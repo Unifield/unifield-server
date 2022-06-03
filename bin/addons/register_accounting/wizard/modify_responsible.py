@@ -23,15 +23,23 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
 
 
 class modify_responsible(osv.osv_memory):
     _name = 'modify.responsible'
 
-    def _get_registers(self, cr, uid, ids):
-        active_ids = ids.get('active_ids', False)
-        return active_ids
+    def _get_registers(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        return context.get('active_ids', False)
+
+    def _get_responsible_ids(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        ids = context.get('active_ids', False)
+        if ids and len(ids) == 1:
+            return self.pool.get('account.bank.statement').read(cr, uid, ids[0], ['responsible_ids'], context=context)['responsible_ids']
+        return []
 
     _columns = {
         'registers_ids': fields.many2many('account.bank.statement','modify_responsible_bank_statement_rel',
@@ -41,6 +49,7 @@ class modify_responsible(osv.osv_memory):
     }
     _defaults = {
         'registers_ids': _get_registers,
+        'responsible_ids': _get_responsible_ids,
     }
 
     def modify_responsible(self, cr, uid, ids, context=None):

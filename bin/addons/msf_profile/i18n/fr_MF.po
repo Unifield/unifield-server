@@ -115038,6 +115038,7 @@ msgstr "Attention ces lignes ne peuvent pas être importées car il y a trop de 
 
 #. module: register_accounting
 #: field:modify.responsible,registers_ids:0
+#: view:modify.responsible:0
 msgid "Impacted Registers"
 msgstr "Registres Impactés"
 
@@ -115060,3 +115061,9 @@ msgstr "Responsables"
 #: view:modify.responsible:0
 msgid "The provided responsibles list must be exhaustive and will update all selected registers!"
 msgstr "La liste fournie des responsable de registre doit être exhaustive et va impacter tous les registres séléctionnés"
+
+#. module: register_accounting
+#: view:modify.responsible:0
+msgid "Exhaustive list of responsibles"
+msgstr "Liste exhaustive des responsables"
+
