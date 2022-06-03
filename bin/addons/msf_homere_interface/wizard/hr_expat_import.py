@@ -111,9 +111,6 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                             contract_end_date_str = contract_end_date and contract_end_date.strftime('%Y-%m-%d') or ''
                 code = get_xml_spreadheet_cell_value(1)
                 if not code:
-                    # msg = "At least one employee in the import file does not" \
-                    #     " have an ID number; make sure all employees in the" \
-                    #     " file have an ID number and run the import again."
                     msg = _('Line %s: ') % line_index + _('THE EMPLOYEE DOES NOT HAVE AN ID NUMBER.')
                     manage_error(line_index, msg, name, contract_end_date=contract_end_date_str)
                 active_str = get_xml_spreadheet_cell_value(2)
@@ -147,7 +144,6 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                 if ids:
                     # Store name of Expat employee to update
                     to_update_vals.append(([ids[0]], vals))
-                    #
                     updated += 1
                 else:
                     # Store Expat employee to create

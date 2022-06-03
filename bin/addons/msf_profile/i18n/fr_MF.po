@@ -115048,3 +115048,9 @@ msgstr "Cellule E7: la Règle de Réappro du fichier: \"%s\" ne correspond pas a
 #, python-format
 msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
 msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_expat_import.py:114
+#, python-format
+msgid "THE EMPLOYEE DOES NOT HAVE AN ID NUMBER."
+msgstr "L'EMPLOYÉ N'A PAS DE NUMÉRO D'IDENTIFICATION"
