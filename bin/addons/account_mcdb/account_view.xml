@@ -189,7 +189,7 @@
                         </group>
                         <newline/>
                         <group expand="0" string="Group By..." colspan="4" col="20">
-                            <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                            <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id', 'show_button_show_inactive': True}"/>
                             <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
                             <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id', 'exclude_journals': ['IB']}"/>
                             <separator orientation="vertical"/>
