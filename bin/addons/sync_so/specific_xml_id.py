@@ -442,6 +442,15 @@ class msf_instance(osv.osv):
             return True
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if context is None:
+            context = {}
+
+        changed_state_ids = []
+
+        if context.get('sync_update_execution') and vals.get('state') in ['active', 'inactive']:
+            changed_state_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '!=', vals['state'])], context=context)
+
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         if 'state' in vals and vals['state'] == 'active' and current_instance.level == 'section':
             for instance in self.browse(cr, uid, ids, context=context):
@@ -450,7 +459,17 @@ class msf_instance(osv.osv):
                     self._synchronize_cc_related_fields(cr, uid, instance, context=context)
                     if instance.level == 'project' and instance.parent_id:
                         self.pool.get('sync.trigger.something.target.lower').create(cr, uid, {'name': 'sync_fp', 'destination': instance.parent_id.instance}, context={})
-        return super(msf_instance, self).write(cr, uid, ids, vals, context=context)
+
+        res = super(msf_instance, self).write(cr, uid, ids, vals, context=context)
+        if changed_state_ids:
+            partner_obj = self.pool.get('res.partner')
+            for instance in self.browse(cr, uid, changed_state_ids, fields_to_fetch=['instance'], context=context):
+                active = vals['state'] == 'active'
+                p_id = partner_obj.search(cr, uid, [('partner_type', '=', 'internal'), ('name', '=', instance.instance), ('active', '!=', active)], context=context)
+                if p_id:
+                    partner_obj.write(cr, uid, p_id, {'active': active}, context={})  # empty context: in sync ctx active field is disabled
+
+        return res
 
 msf_instance()
 
