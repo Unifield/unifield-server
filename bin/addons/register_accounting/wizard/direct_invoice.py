@@ -277,6 +277,9 @@ class wizard_account_invoice(osv.osv):
         # Get analytic_distribution_id
         distrib_id = invoice.analytic_distribution_id and invoice.analytic_distribution_id.id
         account_id = invoice.account_id and invoice.account_id.id
+        # Get dates
+        posting_date = invoice.date_invoice
+        document_date = invoice.document_date
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -284,17 +287,21 @@ class wizard_account_invoice(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': account_id or False,
+            'posting_date': posting_date,
+            'document_date': document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
-        # Create the wizard
-        wiz_obj = self.pool.get('analytic.distribution.wizard')
-        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Update some context values
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
+            'posting_date': posting_date,
+            'document_date': document_date,
         })
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Open it!
         return {
                 'name': _('Global analytic distribution'),
@@ -395,6 +402,9 @@ class wizard_account_invoice_line(osv.osv):
             amount = -1 * amount
         # Get analytic distribution id from this line
         distrib_id = invoice_line and invoice_line.analytic_distribution_id and invoice_line.analytic_distribution_id.id or False
+        # Get dates
+        posting_date = invoice_line.invoice_id.date_invoice
+        document_date = invoice_line.invoice_id.document_date
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -402,17 +412,21 @@ class wizard_account_invoice_line(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': invoice_line.account_id and invoice_line.account_id.id or False,
+            'posting_date': posting_date,
+            'document_date': document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
-        # Create the wizard
-        wiz_obj = self.pool.get('analytic.distribution.wizard')
-        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Update some context values
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
+            'posting_date': posting_date,
+            'document_date': document_date,
         })
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Open it!
         return {
                 'name': _('Analytic distribution'),
