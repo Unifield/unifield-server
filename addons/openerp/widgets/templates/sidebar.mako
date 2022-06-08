@@ -13,6 +13,9 @@
             % if item.get('update_title'):
                 id="update_me_with_title"
             % endif
+            % if item.get('name') == _('Updates Received'):
+                class="sidebar_updates_received"
+            % endif
             >${item['name']}</a>
         </li>
     % else:

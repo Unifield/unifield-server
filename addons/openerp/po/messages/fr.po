@@ -1879,3 +1879,7 @@ msgstr "en haut à droite de l'écran pour être redirigé sur la documentation 
 #: controllers/templates/header.mako:76 controllers/templates/header.mako:78
 msgid "User Manuals"
 msgstr "Manuels d'Utilisateur"
+
+#: widgets/templates/sidebar.mako:145
+msgid "Updates Received"
+msgstr "Mises à jour Reçues"
