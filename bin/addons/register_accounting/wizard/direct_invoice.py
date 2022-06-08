@@ -279,7 +279,6 @@ class wizard_account_invoice(osv.osv):
         account_id = invoice.account_id and invoice.account_id.id
         # Get dates
         posting_date = invoice.date_invoice
-        document_date = invoice.document_date
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -288,7 +287,6 @@ class wizard_account_invoice(osv.osv):
             'state': 'dispatch',
             'account_id': account_id or False,
             'posting_date': posting_date,
-            'document_date': document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -296,8 +294,6 @@ class wizard_account_invoice(osv.osv):
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
-            'posting_date': posting_date,
-            'document_date': document_date,
         })
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
@@ -404,7 +400,6 @@ class wizard_account_invoice_line(osv.osv):
         distrib_id = invoice_line and invoice_line.analytic_distribution_id and invoice_line.analytic_distribution_id.id or False
         # Get dates
         posting_date = invoice_line.invoice_id.date_invoice
-        document_date = invoice_line.invoice_id.document_date
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -413,7 +408,6 @@ class wizard_account_invoice_line(osv.osv):
             'state': 'dispatch',
             'account_id': invoice_line.account_id and invoice_line.account_id.id or False,
             'posting_date': posting_date,
-            'document_date': document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -421,8 +415,6 @@ class wizard_account_invoice_line(osv.osv):
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
-            'posting_date': posting_date,
-            'document_date': document_date,
         })
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')
