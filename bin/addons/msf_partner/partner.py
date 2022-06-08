@@ -744,6 +744,10 @@ class res_partner(osv.osv):
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
+        if vals.get('active') and vals.get('partner_type') == 'intermission' and vals.get('name') \
+                and self.search(cr, uid, [('id', '!=', ids[0]), ('name', '=ilike', vals['name']), ('partner_type', '=', 'internal')], context=context):
+            raise osv.except_osv(_('Error'), _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be modified and activated") % (vals['name'],))
+
         ret = super(res_partner, self).write(cr, uid, ids, vals, context=context)
         self.check_same_pricelist(cr, uid, ids, context=context)
         return ret
@@ -787,6 +791,10 @@ class res_partner(osv.osv):
 
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
+
+        if vals.get('active') and vals.get('partner_type') == 'intermission' and vals.get('name') \
+                and self.search(cr, uid, [('name', '=ilike', vals['name']), ('partner_type', '=', 'internal')], context=context):
+            raise osv.except_osv(_('Error'), _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be created and activated") % (vals['name'],))
 
         new_id = super(res_partner, self).create(cr, uid, vals, context=context)
         self.check_partner_unicity(cr, uid, partner_id=new_id, context=context)
@@ -864,7 +872,7 @@ class res_partner(osv.osv):
                 del(res[ftd])
         return res
 
-    def on_change_active(self, cr, uid, ids, active, context=None):
+    def on_change_active(self, cr, uid, ids, active, name, partner_type, context=None):
         """
         [utp-315] avoid deactivating partner that have still open document linked to them.
         """
@@ -885,6 +893,14 @@ class res_partner(osv.osv):
                                     'message': _("Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
                                                  ) % (objects_linked_to_partner,)}}
         else:
+            if partner_type == 'intermission' and self.search(cr, uid, [('id', '!=', ids[0]), ('name', '=ilike', name), ('partner_type', '=', 'internal')], context=context):
+                return {
+                    'value': {'active': False},
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be activated") % (name,)
+                    }
+                }
             # US-49 check that activated partner is not using a not active CCY
             check_pricelist_ids = []
             fields_pricelist = [

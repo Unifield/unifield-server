@@ -911,15 +911,19 @@ class stock_picking(osv.osv):
             ('auto', 'Waiting'),
             ('confirmed', 'Confirmed'),
             ('assigned', 'Available'),
-            ('done', 'Done'),
+            ('shipped', 'Available Shipped'),  # UF-1617: new state of IN for partial shipment
+            ('updated', 'Available Updated'),
+            ('done', 'Closed'),
             ('delivered', 'Delivered'),
             ('cancel', 'Cancelled'),
+            ('import', 'Import in progress'),
         ], 'State', readonly=True, select=True,
             help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
                  "* Confirmed: still waiting for the availability of products\n"\
                  "* Available: products reserved, simply waiting for confirmation.\n"\
+                 "* Available Shipped: products already shipped at supplier, simply waiting for arrival confirmation.\n"\
                  "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
-                 "* Done: has been processed, can't be modified or cancelled anymore. Can be processed to Delivered if the document is an OUT\n"\
+                 "* Closed: has been processed, can't be modified or cancelled anymore. Can still be processed to Delivered if the document is an OUT\n"
                  "* Delivered: has been delivered, only for a closed OUT\n"\
                  "* Cancelled: has been cancelled, can't be confirmed anymore"),
         'min_date': fields.function(get_min_max_date, fnct_inv=_set_minimum_date, multi="min_max_date",
@@ -1002,6 +1006,7 @@ class stock_picking(osv.osv):
             'dpo_incoming': False,
             'dpo_out': False,
             'new_dpo_out': False,
+            'auto_picking': False,
         }
         for reset_f in to_reset:
             if reset_f not in default:
@@ -1852,6 +1857,21 @@ class stock_picking(osv.osv):
 
             for move_line in picking.move_lines:
                 self.action_invoice_create_line(cr, uid, picking, move_line, invoice_id, group, inv_type, partner, context)
+
+            if picking.purchase_id and picking.purchase_id.tax_line:
+                total_po = picking.purchase_id.amount_untaxed
+                total_invoice = invoice_obj.browse(cr, uid, [invoice_id], fields_to_fetch=['amount_untaxed'], context=context)[0].amount_untaxed
+                if total_po and total_invoice:
+                    for tax_line in move_line.purchase_line_id.order_id.tax_line:
+                        self.pool.get('account.invoice.tax').create(cr, uid, {
+                            'invoice_id': invoice_id,
+                            'account_tax_id': tax_line.account_tax_id.id,
+                            'account_id': tax_line.account_id.id,
+                            'partner_id': tax_line.partner_id.id,
+                            'name': tax_line.name,
+                            'base_amount': total_invoice,
+                            'amount': tax_line.amount * total_invoice / total_po}, context=context)
+
 
             invoice_obj.button_compute(cr, uid, [invoice_id], context=context,
                                        set_total=(inv_type in ('in_invoice', 'in_refund')))

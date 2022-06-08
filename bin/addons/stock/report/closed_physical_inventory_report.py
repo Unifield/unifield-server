@@ -5,6 +5,7 @@ from spreadsheet_xml.xlsx_write import XlsxReport
 from spreadsheet_xml.xlsx_write import XlsxReportParser
 from tools.translate import _
 from openpyxl.cell import WriteOnlyCell
+import tools
 
 
 class closed_physical_inventory_parser(XlsxReportParser):
@@ -172,7 +173,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 'line_number': disc_line.line_no,
                 'qty_counted': counted_qty,
                 'qty_ignored': ignored_qty,
-                'prodlot': disc_line.batch_number or '',
+                'prodlot': disc_line.batch_number and tools.ustr(disc_line.batch_number) or '',
                 'expiry_date': disc_line.expiry_date and datetime.strptime(disc_line.expiry_date[0:10], '%Y-%m-%d') or '',
                 'reason_type': disc_line.reason_type_id.complete_name,
                 'comment': disc_line.comment or '',
@@ -191,7 +192,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 ctx.update({'prodlot_id': (count_line.is_bn or count_line.is_ed) and bn_ids and bn_ids[0] or False})
                 prod_stock = self.pool.get('product.product').browse(self.cr, self.uid, count_line.product_id.id, fields_to_fetch=['qty_available'], context=ctx)['qty_available']
 
-                count_line_qty = int(count_line.quantity)
+                count_line_qty = float(count_line.quantity)
                 if count_line.product_id.id not in rep_lines:
                     rep_lines.update({count_line.product_id.id: {
                         'product_code': count_line.product_id.default_code,
@@ -215,9 +216,9 @@ class closed_physical_inventory_parser(XlsxReportParser):
                     qty_ignored = ''
                 rep_lines[count_line.product_id.id]['lines'].append({
                     'line_number': count_line.line_no,
-                    'qty_counted': ((count_line_qty or count_line_qty == 0) and count_line.quantity) or '',
+                    'qty_counted': ((count_line_qty or count_line_qty == 0) and count_line_qty) or '',
                     'qty_ignored': qty_ignored,
-                    'prodlot': count_line.batch_number or '',
+                    'prodlot': count_line.batch_number and tools.ustr(count_line.batch_number) or '',
                     'expiry_date': count_line.expiry_date and datetime.strptime(count_line.expiry_date[0:10], '%Y-%m-%d') or '',
                     'reason_type': '',
                     'comment': '',

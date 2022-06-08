@@ -8,8 +8,8 @@ Unreconcile Entries,account.unreconcile.reconcile,form,Unreconcile Entries,,Fin_
 Reconcile Entries,account.move.line.reconcile,form,account.move.line.reconcile.full.form,,Fin_Accounting_Entries_Act,sd.account_action_view_account_move_line_reconcile
 Reconciliation: Go to Next Partner,account.partner.reconcile.process,form,Partner Reconcilation Process,,Fin_Accounting_Entries_Act,sd.account_action_account_partner_reconcile
 Re-open closed register,register.reopen,form,,[],"Administration / Access Rights,Fin_Config_Admin_Mission",sd.register_accounting_action_wizard_reopen_register
-Validate Accrual Lines,wizard.accrual.validation,form,,[],"Fin_Config_Coordo,Fin_Config_Admin_Mission",sd.msf_accrual_action_wizard_accrual_validation
-Post Accrual Reversal,wizard.accrual.reversal,form,,[],"Fin_Config_Coordo,Fin_Config_Admin_Mission",sd.msf_accrual_action_wizard_post_accrual_reversal
+Post Accruals,wizard.accrual.validation,form,,[],"Fin_Config_Coordo,Fin_Config_Admin_Mission",sd.msf_accrual_action_wizard_accrual_validation
+Post Accrual Reversals,wizard.accrual.reversal,form,,[],"Fin_Config_Coordo,Fin_Config_Admin_Mission",sd.msf_accrual_action_wizard_post_accrual_reversal
 Validate draft entries,hr.payroll.validation,form,payroll.validation.wizard,[],Fin_Hard_Posting,sd.msf_homere_interface_action_payroll_validation
 Delete draft entries,hr.payroll.deletion,form,payroll.deletion.wizard,[],Fin_Local_Payroll,sd.msf_homere_interface_action_payroll_deletion
 Payroll Analytic reallocation,hr.analytic.reallocation,form,analytic.reallocation.wizard,[],Fin_Local_Payroll,sd.msf_homere_interface_action_payroll_analytic_reallocation

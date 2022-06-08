@@ -113,6 +113,16 @@
    </Borders>
    <NumberFormat ss:Format="Standard"/>
   </Style>
+  <Style ss:ID="s33bis">
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <NumberFormat ss:Format="Standard"/>
+   <Interior ss:Color="#C0C0C0" ss:Pattern="Solid"/>
+  </Style>
   <Style ss:ID="s33Wrap">
    <Alignment ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -122,6 +132,17 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <NumberFormat ss:Format="Standard"/>
+  </Style>
+  <Style ss:ID="s33Wrapbis">
+   <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <NumberFormat ss:Format="Standard"/>
+   <Interior ss:Color="#C0C0C0" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s34">
    <Borders>
@@ -207,6 +228,16 @@
    <Interior  ss:Pattern="Solid"/>
    <NumberFormat ss:Format="Standard"/>
   </Style>
+  <Style ss:ID="s50bis">
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Interior ss:Color="#C0C0C0" ss:Pattern="Solid"/>
+   <NumberFormat ss:Format="Standard"/>
+  </Style>
 
   <Style ss:ID="s51">
    <Font ss:Size="14"/>
@@ -227,6 +258,17 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
   </Style>
+  <Style ss:ID="short_date2bis">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <NumberFormat ss:Format="Short Date"/>
+    <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Interior ss:Color="#C0C0C0" ss:Pattern="Solid"/>
+  </Style>
 
   <Style ss:ID="short_date2a">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -235,7 +277,7 @@
 
  </Styles>
 
-<Worksheet ss:Name="${context.get('paid_invoice') and _('Paid Invoices') or _('Open Invoices')}">
+<Worksheet ss:Name="${context.get('paid_invoice') and _('Paid Invoices') or _('Pending Invoices')}">
     <Table>
     <Column ss:Width="88.5"/>
     <Column ss:AutoFitWidth="0" ss:Width="75.5" ss:Span="1"/>
@@ -261,7 +303,7 @@
 
     <Row ss:AutoFitHeight="0" ss:Height="18">
         <Cell ss:StyleID="s25b">
-        <Data ss:Type="String">${context.get('paid_invoice') and _('PAID INVOICES') or _('OPEN INVOICES')}</Data>
+        <Data ss:Type="String">${context.get('paid_invoice') and _('PAID INVOICES') or _('PENDING INVOICES')}</Data>
         </Cell>
     </Row>
 
@@ -309,7 +351,11 @@
                     ('dn', _('Debit Notes')), ('ivo', _('Intermission Vouchers OUT'))] %>
 % for (doc_type, title) in doc_type_list:
    <Row >
-    <Cell ss:StyleID="s23"><Data ss:Type="String">${title}</Data></Cell>
+    % if doc_type in ['stv', 'ivi', 'donation'] and not context.get('paid_invoice'):
+            <Cell ss:StyleID="s23"><Data ss:Type="String">${title}${_(' (OPEN FISCAL YEAR ONLY)')}</Data></Cell>
+    % else:
+            <Cell ss:StyleID="s23"><Data ss:Type="String">${title}</Data></Cell>
+    % endif
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s24"/>
@@ -361,44 +407,85 @@
 
 % if doc_type in inv:
 % for o in inv[doc_type]:
-    <Row>
-        <% nb_line += 1 %>
-        <% update_percent(nb_line, context) %>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data></Cell>
-        % if isDate(o.document_date):
-            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.document_date or ' ' |n}T00:00:00.000</Data></Cell>
-        % else:
-            <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-        % endif
+    % if o.state == 'draft' and doc_type in ['si_di', 'stv', 'ivi', 'donation']:
+        <Row>
+            <% nb_line += 1 %>
+            <% update_percent(nb_line, context) %>
+            <Cell ss:StyleID="s33bis"><Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data></Cell>
+            % if isDate(o.document_date):
+                <Cell ss:StyleID="short_date2bis" ><Data ss:Type="DateTime">${o.document_date or ' ' |n}T00:00:00.000</Data></Cell>
+            % else:
+                <Cell ss:StyleID="short_date2bis" ><Data ss:Type="String"></Data></Cell>
+            % endif
 
-        % if isDate(o.date_invoice):
-            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_invoice or ' ' |n}T00:00:00.000</Data></Cell>
-        % else:
-            <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-        % endif
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.partner_id and o.partner_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.origin or '')|x}</Data></Cell>
-        % if isDate(o.date_due):
-            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_due or ' ' |n}T00:00:00.000</Data></Cell>
-        % else:
-            <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-        % endif
-        % if not context.get('paid_invoice'):
-            <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.residual or 0.0)|x}</Data></Cell>
-        % endif
-        <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.amount_total or 0.0)|x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data></Cell>
-        % if not context.get('paid_invoice'):
-            <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.residual, o.currency_id.id) or 0.0 )|x}</Data></Cell>
-        % endif
-        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.amount_total, o.currency_id.id) or 0.0 )|x}</Data></Cell>
-        <Cell ss:StyleID="s50"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.imported_state and getSelValue('account.invoice', 'imported_state', o.imported_state) or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join(set([ p.reconcile_txt for p in o.payment_to_display_ids if p.reconcile_txt != False])) or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join([ p.move_id.name for p in o.payment_to_display_ids]) or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.down_payment_ids and ", ".join([ p.move_id.name for p in o.down_payment_ids]) or '')|x}</Data></Cell>
-    </Row>
+            % if isDate(o.date_invoice):
+                <Cell ss:StyleID="short_date2bis" ><Data ss:Type="DateTime">${o.date_invoice or ' ' |n}T00:00:00.000</Data></Cell>
+            % else:
+                <Cell ss:StyleID="short_date2bis" ><Data ss:Type="String"></Data></Cell>
+            % endif
+            <Cell ss:StyleID="s33bis"><Data ss:Type="String">${(o.partner_id and o.partner_id.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="s33bis"><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="s33bis"><Data ss:Type="String">${(o.origin or '')|x}</Data></Cell>
+            % if isDate(o.date_due):
+                <Cell ss:StyleID="short_date2bis" ><Data ss:Type="DateTime">${o.date_due or ' ' |n}T00:00:00.000</Data></Cell>
+            % else:
+                <Cell ss:StyleID="short_date2bis" ><Data ss:Type="String"></Data></Cell>
+            % endif
+            % if not context.get('paid_invoice'):
+                <Cell ss:StyleID="s33bis" ><Data ss:Type="Number">${(o.residual or 0.0)|x}</Data></Cell>
+            % endif
+            <Cell ss:StyleID="s33bis" ><Data ss:Type="Number">${(o.amount_total or 0.0)|x}</Data></Cell>
+            <Cell ss:StyleID="s33bis"><Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data></Cell>
+            % if not context.get('paid_invoice'):
+                <Cell ss:StyleID="s50bis" ><Data ss:Type="Number">${(getConvert(o.residual, o.currency_id.id) or 0.0 )|x}</Data></Cell>
+            % endif
+            <Cell ss:StyleID="s50bis" ><Data ss:Type="Number">${(getConvert(o.amount_total, o.currency_id.id) or 0.0 )|x}</Data></Cell>
+            <Cell ss:StyleID="s50bis"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
+            <Cell ss:StyleID="s33bis"><Data ss:Type="String">${(o.imported_state and getSelValue('account.invoice', 'imported_state', o.imported_state) or '')|x}</Data></Cell>
+            <Cell ss:StyleID="s33Wrapbis"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join(set([ p.reconcile_txt for p in o.payment_to_display_ids if p.reconcile_txt != False])) or '')|x}</Data></Cell>
+            <Cell ss:StyleID="s33Wrapbis"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join([ p.move_id.name for p in o.payment_to_display_ids]) or '')|x}</Data></Cell>
+            <Cell ss:StyleID="s33Wrapbis"><Data ss:Type="String">${(o.down_payment_ids and ", ".join([ p.move_id.name for p in o.down_payment_ids]) or '')|x}</Data></Cell>
+        </Row>
+    % else:
+        <Row>
+            <% nb_line += 1 %>
+            <% update_percent(nb_line, context) %>
+            <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data></Cell>
+            % if isDate(o.document_date):
+                <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.document_date or ' ' |n}T00:00:00.000</Data></Cell>
+            % else:
+                <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
+            % endif
+
+            % if isDate(o.date_invoice):
+                <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_invoice or ' ' |n}T00:00:00.000</Data></Cell>
+            % else:
+                <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
+            % endif
+            <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.partner_id and o.partner_id.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.origin or '')|x}</Data></Cell>
+            % if isDate(o.date_due):
+                <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_due or ' ' |n}T00:00:00.000</Data></Cell>
+            % else:
+                <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
+            % endif
+            % if not context.get('paid_invoice'):
+                <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.residual or 0.0)|x}</Data></Cell>
+            % endif
+            <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.amount_total or 0.0)|x}</Data></Cell>
+            <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data></Cell>
+            % if not context.get('paid_invoice'):
+                <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.residual, o.currency_id.id) or 0.0 )|x}</Data></Cell>
+            % endif
+            <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.amount_total, o.currency_id.id) or 0.0 )|x}</Data></Cell>
+            <Cell ss:StyleID="s50"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
+            <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.imported_state and getSelValue('account.invoice', 'imported_state', o.imported_state) or '')|x}</Data></Cell>
+            <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join(set([ p.reconcile_txt for p in o.payment_to_display_ids if p.reconcile_txt != False])) or '')|x}</Data></Cell>
+            <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join([ p.move_id.name for p in o.payment_to_display_ids]) or '')|x}</Data></Cell>
+            <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.down_payment_ids and ", ".join([ p.move_id.name for p in o.down_payment_ids]) or '')|x}</Data></Cell>
+        </Row>
+    % endif
 % endfor
 % endif
     <Row ss:AutoFitHeight="0" ss:StyleID="s26">

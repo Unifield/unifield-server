@@ -1185,6 +1185,7 @@ Nothing has been imported because of %s. See below:
             to_write['physical_reception_date'] = simu_id.physical_reception_date
         if not partner or partner.partner_type in ['external', 'esc']:
             to_write['imp_shipment_ref'] = simu_id.imp_freight_number or ''
+        to_write['imp_filename'] = simu_id.filename or ''  # To put in last_imported_filename
         partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, to_write, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('ign', 'error', 'new')), ('type_change', '=', False)], context=context)
 
@@ -1194,7 +1195,7 @@ Nothing has been imported because of %s. See below:
         del_lines = mem_move_obj.search(cr, uid, [('wizard_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
         mem_move_obj.unlink(cr, uid, del_lines, context=context)
 
-        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'last_imported_filename': simu_id.filename, 'note': simu_id.imp_notes}, context=context)
+        self.pool.get('stock.picking').write(cr, uid, [simu_id.picking_id.id], {'note': simu_id.imp_notes}, context=context)
 
         context['from_simu_screen'] = True
 

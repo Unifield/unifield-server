@@ -55,6 +55,176 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    def py3_migrate_pickle_ir_values(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            return True
+
+        import pickle
+        import json
+        cr.execute("select id, value from ir_values where object='f'")
+        ok=0
+        fail=0
+        for x in cr.fetchall():
+            try:
+                val = json.dumps(pickle.loads(bytes(x[1], 'utf8')))
+                cr.execute('update ir_values set value=%s where id=%s', (val, x[0]))
+                ok += 1
+            except:
+                fail += 1
+
+        cr.execute("select id, meta from ir_values where coalesce(meta, '')!='' and meta!='web'")
+        for x in cr.fetchall():
+            try:
+                val = json.dumps(pickle.loads(bytes(x[1], 'utf8')))
+                cr.execute('update ir_values set meta=%s where id=%s', (val, x[0]))
+                ok += 1
+            except:
+                fail += 1
+
+        self.log_info(cr, uid, 'Pickle ir_values conversion: ok: %d , fail: %d' % (ok, fail))
+        return True
+
+    # UF25.0
+    def us_8451_split_rr(self, cr, uid, *a, **b):
+        if not cr.column_exists('replenishment_segment_line', 'rr_fmc_1') or not cr.column_exists('replenishment_segment_line', 'rr_max_1'):
+            return True
+
+        for x in range(1, 19):
+            cr.execute('''
+            insert into replenishment_segment_line_period (line_id, value, from_date, to_date, max_value)
+                select id, rr_fmc_%(x)s, rr_fmc_from_%(x)s, rr_fmc_to_%(x)s, rr_max_%(x)s
+                from replenishment_segment_line
+                where rr_fmc_%(x)s is not null
+            ''', {'x': x})
+        cr.execute('''update replenishment_segment_line_period set from_date='2020-01-01' where from_date is null and value is not null''')
+        cr.execute('''update replenishment_segment_line_period set to_date='2222-02-28' where to_date is null and value is not null''')
+        return True
+
+    def us_5722_update_accruals(self, cr, uid, *a, **b):
+        """
+        Updates the existing accruals:
+        - A) renames the states:
+          ==> Partially Posted becomes Running, and Posted becomes Done
+        - B) some pieces of data are now handled at line level:
+          ==> moves them from the accrual itself (msf.accrual.line) to the expense line (msf.accrual.line.expense)
+        - C) initializes the sequence on the existing Accruals so that the line numbers are consistent (Line number = 1 for point B)
+        - D) sets the value to use for the fields "entry_sequence" (previously based on the JI linked to the global AD)
+        """
+        if self.pool.get('sync.client.entity') and not self.pool.get('sync.server.update'):  # existing instances
+            accrual_obj = self.pool.get('msf.accrual.line')
+            ml_obj = self.pool.get('account.move.line')
+            cr.execute("UPDATE msf_accrual_line SET state = 'running' WHERE state = 'partially_posted'")
+            self.log_info(cr, uid, '%d Accrual(s) set to: Running.' % (cr.rowcount,))
+            cr.execute("UPDATE msf_accrual_line SET state = 'done' WHERE state = 'posted'")
+            self.log_info(cr, uid, '%d Accrual(s) set to: Done.' % (cr.rowcount,))
+            # NOTE: in all the Accruals created before this ticket there is NO sequence_id and NO Expense Lines
+            cr.execute('''SELECT id, description, reference, expense_account_id, accrual_amount, state, move_line_id
+                          FROM msf_accrual_line''')
+            accruals = cr.fetchall()
+            for accrual_data in accruals:
+                accrual_id = accrual_data[0]
+                # get the entry_sequence to set at doc level
+                entry_seq = ''
+                move_line_id = accrual_data[6]
+                if accrual_data[5] != 'draft' and move_line_id:
+                    ml = ml_obj.browse(cr, uid, move_line_id, fields_to_fetch=['move_id'])
+                    entry_seq = ml and ml.move_id.name or ''
+                # initialize the sequence for line numbering (ir_sequences are not synchronized)
+                line_seq_id = accrual_obj.create_sequence(cr, uid)
+                cr.execute("UPDATE msf_accrual_line "
+                           "SET entry_sequence = %s, sequence_id = %s "
+                           "WHERE id = %s", (entry_seq, line_seq_id, accrual_id))
+                new_expense_line_vals = {
+                    # the line_number will be automatically filled in, using the sequence created above
+                    # no analytic_distribution_id is defined on the line, the global AD is kept
+                    'accrual_line_id': accrual_id,
+                    'description': accrual_data[1],
+                    'reference': accrual_data[2] or '',
+                    'expense_account_id': accrual_data[3],
+                    'accrual_amount': accrual_data[4] or 0.0,
+                }
+                # call the standard "create" method on Accrual Expense Lines, which are not synchronized
+                self.pool.get('msf.accrual.line.expense').create(cr, uid, new_expense_line_vals)
+            self.log_info(cr, uid, '%d Accrual Expense Line(s) created.' % (len(accruals),))
+        return True
+
+    def fol_order_id_join_change_rules(self, cr, uid, *a, **b):
+        """
+            order_id now uses sql join for queries like order_id.state = draft
+            update client sync rules to not generate sync messages for IR lines
+            (this changes cannot wait for the following sync)
+        """
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        cr.execute('''update sync_client_message_rule
+                set
+                    domain=$$[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft'), ('order_id.procurement_request', '=', False), ('product_uom_qty', '!=', 0.0), '!', '&', ('order_id.fo_created_by_po_sync', '=', False), ('order_id.state', '=', 'draft')]$$,
+                    wait_while=$$[('order_id.procurement_request', '=', False), ('order_id.state', 'in', ['draft', 'draft_p']), ('order_id.partner_type', 'not in', ['external', 'esc']), ('order_id.client_order_ref', '=', False)]$$
+                where
+                    remote_call = 'purchase.order.line.sol_update_original_pol'
+        ''')
+        return True
+
+    def us_6475_set_has_tax_on_po(self, cr, uid, *a, **b):
+        cr.execute('''
+            update purchase_order
+                set has_tax_at_line_level='t'
+            where
+                id in (
+                select po.id
+                    from
+                purchase_order_line pol, purchase_order po, purchase_order_taxe tax
+                where
+                    po.state in ('draft', 'draft_p', 'validated', 'validated_p') and
+                    pol.order_id = po.id and
+                    pol.state not in ('cancel', 'cancel_r') and
+                    tax.ord_id = pol.id
+            )
+        ''')
+        self.log_info(cr, uid, 'US-6475: set PO has tax on %d records' % cr.rowcount)
+        return True
+
+    def us_7791_gdpr_patch(self, cr, uid, *a, **b):
+        cr.execute("""UPDATE hr_employee
+        SET
+        birthday = NULL,
+        gender = NULL,
+        marital = NULL,
+        mobile_phone = NULL,
+        notes = NULL,
+        private_phone = NULL,
+        work_email = NULL,
+        work_phone = NULL,
+        country_id = NULL,
+        ssnid = NULL
+        WHERE employee_type = 'local';
+        """)
+        self.log_info(cr, uid, 'US-7791 : GDPR patch applied on %d rows' % (cr.rowcount,))
+        return True
+
+
+    def us_9173_fix_msf_customer_location(self, cr, uid, *a, **b):
+        '''
+        Remove the unbreakable spaces from the default 'MSF Cutsomer' location
+        Rename manually created 'MSF Customer' locations into 'Other_MSF_Customer
+        '''
+        msf_cust_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1]
+
+        # Removing the unbreakable space from the location and the translations
+        cr.execute("""UPDATE stock_location SET name = replace(name, E'\u00a0', ' ') WHERE id = %s""", (msf_cust_id,))
+        cr.execute("""UPDATE ir_translation SET src = replace(src, E'\u00a0', ' '), value = replace(value, E'\u00a0', ' ') 
+            WHERE name = 'stock.location,name' AND res_id = %s""", (msf_cust_id,))
+
+        # Renaming the non-default 'MSF Customer' locations and their translations
+        cr.execute("""UPDATE stock_location SET name = 'Other_MSF_Customer' WHERE name = 'MSF Customer' AND id != %s""", (msf_cust_id,))
+        cr.execute("""UPDATE ir_translation SET src = 'Other_MSF_Customer', value = 'Other_MSF_Customer' 
+            WHERE name = 'stock.location,name' AND src = 'MSF Customer' AND res_id != %s
+        """, (msf_cust_id,))
+
+        return True
+
     # UF24.1
     def us_9849_trigger_upd_former_nsl(self, cr, uid, *a, **b):
         # UD prod changer from NSL to ST/NS => trigger sync to update active field on missions
@@ -104,35 +274,6 @@ class patch_scripts(osv.osv):
                 subtype in ('standard', 'picking')
         """)
         self.log_info(cr, uid, 'US-9833: %d OUT/Pick fixed' % (cr.rowcount,))
-        return True
-
-    def py3_migrate_pickle_ir_values(self, cr, uid, *a, **b):
-        if not self.pool.get('sync.client.entity'):
-            return True
-
-        import pickle
-        import json
-        cr.execute("select id, value from ir_values where object='f'")
-        ok=0
-        fail=0
-        for x in cr.fetchall():
-            try:
-                val = json.dumps(pickle.loads(bytes(x[1], 'utf8')))
-                cr.execute('update ir_values set value=%s where id=%s', (val, x[0]))
-                ok += 1
-            except:
-                fail += 1
-
-        cr.execute("select id, meta from ir_values where coalesce(meta, '')!='' and meta!='web'")
-        for x in cr.fetchall():
-            try:
-                val = json.dumps(pickle.loads(bytes(x[1], 'utf8')))
-                cr.execute('update ir_values set meta=%s where id=%s', (val, x[0]))
-                ok += 1
-            except:
-                fail += 1
-
-        self.log_info(cr, uid, 'Pickle ir_values conversion: ok: %d , fail: %d' % (ok, fail))
         return True
 
 
@@ -250,7 +391,9 @@ class patch_scripts(osv.osv):
         return True
 
     def us_8449_migrate_rr_min_max_auto_to_periods(self, cr, uid, *a, **b):
-        if cr.column_exists('replenishment_segment_line', 'min_qty'):
+        if cr.column_exists('replenishment_segment_line', 'min_qty') and \
+                cr.column_exists('replenishment_segment_line', 'rr_fmc_1') and \
+                cr.column_exists('replenishment_segment_line', 'rr_max_1'):
             cr.execute("""update replenishment_segment_line line set rr_fmc_1=min_qty, rr_max_1=max_qty, min_qty=NULL, max_qty=NULL
                 from replenishment_segment seg
                 where
@@ -258,7 +401,7 @@ class patch_scripts(osv.osv):
                     seg.rule='minmax'
             """)
 
-        if cr.column_exists('replenishment_segment_line', 'auto_qty'):
+        if cr.column_exists('replenishment_segment_line', 'auto_qty') and cr.column_exists('replenishment_segment_line', 'rr_fmc_1'):
             cr.execute("""update replenishment_segment_line line set rr_fmc_1=auto_qty, auto_qty=NULL
                 from replenishment_segment seg
                 where
@@ -3092,14 +3235,14 @@ class patch_scripts(osv.osv):
             'name': 'FO line updates PO line',
             'server_id': 999,
             'model': 'sale.order.line',
-            'domain': "[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft'), ('product_uom_qty', '!=', 0.0)]",
+            'domain': "[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft'), ('product_uom_qty', '!=', 0.0), ('order_id.procurement_request', '=', False)]",
             'sequence_number': 12,
             'remote_call': 'purchase.order.line.sol_update_original_pol',
             'arguments': "['resourced_original_line/id', 'resourced_original_remote_line','sync_sourced_origin', 'sync_local_id', 'sync_linked_pol', 'order_id/name', 'product_id/id', 'product_id/name', 'name', 'state','product_uom_qty', 'product_uom', 'price_unit', 'in_name_goods_return', 'analytic_distribution_id/id','comment','have_analytic_distribution_from_header','line_number', 'nomen_manda_0/id','nomen_manda_1/id','nomen_manda_2/id','nomen_manda_3/id', 'nomenclature_description','notes','default_name','default_code','date_planned','is_line_split', 'original_line_id/id', 'confirmed_delivery_date', 'stock_take_date', 'cancel_split_ok', 'modification_comment']",
             'destination_name': 'partner_id',
             'active': True,
             'type': 'MISSION',
-            'wait_while': "[('order_id.state', 'in', ['draft', 'draft_p']), ('order_id.partner_type', 'not in', ['external', 'esc']), ('order_id.client_order_ref', '=', False)]",
+            'wait_while': "[('order_id.state', 'in', ['draft', 'draft_p']), ('order_id.partner_type', 'not in', ['external', 'esc']), ('order_id.client_order_ref', '=', False), ('order_id.procurement_request', '=', False)]",
         })
 
         # tigger WKF

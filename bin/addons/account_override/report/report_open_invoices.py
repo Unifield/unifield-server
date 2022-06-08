@@ -24,7 +24,7 @@ from report import report_sxw
 
 class report_open_invoices2(report_sxw.rml_parse):
     """
-    Used for the reports "Open Invoices" and "Paid Invoices" (same display but the state of the docs displayed changes)
+    Used for the reports "Pending Invoices" and "Paid Invoices" (same display but the state of the docs displayed changes)
     """
 
     def __init__(self, cr, uid, name, context=None):
@@ -57,31 +57,38 @@ class report_open_invoices2(report_sxw.rml_parse):
 
     def get_invoices(self, data):
         """
-        Gets only open account.invoices by default, or only paid ones for the Paid Invoices Report.
+        Gets only open and draft account.invoices by default, or only paid ones for the Paid Invoices Report.
         Returns a dict with key = document type, and value = list of account.invoice browse records.
         """
         res = {}
+        context = self.localcontext or {}
         inv_obj = self.pool.get('account.invoice')
         bg_obj = self.pool.get('memory.background.report')
         beginning_date = data.get('form') and data['form'].get('beginning_date')
         ending_date = data.get('form') and data['form'].get('ending_date')
-        context = self.localcontext or {}
         bg_id = False
         if context.get('background_id'):
             bg_id = context['background_id']
             self.percent = 0.05  # 5% of the process
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
-        states = context.get('paid_invoice') and ['paid', 'inv_close'] or ['open']
         for doc_type in ['si_di', 'sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo']:
             # determine the domain to use according to the report type and the doc type
-            domain = [('state', 'in', states)]
+            states = context.get('paid_invoice') and ['paid', 'inv_close'] or ['open']
+            domain = []
+            if doc_type in ['si_di', 'stv', 'ivi', 'donation']:
+                states = context.get('paid_invoice') and ['paid', 'inv_close'] or ['open', 'draft']
+                domain += [('state', 'in', states)]
+                if doc_type == 'si_di':
+                    domain += [('doc_type', 'in', ['si', 'di'])]
+            else:
+                domain += [('state', 'in', states)]
             if context.get('paid_invoice') and beginning_date and ending_date:
                 domain += [('date_invoice', '>=', beginning_date), ('date_invoice', '<=', ending_date)]
-            if doc_type == 'si_di':
-                domain += [('doc_type', 'in', ['si', 'di'])]
-            elif doc_type in ('sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo'):
+            if doc_type in ('sr', 'isi', 'isr', 'donation', 'ivi', 'stv', 'str', 'cr', 'dn', 'ivo'):
                 domain += [('doc_type', '=', doc_type)]
-            type_ids = inv_obj.search(self.cr, self.uid, domain, context=context, order='move_name')
+                if doc_type in ['stv', 'ivi', 'donation'] and not context.get('paid_invoice'):
+                    domain += [('open_fy', '=', True)]
+            type_ids = inv_obj.search(self.cr, self.uid, domain, context=context, order='state desc, move_name')
             if isinstance(type_ids, int):
                 type_ids = [type_ids]
             self.nb_lines += len(type_ids)

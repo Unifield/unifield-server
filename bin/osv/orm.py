@@ -199,7 +199,11 @@ class browse_record(object):
                 fields_to_fetch += [x for x in inherits if x[1]._classic_write and x[1]._prefetch]
             # otherwise we fetch only that field
             else:
-                fields_to_fetch = [(name, col)]
+                if self._name == 'replenishment.segment.line' and col._multi == 'merge_minmax':
+                    # cache all rr_fmc values
+                    fields_to_fetch = [x for x in self._table._columns.items() if x[1]._multi == 'merge_minmax']
+                else:
+                    fields_to_fetch = [(name, col)]
             ids = [id for id in list(self._data.keys()) if name not in self._data[id]]
             # read the results
             if self._fields_to_fetch:

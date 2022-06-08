@@ -44,7 +44,7 @@ class wizard_import_fo_line(osv.osv_memory):
         return res
 
     _columns = {
-        'file': fields.binary(string='File to import', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'file': fields.binary(string='File to import', required=True, readonly=True, states={'draft': [('readonly', False)], 'error': [('readonly', False)]}),
         'message': fields.text(string='Message', readonly=True),
         'fo_id': fields.many2one('sale.order', string='Field Order', required=True),
         'data': fields.binary('Lines with errors'),
@@ -52,7 +52,7 @@ class wizard_import_fo_line(osv.osv_memory):
         'filename_template': fields.char('Templates', size=256),
         'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
         'percent_completed': fields.integer('% completed', readonly=True),
-        'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
+        'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')],
                                   string="State", required=True, readonly=True),
     }
 
@@ -77,11 +77,12 @@ class wizard_import_fo_line(osv.osv_memory):
         sale_obj = self.pool.get('sale.order')
         sale_line_obj = self.pool.get('sale.order.line')
         line_with_error = []
-        vals = {'order_line': []}
+        max_value = sale_line_obj._max_value
 
         context_sol_create = context.copy()
         context_sol_create['no_store_function'] = ['sale.order.line']
         created_line = []
+        blocker_msg = []
         for wiz_browse in self.browse(cr, uid, ids, context):
             try:
                 fo_browse = wiz_browse.fo_id
@@ -155,7 +156,7 @@ class wizard_import_fo_line(osv.osv_memory):
                     total_line_num = file_obj.getNbRows()
                     percent_completed = 0
                     for row in rows:
-
+                        cr.execute("SAVEPOINT line_save")
                         line_num += 1
                         # default values
                         to_write = {
@@ -203,7 +204,7 @@ class wizard_import_fo_line(osv.osv_memory):
 
                             # Cell 2: Quantity
                             qty_value = {}
-                            qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                            qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, max_qty=max_value, context=context)
                             to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
 
                             # Cell 3: UOM
@@ -255,7 +256,7 @@ class wizard_import_fo_line(osv.osv_memory):
                                 ignore_lines += 1
                                 line_ignored_num.append(line_num)
                                 percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                                cr.rollback()
+                                cr.execute('ROLLBACK TO SAVEPOINT line_save')
                                 continue
 
                             # Check product restrictions
@@ -263,8 +264,8 @@ class wizard_import_fo_line(osv.osv_memory):
                                 product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'partner_id': fo_browse.partner_id.id, 'obj_type': 'sale.order'}, context=dict(context, noraise=False))
 
                             # write order line on FO
-                            vals['order_line'].append((0, 0, to_write))
-                            created_line.append(sale_line_obj.create(cr, uid, to_write, context=context_sol_create))
+                            if not blocker_msg:
+                                created_line.append(sale_line_obj.create(cr, uid, to_write, context=context_sol_create))
                             if to_write['error_list']:
                                 lines_to_correct += 1
                             percent_completed = float(line_num)/float(total_line_num-1)*100.0
@@ -276,7 +277,7 @@ class wizard_import_fo_line(osv.osv_memory):
                             ignore_lines += 1
                             line_ignored_num.append(line_num)
                             percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                            cr.rollback()
+                            cr.execute('ROLLBACK TO SAVEPOINT line_save')
                             continue
                         except osv.except_osv as osv_error:
                             osv_value = osv_error.value
@@ -285,23 +286,38 @@ class wizard_import_fo_line(osv.osv_memory):
                             ignore_lines += 1
                             line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                             percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                            cr.execute('ROLLBACK TO SAVEPOINT line_save')
+                            continue
+                        except check_line.ExceptionWrongQuantity:
+                            prod = ''
+                            if p_value.get('default_code'):
+                                prod = self.pool.get('product.product').browse(cr, uid, p_value.get('default_code'), fields_to_fetch=['default_code'], context=context).default_code
+                            blocker_msg.append(_('Line #%s of the file, product: %s') % (line_num+1, prod))
+                            line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                             cr.rollback()
                             continue
-                        finally:
+                        else:
                             self.write(cr, uid, ids, {'percent_completed':percent_completed})
-                            if not context.get('yml_test', False):
-                                cr.commit()
+                            cr.execute("RELEASE SAVEPOINT line_save")
 
-                    sale_line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
-                    categ_log = sale_obj.onchange_categ(
-                        cr, uid, [fo_id], wiz_browse.fo_id.categ, context=context).get('warning', {}).get('message', '').upper()
-                    categ_log = categ_log.replace('THIS', 'THE')
+                    if not blocker_msg:
+                        sale_line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
+                        categ_log = sale_obj.onchange_categ(
+                            cr, uid, [fo_id], wiz_browse.fo_id.categ, context=context).get('warning', {}).get('message', '').upper()
+                        categ_log = categ_log.replace('THIS', 'THE')
                 error_log += '\n'.join(error_list)
                 if error_log:
                     error_log = _("Reported errors for ignored lines : \n") + error_log
                 end_time = time.time()
                 total_time = tools.ustr(round(end_time-start_time)) + _(' second(s)')
-                final_message = _('''
+                if blocker_msg:
+                    wizard_vals = {'state': 'error', 'percent_completed': 100, 'file': False}
+                    cr.rollback()
+                    final_message = _("Warning this/these lines cannot be imported due to too many digits in Qty field. Please check:\n%s") % ('\n'.join(blocker_msg), )
+                else:
+                    wizard_vals = {'state': 'done'}
+                    cr.commit()
+                    final_message = _('''
     %s
     Importation completed in %s!
 # of imported lines : %s on %s lines
@@ -311,7 +327,7 @@ class wizard_import_fo_line(osv.osv_memory):
 
     %s
     ''') % (categ_log, total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
-                wizard_vals = {'message': final_message, 'state': 'done'}
+                wizard_vals['message'] = final_message
                 if line_with_error:
                     file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
                     wizard_vals.update(file_to_export)
@@ -324,9 +340,8 @@ class wizard_import_fo_line(osv.osv_memory):
                 }, context=context)
             finally:
                 sale_obj.write(cr, uid, fo_id, {'state': 'draft', 'import_in_progress': False}, context)
-        if not context.get('yml_test', False):
-            cr.commit()
-            cr.close(True)
+        cr.commit()
+        cr.close(True)
 
 
     def import_file(self, cr, uid, ids, context=None):
@@ -379,7 +394,7 @@ Otherwise, you can continue to use Unifield.""")
         for wiz_read in self.read(cr, uid, ids, ['fo_id', 'state', 'file']):
             fo_id = wiz_read['fo_id']
             fo_name = sale_obj.read(cr, uid, fo_id, ['name'])['name']
-            if wiz_read['state'] != 'done':
+            if wiz_read['state'] not in ('done', 'error'):
                 self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (fo_name, )})
         return False
 

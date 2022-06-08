@@ -77,23 +77,50 @@ class purchase_order(osv.osv):
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         cur_obj = self.pool.get('res.currency')
-        for order in self.browse(cr, uid, ids, context=context):
+        pol_obj = self.pool.get('purchase.order.line')
+        tax_obj = self.pool.get('account.tax')
+        for order in self.browse(cr, uid, ids, fields_to_fetch=['pricelist_id', 'partner_address_id', 'partner_id', 'tender_id'], context=context):
             res[order.id] = {
                 'amount_untaxed': 0.0,
                 'amount_tax': 0.0,
                 'amount_total': 0.0,
                 'amount_total_tender_currency': 0.0,
+                'has_tax_at_line_level': False,
             }
-            val = val1 = 0.0
+            amount_tax = 0
+            amount_untaxed = 0
             cur = order.pricelist_id.currency_id
-            for line in order.order_line:
-                if line.state not in ('cancel', 'cancel_r'):
-                    val1 += line.price_subtotal
-                    for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)['taxes']:
-                        val += c.get('amount', 0.0)
-            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
-            res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
+
+            cr.execute("""select exists(
+                select pol.id from purchase_order_line pol, purchase_order_taxe t
+                where
+                    t.ord_id = pol.id and pol.state not in ('cancel', 'cancel_r') and pol.order_id = %s)""", (order.id, ))
+            res[order.id]['has_tax_at_line_level'] = cr.fetchone()[0]
+
+            if not res[order.id]['has_tax_at_line_level']:
+                cr.execute("select sum(price_unit * product_qty) from purchase_order_line where order_id = %s and state not in ('cancel', 'cancel_r')", (order.id, ))
+                amount_untaxed = cr.fetchone()[0] or 0
+
+                cr.execute("select sum(amount) from account_invoice_tax where purchase_id = %s", (order.id, ))
+                amount_tax = cr.fetchone()[0] or 0
+
+            else:
+                cr.execute("select pol.id from purchase_order_line pol where pol.state not in ('cancel', 'cancel_r') and pol.order_id = %s", (order.id, ))
+                pol_ids = [x[0] for x in cr.fetchall()]
+                max_size = 400
+                offset = 0
+                while offset < len(pol_ids):
+                    for line in pol_obj.browse(cr, uid, pol_ids[offset:max_size+offset], fields_to_fetch=['taxes_id', 'price_unit', 'product_qty', 'product_id'], context=context):
+                        tax_data = tax_obj.compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)
+                        amount_untaxed += tax_data.get('total', 0)
+                        for c in tax_data['taxes']:
+                            amount_tax += c.get('amount', 0.0)
+                        offset += max_size
+
+            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, amount_tax)
+            res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, amount_untaxed)
             res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
+
             if order.tender_id and order.tender_id.currency_id \
                     and order.tender_id.currency_id.id != order.pricelist_id.currency_id.id:
                 res[order.id]['amount_total_tender_currency'] = round(cur_obj.compute(cr, uid, cur.id, order.tender_id.currency_id.id,
@@ -207,6 +234,12 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_order_from_corner_tax(self, cr, uid, ids, context=None):
+        if ids:
+            cr.execute('select purchase_id from account_invoice_tax where id in %s', (tuple(ids),))
+            return [x[0] for x in cr.fetchall()]
+        return []
+
     def _get_order(self, cr, uid, ids, context=None):
         result = {}
         for line in self.pool.get('purchase.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
@@ -273,20 +306,28 @@ class purchase_order(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
+        if not ids:
+            return {}
         res = {}
-        for po in self.browse(cr, uid, ids, context=context):
-            po_from_ir = False
-            po_from_fo = False
-            for pol in po.order_line:
-                # strange algorithm here (adaptation of what was existing before partial confirmation...)
-                if pol.linked_sol_id:
-                    po_from_ir = True
-                    if not pol.linked_sol_id.order_id.procurement_request:
-                        po_from_fo = True
 
-            res[po.id] = {
-                'po_from_ir': po_from_ir,
-                'po_from_fo': po_from_fo,
+        for _id in ids:
+            res[_id] = {
+                'po_from_ir': False,
+                'po_from_fo': False,
+            }
+        cr.execute('''
+            select  pol.order_id, bool_or(not so.procurement_request)
+            from purchase_order_line pol
+            inner join sale_order_line sol on sol.id = pol.linked_sol_id
+            inner join sale_order so on so.id = sol.order_id
+            where
+            pol.order_id in %s
+            group by pol.order_id
+        ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            res[x[0]] = {
+                'po_from_ir': True,
+                'po_from_fo': x[1],
             }
 
         return res
@@ -489,8 +530,11 @@ class purchase_order(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
+        if not ids:
+            return {}
+
         res = {}
-        for po in self.browse(cr, uid, ids, context=context):
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['state', 'push_fo', 'empty_po_cancelled'], context=context):
             po_state_seq = {
                 'draft': 10,
                 'draft_p': 15,
@@ -504,8 +548,11 @@ class purchase_order(osv.osv):
             if po.empty_po_cancelled:
                 res[po.id] = 'cancel'
             else:
-                if po.order_line:
-                    pol_states = set([line.state for line in po.order_line])
+                pol_states = set()
+                cr.execute('select distinct(state) from purchase_order_line where order_id = %s', (po.id, ))
+                for x in cr.fetchall():
+                    pol_states.add(x[0])
+                if pol_states:
                     if all([s.startswith('cancel') for s in pol_states]):  # if all lines are cancelled then the PO is cancelled
                         res[po.id] = 'cancel'
                     else:  # else compute the less advanced state:
@@ -852,6 +899,12 @@ class purchase_order(osv.osv):
                                                     'purchase.order.line': (_get_order, ['date_planned'], 10),
                                                 }
                                                 ),
+        'has_tax_at_line_level': fields.function(_amount_all, method=True, type='boolean', string='Tax at line', store= {
+            'purchase.order.line': [
+                (_get_order, ['taxes_id'], 10),
+                (_get_order_state_changed, ['state'], 10),
+            ]
+        }, multi="sums"),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Purchase Price'), string='Untaxed Amount',
                                           store={
                                               'purchase.order.line': [
@@ -864,14 +917,21 @@ class purchase_order(osv.osv):
                                           'purchase.order.line': [
                                               (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
                                               (_get_order_state_changed, ['state'], 10),
-                                          ]
+                                              (_get_order_from_corner_tax, ['purchase_id', 'amount'], 10),
+                                          ],
+            'account.invoice.tax': [
+                                              (_get_order_from_corner_tax, ['purchase_id', 'amount'], 10),
+                                          ],
         }, multi="sums", help="The tax amount"),
         'amount_total': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Purchase Price'), string='Total',
                                         store={
                                             'purchase.order.line': [
                                                 (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
                                                 (_get_order_state_changed, ['state'], 10),
-                                            ]
+                                            ],
+                                            'account.invoice.tax': [
+                                                (_get_order_from_corner_tax, ['purchase_id', 'amount'], 10),
+                                            ],
         }, multi="sums", help="The total amount"),
         'amount_total_tender_currency': fields.function(_amount_all, method=True, string='Total (Comparison Currency)',
                                                         digits_compute= dp.get_precision('Purchase Price'), store=False,
@@ -927,6 +987,7 @@ class purchase_order(osv.osv):
         'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
         'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
+        'tax_line': fields.one2many('account.invoice.tax', 'purchase_id', 'Tax Lines'),
     }
     _defaults = {
         'po_version': 2,
@@ -1107,7 +1168,8 @@ class purchase_order(osv.osv):
             if vals.get('pricelist_id') and partner.partner_type == 'external':
                 to_curr_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], fields_to_fetch=['currency_id'], context=context).currency_id.id
 
-            for order in self.browse(cr, uid, ids, fields_to_fetch=['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id'], context=context):
+            for order in self.browse(cr, uid, ids, fields_to_fetch=['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id', 'tax_line'], context=context):
+                line_changed= False
                 if order.state in ('draft', 'draft_p', 'validated') and vals['partner_id'] != order.partner_id.id:
                     for line in order.order_line:
                         if line.state in ('draft', 'validated_n', 'validated'):
@@ -1133,8 +1195,15 @@ class purchase_order(osv.osv):
                                 from_curr_id = order.pricelist_id.currency_id.id
                                 price_to_convert = line.price_unit
 
+                            line_changed = True
                             new_price = cur_obj.compute(cr, uid, from_curr_id, to_curr_id, price_to_convert, round=False)
                             pol_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=context)
+                    if line_changed:
+                        tax_line_obj = self.pool.get('account.invoice.tax')
+                        for tax_line in order.tax_line:
+                            new_price = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id, to_curr_id, tax_line.amount, round=False)
+                            tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=context)
+
 
         return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context)
 
@@ -1164,7 +1233,14 @@ class purchase_order(osv.osv):
         if vals.get('partner_id', False):
             partner = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id'), context=context)
             # partner type - always set
-            vals.update({'partner_type': partner.partner_type, })
+            vals.update({'partner_type': partner.partner_type})
+            if partner.partner_type != 'external':
+                vals['tax_line'] = False
+                tax_obj = self.pool.get('account.invoice.tax')
+                tax_lines_ids = tax_obj.search(cr, uid, [('purchase_id', 'in', ids)], context=context)
+                if tax_lines_ids:
+                    tax_obj.unlink(cr, uid, tax_lines_ids, context=context)
+
             # internal type (zone) - always set
             vals.update({'internal_type': partner.zone, })
             # erase delivery_confirmed_date if partner_type is internal or section and the date is not filled by synchro - considered updated by synchro by default
@@ -2748,6 +2824,13 @@ class purchase_order(osv.osv):
             cr.commit()
             cr.close(True)
 
+        return True
+
+    def remove_line_tax(self, cr, uid, ids, context=None):
+        pol_obj = self.pool.get('purchase.order.line')
+        pol_ids = pol_obj.search(cr, uid, [('order_id', 'in', ids), ('state', 'not in', ['confirmed', 'cancel', 'cancel_r', 'done']), ('taxes_id', '!=', False)], context=context)
+        if pol_ids:
+            pol_obj.write(cr, uid, pol_ids, {'taxes_id': [(6, 0, [])]}, context=context)
         return True
 
     # CTRL

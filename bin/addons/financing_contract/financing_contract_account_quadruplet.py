@@ -22,6 +22,7 @@
 from osv import fields, osv
 from tools import sql
 import time
+import logging
 
 class financing_contract_account_quadruplet(osv.osv):
     _name = 'financing.contract.account.quadruplet'
@@ -29,6 +30,7 @@ class financing_contract_account_quadruplet(osv.osv):
     _description = 'FP / CC / destination valid values view'
     _log_access = False
     _auto = True
+    _logger = logging.getLogger('contract.quad')
 
     def migrate_old_quad(self, cr, uid, ids, context=None):
         '''
@@ -190,12 +192,21 @@ class financing_contract_account_quadruplet(osv.osv):
         if contract_id:
             ctr_obj = self.pool.get('financing.contract.contract')
             contract = ctr_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids', 'cost_center_ids', 'quad_gen_date'], context=context)
-            cr.execute('''select max(last_modification) from ir_model_data where module='sd' and (
-                model in ('account.analytic.account', 'account.destination.link', 'dest.cc.link') or (model = 'financing.contract.contract' and res_id = %s)
-            )''', (contract_id,))
+            # last_modification: is modified when the record is Save&Edit on the instance
+            # date_update: is modified by a sync update
+            cr.execute('''
+                select max(greatest(last_modification, date_update))
+                from
+                    ir_model_data
+                where
+                    module='sd' and
+                    model in ('account.analytic.account', 'account.destination.link', 'dest.cc.link')
+            ''')
             last_obj_modified = cr.fetchone()[0]
             if not contract.quad_gen_date or last_obj_modified > contract.quad_gen_date or contract.quad_gen_date > time.strftime('%Y-%m-%d %H:%M:%S'):
                 # ignore quad_gen_date in the future
+                self._logger.info('contract_id: %s, last mod: %s, quad date: %s' % (contract_id, last_obj_modified, contract.quad_gen_date))
+                timer = time.time()
                 cc_ids = [cc.id for cc in contract.cost_center_ids]
                 fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
                 if not cc_ids:
@@ -203,14 +214,12 @@ class financing_contract_account_quadruplet(osv.osv):
                     cc_ids = [0]
                 if not fp_ids:
                     fp_ids = [0]
-
                 cr.execute('''
                     update financing_contract_account_quadruplet set disabled='t'
                     where
                         funding_pool_id in %s and
                         cost_center_id in %s
                 ''', (tuple(fp_ids), tuple(cc_ids)))
-
                 cr.execute('''
                     INSERT INTO financing_contract_account_quadruplet
                         (account_destination_name, account_id, cost_center_id, disabled, account_destination_link_id, funding_pool_id, account_destination_id)
@@ -224,7 +233,7 @@ class financing_contract_account_quadruplet(osv.osv):
                     )
                     ON CONFLICT ON CONSTRAINT financing_contract_account_quadruplet_check_unique DO UPDATE SET disabled=EXCLUDED.disabled''', (tuple(fp_ids), tuple(cc_ids)))
                 cr.execute('update financing_contract_contract set quad_gen_date=%s where id=%s', (last_obj_modified, contract_id))
-
+                self._logger.info('Gen time: %s' % (time.time() - timer))
         return True
 
     # The result set with {ID:Flag} if Flag=True, the line will be grey, otherwise, it is selectable
@@ -303,30 +312,6 @@ class financing_contract_account_quadruplet(osv.osv):
         fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
         return [('cost_center_id', 'in', cc_ids), ('funding_pool_id', 'in', fp_ids)]
 
-    def _get_valid(self, cr, uid, ids, field_name, arg, context=None):
-        res = {}
-        if not ids:
-            return []
-
-        for _id in ids:
-            res[_id] = False
-
-        cr.execute('''select
-            quad.id, view.disabled
-            from
-                financing_contract_account_quadruplet quad, financing_contract_account_quadruplet_view view
-            where
-                quad.account_id = view.account_id and
-                quad.account_destination_id = view.account_destination_id and
-                quad.cost_center_id = view.cost_center_id and
-                quad.funding_pool_id = view.funding_pool_id and
-                quad.id in %s
-        ''', (tuple(ids), ))
-        for x in cr.fetchall():
-            res[x[0]] = not x[1]
-
-        return res
-
     _columns = {
         'account_destination_id': fields.many2one('account.analytic.account', 'Destination', relate=True, readonly=True, select=1),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre', relate=True, readonly=True, select=1),
@@ -337,7 +322,6 @@ class financing_contract_account_quadruplet(osv.osv):
         'account_id': fields.many2one('account.account', 'Account ID', relate=True, readonly=True, select=1),
         'account_destination_link_id': fields.many2one('account.destination.link', 'Link id', readonly=True, select=1),
         'disabled': fields.boolean('Disabled'),
-        'valid': fields.function(_get_valid,  method=True, type='boolean', string='Is quad valid ?'),
     }
 
     _sql_constraints = {

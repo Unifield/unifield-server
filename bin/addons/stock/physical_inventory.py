@@ -414,7 +414,8 @@ class PhysicalInventory(osv.osv):
                     attr_changed.append(_('Line %s, batch %s product is not BN anymore, please correct the line') % (line_number, batch_n))
                 else:
                     attr_changed.append(_('Line %s, expiry %s product is not ED anymore, please correct the line') % (line_number, exp_date))
-            else:
+            elif not prod_info.get(prod_id) or \
+                    (batch_n and prod_info[prod_id]['batch_management']) or (exp_date and prod_info[prod_id]['perishable']):
                 filtered_all_product_batch_expirydate.add((prod_id, batch_n, exp_date))
 
         if attr_changed:
@@ -432,7 +433,7 @@ class PhysicalInventory(osv.osv):
 
             # If no discrepancy, nothing to do
             # (Use a continue to save 1 indentation level..)
-            if counted_qty == theoretical_qty or theoretical_qty == 0 and counted_qty == -1:
+            if counted_qty is not False and counted_qty == theoretical_qty or (theoretical_qty == 0 and counted_qty == -1):
                 if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
                     counting_line_id = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]["line_id"]
                     counting_lines_with_no_discrepancy.append(counting_line_id)
@@ -542,12 +543,16 @@ class PhysicalInventory(osv.osv):
             self._update_total_product(cr, uid, inventory_id, context=context)
             return {}
 
-
     def _update_total_product(self, cr, uid, inventory_id, context=None):
         """
-        theoretical_qties and counted_qties are indexed with (product_id, batchnumber, expirydate)
+        Remove Discrepancy lines with counted_qty and theoretical_qty at 0
+        Then theoretical_qties and counted_qties are indexed with (product_id, batchnumber, expirydate)
         """
-
+        discl_obj = self.pool.get('physical.inventory.discrepancy')
+        discl_dom = [('inventory_id', '=', inventory_id), ('counted_qty', '=', 0), ('theoretical_qty', '=', 0)]
+        disc_lines_ids = discl_obj.search(cr, uid, discl_dom, context=context)
+        if disc_lines_ids:
+            discl_obj.unlink(cr, uid, disc_lines_ids, context=context)
 
         cr.execute('update physical_inventory_discrepancy set total_product_theoretical_qty=0, total_product_counted_qty=0 where inventory_id = %s', (inventory_id, ))
         # theo qty of ignored lines must be counted as qty after inv

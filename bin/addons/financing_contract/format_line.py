@@ -671,6 +671,33 @@ class financing_contract_format_line(osv.osv):
             res['value'] = {'is_quadruplet': False, }
         return res
 
+    def read(self, cr, uid, ids, f, context=None, load='_classic_read'):
+        """
+            open Reporting lines with quad: quad combination must be refreshed to display lines in red if combination is now invalid
+        """
+        if context is None:
+            context = {}
+        if ids and f and 'account_quadruplet_ids' in f and (len(f) > 1 or context.get('report_fromfile')):
+            # len(f) > 1 or context.get('report_fromfile') : to not trigger quad update only in pop up Reporting lines view or in PDF where red color is needed
+            _ids = ids
+            if isinstance(_ids, int):
+                _ids = [ids]
+
+            cr.execute("""
+                select distinct(c.id) from
+                    financing_contract_format_line fl,
+                    financing_contract_contract c,
+                    financing_contract_actual_account_quadruplets quad
+                where
+                    c.format_id = fl.format_id and
+                    fl.id in %s and
+                    fl.is_quadruplet='t' and
+                    quad.actual_line_id = fl.id
+                """, (tuple(_ids),))
+            for x in cr.fetchall():
+                self.pool.get('financing.contract.account.quadruplet').gen_quadruplet(cr, uid, context={'contract_id': x[0]})
+
+        return super(financing_contract_format_line, self).read(cr, uid, ids, f, context=context, load=load)
 
 financing_contract_format_line()
 

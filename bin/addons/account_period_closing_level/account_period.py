@@ -793,13 +793,13 @@ class account_period(osv.osv):
 
     def button_accrual_reversal(self, cr, uid, ids, context=None):
         """
-        Open Accruals Management menu with activated filter "Partially Posted"
+        Opens the Accruals Management view with the "Running" filter activated
         """
         if context is None:
             context = {}
         if isinstance(ids, int):
             ids = [ids]
-        context.update({'search_default_partially_posted': 1,
+        context.update({'search_default_filter_running': 1,
                         'search_default_draft': 0})
         return {
             'name': _('Accruals Management'),

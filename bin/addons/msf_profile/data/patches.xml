@@ -720,7 +720,6 @@
             <field name="method">us_9044_add_location_colors</field>
         </record>
 
-
         <!-- UF24.0 -->
         <record id="us_8870_partner_instance_creator" model="patch.scripts">
             <field name="method">us_8870_partner_instance_creator</field>
@@ -761,6 +760,31 @@
 
         <record id="us_9849_trigger_upd_former_nsl" model="patch.scripts">
             <field name="method">us_9849_trigger_upd_former_nsl</field>
+        </record>
+
+        <!-- UF25.0 -->
+        <record id="fol_order_id_join_change_rules" model="patch.scripts">
+            <field name="method">fol_order_id_join_change_rules</field>
+        </record>
+
+        <record id="us_6475_set_has_tax_on_po" model="patch.scripts">
+            <field name="method">us_6475_set_has_tax_on_po</field>
+        </record>
+
+        <record id="us_7791_gdpr_patch" model="patch.scripts">
+            <field name="method">us_7791_gdpr_patch</field>
+        </record>
+
+        <record id="us_9173_fix_msf_customer_location" model="patch.scripts">
+            <field name="method">us_9173_fix_msf_customer_location</field>
+        </record>
+
+        <record id="us_8451_split_rr" model="patch.scripts">
+            <field name="method">us_8451_split_rr</field>
+        </record>
+
+        <record id="us_5722_update_accruals" model="patch.scripts">
+            <field name="method">us_5722_update_accruals</field>
         </record>
 
         <record id="py3_migrate_pickle_ir_values" model="patch.scripts">

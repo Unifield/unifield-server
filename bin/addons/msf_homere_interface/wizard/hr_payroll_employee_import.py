@@ -381,22 +381,12 @@ class hr_payroll_employee_import(osv.osv_memory):
         try:
             code_staff = employee_data.get('code_staff', False)
             codeterrain = employee_data.get('codeterrain', False)
-            commentaire = employee_data.get('commentaire', False)
-            datenaissance = employee_data.get('datenaissance', False)
             decede = employee_data.get('decede', False)
-            email = employee_data.get('email', False)
             id_staff = employee_data.get('id_staff', False)
             id_unique = employee_data.get('id_unique', False)
             uuid_key = employee_data.get('uuid_key', False)
-            nation = employee_data.get('nation', False)
             nom = employee_data.get('nom', False)
-            num_soc = employee_data.get('num_soc', False)
-            portable = employee_data.get('portable', False)
             prenom = employee_data.get('prenom', False)
-            sexe = employee_data.get('sexe', False)
-            statutfamilial = employee_data.get('statutfamilial', False)
-            tel_bureau = employee_data.get('tel_bureau', False)
-            tel_prive = employee_data.get('tel_prive', False)
             bqmodereglement = employee_data.get('bqmodereglement', False)
             bqnom = employee_data.get('bqnom', False)
             bqnumerocompte = employee_data.get('bqnumerocompte', False)
@@ -447,21 +437,11 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'homere_uuid_key': uuid_key,
                 'photo': False,
                 'identification_id': code_staff or False,
-                'notes': commentaire and ustr(commentaire) or '',
-                'birthday': datenaissance or False,
-                'work_email': email or False,
-                # Do "NOM, Prenom"
                 'name': employee_name,
-                'ssnid': num_soc or False,
-                'mobile_phone': portable or False,
-                'work_phone': tel_bureau or False,
-                'private_phone': tel_prive or False,
                 'bank_name': bqnom,
                 'bank_account_number': bqnumerocompte,
             }
-            # Update Birthday if equal to 0000-00-00
-            if datenaissance and datenaissance == '0000-00-00':
-                vals.update({'birthday': False,})
+
 
             # Update the payment method
             payment_method_id = False
@@ -476,40 +456,6 @@ class hr_payroll_employee_import(osv.osv_memory):
 
             vals.update({'payment_method_id': payment_method_id})
 
-            # Update Nationality
-            if nation:
-                n_ids = self.pool.get('res.country').search(cr, uid, [('code', '=', ustr(nation))])
-                res_nation = False
-                # Only get nationality if one result
-                if n_ids:
-                    if len(n_ids) == 1:
-                        res_nation = n_ids[0]
-                    else:
-                        raise osv.except_osv(_('Error'), _('An error occurred on nationality. Please verify all nationalities.'))
-                vals.update({'country_id': res_nation})
-            # Update gender
-            if sexe:
-                gender = 'unknown'
-                if sexe == 'M':
-                    gender = 'male'
-                elif sexe == 'F':
-                    gender = 'female'
-                vals.update({'gender': gender})
-            # Update Marital Status
-            if statutfamilial:
-                statusname = False
-                status = False
-                if statutfamilial == 'MA':
-                    statusname = 'Married'
-                elif statutfamilial == 'VE':
-                    statusname = 'Widower'
-                elif statutfamilial == 'CE':
-                    statusname = 'Single'
-                if statusname:
-                    s_ids = self.pool.get('hr.employee.marital.status').search(cr, uid, [('name', '=', statusname)])
-                    if s_ids and len(s_ids) == 1:
-                        status = s_ids[0]
-                vals.update({'marital': status})
             # In case of death, desactivate employee
             if decede and decede == 'Y':
                 vals.update({'active': False})

@@ -407,12 +407,7 @@
                     </para>
                 </td>
                 <td>
-                    <para style="terp_default_Centre_8">[[ "%s: %s, %s: %s, %s: %s, %s: %s" % (
-                        translate("Partner's"), get_partners(),
-                        translate('Target Moves'), get_target_move(data),
-                        translate('Reconciled'), get_reconcile_selection(),
-                        translate('Display Partners'), get_display_partners_selection(),
-                        ) ]]</para>
+                    <para style="terp_default_Centre_8">[[ "%s: %s, %s: %s, %s: %s, %s: %s" % (translate("Partner's"), get_partners(), translate('Target Moves'), get_target_move(data), translate('Reconciled'), get_reconcile_selection(), translate('Display Partners'), get_display_partners_selection()) ]]</para>
                 </td>
                 <td>
                   <para style="terp_default_Centre_8">[[ company.currency_id.name ]]</para>

@@ -2715,9 +2715,9 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Error'), _('This wizard only accept ONE advance line.'))
         # others verifications
         for st_line in self.browse(cr, uid, ids, context=context):
-            # verify that the journal id is a cash or bank journal
+            # verify that the journal id is a cash, cheque or bank journal
             if not st_line.statement_id or not st_line.statement_id.journal_id or not st_line.statement_id.journal_id.type \
-                    or st_line.statement_id.journal_id.type not in ['cash', 'bank']:
+                    or st_line.statement_id.journal_id.type not in ['cash', 'bank', 'cheque']:
                 raise osv.except_osv(_('Error'), _("The register journal is not compatible with an advance return."))
             # verify that there is a third party, particularly an employee_id in order to do something
             if not st_line.employee_id:

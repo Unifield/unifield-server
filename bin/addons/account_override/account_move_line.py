@@ -650,7 +650,7 @@ class account_move_line(osv.osv):
         - the unreconciliation date
         - the old reconciliation ref (unreconcile_txt)
         - the tag 'is_si_refund'
-        - the fields related to revaluation
+        - the fields related to revaluation and accruals
         """
         if context is None:
             context = {}
@@ -665,6 +665,8 @@ class account_move_line(osv.osv):
             'is_si_refund': False,
             'revaluation_date': None,
             'revaluation_reference': '',
+            'accrual': False,
+            'accrual_line_id': False,
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 

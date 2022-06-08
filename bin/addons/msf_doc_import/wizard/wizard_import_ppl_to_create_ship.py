@@ -499,6 +499,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         pick_obj = self.pool.get('stock.picking')
         for wiz_read in self.browse(cr, uid, ids, context=context):
             picking_id = wiz_read.picking_id.id
+            if wiz_read.picking_id.state != 'assigned':
+                return self.write(cr, uid, ids, {'message': _('%s must be \'Available\' to use the import') % wiz_read.picking_id.name})
             if not wiz_read.file:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:

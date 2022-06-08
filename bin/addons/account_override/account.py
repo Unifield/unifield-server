@@ -395,14 +395,44 @@ class account_account(osv.osv):
         """
         if context is None:
             context = {}
-        contract_obj = self.pool.get('financing.contract.contract')
-        analytic_acc_obj = self.pool.get('account.analytic.account')
         acc_ids = set()
         if context.get('contract_id'):
-            contract = contract_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids'], context=context)
-            for contract_fp_line in contract.funding_pool_ids:
-                acc_ids.update([t[0] for t in
-                                analytic_acc_obj.get_acc_dest_linked_to_fp(cr, uid, contract_fp_line.funding_pool_id.id, context=context)])
+            cr.execute('''
+                select
+                    distinct(rel.account_id)
+                from
+                    financing_contract_funding_pool_line fpl,
+                    financing_contract_contract contract,
+                    account_analytic_account fp,
+                    fp_account_rel rel
+                where
+                    contract.id = %s and
+                    fpl.contract_id = contract.format_id and
+                    fp.id = fpl.funding_pool_id and
+                    fp.select_accounts_only = 't' and
+                    rel.fp_id = fp.id
+                ''', (context['contract_id'], ))
+            acc_ids.update([x[0] for x in cr.fetchall()])
+
+            cr.execute('''
+                select
+                    distinct(lnk.account_id)
+                from
+                    financing_contract_funding_pool_line fpl,
+                    financing_contract_contract contract,
+                    account_analytic_account fp,
+                    account_destination_link lnk,
+                    funding_pool_associated_destinations rel
+                where
+                    contract.id = %s and
+                    fpl.contract_id = contract.format_id and
+                    fp.id = fpl.funding_pool_id and
+                    fp.select_accounts_only = 'f' and
+                    rel.funding_pool_id = fp.id and
+                    rel.tuple_id = lnk.id
+                ''', (context['contract_id'], ))
+            acc_ids.update([x[0] for x in cr.fetchall()])
+
         return [('id', 'in', list(acc_ids))]
 
     def _get_selected_in_contract(self, cr, uid, account_ids, name=False, args=False, context=None):
@@ -488,7 +518,8 @@ class account_account(osv.osv):
     }
 
     _defaults = {
-        'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
+        # US-8607 : set default activation_date to first day of current month
+        'activation_date': lambda *a: (datetime.datetime.today().replace(day=1)).strftime('%Y-%m-%d'),
         'type_for_register': lambda *a: 'none',
         'shrink_entries_for_hq': lambda *a: True,
         'display_in_reports': lambda *a: True,
@@ -1062,10 +1093,8 @@ class account_move(osv.osv):
             vals.update({'date': self.pool.get('account.period').get_date_in_period(cr, uid, strftime('%Y-%m-%d'), vals.get('period_id'))})
         if not vals.get('document_date', False):
             vals.update({'document_date': vals.get('date')})
-        manual_je = False
         if 'from_web_menu' in context:
             vals.update({'status': 'manu'})
-            manual_je = True
             # Update context in order journal item could retrieve this @creation
             if 'document_date' in vals:
                 context['document_date'] = vals.get('document_date')
@@ -1082,18 +1111,19 @@ class account_move(osv.osv):
             vals['name'] = context['seqnums'][journal.id]
         else:
             # Create sequence for move lines
-            if manual_je and 'period_id' in vals:
-                # For manual JE use the period selected in the form
-                period_ids = vals['period_id'] and [vals['period_id']] or []
+            if vals.get('period_id'):
+                # use the period selected in the form if any
+                period_ids = [vals['period_id']]
             else:
-                period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
-            if not period_ids:
-                raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
+                period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals.get('date'))
+                if not period_ids:
+                    raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') %
+                                         (vals.get('date') or '',))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
             # UF-2479: If the period is not open yet, raise exception for the move
             # US-2563: do not raise in case of duplicate
             if not context.get('copy', False) and period and (period.state == 'created' or \
-                                                              (manual_je and period.state != 'draft')):  # don't save manual JE in a non-open period
+                                                              (context.get('from_web_menu') and period.state != 'draft')):  # don't save manual JE in a non-open period
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Entry is created') % (period.name,))
 
             # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!
