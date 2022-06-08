@@ -61,6 +61,27 @@ class sale_order(osv.osv):
     _name = "sale.order"
     _description = "Sales Order"
 
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        '''
+        overwrite to allow search on customer and self instance
+        '''
+        new_dom = []
+        product_id = False
+        for x in domain:
+            if x[0] == 'product_id':
+                product_id = x[2]
+            else:
+                new_dom.append(x)
+
+        ret = super(sale_order, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if product_id:
+            ret.tables.append('"sale_order_line"')
+            ret.joins.setdefault('"sale_order"', [])
+            ret.joins['"sale_order"'] += [('"sale_order_line"', 'id', 'order_id', 'LEFT JOIN')]
+            ret.where_clause.append(''' "sale_order_line"."product_id" = %s  ''')
+            ret.where_clause_params.append(product_id)
+        return ret
+
     def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy the sale.order. When copy the sale.order:
@@ -713,6 +734,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
+        'product_id': fields.many2one('product.product', string='Product', help='Product to find in the lines'),
     }
 
     _defaults = {
