@@ -333,7 +333,7 @@ msgstr "PDF"
 #: selection:stock.picking,state:0
 #: selection:stock.forecast.line,state:0
 msgid "Available Updated"
-msgstr "Available Updated"
+msgstr "Disponible Mise à Jour"
 
 #. module: import_data
 #: field:import_data,debug:0
@@ -115040,8 +115040,8 @@ msgstr "Attention ces lignes ne peuvent pas être importées car il y a trop de 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:362
 #, python-format
-msgid "You can not process an Incoming Shipment which is not Available or Available Shipped."
-msgstr "Vous ne pouvez pas traiter une Livraison Entrante qui n'est pas Disponible ou Disponible Expédiée."
+msgid "You can not process an Incoming Shipment which is not Available, Available Shipped or Available Updated."
+msgstr "Vous ne pouvez pas traiter une Livraison Entrante qui n'est pas Disponible, Disponible Expédiée ou Disponible Mise à Jour."
 
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment.py:1872

@@ -356,10 +356,10 @@ class stock_incoming_processor(osv.osv):
                       'return to IN form view and re-try.'),
                 )
 
-            if proc.picking_id.state not in ('assigned', 'shipped'):
+            if proc.picking_id.state not in ('assigned', 'shipped', 'updated'):
                 raise osv.except_osv(
                     _('Error'),
-                    _('You can not process an Incoming Shipment which is not Available or Available Shipped.'),
+                    _('You can not process an Incoming Shipment which is not Available, Available Shipped or Available Updated.'),
                 )
 
             for line in proc.move_ids:
