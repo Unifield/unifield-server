@@ -277,7 +277,7 @@ class wizard_account_invoice(osv.osv):
         # Get analytic_distribution_id
         distrib_id = invoice.analytic_distribution_id and invoice.analytic_distribution_id.id
         account_id = invoice.account_id and invoice.account_id.id
-        # Get dates
+        # Get posting date
         posting_date = invoice.date_invoice
         # Prepare values for wizard
         vals = {
@@ -398,7 +398,7 @@ class wizard_account_invoice_line(osv.osv):
             amount = -1 * amount
         # Get analytic distribution id from this line
         distrib_id = invoice_line and invoice_line.analytic_distribution_id and invoice_line.analytic_distribution_id.id or False
-        # Get dates
+        # Get posting date
         posting_date = invoice_line.invoice_id.date_invoice
         # Prepare values for wizard
         vals = {
