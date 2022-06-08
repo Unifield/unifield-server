@@ -1635,7 +1635,7 @@ class account_invoice_line(osv.osv):
         'line_synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False,
                                       help='Technical field, similar to "synced"'),
         'line_doc_type': fields.related('invoice_id', 'doc_type', type='selection', selection=_get_line_doc_type,
-                                        string='Document Type', store=False),
+                                        string='Document Type', store=False, write_relate=False),
         'invoice_type': fields.related('invoice_id', 'type', string='Invoice Type', type='selection', readonly=True, store=False,
                                        selection=[('out_invoice', 'Customer Invoice'),
                                                   ('in_invoice', 'Supplier Invoice'),
