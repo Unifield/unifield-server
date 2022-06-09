@@ -701,23 +701,29 @@ class stock_move(osv.osv):
 
     def _check_reason_type(self, cr, uid, ids, context=None):
         """
-        Do not permit user to create/write a OUT from scratch with some reason types:
+        Do not permit user to create/write an OUT from scratch with some reason types:
          - GOODS RETURN UNIT
          - GOODS REPLACEMENT
+         - OTHER
         """
+        data_obj = self.pool.get('ir.model.data')
         res = True
         try:
-            rt_replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+            rt_replacement_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
         except ValueError:
             rt_replacement_id = 0
         try:
-            rt_return_unit_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
         except ValueError:
             rt_return_unit_id = 0
+        try:
+            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        except ValueError:
+            rt_other_id = 0
 
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
-                if sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id]:
+                if sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id]:
                     pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
                     if not pick['purchase_id'] and not pick['sale_id'] and pick['type'] == 'out':
                         return False
@@ -1881,6 +1887,8 @@ class stock_move(osv.osv):
             vals = {}
             if move.picking_id:
                 picking_ids.append(move.picking_id.id)
+                if move.type == 'out':
+                    vals.update({'reason_type_id': move.picking_id.reason_type_id.id})
             if self._hook_action_done_update_out_move_check(cr, uid, ids, context=context, move=move,):
                 vals.update({'move_history_ids': [(4, move.move_dest_id.id)]})
                 #cr.execute('insert into stock_move_history_ids (parent_id,child_id) values (%s,%s)', (move.id, move.move_dest_id.id))

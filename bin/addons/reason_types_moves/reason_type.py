@@ -269,37 +269,50 @@ class stock_picking(osv.osv):
         if not context:
             context = {}
 
+        data_obj = self.pool.get('ir.model.data')
         res = super(stock_picking, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
+        deli_partner_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
         if 'picking_type' in context:
             if context.get('picking_type') == 'incoming_shipment':
-                res['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+                res['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
             elif context.get('picking_type') == 'internal_move':
-                res['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
-            elif context.get('picking_type') in ('delivery_order', 'picking_ticket'):
-                res['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+                res['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+            elif context.get('picking_type') == 'delivery_order':
+                if from_web:
+                    res['reason_type_id'] = deli_partner_rt_id
+                else:
+                    res['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_unit')[1]
+            elif context.get('picking_type') == 'picking_ticket':
+                res['reason_type_id'] = deli_partner_rt_id
 
         return res
 
     def _check_reason_type(self, cr, uid, ids, context=None):
         """
-        Do not permit user to create/write a OUT from scratch with some reason types:
+        Do not permit user to create/write an OUT from scratch with some reason types:
          - GOODS RETURN UNIT
          - GOODS REPLACEMENT
+         - OTHER
         """
+        data_obj = self.pool.get('ir.model.data')
         res = True
         try:
-            rt_replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+            rt_replacement_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
         except ValueError:
             rt_replacement_id = 0
         try:
-            rt_return_unit_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
         except ValueError:
             rt_return_unit_id = 0
+        try:
+            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        except ValueError:
+            rt_other_id = 0
 
         for sp in self.read(cr, uid, ids, ['purchase_id', 'sale_id', 'type', 'reason_type_id'], context=context):
             if not sp['purchase_id'] and not sp['sale_id'] and sp['type'] == 'out' and sp['reason_type_id']:
-                if sp['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id]:
+                if sp['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id]:
                     return False
         return res
 

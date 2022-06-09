@@ -3148,6 +3148,7 @@ class stock_picking(osv.osv):
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id or False,
                     'original_qty_partial': orig_qty,
                     'location_id': line.location_id and line.location_id.id,
+                    'reason_type_id': picking.reason_type_id.id,
                 }
 
                 # If claim expects replacement
@@ -3508,7 +3509,7 @@ class stock_picking(osv.osv):
         for x in cr.fetchall():
             needed_qty.setdefault(x[1], {})
             needed_qty[x[1]].setdefault(x[2], 0)
-            lot = lot_obj.browse(cr, uid, x[2], fields_to_fetch=['stock_available', 'product_id'], context={'location_id': x[1]})
+            lot = lot_obj.browse(cr, uid, x[2], fields_to_fetch=['stock_available', 'product_id', 'name'], context={'location_id': x[1]})
             if lot.product_id.uom_id.id != x[3]:
                 qty = uom_obj._compute_qty(cr, uid, x[3], x[0], lot.product_id.uom_id.id)
             else:

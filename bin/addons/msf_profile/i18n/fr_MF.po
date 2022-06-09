@@ -94758,6 +94758,11 @@ msgstr "Etc/GMT+5"
 msgid "Deliver Partner"
 msgstr "Livraison partenaire"
 
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_deliver_unit
+msgid "Deliver Unit"
+msgstr "Unité de Livraison"
+
 #. module: base
 #: model:ir.model,name:base.model_ir_property
 msgid "ir.property"
