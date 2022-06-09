@@ -2090,7 +2090,6 @@ class orm_template(object):
                     exclude += self.search_count(cr, user, [('move_id.state', '=', 'draft')], context=context)
                 if self._table == 'account_analytic_line':
                     exclude = self.search_count(cr, user, [('account_id.category', '!=', 'FUNDING')], context=context)
-                    print exclude
                 return int(approximative_result) - exclude, True
         return self.search_count(cr, user, args, context=context), False
 
