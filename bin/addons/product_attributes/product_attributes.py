@@ -1894,7 +1894,7 @@ class product_attributes(osv.osv):
                         'res_model': 'product.ask.activate.wizard',
                         'view_type': 'form',
                         'view_mode': 'form',
-                        'res_id': wiz_obj.create(cr, uid, {'product_id': product.id, 'instance_level': instance_level}, context=context),
+                        'res_id': wiz_obj.create(cr, uid, {'product_id': product.id}, context=context),
                         'target': 'new',
                         'context': context
                     }
@@ -3197,7 +3197,6 @@ class product_ask_activate_wizard(osv.osv_memory):
 
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
-        'instance_level': fields.char(string='Instance Level', size=16, required=True),
     }
 
     def do_activate_product(self, cr, uid, ids, context=None):
@@ -3206,19 +3205,15 @@ class product_ask_activate_wizard(osv.osv_memory):
 
         data_obj = self.pool.get('ir.model.data')
 
-        wiz = self.browse(cr, uid, ids[0], context=context)
-        hq_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
-        itc_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1]
-        esc_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1]
+        prod = self.browse(cr, uid, ids[0], fields_to_fetch=['product_id'], context=context).product_id
         local_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
 
         vals = {'active': True}
-        if (wiz.instance_level == 'section' and (wiz.product_id.international_status.id in (hq_status, itc_status, esc_status) or
-                (wiz.product_id.oc_subscription and wiz.product_id.state_ud in ('valid', 'outdated', 'discontinued')))) or \
-                (wiz.instance_level == 'coordo' and wiz.product_id.international_status.id == local_status):
+        # US-9509: The flow can only going through there if the instance is coordo
+        if prod.international_status.id == local_status:
             vals.update({'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]})
 
-        self.pool.get('product.product').write(cr, uid, wiz.product_id.id, vals, context=context)
+        self.pool.get('product.product').write(cr, uid, prod.id, vals, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
