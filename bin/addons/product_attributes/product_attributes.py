@@ -3209,7 +3209,7 @@ class product_ask_activate_wizard(osv.osv_memory):
         local_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
 
         vals = {'active': True}
-        # US-9509: The flow can only going through there if the instance is coordo
+        # US-9509: The flow can only go through there if the instance is coordo
         if prod.international_status.id == local_status:
             vals.update({'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]})
 
