@@ -850,7 +850,7 @@ class purchase_order(osv.osv):
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
         'partner_ref': fields.char('Supplier Reference', size=128),
         'short_partner_ref': fields.function(_get_short_partner_ref, method=True, string='Supplier Reference', type='char', size=64, store=False),
-        'product_id': fields.many2one('product.product', string='Product', help='Product to find in the lines'),
+        'product_id': fields.many2one('product.product', string='Product', help='Product to find in the lines', readonly=True),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
         'po_from_ir': fields.function(_po_from_x, method=True, type='boolean', string='Is PO from IR ?', multi='po_from_x'),

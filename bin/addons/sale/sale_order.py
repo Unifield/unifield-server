@@ -715,7 +715,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True, internal=1),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
         'active': fields.boolean('Active', readonly=True),
-        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
+        'product_id': fields.many2one('product.product', string='Product', help='Product to find in the lines', readonly=True),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
@@ -734,7 +734,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
-        'product_id': fields.many2one('product.product', string='Product', help='Product to find in the lines'),
     }
 
     _defaults = {

@@ -82746,6 +82746,7 @@ msgstr "SFTP connection succeeded"
 #: field:view.expired.expiring.stock.lines,product_id:0
 #: field:account.commitment.line,line_product_id:0
 #: field:product.ed_bn.mass.update.history,product_id:0
+#: field:stock.picking,product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -115048,3 +115049,11 @@ msgstr "Cellule E7: la Règle de Réappro du fichier: \"%s\" ne correspond pas a
 #, python-format
 msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
 msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
+
+#. modules: purchase, tender_flow, sale, stock
+#: help:purchase.order,product_id:0
+#: help:sale.order,product_id:0
+#: help:stock.picking,product_id:0
+#: help:tender,product_id:0
+msgid "Product to find in the lines"
+msgstr "Produit à trouver dans les lignes"
