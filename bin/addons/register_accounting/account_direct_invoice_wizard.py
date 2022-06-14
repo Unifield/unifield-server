@@ -84,7 +84,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
                                 readonly=True, states={'draft':[('readonly',False)]}),
             'number': fields.related('move_id','name', type='char',
                                      readonly=True, size=64, relation='account.move', store=True,
-                                     string='Number'),
+                                     string='Number', write_relate=False),
             'origin': fields.char('Source Document', size=512,
                                   help="Referencie of the document that produced this invoice.",
                                   readonly=True, states={'draft':[('readonly',False)]}),
