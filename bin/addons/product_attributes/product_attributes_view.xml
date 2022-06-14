@@ -548,7 +548,8 @@
             id="action_order_line_product_tree"
             name="Field orders"
             res_model="sale.order"
-            src_model="product.product"/>
+            src_model="product.product"
+            sequence="100001"/>
 
         <act_window
             context="{}"

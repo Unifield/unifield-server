@@ -537,7 +537,7 @@ form: module.record_id""" % (xml_id,)
             if rec.get('view_ids'):
                 for x in rec.get('view_ids').split(','):
                     linked_views.append(self.id_get(cr,x))
-            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, xml_id, [src_model], value, replace=replace, isobject=True, xml_id=xml_id, view_ids=linked_views)
+            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, xml_id, [src_model], value, replace=replace, isobject=True, xml_id=xml_id, view_ids=linked_views, sequence=rec.get('sequence', 100))
         # TODO add remove ir.model.data
 
     def _tag_ir_set(self, cr, rec, data_node=None):
