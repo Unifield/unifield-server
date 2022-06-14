@@ -914,6 +914,19 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        '''
+        Fake method for 'product_id' field
+        '''
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
     _columns = {
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title'),
         'name': fields.char('Reference', size=64, select=True),
@@ -973,7 +986,7 @@ class stock_picking(osv.osv):
         'customers': fields.char('Customers', size=1026),
         'customer_ref': fields.char('Customer Ref.', size=1026),
         'sync_dpo_in': fields.boolean('Synced IN for DPO reception', internal=1, help='Used to flag a IN linked to a DPO'),
-        'product_id': fields.many2one('product.product', string='Product', help='Product to find in the lines', readonly=True),
+        'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
     }
 
     _defaults = {

@@ -717,9 +717,13 @@ class purchase_order(osv.osv):
 
     def _get_fake(self, cr, uid, ids, name, arg, context=None):
         """
-        Fake method for 'has_confirmed_line' field
+        Fake method for 'has_confirmed_line', 'has_confirmed_or_further_line' and 'product_id' fields
         """
         res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for po_id in ids:
             res[po_id] = False
         return res
@@ -815,7 +819,6 @@ class purchase_order(osv.osv):
 
         return ret
 
-
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -850,7 +853,7 @@ class purchase_order(osv.osv):
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
         'partner_ref': fields.char('Supplier Reference', size=128),
         'short_partner_ref': fields.function(_get_short_partner_ref, method=True, string='Supplier Reference', type='char', size=64, store=False),
-        'product_id': fields.many2one('product.product', string='Product', help='Product to find in the lines', readonly=True),
+        'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
         'po_from_ir': fields.function(_po_from_x, method=True, type='boolean', string='Is PO from IR ?', multi='po_from_x'),
