@@ -2074,11 +2074,11 @@ td.tertiary div.wrap {
 }
 
 /*#sidebar li a { color: #5b5b5b; }*/
-#sidebar li a.sidebar_updates_received {
+#sidebar li a.sidebar_field_orders {
     display: block;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed #5b5b5b;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #5b5b5b;
 }
 
 #sidebar li a:hover,#sidebar li a:focus,#sidebar li a:active {

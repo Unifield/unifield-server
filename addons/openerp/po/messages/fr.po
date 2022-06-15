@@ -1881,5 +1881,5 @@ msgid "User Manuals"
 msgstr "Manuels d'Utilisateur"
 
 #: widgets/templates/sidebar.mako:145
-msgid "Updates Received"
-msgstr "Mises à jour Reçues"
+msgid "Field Orders"
+msgstr "Commandes de Terrain"

@@ -13,8 +13,8 @@
             % if item.get('update_title'):
                 id="update_me_with_title"
             % endif
-            % if model == 'product.product' and item.get('name') == _('Updates Received'):
-                class="sidebar_updates_received"
+            % if model == 'product.product' and item.get('name') == _('Field Orders'):
+                class="sidebar_field_orders"
             % endif
             >${item['name']}</a>
         </li>
