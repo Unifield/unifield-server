@@ -759,7 +759,7 @@ class stock_picking(osv.osv):
                 new_dom.append(x)
 
         ret = super(stock_picking, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
-        if product_id:
+        if product_id and isinstance(product_id, int):
             ret.tables.append('"stock_move"')
             ret.joins.setdefault('"stock_picking"', [])
             ret.joins['"stock_picking"'] += [('"stock_move"', 'id', 'picking_id', 'LEFT JOIN')]

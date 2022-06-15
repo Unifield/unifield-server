@@ -74,7 +74,7 @@ class sale_order(osv.osv):
                 new_dom.append(x)
 
         ret = super(sale_order, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
-        if product_id:
+        if product_id and isinstance(product_id, int):
             ret.tables.append('"sale_order_line"')
             ret.joins.setdefault('"sale_order"', [])
             ret.joins['"sale_order"'] += [('"sale_order_line"', 'id', 'order_id', 'LEFT JOIN')]

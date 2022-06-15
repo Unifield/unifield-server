@@ -75,7 +75,7 @@ class purchase_order(osv.osv):
                 ret.where_clause.append(' "res_partner"."name" ilike %s ')
             ret.where_clause_params.append('%%%s%%'%dest_partner_names)
             ret.having_group_by = ' GROUP BY "purchase_order"."id" '
-        if product_id:
+        if product_id and isinstance(product_id, int):
             ret.tables.append('"purchase_order_line"')
             ret.joins.setdefault('"purchase_order"', [])
             ret.joins['"purchase_order"'] += [('"purchase_order_line"', 'id', 'order_id', 'LEFT JOIN')]

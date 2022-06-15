@@ -54,7 +54,7 @@ class tender(osv.osv):
                 new_dom.append(x)
 
         ret = super(tender, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
-        if product_id:
+        if product_id and isinstance(product_id, int):
             ret.tables.append('"tender_line"')
             ret.joins.setdefault('"tender"', [])
             ret.joins['"tender"'] += [('"tender_line"', 'id', 'tender_id', 'LEFT JOIN')]
