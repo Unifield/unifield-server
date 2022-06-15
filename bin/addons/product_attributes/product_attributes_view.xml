@@ -542,22 +542,97 @@
             </field>
         </record>
 
+        <!-- List of actions at the bottom of the list, the dashed line-break is located on the web's side -->
         <act_window
-            context="{}"
+            context="{'search_view': False}"
             domain="[('procurement_request', '=', False), ('product_id', '=', active_id)]"
             id="action_order_line_product_tree"
-            name="Field orders"
+            name="Field Orders"
             res_model="sale.order"
             src_model="product.product"
             sequence="100001"/>
 
         <act_window
-            context="{}"
+            context="{'search_view': False}"
+            domain="[('procurement_request', '=', True), ('product_id', '=', active_id)]"
+            id="procurement_request_tree_view"
+            name="Internal Requests"
+            res_model="sale.order"
+            src_model="product.product"
+            sequence="100002"/>
+
+        <act_window
+            context="{'search_view': False}"
+            domain="[('rfq_ok', '=', False), ('product_id', '=', active_id)]"
+            id="purchase.action_purchase_line_product_tree2"
+            name="Purchases"
+            res_model="purchase.order"
+            src_model="product.product"
+            groups=""
+            sequence="100003"/>
+
+        <act_window
+            context="{'search_view': False}"
+            domain="[('rfq_ok', '=', True), ('product_id', '=', active_id)]"
+            id="product_view_rfq_tree"
+            name="RfQs"
+            res_model="purchase.order"
+            src_model="product.product"
+            sequence="100004"/>
+
+        <act_window
+            context="{'search_view': False}"
             domain="[('product_id', '=', active_id)]"
             id="action_tender_product_tree"
             name="Tenders"
             res_model="tender"
-            src_model="product.product"/>
+            src_model="product.product"
+            sequence="100005"/>
+
+        <act_window
+            context="{'search_view': False}"
+            domain="[('type', '=', 'in'), ('subtype', '=', 'standard'), ('product_id', '=', active_id)]"
+            id="product_view_in_tree"
+            name="Incoming Shipments"
+            res_model="stock.picking"
+            src_model="product.product"
+            sequence="100006"/>
+
+        <act_window
+            context="{'search_view': False}"
+            domain="[('type', '=', 'internal'), ('subtype', '=', 'standard'), ('product_id', '=', active_id)]"
+            id="product_view_int_tree"
+            name="Internal Moves"
+            res_model="stock.picking"
+            src_model="product.product"
+            sequence="100007"/>
+
+        <act_window
+            context="{'search_view': False}"
+            domain="[('type', '=', 'out'), ('subtype', '=', 'standard'), ('product_id', '=', active_id)]"
+            id="product_view_out_tree"
+            name="Delivery Orders"
+            res_model="stock.picking"
+            src_model="product.product"
+            sequence="100008"/>
+
+        <act_window
+            context="{'search_view': False}"
+            domain="[('type', '=', 'out'), ('subtype', '=', 'picking'), ('product_id', '=', active_id)]"
+            id="product_view_picking_ticket_tree"
+            name="Pickings"
+            res_model="stock.picking"
+            src_model="product.product"
+            sequence="100009"/>
+
+        <act_window
+            context="{'search_view': False}"
+            domain="[('type', '=', 'out'), ('subtype', '=', 'ppl'), ('product_id', '=', active_id)]"
+            id="product_view_picking_ppl_tree"
+            name="Packings"
+            res_model="stock.picking"
+            src_model="product.product"
+            sequence="100010"/>
 
         <!-- Add a link to see all inactivated products -->
         <act_window

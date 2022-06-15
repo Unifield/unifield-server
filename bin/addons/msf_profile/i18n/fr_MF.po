@@ -10533,11 +10533,12 @@ msgstr "Champ pas trouvé sous fichier envoi.ini file."
 msgid "Lists/Sublists"
 msgstr "Listes/Sous-listes"
 
-#. modules: sale, useability_dashboard_and_menu
+#. modules: sale, useability_dashboard_and_menu, product_attributes
 #: view:sale.report:0
 #: view:sale.order:0
+#: model:ir.actions.act_window,name:product_attributes.action_order_line_product_tree
 msgid "Field Orders"
-msgstr "Commandes du terrain"
+msgstr "Commandes de Terrain"
 
 #. modules: purchase_msf, purchase_override
 #: field:purchase.order.line,internal_name:0
@@ -12108,11 +12109,6 @@ msgstr "Fichier d'accès utilisateur"
 #: model:process.node,name:account.process_node_draftstatement0
 msgid "Draft statement"
 msgstr "Relevé sous statut brouillon"
-
-#. module: product_attributes
-#: model:ir.actions.act_window,name:product_attributes.action_order_line_product_tree
-msgid "Field orders"
-msgstr "Commandes de terrain"
 
 #. module: tender_flow
 #: selection:tender,internal_state:0
@@ -22978,7 +22974,7 @@ msgstr "Nom du modèle de l'objet à ouvrir sous la vue d'écran"
 msgid "Pacific/Easter"
 msgstr "Pacific/Easter"
 
-#. modules: purchase, msf_outgoing, useability_dashboard_and_menu, stock
+#. modules: purchase, msf_outgoing, useability_dashboard_and_menu, stock, product_attributes
 #: view:purchase.order:0
 #: model:ir.actions.act_window,name:stock.action_picking_tree
 #: model:ir.ui.menu,name:stock.menu_action_picking_tree
@@ -22988,6 +22984,7 @@ msgstr "Pacific/Easter"
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:185
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:205
 #: code:addons/msf_outgoing/wizard/outgoing_delivery_processor.py:104
+#: model:ir.actions.act_window,name:product_attributes.product_view_out_tree
 #, python-format
 msgid "Delivery Orders"
 msgstr "Bons de Livraison"
@@ -39233,9 +39230,10 @@ msgstr "Chart of Account / FY"
 msgid "Cross-docking Val."
 msgstr "Transbordement - Valeur."
 
-#. module: tender_flow
+#. module: tender_flow, product_attributes
 #: view:tender:0
 #: field:tender,rfq_ids:0
+#: model:ir.actions.act_window,name:product_attributes.product_view_rfq_tree
 msgid "RfQs"
 msgstr "DdD"
 
@@ -69077,7 +69075,7 @@ msgstr "Type de Transport"
 msgid "Display graph"
 msgstr "Affichage du Graphique"
 
-#. modules: purchase, useability_dashboard_and_menu, stock, msf_outgoing
+#. modules: purchase, useability_dashboard_and_menu, stock, msf_outgoing, product_attributes
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:183
 #: model:ir.ui.menu,name:purchase.menu_action_picking_tree4
 #: model:ir.actions.act_window,name:stock.action_picking_tree4
@@ -69085,6 +69083,7 @@ msgstr "Affichage du Graphique"
 #: view:stock.picking:0
 #: view:board.board:0
 #: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_picking_tree_available
+#: model:ir.actions.act_window,name:product_attributes.product_view_in_tree
 #, python-format
 msgid "Incoming Shipments"
 msgstr "Livraisons Entrantes"
@@ -78585,12 +78584,13 @@ msgstr "Purchase Follow-Up"
 msgid "Subtotal (functional currency)"
 msgstr "Sous-Total (devise fonctionnelle)"
 
-#. modules: stock, msf_outgoing
+#. modules: stock, msf_outgoing, product_attributes
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:184
 #: model:ir.actions.act_window,name:stock.action_picking_tree6
 #: model:ir.ui.menu,name:stock.menu_action_picking_tree6
 #: view:stock.picking:0
 #: field:stock.picking,move_lines:0
+#: model:ir.actions.act_window,name:product_attributes.product_view_int_tree
 #, python-format
 msgid "Internal Moves"
 msgstr "Mouvements Internes"
@@ -79199,9 +79199,10 @@ msgstr "Source - Type"
 msgid "You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name."
 msgstr "You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name."
 
-#. module: procurement_request
+#. module: procurement_request, product_attributes
 #: model:ir.actions.act_window,name:procurement_request.action_procurement_request
 #: model:ir.ui.menu,name:procurement_request.menu_procurement_request
+#: model:ir.actions.act_window,name:product_attributes.procurement_request_tree_view
 #: view:sale.order:0
 msgid "Internal Requests"
 msgstr "Demandes Internes"
@@ -115057,3 +115058,13 @@ msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas
 #: help:tender,product_id:0
 msgid "Product to find in the lines"
 msgstr "Produit à trouver dans les lignes"
+
+#. module: product_attributes
+#: model:ir.actions.act_window,name:product_attributes.product_view_picking_ticket_tree
+msgid "Pickings"
+msgstr "Pickings"
+
+#. module: product_attributes
+#: model:ir.actions.act_window,name:product_attributes.product_view_picking_ppl_tree
+msgid "Packings"
+msgstr "Colisages"
