@@ -77,7 +77,6 @@ class View_Log(SecuredController):
         ('uid', _('Owner')),
         ('gid', _('Group Owner')),
         ('level', _('Access Level')),
-        ('xmlid',_('Internal module data ID'))
     ]
 
     @expose(template="/openerp/controllers/templates/view_log.mako")
@@ -95,11 +94,17 @@ class View_Log(SecuredController):
                         line[field] = line[field][1]
 
                     values[field] = ustr(line.get(field) or '/')
+                if line.get('xmlid'):
+                    values['xmlid'] = ustr(line.get('xmlid') or '/')
+                    if model == 'product.product':
+                        fields.append(('xmlid', _('SDref')))
+                    else:
+                        fields.append(('xmlid', _('Internal module data ID')))
 
             if model == 'product.product':
                 xmlid = rpc.session.execute('object', 'execute', model, 'read', [id], ['xmlid_code'], rpc.session.context)
                 values['xmlid_code'] = xmlid[0]['xmlid_code']
-                fields.append(('xmlid_code', _('UniData xmlid_code')))
+                fields.append(('xmlid_code', _('xmlid_code')))
 
             if rpc.session.uid == 1:
                 model_ids = rpc.session.execute('object', 'execute', 'ir.model', 'search', [('model', '=', model)])
