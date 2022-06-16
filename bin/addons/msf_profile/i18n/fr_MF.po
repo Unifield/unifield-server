@@ -115048,3 +115048,9 @@ msgstr "Cellule E7: la Règle de Réappro du fichier: \"%s\" ne correspond pas a
 #, python-format
 msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
 msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:669
+#, python-format
+msgid "Please correct following employee analytic distribution errors to allow Import to be processed"
+msgstr "Veuillez corriger les erreurs suivantes de distribution analytique des employés pour pouvoir finaliser l'import des données:"
