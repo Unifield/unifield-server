@@ -475,19 +475,26 @@ class import_data(osv.osv_memory):
                                                                  data['msfid'])], order='NO_ORDER')
 
                     if ids_to_update:
-                        #UF-2170: remove the standard price value from the list for update product case
+                        # UF-2170: remove the standard price value from the list for update product case
                         # US-6468: remove BN/ED attr for update
-                        for to_remove in ['standard_price', 'perishable', 'batch_management']:
+                        # US-10051: Remove MSFID attr
+                        for to_remove in ['standard_price', 'perishable', 'batch_management', 'msfid']:
                             if to_remove in data:
                                 del data[to_remove]
                         impobj.write(cr, uid, ids_to_update, data, context=context)
                         nb_update_success += 1
                         cr.commit()
                     else:
+                        for to_remove in ['msfid']:  # US-10051: Remove MSFID attr
+                            if to_remove in data:
+                                del data[to_remove]
                         impobj.create(cr, uid, data, context={'from_import_menu': True})
                         nb_succes += 1
                         cr.commit()
                 else:
+                    for to_remove in ['msfid']:  # US-10051: Remove MSFID attr
+                        if to_remove in data:
+                            del data[to_remove]
                     impobj.create(cr, uid, data, context={'from_import_menu': True})
                     nb_succes += 1
                     cr.commit()

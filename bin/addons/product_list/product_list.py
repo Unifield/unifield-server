@@ -486,6 +486,45 @@ product and can't be deleted"""),
 
         return [('id', 'in', ids)]
 
+    def _get_sdref(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        """
+        Retrieve SDref (name) from ir_model_data
+        """
+        if not context:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+
+        res = {}
+        for prod in self.browse(cr, uid, ids, context=context):
+            sdref = False
+            sd_domain = [('res_id', '=', prod.id), ('model', '=', 'product.product'), ('module', '=', 'sd')]
+            sdref_ids = data_obj.search(cr, uid, sd_domain, context=context)
+            if sdref_ids:
+                sdref = 'sd.' + data_obj.browse(cr, uid, sdref_ids[0], fields_to_fetch=['name'], context=context).name
+            res[prod.id] = sdref
+
+        return res
+
+    def _search_sdref(self, cr, uid, obj, name, args, context=None):
+        """
+        Search all products with the exact given sdref
+        """
+        if not context:
+            context = {}
+
+        res = []
+        if not args:
+            return res
+        data_obj = self.pool.get('ir.model.data')
+
+        if args[0] and args[0][2]:
+            data_domain = [('model', '=', 'product.product'), ('module', '=', 'sd'), ('name', '=', args[0][2])]
+            data_ids = data_obj.search(cr, uid, data_domain, context=context)
+            if data_ids:
+                return [('id', '=', data_obj.browse(cr, uid, data_ids[0], fields_to_fetch=['res_id'], context=context).res_id)]
+        return res
+
     _columns = {
         'list_ids': fields.function(
             _get_list_sublist,
@@ -504,13 +543,15 @@ product and can't be deleted"""),
             select=True,
         ),
         'msfid': fields.integer(
-            string='Hidden field for UniData',
+            string='MSFID',
+            help='Hidden field for UniData',
             select=1
         ),  # US-45: Added this field but hidden, for UniData to be able to import the Id
         'xmlid_code': fields.char(
             'Xmlid Code',
             size=18,
         ),  # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
+        'sdref': fields.function(_get_sdref, fnct_search=_search_sdref, method=True, store=True, string='SDref', type='char', size=256, readonly=True)
     }
 
     _sql_constraints = [

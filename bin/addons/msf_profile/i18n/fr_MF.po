@@ -27529,9 +27529,9 @@ msgid "Import results"
 msgstr "Import results"
 
 #. module: product_list
-#: field:product.product,msfid:0
+#: help:product.product,msfid:0
 msgid "Hidden field for UniData"
-msgstr "Champs cachés pour Unidata"
+msgstr "Champ caché pour Unidata"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:740
@@ -28433,10 +28433,11 @@ msgstr "Traduire"
 msgid "Product UOM"
 msgstr "UDM du Produit"
 
-#. modules: mission_stock, product_nomenclature
+#. modules: mission_stock, product_nomenclature, product_list
 #: field:stock.mission.report.line,xmlid_code:0
 #: field:product.category,msfid:0
 #: field:product.nomenclature,msfid:0
+#: field:product.product,msfid:0
 msgid "MSFID"
 msgstr "MSFID"
 
