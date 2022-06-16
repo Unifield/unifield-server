@@ -283,7 +283,7 @@ class hr_payroll_import(osv.osv_memory):
                 if not account.default_destination_id:
                     raise osv.except_osv(_('Warning'), _('No default Destination defined for this account: %s') % (account.code or '',))
                 destination_id = account.default_destination_id and account.default_destination_id.id or False
-                destination_code = account.default_destination_id.code
+                destination_code = account.default_destination_id and account.default_destination_id.code or False
 
         # Fetch description
         if not name:
@@ -327,7 +327,7 @@ class hr_payroll_import(osv.osv_memory):
                 to_update_employee =True
             if not cost_center_id:
                 cost_center_id = temp_cc
-                cost_center_code = employee_data.get('cost_center_id')[1]
+                cost_center_code = employee_data.get('cost_center_id') and employee_data.get('cost_center_id')[1] or False
             vals.update({
                 'cost_center_id': cost_center_id,
                 'funding_pool_id': employee_data and employee_data.get('funding_pool_id', False) and employee_data.get('funding_pool_id')[0] or False,
