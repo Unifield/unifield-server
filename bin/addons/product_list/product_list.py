@@ -496,13 +496,13 @@ product and can't be deleted"""),
         data_obj = self.pool.get('ir.model.data')
 
         res = {}
-        for prod in self.browse(cr, uid, ids, context=context):
+        for prod_id in ids:
             sdref = False
-            sd_domain = [('res_id', '=', prod.id), ('model', '=', 'product.product'), ('module', '=', 'sd')]
+            sd_domain = [('res_id', '=', prod_id), ('model', '=', 'product.product'), ('module', '=', 'sd')]
             sdref_ids = data_obj.search(cr, uid, sd_domain, context=context)
             if sdref_ids:
                 sdref = 'sd.' + data_obj.browse(cr, uid, sdref_ids[0], fields_to_fetch=['name'], context=context).name
-            res[prod.id] = sdref
+            res[prod_id] = sdref
 
         return res
 
@@ -551,7 +551,7 @@ product and can't be deleted"""),
             'Xmlid Code',
             size=18,
         ),  # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
-        'sdref': fields.function(_get_sdref, fnct_search=_search_sdref, method=True, store=True, string='SDref', type='char', size=256, readonly=True)
+        'sdref': fields.function(_get_sdref, fnct_search=_search_sdref, method=True, store=False, string='SDref', type='char', size=256, readonly=True)
     }
 
     _sql_constraints = [
