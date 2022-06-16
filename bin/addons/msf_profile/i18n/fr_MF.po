@@ -115048,3 +115048,15 @@ msgstr "Cellule E7: la Règle de Réappro du fichier: \"%s\" ne correspond pas a
 #, python-format
 msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
 msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:326
+#, python-format
+msgid "You can not select 'Products' on a Project instance"
+msgstr "Impossible de sélectionner 'Produits' sur une instance Projet"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import.py:246
+#, python-format
+msgid "You can not select 'Import Products' on a Project instance"
+msgstr "Impossible de sélectionner 'Importer Produits' sur une instance Projet"

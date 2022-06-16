@@ -787,5 +787,10 @@
             <field name="method">us_5722_update_accruals</field>
         </record>
 
+        <!-- UF26.0 -->
+        <record id="us_10010_hide_import_export_product_menu" model="patch.scripts">
+            <field name="method">us_10010_hide_import_export_product_menu</field>
+        </record>
+
     </data>
 </openerp>
