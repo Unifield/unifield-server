@@ -73,6 +73,7 @@ class hr_payroll_import(osv.osv_memory):
         'filename': fields.char(string="Imported filename", size=256),
         'date_format': fields.selection([('%d/%m/%Y', 'dd/mm/yyyy'), ('%m-%d-%Y', 'mm-dd-yyyy'), ('%d-%m-%y', 'dd-mm-yy'), ('%d-%m-%Y', 'dd-mm-yyyy'), ('%d/%m/%y', 'dd/mm/yy'), ('%d.%m.%Y', 'dd.mm.yyyy')], "Date format", required=True, help="This is the date format used in the Homère file in order to recognize them."),
         'msg': fields.text(string='Message'),
+        'blocked': fields.boolean('Is import blocked'),
     }
 
     _defaults = {
@@ -665,14 +666,18 @@ class hr_payroll_import(osv.osv_memory):
         if wiz_state == 'simu' and ids:
             # US_201: if check raise no error, change state to process
             # US-671: Show message in the wizard if there was warning or not.
+            wiz_state = 'proceed'
+            blocked = False
             if blocking_msg:
                 error_msg = '%s:\n--------------------\n%s' % (_('Please correct following employee analytic distribution errors to allow Import to be processed'), "\n".join(blocking_msg))
+                wiz_state = 'simu'
+                blocked = True
             elif error_msg:
                 error_msg = _("Import can be processed but with the following warnings:\n-------------------- \n") + error_msg
             else:
                 error_msg = _("No warning found for this file. Import can be now processed.")
 
-            self.write(cr, uid, [wiz.id], {'state': 'proceed', 'msg': error_msg})
+            self.write(cr, uid, [wiz.id], {'state': wiz_state, 'msg': error_msg, 'blocked': blocked})
             view_id = self.pool.get('ir.model.data').get_object_reference(cr,
                                                                           uid, 'msf_homere_interface', 'payroll_import_wizard')
             view_id = view_id and view_id[1] or False

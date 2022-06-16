@@ -173,9 +173,10 @@
                     <field name="file" filename="filename"/>
                     <field name="filename" invisible="1"/>
                     <field name="date_format"/>
+                    <field name="blocked" invisible="1" />
                     <newline/>
                     <group colspan="4" col="2"
-                        attrs="{'invisible': [('state', '=', 'simu')]}">
+                        attrs="{'invisible': [('blocked', '=', False), ('state', '=', 'simu')]}">
                         <field name="msg" colspan="4"/>
                     </group>
                     <group colspan="4" col="2"
