@@ -115033,3 +115033,31 @@ msgid "Warning this/these lines cannot be imported due to too many digits in Qty
 "%s"
 msgstr "Attention ces lignes ne peuvent pas être importées car il y a trop de chiffres dans le champ Qté. Veuillez vérifier:\n"
 "%s"
+
+#. module: account_period_closing_level
+#: field:account.period,is_eoy_liquidity_revaluated:0
+msgid "Revaluation EoY liquidity"
+msgstr "Réévaluation de la Trésorerie de fin d'année"
+
+#. module: account_period_closing_level
+#: field:account.period,is_eoy_regular_bs_revaluated:0
+msgid "Revaluation EoY regular B/S"
+msgstr "Réévaluation de la Balance de Bilan de fin d'année"
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:203
+#, python-format
+msgid "You should run the year-end revaluation liquidity and regular balance before closing P15."
+msgstr "Veuillez lancer les réévaluations de la trésorerie et de la balance de bilan de fin d'année avant de fermer la période P15."
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:205
+#, python-format
+msgid "You should run the year-end revaluation liquidity before closing P15."
+msgstr "Veuillez lancer la réévaluation de la trésorerie de fin d'année avant de fermer la période P15."
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:207
+#, python-format
+msgid "You should run the year-end revaluation regular balance before closing P15."
+msgstr "Veuillez lancer la réévaluation de la balance de bilan de fin d'année avant de fermer la période P15."
