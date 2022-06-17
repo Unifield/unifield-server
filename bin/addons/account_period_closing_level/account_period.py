@@ -197,7 +197,14 @@ class account_period(osv.osv):
                     if level == 'coordo' and not period.special and company.revaluation_default_account:
                         if not period.is_revaluated:
                             raise osv.except_osv(_('Warning'), _('You should run the month-end revaluation before closing the period.'))
-
+                    # US-9770: check that the EoY revals have been processed in coordo before closing period P15
+                    if level == 'coordo' and period.number == 15 and company.revaluation_default_account:
+                        if not period.is_eoy_liquidity_revaluated and not period.is_eoy_regular_bs_revaluated:
+                            raise osv.except_osv(_('Warning'), _('You should run the year-end revaluation liquidity and regular balance before closing P15.'))
+                    if not period.is_eoy_liquidity_revaluated:
+                        raise osv.except_osv(_('Warning'), _('You should run the year-end revaluation liquidity before closing P15.'))
+                    if not period.is_eoy_regular_bs_revaluated:
+                        raise osv.except_osv(_('Warning'), _('You should run the year-end revaluation regular balance before closing P15.'))
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
                 journal_ok = []
