@@ -493,16 +493,18 @@ product and can't be deleted"""),
         if not context:
             context = {}
 
-        data_obj = self.pool.get('ir.model.data')
+        if not ids:
+            return []
 
+        data_obj = self.pool.get('ir.model.data')
         res = {}
+
         for prod_id in ids:
-            sdref = False
-            sd_domain = [('res_id', '=', prod_id), ('model', '=', 'product.product'), ('module', '=', 'sd')]
-            sdref_ids = data_obj.search(cr, uid, sd_domain, context=context)
-            if sdref_ids:
-                sdref = 'sd.' + data_obj.browse(cr, uid, sdref_ids[0], fields_to_fetch=['name'], context=context).name
-            res[prod_id] = sdref
+            res[prod_id] = False
+
+        sdref_ids = data_obj.search(cr, uid, [('res_id', 'in', ids), ('model', '=', 'product.product'), ('module', '=', 'sd')], context=context)
+        for data in data_obj.browse(cr, uid, sdref_ids, fields_to_fetch=['name', 'res_id'], context=context):
+            res[data.res_id] = 'sd.%s' % (data.name, )
 
         return res
 
@@ -513,17 +515,20 @@ product and can't be deleted"""),
         if not context:
             context = {}
 
-        res = []
         if not args:
-            return res
+            return []
         data_obj = self.pool.get('ir.model.data')
 
         if args[0] and args[0][2]:
-            data_domain = [('model', '=', 'product.product'), ('module', '=', 'sd'), ('name', '=', args[0][2])]
+            sdref = args[0][2]
+            if sdref.startswith('sd.'):
+                sdref = sdref[3:]
+            data_domain = [('model', '=', 'product.product'), ('module', '=', 'sd'), ('name', '=', sdref)]
             data_ids = data_obj.search(cr, uid, data_domain, context=context)
             if data_ids:
                 return [('id', '=', data_obj.browse(cr, uid, data_ids[0], fields_to_fetch=['res_id'], context=context).res_id)]
-        return res
+            return [('id', '=', 0)]
+        return []
 
     _columns = {
         'list_ids': fields.function(
@@ -551,7 +556,7 @@ product and can't be deleted"""),
             'Xmlid Code',
             size=18,
         ),  # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
-        'sdref': fields.function(_get_sdref, fnct_search=_search_sdref, method=True, store=False, string='SDref', type='char', size=256, readonly=True)
+        'sdref': fields.function(_get_sdref, fnct_search=_search_sdref, method=True, store=False, string='SDref', type='char', size=256)
     }
 
     _sql_constraints = [
