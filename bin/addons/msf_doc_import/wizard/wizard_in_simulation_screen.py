@@ -1686,7 +1686,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 cd_ctx['location'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
                                                                                          'stock_location_cross_docking')[1],
                 if lot_check or exp_check:
-                    bn_domain = []
+                    bn_domain = [('product_id', '=', prod_id)]
                     if write_vals.get('imp_batch_name', False):
                         bn_domain.append(('name', '=', write_vals['imp_batch_name']))
                     if write_vals.get('imp_exp_date', False):
