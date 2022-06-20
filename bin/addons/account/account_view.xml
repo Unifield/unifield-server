@@ -1193,18 +1193,6 @@
                                  </field>
                           </group>
                         </page>
-                        <page groups="base.group_extended" string="Special Computation">
-                            <separator colspan="4" string="Applicability Options"/>
-                            <field name="applicable_type"/>
-                            <field name="domain"/>
-                            <separator colspan="4" string="Applicable Code (if type=code)"/>
-                            <field colspan="4" name="python_applicable" nolabel="1" attrs="{'readonly':[('applicable_type','=','true')], 'required':[('applicable_type','=','code')]}"/>
-                            <separator colspan="2" string="Compute Code"/>
-                            <separator colspan="2" string="Reverse Compute Code"/>
-                            <field colspan="2" name="python_compute" nolabel="1" attrs="{'readonly':[('type','!=','code')],'required':[('type','=','code')]}"/>
-                            <field colspan="2" name="python_compute_inv" nolabel="1" attrs="{'readonly':[('type','!=','code')],'required':[('type','=','code')]}"/>
-
-                        </page>
                     </notebook>
                 </form>
               </field>
