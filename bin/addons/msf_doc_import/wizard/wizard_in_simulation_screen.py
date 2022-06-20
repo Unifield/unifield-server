@@ -1681,12 +1681,11 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 })
 
             # Check stock in Cross Docking
-            if write_vals.get('imp_product_qty') and with_pack and \
-                    (write_vals.get('imp_batch_id') or write_vals.get('imp_exp_date')):
+            if write_vals.get('imp_product_qty'):
                 cd_ctx = context.copy()
                 cd_ctx.update({
-                    'location_id': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
-                                                                                       'stock_location_cross_docking')[1],
+                    'location': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
+                                                                                    'stock_location_cross_docking')[1],
                     'prodlot_id': write_vals.get('imp_batch_id', False)
                 })
                 if prod_obj.browse(cr, uid, prod_id, fields_to_fetch=['qty_allocable'], context=cd_ctx).qty_allocable < 0:
