@@ -1683,11 +1683,18 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             # Check stock in Cross Docking
             if write_vals.get('imp_product_qty'):
                 cd_ctx = context.copy()
-                cd_ctx.update({
-                    'location': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
-                                                                                    'stock_location_cross_docking')[1],
-                    'prodlot_id': write_vals.get('imp_batch_id', False)
-                })
+                cd_ctx['location'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
+                                                                                         'stock_location_cross_docking')[1],
+                if lot_check or exp_check:
+                    bn_domain = []
+                    if write_vals.get('imp_batch_name', False):
+                        bn_domain.append(('name', '=', write_vals['imp_batch_name']))
+                    if write_vals.get('imp_exp_date', False):
+                        bn_domain.append(('life_date', '=', write_vals['imp_exp_date']))
+                    bn_ids = self.pool.get('stock.production.lot').search(cr, uid, bn_domain, context=context)
+                    if bn_ids:
+                        cd_ctx['prodlot_id'] = bn_ids and bn_ids[0]
+
                 if prod_obj.browse(cr, uid, prod_id, fields_to_fetch=['qty_allocable'], context=cd_ctx).qty_allocable < 0:
                     err_msg = _('There is not enough allocable stock in Cross Docking to process the product %s with a quantity of %s') \
                               % (product.default_code, write_vals['imp_product_qty'])
