@@ -54,6 +54,9 @@ class res_currency_table(osv.osv):
 
         return self.write(cr, uid, ids, {'state': 'valid'}, context=context)
 
+    def closed(self, cr, uid, ids, context=None):
+        return self.write(cr, uid, ids, {'state': 'closed'}, context=context)
+
     def _check_unicity(self, cr, uid, ids, context=None):
         if not context:
             context={}
