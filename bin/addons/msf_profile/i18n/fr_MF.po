@@ -63089,8 +63089,9 @@ msgstr "Vous pouvez utiliser l'export type pour le format que vous avez besoin d
 msgid "Save As"
 msgstr "Enregistrer sous"
 
-#. module: sync_client
+#. module: sync_client, board
 #: field:sync.client.update_received,execution_date:0
+#: code:addons/board/queries_finance.py:135
 msgid "Execution date"
 msgstr "Date d'exécution"
 
@@ -115048,3 +115049,33 @@ msgstr "Cellule E7: la Règle de Réappro du fichier: \"%s\" ne correspond pas a
 #, python-format
 msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
 msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
+
+#. module: board
+#: code:addons/board/queries_finance.py:134
+#, python-format
+msgid "Not runs entries"
+msgstr "Entrées non executées"
+
+#. module: board
+#: code:addons/board/queries_finance.py:135
+#, python-format
+msgid "Object/model"
+msgstr "Objet/modèle"
+
+#. module: board
+#: code:addons/board/queries_finance.py:135
+#, python-format
+msgid "Source instance"
+msgstr "Instance source"
+
+#. module: board
+#: code:addons/board/queries_finance.py:135
+#, python-format
+msgid "Sync date"
+msgstr "Date de Synchronisation"
+
+#. module: board
+#: code:addons/board/queries_finance.py:135
+#, python-format
+msgid "xml.id"
+msgstr "xml.id"
