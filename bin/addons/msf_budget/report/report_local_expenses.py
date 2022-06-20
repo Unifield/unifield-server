@@ -89,12 +89,14 @@ class report_local_expenses(WebKitParser):
                                                            data['form']['start_period_id'],
                                                            context=context)
                 header_data.append([_('Period from:'), period.name])
+                domain.append(('date', '>=', period.date_start))
             if 'end_period_id' in data['form']:
                 period = pool.get('account.period').browse(cr,
                                                            uid,
                                                            data['form']['end_period_id'],
                                                            context=context)
                 header_data.append([_('Period to:'), period.name])
+                domain.append(('date', '<=', period.date_stop))
             # Get expenses. UTP-944: break down the _get_actual_amounts method to only return expense accounts and not income or donation accounts (extra-accounting accounts)
             context.update({'only_expenses': True})
             expenses = pool.get('msf.budget.tools')._get_actual_amounts(cr,
