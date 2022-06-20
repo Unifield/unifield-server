@@ -137,55 +137,19 @@ class WizardCurrencyrevaluation(osv.osv_memory):
     def _is_revaluated(self, cr, uid, period_id, revaluation_method=False,
                        context=None):
         """
-        check if the revaluation has already been run by checking
-        for a non-zero entry in the REV journal in the current instance
-        and according to reval method filter by account type liquidity or not
-        at line level
+        Since US-9770: check the tags is_eoy_liquidity_revaluated and is_eoy_regular_bs_revaluated for year-end reval
 
         Since US-7448: check the tag is_revaluated for month-end reval.
         """
         if context is None:
             context = {}
         is_revaluated = False
-        journal_obj = self.pool.get('account.journal')
         period_obj = self.pool.get('account.period')
 
         if revaluation_method in ('liquidity_year', 'other_bs'):
-            comp_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
-            instance_id = comp_id.instance_id and comp_id.instance_id.id or False
-
-            # get the revaluation journal of the instance
-            rev_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'revaluation'), ('instance_id', '=', instance_id)],
-                                                 limit=1, context=context)
-            rev_journal_id = rev_journal_ids and rev_journal_ids[0] or False
-
-            domain = [
-                ('journal_id', '=', rev_journal_id),
-                ('period_id', '=', period_id),
-            ]
-
-            # filter by liquidity account type or not  for end year methods
-            # => to filter by account type we are at line level
-            account_liquidity_ids = self.pool.get('account.account').search(cr,
-                                                                            uid, [('type', '=', 'liquidity')], context=context)
-            if comp_id.revaluation_default_account:
-                # do not count rev default account itself
-                account_ids_domain = [
-                    ('account_id', '!=',
-                        comp_id.revaluation_default_account.id),
-                ]
-            else:
-                account_ids_domain = []
-            if account_liquidity_ids:
-                op = 'in' if revaluation_method == 'liquidity_year' \
-                    else 'not in'
-                account_ids_domain += [
-                    ('account_id', op, account_liquidity_ids),
-                ]
-            if account_ids_domain:
-                domain += account_ids_domain
-            reval_move_count = self.pool.get('account.move.line').search(cr, uid, domain, count=True, context=context)
-            is_revaluated = reval_move_count > 0
+            liquidity_reval = period_obj.browse(cr, uid, [period_id], fields_to_fetch=['is_eoy_liquidity_revaluated'], context=context)[0].is_eoy_liquidity_revaluated
+            bs_reval =  period_obj.browse(cr, uid, [period_id], fields_to_fetch=['is_eoy_regular_bs_revaluated'], context=context)[0].is_eoy_regular_bs_revaluated
+            is_revaluated = liquidity_reval if revaluation_method == 'liquidity_year' else bs_reval
         # Monthly reval
         elif period_obj.browse(cr, uid, [period_id], fields_to_fetch=['is_revaluated'], context=context)[0].is_revaluated:
             is_revaluated = True
@@ -889,7 +853,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 period_obj.write(cr, uid, form.period_id.id, {'is_eoy_regular_bs_revaluated': True}, context=context)
                 cr.commit()  # so that the tag is kept despite the warning raised
             raise osv.except_osv(_("Warning"),
-                                 _("No revaluation accounting entry have been posted."))
+                                 _("Already revaluated: No revaluation accounting entry have been posted."))
 
     def _get_next_fiscalyear_id(self, cr, uid, fiscalyear_id, context=None):
         """Return the next fiscal year ID."""
