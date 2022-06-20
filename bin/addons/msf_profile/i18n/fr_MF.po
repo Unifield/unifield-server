@@ -13876,12 +13876,13 @@ msgstr "Le système n'a pas trouvé de journal %s !"
 msgid "System manages VAT locally ?"
 msgstr "System manages VAT locally ?"
 
-#. module: account_mcdb
+#. module: account_mcdb, board
 #: report:account.analytic.line:0
 #: report:account.analytic.line_csv:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:187
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
+#: report:addons/board/report/integrity.mako:80
 #, python-format
 msgid "Entry status"
 msgstr "Entrée - Statut"
@@ -50926,6 +50927,7 @@ msgstr "Donation Line"
 #: selection:account.report.general.ledger,filter:0
 #: selection:account.vat.declaration,filter:0
 #: selection:integrity.finance.wizard,filter:0
+#: code:addons/account_override/wizard/integrity_finance_wizard.py:119
 msgid "No Filters"
 msgstr "Aucun Filtre"
 
@@ -65700,6 +65702,8 @@ msgstr "Products date of expiry"
 #: report:voucher.print:0
 #: selection:account.analytic.line,move_state:0
 #: selection:integrity.finance.wizard,move_state:0
+#: view:msf.accrual.line:0
+#: code:addons/account_override/wizard/integrity_finance_wizard.py:136
 msgid "Posted"
 msgstr "Comptabilisé"
 
@@ -67304,6 +67308,7 @@ msgstr "Devise d'impression:"
 #: selection:account.analytic.line,move_state:0
 #: selection:account.move.line,move_state:0
 #: selection:integrity.finance.wizard,move_state:0
+#: code:addons/account_override/wizard/integrity_finance_wizard.py:138
 msgid "Unposted"
 msgstr "Non comptabilisé"
 
@@ -67945,6 +67950,11 @@ msgstr "La période n'a pas été trouvée pour cette date: %s."
 #: model:ir.ui.menu,name:base.menu_translation
 msgid "Translations"
 msgstr "Traductions"
+
+#. module: msf_accrual
+#: view:msf.accrual.line:0
+msgid "Partially Posted"
+msgstr "Partiellement Comptabilisé"
 
 #. modules: sales_followup, purchase_followup, account_mcdb
 #: view:account.mcdb:0
@@ -74795,7 +74805,7 @@ msgstr "Confirmer Brouillons de Factures"
 msgid "Update Sent Monitor"
 msgstr "Surveillance des Mises à jour Envoyées"
 
-#. modules: msf_budget, account, account_period_closing_level, finance, vertical_integration, msf_currency_revaluation, analytic_distribution, account_override
+#. modules: msf_budget, account, account_period_closing_level, finance, vertical_integration, msf_currency_revaluation, analytic_distribution, account_override, board
 #: field:account.aged.trial.balance,fiscalyear_id:0
 #: field:account.balance.report,fiscalyear_id:0
 #: field:account.bs.report,fiscalyear_id:0
@@ -74827,6 +74837,7 @@ msgstr "Surveillance des Mises à jour Envoyées"
 #: field:wizard.hq.report.oca,fiscalyear_id:0
 #: field:wizard.hq.report.ocg,fiscalyear_id:0
 #: field:integrity.finance.wizard,fiscalyear_id:0
+#: report:addons/board/report/integrity.mako:88
 #, python-format
 msgid "Fiscal year"
 msgstr "Exercice Comptable"
@@ -115051,6 +115062,21 @@ msgid "Cannot update these products, ED/BN attributes have not changed since the
 msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
 
 #. module: board
+#: report:addons/board/report/integrity.mako:83
+msgid "Filter used: "
+msgstr "Filtre utilisé: "
+
+#. module: board
+#: report:addons/board/report/integrity.mako:82
+msgid "from "
+msgstr "de"
+
+#. module: board
+#: report:addons/board/report/integrity.mako:90
+msgid "to "
+msgstr "à"
+
+#. module: board
 #: code:addons/board/queries_finance.py:134
 #, python-format
 msgid "Not runs entries"
@@ -115079,3 +115105,14 @@ msgstr "Date de Synchronisation"
 #, python-format
 msgid "xml.id"
 msgstr "xml.id"
+
+#. module: board
+#: report:addons/board/report/integrity.mako:81
+msgid "Prop. Instance export"
+msgstr "Instance prop. export"
+
+#. module: board
+#: report:addons/board/report/integrity.mako:89
+msgid "Prop. Instances selected"
+msgstr "Instances prop. sélectionnées"
+
