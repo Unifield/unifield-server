@@ -843,7 +843,7 @@ class msf_import_export(osv.osv_memory):
                                     self._cache[dbname].setdefault('product.product.%s' % field, {})
                                     self._cache[dbname]['product.product.%s.%s' % (field, value)] = key
                                 break
-                if fields_def[field]['type'] == 'many2many':
+                if fields_def[field]['type'] == 'many2many' and field != 'fp_account_ids':
                     new_obj = self.pool.get(fields_def[field]['relation'])
                     ret = [(6, 0, [])]
                     for name in value.split(','):
@@ -964,8 +964,13 @@ class msf_import_export(osv.osv_memory):
                                 data[points[0]] = False
                             elif line_data[n]:
                                 data[points[0]] = _get_obj(h, line_data[n], fields_def) or False
-                        elif fields_def[points[0]]['type'] == 'many2many' and line_data[n]:
-                            data.setdefault(points[0], []).append((4, _get_obj(h, line_data[n], fields_def)))
+                        elif fields_def[points[0]]['type'] == 'many2many' and line_data[n] :
+                            if points[0] == 'fp_account_ids' :
+                                value = process_data(points[0], line_data[n], fields_def)
+                                if value is not None:
+                                    data[points[0]] = value
+                            else:
+                                data.setdefault(points[0], []).append((4, _get_obj(h, line_data[n], fields_def)))
 
                 if not line_ok:
                     rejected.append((row_index+1, line_data, ''))
@@ -1047,6 +1052,12 @@ class msf_import_export(osv.osv_memory):
                             raise Exception(_('The Parent Analytic Account must be a View type Funding Pool.'))
                     # Cost Centers
                     if data.get('cost_center_ids'):
+                        # Block the possibility to have both a list of Cost Centers and "Allow all Cost Centers" set to "True"
+                        if data.get('allow_all_cc_with_fp'):
+                            raise Exception(_('Import error for account "%s" : If listing Cost Centers, "Allow all Cost Centers" must be set to False.') % data.get('name'))
+                        else:
+                            # Listing "Cost Centers" unticks the box "Allow all Cost Centers" in the FP form
+                            data['allow_all_cc_with_fp'] = False
                         cc_list = []
                         for cost_center in data.get('cost_center_ids').split(','):
                             cc = cost_center.strip()
@@ -1062,6 +1073,12 @@ class msf_import_export(osv.osv_memory):
                         data['cost_center_ids'] = [(6, 0, [])]
                     # Account/Destination
                     if data.get('tuple_destination_account_ids'):
+                        # Block the possibility to have both "Accounts/Destinations" and "G/L Accounts
+                        if data.get('fp_account_ids'):
+                            raise Exception(_('Import error for account "%s" : Listing both Accounts/Destinations and G/L Accounts is not allowed') % data.get('name'))
+                        else:
+                            # Listing "Accounts/Destinations" unticks the box "Select Accounts Only" in the FP form
+                            data['select_accounts_only'] = False
                         dest_acc_list = []
                         for destination_account in data.get('tuple_destination_account_ids').split(','):
                             dest_acc_ids = []
@@ -1080,6 +1097,28 @@ class msf_import_export(osv.osv_memory):
                         data['tuple_destination_account_ids'] = [(6, 0, dest_acc_list)]
                     else:
                         data['tuple_destination_account_ids'] = [(6, 0, [])]
+                    # G/L Accounts
+                    if data.get('fp_account_ids'):
+                        gl_list = []
+                        # Block the possibility to have both "Accounts/Destinations" and "G/L Accounts
+                        if data.get('tuple_destination_account_ids')[0][2]:     # at this stage even though the dest/acc is empty, data['tuple_destination_account_ids'] is filled with (6, 0, [])
+                            raise Exception(_('Import error for account "%s" : Listing both Accounts/Destinations and G/L Accounts is not allowed') % data.get('name'))
+                        else:
+                            # Listing "G/L Accounts" ticks the box "Select Accounts Only" in the FP form
+                            data['select_accounts_only'] = True
+                        gl_iter = data.get('fp_account_ids').split(',')
+                        for name in gl_iter:
+                            name = name.strip()
+                            # Allow the same accounts as in the interface
+                            gl_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('active', '=', 't'), ('code', '=', name), ('user_type_code', 'in', ['expense', 'income'])]
+                            gl_ids = acc_obj.search(cr, uid, gl_dom, limit=1, context=context)
+                            if gl_ids:
+                                gl_list.append(gl_ids[0])
+                            else:
+                                raise Exception(_('Import error for account "%s" : G/L Account "%s" not found or not of type Income or Expense') % (data.get('name'), name))
+                        data['fp_account_ids'] = [(6, 0, gl_list)]
+                    else:
+                        data['fp_account_ids'] = [(6, 0, [])]
 
                 # Destinations
                 dest_cc_tuple_list = []
