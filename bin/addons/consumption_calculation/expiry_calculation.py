@@ -192,7 +192,7 @@ class expiry_quantity_report_line(osv.osv_memory):
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'product_code': fields.char(string='Ref.', size=64, required=True),
         'product_name': fields.char(string='Name', size=128, required=True),
-        'uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom'),
+        'uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom', write_relate=False),
         'real_stock': fields.float(digits=(16, 2), string='Real stock', related_uom='uom_id'),
         'expired_qty': fields.float(digits=(16, 2), string='Batch exp.', related_uom='uom_id'),
         'batch_number': fields.char(size=64, string='Batch'),
@@ -912,7 +912,7 @@ class product_likely_expire_report_item_line(osv.osv):
         'location_id': fields.many2one('stock.location', string='Location'),
         'available_qty': fields.float(digits=(16,2), string='Available Qty.', related_uom='uom_id'),
         'expired_qty': fields.float(digits=(16,2), string='Expired Qty.', related_uom='uom_id'),
-        'expired_date': fields.related('lot_id', 'life_date', type='date', string='Expiry date', store=True),
+        'expired_date': fields.related('lot_id', 'life_date', type='date', string='Expiry date', store=True, write_relate=False),
         'uom_id': fields.many2one('product.uom', string='UoM'),
     }
 

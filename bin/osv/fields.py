@@ -1018,9 +1018,9 @@ class related(function):
     def __init__(self, *arg, **args):
         self.arg = arg
         self._relations = []
-        write_fnct = self._fnct_write
-        if not args.get('write_relate', True):
-            write_fnct = None
+        write_fnct = None
+        if args.get('write_relate', False):
+            write_fnct = self._fnct_write
 
         super(related, self).__init__(self._fnct_read, arg, write_fnct, fnct_inv_arg=arg, method=True, fnct_search=self._fnct_search, **args)
         if self.store is True:

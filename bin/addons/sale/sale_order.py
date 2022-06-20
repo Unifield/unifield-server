@@ -694,7 +694,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True, internal=1),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
         'active': fields.boolean('Active', readonly=True),
-        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
+        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product', write_relate=False),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
@@ -2211,8 +2211,8 @@ class sale_order_line(osv.osv):
         'display_resourced_orig_line': fields.function(_get_display_resourced_orig_line, method=True, type='char', readonly=True, string='Original FO/IR line', help='Original line from which the current one has been cancel and ressourced'),
         'resourced_at_state': fields.char('Resourced at state', size=128, help='The state of the original line when the resourced line has been created'),
         'stock_take_date': fields.date('Date of Stock Take', required=False),
-        'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer'),
-        'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman'),
+        'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer', write_relate=False),
+        'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman', write_relate=False),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'is_line_split': fields.boolean(string='This line is a split line?'),  # UTP-972: Use boolean to indicate if the line is a split line
         'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
@@ -3845,12 +3845,7 @@ class expected_sale_order_line(osv.osv):
             string='Purchase order line',
             ondelete='cascade',
         ),
-        'po_id': fields.related(
-            'po_line_id',
-            'order_id',
-            type='many2one',
-            relation='purchase.order',
-        ),
+        'po_id': fields.related('po_line_id', 'order_id', type='many2one', relation='purchase.order', write_relate=False),
     }
 
 expected_sale_order_line()
@@ -4036,6 +4031,7 @@ class sale_order_leave_close(osv.osv_memory):
             type='selection',
             string='Order state',
             selection=SALE_ORDER_STATE_SELECTION,
+            write_relate=False,
         ),
         'action': fields.selection(
             selection=[
