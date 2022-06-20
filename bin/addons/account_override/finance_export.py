@@ -216,6 +216,8 @@ class finance_archive():
                     fileparams.get('query_tpl_context'))
             if fileparams.get('query_params', False):
                 cr.execute(sql, fileparams['query_params'])
+            elif fileparams.get('dict_query_params', False):
+                cr.execute(sql, fileparams['dict_query_params'])
             else:
                 cr.execute(sql)
             sqlres = cr.fetchall()
