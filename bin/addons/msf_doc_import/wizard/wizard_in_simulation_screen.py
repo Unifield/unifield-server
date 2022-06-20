@@ -990,7 +990,7 @@ Nothing has been imported because of %s. See below:
                                                        'percent_completed': percent_completed}, context=context)
                         vals = values.get(file_line[0], [])
                         if file_line[1] == 'match':
-                            err_msg = wl_obj.import_line(cr, uid, in_line, vals, prodlot_cache, context=context)
+                            err_msg = wl_obj.import_line(cr, uid, in_line, vals, prodlot_cache, wiz.with_pack, context=context)
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [in_line], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         elif file_line[1] == 'split':
@@ -1007,7 +1007,7 @@ Nothing has been imported because of %s. See below:
                                                      'error_msg': '',
                                                      'parent_line_id': in_line,
                                                      'move_id': False}, context=context)
-                            err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, context=context)
+                            err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, wiz.with_pack, context=context)
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         # Commit modifications
@@ -1054,7 +1054,7 @@ Nothing has been imported because of %s. See below:
                     new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
                                                         'line_number': vals.get('line_number') and int(vals.get('line_number', 0)) or False,
                                                         'simu_id': wiz.id}, context=context)
-                    err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, context=context)
+                    err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, wiz.with_pack, context=context)
                     if in_line in not_ok_file_lines:
                         wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[in_line]}, context=context)
 
@@ -1467,7 +1467,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'integrity_status': 'empty',
     }
 
-
     def check_exp_date(self, cr, uid, exp_value, context=None):
         if context is None:
             context = {}
@@ -1486,8 +1485,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         return res
 
-
-    def import_line(self, cr, uid, ids, values, prodlot_cache=None, context=None):
+    def import_line(self, cr, uid, ids, values, prodlot_cache=None, with_pack=None, context=None):
         '''
         Write the line with the values
         '''
@@ -1681,6 +1679,21 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'imp_batch_name': False,
                     'imp_exp_date': False,
                 })
+
+            # Check stock in Cross Docking
+            if write_vals.get('imp_product_qty') and with_pack and \
+                    (write_vals.get('imp_batch_id') or write_vals.get('imp_exp_date')):
+                cd_ctx = context.copy()
+                cd_ctx.update({
+                    'location_id': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
+                                                                                       'stock_location_cross_docking')[1],
+                    'prodlot_id': write_vals.get('imp_batch_id', False)
+                })
+                if prod_obj.browse(cr, uid, prod_id, fields_to_fetch=['qty_allocable'], context=cd_ctx).qty_allocable < 0:
+                    err_msg = _('There is not enough allocable stock in Cross Docking to process the product %s with a quantity of %s') \
+                              % (product.default_code, write_vals['imp_product_qty'])
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
 
             # Message ESC 1
             write_vals['message_esc1'] = values.get('message_esc1')

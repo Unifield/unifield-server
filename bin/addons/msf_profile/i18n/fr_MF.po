@@ -115048,3 +115048,9 @@ msgstr "Cellule E7: la Règle de Réappro du fichier: \"%s\" ne correspond pas a
 #, python-format
 msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
 msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1693
+#, python-format
+msgid "There is not enough allocable stock in Cross Docking to process the product %s with a quantity of %s"
+msgstr "Il n'y a pas assez de stock attribuable en Transbordement pour traiter le produit %s avec une quantité de %s"
