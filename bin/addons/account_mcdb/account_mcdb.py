@@ -52,7 +52,7 @@ class account_mcdb(osv.osv):
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
         'partner_id': fields.many2one('res.partner', string="Partner"),  # not used since US-3427
         'partner_ids': fields.many2many(obj='res.partner', rel='partner_mcdb', id1='mcdb_id', id2='partner_id',
-                                        string='Partners', order_by='name, id'),
+                                        string='Partners', order_by='name, id', display_inactive=True),
         'employee_id': fields.many2one('hr.employee', string="Employee"),  # not used since US-3427
         'employee_ids': fields.many2many(obj='hr.employee', rel='employee_mcdb', id1='mcdb_id', id2='employee_id',
                                          string='Employees', order_by='employee_type, identification_id, id'),
