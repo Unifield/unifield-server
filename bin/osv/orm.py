@@ -3312,7 +3312,7 @@ class orm(orm_template):
                                 ('timestamp', 'date', 'date', '::date'),
                                 ('numeric', 'float', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                                 ('float8', 'float', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
-                                ('int4', 'integer_big', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
+                                ('int4', 'integer', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                                 ('int4', 'int8', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                                 ('int4', 'many2one', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                             ]

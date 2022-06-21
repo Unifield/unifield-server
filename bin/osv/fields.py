@@ -148,7 +148,7 @@ class integer(_column):
     _symbol_get = lambda self,x: x or 0
 
 class integer_big(_column):
-    _type = 'integer_big'
+    _type = 'integer'
     # do not reference the _symbol_* of integer class, as that would possibly
     # unbind the lambda functions
     _symbol_c = '%s'

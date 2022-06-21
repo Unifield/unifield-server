@@ -50,5 +50,16 @@ def migrate(cr, version):
         'update_stock_level() CASCADE'
     ]:
         cr.execute('drop function if exists %s' % x) # not_a_user_entry
+
+    for table, col in [
+            ('wkf_instance', 'uid'),
+            ('wkf_witm_trans', 'trans_id'),
+            ('wkf_witm_trans', 'inst_id'),
+            ('wkf_logs', 'res_id'),
+            ('wkf_logs', 'uid'),
+            ('wkf_logs', 'act_id'),
+
+    ]:
+        cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" type int8' % (table, col)) # not_a_user_entry
     return True
 

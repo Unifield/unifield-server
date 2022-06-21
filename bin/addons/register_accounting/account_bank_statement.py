@@ -181,7 +181,7 @@ class account_bank_statement(osv.osv):
         return res
 
     _columns = {
-        'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer_big', string='Id', readonly="1",
+        'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
                                       help='Virtual Field that take back the id of the Register'),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'closing_balance_frozen_date': fields.date("Closing balance frozen date"),

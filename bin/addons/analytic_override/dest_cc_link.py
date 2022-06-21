@@ -79,7 +79,7 @@ class dest_cc_link(osv.osv):
         'cc_name': fields.related('cc_id', 'name', type="char", string="Cost Center Name", readonly=True, write_relate=False, store=False),
         'active_from': fields.date('Activation Combination Dest / CC from', required=False),
         'inactive_from': fields.date('Inactivation Combination Dest / CC from', required=False),
-        'current_id': fields.function(_get_current_id, method=1, type='integer_big', internal=1, string="DB Id (used by the UI)"),
+        'current_id': fields.function(_get_current_id, method=1, type='integer', internal=1, string="DB Id (used by the UI)"),
     }
 
     _order = 'dest_id, cc_code, id'

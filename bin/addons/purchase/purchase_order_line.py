@@ -534,7 +534,7 @@ class purchase_order_line(osv.osv):
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State',
                                       help='for internal use only'),
         # openerp bug: id is not given to onchanqge call if we are into one2many view
-        'fake_id': fields.function(_get_fake_id, type='integer_big', method=True, string='Id',
+        'fake_id': fields.function(_get_fake_id, type='integer', method=True, string='Id',
                                    help='for internal use only'),
         'old_price_unit': fields.float(string='Old price',
                                        digits_compute=dp.get_precision('Purchase Price Computation')),

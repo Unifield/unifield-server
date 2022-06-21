@@ -174,7 +174,7 @@ class wizard_common_import_line(osv.osv_memory):
         'product_ids': fields.many2many('product.product', 'product_add_in_line_rel',
                                         'wiz_id', 'product_id', string='Products'),
         'search_default_not_restricted': fields.integer('Search default not restricted', invisible=True),  # UFTP-15 (for context reinject in product_ids m2m for 'add multiple lines' button)
-        'current_id': fields.function(_get_current_id, method=True, type='integer_big', string='ID'),
+        'current_id': fields.function(_get_current_id, method=True, type='integer', string='ID'),
         'msg': fields.text('Msg'),
         'display_error': fields.boolean('Error', readonly=1),
         'already_running': fields.boolean('Already running'),

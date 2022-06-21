@@ -676,7 +676,7 @@ class account_journal(osv.osv):
         'is_active': fields.boolean('Active'),
         'is_default': fields.function(_get_is_default, method=True, type='boolean', string='Default Journal',
                                       store=False, help="Journals created by default in new instances"),
-        'current_id': fields.function(_get_current_id, method=True, type='integer_big', string="DB Id (used by the UI)",
+        'current_id': fields.function(_get_current_id, method=True, type='integer', string="DB Id (used by the UI)",
                                       store=False, internal=True),
     }
 
