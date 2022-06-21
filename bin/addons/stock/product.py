@@ -181,8 +181,8 @@ class product_product(osv.osv):
         """
         if context is None:
             context = {}
-        states = context.get('states',[])
-        what = context.get('what',())
+        states = context.get('states', [])
+        what = context.get('what', ())
         if not ids:
             ids = self.search(cr, uid, [], order='NO_ORDER')
         res = {}.fromkeys(ids, 0.0)
@@ -191,12 +191,12 @@ class product_product(osv.osv):
 
         if not('in' in what or 'out' in what):
             return res
-        stock_warehouse_obj = self.pool.get('stock.warehouse')
-        stock_location_obj = self.pool.get('stock.location')
+
+        loc_obj = self.pool.get('stock.location')
+
         if context.get('shop', False):
             sale_shop_obj = self.pool.get('sale.shop')
-            warehouse_id = sale_shop_obj.read(cr, uid, int(context['shop']),
-                                              ['warehouse_id'], context=context)['warehouse_id']
+            warehouse_id = sale_shop_obj.read(cr, uid, int(context['shop']), ['warehouse_id'], context=context)['warehouse_id']
             if warehouse_id:
                 context['warehouse'] = warehouse_id[0]
 
@@ -207,9 +207,8 @@ class product_product(osv.osv):
             if type(context['location']) == type(1):
                 location_ids = [context['location']]
             elif type(context['location']) in (type(''), type(u'')):
-                location_ids = stock_location_obj.search(cr, uid,
-                                                         [('name','ilike',context['location'])],
-                                                         order='NO_ORDER', context=context)
+                location_ids = loc_obj.search(cr, uid, [('name', 'ilike', context['location'])], order='NO_ORDER',
+                                              context=context)
             else:
                 location_ids = context['location']
         elif context.get('location_category', False) and context.get('location_usage', False):
@@ -217,21 +216,16 @@ class product_product(osv.osv):
             location_usage = context.get('location_usage')
             assert isinstance(location_category, list)
             assert isinstance(location_usage, list)
-            location_ids = stock_location_obj.search(cr, uid,
-                                                     [('location_category','in', location_category),
-                                                      ('usage', 'in', location_usage)],
-                                                     order='NO_ORDER', context=context)
+            location_ids = loc_obj.search(cr, uid, [('location_category', 'in', location_category),
+                                          ('usage', 'in', location_usage)], order='NO_ORDER', context=context)
         else:
-            location_ids = []
-            wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
-            for w in stock_warehouse_obj.read(cr, uid, wids, ['lot_stock_id'], context=context):
-                location_ids.append(w['lot_stock_id'][0])
+            default_locs_domain = ['|', ('eprep_location', '=', True), '&', ('usage', '=', 'internal'),
+                                   ('location_category', 'in', ('stock', 'consumption_unit', 'eprep'))]
+            location_ids = loc_obj.search(cr, uid, default_locs_domain, context=context)
 
         # build the list of ids of children of the location given by id
-        if context.get('compute_child',True):
-            child_location_ids = stock_location_obj.search(cr, uid,
-                                                           [('location_id', 'child_of', location_ids)],
-                                                           order='NO_ORDER')
+        if context.get('compute_child', True):
+            child_location_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', location_ids)], order='NO_ORDER')
             location_ids = child_location_ids or location_ids
 
         results = []
@@ -241,7 +235,6 @@ class product_product(osv.osv):
         from_strict_date = context.get('from_strict_date',False)
         to_date = context.get('to_date',False)
         date_str = False
-        date_values = False
         where = [tuple(location_ids), tuple(location_ids), tuple(ids), tuple(states)]
 
         pol_query_date = 'coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned)'
@@ -263,15 +256,13 @@ class product_product(osv.osv):
             date_pol_cond = {'from_date': from_date, 'to_date': to_date}
         elif from_date:
             date_str = "date>=%s"
-            date_values = [from_date]
-            where.append(tuple(date_values))
+            where.append(tuple([from_date]))
 
             date_pol_str = 'AND %s>=%%(from_date)s' % (pol_query_date, )
             date_pol_cond = {'from_date': from_date}
         elif to_date:
             date_str = "date<=%s"
-            date_values = [to_date]
-            where.append(tuple(date_values))
+            where.append(tuple([to_date]))
 
             date_pol_str = 'AND %s<=%%(to_date)s' % (pol_query_date, )
             date_pol_cond = {'to_date': to_date}
