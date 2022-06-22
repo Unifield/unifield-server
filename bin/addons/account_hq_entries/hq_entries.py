@@ -486,9 +486,25 @@ class hq_entries(osv.osv):
             view['arch'] = etree.tostring(arch)
         return view
 
-    def onchange_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False):
-        return self.pool.get('analytic.distribution').\
-            onchange_ad_destination(cr, uid, ids, destination_id=destination_id, funding_pool_id=funding_pool_id, account_id=account_id)
+    def onchange_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False, cost_center_id=False):
+        ad_obj = self.pool.get('analytic.distribution')
+        res = ad_obj.onchange_ad_destination(cr, uid, ids, destination_id=destination_id,
+                                             funding_pool_id=funding_pool_id, account_id=account_id) or {}
+        res['domain'] = {'destination_id': [('type', '!=', 'view'), ('category', '=', 'DEST'),
+                                            ('dest_compatible_with_cc_ids', '=', cost_center_id)], }
+        return res
+
+
+    def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False, destination_id=False):
+        """
+        Resets the FP and Dest if not compatible with CC and update DEST domain
+        """
+        ad_obj = self.pool.get('analytic.distribution')
+        res = ad_obj.onchange_ad_cost_center(cr, uid, ids, cost_center_id=cost_center_id, funding_pool_id=funding_pool_id) or {}
+        res['domain'] = {'destination_id': [('type', '!=', 'view'), ('category', '=', 'DEST'), ('dest_compatible_with_cc_ids', '=', cost_center_id)],}
+        if not ad_obj.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id):
+            res['value'] = {'destination_id': False}
+        return res
 
     def _check_cc(self, cr, uid, ids, context=None):
         """

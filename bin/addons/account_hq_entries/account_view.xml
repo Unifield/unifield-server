@@ -24,10 +24,11 @@
                     <field name="amount"/>
                     <field name="currency_id"/>
                     <field name="cost_center_id"
+                           on_change="onchange_cost_center(cost_center_id, analytic_id, destination_id)"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
                            attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="destination_id"
-                           on_change="onchange_destination(destination_id, analytic_id, account_id)"
+                           on_change="onchange_destination(destination_id, analytic_id, account_id, cost_center_id)"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
                            attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="analytic_id"
