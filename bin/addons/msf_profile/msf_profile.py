@@ -56,6 +56,22 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF26.0
+    def us_8428_pi_type_migration(self, cr, uid, *a, **b):
+        '''
+        In PIs, if full_inventory == True, set the type to 'full'
+        If any PI has at least one product, block the modification of the type (products_added = True)
+        '''
+        # Full inventories
+        cr.execute("""UPDATE physical_inventory SET type = 'full' WHERE full_inventory = 't'""")
+
+        # PI with products
+        cr.execute("""UPDATE physical_inventory SET products_added = 't' WHERE id IN (
+            SELECT pi.id FROM physical_inventory pi LEFT JOIN physical_inventory_product_rel rel ON rel.product_id = pi.id 
+            GROUP BY pi.id HAVING count(rel) > 0)""")
+
+        return True
+
     # UF25.0
     def us_8451_split_rr(self, cr, uid, *a, **b):
         if not cr.column_exists('replenishment_segment_line', 'rr_fmc_1') or not cr.column_exists('replenishment_segment_line', 'rr_max_1'):

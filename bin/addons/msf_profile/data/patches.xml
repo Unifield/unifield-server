@@ -787,5 +787,10 @@
             <field name="method">us_5722_update_accruals</field>
         </record>
 
+        <!-- UF26.0 -->
+        <record id="us_8428_pi_type_migration" model="patch.scripts">
+            <field name="method">us_8428_pi_type_migration</field>
+        </record>
+
     </data>
 </openerp>

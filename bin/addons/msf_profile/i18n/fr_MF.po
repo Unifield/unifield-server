@@ -10132,11 +10132,6 @@ msgstr "5"
 msgid "Nauru"
 msgstr "Nauru"
 
-#. module: stock
-#: field:physical.inventory.select.products,full_inventory:0
-msgid "Full Inventory"
-msgstr "Inventaire Complet"
-
 #. module: purchase
 #: model:ir.actions.act_window,name:purchase.action_purchase_order_report_all
 #: model:ir.ui.menu,name:purchase.menu_action_purchase_order_report_all
@@ -45793,11 +45788,6 @@ msgstr "Zone de destination du picking interne."
 msgid "Anguilla"
 msgstr "Anguille"
 
-#. module: stock
-#: view:physical.inventory:0
-msgid "Set as full inventory"
-msgstr "Marquer comme inventaire complet"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:134
 #: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:124
@@ -79024,11 +79014,6 @@ msgstr "Ligne %s. Aucune destination précisée !"
 #, python-format
 msgid "Sourced"
 msgstr "Sourcé"
-
-#. module: stock
-#: view:physical.inventory:0
-msgid "Setting as 'full inventory' is irreversible. Do you confirm ?"
-msgstr "Marquer comme étant 'inventaire complet' est irréversible. Voulez-vous continuer ?"
 
 #. module: consumption_calculation
 #: model:ir.actions.report.xml,name:consumption_calculation.report_incoming_consumption_xls
@@ -115048,3 +115033,28 @@ msgstr "Cellule E7: la Règle de Réappro du fichier: \"%s\" ne correspond pas a
 #, python-format
 msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
 msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
+
+#. module: stock
+#: selection:physical.inventory,type:0
+msgid "Full Inventory count (planned)"
+msgstr "Comptage complet de l'Inventaire (planifié)"
+
+#. module: stock
+#: selection:physical.inventory,type:0
+msgid "Partial Inventory count (planned)"
+msgstr "Comptage partiel de l'Inventaire (planifié)"
+
+#. module: stock
+#: selection:physical.inventory,type:0
+msgid "Stock correction (unplanned)"
+msgstr "Correction du Stock (non planifiée)"
+
+#. module: stock
+#: field:physical.inventory,products_added:0
+msgid "Has or had products"
+msgstr "A ou a eu des produits"
+
+#. module: stock
+#: field:physical.inventory,type:0
+msgid "Inventory Type"
+msgstr "Type d'Inventaire"

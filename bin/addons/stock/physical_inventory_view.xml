@@ -25,18 +25,15 @@
                     <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="responsible"/>
                     <field name="date_done"/>
-                    <field name="full_inventory"/>
+                    <field name="type" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('products_added', '=', True)]}"/>
                     <field name="discrepancies_generated" invisible="1" readonly="1"/>
-                    <button colspan="2" name="set_full_inventory" states="draft" string="Set as full inventory" type="object"
-                        icon="gtk-about" 
-                        confirm="Setting as 'full inventory' is irreversible. Do you confirm ?" 
-                        attrs="{'invisible': [('full_inventory', '=', True)]}"/>
+                    <field name="products_added" invisible="1" readonly="1"/>
                     <notebook colspan="4">
                         <page string="Products" attrs="{'readonly': [('state', 'not in', ['draft'])]}">
                             <button name="action_select_products" states="draft" string="Products Selection" type="object"
-                                    icon="gtk-add"/>
-                                <field colspan="4" name="product_ids" nolabel="1" 
-                                       attrs="{'readonly': ['|', ('full_inventory', '=', True), ('state', 'not in', ['draft'])]}">
+                                    icon="gtk-add" attrs="{'invisible': [('type', '=', 'correction')]}"/>
+                                <field colspan="4" name="product_ids" nolabel="1" on_change="onchange_products(product_ids, products_added)"
+                                       attrs="{'readonly': ['|', ('type', '=', 'full'), ('state', 'not in', ['draft'])]}">
                                 <tree string="Products" noteditable="1">
                                     <field name="default_code"/>
                                     <field name="name"/>
