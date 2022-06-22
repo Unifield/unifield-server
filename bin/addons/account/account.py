@@ -2117,6 +2117,9 @@ class account_tax(osv.osv):
         'partner_id': fields.many2one('res.partner', 'Partner',
                                       domain=[('partner_type', '=', 'external'), ('active', '=', True)],
                                       ondelete='restrict'),
+        'python_compute':fields.text('Python Code'), # deprecated
+        'python_compute_inv':fields.text('Python Code (reverse)'), # deprecated
+        'python_applicable':fields.text('Python Code'), # deprecated
         #
         # Fields used for the VAT declaration
         #
