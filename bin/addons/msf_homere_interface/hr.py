@@ -223,7 +223,7 @@ class hr_employee(osv.osv):
         emp_fp = employee.funding_pool_id
         if emp_dest and emp_cc:
             if not ad_obj.check_dest_cc_compatibility(cr, uid, emp_dest.id, emp_cc.id, context=context):
-                raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Destination %s.') %
+                raise osv.except_osv(_('Error'), _('Employee %s: the Cost Centerzzz %s is not compatible with the Destination %s.') %
                                      (employee.name_resource, emp_cc.code or '', emp_dest.code or ''))
         if emp_fp and emp_cc:
             if not ad_obj.check_fp_cc_compatibility(cr, uid, emp_fp.id, emp_cc.id, context=context):
@@ -303,7 +303,8 @@ class hr_employee(osv.osv):
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
-            self._check_employee_cc_compatibility(cr, uid, emp.id, context=context)
+            if not (context.get('source', False) and context.get('source') == 'payroll_import'):  # US-10124: AD incompatibility should not block imports anymore
+                self._check_employee_cc_compatibility(cr, uid, emp.id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
