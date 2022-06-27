@@ -105,6 +105,26 @@ class PhysicalInventory(osv.osv):
 
         return totals
 
+    def _get_products_added(self, cr, uid, ids, field_name, arg, context=None):
+        if not ids:
+            return False
+
+        cr.execute("""
+            SELECT pi.id, count(rel.product_id)
+            FROM
+                physical_inventory pi
+            LEFT JOIN
+                physical_inventory_product_rel rel ON rel.product_id = pi.id
+            WHERE
+                pi.id in %s
+            GROUP BY pi.id
+        """, (tuple(ids), ))
+        ret = {}
+        for x in cr.fetchall():
+            ret[x[0]] = x[1] > 0
+
+        return ret
+
     _columns = {
         'ref': fields.char('Reference', size=64, readonly=True, sort_column='id'),
         'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -147,7 +167,7 @@ class PhysicalInventory(osv.osv):
         'has_bad_stock': fields.boolean('Has bad Stock', readonly=1),
         'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection', readonly=1),
         'multiple_filter_months': fields.boolean('Multiple Selection', readonly=1),
-        'products_added': fields.boolean('Has or had products', readonly=1),
+        'products_added': fields.function(_get_products_added, method=True, type='boolean', string='Has or had products'),
     }
 
     _defaults = {
@@ -167,9 +187,6 @@ class PhysicalInventory(osv.osv):
     def create(self, cr, uid, values, context):
         context = context is None and {} or context
         values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
-
-        if values.get('product_ids', False) != [(6, 0, [])]:
-            values['products_added'] = True
 
         new_id = super(PhysicalInventory, self).create(cr, uid, values, context=context)
 
@@ -199,12 +216,6 @@ class PhysicalInventory(osv.osv):
                            "multiple_filter_months",
                            "max_filter_months"]
 
-        # US-8428: Prevent type's modification if the original PI has products
-        if self.browse(cr, uid, id_, fields_to_fetch=['product_ids'], context=context).product_ids:
-            default['products_added'] = True
-        else:
-            fields_to_empty.append('products_added')
-
         for field in fields_to_empty:
             default[field] = False
 
@@ -213,21 +224,8 @@ class PhysicalInventory(osv.osv):
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
 
-    def onchange_type(self, cr, uid, ids, context=None):
-        '''
-        Remove the products in case the type changes
-        '''
-        if context is None:
-            context = {}
-        return {'value': {'product_ids': False}}
-
-    def onchange_products(self, cr, uid, ids, product_ids, products_added, context=None):
-        if context is None:
-            context = {}
-        result = {}
-        if ids and not products_added and product_ids != [(6, 0, [])]:
-            result['products_added'] = True
-        return {'value': result}
+    def onchange_products(self, cr, uid, ids, product_ids, context=None):
+        return {'value': {'products_added': product_ids != [(6, 0, [])]}}
 
     def action_select_products(self, cr, uid, ids, context=None):
         """
