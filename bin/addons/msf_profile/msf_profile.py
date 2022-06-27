@@ -65,11 +65,6 @@ class patch_scripts(osv.osv):
         # Full inventories
         cr.execute("""UPDATE physical_inventory SET type = 'full' WHERE full_inventory = 't'""")
 
-        # PI with products
-        cr.execute("""UPDATE physical_inventory SET products_added = 't' WHERE id IN (
-            SELECT pi.id FROM physical_inventory pi LEFT JOIN physical_inventory_product_rel rel ON rel.product_id = pi.id 
-            GROUP BY pi.id HAVING count(rel) > 0)""")
-
         return True
 
     # UF25.0

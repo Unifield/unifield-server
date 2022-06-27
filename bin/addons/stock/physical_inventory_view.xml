@@ -25,14 +25,14 @@
                     <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="responsible"/>
                     <field name="date_done"/>
-                    <field name="type" on_change="onchange_type()" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('products_added', '=', True)]}"/>
+                    <field name="type" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('products_added', '=', True)]}"/>
                     <field name="discrepancies_generated" invisible="1" readonly="1"/>
                     <field name="products_added" invisible="1" readonly="1"/>
                     <notebook colspan="4">
                         <page string="Products" attrs="{'readonly': [('state', 'not in', ['draft'])]}">
                             <button name="action_select_products" states="draft" string="Products Selection" type="object"
                                     icon="gtk-add" attrs="{'invisible': [('type', '=', 'correction')]}"/>
-                                <field colspan="4" name="product_ids" nolabel="1" on_change="onchange_products(product_ids, products_added)"
+                                <field colspan="4" name="product_ids" nolabel="1" on_change="onchange_products(product_ids)"
                                        attrs="{'readonly': ['|', ('type', '=', 'full'), ('state', '!=', 'draft')]}">
                                 <tree string="Products" noteditable="1">
                                     <field name="default_code"/>
