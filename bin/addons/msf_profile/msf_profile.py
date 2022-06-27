@@ -60,9 +60,7 @@ class patch_scripts(osv.osv):
     def us_8428_pi_type_migration(self, cr, uid, *a, **b):
         '''
         In PIs, if full_inventory == True, set the type to 'full'
-        If any PI has at least one product, block the modification of the type (products_added = True)
         '''
-        # Full inventories
         cr.execute("""UPDATE physical_inventory SET type = 'full' WHERE full_inventory = 't'""")
 
         return True

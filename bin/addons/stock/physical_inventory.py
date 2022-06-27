@@ -165,9 +165,9 @@ class PhysicalInventory(osv.osv):
         'discrepancy_lines_percent_absvalue': fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Percent of absolute value of discrepancies")),
         'bad_stock_msg': fields.text('Bad Stock', readonly=1),
         'has_bad_stock': fields.boolean('Has bad Stock', readonly=1),
-        'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection', readonly=1),
-        'multiple_filter_months': fields.boolean('Multiple Selection', readonly=1),
-        'products_added': fields.function(_get_products_added, method=True, type='boolean', string='Has or had products'),
+        'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection'),
+        'multiple_filter_months': fields.boolean('Multiple Selection'),
+        'products_added': fields.function(_get_products_added, method=True, type='boolean', string='Has products'),
     }
 
     _defaults = {
@@ -225,7 +225,10 @@ class PhysicalInventory(osv.osv):
         pass
 
     def onchange_products(self, cr, uid, ids, product_ids, context=None):
-        return {'value': {'products_added': product_ids != [(6, 0, [])]}}
+        res = {'value': {'products_added': product_ids != [(6, 0, [])]}}
+        if product_ids == [(6, 0, [])]:
+            res['value'].update({'max_filter_months': -1, 'multiple_filter_months': False})
+        return res
 
     def action_select_products(self, cr, uid, ids, context=None):
         """

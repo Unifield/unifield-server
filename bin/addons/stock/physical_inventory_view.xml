@@ -27,6 +27,8 @@
                     <field name="date_done"/>
                     <field name="type" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('products_added', '=', True)]}"/>
                     <field name="discrepancies_generated" invisible="1" readonly="1"/>
+                    <field name="max_filter_months" invisible="1"/>
+                    <field name="multiple_filter_months" invisible="1"/>
                     <field name="products_added" invisible="1" readonly="1"/>
                     <notebook colspan="4">
                         <page string="Products" attrs="{'readonly': [('state', 'not in', ['draft'])]}">

@@ -115051,8 +115051,8 @@ msgstr "Correction du Stock (non planifiée)"
 
 #. module: stock
 #: field:physical.inventory,products_added:0
-msgid "Has or had products"
-msgstr "A ou a eu des produits"
+msgid "Has products"
+msgstr "A des produits"
 
 #. module: stock
 #: field:physical.inventory,type:0
