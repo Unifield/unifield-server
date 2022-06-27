@@ -224,16 +224,9 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 for field in fields:
                     field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
                 # Change FP field
-                try:
-                    fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-                except ValueError:
-                    fp_id = 0
                 fp_fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fp_fields:
-                    if context.get('is_intermission', False):
-                        field.set('domain', "[('id', '=', %s)]" % fp_id)
-                    # If context with "from" exists AND its content is an integer (so an object id)
-                    elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) \
+                    if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) \
                             or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                             or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
