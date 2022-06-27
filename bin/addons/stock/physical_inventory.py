@@ -213,6 +213,14 @@ class PhysicalInventory(osv.osv):
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
 
+    def onchange_type(self, cr, uid, ids, context=None):
+        '''
+        Remove the products in case the type changes
+        '''
+        if context is None:
+            context = {}
+        return {'value': {'product_ids': False}}
+
     def onchange_products(self, cr, uid, ids, product_ids, products_added, context=None):
         if context is None:
             context = {}
