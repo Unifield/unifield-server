@@ -131,9 +131,10 @@ class hr_payroll_import(osv.osv_memory):
         created = 0
         vals = {}
         error_message = ""
+        ad_errors_message = []
         # verify that some data exists
         if not data:
-            return False, res_amount, created, vals, error_message, bs_only
+            return False, res_amount, created, vals, "", error_message, bs_only
         if not field:
             raise osv.except_osv(_('Error'), _('No field given for payroll import!'))
         # Prepare some values
@@ -175,7 +176,7 @@ class hr_payroll_import(osv.osv_memory):
                     cost_center_id = cc_ids[0]
                     cost_center_code = project[0]
                 else:
-                    error_message += _("Invalid Cost Center [%s] will be ignored.") % (project[0])
+                    error_message = _("Invalid Cost Center [%s] will be ignored.") % (project[0])
             if axis1 and axis1[0]:
                 # check if the value exists as a valid DEST in the local system
                 condition = [('category', '=', 'DEST'),('type', '!=', 'view'),('code', '=ilike', axis1[0]),]
@@ -185,7 +186,9 @@ class hr_payroll_import(osv.osv_memory):
                     destination_id = dest_ids[0]
                     destination_code = axis1[0]
                 else:
-                    error_message += _("Invalid Destination [%s] will be ignored.") % (axis1[0])
+                    error_message = error_message + _("Invalid Destination [%s] will be ignored.") % (axis1[0])
+            if error_message:
+                context.update({'errors_found': True})
 
         # Check period
         if not date and not date[0]:
@@ -336,16 +339,15 @@ class hr_payroll_import(osv.osv_memory):
             if wiz_state == 'simu' and to_update_employee:
                 #check cc compat on (cost_center_id, destination_id, employee_data.funding_pool_id)
                 if cost_center_id and destination_id and not ad_obj.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
-                    error_message += (_('Employee %s: the Cost Center %s is not compatible with the Destination %s.') % (employee_data['name_resource'], cost_center_code, destination_code))
+                    ad_errors_message.append(_('Employee %s: the Cost Center %s is not compatible with the Destination %s.') % (employee_data['name_resource'], cost_center_code, destination_code))
                 fp_id = employee_data.get('funding_pool_id', False) and employee_data.get('funding_pool_id')[0]
                 if fp_id and cost_center_id and not ad_obj.check_fp_cc_compatibility(cr, uid, fp_id, cost_center_id, context=context):
-                    error_message += (_('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.') % (employee_data['name_resource'], cost_center_code, employee_data.get('funding_pool_id')[1]))
+                    ad_errors_message.append(_('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.') % (employee_data['name_resource'], cost_center_code, employee_data.get('funding_pool_id')[1]))
         # Write payroll entry
         if wiz_state != 'simu':
             #US-671: In the process mode, update the employee cost center and destination, and use also this one for the payroll object.
             ############################ UPDATE THE EMPLOYEE! AND PREPARE THE LOG FILE WITH WARNING!
-            if to_update_employee and employee_id:
-                context.update({'source': 'payroll_import'})
+            if to_update_employee and employee_id and not context.get('errors_found', False):
                 self.pool.get('hr.employee').write(cr, uid, [employee_id], {'cost_center_id': cost_center_id, 'destination_id': destination_id,}, context)
 
             res = self.pool.get('hr.payroll.msf').create(cr, uid, vals, context={'from': 'import'})
@@ -353,7 +355,7 @@ class hr_payroll_import(osv.osv_memory):
                 created += 1
         else:
             created += 1
-        return True, amount, created, vals, currency[0], error_message, bs_only
+        return True, amount, created, vals, currency[0], error_message, ad_errors_message, bs_only
 
     def _get_homere_password(self, cr, uid, pass_type='payroll'):
         ##### UPDATE HOMERE.CONF FILE #####
@@ -522,6 +524,7 @@ class hr_payroll_import(osv.osv_memory):
 
         filename = ""
         error_msg = ""
+        ad_errors_msg = []
         wiz_state = False
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
@@ -584,12 +587,15 @@ class hr_payroll_import(osv.osv_memory):
                     for line in reader:
                         num_line += 1
                         processed += 1
-                        update, amount, nb_created, vals, ccy, msg, bs_only = self.update_payroll_entries(
+                        update, amount, nb_created, vals, ccy, msg, ad_errors_message, bs_only = self.update_payroll_entries(
                             cr, uid, data=line, field=field,
                             date_format=wiz.date_format,
                             wiz_state=wiz.state,
-                            bs_only=bs_only)
+                            bs_only=bs_only,
+                            context=context)
                         res_amount += round(amount, 2)
+                        for block in ad_errors_message:
+                            ad_errors_msg.append(_("Line %s: %s") % (str(num_line), block))
                         if not update:
                             res = False
                         if num_line == 2:  # the first line containing data
@@ -600,8 +606,10 @@ class hr_payroll_import(osv.osv_memory):
                                                                    'Please use one file per currency.') % ccy)
                             currency_list.append(ccy)
                         created += nb_created
+
                         if msg:
                             file_error_msg += _("Line %s: %s\n") % (str(num_line), msg)
+
                     if bs_only:
                         raise osv.except_osv(_('Error'), _('The file "%s" contains only B/S lines.') % csvfile)
 
@@ -659,16 +667,20 @@ class hr_payroll_import(osv.osv_memory):
         if wiz_state == 'simu' and ids:
             # US_201: if check raise no error, change state to process
             # US-671: Show message in the wizard if there was warning or not.
-            # US-10124: No warnings related to employees AD should be blocking anymore
             wiz_state = 'proceed'
-            if error_msg:
+            if ad_errors_msg:
+                error_msg = '%s\n--------------------\n%s' % (_('Import can be processed but with the warnings below. \n'
+                                                                 '(If analytic distribution in payroll is invalid, employee analytic distribution will remain untouched).'), "\n".join(ad_errors_msg))
+                context.update({'errors_found': True})
+            elif error_msg:
                 error_msg = _("Import can be processed but with the following warnings:\n-------------------- \n") + error_msg
+                context.update({'errors_found': True})
             else:
                 error_msg = _("No warning found for this file. Import can be now processed.")
+                context.update({'errors_found': False})
 
-            self.write(cr, uid, [wiz.id], {'state': wiz_state, 'msg': error_msg})
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr,
-                                                                          uid, 'msf_homere_interface', 'payroll_import_wizard')
+            self.write(cr, uid, [wiz.id], {'state': wiz_state, 'msg': error_msg}, context=context)
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_wizard')
             view_id = view_id and view_id[1] or False
 
             return {
@@ -693,7 +705,9 @@ class hr_payroll_import(osv.osv_memory):
         # This is to redirect to Payroll Tree View
         context.update({'from': 'payroll_import'})
 
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename,'created': created, 'total': processed, 'state': 'payroll',}, context=context)
+        res_id = self.pool.get('hr.payroll.import.confirmation')\
+            .create(cr, uid, {'filename': filename,'created': created, 'total': processed, 'state': 'payroll'},
+                    context=context)
 
         return {
             'name': 'Payroll Import Confirmation',
