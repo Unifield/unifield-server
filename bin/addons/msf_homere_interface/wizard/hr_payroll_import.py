@@ -347,7 +347,11 @@ class hr_payroll_import(osv.osv_memory):
         if wiz_state != 'simu':
             #US-671: In the process mode, update the employee cost center and destination, and use also this one for the payroll object.
             ############################ UPDATE THE EMPLOYEE! AND PREPARE THE LOG FILE WITH WARNING!
-            if to_update_employee and employee_id and not context.get('errors_found', False):
+            # US-10124: Only update AD of Employees without AD errors in payroll file
+            if context.get('emp_with_err_list', False):
+                # Convert the comma-separated string to list of int
+                emp_with_err_list = map(int, context.get('emp_with_err_list').split(","))
+            if to_update_employee and employee_id and emp_with_err_list and employee_id not in emp_with_err_list:
                 self.pool.get('hr.employee').write(cr, uid, [employee_id], {'cost_center_id': cost_center_id, 'destination_id': destination_id,}, context)
 
             res = self.pool.get('hr.payroll.msf').create(cr, uid, vals, context={'from': 'import'})
@@ -355,7 +359,7 @@ class hr_payroll_import(osv.osv_memory):
                 created += 1
         else:
             created += 1
-        return True, amount, created, vals, currency[0], error_message, ad_errors_message, bs_only
+        return True, amount, created, vals, currency[0], error_message, ad_errors_message, bs_only, employee_id
 
     def _get_homere_password(self, cr, uid, pass_type='payroll'):
         ##### UPDATE HOMERE.CONF FILE #####
@@ -526,6 +530,9 @@ class hr_payroll_import(osv.osv_memory):
         error_msg = ""
         ad_errors_msg = []
         wiz_state = False
+        # US-10124: Store ids of Emp with AD errors to use it when the wizard is in proceed state
+        # to only allow AD update of employees without errors
+        emp_with_err_list = []
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
             if not wiz.file:
@@ -587,12 +594,14 @@ class hr_payroll_import(osv.osv_memory):
                     for line in reader:
                         num_line += 1
                         processed += 1
-                        update, amount, nb_created, vals, ccy, msg, ad_errors_message, bs_only = self.update_payroll_entries(
+                        update, amount, nb_created, vals, ccy, msg, ad_errors_message, bs_only, emp_id = self.update_payroll_entries(
                             cr, uid, data=line, field=field,
                             date_format=wiz.date_format,
                             wiz_state=wiz.state,
                             bs_only=bs_only,
                             context=context)
+                        if emp_id and msg or ad_errors_message:
+                            emp_with_err_list.append(emp_id)
                         res_amount += round(amount, 2)
                         for block in ad_errors_message:
                             ad_errors_msg.append(_("Line %s: %s") % (str(num_line), block))
@@ -609,6 +618,10 @@ class hr_payroll_import(osv.osv_memory):
 
                         if msg:
                             file_error_msg += _("Line %s: %s\n") % (str(num_line), msg)
+                    # Convert the array of Emp ids with AD errors into a comma separated string to easily share it through context
+                    emp_err_list = [str(emp) for emp in emp_with_err_list]
+                    emp_with_err_list = ",".join(emp_err_list)
+                    context.update({'emp_with_err_list': emp_with_err_list})
 
                     if bs_only:
                         raise osv.except_osv(_('Error'), _('The file "%s" contains only B/S lines.') % csvfile)
