@@ -148,7 +148,7 @@ class RPCGateway(object):
                 common.error('PatchFailed', err.code)
             elif err.code.startswith('AccessDenied'):
                 raise openobject.errors.AccessDenied(err.code, _('Access Denied'))
-            elif _('relation') in err.type:
+            elif err.code.startswith('BadRestoration'):
                 common.error('BadRestoration', err.code)
             else:
                 common.error(_('Application Error'), err.backtrace)
