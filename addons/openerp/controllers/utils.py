@@ -245,6 +245,9 @@ def secured(fn):
             elif action == 'login' and login_ret == -6:
                 return login(cherrypy.request.path_info, message=_('Your IP have been blocked because of too many bad login attempts. It will be unblocked after %s minutes.') % rpc.BLOCKED_MIN_COUNT,
                              db=db, user=user, action=action, origArgs=get_orig_args(kw))
+            elif action == 'login' and login_ret == -8:
+                return login(cherrypy.request.path_info, message=_('Login refused. Database restore has failed, please delete it and try again'),
+                             db=db, user=user, action=action, origArgs=get_orig_args(kw))
             elif login_ret <= 0:
                 # Bad login attempt
                 if action == 'login':

@@ -71,7 +71,7 @@
         <hr style="margin: 0 0 !important; background-color: #5A5858;">
         %if form.name == 'restore':
         <div class="restore_warning">
-            ${_('You will automatically be redirected to the Login screen after the database is fully restored. Please wait until the process is completed after it is started.')}
+            ${_('You will automatically be redirected to the Login screen after the database is fully restored. Please wait until the process is completed.')}
         </div>
         %endif
         <div>${form.display()}</div>

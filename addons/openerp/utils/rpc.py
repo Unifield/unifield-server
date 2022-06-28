@@ -148,6 +148,8 @@ class RPCGateway(object):
                 common.error('PatchFailed', err.code)
             elif err.code.startswith('AccessDenied'):
                 raise openobject.errors.AccessDenied(err.code, _('Access Denied'))
+            elif _('relation') in err.type:
+                common.error('BadRestoration', err.code)
             else:
                 common.error(_('Application Error'), err.backtrace)
 
@@ -372,6 +374,8 @@ class RPCSession(object):
                 return -5
             elif e.title == 'PasswordExpired':
                 return -7
+            elif e.title == 'BadRestoration':
+                return -8
             return -1
 
         if uid <= 0:
