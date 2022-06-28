@@ -1869,7 +1869,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'prodlot_id': batch_id,
                     'product_id': line.imp_product_id.id,
                     'uom_id': line.imp_uom_id.id,
-                    'ordered_quantity': move.product_qty,
+                    'ordered_quantity': line.imp_product_qty,
                     'quantity': line.imp_product_qty,
                     'wizard_id': partial_id,
                     'pack_info_id': line.pack_info_id and line.pack_info_id.id or False,
