@@ -187,8 +187,6 @@ class hr_payroll_import(osv.osv_memory):
                     destination_code = axis1[0]
                 else:
                     error_message = error_message + _("Invalid Destination [%s] will be ignored.") % (axis1[0])
-            if error_message:
-                context.update({'errors_found': True})
 
         # Check period
         if not date and not date[0]:
@@ -336,7 +334,7 @@ class hr_payroll_import(osv.osv_memory):
                 'free1_id': employee_data and employee_data.get('free1_id', False) and employee_data.get('free1_id')[0] or False,
                 'free2_id': employee_data and employee_data.get('free2_id', False) and employee_data.get('free2_id')[0] or False,
             })
-            if wiz_state == 'simu' and to_update_employee:
+            if to_update_employee:
                 #check cc compat on (cost_center_id, destination_id, employee_data.funding_pool_id)
                 if cost_center_id and destination_id and not ad_obj.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
                     ad_errors_message.append(_('Employee %s: the Cost Center %s is not compatible with the Destination %s.') % (employee_data['name_resource'], cost_center_code, destination_code))
@@ -348,10 +346,7 @@ class hr_payroll_import(osv.osv_memory):
             #US-671: In the process mode, update the employee cost center and destination, and use also this one for the payroll object.
             ############################ UPDATE THE EMPLOYEE! AND PREPARE THE LOG FILE WITH WARNING!
             # US-10124: Only update AD of Employees without AD errors in payroll file
-            if context.get('emp_with_err_list', False):
-                # Convert the comma-separated string to list of int
-                emp_with_err_list = map(int, context.get('emp_with_err_list').split(","))
-            if to_update_employee and employee_id and emp_with_err_list and employee_id not in emp_with_err_list:
+            if to_update_employee and employee_id and not ad_errors_message and not error_message:
                 self.pool.get('hr.employee').write(cr, uid, [employee_id], {'cost_center_id': cost_center_id, 'destination_id': destination_id,}, context)
 
             res = self.pool.get('hr.payroll.msf').create(cr, uid, vals, context={'from': 'import'})
@@ -359,7 +354,7 @@ class hr_payroll_import(osv.osv_memory):
                 created += 1
         else:
             created += 1
-        return True, amount, created, vals, currency[0], error_message, ad_errors_message, bs_only, employee_id
+        return True, amount, created, vals, currency[0], error_message, ad_errors_message, bs_only
 
     def _get_homere_password(self, cr, uid, pass_type='payroll'):
         ##### UPDATE HOMERE.CONF FILE #####
@@ -530,9 +525,6 @@ class hr_payroll_import(osv.osv_memory):
         error_msg = ""
         ad_errors_msg = []
         wiz_state = False
-        # US-10124: Store ids of Emp with AD errors to use it when the wizard is in proceed state
-        # to only allow AD update of employees without errors
-        emp_with_err_list = []
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
             if not wiz.file:
@@ -594,14 +586,11 @@ class hr_payroll_import(osv.osv_memory):
                     for line in reader:
                         num_line += 1
                         processed += 1
-                        update, amount, nb_created, vals, ccy, msg, ad_errors_message, bs_only, emp_id = self.update_payroll_entries(
+                        update, amount, nb_created, vals, ccy, msg, ad_errors_message, bs_only = self.update_payroll_entries(
                             cr, uid, data=line, field=field,
                             date_format=wiz.date_format,
                             wiz_state=wiz.state,
-                            bs_only=bs_only,
-                            context=context)
-                        if emp_id and msg or ad_errors_message:
-                            emp_with_err_list.append(emp_id)
+                            bs_only=bs_only)
                         res_amount += round(amount, 2)
                         for block in ad_errors_message:
                             ad_errors_msg.append(_("Line %s: %s") % (str(num_line), block))
@@ -618,10 +607,6 @@ class hr_payroll_import(osv.osv_memory):
 
                         if msg:
                             file_error_msg += _("Line %s: %s\n") % (str(num_line), msg)
-                    # Convert the array of Emp ids with AD errors into a comma separated string to easily share it through context
-                    emp_err_list = [str(emp) for emp in emp_with_err_list]
-                    emp_with_err_list = ",".join(emp_err_list)
-                    context.update({'emp_with_err_list': emp_with_err_list})
 
                     if bs_only:
                         raise osv.except_osv(_('Error'), _('The file "%s" contains only B/S lines.') % csvfile)
@@ -680,19 +665,15 @@ class hr_payroll_import(osv.osv_memory):
         if wiz_state == 'simu' and ids:
             # US_201: if check raise no error, change state to process
             # US-671: Show message in the wizard if there was warning or not.
-            wiz_state = 'proceed'
             if ad_errors_msg:
                 error_msg = '%s\n--------------------\n%s' % (_('Import can be processed but with the warnings below. \n'
                                                                  '(If analytic distribution in payroll is invalid, employee analytic distribution will remain untouched).'), "\n".join(ad_errors_msg))
-                context.update({'errors_found': True})
             elif error_msg:
                 error_msg = _("Import can be processed but with the following warnings:\n-------------------- \n") + error_msg
-                context.update({'errors_found': True})
             else:
                 error_msg = _("No warning found for this file. Import can be now processed.")
-                context.update({'errors_found': False})
 
-            self.write(cr, uid, [wiz.id], {'state': wiz_state, 'msg': error_msg}, context=context)
+            self.write(cr, uid, [wiz.id], {'state': 'proceed', 'msg': error_msg})
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_wizard')
             view_id = view_id and view_id[1] or False
 
