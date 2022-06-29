@@ -95,7 +95,7 @@ class wizard_import_ad_line(osv.osv_memory):
             ''', (doc.id, ))  # not_a_user_entry
 
             for x in cr.fetchall():
-                key = (x[1], x[2])
+                key = (x[1], x[2].lower())
                 current_line_add.setdefault(key, []).append(x)
 
 
@@ -122,7 +122,7 @@ class wizard_import_ad_line(osv.osv_memory):
 
             for row in ws.rows:
                 if len(row) > percentage_col:
-                    key = (row[0].value, row[1].value)
+                    key = (row[0].value, row[1].value.lower())
                     if not row[0].value or not row[1].value:
                         # empty line
                         continue

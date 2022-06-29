@@ -337,9 +337,8 @@ Importation completed in %s!
                 header_index = wiz_common_import.get_header_index(
                     cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'invoice_id': invoice_id, 'header_index': header_index})
-                res, res1 = wiz_common_import.check_header_values(
-                    cr, uid, ids, context, header_index,
-                    columns_for_account_line_import)
+                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index,
+                                                                  columns_for_account_line_import)
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
             except osv.except_osv as osv_error:

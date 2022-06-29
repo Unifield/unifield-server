@@ -236,7 +236,7 @@ class wizard_pick_import(osv.osv_memory):
 
         prod_obj = self.pool.get('product.product')
 
-        product_ids = prod_obj.search(cr, uid, [('default_code', '=', line_data['code'])], limit=1, context=context)
+        product_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', line_data['code'])], limit=1, context=context)
         if not product_ids:
             raise osv.except_osv(
                 _('Error'),

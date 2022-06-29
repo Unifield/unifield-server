@@ -687,7 +687,7 @@ class PhysicalInventory(osv.osv):
         cs_to_reset = []
         uom_ids = product_uom_obj.search(cr, uid, [], context=context)
         for uom in product_uom_obj.read(cr, uid, uom_ids, ['name'], context=context):
-            all_uom[uom['name']] = uom['id']
+            all_uom[uom['name'].lower()] = uom['id']
 
         for row_index, row in enumerate(counting_sheet_file.getRows()):
             # === Process header ===
@@ -742,7 +742,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
             # Check product_code and type
             product_code = row.cells[1].data
-            product_ids = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
+            product_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
             product_id = False
             if len(product_ids) == 1:
                 product_id = product_ids[0]
@@ -754,7 +754,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
             # Check UoM
             product_uom_id = False
-            product_uom = row.cells[3].data
+            product_uom = row.cells[3].data.lower()
             if product_uom not in all_uom:
                 add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
             else:
@@ -922,7 +922,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             product_code = row.cells[2].data
             line_no = row.cells[0].data
             # check if line number and product code are matching together
-            product_id = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
+            product_id = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
             disc_line_found = self.pool.get('physical.inventory.discrepancy').search(cr, uid, [
                 ('inventory_id', '=', inventory_rec.id),
                 ('line_no', '=', int(line_no)),

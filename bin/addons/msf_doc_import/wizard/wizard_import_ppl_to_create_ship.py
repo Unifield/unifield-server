@@ -275,7 +275,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                                 ('id', 'not in', treated_lines),
                                 ('picking_id', '=', wiz_browse.picking_id.id),
                                 ('line_number', '=', imp_line_num),
-                                ('product_id.default_code', '=', row.cells[1].data),
+                                ('product_id.default_code', '=', row.cells[1].data.upper()),
                                 ('state', '=', 'assigned'),
                             ]
                             if row.cells[5].data:
@@ -527,7 +527,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         get_header_index(cr, uid, ids, next(reader_iterator), error_list=[], line_num=0, context=context)
                 context.update({'picking_id': picking_id, 'header_index': header_index})
                 res, res1 = wiz_common_import.\
-                    check_header_values(cr, uid, ids, context, header_index, ppl_columns_lines_for_import, ignore_case=True)
+                    check_header_values(cr, uid, ids, context, header_index, ppl_columns_lines_for_import)
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
             except osv.except_osv as osv_error:

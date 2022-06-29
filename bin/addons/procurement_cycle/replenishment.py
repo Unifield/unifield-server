@@ -3605,7 +3605,7 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
             prod_code = row.cells[0].data
             if not prod_code:
                 continue
-            prod_code = prod_code.strip()
+            prod_code = prod_code.strip().upper()
 
             seg_ref = row.cells[3].data
             if not seg_ref:
@@ -4223,12 +4223,12 @@ class product_stock_out(osv.osv):
                 continue
 
             if not row.cells[3].type == 'datetime':
-                line_error.append(_('XLS Line %d: FROM DATE %d, date is not valid, found %s') % (idx, row.cells[3].data))
+                line_error.append(_('XLS Line %d: "FROM DATE" date is not valid, found %s') % (idx, row.cells[3].data))
                 error += line_error
                 continue
 
             if not row.cells[4].type == 'datetime':
-                line_error.append(_('XLS Line %d: TO DATE %d, date is not valid, found %s') % (idx, row.cells[4].data))
+                line_error.append(_('XLS Line %d: "TO DATE" date is not valid, found %s') % (idx, row.cells[4].data))
                 error += line_error
                 continue
 
