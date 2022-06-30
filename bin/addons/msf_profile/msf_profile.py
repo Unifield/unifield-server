@@ -56,6 +56,13 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_9999_custom_accrual_order(self, cr, uid, *a, **b):
+        cr.execute("update msf_accrual_line set order_accrual='1234-01-01' where state != 'draft'")
+        cr.execute("update msf_accrual_line set order_accrual=document_date where state = 'draft'")
+        return True
+
+    # UF27.0
+
     def us_8259_remove_currency_table_wkf(self, cr, uid, *a, **b):
         cr.execute("delete from wkf_workitem where act_id in (select id from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table'))")
         cr.execute("delete from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table')")

@@ -791,5 +791,9 @@
             <field name="method">us_8259_remove_currency_table_wkf</field>
         </record>
 
+        <record id="us_9999_custom_accrual_order" model="patch.scripts">
+            <field name="method">us_9999_custom_accrual_order</field>
+        </record>
+
     </data>
 </openerp>
