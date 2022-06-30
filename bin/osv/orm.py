@@ -3126,6 +3126,8 @@ class orm(orm_template):
             self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
                                 f._rel, self._table, ref)
         else:
+            int8_alter = []
+            int8_field = []
             cr.execute("""
                 SELECT a.attname
                      FROM pg_class c,pg_attribute a,pg_type t
@@ -3136,8 +3138,13 @@ class orm(orm_template):
                      AND typname='int4'
                     """, (f._rel, (f._id1, f._id2)))
             for x in cr.fetchall():
-                self.__schema.warn("Table '%s': column '%s' changed from int4 to int8", f._rel, x[0])
-                cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" type int8' % (f._rel, x[0])) # not_a_user_entry
+                int8_alter.append('ALTER COLUMN "%s" type int8' % x[0])
+                int8_field.append(x[0])
+            if int8_alter:
+                self.__schema.warn("Table '%s' changed from int4 to int8 %s", f._rel, ','.join(int8_field))
+                cr.execute('ALTER TABLE "%s" %s' % (f._rel, ','.join(int8_alter))) # not_a_user_entry
+                cr.commit()
+                self.__schema.warn("Done %s", f._rel)
 
 
     def _auto_init(self, cr, context=None):
@@ -3222,6 +3229,8 @@ class orm(orm_template):
                        "AND a.atttypid=t.oid", (self._table,))
             col_data = dict([(x['attname'], x) for x in cr.dictfetchall()])
 
+            int8_alter = []
+            int8_field = []
             for k in ('id', 'write_uid', 'create_uid'):
                 cr.execute("""
                     SELECT c.relname,a.attname,a.attlen,a.atttypmod,a.attnotnull,a.atthasdef,t.typname,CASE WHEN a.attlen=-1 THEN a.atttypmod-4 ELSE a.attlen END as size
@@ -3233,8 +3242,8 @@ class orm(orm_template):
                          AND typname='int4'
                         """, (self._table, k))
                 if cr.rowcount:
-                    self.__schema.warn("Table '%s': column '%s' changed from int4 to int8", self._table, k)
-                    cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" type int8' % (self._table, k)) # not_a_user_entry
+                    int8_alter.append('ALTER COLUMN "%s" type int8' % (k, ))
+                    int8_field.append(k)
 
             for k in self._columns:
 
@@ -3331,8 +3340,8 @@ class orm(orm_template):
                                     if f_pg_type != f_obj_type:
                                         ok = True
                                         if f_pg_type == 'int4' and c[2] == 'int8':
-                                            self.__schema.warn("Table '%s': column '%s' changed from int4 to int8", self._table, k)
-                                            cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" type int8' % (self._table, k)) # not_a_user_entry
+                                            int8_alter.append('ALTER COLUMN "%s" type int8' % (k, ))
+                                            int8_field.append(k)
                                             break
                                         cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO temp_change_size' % (self._table, k))  # not_a_user_entry
                                         cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, c[2]))  # not_a_user_entry
@@ -3478,6 +3487,11 @@ class orm(orm_template):
                                         "ALTER TABLE %s ALTER COLUMN %s SET NOT NULL"
                                     self.__logger.warn(msg, k, self._table, self._table, k)
                             cr.commit()
+            if int8_alter:
+                self.__schema.warn("Table '%s' changed from int4 to int8 %s", self._table, ','.join(int8_field))
+                cr.execute('ALTER TABLE "%s" %s' % (self._table, ','.join(int8_alter))) # not_a_user_entry
+                cr.commit()
+                self.__schema.warn("Done %s", self._table)
             todo_end_append = todo_end.append
             for order, f, k in todo_update_store:
                 todo_end_append((order, self._update_store, (f, k)))
