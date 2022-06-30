@@ -311,13 +311,14 @@ class msf_accrual_line(osv.osv):
         current_values = self.read(cr, uid, ids, ['document_date', 'date', 'state'], context=context)[0]
         document_date = 'document_date' in vals and vals['document_date'] or current_values['document_date']
         posting_date = 'date' in vals and vals['date'] or current_values['date']
+        changing_state = 'state' in vals and vals['state'] != 'draft' or False
         self.pool.get('finance.tools').check_document_date(cr, uid, document_date, posting_date, context=context)
         # US-9999: create order_accrual column for custom sort of accruals lines
         if document_date:
-            if current_values['state'] == 'draft':
+            if not changing_state and current_values['state'] == 'draft':
                 vals.update({'order_accrual': document_date})
             else:
-                vals.update({'order_accrual': '1234-01-01'})
+                vals.update({'order_accrual': '1901-01-01'})
         res = super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
         self._check_account_compat(cr, uid, ids, context=context)
         return res

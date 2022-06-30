@@ -57,7 +57,7 @@ class patch_scripts(osv.osv):
     }
 
     def us_9999_custom_accrual_order(self, cr, uid, *a, **b):
-        cr.execute("update msf_accrual_line set order_accrual='1234-01-01' where state != 'draft'")
+        cr.execute("update msf_accrual_line set order_accrual='1901-01-01' where state != 'draft'")
         cr.execute("update msf_accrual_line set order_accrual=document_date where state = 'draft'")
         return True
 
