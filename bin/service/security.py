@@ -27,6 +27,7 @@ import re
 from passlib.hash import bcrypt
 from tools.translate import _
 from osv import osv
+from psycopg2._psycopg import ProgrammingError
 PASSWORD_MIN_LENGHT = 8
 
 # When rejecting a password, hide the traceback
@@ -49,10 +50,13 @@ def _get_number_modules(cr, testlogin=False):
         if pooler.pool_dic[cr.dbname]._ready:
             return False
         ready = False
-    cr.execute("select count(id) from ir_module_module where state in ('to install', 'to upgrade')")
-    n = cr.fetchone()
-    if n and n[0]:
-        return n[0]
+    try:
+        cr.execute("select count(id) from ir_module_module where state in ('to install', 'to upgrade')")
+        n = cr.fetchone()
+        if n and n[0]:
+            return n[0]
+    except ProgrammingError:
+        raise Exception("BadRestoration: The table ir_module_module is missing")
     if not ready:
         # when loading the trans. modules are installed but db is not ready
         return True
