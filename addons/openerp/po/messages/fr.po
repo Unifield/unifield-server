@@ -152,6 +152,10 @@ msgstr ""
 msgid "New database name:"
 msgstr "Nom de la nouvelle base de données :"
 
+#: controllers/templates/database.mako:72
+msgid "You will automatically be redirected to the Login screen after the database is fully restored. Please wait until the process is completed."
+msgstr "Vous serez automatiquement redirigé(e) vers l'écran d'Identification une fois que la base de données sera complètement restaurée. Veuillez attendre que le processus soit entièrement terminé."
+
 #: controllers/database.py:69
 msgid ""
 "Choose the name of the database that will be created. The name must not "
@@ -519,6 +523,10 @@ msgstr "Mauvais nom d'utilisateur ou mot de passe"
 #: controllers/utils.py:127 controllers/templates/login_ajax.mako:111
 msgid "Your IP have been blocked because of too many bad login attempts. It will be unblocked after %s minutes."
 msgstr "Votre IP à été bloquée à cause d'un trop grand nombre de connexion infructueuses. Elle sera débloquée dans %s minutes."
+
+#: controllers/utils.py:225
+msgid "Login refused. The database restoration has failed, please delete it and try again"
+msgstr "Identification refusée. La restauration de la base de données a échoué, veuillez la supprimer et recommencer"
 
 #: controllers/view_log.py:32
 msgid "ID"
