@@ -126,10 +126,9 @@ class wizard_import_fo_line(osv.osv_memory):
                         if h_name != 'State' or len(header_row) != mandatory_col_count:
                             tr_header_row = _(tools.ustr(header_row[i]))
                             tr_h_name = _(h_name)
-                            if len(header_row) > i and tr_header_row != tr_h_name:
+                            if len(header_row) > i and tr_header_row.upper() != tr_h_name.upper():
                                 header_error = True
-                                if tr_header_row.upper() == tr_h_name.upper():
-                                    error_list.append(_("\n\tPlease check spelling on column '%s'.") % tr_header_row)
+                                error_list.append(_("\n\tPlease check spelling on column '%s'.") % tr_header_row)
 
                 if header_error:
                     msg = _("\n\tYou can not import this file because the header of columns doesn't match with the expected headers: %s") % ','.join([_(x) for x in columns_for_fo_line_import])
