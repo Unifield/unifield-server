@@ -540,7 +540,7 @@ class res_currency(osv.osv):
                 date = None
 
             if not date:
-                raise osv.except_osv(_('Error'), _("A 'Date' column is needed for each line of %s in this format: '18/10/2016'." % file_to_import))
+                raise osv.except_osv(_('Error'), _("A 'Date' column is needed for each line of %s in this format: '18/10/2016'.") % file_to_import)
 
         import_obj = self.pool.get('import.currencies')
         import_id = import_obj.create(cr, uid, {
@@ -644,10 +644,10 @@ class res_currency(osv.osv):
         # Check on Accrual Lines
         if accrual_line_obj.search_exist(cr, uid,
                                          ['|', ('currency_id', 'in', ids), ('functional_currency_id', 'in', ids),
-                                          ('state', 'in', ['draft', 'partially_posted'])], context=context):
+                                          ('state', 'in', ['draft', 'running'])], context=context):
             raise osv.except_osv(_('Currency currently used!'),
                                  _("The currency you want to %s is used in at least "
-                                   "one Draft or Partially Posted Accrual Line.") % keyword)
+                                   "one Draft or Running Accrual.") % keyword)
 
         return pricelist_ids
 

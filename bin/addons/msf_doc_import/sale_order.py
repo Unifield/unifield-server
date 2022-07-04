@@ -191,12 +191,20 @@ class sale_order_line(osv.osv):
         '''
         Check if the Sale order line has an inactive product
         '''
-        inactive_lines = self.search(cr, uid, [('product_id.active', '=', False), ('id', 'in', ids),
-                                               ('state', 'not in', ['draft', 'cancel', 'cancel_r', 'done'])], context={'procurement_request': True})
-
+        if not ids:
+            return True
+        cr.execute('''select count(sol.id) from
+            sale_order_line sol, product_product p
+            where
+                sol.product_id = p.id and
+                sol.state not in ('draft', 'cancel', 'cancel_r', 'done') and
+                p.active = 'f' and
+                sol.id in %s
+        ''', (tuple(ids),))
+        inactive_lines = cr.fetchone()[0]
         if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            plural = inactive_lines == 1 and _('A product has') or _('Some products have')
+            l_plural = inactive_lines == 1 and _('line') or _('lines')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this line you have to remove/correct the line containing the inactive product (see red %s of the document)') % (plural, l_plural))
         return True
 
@@ -265,6 +273,21 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def onchange_ir_qty(self, cr, uid, ids, product_id, uom_id, product_qty=0.00, price_unit=0.00, context=None):
+        if context is None:
+            context = {}
+
+        sol = {}
+        if ids:
+            sol = self.read(cr, uid, ids[0], ['product_uom_qty', 'product_uos_qty'], context=context)
+
+        res = self.onchange_uom(cr, uid, ids, product_id, uom_id, product_qty, context=context)
+
+        p_unit = res.get('value') and res['value'].get('price_unit', price_unit) or price_unit
+        self.check_digits(cr, uid, res, sol, product_qty, p_unit, context=context)
+
+        return res
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -325,26 +348,5 @@ class sale_order_line(osv.osv):
                 raise osv.except_osv(_('Warning !'), _(message))
         return super(sale_order_line, self).create(cr, uid, vals, context=context)
 
-    def get_error(self, cr, uid, ids, context=None):
-        '''
-        Show error message
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, int):
-            ids = [ids]
-        obj_data = self.pool.get('ir.model.data')
-        view_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'internal_request_line_error_message_view')[1]
-        view_to_return = {
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'sale.order.line',
-            'type': 'ir.actions.act_window',
-            'res_id': ids[0],
-            'target': 'new',
-            'context': context,
-            'view_id': [view_id],
-        }
-        return view_to_return
 
 sale_order_line()

@@ -1,0 +1,72 @@
+-
+  For Accruals (msf.accrual.line), track the creation, modification, and deletion
+-  
+  !python {model: audittrail.rule}: |
+    name = 'Accruals'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'msf.accrual.line')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        fields = ['entry_sequence', 'currency_id', 'third_party_type', 'partner_id', 'employee_id', 'period_id', 'document_date', 
+                  'date', 'accrual_type', 'accrual_account_id', 'analytic_distribution_id', 'description', 'reference', 'state']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'msf.accrual.line'), ('name', 'in', fields)], context=context)
+
+        # For the Sequence
+        field_other_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'msf.accrual.line'), ('name', '=', 'entry_sequence')], context=context)
+        field_other_id = False
+        if field_other_name:
+            field_other_id = field_other_name[0]
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': True,
+            'log_create': True,
+            'field_ids': [(6, 0, fields_ids)],
+            'field_other_id': field_other_id,
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  For Accrual Expense Lines (msf.accrual.line.expense), track the creation, modification, and deletion
+-
+  !python {model: audittrail.rule}: |
+    name = 'Accrual Expense Lines'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'msf.accrual.line.expense')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        fields = ['description', 'reference', 'expense_account_id', 'analytic_distribution_id', 'accrual_amount']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' , 'msf.accrual.line.expense'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'msf.accrual.line.expense'), ('name', '=', 'line_number')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'msf.accrual.line.expense'), ('name', '=', 'accrual_line_id')], context=context)
+
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+            if field_name:
+                name_id = field_name[0]
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': True,
+            'log_create': True,
+            'field_ids': [(6, 0, fields_ids)],
+            'parent_field_id': parent_id,
+            'name_get_field_id': name_id,
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)

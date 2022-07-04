@@ -171,7 +171,7 @@ class hr_payroll_import(osv.osv_memory):
                 if cc_ids and cc_ids[0]:
                     cost_center_id = cc_ids[0]
                 else:
-                    error_message = "Invalid Cost Center [" + project[0] + "] will be ignored. "
+                    error_message = _("Invalid Cost Center [%s] will be ignored.") % (project[0])
             if axis1 and axis1[0]:
                 # check if the value exists as a valid DEST in the local system
                 condition = [('category', '=', 'DEST'),('type', '!=', 'view'),('code', '=ilike', axis1[0]),]
@@ -180,7 +180,7 @@ class hr_payroll_import(osv.osv_memory):
                 if dest_ids and dest_ids[0]:
                     destination_id = dest_ids[0]
                 else:
-                    error_message = error_message + "Invalid Destination [" + axis1[0] + "] will be ignored."
+                    error_message = error_message + _("Invalid Destination [%s] will be ignored.") % (axis1[0])
 
         # Check period
         if not date and not date[0]:
@@ -249,7 +249,7 @@ class hr_payroll_import(osv.osv_memory):
             bs_only = False
             if employee_id:
                 # Create description
-                name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], date_format)))
+                name = _('Salary ') + str(time.strftime(' %b %Y', time.strptime(date[0], date_format)))
                 if not is_counterpart:
                     # US_374: Add Employee number to description
                     name += " - " + employee_identification_id
@@ -281,7 +281,7 @@ class hr_payroll_import(osv.osv_memory):
         if not name:
             name = description and description[0] and ustr(description[0]) or ''
         if is_payroll_rounding:
-            name = 'Payroll rounding'
+            name = _('Payroll rounding')
         if not employee_id:
             if second_description and second_description[0]:
                 ref = ustr(second_description[0])
@@ -455,7 +455,7 @@ class hr_payroll_import(osv.osv_memory):
         # create lines
         name = "%s %s" % (
             header_vals.get('name', ''),
-            UF_SIDE_ROUNDING_LINE.get('name', False),
+            _(UF_SIDE_ROUNDING_LINE.get('name', False)),
         )
         self.pool.get('hr.payroll.msf').create(cr, uid, {
             'date': header_vals['date'],
@@ -614,7 +614,7 @@ class hr_payroll_import(osv.osv_memory):
                         pr_ids = self.pool.get('hr.payroll.msf').search(
                             cr, uid, [
                                 ('state', '=', 'draft'),
-                                ('name', '=', 'Payroll rounding'),
+                                ('name', '=', _('Payroll rounding')),
                                 ('currency_id', '=', header_vals['currency_id']),
                             ])
                         if not pr_ids:
@@ -649,9 +649,9 @@ class hr_payroll_import(osv.osv_memory):
             # US_201: if check raise no error, change state to process
             # US-671: Show message in the wizard if there was warning or not.
             if error_msg:
-                error_msg = "Import can be processed but with the following warnings:\n-------------------- \n" + error_msg
+                error_msg = _("Import can be processed but with the following warnings:\n-------------------- \n") + error_msg
             else:
-                error_msg = "No warning found for this file. Import can be now processed."
+                error_msg = _("No warning found for this file. Import can be now processed.")
 
             self.write(cr, uid, [wiz.id], {'state': 'proceed', 'msg': error_msg})
             view_id = self.pool.get('ir.model.data').get_object_reference(cr,

@@ -50,6 +50,97 @@ class financing_contract_format(osv.osv):
         'overhead_type': 'cost_percentage',
     }
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, int):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        # get previous list of cc
+        previous_cc = {}
+        cr.execute('''
+                select cc.contract_id, array_agg(cc.cost_center_id)
+                from
+                    financing_contract_cost_center cc
+                where 
+                    cc.contract_id = %s
+                group by cc.contract_id
+            ''', (tuple(ids),))
+        for x in cr.fetchall():
+            previous_cc[x[0]] = set(x[1])
+
+
+        previous_fp = {}
+        # get previous list of fp
+        cr.execute('''
+                select fp.contract_id, array_agg(fp.funding_pool_id)
+                from
+                    financing_contract_funding_pool_line fp
+                where 
+                    fp.contract_id = %s
+                group by fp.contract_id
+            ''', (tuple(ids),))
+        for x in cr.fetchall():
+            previous_fp[x[0]] = set(x[1])
+
+        res =  super(financing_contract_format, self).write(cr, uid, ids, vals, context=context)
+
+        # get current list of cc
+        current_cc = {}
+        cr.execute('''
+                select cc.contract_id, array_agg(cc.cost_center_id)
+                from
+                    financing_contract_cost_center cc
+                where 
+                    cc.contract_id = %s
+                group by cc.contract_id
+            ''', (tuple(ids),))
+        for x in cr.fetchall():
+            current_cc[x[0]] = set(x[1])
+
+        current_fp = {}
+        # get previous list of fp
+        cr.execute('''
+                select fp.contract_id, array_agg(fp.funding_pool_id)
+                from
+                    financing_contract_funding_pool_line fp
+                where 
+                    fp.contract_id = %s
+                group by fp.contract_id
+            ''', (tuple(ids),))
+        for x in cr.fetchall():
+            current_fp[x[0]] = set(x[1])
+
+        for _id in ids:
+            # if cc added or fp added, we don't care of fp or cc deletion bc quad used will be deleted
+            if not current_cc.get(_id, set()).issubset(previous_cc.get(_id, set())) or not current_fp.get(_id, set()).issubset(previous_fp.get(_id, set())):
+                # reset flag to refresh quad combination if needed
+                cr.execute('''update financing_contract_contract set quad_gen_date=NULL where format_id = %s''', (_id,))
+
+            if not context.get('sync_update_execution'):
+                # no auto delete from sync , in case of NR on FP lines
+                cc_removed = previous_cc.get(_id, set()) - current_cc.get(_id, set())
+                cc_removed.add(0)
+                current_fp.setdefault(_id, set()).add(0)
+                cr.execute("""
+                    delete from
+                        financing_contract_actual_account_quadruplets quadl using financing_contract_format_line fl, financing_contract_format fm, financing_contract_contract fc, financing_contract_account_quadruplet quad
+                    where
+                        fl.id = quadl.actual_line_id and
+                        fm.id = fl.format_id and
+                        fc.format_id = fm.id and
+                        fm.id = %s and
+                        quad.id = quadl.account_quadruplet_id and
+                        (quad.funding_pool_id not in %s  or quad.cost_center_id in %s)
+                    returning fl.id
+                """, (_id, tuple(current_fp[_id]), tuple(cc_removed)))
+                if cr.rowcount:
+                    # trigger sync
+                    fl = set([x[0] for x in cr.fetchall()])
+                    self.pool.get('financing.contract.format.line').sql_synchronize(cr, fl, 'quadruplet_sync_list')
+
+        return res
+
     def name_get(self, cr, uid, ids, context=None):
         result = self.browse(cr, uid, ids, context=context)
         res = []

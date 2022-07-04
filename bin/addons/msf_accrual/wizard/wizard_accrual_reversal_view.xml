@@ -3,11 +3,11 @@
     <data>
 
         <record id="wizard_accrual_reversal_view" model="ir.ui.view">
-            <field name="name">Post Accrual Reversal</field>
+            <field name="name">Post Accrual Reversals</field>
             <field name="model">wizard.accrual.reversal</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Post Accrual Reversal">
+                <form string="Post Accrual Reversals">
                     <group colspan="4" col="6">
                         <field name="document_date"/>
                         <field name="posting_date"/>
@@ -29,7 +29,7 @@
         </record>
 
         <record id="action_wizard_post_accrual_reversal" model="ir.actions.act_window">
-            <field name="name">Post Accrual Reversal</field>
+            <field name="name">Post Accrual Reversals</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">wizard.accrual.reversal</field>
             <field name="view_type">form</field>
@@ -40,7 +40,7 @@
         <record model="ir.values" id="action_wizard_post_accrual_reversal_values">
             <field name="model_id" ref="msf_accrual.model_msf_accrual_line" />
             <field name="object" eval="1" />
-            <field name="name">Post Accrual Reversal</field>
+            <field name="name">Post Accrual Reversals</field>
             <field name="key2">client_action_multi</field>
             <field name="value" eval="'ir.actions.act_window,' +str(ref('action_wizard_post_accrual_reversal'))" />
             <field name="key">action</field>

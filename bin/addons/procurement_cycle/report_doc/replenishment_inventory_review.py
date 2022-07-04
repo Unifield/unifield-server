@@ -233,9 +233,9 @@ class inventory_parser(XlsxReportParser):
                 self.add_cell(line.open_donation and _('Yes') or _('No'))
 
                 self.add_cell(line.sleeping_qty or None)
-                self.add_cell(line.unit_of_supply_amc or None)
+                self.add_cell(line.unit_of_supply_amc or None, float_style)
 
-                self.add_cell(line.unit_of_supply_fmc or None)
+                self.add_cell(line.unit_of_supply_fmc or None, float_style)
                 self.add_cell(line.qty_lacking or None)
                 self.add_cell(self.to_datetime(line.qty_lacking_needed_by), date_style)
                 self.add_cell(self.to_datetime(line.eta_for_next_pipeline), date_style)
@@ -259,7 +259,7 @@ class inventory_parser(XlsxReportParser):
                 for detail_pas in line.pas_ids:
                     if detail_pas.projected is not None and detail_pas.projected is not False:
                         if detail_pas.projected:
-                            self.add_cell(detail_pas.projected)
+                            self.add_cell(detail_pas.projected, float_style)
                         else:
                             self.add_cell(detail_pas.projected, red_cell_style)
                     else:

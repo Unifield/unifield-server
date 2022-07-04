@@ -1483,6 +1483,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
         errors = []
         warnings = []
+        max_qty = self.pool.get('purchase.order.line')._max_qty
 
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
@@ -1587,7 +1588,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Qty
             if values[4]:
-                write_vals['imp_qty'] = float(values[4])
+                if values[4] < max_qty:
+                    write_vals['imp_qty'] = float(values[4])
+                else:
+                    errors.append(_('Quantity can not have more than 10 digits.'))
+                    write_vals['type_change'] = 'error'
+                    write_vals['imp_qty'] = 0.00
             else:
                 write_vals['type_change'] = 'error'
                 write_vals['imp_qty'] = 0.00
@@ -1635,6 +1641,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 if write_vals['imp_price'] * write_vals['imp_qty'] < 0.01:
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
+                if len(str(int(write_vals['imp_qty'] * write_vals['imp_price']))) > 25:
+                    errors.append(_('The Total amount is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed'))
+                    write_vals.update({'imp_qty': 0.00, 'imp_price': 0.00, 'type_change': 'error'})
 
             # Currency
             currency_value = values[7]

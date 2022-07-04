@@ -44,7 +44,7 @@ class wizard_import_tender_line(osv.osv_memory):
         return res
 
     _columns = {
-        'file': fields.binary(string='File to import', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'file': fields.binary(string='File to import', required=True, readonly=True, states={'draft': [('readonly', False)], 'error': [('readonly', False)]}),
         'message': fields.text(string='Message', readonly=True),
         'tender_id': fields.many2one('tender', string='Tender', required=True),
         'data': fields.binary('Lines with errors'),
@@ -52,7 +52,7 @@ class wizard_import_tender_line(osv.osv_memory):
         'filename_template': fields.char('Templates', size=256),
         'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
         'percent_completed': fields.integer('% completed', readonly=True),
-        'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
+        'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')],
                                   string="State", required=True, readonly=True),
     }
 
@@ -64,10 +64,7 @@ class wizard_import_tender_line(osv.osv_memory):
             context = {}
         if isinstance(ids, int):
             ids = [ids]
-        if not context.get('yml_test', False):
-            cr = pooler.get_db(dbname).cursor()
-        else:
-            cr = dbname
+        cr = pooler.get_db(dbname).cursor()
         context.update({'import_in_progress': True})
         start_time = time.time()
         wiz_common_import = self.pool.get('wiz.common.import')
@@ -77,8 +74,10 @@ class wizard_import_tender_line(osv.osv_memory):
         tender_obj = self.pool.get('tender')
         tender_line_obj = self.pool.get('tender.line')
         line_with_error = []
-        vals = {'tender_line_ids': []}
+        blocker_msg = []
+
         categ_log = ''
+        max_qty = self.pool.get('purchase.order.line')._max_qty
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             tender_browse = wiz_browse.tender_id
@@ -99,6 +98,7 @@ class wizard_import_tender_line(osv.osv_memory):
             total_line_num = len([row for row in file_obj.getRows()])
             percent_completed = 0
             for row in rows:
+                cr.execute("SAVEPOINT line_save")
                 # default values
                 to_write = {
                     'error_list': [],
@@ -139,7 +139,7 @@ class wizard_import_tender_line(osv.osv_memory):
 
                     # Cell 2: Quantity
                     qty_value = {}
-                    qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                    qty_value = check_line.quantity_value(cell_nb=2, product_obj=product_obj, row=row, to_write=to_write, max_qty=max_qty, context=context)
                     to_write.update({'qty': qty_value['product_qty'], 'error_list': qty_value['error_list'], 'warning_list': qty_value['warning_list']})
 
                     # Cell 3: UoM
@@ -166,17 +166,16 @@ class wizard_import_tender_line(osv.osv_memory):
                     if p_value.get('default_code'):
                         product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'constraints': ['external', 'internal', 'esc']}, context=dict(context, noraise=False))
 
-                    vals['tender_line_ids'].append((0, 0, to_write))
 
                     if to_write.get('qty', 0.00) <= 0.00:
                         message += _("Line %s in the Excel file: Details: %s\n") % (line_num, _('Product Qty should be greater than 0.00'))
                         ignore_lines += 1
                         line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                        cr.rollback()
+                        cr.execute("RELEASE SAVEPOINT line_save")
                         continue
 
-
-                    tender_line_obj.create(cr, uid, to_write, context)
+                    if not blocker_msg:
+                        tender_line_obj.create(cr, uid, to_write, context)
                     if to_write['error_list']:
                         lines_to_correct += 1
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
@@ -188,6 +187,14 @@ class wizard_import_tender_line(osv.osv_memory):
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                    cr.execute("RELEASE SAVEPOINT line_save")
+                    continue
+                except check_line.ExceptionWrongQuantity:
+                    prod = ''
+                    if p_value.get('default_code'):
+                        prod = self.pool.get('product.product').browse(cr, uid, p_value.get('default_code'), fields_to_fetch=['default_code'], context=context).default_code
+                        blocker_msg.append(_('Line #%s of the file, product: %s') % (line_num+1, prod))
+                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     cr.rollback()
                     continue
                 except osv.except_osv as osv_error:
@@ -197,23 +204,29 @@ class wizard_import_tender_line(osv.osv_memory):
                     ignore_lines += 1
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                    cr.rollback()
+                    cr.execute("RELEASE SAVEPOINT line_save")
                     continue
-                finally:
+                else:
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
-                    if not context.get('yml_test', False):
-                        cr.commit()
+                    cr.commit()
 
-            categ_log = tender_obj.onchange_categ(
+            if not blocker_msg:
+                categ_log = tender_obj.onchange_categ(
                     cr, uid, [tender_browse.id], tender_browse.categ, context=context).get('warning', {}).get('message', '').upper()
-            categ_log = categ_log.replace('THIS', 'THE')
+                categ_log = categ_log.replace('THIS', 'THE')
 
         error_log += '\n'.join(error_list)
         if error_log:
             error_log = _("Reported errors for ignored lines : \n") + error_log
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + _(' second(s)')
-        final_message = _('''
+        if blocker_msg:
+            wizard_vals = {'state': 'error', 'percent_completed': 100, 'file': False}
+            cr.rollback()
+            final_message = _("Warning this/these lines cannot be imported due to too many digits in Qty field. Please check:\n%s") % ('\n'.join(blocker_msg), )
+        else:
+            wizard_vals = {'state': 'done'}
+            final_message = _('''
 %s
 Importation completed in %s!
 # of imported lines : %s on %s lines
@@ -224,16 +237,15 @@ Importation completed in %s!
 %s
 ''') % (categ_log, total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
 #        try:
-        wizard_vals = {'message': final_message, 'state': 'done'}
+        wizard_vals['message'] = final_message
         if line_with_error:
             file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
         # we reset the state of the PO to draft (initial state)
         tender_obj.write(cr, uid, tender_id, {'state': 'draft'}, context)
-        if not context.get('yml_test', False):
-            cr.commit()
-            cr.close(True)
+        cr.commit()
+        cr.close(True)
 
 
     def import_file(self, cr, uid, ids, context=None):
@@ -267,11 +279,8 @@ Importation completed in %s!
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
             tender_obj.write(cr, uid, tender_id, {'state': 'done'}, context)
-        if not context.get('yml_test', False):
-            thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
-            thread.start()
-        else:
-            self._import(cr, uid, ids, context)
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
 Otherwise, you can continue to use Unifield.""")
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
@@ -286,7 +295,7 @@ Otherwise, you can continue to use Unifield.""")
         for wiz_read in self.read(cr, uid, ids, ['tender_id', 'state', 'file']):
             tender_id = wiz_read['tender_id']
             po_name = tender_obj.read(cr, uid, tender_id, ['name'])['name']
-            if wiz_read['state'] != 'done':
+            if wiz_read['state'] not in  ('done', 'error'):
                 self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (po_name, )})
         return False
 

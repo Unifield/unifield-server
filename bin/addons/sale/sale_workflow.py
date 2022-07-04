@@ -206,7 +206,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        sol = self.browse(cr, uid, ids[0], context=context)
+        sol = self.browse(cr, uid, ids[0], fields_to_fetch=['state', 'order_id', 'product_id', 'dpo_line_id'], context=context)
         if sol.state.startswith('cancel'):
             return False
 
@@ -667,7 +667,7 @@ class sale_order_line(osv.osv):
             if sol.order_id.procurement_request and not sol.order_id.location_requestor_id:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate the line without a Location Requestor.'))
-            if not sol.order_id.procurement_request and sol.product_uom_qty*sol.price_unit >= self._max_value:
+            if sol.product_uom_qty*sol.price_unit >= self._max_value:
                 raise osv.except_osv(_('Warning !'), _('%s line %s: %s') % (sol.order_id.name, sol.line_number, _(self._max_msg)))
             if not sol.order_id.delivery_requested_date:
                 raise osv.except_osv(_('Warning !'),
@@ -736,6 +736,8 @@ class sale_order_line(osv.osv):
             if supplier and sol.product_id and supplier.partner_type in ('esc', 'external') and sol.product_id.state.code in ('forbidden', 'phase_out'):
                 # do not block FO/IR line validation if default supplier is esc/external and prod stat not allowed
                 to_write['supplier'] = False
+                if sol.po_cft == 'pli':
+                    to_write['po_cft'] = 'po'
 
             if to_write:
                 self.write(cr, uid, sol.id, to_write, context=context)

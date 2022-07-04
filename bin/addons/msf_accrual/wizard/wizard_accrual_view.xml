@@ -3,12 +3,12 @@
     <data>
 
         <record id="wizard_accrual_validation_view" model="ir.ui.view">
-            <field name="name">Validate Accrual Lines</field>
+            <field name="name">Post Accruals</field>
             <field name="model">wizard.accrual.validation</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Validate Accrual Lines">
-                    <label string="Are you sure you want to validate those accrual lines?" align="0.0" colspan="3"/>
+                <form string="Post Accruals">
+                    <label string="Are you sure you want to post those accruals?" align="0.0" colspan="3"/>
                     <separator colspan="4"/>
                     <group colspan="4" col="6">
                         <button special="cancel" string="No" icon="gtk-cancel"/>
@@ -19,7 +19,7 @@
         </record>
 
         <record id="action_wizard_accrual_validation" model="ir.actions.act_window">
-            <field name="name">Validate Accrual Lines</field>
+            <field name="name">Post Accruals</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">wizard.accrual.validation</field>
             <field name="view_type">form</field>
@@ -30,7 +30,7 @@
         <record model="ir.values" id="action_wizard_accrual_validation_values">
             <field name="model_id" ref="msf_accrual.model_msf_accrual_line" />
             <field name="object" eval="1" />
-            <field name="name">Validate Accrual Lines</field>
+            <field name="name">Post Accruals</field>
             <field name="key2">client_action_multi</field>
             <field name="value" eval="'ir.actions.act_window,' +str(ref('action_wizard_accrual_validation'))" />
             <field name="key">action</field>

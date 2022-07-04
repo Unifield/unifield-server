@@ -78,11 +78,16 @@ class purchase_order_change_currency(osv.osv_memory):
         currency_obj = self.pool.get('res.currency')
         line_obj = self.pool.get('purchase.order.line')
         order_obj = self.pool.get('purchase.order')
+        tax_line_obj = self.pool.get('account.invoice.tax')
 
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.order_id.order_line:
                 new_price = currency_obj.compute(cr, uid, wiz.old_pricelist_id.currency_id.id, wiz.new_pricelist_id.currency_id.id, line.price_unit, round=False, context=context)
                 line_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=c)
+
+            for tax_line in wiz.order_id.tax_line:
+                new_price = currency_obj.compute(cr, uid, wiz.old_pricelist_id.currency_id.id, wiz.new_pricelist_id.currency_id.id, tax_line.amount, round=False, context=context)
+                tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=c)
 
             order_data = {'pricelist_id': wiz.new_pricelist_id.id,}
             # Set at least, the functional currency

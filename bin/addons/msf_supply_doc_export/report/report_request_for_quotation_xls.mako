@@ -72,8 +72,8 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery requested date')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery confirmed date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Requested Delivery Date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Confirmed Delivery Date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
     </Row>

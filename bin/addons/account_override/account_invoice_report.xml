@@ -3,22 +3,22 @@
     <data>
 
         <report id="open_invoices_2"
-            string="Open Invoices"
+            string="Pending Invoices"
             model="account.invoice"
             name="open.invoices.2"
-            target_filename="${_('Open Invoices')}_${company_id.instance_id.code}_%(year)s%(month)s%(day)s"
+            target_filename="${_('Pending Invoices')}_${company_id.instance_id.code}_%(year)s%(month)s%(day)s"
             file="account_override/report/open_invoices_xls.mako"
             report_type="webkit"
             header="False"
             auto="False"
             menu="True"/>
-        <!-- put "Open Invoices" at the top of the menu -->
+        <!-- put "Pending Invoices" at the top of the menu -->
         <function model="ir.values" name="write">
             <function model="ir.values" name="search"
                       eval="[[('key', '=', 'action'),
                               ('key2', '=', 'client_print_multi'),
                               ('model', '=', 'account.invoice'),
-                              ('name', '=', 'Open Invoices')]]" />
+                              ('name', '=', 'Pending Invoices')]]" />
             <value eval="{'sequence': 90}" />
         </function>
 

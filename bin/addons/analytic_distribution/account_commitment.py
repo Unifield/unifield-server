@@ -112,10 +112,24 @@ class account_commitment(osv.osv):
             res[cv['id']] = not other_done_button_usable and cv['state'] != 'done'
         return res
 
+    def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns the number of lines for each selected commitment voucher
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        res = {}
+        for commit in self.browse(cr, uid, ids, fields_to_fetch=['line_ids'], context=context):
+            res[commit.id] = len(commit.line_ids)
+        return res
+
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
+        'line_count': fields.function(_get_line_count, string='Line count', method=True, type='integer', store=False),
         'partner_id': fields.many2one('res.partner', string="Partner", required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),

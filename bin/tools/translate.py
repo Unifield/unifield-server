@@ -781,6 +781,9 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
             if field_def.translate:
                 name = model + "," + field_name
                 try:
+                    if model == 'ir.model' and field_name == 'name' and getattr(obj, 'name') == getattr(obj, 'model'):
+                        # do not translate object name not defined
+                        continue
                     trad = getattr(obj, field_name) or ''
                 except:
                     trad = ''

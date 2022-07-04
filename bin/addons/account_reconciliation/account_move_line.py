@@ -621,6 +621,38 @@ class account_move_reconcile(osv.osv):
                 cr.execute(sql, sql_params)
         return True
 
+    def _set_accruals_to_done(self, cr, rec_id):
+        """
+        Accruals in Running state are set to Done if they are fully reconciled.
+
+        Note that only One Time Accruals can be in Running state, and that only the header line on the accrual account is reconcilable.
+        """
+        if rec_id:
+            accrual_sql = """
+                UPDATE msf_accrual_line
+                SET state = 'done'
+                WHERE state = 'running'
+                AND id IN (SELECT accrual_line_id FROM account_move_line WHERE reconcile_id = %s)
+            """
+            cr.execute(accrual_sql, (rec_id,))
+        return True
+
+    def _set_accruals_to_running(self, cr, rec_ids):
+        """
+        One Time Accruals in Done state are set back to Running if their header line is unreconciled.
+        """
+        if rec_ids:
+            if isinstance(rec_ids, int):
+                rec_ids = [rec_ids]
+            accrual_sql = """
+                UPDATE msf_accrual_line
+                SET state = 'running'
+                WHERE accrual_type = 'one_time_accrual' AND state = 'done'
+                AND id IN (SELECT accrual_line_id FROM account_move_line WHERE reconcile_id IN %s)
+            """
+            cr.execute(accrual_sql, (tuple(rec_ids),))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
@@ -672,6 +704,7 @@ class account_move_reconcile(osv.osv):
 
         if context.get('sync_update_execution'):
             self.pool.get('account.move.line').reconciliation_update(cr, uid, [res], context=context)
+        self._set_accruals_to_done(cr, res)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -712,6 +745,8 @@ class account_move_reconcile(osv.osv):
         for rec in self.browse(cr, uid, list(set(ids)), fields_to_fetch=['name', 'line_id', 'line_partial_ids'], context=context):
             move_obj.log_reconcile(cr, uid, rec, delete=True, context=context)
             self._generate_unreconcile(cr, uid, [rec], context)
+
+        self._set_accruals_to_running(cr, ids)
 
         return super(account_move_reconcile, self).unlink(cr, uid, ids, context=context)
 

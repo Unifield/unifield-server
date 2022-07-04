@@ -42,7 +42,7 @@ class account_analytic_journal(osv.osv):
             ('correction_manual', 'Correction Manual'),
             ('cur_adj', 'Currency Adjustment'),
             ('engagement', 'Engagement'),
-            ('general','General'),
+            ('general', 'Accrual'),  # US-8023: the old type "General" was in fact used for Accruals only
             ('hq', 'HQ'),
             ('hr', 'HR'),
             ('inkind', 'In-kind Donation'),
@@ -77,6 +77,10 @@ class account_analytic_journal(osv.osv):
 (eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
         'code': fields.char('Journal Code', size=8, required=True),
         'has_ajis': fields.function(_get_has_ajis, type='boolean', method=True, string='Has Analytic Journal Items', store=False),
+    }
+
+    _defaults = {
+        'type': lambda *a: 'purchase',
     }
 
     def name_get(self, cr, user, ids, context=None):

@@ -997,6 +997,7 @@ class account_invoice(osv.osv):
             # the journal used for Intermission Vouchers must be the INT journal of the current instance
             is_iv = context and context.get('type') in ['in_invoice', 'out_invoice'] and not context.get('is_debit_note') \
                 and not context.get('is_inkind_donation') and context.get('is_intermission')
+            ignore_check_total = False
             if is_iv:
                 int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                 # update the IV if the INT journal exists but isn't used in the IV (= journal created after the IV creation)
@@ -1005,15 +1006,18 @@ class account_invoice(osv.osv):
                         self.write(cr, uid, inv.id, {'journal_id': int_journal_id}, context=context)
                 else:
                     raise osv.except_osv(_('Warning'), _('No Intermission journal found for the current instance.'))
+            if inv.doc_type in ('isi', 'ivi', 'isr'):
+                ignore_check_total = True
+
             if not inv.date_invoice and not inv.document_date:
                 values.update({'date': curr_date, 'document_date': curr_date, 'state': 'date'})
             elif not inv.date_invoice:
                 values.update({'date': curr_date, 'document_date': inv.document_date, 'state': 'date'})
             elif not inv.document_date:
                 values.update({'date': inv.date_invoice, 'document_date': curr_date, 'state': 'date'})
-            if inv.type in ('in_invoice', 'in_refund') and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
+            if inv.type in ('in_invoice', 'in_refund') and not ignore_check_total and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
                 state = values and 'both' or 'amount'
-                values.update({'check_total': inv.check_total , 'amount_total': inv.amount_total, 'state': state})
+                values.update({'check_total': inv.check_total, 'amount_total': inv.amount_total, 'state': state})
             if values:
                 values['invoice_id'] = inv.id
                 wiz_id = self.pool.get('wizard.invoice.date').create(cr, uid, values, context)
@@ -1609,7 +1613,7 @@ class account_invoice_line(osv.osv):
         'line_synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False,
                                       help='Technical field, similar to "synced"'),
         'line_doc_type': fields.related('invoice_id', 'doc_type', type='selection', selection=_get_line_doc_type,
-                                        string='Document Type', store=False),
+                                        string='Document Type', store=False, write_relate=False),
         'invoice_type': fields.related('invoice_id', 'type', string='Invoice Type', type='selection', readonly=True, store=False,
                                        selection=[('out_invoice', 'Customer Invoice'),
                                                   ('in_invoice', 'Supplier Invoice'),

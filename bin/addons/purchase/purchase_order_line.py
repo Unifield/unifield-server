@@ -28,7 +28,13 @@ class purchase_order_line(osv.osv):
         '''
         Return True if the system configuration VAT management is set to True
         '''
+
+        if context is None:
+            context = {}
         vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        if vat_ok and 'purchase_id' in context:
+            vat_ok = not self.pool.get('account.invoice.tax').search_exists(cr, uid, [('purchase_id', '=', context['purchase_id'])], context=context)
+
         res = {}
         for id in ids:
             res[id] = vat_ok
@@ -48,8 +54,9 @@ class purchase_order_line(osv.osv):
             for tag in form.xpath('//page[@name="nomenselection"]'):
                 tag.getparent().remove(tag)
             nb = form.xpath('//notebook')
-            nb[0].tag = 'empty'
-            view['arch'] = etree.tostring(form, encoding='unicode')
+            if nb:
+                nb[0].tag = 'empty'
+                view['arch'] = etree.tostring(form, encoding='unicode')
         return view
 
     def _amount_line(self, cr, uid, ids, prop, arg, context=None):
@@ -461,19 +468,49 @@ class purchase_order_line(osv.osv):
         return ret
 
     def _in_qty_remaining(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+            compute po qty - sum(IN cancel / cancel_r / done)
+              in_qty_remaining: used for dpo (IN is not created when pol is confiremd
+              regular_qty_remaining: used for regular flow
+              regular_qty_available
+        """
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
 
         res = {}
-        for pol in self.browse(cr, uid, ids, fields_to_fetch=['product_qty', 'product_uom'], context=context):
-            move_processed_ids = move_obj.search(cr, uid, [('purchase_line_id', '=', pol.id), ('state', 'in', ['cancel', 'cancel_r', 'done'])], context=context)
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['product_qty', 'product_uom', 'order_id'], context=context):
+            move_processed_ids = move_obj.search(cr, uid, [('purchase_line_id', '=', pol.id), ('type', '=', 'in'), ('state', 'in', ['cancel', 'cancel_r', 'done'])], context=context)
             qty = pol.product_qty
-            for move_processed in move_obj.browse(cr, uid, move_processed_ids, fields_to_fetch=['product_qty', 'product_uom'], context=context):
+            regular_qty_remaining = qty # already processed
+            for move_processed in move_obj.browse(cr, uid, move_processed_ids, fields_to_fetch=['product_qty', 'product_uom', 'state'], context=context):
+                move_qty = move_processed['product_qty']
                 if move_processed.product_uom.id != pol.product_uom.id:
-                    qty -= uom_obj._compute_qty(cr, uid, move_processed.product_uom.id, move_processed['product_qty'], pol.product_uom.id)
+                    move_qty = uom_obj._compute_qty(cr, uid, move_processed.product_uom.id, move_processed['product_qty'], pol.product_uom.id)
+                qty -= move_qty
+                if move_processed['state'] == 'done':
+                    regular_qty_remaining -= move_qty
+            res[pol.id] = {'in_qty_remaining': qty}
+
+            if context.get('sync_message_execution'):
+                in_shipped_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'shipped')], context=context)
+                if in_shipped_ids:
+                    remaining_in_ids = move_obj.search(cr, uid, [('purchase_line_id', '=', pol.id), ('picking_id', 'in', in_shipped_ids), ('type', '=', 'in'), ('state', 'in', ['assigned', 'confirm'])], context=context)
+                    for move_remaining in move_obj.browse(cr, uid, remaining_in_ids, fields_to_fetch=['product_qty', 'product_uom'], context=context):
+                        if move_remaining.product_uom.id != pol.product_uom.id:
+                            regular_qty_remaining -= uom_obj._compute_qty(cr, uid, move_remaining.product_uom.id, move_remaining.product_qty, pol.product_uom.id)
+                        else:
+                            regular_qty_remaining -= move_remaining.product_qty
+
+            remaining_in_ids = move_obj.search(cr, uid, [('purchase_line_id', '=', pol.id), ('type', '=', 'in'), ('state', 'in', ['assigned', 'confirm'])], context=context)
+            max_qty_cancellable = -regular_qty_remaining
+            for move_remaining in move_obj.browse(cr, uid, remaining_in_ids, fields_to_fetch=['product_qty', 'product_uom'], context=context):
+                if move_remaining.product_uom.id != pol.product_uom.id:
+                    max_qty_cancellable += uom_obj._compute_qty(cr, uid, move_remaining.product_uom.id, move_remaining['product_qty'], pol.product_uom.id)
                 else:
-                    qty -= move_processed['product_qty']
-            res[pol.id] = qty
+                    max_qty_cancellable += move_remaining['product_qty']
+
+            res[pol.id]['regular_qty_remaining'] = regular_qty_remaining
+            res[pol.id]['max_qty_cancellable'] = max_qty_cancellable
         return res
 
 
@@ -484,7 +521,7 @@ class purchase_order_line(osv.osv):
         'set_as_resourced': fields.boolean(string='Force resourced state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
         'original_line_id': fields.many2one('purchase.order.line', string='Original line', help='ID of the original line before split'),
-        'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True),
+        'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True, select=1),
         'sync_linked_sol': fields.char(size=256, string='Linked FO line at synchro'),
         # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
@@ -542,11 +579,11 @@ class purchase_order_line(osv.osv):
                                           digits_compute=dp.get_precision('Purchase Price')),
         'notes': fields.text('Notes'),
         'order_id': fields.many2one('purchase.order', 'Order Reference', select=True, required=True,
-                                    ondelete='cascade'),
-        'account_analytic_id': fields.many2one('account.analytic.account', 'Analytic Account', ),
+                                    ondelete='cascade', join=True),
+        'account_analytic_id': fields.many2one('account.analytic.account', 'Analytic Account'),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company',
                                      string='Company', store=True, readonly=True),
-        'state': fields.selection(PURCHASE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
+        'state': fields.selection(PURCHASE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True, select=1,
                                   help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
                                        \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \
@@ -612,7 +649,9 @@ class purchase_order_line(osv.osv):
         'confirmation_date': fields.date('Confirmation Date', readonly=True),
         'closed_date': fields.date('Closed Date', readonly=True),
         'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR/FO name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
-        'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1),
+        'in_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Qty remaining on IN', method=1, multi='in_remain'),
+        'regular_qty_remaining': fields.function(_in_qty_remaining, type='float', string='Total PO qty - already processed', method=1, multi='in_remain'),
+        'max_qty_cancellable': fields.function(_in_qty_remaining, type='float', string='Total PO qty - already processed + assign qty + confirm qty', method=1, multi='in_remain'),
         'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
         'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
@@ -1810,8 +1849,11 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
 
+        pol = {}
+        if ids:
+            pol = self.read(cr, uid, ids[0], ['product_qty'], context=context)
         if not product_id or not product_uom or not product_qty:
-            self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
+            self.check_digits(cr, uid, res, pol, qty=product_qty, price_unit=price_unit, context=context)
             return res
 
         order_id = context.get('purchase_id', False)
@@ -1835,7 +1877,7 @@ class purchase_order_line(osv.osv):
         else:
             res['value'].update({'old_price_unit': price_unit})
 
-        self.check_digits(cr, uid, res, qty=product_qty, price_unit=price_unit, context=context)
+        self.check_digits(cr, uid, res, pol, qty=product_qty, price_unit=price_unit, context=context)
         return res
 
     def get_sol_ids_from_pol_ids(self, cr, uid, ids, context=None):
@@ -2117,6 +2159,18 @@ class purchase_order_line(osv.osv):
             if pol.order_id.id not in inv_ids:
                 inv_ids[pol.order_id.id] = pol.order_id.action_invoice_get_or_create(context=context)
 
+            all_taxes = {}
+            if pol.order_id.tax_line and pol.order_id.amount_untaxed:
+                percent = (pol.product_qty * pol.price_unit) / pol.order_id.amount_untaxed
+                all_taxes.setdefault(inv_ids[pol.order_id.id], {})
+                for tax_line in pol.order_id.tax_line:
+                    key = (tax_line.account_tax_id and tax_line.account_tax_id.id or False, tax_line.account_id.id, tax_line.partner_id and tax_line.partner_id.id or False)
+                    if key not in all_taxes[inv_ids[pol.order_id.id]]:
+                        all_taxes[inv_ids[pol.order_id.id]][key] = {
+                            'tax_line': tax_line,
+                            'amount': 0,
+                        }
+                    all_taxes[inv_ids[pol.order_id.id]][key]['amount'] +=  tax_line.amount * percent
 
             if pol.product_id:
                 account_id = pol.product_id.product_tmpl_id.property_account_expense.id
@@ -2150,6 +2204,21 @@ class purchase_order_line(osv.osv):
             }, context=context)
 
         self.write(cr, uid, ids, {'invoiced': True}, context=context)
+
+        for inv_id in all_taxes:
+            for key in all_taxes[inv_id]:
+                tax_id = self.pool.get('account.invoice.tax').search(cr, uid, [('invoice_id', '=', inv_id), ('account_tax_id', '=', key[0]), ('account_id', '=', key[1]), ('partner_id', '=', key[2])], context=context)
+                if not tax_id:
+                    self.pool.get('account.invoice.tax').create(cr, uid, {
+                        'invoice_id': inv_id,
+                        'account_tax_id':  key[0],
+                        'account_id': key[1],
+                        'partner_id': key[2],
+                        'name': all_taxes[inv_id][key]['tax_line'].name,
+                        'amount': all_taxes[inv_id][key]['amount']}, context=context)
+                else:
+                    cr.execute('update account_invoice_tax set amount=amount+%s where id = %s', (all_taxes[inv_id][key]['amount'], tax_id[0]))
+
         self.pool.get('account.invoice').button_compute(cr, uid, list(inv_ids.values()), {'type':'in_invoice'}, set_total=True)
 
 
@@ -2227,6 +2296,28 @@ class purchase_order_line(osv.osv):
         res['keep_open'] = True
         res['res_id'] = pol.order_id.id
         return res
+
+    def get_error(self, cr, uid, ids, context=None):
+        '''
+        Show error message
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        view_id = obj_data.get_object_reference(cr, uid, 'purchase', 'po_line_error_message_view')[1]
+        return {
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'purchase.order.line',
+            'type': 'ir.actions.act_window',
+            'res_id': ids[0],
+            'target': 'new',
+            'context': context,
+            'view_id': [view_id],
+        }
+
 
 purchase_order_line()
 

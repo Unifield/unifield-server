@@ -170,8 +170,8 @@ class wizard_import_pick_line(osv.osv_memory):
                         if picking.type == 'in' and partner_loc and partner_loc != src_value['location_id']:
                             raise osv.except_osv(_('Error'), _('The source location is not compatible with the partner'))
 
-                        to_write.update({'location_id': src_value['location_id'], 'is_ext_cu': src_value['is_ext_cu'],
-                                         'error_list': src_value['error_list'],})
+                        to_write.update({'location_id': src_value['location_id'],
+                                         'error_list': src_value['error_list']})
                         if not src_value['location_id']:
                             raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
 

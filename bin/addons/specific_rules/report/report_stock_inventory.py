@@ -421,12 +421,23 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                 nb_items += 1
             for batch_id in res[product_id]['lines']:
                 rounded_batch_qty = round(res[product_id]['lines'][batch_id]['qty'], 6)
-                final_result[product_code]['lines'][batch_id] = {
-                    'batch': bn_data.get(batch_id, ''),
-                    'expiry_date': res[product_id]['lines'][batch_id]['expiry_date'],
-                    'qty': rounded_batch_qty,
-                    'value': cost_price * rounded_batch_qty,
-                    'location_ids': dict([(x, round(y, 6)) for x, y in res[product_id]['lines'][batch_id]['location_ids'].items()]),
+                # US-9727: With a product list, do not display empty BN/ED lines
+                if not report.product_list_id or rounded_batch_qty != 0:
+                    final_result[product_code]['lines'][batch_id] = {
+                        'batch': bn_data.get(batch_id, ''),
+                        'expiry_date': res[product_id]['lines'][batch_id]['expiry_date'],
+                        'qty': rounded_batch_qty,
+                        'value': cost_price * rounded_batch_qty,
+                        'location_ids': dict([(x, round(y, 6)) for x, y in res[product_id]['lines'][batch_id]['location_ids'].items()]),
+                    }
+            # US-9727: With a product list, add 1 empty with no data if there is none found/all have been removed
+            if report.product_list_id and not final_result[product_code].get('lines'):
+                final_result[product_code]['lines'][False] = {
+                    'batch': '',
+                    'expiry_date': False,
+                    'qty': 0,
+                    'value': 0,
+                    'location_ids': {},
                 }
 
         fres = []

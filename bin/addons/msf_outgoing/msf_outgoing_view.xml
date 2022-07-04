@@ -187,13 +187,13 @@
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
                             <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="1"
-                                    attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                                    attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('from_ir', '=', True)]}" />
                             <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
                             <field name="address_id" colspan="2" context="{'contact_display':'partner'}"
                                    domain="[('partner_id', '=', partner_id2)]"
-                                   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': ['|', ('state', 'in', ['done', 'cancel']), ('partner_id2', '=', False)]}" />
+                                   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': ['|', '|', ('state', 'in', ['done', 'cancel']), ('partner_id2', '=', False), ('from_ir', '=', True)]}" />
                             <field name="backorder_id" readonly="1" string="Original PICK" />
-                            <field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}" />
+                            <field name="reason_type_id" widget="selection" readonly="1" />
                             <field name="order_category" />
                         </group>
 
@@ -410,6 +410,7 @@
                             <field name="allocation_setup" invisible="1" />
                             <field name="flow_type" invisible="1" />
                             <field name="has_draft_moves" invisible="1" />
+                            <field name="from_ir" invisible="1" />
                             <field name="auto_picking" invisible="1"/>
                             <field name="date_done" />
                             <field name="move_type" invisible="1"/>
@@ -650,16 +651,16 @@
                             <field name="origin" readonly="1"/>
                             <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                         required="1"
-                            attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('from_ir', '=', True)]}" />
                             <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" on_change="change_packing_list(packing_list)"/>
                             <field name="address_id" colspan="2" context="{'contact_display':'partner'}"
-                                   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}"
+                                   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': ['|', ('partner_id2', '=', False), ('from_ir', '=', True)]}"
                                    domain="[('partner_id', '=', partner_id2)]"
                             />
                             <field name="order_category" />
                             <field name="invoice_state" invisible="1" />
                             <field name="backorder_id" readonly="1" />
-                            <field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
+                            <field name="reason_type_id" widget="selection" readonly="1"/>
                             <field name="num_of_packs" />
                             <field name="total_volume" />
                             <field name="total_weight" />
@@ -771,6 +772,7 @@
                             <field name="date_done" />
                             <field name="move_type" invisible="1"/>
                             <field name="type" invisible="1"/>
+                            <field name="from_ir" invisible="1"/>
                             <field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
                         </page>
                         <page string="Notes">

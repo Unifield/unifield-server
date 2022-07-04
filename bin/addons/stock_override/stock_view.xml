@@ -307,7 +307,7 @@
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" 
                                             />
                                        <field name="location_dest_id"
-                                            domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')]"
+                                            domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id), ('output_ok', '=', False), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')]"
                                             on_change="location_dest_change(location_dest_id, location_id, product_id)"
                                             />
                                     </group>
@@ -398,12 +398,12 @@
         </record>
 
         <record id="stock.view_picking_in_form" model="ir.ui.view">
-        	<field name="name">view.picking.in.form</field>
-        	<field name="model">stock.picking</field>
-        	<field name="type">form</field>
+            <field name="name">view.picking.in.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
             <field name="priority">22</field>
-        	<field name="arch" type="xml">
-        		<form string="Incoming Shipments">
+            <field name="arch" type="xml">
+                <form string="Incoming Shipments" hide_delete_button="1">
                     <field name="progress_memory_not_done" invisible="1" />
                     <field name="progress_memory_error" invisible="1" />
                     <group colspan="6">
@@ -470,8 +470,16 @@
                         <page string="General Information">
                             <field name="from_wkf" invisible="1"/>
                             <field name="subtype" invisible="1" readonly="1" />
+                            <group name="import" string="Import Lines" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('from_wkf', '=', True)]}">
+                                <button name="wizard_import_pick_line" string="Import lines" icon="gtk-dnd" type="object" />
+                                <button name="wizard_import_return_from_unit" string="Import Return from Unit" icon="gtk-execute" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                                <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0" />
+                                <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
+                                <newline />
+                                <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
+                            </group>
                             <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
-                                default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
+                                default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'address_in_id': address_id, 'date_expected': min_date, 'ext_cu': ext_cu, 'from_wkf': from_wkf}"
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_in_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 on_change="onchange_move()"
                                 filter_selector="[('Show available lines', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show all lines', []), ('Show cancelled lines', [('state', 'in', ['cancel', 'cancel_r'])])]"
@@ -519,24 +527,24 @@
                                         <field name="is_ext_cu" invisible="1" />
                                         <field name="name" invisible="1" colspan="4"/>
                                         <field name="product_id"
-                                        	context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
-                                        	on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type, purchase_line_id)"
-                                        	colspan="4"
-                                        	attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
-                                        	 />
+                                            context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
+                                            on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type, purchase_line_id)"
+                                            colspan="4"
+                                            attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
+                                             />
                                         <field name="purchase_line_id" invisible="1"/>
-            							<field name="change_reason" colspan="4"/>
-										<field name="product_qty"
-											on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"
-											attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
-											colspan="2"
-											 />
+                                        <field name="change_reason" colspan="4"/>
+                                        <field name="product_qty"
+                                            on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"
+                                            attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
+                                            colspan="2"
+                                             />
                                         <field name="product_uom"
                                             on_change="onchange_uom(product_uom, product_qty)"
-                                        	string="Unit Of Measure"
-                                        	attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
-                                        	colspan="2"
-                                        	domain="[('uom_by_product', '=', product_id)]"/>
+                                            string="Unit Of Measure"
+                                            attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
+                                            colspan="2"
+                                            domain="[('uom_by_product', '=', product_id)]"/>
                                         <field name="comment" colspan="4" />
                                         <field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" invisible="1"/>
                                         <field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" invisible="1"/>
@@ -546,19 +554,19 @@
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
                                         <field name="location_id"
-                                        	domain="[('filter_partner_ext_cu', 'in', [parent.partner_id2, parent.ext_cu]), ('usage', '!=', 'view'), ('id', '!=', location_dest_id), '|', '&amp;', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit'), ('usage', '=', 'supplier')]"
-                                        	context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
-                                        	attrs="{'readonly': ['|', '|', ('from_wkf_line', '=', True), ('is_ext_cu', '=', True), ('state', '=', 'assigned')]}"
-                                        	 />
-            							<field name="product_type" invisible="1"/>
+                                            domain="[('filter_partner_ext_cu', 'in', [parent.partner_id2, parent.ext_cu]), ('usage', '!=', 'view'), ('id', '!=', location_dest_id), '|', '&amp;', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit'), ('usage', '=', 'supplier')]"
+                                            context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
+                                            attrs="{'readonly': ['|', '|', ('from_wkf_line', '=', True), ('is_ext_cu', '=', True), ('state', '=', 'assigned')]}"
+                                             />
+                                        <field name="product_type" invisible="1"/>
                                         <field name="location_dest_id"
                                             domain="[('usage', '!=', 'view'), ('incoming_dest', '=', product_id), ('id', '!=', location_id)]"
                                             on_change="location_dest_change(location_dest_id, location_id)"
                                             />
                                     <field name="move_cross_docking_ok" invisible="1"/>
-               						</group>
-               						
-               						<group colspan="2" col="4">
+                                    </group>
+
+                                    <group colspan="2" col="4">
                                         <separator string="Traceability" colspan="4"/>
                                         <field name="asset_id" colspan="4" />
                                         <field name="prodlot_id" context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory}" domain="[('product_id','=?',product_id), ('check_type','=', True)]" on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="2" attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}"/>
@@ -588,6 +596,34 @@
 
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
+                                    <newline />
+                                    <html>
+                                        <style>
+                                            #view_form #error_message_unifield .readonlyfield
+                                            {
+                                                border-style: none;
+                                                padding: 5px;
+                                                color:red;
+                                                font-weight: bold;
+                                                text-transform: uppercase;
+                                                width: 98%%;
+                                            }
+
+                                            #error_message_unifield p, #error_message_unifield span
+                                            {
+                                                color: red;
+                                                min-height: 1em;
+                                                height: 1em;
+                                                font-weight: bold;
+                                                padding: 5px;
+                                                text-transform: uppercase;
+                                                width: 90%%;
+                                            }
+                                        </style>
+                                        <div id="error_message_unifield">
+                                            <field name="text_error" colspan="4" nolabel="1" readonly="1" />
+                                        </div>
+                                    </html>
                                     <group col="4" colspan="2">
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
@@ -859,7 +895,7 @@
                                         </group>
                                         <field name="reason_type_id" widget="selection"
                                                domain="[('outgoing_ok', '=', True)]" 
-                                               attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                               attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('from_wkf_line', '=', True)]}"/>
                                     </group>
 
                                     <group colspan="2" col="2">

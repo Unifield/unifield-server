@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 from tools.translate import _
+from tools import ustr
 import netsvc
 import decimal_precision as dp
 from datetime import datetime
@@ -205,7 +206,7 @@ class substitute(osv.osv_memory):
                               }
                 prodlot_id = lot_obj.create(cr, uid, lot_values, context=context)
                 # lot creation message
-                lot_obj.log(cr, uid, prodlot_id, _('Batch Number %s for %s with Expiry Date %s has been created.')%(lot_name,item.product_id_substitute_item.name,exp_item.strftime(date_format)))
+                lot_obj.log(cr, uid, prodlot_id, _('Batch Number %s for %s with Expiry Date %s has been created.')%(lot_name,item.product_id_substitute_item.name, ustr(exp_item.strftime(date_format))))
         elif item.product_id_substitute_item.perishable:
             # expiry date must have been filled in
             if not item.exp_substitute_item:
@@ -400,6 +401,7 @@ class substitute(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         kit_obj = self.pool.get('composition.kit')
         data_tools_obj = self.pool.get('data.tools')
+        comp_item_obj = self.pool.get('composition.item')
         # load default data
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
 
@@ -430,6 +432,8 @@ class substitute(osv.osv_memory):
             for item in obj.composition_item_ids:
                 # analyze each item
                 self._handle_compo_item(cr, uid, ids, obj, item, items_to_stock_ids, pick_id, context=context)
+                if item.item_id_mirror:
+                    comp_item_obj.write(cr, uid, item.item_id_mirror, {'item_lot': item.lot_mirror, 'item_exp': item.exp_substitute_item}, context=context)
             # the corresponding kit is set to done
             kit_obj.close_kit(cr, uid, kit_ids, context=context)
             # a move with a kit from kitting location is created
@@ -542,6 +546,55 @@ class substitute(osv.osv_memory):
                  #                 'source_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  }
 
+    def update_lines_bned(self, cr, uid, ids, context=None):
+        if not ids:
+            return {}
+        lot_obj = self.pool.get('stock.production.lot')
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        line_ids_to_write = {}
+        product_code_to_write = set()
+        for line in wiz.composition_item_ids:
+            to_write = {}
+            if line.product_id_substitute_item.perishable and not line.exp_substitute_item:
+                to_write['exp_substitute_item'] = '2999-12-31'
+            if line.product_id_substitute_item.batch_management and not line.lot_mirror:
+                to_write['lot_mirror'] = 'TO-BE-REPLACED'
+            elif line.product_id_substitute_item.batch_management and line.lot_mirror and line.lot_mirror.startswith('MSFBN/'):
+                if not lot_obj.search_exists(cr, uid, [('product_id', '=', line.product_id_substitute_item.id), ('name', '=', line.lot_mirror), ('type', '=', 'standard')], context=context):
+                    to_write['lot_mirror'] = 'TO-BE-REPLACED'
+            elif line.product_id_substitute_item.perishable and not line.product_id_substitute_item.batch_management and line.lot_mirror:
+                to_write['lot_mirror'] = False
+            if not line.product_id_substitute_item.batch_management and not line.product_id_substitute_item.perishable and (line.exp_substitute_item or line.lot_mirror):
+                to_write.update({'lot_mirror': False, 'exp_substitute_item': False})
+            if to_write:
+                line_ids_to_write[line.id] = to_write
+                product_code_to_write.add(line.product_id_substitute_item.default_code)
+
+        if product_code_to_write:
+            cr.execute('''
+                    select p.default_code
+                    from
+                        audittrail_log_line l, product_product p, ir_model_fields f
+                    where
+                        p.product_tmpl_id = l.res_id and
+                        f.name in ('perishable', 'batch_management') and
+                        f.model = 'product.product' and
+                        l.field_id = f.id and
+                        l.timestamp >= %s and
+                        p.default_code in %s
+                    group by p.default_code
+                ''', (wiz.kit_id.composition_creation_date, tuple(product_code_to_write)))
+
+            product_code_to_write = list(product_code_to_write - set([x[0] for x in cr.fetchall()]))
+            if product_code_to_write:
+                if len(product_code_to_write) > 10:
+                    product_code_to_write = product_code_to_write[0:9] + ['...']
+                raise osv.except_osv(_('Warning !'), "%s:\n%s" % (_('Cannot update these products, ED/BN attributes have not changed since the KCL creation'), ','.join(product_code_to_write)))
+
+        for line_id in line_ids_to_write:
+            self.pool.get('substitute.item.mirror').write(cr, uid, line_id, line_ids_to_write[line_id], context=context)
+
+        return self.pool.get('wizard').open_wizard(cr, uid, wiz.kit_id.id, w_type='update', context=context)
 substitute()
 
 
@@ -1081,20 +1134,21 @@ class substitute_item_mirror(osv.osv_memory):
             if not item.lot_mirror:
                 # lot is needed
                 result = 'missing_lot'
+            elif not item.exp_substitute_item:
+                result = 'missing_date'
             else:
                 # we check the lot type is standard if the lot exists
                 # the type is not specified, as 1) name must be unique for one product 2) lot type cannot be mixed for one product, either std or int, not both
-                prodlot_ids = lot_obj.search(cr, uid, [('name', '=', item.lot_mirror),
-                                                       ('product_id', '=', item.product_id_substitute_item.id)], context=context)
+                prodlot_ids = lot_obj.search(cr, uid, [
+                                            ('name', '=', item.lot_mirror),
+                                            ('product_id', '=', item.product_id_substitute_item.id),
+                                            ('life_date', '=', item.exp_substitute_item)
+                ], context=context)
                 if prodlot_ids:
-                    data = lot_obj.read(cr, uid, prodlot_ids, ['life_date','name','type'], context=context)
+                    data = lot_obj.read(cr, uid, prodlot_ids, ['type'], context=context)
                     lot_type = data[0]['type']
                     if lot_type != 'standard':
                         result = 'wrong_lot_type_need_standard'
-                else:
-                    # the lot does not exist, the expiry date is mandatory
-                    if not item.exp_substitute_item:
-                        result = 'missing_date'
         elif perishable:
             if not item.exp_substitute_item:
                 # expiry date is needed

@@ -66,12 +66,15 @@ class financing_contract_funding_pool_line(osv.osv):
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
         format_obj = self.pool.get('financing.contract.format')
+        contract_obj = self.pool.get('financing.contract.contract')
         # US-113: Check if the call is from sync update
         if context.get('sync_update_execution') and vals.get('contract_id', False):
             # US-113: and if there is any financing contract existed for this format, if no, then ignore this call
-            exist = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', '=', vals['contract_id'])])
+            exist = contract_obj.search_exists(cr, uid, [('format_id', '=', vals['contract_id'])])
             if not exist:
                 return None
+            # new fp from sync: request new quad generation
+            cr.execute('''update financing_contract_contract set quad_gen_date=NULL where format_id = %s''', (vals['contract_id'],))
 
         result = super(financing_contract_funding_pool_line, self).create(cr, uid, vals, context=context)
         # when a new funding pool is added to contract, then add all of the cost centers to the cost center tab, unless
@@ -103,20 +106,28 @@ class financing_contract_funding_pool_line(osv.osv):
         """
         if not ids:
             return True
+
+        if isinstance(ids, int):
+            ids = [ids]
+
         if context is None:
             context = {}
 
         # US-180: Check if it comes from the sync update, and if any contract
-        if context.get('sync_update_execution') and vals.get('format_id', False):
+        if context.get('sync_update_execution') and vals.get('contract_id', False):
             # Check if this format line belongs to any financing contract/format
             ctr_obj = self.pool.get('financing.contract.contract')
-            exist = ctr_obj.search(cr, uid, [('format_id', '=', vals['format_id'])])
+            exist = ctr_obj.search_exists(cr, uid, [('format_id', '=', vals['contract_id'])])
             if not exist:
                 return True
+            if vals.get('funding_pool_id') and self.search_exists(cr, uid, [('id', 'in', ids), ('funding_pool_id', '!=', vals['funding_pool_id'])]):
+                # sync, change of FP in existing line, request quad generation
+                cr.execute('''update financing_contract_contract set quad_gen_date=NULL where format_id = %s''', (vals['contract_id'],))
 
         res = super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
         self.check_fp(cr, uid, ids)
         return res
+
 
 financing_contract_funding_pool_line()
 
@@ -125,6 +136,7 @@ class financing_contract_contract(osv.osv):
     _name = "financing.contract.contract"
     _inherits = {"financing.contract.format": "format_id"}
     _trace = True
+    _order = 'id desc'
 
     def contract_open_proxy(self, cr, uid, ids, context=None):
         # utp-1030/7: check grant amount when going on in workflow
@@ -619,32 +631,6 @@ class financing_contract_contract(osv.osv):
                     cc_ids.append(cc.id)
                 vals['cost_center_ids'] = [(6,0,cc_ids)] # this will be used at final value of cc list to this contract
 
-        res = super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
-        if fp_added_flag: # if the previous save has been recovered thanks to the flag set to True, then reset it back to False
-            cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''', (ids[0],))
-
-        # uf-2342 delete any assigned quads that are no longer valid due to changes in the contract
-        # get list of all valid ids for this contract
-        format =  self.browse(cr,uid,ids,context=context)[0].format_id
-        funding_pool_ids = [x.funding_pool_id.id for x in format.funding_pool_ids]
-
-        if not context.get('sync_update_execution'):
-            earmarked_funding_pools = [x.funded for x in format.funding_pool_ids]
-            if not any(earmarked_funding_pools) and format.reporting_type == 'allocated':
-                raise osv.except_osv(_('Error'), _("At least one funding pool should be defined as earmarked in the funding pool list of this financing contract."))
-
-
-        cost_center_ids = [x.id for x in format.cost_center_ids]
-
-        quad_obj = self.pool.get('financing.contract.account.quadruplet')
-        valid_quad_ids = quad_obj.search(cr, uid, [('funding_pool_id','in',funding_pool_ids),('cost_center_id','in',cost_center_ids)], context=context)
-
-        # filter current assignments and re-write entries if necessary
-        format_obj = self.pool.get('financing.contract.format')
-        format_line_obj = self.pool.get('financing.contract.format.line')
-        format_browse = format_obj.browse(cr, uid, format.id, context=context)
-        fcfpl_line_obj = self.pool.get('financing.contract.funding.pool.line')
-
         # US-113: Populate the instance_id down to format, format line and also funding pool line
         instance_id = vals.get('instance_id', False)
         if not instance_id:
@@ -652,18 +638,29 @@ class financing_contract_contract(osv.osv):
             instance_id =  self.browse(cr,uid,ids,context=context)[0].instance_id
             if instance_id:
                 instance_id = instance_id.id
-
         if instance_id:
-            if not format.hidden_instance_id or format.hidden_instance_id.id != instance_id:
-                format_obj.write(cr, uid, format.id, {'hidden_instance_id': instance_id}, context=context)
+            vals['hidden_instance_id'] = instance_id
+
+        res = super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
+        if fp_added_flag: # if the previous save has been recovered thanks to the flag set to True, then reset it back to False
+            cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''', (ids[0],))
+
+        format =  self.browse(cr,uid,ids,context=context)[0].format_id
+
+        if not context.get('sync_update_execution'):
+            earmarked_funding_pools = [x.funded for x in format.funding_pool_ids]
+            if not any(earmarked_funding_pools) and format.reporting_type == 'allocated':
+                raise osv.except_osv(_('Error'), _("At least one funding pool should be defined as earmarked in the funding pool list of this financing contract."))
+
+
+        # filter current assignments and re-write entries if necessary
+        format_obj = self.pool.get('financing.contract.format')
+        format_line_obj = self.pool.get('financing.contract.format.line')
+        format_browse = format_obj.browse(cr, uid, format.id, context=context)
+        fcfpl_line_obj = self.pool.get('financing.contract.funding.pool.line')
 
         for format_line in format_browse.actual_line_ids:
-            account_quadruplet_ids = [account_quadruplet.id for account_quadruplet in format_line.account_quadruplet_ids]
-            filtered_quads = [x for x in account_quadruplet_ids if x in valid_quad_ids]
-            list_diff = set(account_quadruplet_ids).symmetric_difference(set(filtered_quads))
             list_to_update = {}
-            if list_diff:
-                list_to_update['account_quadruplet_ids'] = [(6, 0, filtered_quads)]
             if instance_id:
                 if not format_line.instance_id or format_line.instance_id.id != instance_id:
                     list_to_update['instance_id'] = instance_id

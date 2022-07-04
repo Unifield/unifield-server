@@ -208,12 +208,12 @@
                 <field name="model">financing.contract.account.quadruplet</field>
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract;red:not valid" notselectable="used_in_contract" editable="top" noteditable="1">
+                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract;red:disabled" notselectable="used_in_contract" editable="top" noteditable="1">
                         <field name="account_destination_name"/>
                         <field name="funding_pool_id"/>
                         <field name="cost_center_id"/>
                         <field name="used_in_contract" invisible="1"/>
-                        <field name="valid" invisible="1" />
+                        <field name="disabled" invisible="1" />
                     </tree>
                 </field>
             </record>
@@ -243,6 +243,7 @@
                     <search string="Search Account/Destination/Funding Pool/Cost Centre">
                             <filter icon="gtk-missing-image" name="active" string="Show Active" domain="[('disabled', '=', False)]" separator="1" />
                             <field name="account_destination_name" string="Account"/>
+                            <field name="account_destination_id" domain="[('category', '=', 'DEST')]"/>
                             <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]"/>
                             <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
                     </search>

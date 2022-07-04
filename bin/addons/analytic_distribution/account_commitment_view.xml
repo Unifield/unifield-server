@@ -78,6 +78,7 @@
                     <field name="name"/>
                     <field name="partner_id" string="Supplier"/>
                     <field name="purchase_id" />
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="total" digits="(16,2)"/>
                     <field name="type"/>

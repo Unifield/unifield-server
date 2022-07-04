@@ -614,7 +614,7 @@ class purchase_order_line(osv.osv):
         if to_complete_ids:
             error = []
             for line in self.read(cr, uid, to_complete_ids, ['line_number', 'default_code'], context=context):
-                error.append(_('#%d  %s') % (line['line_number'], line['default_code']))
+                error.append('#%d  %s' % (line['line_number'], line['default_code']))
             if len(error) == 1:
                 raise osv.except_osv(_('Error'), _("This cannot be validated as line source document information is missing: %s") % error[0])
             else:
@@ -879,6 +879,13 @@ class purchase_order_line(osv.osv):
             self.generate_invoice(cr, uid, list(pol_to_invoice.keys()), context=context)
         return True
 
+    def update_tax_corner(self, cr, uid, ids, context=None):
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['product_qty', 'price_unit', 'order_id'], context=context):
+            if pol.order_id.tax_line and pol.order_id.amount_untaxed:
+                percent = (pol.product_qty * pol.price_unit) / pol.order_id.amount_untaxed
+            for tax_line in pol.order_id.tax_line:
+                self.pool.get('account.invoice.tax').write(cr, uid, tax_line.id, {'amount': round(tax_line.amount * (1 - percent), 2)}, context=context)
+        return True
 
     def action_cancel(self, cr, uid, ids, context=None):
         '''
@@ -900,6 +907,7 @@ class purchase_order_line(osv.osv):
                 if pol.cancelled_by_sync:
                     sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
+        self.update_tax_corner(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
         return True
@@ -925,6 +933,7 @@ class purchase_order_line(osv.osv):
                     sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True, 'product_uom_qty': pol.product_qty ,'product_uos_qty': pol.product_qty}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
 
+        self.update_tax_corner(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 
         return True

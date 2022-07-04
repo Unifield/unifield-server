@@ -173,7 +173,6 @@ class account_analytic_account(osv.osv):
         'user_id': lambda self, cr, uid, ctx: uid,
         'partner_id': lambda self, cr, uid, ctx: ctx.get('partner_id', False),
         'contact_id': lambda self, cr, uid, ctx: ctx.get('contact_id', False),
-        'date_start': lambda *a: time.strftime('%Y-%m-%d'),
         'currency_id': _get_default_currency,
     }
 

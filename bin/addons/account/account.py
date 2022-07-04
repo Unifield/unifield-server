@@ -1168,10 +1168,13 @@ class account_period(osv.osv):
         return False
 
     def find(self, cr, uid, dt=None, context=None):
+        """
+        Gets the period(s) in which the dt is included, whatever the period state and including special December periods
+        (note that Periods 0 with active = False are by default excluded)
+        """
         if not dt:
             dt = time.strftime('%Y-%m-%d')
-#CHECKME: shouldn't we check the state of the period?
-        ids = self.search(cr, uid, [('date_start','<=',dt),('date_stop','>=',dt)])
+        ids = self.search(cr, uid, [('date_start', '<=', dt), ('date_stop', '>=', dt)], order='date_start, number')
         if not ids:
             raise osv.except_osv(_('Error !'), _('No period defined for this date: %s !\nPlease create a fiscal year.')%dt)
         return ids

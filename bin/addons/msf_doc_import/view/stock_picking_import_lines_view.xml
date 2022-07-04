@@ -30,59 +30,6 @@
             </field>
         </record>
 
-        <record id="view_incoming_shipment_import_form_view" model="ir.ui.view">
-            <field name="name">view.incoming.shipment.import.form.view</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="priority">35</field>
-            <field name="inherit_id" ref="stock.view_picking_in_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook//field[@name='move_lines']" position="before">
-                        <group name="import" string="Import Lines" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('from_wkf', '=', True)]}">
-                            <button name="wizard_import_pick_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
-                            <button name="wizard_import_return_from_unit" string="Import Return from Unit" icon="gtk-execute" col="1" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                            <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0" />
-                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
-                            <newline />
-                            <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
-                        </group>
-                    </xpath>
-
-                    <xpath expr="/form//field[@name='move_lines']//form//field[@name='state']" position="after">
-                        <newline />
-                        <html>
-                            <style>
-                                #view_form #error_message_unifield .readonlyfield
-                                {
-                                    border-style: none;
-                                    padding: 5px;
-                                    color:red;
-                                    font-weight: bold;
-                                    text-transform: uppercase;
-                                    width: 98%%;
-                                }
-
-                                #error_message_unifield p, #error_message_unifield span
-                                {
-                                    color: red;
-                                    min-height: 1em;
-                                    height: 1em;
-                                    font-weight: bold;
-                                    padding: 5px;
-                                    text-transform: uppercase;
-                                    width: 90%%;
-                                }
-                            </style>
-                            <div id="error_message_unifield">
-                                <field name="text_error" colspan="4" nolabel="1" readonly="1" />
-                            </div>
-                        </html>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
         <record id="view_delivery_order_import_form_view" model="ir.ui.view">
             <field name="name">view.delivery.order.import.form.view</field>
             <field name="model">stock.picking</field>

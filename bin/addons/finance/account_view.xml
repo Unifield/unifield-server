@@ -58,11 +58,15 @@
                                                                    'required': ['|', ('status_move', '=', 'sys'), ('imported', '=', True)]}"/>
                                         <field name="reference"/>
                                         <field name="partner_type_mandatory" invisible="1"/>
-                                        <field name="account_id" domain="[('restricted_area', '=', 'account_move_lines')]"/>
+                                        <field name="account_id" on_change="onchange_account_id(account_id, partner_type)" domain="[('restricted_area', '=', 'account_move_lines')]" context="{'date': parent.date}" />
                                         <field name="partner_id" invisible="1"/>
+                                        <field name="partner_type"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]"
+                                            context="{'journal_fake_name': True, 'search_default_active': True, 'curr': parent.manual_currency_id, 'journal': parent.journal_id}" />
                                         <field name="debit_currency" sum="Total Booking Debit" string="Book. Debit"/>
                                         <field name="credit_currency" sum="Total Booking Credit" string="Book. Credit"/>
-                                        <field name="currency_id" string="Book. Currency"/>
+                                        <field name="currency_id" string="Book. Currency" readonly="1"/>
                                         <field name="debit" sum="Total Functional Debit" string="Func. Debit" readonly="1"/>
                                         <field name="credit" sum="Total Functional Credit" string="Func. Credit" readonly="1"/>
                                         <field name="functional_currency_id" readonly="1"/>

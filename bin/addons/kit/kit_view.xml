@@ -85,7 +85,7 @@
                     	<button name="mark_as_inactive" string="Mark as Inactive" type="object" icon="gtk-missing-image" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', False)]}" />
                         <button name="mark_as_active" string="Mark as Active" type="object" icon="gtk-redo" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', True)]}" />
                     	<button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
-                    	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
+						<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                     </group>

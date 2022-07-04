@@ -72,9 +72,10 @@
                         	</tree>
                         </field>
                     </group>
-                    <group col="4" colspan="4">
+                    <group col="10" colspan="4">
 	                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
 	                    <button name="check_integrity" string="Check Integrity" type="object" icon="gtk-paste-v" />
+                        <button name="update_lines_bned" type="object" string="Update products whose BN/ED attributes have changed" icon="gtk-properties" />
 	                    <button name="check_availability" string="Check Availability" type="object" icon="gtk-find" />
 	                    <button name="do_substitute" string="Process Substitute" type="object" icon="gtk-go-forward" />
 	                    <button name="do_de_kitting" string="Process De-Kitting" type="object" icon="gtk-go-forward" />

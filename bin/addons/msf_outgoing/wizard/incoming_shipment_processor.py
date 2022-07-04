@@ -224,6 +224,7 @@ class stock_incoming_processor(osv.osv):
         'sequence_issue': fields.boolean('Issue with To ship'),
         'physical_reception_date': fields.datetime('Physical Reception Date'),
         'imp_shipment_ref': fields.char(string='Ship Reference from the IN VI import', size=256, readonly=True),
+        'imp_filename': fields.char(size=128, string='Filename', readonly=True),
     }
 
     _defaults = {

@@ -206,7 +206,6 @@ def compute_location_value(cr, uid, **kwargs):
     context = kwargs.get('context', {})
     loc_id = None
     loc_name = None
-    ext_cu = False
     msg = ''
     if row.cells[cell_nb] and tools.ustr(row.cells[cell_nb]) != tools.ustr(None):
         if row.cells[cell_nb].type == 'str':
@@ -216,7 +215,7 @@ def compute_location_value(cr, uid, **kwargs):
                 if check_type and product_id and check_type == 'src' and pick_type == 'internal':
                     domain.extend([('internal_src', '=', product_id), ('usage', '!=', 'view'), ('virtual_ok', '!=', 't')])
                 elif check_type and product_id and check_type == 'dest' and pick_type == 'internal':
-                    domain.extend([('internal_dest', '=', product_id), ('usage', '!=', 'view'), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')])
+                    domain.extend([('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('output_ok', '=', False), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')])
                 elif check_type and product_id and check_type == 'src' and pick_type == 'in':
                     domain.extend([('usage', '=', 'supplier')])
                 elif check_type and product_id and check_type == 'dest' and pick_type == 'in':
@@ -244,7 +243,6 @@ def compute_location_value(cr, uid, **kwargs):
                             % (loc_name, pick_ext_cu.name))
                     else:
                         loc_id = pick_ext_cu.id
-                        ext_cu = True
                 else:
                     if loc_ids:
                         loc_id = loc_ids[0]
@@ -262,7 +260,7 @@ def compute_location_value(cr, uid, **kwargs):
             msg = _('The Location Name has to be string.')
         if not loc_name:
             error_list.append(msg or _('The location was not valid.'))
-    return {'location_id': loc_id, 'is_ext_cu': ext_cu, 'error_list': error_list}
+    return {'location_id': loc_id, 'error_list': error_list}
 
 
 def product_value(cr, uid, **kwargs):
@@ -318,6 +316,9 @@ def product_value(cr, uid, **kwargs):
         'cost_price': cost_price, 'product_code':product_code, 'product_id': p_id}
 
 
+class ExceptionWrongQuantity(Exception):
+    pass
+
 def quantity_value(**kwargs):
     """
     Compute qty value of the cell.
@@ -331,6 +332,7 @@ def quantity_value(**kwargs):
         product_qty = kwargs['to_write']['product_qty']
     error_list = kwargs['to_write']['error_list']
     cell_nb = kwargs.get('cell_nb', 2)
+    max_qty = kwargs.get('max_qty', 0)
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
     try:
@@ -338,7 +340,10 @@ def quantity_value(**kwargs):
             warning_list.append(_('The Product Quantity was not set. It is set to 1 by default.'))
         else:
             if row.cells[cell_nb].type in ['int', 'float']:
-                product_qty = row.cells[cell_nb].data
+                if not max_qty or row.cells[cell_nb].data < max_qty:
+                    product_qty = row.cells[cell_nb].data
+                else:
+                    raise ExceptionWrongQuantity(_('The Product Quantity can not have more than 10 digits'))
             else:
                 error_list.append(_('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.'))
             if product_qty <= 0.00:
@@ -516,12 +521,11 @@ def compute_confirmed_delivery_date_value(**kwargs):
     warning_list = kwargs['to_write']['warning_list']
     cell_nb = kwargs.get('cell_nb', 7)
     try:
-        if not row.cells[cell_nb].data:
-            warning_list.append(_('Confirmed delivery date not found. The date from the header has been taken (if any)'))
-        elif row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
-            confirmed_delivery_date = row.cells[cell_nb].data.strftime('%Y-%m-%d')
-        else:
-            warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))
+        if row.cells[cell_nb] and row.cells[cell_nb].data:
+            if row.cells[cell_nb].type == 'datetime':
+                confirmed_delivery_date = row.cells[cell_nb].data.strftime('%Y-%m-%d')
+            else:
+                warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
         warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))

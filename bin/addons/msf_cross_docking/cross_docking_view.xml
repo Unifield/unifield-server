@@ -5,23 +5,6 @@
         <!-- Here we just add a boolean in the page 'Delivery and invoicing' of the purchase order form notebook -->
 
         
-        <!-- Here we add 'purchase_id' in the context for defining a 'default_get'
-         when we want to create a new stock move directly in the delivery form -->
-        <record id="stock_picking_cross_docking_form_view" model="ir.ui.view">
-            <field name="name">stock.picking.in.form.cross.docking</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="priority">20</field>
-            <field name="inherit_id" ref="stock.view_picking_in_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook/page[@string='General Information']/field[@name='move_lines']" position="attributes" >
-                        <attribute name="default_get">{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'address_in_id': address_id, 'date_expected': min_date, 'ext_cu': ext_cu} </attribute>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-        
         <!-- Delivery Orders : we add 2 buttons and play with attrs to change the source location-->
         <record id="view_picking_out_cross_docking_form" model="ir.ui.view">
             <field name="name">view.picking.out.cross.docking</field>

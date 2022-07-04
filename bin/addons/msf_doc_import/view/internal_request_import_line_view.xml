@@ -1,67 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-
-        <record id="internal_request_line_error_message_view" model="ir.ui.view">        
-            <field name="name">internal.request.line.error.message.view</field>
-            <field name="model">sale.order.line</field>
-            <field name="type">form</field>
-            <field name="priority" eval="999" />
-            <field name="arch" type="xml">
-                <form>
-                    <field name="to_correct_ok" invisible="1"/>
-                    <field name="inactive_product" invisible="1" />
-                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
-                            <html>
-                                <style>
-                                    #error_message_unifield 
-                                    {
-                                        border-style: solid;
-                                        border-width: 1px;
-                                        border-radius: 5px;
-                                        border-color: black;
-                                        background-color: #F0EBA4;
-                                    }
-
-                                    #view_form #error_message_unifield .readonlyfield
-                                    {
-                                        border-style: none;
-                                        padding: 5px;
-                                        color: red;
-                                        background-color: #F0EBA4;
-                                        font-weight: bold;
-                                        text-transform: uppercase;
-                                        width: 90%%;
-                                    }
-
-                                    #error_message_unifield p, #error_message_unifield span
-                                    {
-                                        height: 1em;
-                                        min-height: 1em;
-                                            color: red;
-                                        font-weight: bold;
-                                        text-transform: uppercase;
-                                        padding: 5px;
-                                        width: 90%%;
-                                    }
-
-                                    #error_message_unifield .grip
-                                    {
-                                        visibility: hidden;
-                                    }
-                                </style>
-
-                                <div id="error_message_unifield">
-									<field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" readonly="1" />
-									<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" string="Error" colspan="4" />
-                                </div>
-                           </html>
-                       </group>
-                    <button special="cancel" icon="gtk-cancel" string="Close window" colspan="4" />
-                </form>
-            </field>
-        </record>
-
         <record id="internal_request_import_lines" model="ir.ui.view">
             <field name="name">internal.request.import.lines.xls.form.view</field>
             <field name="model">sale.order</field>
@@ -122,13 +61,6 @@
                                 </div>
                            </html>
                        </group>
-                </xpath>
-                <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True;blue: soq_updated == True</attribute>
-                </xpath>
-                <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree/field[@name='product_id']" position="before" >
-                    <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
-                    <field name="line_number" readonly="1"/>
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
                     <attribute name="on_change">onchange_uom(product_id, product_uom, product_uom_qty)</attribute>

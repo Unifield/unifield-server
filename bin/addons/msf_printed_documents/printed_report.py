@@ -116,7 +116,7 @@ class ir_actions_report_xml(osv.osv):
                 vals_dict[field_name] = ''
                 model_doc = model_obj.browse(cr, uid, active_id, context=context)
                 # Use a function to compute the name
-                if field_name.startswith('_('):
+                if field_name.startswith('_'+'('): # '_' + '(' : to disable export of translations
                     to_trans = field_name[3:-2]
                     vals_dict[field_name] = _(to_trans)
                     continue
@@ -213,7 +213,7 @@ class ir_actions_report_xml(osv.osv):
             fields_name = re.findall('\${((?:[\'"\w+].?)*)}', report_name)
             for field_name in fields_name:
                 # Use a function to compute the name
-                if field_name.startswith('_('):
+                if field_name.startswith('_'+'('): # disable translation export
                     try:
                         safe_eval(field_name, locals_dict={'_': lambda *x: x})
                     except:

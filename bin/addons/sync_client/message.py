@@ -133,7 +133,10 @@ class local_message_rule(osv.osv):
                     cr.execute("update ir_model_data set sync_date=last_modification where model='sale.order.line' and res_id = %s" , (res_id,))
                     return
 
-            if not force_domain and res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
+            new_dom = eval(rule.domain)
+            new_dom = ['&', ('id', '=', res_id)] + new_dom
+            if not force_domain and not model_obj.search(cr, uid, new_dom, order='NO_ORDER', context=context):
+                #if not force_domain and res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")

@@ -246,6 +246,7 @@
                                 default_selector="'3'" o2m_selectable="2"
                                 >
                                 <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" editable="both">
+                                    <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
                                     <field name="default_name" displayon="noteditable"/>
@@ -386,6 +387,23 @@
                                     <field name="currency_id"/>
                                 </tree>
                             </field>
+                                <field name="has_tax_at_line_level" invisible="1" />
+                                <field name="tax_line" nolabel="1" attrs="{'invisible': [('partner_type', '!=', 'external')], 'readonly': ['|', ('not_beyond_validated','=', False), ('has_tax_at_line_level', '=', True)]}">
+                                    <tree editable="bottom" string="Taxes">
+                                        <field name="account_tax_id" on_change="tax_code_change(account_tax_id, parent.amount_untaxed, parent.partner_id, context)" />
+                                        <field name="name"/>
+
+                                        <field name="account_id"
+                                               domain="[('type', 'not in', ['view', 'consolidation']),
+                                                        ('user_type_code', '=', 'tax')]"/>
+
+                                        <field name="partner_id" readonly="1"/>
+                                        <field name="base" readonly="1"/>
+                                        <field name="amount" />
+                                        <field name="base_amount" invisible="1"/>
+                                    </tree>
+                                </field>
+
                         </page>
                         <page string="Notes">
                             <group colspan="4" col="6">
@@ -430,6 +448,7 @@
                         <field name="functional_amount_untaxed"/>
                         <field name="functional_amount_tax"/>
                         <field name="functional_amount_total"/>
+                        <button type="object" string="Remove taxes on lines" name="remove_line_tax" attrs="{'invisible': ['|', ('has_tax_at_line_level', '=', False), ('not_beyond_validated', '=', False)]}" icon="gtk-cut" confirm="Remove taxes on all PO lines ?"/>
                         <newline/>
                         <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
                         <newline/>
@@ -1121,6 +1140,66 @@ action = {
             <field name="key">action</field>
             <field name="model">ir.ui.menu</field>
             <field eval="ref('ir_ui_menu_po_custom_text')" name="res_id"/>
+        </record>
+
+        <record id="po_line_error_message_view" model="ir.ui.view">
+            <field name="name">po.line.error.message.view</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">form</field>
+            <field name="priority" eval="998" />
+            <field name="arch" type="xml">
+                <form>
+                    <field name="to_correct_ok" invisible="1"/>
+                    <field name="inactive_product" invisible="1" />
+                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
+                        <html>
+                            <style>
+                                #error_message_unifield
+                                {
+                                    border-style: solid;
+                                    border-width: 1px;
+                                    border-radius: 5px;
+                                    border-color: black;
+                                    background-color: #F0EBA4;
+                                }
+
+                                #view_form #error_message_unifield .readonlyfield
+                                {
+                                    border-style: none;
+                                    padding: 5px;
+                                    color: red;
+                                    background-color: #F0EBA4;
+                                    font-weight: bold;
+                                    text-transform: uppercase;
+                                    width: 90%%;
+                                }
+
+                                #error_message_unifield p, #error_message_unifield span
+                                {
+                                    height: 1em;
+                                    min-height: 1em;
+                                        color: red;
+                                    font-weight: bold;
+                                    text-transform: uppercase;
+                                    padding: 5px;
+                                    width: 90%%;
+                                }
+
+                                #error_message_unifield .grip
+                                {
+                                    visibility: hidden;
+                                }
+                            </style>
+
+                            <div id="error_message_unifield">
+                                <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" readonly="1" />
+                                <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" string="Error" colspan="4" />
+                            </div>
+                        </html>
+                    </group>
+                    <button special="cancel" icon="gtk-cancel" string="Close window" colspan="4" />
+                </form>
+            </field>
         </record>
 
     </data>

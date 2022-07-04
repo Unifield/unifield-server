@@ -16,7 +16,9 @@ def main():
         sys.exit(-1)
 
     # Load the PO file
-    pofile = sys.argv[1]
+    clean(sys.argv[1])
+
+def clean(pofile, output=False):
     po = polib.pofile(pofile, wrapwidth=0)
 
     # Filter entries in the PO
@@ -35,8 +37,15 @@ def main():
     keep = sort_po(keep)
 
     # Display kept entries
+    if output:
+        o = open(output, 'w')
+    else:
+        o = sys.stdout
     for entry in keep:
-        print(entry)
+        o.write("%s\n" % entry)
+
+    if output:
+        o.close()
 
 # Sort a list of PO entries according to msgid
 def sort_po(po):
