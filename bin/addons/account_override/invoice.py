@@ -395,6 +395,34 @@ class account_invoice(osv.osv):
             dom = ['|', ('state', '=', 'draft'), '&', ('state', '=', 'cancel'), ('date_invoice', '=', False)]
         return dom
 
+    def _get_fiscalyear(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        fy_obj = self.pool.get('account.fiscalyear')
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['date_invoice'], context=context):
+            fy_id = fy_obj.search(cr, uid, [('date_start', '<=', inv.date_invoice), ('date_stop', '>=', inv.date_invoice)], context=context)[0]
+            if fy_id:
+                res[inv.id] = fy_id
+        return res
+
+    def _get_search_by_fiscalyear(self, cr, uid, obj=None, name=None, args=None, context=None):
+        if not args:
+            return []
+        if not args[0] or len(args[0]) < 3 or args[0][1] != '=':
+            raise osv.except_osv(_('Error'), _('Filter not implemented yet.'))
+        if context is None:
+            context = {}
+        fy_obj = self.pool.get('account.fiscalyear')
+        dom = []
+        if args[0][1] == '=' and args[0][2]:
+            fy_id = args[0][2]
+            fy = fy_obj.browse(cr, uid, fy_id, fields_to_fetch=['date_start', 'date_stop'], context=context)
+            dom = [('date_invoice', '>=', fy.date_start), ('date_invoice', '<=', fy.date_stop)]
+        return dom
+
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
@@ -436,6 +464,7 @@ class account_invoice(osv.osv):
                                     string='Document Type', store=False, fnct_search=_search_doc_type),
         'open_fy': fields.function(_get_fake, method=True, type='boolean', string='Open Fiscal Year', store=False,
                                    fnct_search=_search_open_fy),
+        'fiscalyear_id': fields.function(_get_fiscalyear, fnct_search=_get_search_by_fiscalyear, type='many2one', obj='account.fiscalyear', method=True, store=False, string='Fiscal year', readonly=True),
     }
 
     _defaults = {
