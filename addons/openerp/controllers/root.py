@@ -190,6 +190,7 @@ class Root(SecuredController):
                     other_surveys=json.dumps(other_surveys),
                     show_close_btn=rpc.session.uid == 1,
                     widgets=widgets,
+                    from_login=from_login,
                     display_shortcut=display_shortcut)
 
     @expose()

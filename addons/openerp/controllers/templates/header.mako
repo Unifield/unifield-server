@@ -67,6 +67,18 @@ if add_style:
         <div id="corner">
             <ul class="tools">
         % endif
+                <li><a href="https://doc.unifield.org/" target="_blank" class="user_manuals"
+                       % if add_style:
+                           style="background-position: -94px 0px;"
+                           onMouseOver="this.style.opacity=0.6"
+                           onMouseOut="this.style.opacity=1.0"
+                       % endif
+                >${_("User Manuals")}</a>
+                    <ul>
+                        <li class="first last"><a href="https://doc.unifield.org/" target="_blank">${_("User Manuals")}</a></li>
+                    </ul>
+                </li>
+
                 <li><a href="${py.url('/openerp')}" target="_top" class="home"
                        % if add_style:
                            style="background-position: -22px 0px;"
