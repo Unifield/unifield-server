@@ -205,6 +205,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     data = {
                         'state': line.state,
                         'state_display': line_state_display_dict.get(line.state_to_display),
+                        'cancelled_move': move.state in ('cancel', 'cancel_r')
                     }
                     m_type = move.state in ('cancel', 'cancel_r') or move.product_qty != 0.00 and move.picking_id.type == 'out'
                     ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
@@ -223,8 +224,22 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 line.product_uom.id,
                             )
                         delivery_order = move.picking_id.name
-                        if move.picking_id.state not in ('done', 'delivered'):
+                        if move.state != 'done':
                             delivery_order = '-'
+                            # Search if there is an INT created from the cancellation, even if it is not closed
+                            if move.state in ('cancel', 'cancel_r') and not from_stock:
+                                self.cr.execute("""
+                                    SELECT p.name FROM stock_move m 
+                                    LEFT JOIN stock_picking p ON m.picking_id = p.id
+                                    LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+                                    LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
+                                    WHERE p.type = 'internal' AND p.subtype = 'standard' AND 
+                                        (sl.id = %s OR p.from_pick_cancel_id = %s)
+                                    LIMIT 1
+                                """, (line.id, move.picking_id.id))
+                                int_cancel_info = self.cr.fetchone()
+                                if int_cancel_info:
+                                    delivery_order = int_cancel_info[0]
                         data.update({
                             'po_name': po_name,
                             'edd': edd,
@@ -266,8 +281,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 'packing': packing,
                                 'shipment': shipment,
                                 'is_delivered': is_delivered,
-                                'delivered_qty': (is_shipment_done or is_delivered) and move.product_qty or 0.00,
-                                'delivered_uom': (is_shipment_done or is_delivered) and move.product_uom.name or '-',
+                                'delivered_qty': move.state == 'cancel' and 'N/A' or (is_shipment_done or is_delivered) and move.product_qty or 0.00,
+                                'delivered_uom': move.product_uom.name or '-',
                                 'backordered_qty': not is_shipment_done and not is_delivered and line.order_id.state != 'cancel' and move.product_qty or 0.00,
                                 'rts': move.picking_id.shipment_id and move.picking_id.shipment_id.shipment_expected_date[0:10],
                                 'eta': eta and eta.strftime('%Y-%m-%d'),
@@ -311,7 +326,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             data.update({
                                 'packing': packing,
                                 'delivered_qty': is_shipment_done and move.product_qty or 0.00,
-                                'delivered_uom': is_shipment_done and move.product_uom.name or '-',
+                                'delivered_uom': move.product_uom.name or '-',
                                 'rts': line.order_id.ready_to_ship_date,
                                 'shipment': shipment,
                             })
@@ -363,6 +378,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     data = {
                         'state': line.state,
                         'state_display': line_state_display_dict.get(line.state_to_display),
+                        'cancelled_move': False,
                         'line_number': line.line_number,
                         'line_comment': line.comment or '-',
                         'po_name': po_name,
@@ -372,7 +388,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'ordered_qty': line.product_uom_qty,
                         'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
                         'delivered_qty': received_qty,
-                        'delivered_uom': received_qty and line.product_uom.name or '-',
+                        'delivered_uom': line.product_uom.name or '-',
                         'delivery_order': int_name or '-',
                         'backordered_qty': line.order_id.state != 'cancel' and line.product_uom_qty - received_qty or 0.00,
                         'edd': edd,

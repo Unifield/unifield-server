@@ -295,17 +295,17 @@
 	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('uom_id', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
-                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and formatLang(line.get('delivered_qty', 0.00)) or removeParentNode('para') ]]</para>
-                    <para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and formatLang(line.get('delivered_qty', 0.00)) or removeParentNode('para') ]]</para>
+                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('cancelled_move') and 'N/A' or formatLang(line.get('delivered_qty', 0.00))) or removeParentNode('para') ]]</para>
+                    <para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('cancelled_move') and 'N/A' or formatLang(line.get('delivered_qty', 0.00))) or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and line.get('delivered_uom', '-') or removeParentNode('para') ]]</para>
 	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('delivered_uom', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
-                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('extra_qty', 0) == 0 and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para')) or removeParentNode('para') ]]</para>
-                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('extra_qty', 0) and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para')) or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('extra_qty', 0.00))) ]])</para>
-                    <para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and '-' or removeParentNode('para') ]]</para>
+                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('extra_qty', 0) == 0 and (line.get('cancelled_move') and '0.00' or formatLang(line.get('backordered_qty', 0.00))) or removeParentNode('para')) or removeParentNode('para') ]]</para>
+                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('extra_qty', 0) and (line.get('cancelled_move') and '0.00' or formatLang(line.get('backordered_qty', 0.00))) or removeParentNode('para')) or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('extra_qty', 0.00))) ]])</para>
+                    <para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('cancelled_move') and '0.00' or '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and line.get('delivery_order', '-') or removeParentNode('para') ]]</para>
