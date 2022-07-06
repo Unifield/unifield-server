@@ -1149,6 +1149,8 @@ class stock_move(osv.osv):
                                          },
                                          ),
         'linked_incoming_move': fields.many2one('stock.move', 'Linked Incoming move', readonly=True, help="Link between INT and IN"),
+        'from_pick_move_cancel_id': fields.many2one('stock.move', string='Linked Picking/Out move', readonly=True,
+                                                    help='Move from Picking or Out that created that Internal Move after cancellation'),
     }
 
     _defaults = {
@@ -1158,6 +1160,7 @@ class stock_move(osv.osv):
         'inactive_error': lambda *a: '',
         'has_to_be_resourced': False,
         'is_ext_cu': _default_is_ext_cu,
+        'from_pick_move_cancel_id': False,
     }
 
     @check_rw_warning
@@ -1555,6 +1558,9 @@ class stock_move(osv.osv):
 
         if not 'sync_dpo' in default:
             default['sync_dpo'] = False
+
+        if not 'from_pick_move_cancel_id' in default:
+            default['from_pick_move_cancel_id'] = False
 
         return super(stock_move, self).copy_data(cr, uid, id, default, context=context)
 
@@ -2190,6 +2196,7 @@ class stock_move_cancel_more_wizard(osv.osv_memory):
                         'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
                         'expired_date': move.expired_date or False,
                         'reason_type_id': int_reason_type_id,
+                        'from_pick_move_cancel_id': move.id,
                     }
                     move_obj.create(cr, uid, m_data, context=context)
 

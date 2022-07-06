@@ -233,10 +233,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                     LEFT JOIN stock_picking p ON m.picking_id = p.id
                                     LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
                                     LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
-                                    WHERE p.type = 'internal' AND p.subtype = 'standard' AND 
-                                        (sl.id = %s OR p.from_pick_cancel_id = %s)
+                                    WHERE p.type = 'internal' AND p.subtype = 'standard' AND from_pick_move_cancel_id = %s
                                     LIMIT 1
-                                """, (line.id, move.picking_id.id))
+                                """, (move.id,))
                                 int_cancel_info = self.cr.fetchone()
                                 if int_cancel_info:
                                     delivery_order = int_cancel_info[0]
