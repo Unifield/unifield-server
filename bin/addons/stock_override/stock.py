@@ -2450,6 +2450,7 @@ class stock_picking_cancel_more_wizard(osv.osv_memory):
                     'prodlot_id': m.prodlot_id and m.prodlot_id.id or False,
                     'expired_date': m.expired_date or False,
                     'reason_type_id': int_reason_type_id,
+                    'from_pick_move_cancel_id': m.id,
                 }
                 move_obj.create(cr, uid, m_data, context=context)
                 moves_ids_to_cancel.append(m.id)
