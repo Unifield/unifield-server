@@ -365,7 +365,10 @@ class wizard_cancel_lines(osv.osv_memory):
                 line_ids = line_obj.search(cr, uid, [(wiz.linked_field_name, '=', wiz.initial_doc_id)], context=context)
 
             if wiz.to_cancel_type in ['sale.order.line', 'purchase.order.line']:
-                line_ids = line_obj.search(cr, uid, [('id', 'in', line_ids), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
+                states = ['draft', 'validated']
+                if wiz.to_cancel_type == 'purchase.order.line':
+                    states.append('validated_n')
+                line_ids = line_obj.search(cr, uid, [('id', 'in', line_ids), ('state', 'in', states)], context=context)
 
             self.write(cr, uid, [wiz.id], {'line_ids': line_ids}, context=context)
 
