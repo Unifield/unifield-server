@@ -639,6 +639,13 @@ table.fields td {
     white-space: nowrap;
 }
 
+.restore_warning {
+    text-align:center;
+    margin-top:20px;
+    font-weight: bold;
+    color: red;
+}
+
 .action-buttons label {
     display: block;
 }
