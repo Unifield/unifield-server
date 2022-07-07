@@ -23,8 +23,17 @@
                         </tr>
                         % endfor
                     </table>
-                </div>         
+                    <div style="text-align: center; margin: 10px 0 10px 0;">
+                        <a class="button-a" href="${py.url('/openerp/showfields', model=model)}" id="show_fields_button">${_('Show fields')}</a>
+                    </div
+                </div>
             </td>
         </tr>
     </table>
+
+    <script type="text/javascript">
+        jQuery(document).ready(function() {
+            jQuery('#show_fields_button').fancybox();
+        });
+    </script>
 </%def>

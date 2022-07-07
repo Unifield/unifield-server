@@ -1102,3 +1102,8 @@ iframe.ui-dialog-content {
     padding: 0 !important;
     width: 100% !important;
 }
+
+.show_fields_button {
+    text-align: center !important;
+    margin: 10px 0 10px 0 !important;
+}
