@@ -23,9 +23,11 @@
                         </tr>
                         % endfor
                     </table>
+                    % if rpc.session and rpc.session.uid == 1:
                     <div style="text-align: center; margin: 10px 0 10px 0;">
                         <a class="button-a" href="${py.url('/openerp/showfields', model=model)}" id="show_fields_button">${_('Show fields')}</a>
-                    </div
+                    </div>
+                    % endif
                 </div>
             </td>
         </tr>

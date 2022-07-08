@@ -107,7 +107,7 @@ class View_Log(SecuredController):
                     fields.insert(7, ('model_sdref', 'Model Sdref'))
                     values['model_sdref'] = 'sd.%s' % rpc.session.execute('object', 'execute', 'ir.model', 'get_sd_ref', model_ids[0])
 
-        return {'values': values, 'fields': fields, 'model': model}
+        return {'values': values, 'fields': fields, 'rpc': rpc, 'model': model}
 
 
 class Show_Fields(SecuredController):
