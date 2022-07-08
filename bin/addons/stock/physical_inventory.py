@@ -671,9 +671,7 @@ class PhysicalInventory(osv.osv):
             else:
                 counting_sheet_errors.append(_msg)
 
-        new_cr = pooler.get_db(cr.dbname).cursor()
-
-        inventory_rec = self.browse(new_cr, uid, ids, context=context)[0]
+        inventory_rec = self.browse(cr, uid, ids, context=context)[0]
         if not inventory_rec.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
         counting_sheet_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import))
@@ -686,13 +684,16 @@ class PhysicalInventory(osv.osv):
         line_items = []
 
         all_uom = {}
-        uom_ids = product_uom_obj.search(new_cr, uid, [], context=context)
-        for uom in product_uom_obj.read(new_cr, uid, uom_ids, ['name'], context=context):
+        uom_ids = product_uom_obj.search(cr, uid, [], context=context)
+        for uom in product_uom_obj.read(cr, uid, uom_ids, ['name'], context=context):
             all_uom[uom['name']] = uom['id']
 
         context['import_in_progress'] = True
         result = False
         try:
+            # Reset the qty of each CS line
+            cr.execute("""UPDATE physical_inventory_counting SET quantity = NULL WHERE inventory_id = %s""", (inventory_rec.id,))
+
             for row_index, row in enumerate(counting_sheet_file.getRows()):
                 # === Process header ===
 
@@ -734,12 +735,12 @@ class PhysicalInventory(osv.osv):
 
                 # Check product_code and type
                 product_code = row.cells[1].data
-                product_ids = product_obj.search(new_cr, uid, [('default_code', '=like', product_code)], context=context)
+                product_ids = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
                 product_id = False
                 if len(product_ids) == 1:
                     product_id = product_ids[0]
                     # Check if product is non-stockable
-                    if product_obj.search_exist(new_cr, uid, [('id', '=', product_id), ('type', 'in', ['service_recep', 'consu'])]):
+                    if product_obj.search_exist(cr, uid, [('id', '=', product_id), ('type', 'in', ['service_recep', 'consu'])]):
                         add_error("""Impossible to import non-stockable product %s""" % product_code, row_index, 1)
                 else:
                     add_error(_("""Product %s not found""") % product_code, row_index, 1)
@@ -758,7 +759,7 @@ class PhysicalInventory(osv.osv):
                     if isinstance(quantity, int) and quantity == 0:
                         quantity = '0'
                     try:
-                        quantity = counting_obj.quantity_validate(new_cr, uid, quantity, product_uom_id)
+                        quantity = counting_obj.quantity_validate(cr, uid, quantity, product_uom_id)
                     except NegativeValueError:
                         add_error(_('Quantity %s is negative') % quantity, row_index, 4)
                         quantity = 0.0
@@ -767,7 +768,7 @@ class PhysicalInventory(osv.osv):
                         add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
 
                 if product_id:
-                    product_info = product_obj.read(new_cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
+                    product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
                 else:
                     product_info = {'batch_management': False, 'perishable': False, 'default_code': product_code, 'uom_id': False}
 
@@ -829,49 +830,47 @@ class PhysicalInventory(osv.osv):
                 if quantity is not None:
                     data['quantity'] = quantity
                 # Check if line exist
-                line_ids = counting_obj.search(new_cr, uid, [('inventory_id', '=', inventory_rec.id),
-                                                             ('product_id', '=', product_id),
-                                                             ('batch_number', '=', batch_name),
-                                                             ('expiry_date', '=', expiry_date)], context=context)
+                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
+                                                         ('product_id', '=', product_id),
+                                                         ('batch_number', '=', batch_name),
+                                                         ('expiry_date', '=', expiry_date)], context=context)
                 if not line_ids and (batch_name or expiry_date):  # Search for empty BN/ED lines
-                    line_ids = counting_obj.search(new_cr, uid, [('inventory_id', '=', inventory_rec.id),
-                                                                 ('product_id', '=', product_id),
-                                                                 ('batch_number', '=', False),
-                                                                 ('expiry_date', '=', False)], context=context)
+                    line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
+                                                             ('product_id', '=', product_id),
+                                                             ('batch_number', '=', False),
+                                                             ('expiry_date', '=', False)], context=context)
 
                 if line_ids:
-                    counting_obj.write(new_cr, uid, line_ids[0], data, context=context)
+                    counting_obj.write(cr, uid, line_ids[0], data, context=context)
                 else:
                     data['inventory_id'] = inventory_rec.id
-                    counting_obj.create(new_cr, uid, data, context=context)
+                    counting_obj.create(cr, uid, data, context=context)
 
             # endfor
 
             if counting_sheet_errors:
-                new_cr.rollback()
+                cr.rollback()
                 # Errors found, open message box for explain
-                #self.write(new_cr, uid, ids, {'file_to_import': False}, context=context)
-                new_cr.execute('update physical_inventory set file_to_import = NULL where id = %s', (ids[0], ))
+                #self.write(cr, uid, ids, {'file_to_import': False}, context=context)
+                cr.execute('update physical_inventory set file_to_import = NULL where id = %s', (ids[0], ))
                 if counting_sheet_warnings:
                     counting_sheet_errors.append("\n%s" % _("Warning"))
                     counting_sheet_errors += counting_sheet_warnings
-                result = wizard_obj.message_box(new_cr, uid, title=_('Importation errors'), message='\n'.join(counting_sheet_errors))
+                result = wizard_obj.message_box(cr, uid, title=_('Importation errors'), message='\n'.join(counting_sheet_errors))
             else:
                 # No error found
                 vals = {
                     'file_to_import': False,
                     'responsible': counting_sheet_header.get('inventory_counter_name'),
                 }
-                self.write(new_cr, uid, ids, vals, context=context)
+                self.write(cr, uid, ids, vals, context=context)
                 counting_sheet_warnings.insert(0, _('Counting sheet successfully imported.'))
-                result = wizard_obj.message_box(new_cr, uid, title='Information', message='\n'.join(counting_sheet_warnings))
-                new_cr.commit()
+                result = wizard_obj.message_box(cr, uid, title='Information', message='\n'.join(counting_sheet_warnings))
         except Exception as e:
-            new_cr.rollback()
-            wizard_obj.message_box(new_cr, uid, title='Information', message=_('An error occured: %s') % (e.message,))
+            cr.rollback()
+            wizard_obj.message_box(cr, uid, title='Information', message=_('An error occured: %s') % (e.message,))
         finally:
             context['import_in_progress'] = False
-            new_cr.close(True)
             return result
 
     def import_xls_discrepancy_report(self, cr, uid, ids, context=None):
