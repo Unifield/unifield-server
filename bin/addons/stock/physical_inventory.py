@@ -868,7 +868,7 @@ class PhysicalInventory(osv.osv):
                 result = wizard_obj.message_box(cr, uid, title='Information', message='\n'.join(counting_sheet_warnings))
         except Exception as e:
             cr.rollback()
-            wizard_obj.message_box(cr, uid, title='Information', message=_('An error occured: %s') % (e.message,))
+            result = wizard_obj.message_box(cr, uid, title='Information', message=_('An error occured: %s') % (e.message,))
         finally:
             context['import_in_progress'] = False
             return result
