@@ -2583,7 +2583,7 @@ class account_subscription(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=64, required=True),
-        'ref': fields.char('Reference', size=16),
+        'ref': fields.char('Reference', size=64),
         'model_id': fields.many2one('account.model', 'Model', required=True),
 
         'date_start': fields.date('Start Date', required=True),
