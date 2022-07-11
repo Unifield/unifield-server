@@ -353,7 +353,7 @@
                                 <field name="dest_partner_type" invisible="1" />
                                 <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('partner_type', '=', 'internal')]"/>
                                 <field name="dest_address_id" domain="[('dest_address', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
-                                <field name="cross_docking_ok" attrs="{'readonly':['|', '|', '|', ('unallocation_ok', '=', True), ('order_type', '=', 'direct'), ('allocation_setup', '=', 'unallocated'), ('state', '!=', 'draft')]}" on_change="onchange_cross_docking_ok(cross_docking_ok, warehouse_id, categ)"/>
+                                <field name="cross_docking_ok" invisible="1" />
                                 <field name="location_id" domain="[('usage', '=', 'internal')]" readonly="1" on_change="onchange_location_id(location_id,categ)"/>
                                 <field name="incoterm_id" attrs="{'invisible': [('intl_supplier_ok', '=', False)], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" widget="selection"/>
                             </group>
