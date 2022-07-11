@@ -1274,6 +1274,15 @@ msgstr "Champ"
 msgid "Information"
 msgstr "Information"
 
+#: controllers/templates/view_log.mako:4 controllers/templates/view_log.mako:27
+msgid "Show fields"
+msgstr "Afficher les champs"
+
+#: controllers/templates/show_fields.mako:4
+#: controllers/templates/show_fields.mako:12
+msgid "%s's fields"
+msgstr "Champs de %s"
+
 #: controllers/templates/viewed.mako:17
 #, python-format
 msgid "View Editor %s - %s"

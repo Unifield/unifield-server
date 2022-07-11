@@ -1109,3 +1109,8 @@ iframe.ui-dialog-content {
     padding: 0 !important;
     width: 100% !important;
 }
+
+#show_fields {
+    text-align: right;
+    margin: 0;
+}

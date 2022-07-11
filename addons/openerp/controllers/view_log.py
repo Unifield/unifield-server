@@ -107,6 +107,17 @@ class View_Log(SecuredController):
                     fields.insert(7, ('model_sdref', 'Model Sdref'))
                     values['model_sdref'] = 'sd.%s' % rpc.session.execute('object', 'execute', 'ir.model', 'get_sd_ref', model_ids[0])
 
-        return {'values':values, 'fields': fields}
+        return {'values': values, 'fields': fields, 'rpc': rpc, 'model': model}
 
-# vim: ts=4 sts=4 sw=4 si et
+
+class Show_Fields(SecuredController):
+
+    _cp_path = "/openerp/showfields"
+
+    @expose(template="/openerp/controllers/templates/show_fields.mako")
+    def index(self, model=None):
+        model_fields = rpc.session.execute('object', 'execute', model, 'fields_get', False, rpc.session.context)
+        res = {'model': model}
+        if model_fields:
+            res.update({'model_fields': model_fields.items()})
+        return res
