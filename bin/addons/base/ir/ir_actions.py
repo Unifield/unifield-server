@@ -374,36 +374,6 @@ class act_window(osv.osv):
             res['target'] = 'crush'
         return res
 
-    def view_docs_with_product(self, cr, uid, ids, menu_action=None, context=None):
-        '''
-        Get info from the given menu action to return the right view with the right data
-        '''
-        if not menu_action:
-            return True
-        if context is None:
-            context = {}
-
-        res = self.open_view_from_xmlid(cr, uid, menu_action, ['tree', 'form'], new_tab=True, context=context)
-        res_model = res.get('res_model', False)
-        if not res_model:
-            return True
-        search_view_id = res.get('search_view_id') and res['search_view_id'][0] or False
-        if not search_view_id and res_model == 'sale.order' and menu_action.split('.')[0] == 'procurement_request':
-            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request',
-                                                                                 'procurement_request_search_view')[1]
-        res_domain = res.get('domain', False) and eval(res['domain']) or []
-        res_domain.append(('product_id', '=', context.get('active_id', False)))
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': res_model,
-            'view_type': res.get('view_type', 'form'),
-            'view_mode': res.get('view_mode', 'tree,form'),
-            'views': res.get('views', False) or [],
-            'search_view_id': search_view_id,
-            'domain': res_domain,
-            'context': res.get('context', False) and eval(res['context']) or {},
-        }
-
 
 act_window()
 

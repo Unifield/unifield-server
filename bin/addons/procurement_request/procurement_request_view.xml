@@ -221,7 +221,7 @@
             <field name="res_model">sale.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_search_id" ref="procurement_request_search_view" />
+            <field name="search_view_id" ref="procurement_request_search_view" />
             <field name="context">{'procurement_request': True}</field>
             <field name="domain">[('procurement_request', '=', True)]</field>
         </record>
