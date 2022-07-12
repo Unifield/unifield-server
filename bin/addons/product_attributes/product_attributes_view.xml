@@ -546,10 +546,10 @@
         <!-- FO -->
         <record id="action_product_fo_tree" model="ir.actions.server">
             <field name="name">Field Orders</field>
-            <field name="model_id" ref="sale.model_sale_order"/>
+            <field name="model_id" ref="product.model_product_product"/>
             <field name="state">code</field>
             <field name="code">
-action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, ids, menu_action='sale.action_order_form', context=context)
+action = self.view_docs_with_product(cr, uid, ids, menu_action='sale.action_order_form', context=context)
             </field>
         </record>
 
@@ -565,10 +565,10 @@ action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, 
         <!-- IR -->
         <record id="action_product_ir_tree" model="ir.actions.server">
             <field name="name">Internal Requests</field>
-            <field name="model_id" ref="procurement_request.model_sale_order"/>
+            <field name="model_id" ref="product.model_product_product"/>
             <field name="state">code</field>
             <field name="code">
-action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, ids, menu_action='procurement_request.action_procurement_request', context=context)
+action = self.view_docs_with_product(cr, uid, ids, menu_action='procurement_request.action_procurement_request', context=context)
             </field>
         </record>
 
@@ -584,10 +584,10 @@ action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, 
         <!-- PO -->
         <record id="action_product_po_tree" model="ir.actions.server">
             <field name="name">Purchases</field>
-            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="model_id" ref="product.model_product_product"/>
             <field name="state">code</field>
             <field name="code">
-action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, ids, menu_action='purchase.purchase_form_action', context=context)
+action = self.view_docs_with_product(cr, uid, ids, menu_action='purchase.purchase_form_action', context=context)
             </field>
         </record>
 
@@ -603,10 +603,10 @@ action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, 
         <!-- RfQ -->
         <record id="action_product_rfq_tree" model="ir.actions.server">
             <field name="name">RfQs</field>
-            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="model_id" ref="product.model_product_product"/>
             <field name="state">code</field>
             <field name="code">
-action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, ids, menu_action='purchase.purchase_rfq', context=context)
+action = self.view_docs_with_product(cr, uid, ids, menu_action='purchase.purchase_rfq', context=context)
             </field>
         </record>
 
@@ -622,10 +622,10 @@ action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, 
         <!-- Tender -->
         <record id="action_product_tender_tree" model="ir.actions.server">
             <field name="name">Tenders</field>
-            <field name="model_id" ref="tender_flow.model_tender"/>
+            <field name="model_id" ref="product.model_product_product"/>
             <field name="state">code</field>
             <field name="code">
-action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, ids, menu_action='tender_flow.tender_action', context=context)
+action = self.view_docs_with_product(cr, uid, ids, menu_action='tender_flow.tender_action', context=context)
             </field>
         </record>
 
@@ -641,10 +641,10 @@ action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, 
         <!-- IN -->
         <record id="action_product_in_tree" model="ir.actions.server">
             <field name="name">Incoming Shipments</field>
-            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="model_id" ref="product.model_product_product"/>
             <field name="state">code</field>
             <field name="code">
-action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, ids, menu_action='stock.action_picking_tree4', context=context)
+action = self.view_docs_with_product(cr, uid, ids, menu_action='stock.action_picking_tree4', context=context)
             </field>
         </record>
 
@@ -660,10 +660,10 @@ action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, 
         <!-- INT -->
         <record id="action_product_int_tree" model="ir.actions.server">
             <field name="name">Internal Moves</field>
-            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="model_id" ref="product.model_product_product"/>
             <field name="state">code</field>
             <field name="code">
-action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, ids, menu_action='stock.action_picking_tree6', context=context)
+action = self.view_docs_with_product(cr, uid, ids, menu_action='stock.action_picking_tree6', context=context)
             </field>
         </record>
 
@@ -679,10 +679,10 @@ action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, 
         <!-- OUT -->
         <record id="action_product_out_tree" model="ir.actions.server">
             <field name="name">Delivery Orders</field>
-            <field name="model_id" ref="stock.model_stock_picking"/>
+            <field name="model_id" ref="product.model_product_product"/>
             <field name="state">code</field>
             <field name="code">
-action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, ids, menu_action='stock.action_picking_tree', context=context)
+action = self.view_docs_with_product(cr, uid, ids, menu_action='stock.action_picking_tree', context=context)
             </field>
         </record>
 
@@ -698,10 +698,10 @@ action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, 
         <!-- Pick -->
         <record id="action_product_pick_tree" model="ir.actions.server">
             <field name="name">Pickings</field>
-            <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
+            <field name="model_id" ref="product.model_product_product"/>
             <field name="state">code</field>
             <field name="code">
-action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.action_picking_ticket', context=context)
+action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.action_picking_ticket', context=context)
             </field>
         </record>
 
@@ -717,10 +717,10 @@ action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, 
         <!-- PPL -->
         <record id="action_product_pack_tree" model="ir.actions.server">
             <field name="name">Packings</field>
-            <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
+            <field name="model_id" ref="product.model_product_product"/>
             <field name="state">code</field>
             <field name="code">
-action = self.pool.get('ir.actions.act_window').view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.action_ppl', context=context)
+action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.action_ppl', context=context)
             </field>
         </record>
 

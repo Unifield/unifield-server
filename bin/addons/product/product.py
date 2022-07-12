@@ -27,6 +27,7 @@ from _common import rounding
 import re
 from tools.translate import _
 from tools import cache
+from tools.safe_eval import safe_eval
 
 def is_pair(x):
     return not x%2
@@ -891,6 +892,28 @@ class product_product(osv.osv):
                     res['value'].update({'list_price': list_price})
                 else:
                     res.update({'value': {'list_price': list_price}})
+        return res
+
+    def view_docs_with_product(self, cr, uid, ids, menu_action, context=None):
+        '''
+        Get info from the given menu action to return the right view with the right data
+        '''
+
+        if context is None:
+            context = {}
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, menu_action, ['tree', 'form'], new_tab=True, context=context)
+
+        res_domain = res.get('domain', False) and safe_eval(res['domain']) or []
+        res_domain.append(('product_id', '=', context.get('active_id', False)))
+        res['domain'] = res_domain
+
+        if context.get('active_id'):
+            res['name'] = '%s [%s]' % (
+                res.get('name', ''),
+                self.browse(cr, uid, context['active_id'], fields_to_fetch='default_code', context=context).default_code
+            )
+
         return res
 
 
