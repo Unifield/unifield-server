@@ -904,9 +904,9 @@ class product_product(osv.osv):
 
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, menu_action, ['tree', 'form'], new_tab=True, context=context)
 
-        res_domain = res.get('domain', False) and safe_eval(res['domain']) or []
-        res_domain.append(('product_id', '=', context.get('active_id', False)))
-        res['domain'] = res_domain
+        res_context = res.get('context', False) and safe_eval(res['context']) or {}
+        res_context['search_default_product_id'] = context.get('active_id', False)
+        res['context'] = res_context
 
         if context.get('active_id'):
             res['name'] = '%s [%s]' % (
