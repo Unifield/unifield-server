@@ -27,6 +27,7 @@ from _common import rounding
 import re
 from tools.translate import _
 from tools import cache
+from tools.safe_eval import safe_eval
 
 def is_pair(x):
     return not x%2
@@ -903,7 +904,7 @@ class product_product(osv.osv):
 
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, menu_action, ['tree', 'form'], new_tab=True, context=context)
 
-        res_domain = res.get('domain', False) and eval(res['domain']) or []
+        res_domain = res.get('domain', False) and safe_eval(res['domain']) or []
         res_domain.append(('product_id', '=', context.get('active_id', False)))
         res['domain'] = res_domain
 
