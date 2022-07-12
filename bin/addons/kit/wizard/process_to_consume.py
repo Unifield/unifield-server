@@ -196,8 +196,8 @@ class process_to_consume_line(osv.osv_memory):
                 'total_selected_qty_process_to_consume': fields.function(_vals_get, method=True, type='float', string='Total Selected Qty', multi='get_vals', store=False, readonly=True),
                 'qty_available_process_to_consume': fields.function(_vals_get, method=True, type='float', string='Available Qty', multi='get_vals', store=False),
                 # related
-                'line_number_process_to_consume': fields.related('to_consume_id_process_to_consume', 'line_number_to_consume', type='integer', string='Line'),
-                'consider_child_locations_process_to_consume': fields.related('kit_creation_id_process_to_consume', 'consider_child_locations_kit_creation', type='boolean', string='Consider Child Location'),
+                'line_number_process_to_consume': fields.related('to_consume_id_process_to_consume', 'line_number_to_consume', type='integer', string='Line', write_relate=False),
+                'consider_child_locations_process_to_consume': fields.related('kit_creation_id_process_to_consume', 'consider_child_locations_kit_creation', type='boolean', string='Consider Child Location', write_relate=False),
                 }
 
 process_to_consume_line()

@@ -739,7 +739,7 @@ class sale_order_line_followup(osv.osv_memory):
         'procure_method': fields.related('line_id', 'type', type='selection', selection=[('make_to_stock','From stock'), ('make_to_order','On order')], readonly=True, string='Proc. Method'),
         'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('dpo', 'DPO'), ('cft','CFT'), ('pli', 'PLI')], readonly=True, string='PO/CFT'),
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
-        'product_id': fields.related('line_id', 'product_id', string='Product Code', readondy=True,
+        'product_id': fields.related('line_id', 'product_id', string='Product Code', readonly=True,
                                      type='many2one', relation='product.product'),
         'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True, related_uom='uom_id'),
         'uom_id': fields.related('line_id', 'product_uom', type='many2one', relation='product.uom', string='UoM', readonly=True),
