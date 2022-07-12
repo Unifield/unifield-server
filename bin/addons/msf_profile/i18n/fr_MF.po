@@ -10536,7 +10536,7 @@ msgstr "Listes/Sous-listes"
 #. modules: sale, useability_dashboard_and_menu, product_attributes
 #: view:sale.report:0
 #: view:sale.order:0
-#: model:ir.actions.act_window,name:product_attributes.action_order_line_product_tree
+#: model:ir.actions.server,name:product_attributes.action_product_fo_tree
 msgid "Field Orders"
 msgstr "Commandes de Terrain"
 
@@ -17123,7 +17123,7 @@ msgid "Employee Marital Status"
 msgstr "Employé - Etat civil "
 
 #. modules: product_attributes, tender_flow, sales_followup
-#: model:ir.actions.act_window,name:product_attributes.action_tender_product_tree
+#: model:ir.actions.server,name:product_attributes.action_product_tender_tree
 #: view:sale.order.line.followup:0
 #: model:ir.actions.act_window,name:tender_flow.tender_action
 #: model:ir.ui.menu,name:tender_flow.menu_tender
@@ -22984,7 +22984,7 @@ msgstr "Pacific/Easter"
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:185
 #: code:addons/msf_outgoing/wizard/internal_move_processor.py:205
 #: code:addons/msf_outgoing/wizard/outgoing_delivery_processor.py:104
-#: model:ir.actions.act_window,name:product_attributes.product_view_out_tree
+#: model:ir.actions.server,name:product_attributes.action_product_out_tree
 #, python-format
 msgid "Delivery Orders"
 msgstr "Bons de Livraison"
@@ -39233,7 +39233,7 @@ msgstr "Transbordement - Valeur."
 #. module: tender_flow, product_attributes
 #: view:tender:0
 #: field:tender,rfq_ids:0
-#: model:ir.actions.act_window,name:product_attributes.product_view_rfq_tree
+#: model:ir.actions.server,name:product_attributes.action_product_rfq_tree
 msgid "RfQs"
 msgstr "DdD"
 
@@ -69083,7 +69083,7 @@ msgstr "Affichage du Graphique"
 #: view:stock.picking:0
 #: view:board.board:0
 #: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_picking_tree_available
-#: model:ir.actions.act_window,name:product_attributes.product_view_in_tree
+#: model:ir.actions.server,name:product_attributes.action_product_in_tree
 #, python-format
 msgid "Incoming Shipments"
 msgstr "Livraisons Entrantes"
@@ -78590,7 +78590,7 @@ msgstr "Sous-Total (devise fonctionnelle)"
 #: model:ir.ui.menu,name:stock.menu_action_picking_tree6
 #: view:stock.picking:0
 #: field:stock.picking,move_lines:0
-#: model:ir.actions.act_window,name:product_attributes.product_view_int_tree
+#: model:ir.actions.server,name:product_attributes.action_product_int_tree
 #, python-format
 msgid "Internal Moves"
 msgstr "Mouvements Internes"
@@ -79202,7 +79202,7 @@ msgstr "You do not have access to the field (%s). If you did not edit this field
 #. module: procurement_request, product_attributes
 #: model:ir.actions.act_window,name:procurement_request.action_procurement_request
 #: model:ir.ui.menu,name:procurement_request.menu_procurement_request
-#: model:ir.actions.act_window,name:product_attributes.procurement_request_tree_view
+#: model:ir.actions.server,name:product_attributes.action_product_ir_tree
 #: view:sale.order:0
 msgid "Internal Requests"
 msgstr "Demandes Internes"
@@ -87671,7 +87671,7 @@ msgstr "Compte- Journal"
 #: view:account.analytic.line:0
 #: field:analytic.distribution,purchase_ids:0
 #: model:ir.ui.menu,name:base.menu_purchase_root
-#: model:ir.actions.act_window,name:purchase.action_purchase_line_product_tree2
+#: model:ir.actions.server,name:product_attributes.action_product_po_tree
 msgid "Purchases"
 msgstr "Achats"
 
@@ -115060,11 +115060,11 @@ msgid "Product to find in the lines"
 msgstr "Produit à trouver dans les lignes"
 
 #. module: product_attributes
-#: model:ir.actions.act_window,name:product_attributes.product_view_picking_ticket_tree
+#: model:ir.actions.server,name:product_attributes.action_product_pick_tree
 msgid "Pickings"
 msgstr "Pickings"
 
 #. module: product_attributes
-#: model:ir.actions.act_window,name:product_attributes.product_view_picking_ppl_tree
+#: model:ir.actions.server,name:product_attributes.action_product_pack_tree
 msgid "Packings"
 msgstr "Colisages"
