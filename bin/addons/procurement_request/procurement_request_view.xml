@@ -177,20 +177,18 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <search string="Internal Requests">
-                    <group string="Filters" expand="1">
-                        <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', 'in', ['draft','draft_p'])]" />
-                        <filter name="state_valid" string="Validated" icon="terp-check" domain="[('state', 'in', ['validated','validated_p'])]" />
-                        <filter name="sourced" string="Sourced" icon="gtk-paste-v" domain="[('state','in',['sourced','sourced_p'])]" />
-                        <filter name="state_proc_progress" string="Confirmed" icon="terp-camera_test" domain="[('state', 'in', ('confirmed', 'confirmed_p'))]" />
-                        <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
-                        <filter name="cancelled" string="Cancelled" icon="gtk-cancel" domain="[('state', '=', 'cancel')]" />
-                        <separator orientation="vertical" />
-                        <field name="name" />
-                        <field name="origin" />
-                        <field name="requestor" />
-                        <field name="location_requestor_id" />
-                        <field name="product_id" />
-                    </group>
+                    <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', 'in', ['draft','draft_p'])]" />
+                    <filter name="state_valid" string="Validated" icon="terp-check" domain="[('state', 'in', ['validated','validated_p'])]" />
+                    <filter name="sourced" string="Sourced" icon="gtk-paste-v" domain="[('state','in',['sourced','sourced_p'])]" />
+                    <filter name="state_proc_progress" string="Confirmed" icon="terp-camera_test" domain="[('state', 'in', ('confirmed', 'confirmed_p'))]" />
+                    <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
+                    <filter name="cancelled" string="Cancelled" icon="gtk-cancel" domain="[('state', '=', 'cancel')]" />
+                    <separator orientation="vertical" />
+                    <field name="name" />
+                    <field name="origin" />
+                    <field name="requestor" />
+                    <field name="location_requestor_id" />
+                    <field name="product_id" />
                     <newline />
                     <group string="Group By...">
                         <filter string="State" icon="terp-gtk-select-all" domain="[]" context="{'group_by': 'state'}" />
