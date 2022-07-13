@@ -905,6 +905,9 @@ class product_product(osv.osv):
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, menu_action, ['tree', 'form'], new_tab=True, context=context)
 
         res_context = res.get('context', False) and safe_eval(res['context']) or {}
+        for col in res_context:  # Remove the default filters
+            if 'search_default_' in col:
+                res_context[col] = False
         res_context['search_default_product_id'] = context.get('active_id', False)
         res['context'] = res_context
 
@@ -912,6 +915,7 @@ class product_product(osv.osv):
 
 
 product_product()
+
 
 class product_packaging(osv.osv):
     _name = "product.packaging"
