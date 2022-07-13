@@ -115052,5 +115052,5 @@ msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1693
 #, python-format
-msgid "There is not enough allocable stock in Cross Docking to process the product %s with a quantity of %s"
-msgstr "Il n'y a pas assez de stock attribuable en Transbordement pour traiter le produit %s avec une quantité de %s"
+msgid "There is not enough stock in Cross Docking which can be allocated to process the product %s with a quantity of %s. Please check if there is some other (forced) availability of this product."
+msgstr "Il n'y a pas assez de stock attribuable en Transbordement pour traiter le produit %s avec une quantité de %s. Veuillez vérifier si il y a d'autres disponibilités (forcées) pour ce produit."

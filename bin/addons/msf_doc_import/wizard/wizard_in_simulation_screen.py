@@ -1700,7 +1700,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
                 if not new_bn and prod_obj.browse(cr, uid, prod_id, fields_to_fetch=['qty_allocable'],
                                                   context=cd_ctx).qty_allocable < 0:
-                    err_msg = _('There is not enough allocable stock in Cross Docking to process the product %s with a quantity of %s') \
+                    err_msg = _('There is not enough stock in Cross Docking which can be allocated to process the product %s with a quantity of %s. Please check if there is some other (forced) availability of this product.') \
                               % (product.default_code, write_vals['imp_product_qty'])
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
