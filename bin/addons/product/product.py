@@ -908,12 +908,6 @@ class product_product(osv.osv):
         res_context['search_default_product_id'] = context.get('active_id', False)
         res['context'] = res_context
 
-        if context.get('active_id'):
-            res['name'] = '%s [%s]' % (
-                res.get('name', ''),
-                self.browse(cr, uid, context['active_id'], fields_to_fetch='default_code', context=context).default_code
-            )
-
         return res
 
 
