@@ -313,13 +313,11 @@ class account_move_line(osv.osv):
             return res
         if isinstance(ids, (int, long)):
             ids = [ids]
-        il_obj = self.pool.get('account.invoice.line')
-        for r in self.read(cr, uid, ids, ['product_id', 'invoice_line_id'], context=context):
-            res[r['id']] = False
-            if r['product_id'] and r['invoice_line_id']:
-                il = il_obj.read(cr, uid, [r['invoice_line_id'][0]], ['product_code'])[0]
-                if il['product_code']:
-                    res[r['id']] = il['product_code']
+        for r in self.browse(cr, uid, ids):
+            if r.id:
+                res[r.id] = False
+                if r.product_id and r.invoice_line_id:
+                    res[r.id] = r.product_id.default_code or False
         return res
 
     def _get_quantity(self, cr, uid, ids, field_name=None, arg=None, context=None):
