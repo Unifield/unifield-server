@@ -71,6 +71,8 @@
                         <field name="cheque_number" invisible="1"/>
                         <field name="db_id" invisible="1"/>
                         <field name="amount_currency" invisible="1"/>
+                        <field name="product_code" invisible="1"/>
+                        <field name="entry_quantity" invisible="1"/>
                     </group>
 
                     <group col="6" colspan="4">
