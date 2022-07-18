@@ -303,6 +303,40 @@ class account_move_line(osv.osv):
             ret[i] = finance_export.finance_archive._get_hash(cr, uid, [i], 'account.move.line')
         return ret
 
+
+    def _get_product(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Returns product code
+        """
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        il_obj = self.pool.get('account.invoice.line')
+        for r in self.read(cr, uid, ids, ['product_id', 'invoice_line_id'], context=context):
+            res[r['id']] = False
+            if r['product_id'] and r['invoice_line_id']:
+                il = il_obj.read(cr, uid, [r['invoice_line_id'][0]], ['product_code'])[0]
+                if il['product_code']:
+                    res[r['id']] = il['product_code']
+        return res
+
+    def _get_quantity(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Returns product quantity
+        """
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for r in self.read(cr, uid, ids, ['quantity', 'product_id', 'invoice_line_id'], context=context):
+            res[r['id']] = False
+            if r['quantity'] and r['product_id'] and r['invoice_line_id']:
+                res[r['id']] = r['quantity']
+        return res
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')],
@@ -361,6 +395,10 @@ class account_move_line(osv.osv):
                                                     help="Register line to which this partner automated entry is linked"),
         'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
                                  store=False, help='DB ID used for Vertical Integration'),
+        'product_code': fields.function(_get_product, method=True, type='char', size=64,
+                                        string='Product validated in SI', store=False),
+        'entry_quantity': fields.function(_get_quantity, method=True, type='char', string='Quantity validated in SI',
+                                          store=False),
     }
 
     _defaults = {

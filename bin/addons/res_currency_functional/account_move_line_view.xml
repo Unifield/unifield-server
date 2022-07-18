@@ -145,6 +145,8 @@
                     <field name="functional_currency_id" readonly="1"/>
                     <field name="reconcile_txt" readonly="1"/>
                     <field name="state"/>
+                    <field name="product_code" invisible="1"/>
+                    <field name="entry_quantity" invisible="1"/>
                 </tree>
             </field>
         </record>
