@@ -448,7 +448,7 @@ class wizard_import_in_simulation_screen(osv.osv):
         for row in rows:
             index += 1
             values.setdefault(index, [])
-            if len(row) > 2 and row[1] and row[1].data == PACK_HEADER[1][0]:
+            if len(row) > 2 and row[1] and row[1].data and row[1].data.lower() == PACK_HEADER[1][0].lower():
                 # this line is for pack header
                 nb_pack += 1
                 for nb, x in enumerate(PACK_HEADER):

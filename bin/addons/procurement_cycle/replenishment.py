@@ -4215,7 +4215,6 @@ class product_stock_out(osv.osv):
             else:
                 data_towrite['product_id'] = prod_id[0]
 
-
             if cells_nb < 5:
                 line_error.append(_('XLS Line %d: dates from and to required') % (idx,))
                 error += line_error
@@ -4239,11 +4238,11 @@ class product_stock_out(osv.osv):
             if error_date.get('warning', {}).get('message'):
                 line_error.append(_('XLS Line %d: %s') % (idx, error_date['warning']['message']))
 
-
-            if cells_nb > 6 and row.cells[6].data and not isinstance(row.cells[6].data, (int, long, float)):
-                line_error.append(_('XLS Line %d: Missing Qty must be a number, found %s') % (idx, row.cells[6].data))
-            else:
-                data_towrite['qty_missed'] = row.cells[6].data
+            if cells_nb > 6:
+                if row.cells[6].data and not isinstance(row.cells[6].data, (int, long, float)):
+                    line_error.append(_('XLS Line %d: Missing Qty must be a number, found %s') % (idx, row.cells[6].data))
+                else:
+                    data_towrite['qty_missed'] = row.cells[6].data
 
             replace_prod_col = 7
             for sub in [1, 2, 3]:
