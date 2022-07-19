@@ -408,6 +408,11 @@ class Text(TinyInputWidget):
 register_widget(Text, ["text", "text_tag"])
 
 
+class Signature(Text):
+    template = "/openerp/widgets/form/templates/signature.mako"
+
+register_widget(Signature, ['signature'])
+
 class Integer(TinyInputWidget):
     template = "/openerp/widgets/form/templates/integer.mako"
 
