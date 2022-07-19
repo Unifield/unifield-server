@@ -3,8 +3,8 @@
 	display: inline-block;
 	border: 1px solid #a0a0a0;
 	-ms-touch-action: none;
-    height: 300px;
-    width: 400px;
+    height: 50px;
+    width: 200px;
 }
 .kbw-signature-disabled {
 	opacity: 0.35;
