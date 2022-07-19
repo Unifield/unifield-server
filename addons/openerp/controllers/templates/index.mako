@@ -94,9 +94,12 @@
             <tr>
                 <%include file="banner.mako"/>
             </tr>
+            % if from_login:
             <tr>
-                <%include file="shortcut_tooltip.mako"/>
+               <td id="shortcut_message" colspan="3">${_('Do you have any questions on how to use UniField ? You can click on the button')} <a id="help_banner_icon" href="https://doc.unifield.org/" target="_blank"></a> ${_('on the top right of the screen to reach the User Manuals website.')}
             </tr>
+            % endif
+
             % if tools is not None:
                 <tr>
                     <td id="secondary" class="sidenav-open">

@@ -649,7 +649,8 @@ function form_setRequired(container, field, required) {
     else {
     	$field.removeClass('requiredfield');
     }
-    if(required) {
+    var field_id = $field.attr('id');
+    if(required && field_id != 'ext_cu_text' && field_id != 'partner_id2_text') {
         $field.removeClass('readonlyfield');
     }
     $field.removeClass('errorfield');

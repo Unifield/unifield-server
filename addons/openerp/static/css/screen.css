@@ -278,6 +278,14 @@ p#cmp_logo {
     text-indent: 0;
 }
 
+#corner ul.tools li a.user_manuals {
+    background-position: -94px 0;
+}
+
+#corner ul.tools li a.user_manuals:hover {
+    background-position: -94px -34px;
+}
+
 #corner ul.tools li a.home {
     background-position: -22px 0;
 }
@@ -626,6 +634,14 @@ h1,h2,h3,h4,h5,h6 {
     color: #252424;
     line-height: 1.2;
     text-shadow: #fff 0 1px 0;
+}
+
+.search_filters h6 {
+    color: #4C4C4C;
+}
+
+.search_filters h6 label {
+    color: #000;
 }
 
 h1 {
@@ -2461,4 +2477,14 @@ table #rr-chrono  {
 }
 #rr-chrono .hlt {
   width: 25%;
+}
+
+#help_banner_icon {
+    width: 26px;
+    height: 35px;
+    overflow: hidden;
+    background: url(../images/top-tools-a.png) no-repeat;
+    display:inline-block;
+    background-position: -94px 1px;
+    vertical-align: middle;
 }

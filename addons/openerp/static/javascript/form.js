@@ -333,13 +333,25 @@ function error_display(msg, title='Warning Message') {
                             .text('OK')
                         )
                 ));
-    error.find('.button-a').focus()
-    window.top.jQuery.fancybox(error, {
-        scrolling: 'no',
-        onComplete: function () {
-            $(this).find(".button-a").focus()
-        }
-    });
+    if (jQuery('div#fancybox-wrap').is(':visible')) {
+        // chaining warning pop: IR, new line, qty:11 digits, hit return
+        jQuery('div#fancybox-wrap').fadeOut(5000, function() {
+            window.top.jQuery.fancybox(error, {
+                scrolling: 'no',
+                onComplete: function () {
+                    $(this).find(".button-a").focus()
+                    }
+                });
+            });
+    } else {
+        error.find('.button-a').focus()
+        window.top.jQuery.fancybox(error, {
+            scrolling: 'no',
+            onComplete: function () {
+                $(this).find(".button-a").focus()
+            }
+        });
+    }
 }
 
 function get_sidebar_status(args, noterp) {

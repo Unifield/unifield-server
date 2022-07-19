@@ -548,7 +548,8 @@ class Form(SecuredController):
                 params.id = int(Model.create(data, ctx))
                 params.ids = (params.ids or []) + [params.id]
                 params.count += 1
-                params.is_new_doc = True
+                if params.model == 'product.history.consumption':
+                    params.is_new_doc = True
             else:
                 ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
                 ctx['from_web_interface'] = True
