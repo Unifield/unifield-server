@@ -9,17 +9,16 @@
     <table class="view" cellspacing="5" border="0" width="100%">
         <tr>
             <td>
-                <h1>${_("Information")}</h1>
+                <h1>${_("Information")}
+                % if rpc.session and rpc.session.uid == 1:
+                        <a class="help" id="show_fields_button" title="${_('Show fields')}" href="${py.url('/openerp/showfields', model=model)}"></a>
+                % endif
+                </h1>
             </td>
         </tr>
         <tr>
             <td>
                 <div class="box2">
-                    % if rpc.session and rpc.session.uid == 1:
-                    <div id="show_fields">
-                        <a href="${py.url('/openerp/showfields', model=model)}" id="show_fields_button">${_('Show fields')}</a>
-                    </div>
-                    % endif
                     <table border="0" width="100%" align="center">
                         % for field, description in fields:
                         <tr>
