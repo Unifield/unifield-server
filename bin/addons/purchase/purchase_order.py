@@ -45,6 +45,7 @@ from sourcing.purchase_order import COMPATS
 class purchase_order(osv.osv):
     _name = "purchase.order"
     _description = "Purchase Order"
+    _inherit = 'signature.object'
     _order = "id desc"
 
     def _where_calc(self, cr, uid, domain, active_test=True, context=None):
@@ -988,6 +989,7 @@ class purchase_order(osv.osv):
         'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
         'tax_line': fields.one2many('account.invoice.tax', 'purchase_id', 'Tax Lines'),
+        'signature_id': fields.many2one('signature', 'Signature'),
     }
     _defaults = {
         'po_version': 2,
@@ -1483,7 +1485,14 @@ class purchase_order(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['delivery_requested_date', 'delivery_requested_date_modified', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date', 'show_default_msg']
+        fields_to_reset = [
+            'delivery_requested_date', 'delivery_requested_date_modified', 'ready_to_ship_date',
+            'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date',
+            'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date',
+            'show_default_msg', 'signature_id', 'signature_users', 'signature_line_ids',
+            'signature_state', 'signed_off_line', 'signature_is_closed', 'signature_available',
+            'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model'
+        ]
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:

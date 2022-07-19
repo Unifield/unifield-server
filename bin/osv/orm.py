@@ -2421,6 +2421,9 @@ class orm_memory(orm_template):
         self.next_id = 0
         self.check_id = 0
         cr.execute('delete from wkf_instance where res_type=%s', (self._name,))
+        for x in self._columns:
+            if self._columns[x]._type == 'many2many':
+                self._columns[x].setup_m2m(self)
 
     def _check_access(self, cr, uid, object_id, mode):
         user_obj = self.pool.get('res.users')
@@ -3112,6 +3115,8 @@ class orm(orm_template):
                 cr.commit()
 
     def _create_m2m_table(self, cr, f):
+        f.setup_m2m(self)
+
         cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
         if not cr.dictfetchall():
             if not self.pool.get(f._obj):
@@ -4455,10 +4460,14 @@ class orm(orm_template):
 
             record_id = tocreate[table].pop('id', None)
 
+            inherit_obj = self.pool.get(table)
             if record_id is None or not record_id:
-                record_id = self.pool.get(table).create(cr, user, tocreate[table], context=context)
+                if hasattr(inherit_obj, '_record_source') and inherit_obj._record_source:
+                    tocreate[table]['signature_res_model'] = self._name
+                    tocreate[table]['signature_res_id'] = id_new
+                record_id = inherit_obj.create(cr, user, tocreate[table], context=context)
             elif tocreate[table]:
-                self.pool.get(table).write(cr, user, [record_id], tocreate[table], context=context)
+                inherit_obj.write(cr, user, [record_id], tocreate[table], context=context)
 
             upd0 += ',' + self._inherits[table]
             upd1 += ',%s'

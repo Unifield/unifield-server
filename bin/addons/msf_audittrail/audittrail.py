@@ -685,16 +685,18 @@ class audittrail_rule(osv.osv):
             model_name_tolog = rule.object_id.model
             model_id_tolog = rule.object_id.id
             parent_field = False
+            inherits = False
             if rule.parent_field_id:
                 parent_field_display = rule.name_get_field_id.name
                 parent_field = rule.parent_field_id.name
                 model_name_tolog = rule.parent_field_id.relation
                 model_parent_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
 
-            inherits = self.pool.get(model_name_tolog)._inherits
-            if inherits:
-                model_name_tolog = inherits.keys()[-1]
-                model_id_tolog = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
+            if model_name_tolog in ('product.product', 'hr.employee'):
+                inherits = self.pool.get(model_name_tolog)._inherits
+                if inherits:
+                    model_name_tolog = inherits.keys()[-1]
+                    model_id_tolog = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
 
             if method in ('write', 'create'):
                 original_fields = current.values()[0].keys()
@@ -721,7 +723,9 @@ class audittrail_rule(osv.osv):
                 inherit_field_id = False
                 if inherits:
                     inherits_field = inherits.values()[-1]
-                    inherit_field_id = self.pool.get(rule.object_id.model).read(cr, uid, res_id, [inherits_field])[inherits_field][0]
+                    inherit_field_ids = self.pool.get(rule.object_id.model).read(cr, uid, res_id, [inherits_field])[inherits_field]
+                    if inherit_field_ids:
+                        inherits_field = inherit_field_ids[0]
 
                 vals = {
                     'name': rule.object_id.name,
