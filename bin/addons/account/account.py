@@ -1270,7 +1270,7 @@ class account_journal_period(osv.osv):
         'active': fields.boolean('Active', required=True, help="If the active field is set to False, it will allow you to hide the journal period without removing it."),
         'state': fields.selection([('draft','Draft'), ('printed','Printed'), ('done','Done')], 'State', required=True, readonly=True,
                                   help='When journal period is created. The state is \'Draft\'. If a report is printed it comes to \'Printed\' state. When all transactions are done, it comes in \'Done\' state.'),
-        'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', string='Fiscal Year', type='many2one', relation='account.fiscalyear'),
+        'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', string='Fiscal Year', type='many2one', relation='account.fiscalyear', write_relate=False),
         'company_id': fields.related('journal_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True)
     }
 
@@ -1418,13 +1418,13 @@ class account_move(osv.osv):
         'ref': fields.char('Reference', size=64),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}),
         'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear',
-                                        string='Fiscal Year', store=False),
+                                        string='Fiscal Year', store=False, write_relate=False),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}),
         'state': fields.selection([('draft','Unposted'), ('posted','Posted')], 'State', required=True, readonly=True,
                                   help='All manually created new journal entry are usually in the state \'Unposted\', but you can set the option to skip that state on the related journal. In that case, they will be behave as journal entries automatically created by the system on document validation (invoices, bank statements...) and will be created in \'Posted\' state.'),
         'line_id': fields.one2many('account.move.line', 'move_id', 'Entries', states={'posted':[('readonly',True)]}),
         'to_check': fields.boolean('To Review', help='Check this box if you are unsure of that journal entry and if you want to note it as \'to be reviewed\' by an accounting expert.'),
-        'partner_id': fields.related('line_id', 'partner_id', type="many2one", relation="res.partner", string="Partner", store=True),
+        'partner_id': fields.related('line_id', 'partner_id', type="many2one", relation="res.partner", string="Partner", store=True, write_relate=False),
         'amount': fields.function(_amount_compute, method=True, string='Amount', digits_compute=dp.get_precision('Account'), type='float', fnct_search=_search_amount),
         'date': fields.date('Date', required=True, states={'posted':[('readonly',True)]}, select=True),
         'narration':fields.text('Narration'),
@@ -2104,12 +2104,10 @@ class account_tax(osv.osv):
     _columns = {
         'name': fields.char('Tax Name', size=64, required=True, translate=True, help="This name will be displayed on reports"),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the tax lines from the lowest sequences to the higher ones. The order is important if you have a tax with several tax children. In this case, the evaluation order is important."),
-        'amount': fields.float('Amount', required=True, digits_compute=get_precision_tax(), help="For taxes of type percentage, enter % ratio between 0-1."),
+        'amount': fields.float('Amount', required=True, digits_compute=get_precision_tax(), help="For taxes of type percentage, enter % ratio between -1 and 1, Example: 0.02 for 2% "),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the tax without removing it."),
-        'type': fields.selection( [('percent','Percentage'), ('fixed','Fixed Amount'), ('none','None'), ('code','Python Code'), ('balance','Balance')], 'Tax Type', required=True,
-                                  help="The computation method for the tax amount."),
-        'applicable_type': fields.selection( [('true','Always'), ('code','Given by Python Code')], 'Applicability', required=True,
-                                             help="If not applicable (computed through a Python code), the tax won't appear on the invoice."),
+        'type': fields.selection([('percent','Percentage'), ('fixed','Fixed Amount')], 'Tax Type', required=True, help="The computation method for the tax amount."),
+        'applicable_type': fields.selection([('true','Always')], 'Applicability', required=True, readonly=True, help="Always applicable."),
         'domain':fields.char('Domain', size=32, help="This field is only used if you develop your own module allowing developers to create specific taxes in a custom domain."),
         'account_collected_id':fields.many2one('account.account', 'Invoice Tax Account'),
         'account_paid_id':fields.many2one('account.account', 'Refund Tax Account'),
@@ -2119,10 +2117,9 @@ class account_tax(osv.osv):
         'partner_id': fields.many2one('res.partner', 'Partner',
                                       domain=[('partner_type', '=', 'external'), ('active', '=', True)],
                                       ondelete='restrict'),
-        'python_compute':fields.text('Python Code'),
-        'python_compute_inv':fields.text('Python Code (reverse)'),
-        'python_applicable':fields.text('Python Code'),
-
+        'python_compute':fields.text('Python Code'), # deprecated
+        'python_compute_inv':fields.text('Python Code (reverse)'), # deprecated
+        'python_applicable':fields.text('Python Code'), # deprecated
         #
         # Fields used for the VAT declaration
         #
@@ -2144,6 +2141,16 @@ class account_tax(osv.osv):
         'type_tax_use': fields.selection([('sale','Sale'),('purchase','Purchase'),('all','All')], 'Tax Application', required=True)
 
     }
+
+    def _check_percent(self, cr, uid, ids, context=None):
+        obj = self.browse(cr, uid, ids[0], context=context)
+        if obj.type == 'percent' and abs(obj.amount) > 1.0:
+            return False
+        return True
+
+    _constraints = [
+        (_check_percent, 'For taxes of type percentage, enter % ratio between -1 and 1, Example: 0.02 for 2% ', ['amount']),
+    ]
 
     def name_search(self, cr, user, name, args=None, operator='ilike', context=None, limit=80):
         """
@@ -2195,8 +2202,6 @@ class account_tax(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if vals.get('type', False) and vals['type'] in ('none', 'code'):
-            vals.update({'amount': 0.0})
         self._check_tax_partner(cr, uid, vals, context=context)
         return super(account_tax, self).write(cr, uid, ids, vals, context=context)
 
@@ -2233,8 +2238,6 @@ class account_tax(osv.osv):
         return self.pool.get('res.company').search(cr, uid, [('parent_id', '=', False)])[0]
 
     _defaults = {
-        'python_compute': '''# price_unit\n# address: res.partner.address object or False\n# product: product.product object or None\n# partner: res.partner object or None\n\nresult = price_unit * 0.10''',
-        'python_compute_inv': '''# price_unit\n# address: res.partner.address object or False\n# product: product.product object or False\n\nresult = price_unit * 0.10''',
         'applicable_type': 'true',
         'type': 'percent',
         'amount': 0,
@@ -2253,22 +2256,14 @@ class account_tax(osv.osv):
 
     def _applicable(self, cr, uid, taxes, price_unit, address_id=None, product=None, partner=None):
         res = []
-        obj_partener_address = self.pool.get('res.partner.address')
         for tax in taxes:
-            if tax.applicable_type=='code':
-                localdict = {'price_unit':price_unit, 'address':obj_partener_address.browse(cr, uid, address_id), 'product':product, 'partner':partner}
-                exec tax.python_applicable in localdict
-                if localdict.get('result', False):
-                    res.append(tax)
-            else:
-                res.append(tax)
+            res.append(tax)
         return res
 
     def _unit_compute(self, cr, uid, taxes, price_unit, address_id=None, product=None, partner=None, quantity=0):
         taxes = self._applicable(cr, uid, taxes, price_unit, address_id, product, partner)
         res = []
         cur_price_unit=price_unit
-        obj_partener_address = self.pool.get('res.partner.address')
         for tax in taxes:
             # we compute the amount for the current tax object and append it to the result
             description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')  # tax name and INVOICE partner name
@@ -2295,16 +2290,6 @@ class account_tax(osv.osv):
             elif tax.type=='fixed':
                 data['amount'] = tax.amount
                 data['tax_amount']=quantity
-               # data['amount'] = quantity
-            elif tax.type=='code':
-                address = address_id and obj_partener_address.browse(cr, uid, address_id) or None
-                localdict = {'price_unit':cur_price_unit, 'address':address, 'product':product, 'partner':partner}
-                exec tax.python_compute in localdict
-                amount = localdict['result']
-                data['amount'] = amount
-            elif tax.type=='balance':
-                data['amount'] = cur_price_unit - reduce(lambda x,y: y.get('amount',0.0)+x, res, 0.0)
-                data['balance'] = cur_price_unit
 
             amount2 = data.get('amount', 0.0)
             if tax.child_ids:
@@ -2384,16 +2369,12 @@ class account_tax(osv.osv):
         total = 0.0
         precision_pool = self.pool.get('decimal.precision')
         for r in res:
-            if r.get('balance',False):
-                r['amount'] = round(r.get('balance', 0.0) * quantity, precision_pool.precision_get(cr, uid, 'Account')) - total
-            else:
-                r['amount'] = round(r.get('amount', 0.0) * quantity, precision_pool.precision_get(cr, uid, 'Account'))
-                total += r['amount']
+            r['amount'] = round(r.get('amount', 0.0) * quantity, precision_pool.precision_get(cr, uid, 'Account'))
+            total += r['amount']
         return res
 
     def _unit_compute_inv(self, cr, uid, taxes, price_unit, address_id=None, product=None, partner=None):
         taxes = self._applicable(cr, uid, taxes, price_unit, address_id, product, partner)
-        obj_partener_address = self.pool.get('res.partner.address')
         res = []
         taxes.reverse()
         cur_price_unit = price_unit
@@ -2416,14 +2397,6 @@ class account_tax(osv.osv):
 
             elif tax.type=='fixed':
                 amount = tax.amount
-
-            elif tax.type=='code':
-                address = address_id and obj_partener_address.browse(cr, uid, address_id) or None
-                localdict = {'price_unit':cur_price_unit, 'address':address, 'product':product, 'partner':partner}
-                exec tax.python_compute_inv in localdict
-                amount = localdict['result']
-            elif tax.type=='balance':
-                amount = cur_price_unit - reduce(lambda x,y: y.get('amount',0.0)+x, res, 0.0)
 
             if tax.include_base_amount:
                 cur_price_unit -= amount
@@ -2481,13 +2454,37 @@ class account_tax(osv.osv):
         obj_precision = self.pool.get('decimal.precision')
         for r in res:
             prec = obj_precision.precision_get(cr, uid, 'Account')
-            if r.get('balance',False):
-                r['amount'] = round(r['balance'] * quantity, prec) - total
-            else:
-                r['amount'] = round(r['amount'] * quantity, prec)
-                total += r['amount']
+            r['amount'] = round(r['amount'] * quantity, prec)
+            total += r['amount']
         return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Prevents deletion in case the tax object is still referenced elsewhere
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        product_obj = self.pool.get('product.template')
+        acc_obj = self.pool.get('account.account')
+        acc_inv_obj = self.pool.get('account.invoice.line')
+        acc_inv_tax_obj = self.pool.get('account.invoice.tax')
+        purch_obj = self.pool.get('purchase.order.line')
+        sale_obj = self.pool.get('sale.order.line')
+        if product_obj.search_exists(cr, uid, ['|', ('taxes_id', 'in', ids), ('supplier_taxes_id', 'in', ids)], context=context) or \
+                acc_obj.search_exists(cr, uid, [('tax_ids', 'in', ids)], context=context) or \
+                acc_inv_obj.search_exists(cr, uid, [('invoice_line_tax_id', 'in', ids)], context=context) or \
+                acc_inv_tax_obj.search_exists(cr, uid, [('account_tax_id', 'in', ids)], context=context) or \
+                purch_obj.search_exists(cr, uid, [('taxes_id', 'in', ids)], context=context) or \
+                sale_obj.search_exists(cr, uid, [('tax_id', 'in', ids)], context=context):
+            raise osv.except_osv(_('Warning'), _("You are trying to delete a tax record that is still referenced!"))
+        else:
+            return super(account_tax, self).unlink(cr, uid, ids, context=context)
+
+
 account_tax()
+
 
 # ---------------------------------------------------------
 # Account Entries Models
@@ -2586,7 +2583,7 @@ class account_subscription(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=64, required=True),
-        'ref': fields.char('Reference', size=16),
+        'ref': fields.char('Reference', size=64),
         'model_id': fields.many2one('account.model', 'Model', required=True),
 
         'date_start': fields.date('Start Date', required=True),
@@ -3026,7 +3023,7 @@ class account_tax_template(osv.osv):
         'chart_template_id': fields.many2one('account.chart.template', 'Chart Template', required=True),
         'name': fields.char('Tax Name', size=64, required=True),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the taxes lines from lower sequences to higher ones. The order is important if you have a tax that has several tax children. In this case, the evaluation order is important."),
-        'amount': fields.float('Amount', required=True, digits=(14,4), help="For Tax Type percent enter % ratio between 0-1."),
+        'amount': fields.float('Amount', required=True, digits=(14,4), help="For Tax Type percent enter % ratio between -1 and 1."),
         'type': fields.selection( [('percent','Percent'), ('fixed','Fixed'), ('none','None'), ('code','Python Code'), ('balance','Balance')], 'Tax Type', required=True),
         'applicable_type': fields.selection( [('true','True'), ('code','Python Code')], 'Applicable Type', required=True, help="If not applicable (computed through a Python code), the tax won't appear on the invoice."),
         'domain':fields.char('Domain', size=32, help="This field is only used if you develop your own module allowing developers to create specific taxes in a custom domain."),

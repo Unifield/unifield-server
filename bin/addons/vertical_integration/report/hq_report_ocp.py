@@ -201,7 +201,7 @@ class finance_archive(finance_export.finance_archive):
 # request used for OCP VI only (removed from OCG VI in US-6516)
 # Journals excluded from the Account Balances: Migration, In-kind Donation, OD-Extra Accounting
 account_balances_per_currency_sql = """
-    SELECT i.code AS instance, acc.code, acc.name, %s AS period, req.opening, req.calculated, req.closing, 
+    SELECT i.code AS instance, acc.code, acc.name, %(period_yyymm)s AS period, req.opening, req.calculated, req.closing, 
            c.name AS currency
     FROM
     (
@@ -218,8 +218,8 @@ account_balances_per_currency_sql = """
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
                 WHERE acc.active = 't'
                 AND curr.active = 't'
-                AND aml.date < %s
-                AND j.instance_id IN %s
+                AND ( aml.date < %(first_day_of_period)s or aml.period_id in %(include_period_opening)s )
+                AND j.instance_id IN %(instance_ids)s
                 AND j.type NOT IN ('migration', 'inkind', 'extra')
                 GROUP BY aml.instance_id, aml.account_id, aml.currency_id
             )
@@ -234,8 +234,8 @@ account_balances_per_currency_sql = """
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
                 WHERE acc.active = 't'
                 AND curr.active = 't'
-                AND aml.period_id = %s
-                AND j.instance_id IN %s
+                AND aml.period_id = %(period_id)s
+                AND j.instance_id IN %(instance_ids)s
                 AND j.type NOT IN ('migration', 'inkind', 'extra')
                 GROUP BY aml.instance_id, aml.account_id, aml.currency_id
             )
@@ -250,8 +250,8 @@ account_balances_per_currency_sql = """
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
                 WHERE acc.active = 't'
                 AND curr.active = 't'
-                AND aml.date <= %s
-                AND j.instance_id IN %s
+                AND ( aml.date <= %(last_day_of_period)s and aml.period_id not in %(exclude_period_closing)s )
+                AND j.instance_id IN %(instance_ids)s
                 AND j.type NOT IN ('migration', 'inkind', 'extra')
                 GROUP BY aml.instance_id, aml.account_id, aml.currency_id
             )
@@ -284,6 +284,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         mi_obj = pool.get('msf.instance')
         m_obj = pool.get('account.move')
         ml_obj = pool.get('account.move.line')
+        period_obj = pool.get('account.period')
         excluded_journal_types = ['hq', 'migration', 'inkind', 'extra']  # journal types that should not be used to take lines
         # Fetch data from wizard
         if not data.get('form', False):
@@ -296,8 +297,8 @@ class hq_report_ocp(report_sxw.report_sxw):
         all_missions = form.get('all_missions', False)
         if not fy_id or not period_id or not instance_ids or (not instance_id and not all_missions):
             raise osv.except_osv(_('Warning'), _('Some information is missing: either fiscal year or period or instance.'))
-        period = pool.get('account.period').browse(cr, uid, period_id, context=context,
-                                                   fields_to_fetch=['date_start', 'date_stop', 'number'])
+        period = period_obj.browse(cr, uid, period_id, context=context,
+                                   fields_to_fetch=['date_start', 'date_stop', 'number'])
         first_day_of_period = period.date_start
         tm = strptime(first_day_of_period, '%Y-%m-%d')
         year_num = tm.tm_year
@@ -520,6 +521,19 @@ class hq_report_ocp(report_sxw.report_sxw):
             period_yyyymm = "{0}{1}".format(year, month)
             last_day_of_period = period.date_stop
             reg_types = ('cash', 'bank', 'cheque')
+            include_period_opening = [0]
+            exclude_period_closing = [0]
+
+            if period.number in (13, 14, 15):
+                include_period_opening = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('number', 'in', [12, 13, 14]), ('number', '<', period.number)], context=context)
+                if not include_period_opening:
+                    include_period_opening = [0]
+
+            if period.number in (12, 13, 14):
+                exclude_period_closing = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('special', '=', 't'), ('number', '>', period.number)], context=context)
+                if not exclude_period_closing:
+                    exclude_period_closing = [0]
+
             # Liquidity Balances
             processrequests.append(
                 {
@@ -540,8 +554,16 @@ class hq_report_ocp(report_sxw.report_sxw):
                                 'Calculated balance', 'Closing balance', 'Booking Currency'],
                     'filename': account_balance_filename,
                     'key': 'account_balances_per_currency',
-                    'query_params': (tuple([period_yyyymm]), first_day_of_period, tuple(instance_ids), period.id,
-                                     tuple(instance_ids), last_day_of_period, tuple(instance_ids)),
+                    'dict_query_params': {
+                        'period_yyymm': period_yyyymm,
+                        'first_day_of_period': first_day_of_period,
+                        'last_day_of_period': last_day_of_period,
+                        'instance_ids': tuple(instance_ids),
+                        'period_id': period.id,
+                        'include_period_opening': tuple(include_period_opening),
+                        'exclude_period_closing': tuple(exclude_period_closing),
+
+                    }
                 },
             )
         if plresult_ji_in_ids:

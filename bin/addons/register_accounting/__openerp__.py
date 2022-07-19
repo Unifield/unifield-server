@@ -68,6 +68,7 @@
         'wizard/wizard_register_import.xml',
         'wizard/account_direct_invoice_wizard_view.xml',
         'wizard/register_opening.xml',
+        'wizard/wizard_modify_responsible.xml',
     ],
     "demo_xml" : [],
     "test": [

@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="wizard_modify_responsible">
+            <field name="name">wizard.modify.responsible.form</field>
+            <field name="model">modify.responsible</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Modify Responsible - Wizard">
+                    <separator string="The provided responsibles list must be exhaustive and will update all selected registers!"/>
+                    <separator string="Exhaustive list of responsibles" colspan="2" />
+                    <separator string="Impacted Registers" colspan="2" />
+                    <field name="responsible_ids" nolabel="1" colspan="2"/>
+                    <field name="registers_ids" nolabel="1" readonly="1" colspan="2">
+                            <tree>
+                                <field name="name"/>
+                                <field name="period_id"/>
+                                <field name="currency"/>
+                                <field name="journal_id"/>
+                                <field name="responsible_ids" truncate="512" />
+                            </tree>
+                    </field>
+                    <newline />
+                    <group colspan="4">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                        <button string="Confirm" icon="terp-check" name="modify_responsible" type="object"/>
+                    </group>
+                </form>
+            </field>
+          </record>
+
+          <!-- Actions -->
+          <act_window id="action_modify_responsible"
+            name="Modify register responsible"
+            res_model="modify.responsible"
+            src_model="account.bank.statement"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new" />
+
+    </data>
+</openerp>

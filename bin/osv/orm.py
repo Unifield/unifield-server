@@ -2090,7 +2090,6 @@ class orm_template(object):
                     exclude += self.search_count(cr, user, [('move_id.state', '=', 'draft')], context=context)
                 if self._table == 'account_analytic_line':
                     exclude = self.search_count(cr, user, [('account_id.category', '!=', 'FUNDING')], context=context)
-                    print exclude
                 return int(approximative_result) - exclude, True
         return self.search_count(cr, user, args, context=context), False
 
@@ -3117,18 +3116,22 @@ class orm(orm_template):
     def _create_m2m_table(self, cr, f):
         f.setup_m2m(self)
 
-        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
-        if not cr.dictfetchall():
+        cr.execute("SELECT relname, relhasoids FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
+        x = cr.dictfetchall()
+        if not x:
             if not self.pool.get(f._obj):
                 raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
             ref = self.pool.get(f._obj)._table
-            cr.execute('CREATE TABLE "%s" ("%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, "%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, UNIQUE("%s","%s")) WITH OIDS' % (f._rel, f._id1, self._table, f._id2, ref, f._id1, f._id2)) # not_a_user_entry
+            cr.execute('CREATE TABLE "%s" ("%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, "%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, UNIQUE("%s","%s"))' % (f._rel, f._id1, self._table, f._id2, ref, f._id1, f._id2)) # not_a_user_entry
             cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id1, f._rel, f._id1)) # not_a_user_entry
             cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id2, f._rel, f._id2)) # not_a_user_entry
             cr.execute("COMMENT ON TABLE \"%s\" IS 'RELATION BETWEEN %s AND %s'" % (f._rel, self._table, ref)) # not_a_user_entry
             cr.commit()
             self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
                                 f._rel, self._table, ref)
+        elif x[0].get('relhasoids'):
+            cr.execute('ALTER TABLE "%s" SET WITHOUT OIDS' % (f._rel, )) # not_a_user_entry
+            cr.commit()
 
 
     def _auto_init(self, cr, context=None):
@@ -3144,7 +3147,7 @@ class orm(orm_template):
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
-                cr.execute('CREATE TABLE "%s" (id SERIAL NOT NULL, PRIMARY KEY(id)) WITHOUT OIDS' % (self._table,))  # not_a_user_entry
+                cr.execute('CREATE TABLE "%s" (id SERIAL NOT NULL, PRIMARY KEY(id))' % (self._table,))  # not_a_user_entry
                 cr.execute("COMMENT ON TABLE \"%s\" IS '%s'" % (self._table, self._description.replace("'", "''")))  # not_a_user_entry
                 create = True
                 self.__schema.debug("Table '%s': created", self._table)

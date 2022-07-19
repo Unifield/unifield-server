@@ -50,4 +50,28 @@ class account_partner_ledger(osv.osv_memory):
         return update_name(self, cr, uid, _('Partner Ledger'), ret, context)
 
 account_partner_ledger()
+
+
+class account_employee_balance(osv.osv_memory):
+    _name = 'account.employee.balance'
+    _inherit = 'account.employee.balance'
+
+    def _print_report(self, cr, uid, ids, data, context=None):
+        ret = super(account_employee_balance, self)._print_report(cr, uid, ids, data, context)
+        return update_name(self, cr, uid, _('Employee Balance'), ret, context)
+
+
+account_employee_balance()
+
+
+class account_employee_ledger(osv.osv_memory):
+    _name = 'account.employee.ledger'
+    _inherit = 'account.employee.ledger'
+
+    def _print_report(self, cr, uid, ids, data, context=None):
+        ret = super(account_employee_ledger, self)._print_report(cr, uid, ids, data, context)
+        return update_name(self, cr, uid, _('Employee Ledger'), ret, context)
+
+
+account_employee_ledger()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -638,8 +638,9 @@ class purchase_order_line(osv.osv):
         ('rfq_updated', 'Updated'),
         #('rfq_done', 'RfQ Done'),
     ]
-    _columns = {'order_state': fields.related('order_id', 'state', string='Purchase Order State', type='selection', selection=STATE_SELECTION,),
-                }
+    _columns = {
+        'order_state': fields.related('order_id', 'state', string='Purchase Order State', type='selection', selection=STATE_SELECTION, write_relate=False),
+    }
 
 purchase_order_line()
 
