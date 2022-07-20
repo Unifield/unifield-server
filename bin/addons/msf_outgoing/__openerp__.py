@@ -46,6 +46,7 @@
                  "msf_order_date",
                  "stock_override",
                  "unifield_setup",
+                 "msf_audittrail",
                  ],
     'update_xml': [
         'data/msf_outgoing_data.xml',
