@@ -445,7 +445,7 @@
                                         <field name="name" />
                                         <field name="is_active" />
                                         <field name="user_id" />
-                                        <field name="signature" />
+                                        <field name="image" widget="image" />
                                         <field name="date" />
                                         <button name="action_sign" string="Sign" icon="sign.png" attrs="{'invisible': ['|', ('signed', '=', True), ('is_active', '=', False)]}" type="object" confirm="Do you want to sign the document ?"/>
                                         <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': [('signed', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>

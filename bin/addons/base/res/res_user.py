@@ -444,6 +444,15 @@ class users(osv.osv):
                         res.append(('id', '=', '0'))
         return res
 
+    def _get_current_signature(self, cr, uid, ids, name=None, arg=None, context=None):
+        res = {}
+        for u in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id'], context=context):
+            if u.esignature_id:
+                res[u.id] = u.esignature_id.image.split(',')[-1]
+            else:
+                res[u.id] = False
+        return res
+
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
                             help="The new user's real name, used for searching"
@@ -461,7 +470,8 @@ class users(osv.osv):
                              " aren't configured, it won't be possible to email new "
                              "users."),
         'signature': fields.text('Signature', size=64),
-        'esignature': fields.text('ESignature'),
+        'esignature_id': fields.many2one('signature.image', 'Current Signature'),
+        'current_signature': fields.related('esignature_id', 'pngb64', string='Signature', type='text', readonly=1),
         'address_id': fields.many2one('res.partner.address', 'Address'),
         'force_password_change':fields.boolean('Change password on next login',
                                                help="Check out this box to force this user to change his "\
@@ -684,8 +694,6 @@ class users(osv.osv):
             return True
         if not hasattr(ids, '__iter__'):
             ids = [ids]
-        #if values.get('esignature'):
-        #    values['esignature'] = ' '.join(values['esignature'].split())
         if ids == [uid]:
             for key in values.keys():
                 if not (key in self.SELF_WRITEABLE_FIELDS or key.startswith('context_')):
@@ -962,6 +970,23 @@ class users(osv.osv):
 
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1
+
+    def add_signature(self, cr, uid, ids, context=None):
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        if real_uid != ids[0]:
+            raise osv.except_osv(_('Warning!'), _("You can only change your own signature."))
+        wiz_id = self.pool.get('signature.set_user').create(cr, uid, {'user_id': real_uid}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'signature.set_user',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'height': '400px',
+            'width': '720px',
+        }
 
 users()
 

@@ -152,7 +152,8 @@
                             <newline/>
                             <group colspan="2" col="2">
                                 <separator string="Signature" colspan="2"/>
-                                <field colspan="2" name="esignature" nolabel="1" widget="signature"/>
+                                <field name="current_signature" widget="image" width="200" height="50" nolabel="1" colspan="2"/>
+                                <button type="object" string="Add Signature" name="add_signature" colspan="2"/>
                             </group>
                             <group colspan="2" col="2" expand="1">
                                 <separator string="Groups" colspan="2"/>
