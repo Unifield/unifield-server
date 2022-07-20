@@ -148,13 +148,17 @@ class signature_line(osv.osv):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
 
-        self.write(cr, uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid}, context=context)
+        user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['esignature'], context=context)
+        if not user_d.esignature:
+            raise osv.except_osv(_('Warning'), _("No signature defined in user's profile"))
+
+        self.write(cr, uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'signature': user_d.esignature}, context=context)
         sign_line.signature_id._set_signature_state(context=context)
         return True
 
     def action_unsign(self, cr, uid, ids, context=None):
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
-        self.write(cr, uid, ids, {'signed': False, 'date': False, 'user_id': False}, context=context)
+        self.write(cr, uid, ids, {'signed': False, 'date': False, 'user_id': False, 'signature': False}, context=context)
         sign_line.signature_id._set_signature_state(context=context)
         return True
 

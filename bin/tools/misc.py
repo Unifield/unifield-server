@@ -49,6 +49,7 @@ from lxml import etree
 from which import which
 from threading import local
 import math
+import json
 
 try:
     from html2text import html2text
@@ -65,6 +66,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
+
+from svglib import svglib
+from reportlab.graphics import renderPM
 
 _logger = logging.getLogger('tools')
 
@@ -1967,4 +1971,42 @@ def get_traceback(error):
 def get_stack():
     import traceback
     return ustr("".join(traceback.format_list(traceback.extract_stack())))
+
+def convert_sig_to_svg(json_sign, height=50, width=200):
+    try:
+        a = json.loads(json_sign)
+    except:
+        return False
+    svg = """<?xml version="1.0"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="%(width)spx" height="%(height)spx">
+<g fill="#fff" style="fill:#fff;fill-opacity:0.0">
+<rect x="0" y="0" width="%(width)s" height="%(height)s"/>
+<g fill="none" stroke="#000" stroke-width="2">""" % {'height': height, 'width': width}
+
+    for x in a['lines']:
+        svg += '<polyline points="%s" />' % " ".join(['%s,%s' % tuple(point) for point in x])
+
+    svg +=  """</g>
+</g>
+<text fill="black" x="0" y="50" textLength="100%" >Hellow World roro ror ro ror ro ror or r ABCDEGH</text>
+</svg>
+"""
+    return """<?xml version="1.0" encoding="utf-8" ?>
+<svg baseProfile="full" height="50" version="1.1" width="200" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink"><defs /><text textLength="200" fill="red" x="0" y="50">Test Hellow World roro ror ro ror ro ror or r ABCDEGH</text></svg>"""
+    return svg
+
+def convert_sig_to_png(json_sign):
+    svg_sig = convert_sig_to_svg(json_sign)
+    if not svg_sig:
+        return ''
+    parser = etree.XMLParser(
+        remove_comments=True, recover=True, resolve_entities=False
+    )
+    try:
+        svg_root = etree.fromstring(svg_sig, parser=parser)
+    except Exception as exc:
+        _logger.error("Failed to load input file! (%s)" % exc)
+    drawing = svglib.SvgRenderer(False).render(svg_root)
+    return renderPM.drawToString(drawing, fmt='PNG')
 

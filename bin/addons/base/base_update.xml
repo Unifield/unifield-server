@@ -152,7 +152,7 @@
                             <newline/>
                             <group colspan="2" col="2">
                                 <separator string="Signature" colspan="2"/>
-                                <field colspan="2" name="signature" nolabel="1"/>
+                                <field colspan="2" name="esignature" nolabel="1" widget="signature"/>
                             </group>
                             <group colspan="2" col="2" expand="1">
                                 <separator string="Groups" colspan="2"/>

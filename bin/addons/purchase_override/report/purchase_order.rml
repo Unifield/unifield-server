@@ -772,19 +772,19 @@
                     <para style="Standard">Name :</para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
+                    <para style="Standard">[[ getSign(objects[0], 'sr', 'user_id') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
+                    <para style="Standard">[[ getSign(objects[0], 'tr', 'user_id') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
+                    <para style="Standard">[[ getSign(objects[0], 'fn', 'user_id') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
+                    <para style="Standard">[[ getSign(objects[0], 'mr', 'user_id') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
+                    <para style="Standard">[[ getSign(objects[0], 'hq', 'user_id') ]]</para>
                 </td>
             </tr>
             <tr>
@@ -792,19 +792,19 @@
                     <para style="Standard">Date :</para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
+                    <para style="Standard">[[ getSign(objects[0], 'sr', 'date') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
+                    <para style="Standard">[[ getSign(objects[0], 'tr', 'date') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
+                    <para style="Standard">[[ getSign(objects[0], 'fn', 'date') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
+                    <para style="Standard">[[ getSign(objects[0], 'mr', 'date') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
+                    <para style="Standard">[[ getSign(objects[0], 'hq', 'date') ]]</para>
                 </td>
             </tr>
             <tr>
@@ -813,8 +813,7 @@
                     <para style="Standard"> </para>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
-                    <para style="Standard"> </para>
+                    <image width="100" height="25">[[ getSign(objects[0], 'sr', 'signature') ]]</image>
                 </td>
                 <td>
                     <para style="Standard"> </para>

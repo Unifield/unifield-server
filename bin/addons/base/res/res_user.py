@@ -461,6 +461,7 @@ class users(osv.osv):
                              " aren't configured, it won't be possible to email new "
                              "users."),
         'signature': fields.text('Signature', size=64),
+        'esignature': fields.text('ESignature'),
         'address_id': fields.many2one('res.partner.address', 'Address'),
         'force_password_change':fields.boolean('Change password on next login',
                                                help="Check out this box to force this user to change his "\
@@ -683,6 +684,8 @@ class users(osv.osv):
             return True
         if not hasattr(ids, '__iter__'):
             ids = [ids]
+        #if values.get('esignature'):
+        #    values['esignature'] = ' '.join(values['esignature'].split())
         if ids == [uid]:
             for key in values.keys():
                 if not (key in self.SELF_WRITEABLE_FIELDS or key.startswith('context_')):
