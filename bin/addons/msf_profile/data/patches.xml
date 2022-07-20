@@ -787,8 +787,17 @@
             <field name="method">us_5722_update_accruals</field>
         </record>
 
+        <!-- UF26.0 -->
         <record id="us_8259_remove_currency_table_wkf" model="patch.scripts">
             <field name="method">us_8259_remove_currency_table_wkf</field>
+        </record>
+
+        <record id="us_10090_new_dep_journals" model="patch.scripts">
+            <field name="method">us_10090_new_dep_journals</field>
+        </record>
+
+        <record id="us_10010_hide_import_export_product_menu" model="patch.scripts">
+            <field name="method">us_10010_hide_import_export_product_menu</field>
         </record>
 
     </data>

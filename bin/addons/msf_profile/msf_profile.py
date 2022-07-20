@@ -56,10 +56,63 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF26.0
     def us_8259_remove_currency_table_wkf(self, cr, uid, *a, **b):
         cr.execute("delete from wkf_workitem where act_id in (select id from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table'))")
         cr.execute("delete from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table')")
         cr.execute("delete from wkf where name='wkf.res.currency.table' and osv='res.currency.table'")
+        return True
+
+    def us_10090_new_dep_journals(self, cr, uid, *a, **b):
+        """
+        Creates the DEP G/L journals in all OCB instances and DEP analytic journals in all existing instances.
+        This is done in Python as the objects created must sync normally.
+        """
+        user_obj = self.pool.get('res.users')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
+        journal_obj = self.pool.get('account.journal')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            # DEP analytic journal
+            dep_analytic_journal_ids = analytic_journal_obj.search(cr, uid,
+                                                                   [('code', '=', 'DEP'),
+                                                                    ('type', '=', 'depreciation'),
+                                                                    ('is_current_instance', '=', True)])
+            if dep_analytic_journal_ids:  # just in case the journal has been created before the release
+                dep_analytic_journal_id = dep_analytic_journal_ids[0]
+            else:
+                dep_analytic_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'DEP',
+                    'name': 'Depreciation',
+                    'type': 'depreciation',
+                }
+                dep_analytic_journal_id = analytic_journal_obj.create(cr, uid, dep_analytic_vals)
+            # DEP G/L journal in all OCB instances
+            if current_instance.name.startswith('OCB')\
+                    and not journal_obj.search_exist(cr, uid, [('code', '=', 'DEP'), ('type', '=', 'depreciation'),
+                                                               ('is_current_instance', '=', True),
+                                                               ('analytic_journal_id', '=', dep_analytic_journal_id)]):
+                dep_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'DEP',
+                    'name': 'Depreciation',
+                    'type': 'depreciation',
+                    'analytic_journal_id': dep_analytic_journal_id,
+                }
+                journal_obj.create(cr, uid, dep_vals)
+        return True
+
+    def us_10010_hide_import_export_product_menu(self, cr, uid, *a, **b):
+        data_obj = self.pool.get('ir.model.data')
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        import_prod_menu_id = data_obj.get_object_reference(cr, uid, 'import_data', 'menu_action_import_products')[1]
+        update_prod_menu_id = data_obj.get_object_reference(cr, uid, 'import_data', 'menu_action_update_products')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, [import_prod_menu_id, update_prod_menu_id], {'active': instance.level != 'project'}, context={})
+
         return True
 
     # UF25.0

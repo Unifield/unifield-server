@@ -146,7 +146,11 @@ class wizard_return_from_unit_import(osv.osv_memory):
                 if cell[3].data_type == 'n':
                     line.update({'product_qty': qty})
                 else:
-                    line_err += _('The Quantity must be a number. ')
+                    try:
+                        qty = float(qty.rstrip().replace(',', '.'))
+                        line.update({'product_qty': qty})
+                    except ValueError:
+                        line_err += _('The Quantity must be a number. ')
             else:
                 line_err += _('The Quantity is mandatory for each line. ')
 

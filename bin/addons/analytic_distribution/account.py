@@ -83,7 +83,7 @@ class account_destination_link(osv.osv):
     _columns = {
         'account_id': fields.many2one('account.account', "G/L Account", required=True, domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]", readonly=True, select=1),
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", readonly=True, select=1),
-        'destination_code': fields.related('destination_id', 'code', string="Analytical Destination Account", type='char', store=False),
+        'destination_code': fields.related('destination_id', 'code', string="Analytical Destination Account", type='char', store=False, write_relate=False),
         'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
         'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True,
                                 store={
@@ -156,9 +156,9 @@ class account_account(osv.osv):
     _inherit = 'account.account'
 
     _columns = {
-        'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
-        'user_type_report_type': fields.related('user_type', 'report_type', type="char", string="User Type Report Type", store=False),
-        'user_type_name': fields.related('user_type', 'name', type="char", string="User Type Name", store=False),
+        'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False, write_relate=False),
+        'user_type_report_type': fields.related('user_type', 'report_type', type="char", string="User Type Report Type", store=False, write_relate=False),
+        'user_type_name': fields.related('user_type', 'name', type="char", string="User Type Name", store=False, write_relate=False),
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id',
                                                   string='Funding Pools'),
         'default_destination_id': fields.many2one('account.analytic.account', 'Default Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),

@@ -139,9 +139,9 @@ class stock_pipe_per_product_instance_prod_lines(osv.osv):
     _columns = {
         'stock_pipe_per_product_instance_id': fields.many2one('stock.pipe.per.product.instance', string='Report Stock & Pipe per Product and per Instance'),
         'product_id': fields.many2one('product.product', string='Product'),
-        'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', store=True, string='UoM'),
+        'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', store=True, string='UoM', write_relate=False),
         'instance_id': fields.many2one('msf.instance', 'Instance/Mission'),
-        'uf_state': fields.related('product_id', 'state', type='many2one', relation='product.status', store=True, string='HQ UniField Status'),
+        'uf_state': fields.related('product_id', 'state', type='many2one', relation='product.status', store=True, string='HQ UniField Status', write_relate=False),
         'ud_state': fields.related('product_id', 'state_ud', type='selection', selection=[('valid', 'Valid'), ('outdated', 'Outdated'), ('discontinued', 'Discontinued'), ('phase_out', 'Phase Out'), ('stopped', 'Stopped'), ('archived', 'Archived'), ('forbidden', 'Forbidden')], store=True, write_relate=False, string='HQ UniData Status'),
         'instance_stock': fields.float('Instance stock', related_uom='uom_id'),
         'pipe_qty': fields.float('Pipeline Qty', related_uom='uom_id'),

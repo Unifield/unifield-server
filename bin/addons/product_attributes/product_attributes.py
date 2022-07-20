@@ -994,7 +994,7 @@ class product_attributes(osv.osv):
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
             }
         ),
-        'uom_category_id': fields.related('uom_id', 'category_id', string='Uom Category', type='many2one', relation='product.uom.categ'),
+        'uom_category_id': fields.related('uom_id', 'category_id', string='Uom Category', type='many2one', relation='product.uom.categ', write_relate=False),
         'no_external': fields.function(_get_restriction, method=True, type='boolean', string='External partners orders', readonly=True, multi='restriction',
                                        store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
                                               'product.status': (_get_product_status, ['no_external'], 10),

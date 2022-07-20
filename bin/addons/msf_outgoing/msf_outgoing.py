@@ -2393,7 +2393,7 @@ class stock_picking(osv.osv):
         'in_ref': fields.char(string='IN Reference', size=1024),
         'from_manage_expired': fields.boolean(string='The Picking was created with Manage Expired Stock'),
         'requestor': fields.char(size=128, string='Requestor'),
-        'from_ir': fields.related('sale_id', 'procurement_request', type='boolean', relation='sale.order', string='Is the linked Sale Order IR'),
+        'from_ir': fields.related('sale_id', 'procurement_request', type='boolean', relation='sale.order', string='Is the linked Sale Order IR', write_relate=False),
     }
 
     _defaults = {
