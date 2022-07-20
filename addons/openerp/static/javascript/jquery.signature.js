@@ -132,6 +132,7 @@ $(selector).signature({color: 'blue', guideline: true}) */
 				this.ctx.stroke();
 				this.ctx.restore();
 			}
+            this.empty_txt = true;
 			this.lines = [];
 			if (!init) {
 				this._changed();
@@ -147,7 +148,11 @@ $(selector).signature({color: 'blue', guideline: true}) */
 				var output = '';
 				switch (this.options.syncFormat) {
 					case 'PNG':
-						output = this.toDataURL();
+                        if (this.isEmpty()) {
+                            output = '';
+                        } else {
+    						output = this.toDataURL();
+                        }
 						break;
 					case 'JPEG':
 						output = this.toDataURL('image/jpeg');
@@ -380,7 +385,7 @@ $(selector).signature({color: 'blue', guideline: true}) */
 			@return {boolean} <code>true</code> if not signed, <code>false</code> if signed.
 			@example if ($(selector).signature('isEmpty')) ... */
 		isEmpty: function() {
-			return this.lines.length === 0;
+			return this.lines.length === 0 && this.empty_txt ;
 		},
 
 		/** Remove the signature functionality.
@@ -391,7 +396,20 @@ $(selector).signature({color: 'blue', guideline: true}) */
 			$(this.canvas).remove();
 			this.canvas = this.ctx = this.lines = null;
 			this._mouseDestroy();
-		}
+		},
+        setText: function(txt) {
+          var json_d = this.toJSON();
+          this.clear(true);
+          this._drawJSON(json_d, this.options.scale);
+          if (txt) {
+              this.empty_txt = false;
+              this.ctx.fillStyle = 'black';
+              this.ctx.font = "50px cursive"
+              this.ctx.fillText(txt, 0, 50, this.element.width());
+              this.ctx.fillStyle = this.options.background;
+          }
+          this._changed();
+        }
 	};
 
 	if (!$.Widget.prototype._destroy) {
