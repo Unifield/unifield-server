@@ -5,6 +5,7 @@
 	-ms-touch-action: none;
     height: 100px;
     width: 400px;
+    background-color: #fff;
 }
 .kbw-signature-disabled {
 	opacity: 0.35;

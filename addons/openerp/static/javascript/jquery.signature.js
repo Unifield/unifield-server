@@ -119,7 +119,7 @@ $(selector).signature({color: 'blue', guideline: true}) */
 				return;
 			}
 			this.ctx.clearRect(0, 0, this.element.width(), this.element.height());
-			this.ctx.fillRect(0, 0, this.element.width(), this.element.height());
+			//this.ctx.fillRect(0, 0, this.element.width(), this.element.height());
 			if (this.options.guideline) {
 				this.ctx.save();
 				this.ctx.strokeStyle = this.options.guidelineColor;
