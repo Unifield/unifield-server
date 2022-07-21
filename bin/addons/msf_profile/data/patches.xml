@@ -800,5 +800,9 @@
             <field name="method">us_10010_hide_import_export_product_menu</field>
         </record>
 
+        <record id="us_9406_empty_sign" model="patch.scripts">
+            <field name="method">us_9406_empty_sign</field>
+        </record>
+
     </data>
 </openerp>

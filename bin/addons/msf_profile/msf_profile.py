@@ -56,6 +56,13 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_9406_empty_sign(self, cr, uid, *a, **b):
+        cr.execute('select id from purchase_order where signature_id is null')
+        for x in cr.fetchall():
+            cr.execute("insert into signature (signature_res_model, signature_res_id) values ('purchase.order', %s) returning id", (x[0], ))
+            a = cr.fetchone()
+            cr.execute("update purchase_order set signature_id=%s where id=%s", (a[0], x[0]))
+        return True
     # UF26.0
     def us_8259_remove_currency_table_wkf(self, cr, uid, *a, **b):
         cr.execute("delete from wkf_workitem where act_id in (select id from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table'))")
