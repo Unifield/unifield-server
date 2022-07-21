@@ -989,7 +989,6 @@ class purchase_order(osv.osv):
         'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
         'tax_line': fields.one2many('account.invoice.tax', 'purchase_id', 'Tax Lines'),
-        'signature_id': fields.many2one('signature', 'Signature'),
     }
     _defaults = {
         'po_version': 2,

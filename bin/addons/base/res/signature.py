@@ -81,8 +81,6 @@ class signature_object(osv.osv):
     _name = 'signature.object'
     _inherits = {'signature': 'signature_id'}
 
-    # do not create table signature_object
-    _auto = False
 
     _columns = {
         'signature_id': fields.many2one('signature', 'Signature', required=True, ondelete='cascade'),
