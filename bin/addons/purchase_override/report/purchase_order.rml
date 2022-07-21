@@ -813,23 +813,19 @@
                     <para style="Standard"> </para>
                 </td>
                 <td>
-                    <image width="100" height="25">[[ getSign(objects[0], 'sr', 'signature') ]]</image>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
-                    <para style="Standard"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image')]]</image>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
-                    <para style="Standard"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'fn', 'image') or removeParentNode('image')]]</image>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
-                    <para style="Standard"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'mr', 'image') or removeParentNode('image')]]</image>
                 </td>
                 <td>
-                    <para style="Standard"> </para>
-                    <para style="Standard"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'hq', 'image') or removeParentNode('image')]]</image>
                 </td>
             </tr>
         </blockTable>

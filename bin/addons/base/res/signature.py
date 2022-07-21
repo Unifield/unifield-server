@@ -131,6 +131,8 @@ signature_object()
 class signature_line(osv.osv):
     _name = 'signature.line'
     _description = 'Document Signature'
+
+
     _columns = {
         'signature_id': fields.many2one('signature', 'Parent', required=1),
         'user_id': fields.many2one('res.users', 'Signee User'),
@@ -138,7 +140,9 @@ class signature_line(osv.osv):
         'name': fields.char('Role/Function', size=128),
         'name_key': fields.char('key', size=10),
         'signed': fields.boolean('Signed'),
-        'signature': fields.text('Signature'),
+        'image_id': fields.many2one('signature.image', 'Image'),
+        'image': fields.related('image_id', 'pngb64', type='text', string='Image', readonly=1),
+        'data_image': fields.related('image_id', 'image', type='text', string='Image', readonly=1),
         'date': fields.datetime('Date'),
     }
 
@@ -148,21 +152,43 @@ class signature_line(osv.osv):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
 
-        user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['esignature'], context=context)
-        if not user_d.esignature:
+        user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['esignature_id'], context=context)
+        if not user_d.esignature_id:
             raise osv.except_osv(_('Warning'), _("No signature defined in user's profile"))
 
-        self.write(cr, uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'signature': user_d.esignature}, context=context)
+        self.write(cr, uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': user_d.esignature_id.id}, context=context)
         sign_line.signature_id._set_signature_state(context=context)
         return True
 
     def action_unsign(self, cr, uid, ids, context=None):
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
-        self.write(cr, uid, ids, {'signed': False, 'date': False, 'user_id': False, 'signature': False}, context=context)
+        self.write(cr, uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False}, context=context)
         sign_line.signature_id._set_signature_state(context=context)
         return True
 
 signature_line()
+
+class signature_image(osv.osv):
+    _name = 'signature.image'
+    _description = 'Image'
+    _rec_name = 'user_id'
+
+    def _get_image(self, cr, uid, ids, name=None, arg=None, context=None):
+        res = {}
+        for u in self.browse(cr, uid, ids, fields_to_fetch=['image'], context=context):
+            if u.image:
+                res[u.id] = u.image.split(',')[-1]
+            else:
+                res[u.id] = False
+        return res
+
+    _columns = {
+        'user_id': fields.many2one('res.users', required=1, string='User'),
+        'image': fields.text('Signature'),
+        'pngb64': fields.function(_get_image, method=1, type='text', string='Image'),
+    }
+
+signature_image()
 
 class signature_add_user_wizard(osv.osv_memory):
     _name = 'signature.add_user.wizard'
@@ -198,3 +224,27 @@ class signature_add_user_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 signature_add_user_wizard()
+
+class signature_set_user(osv.osv_memory):
+    _name = 'signature.set_user'
+    _description = "Wizard to edit user's signature"
+    _rec_name = 'user_id'
+
+    _columns = {
+        'new_signature': fields.text('New signature'),
+        'user_id': fields.many2one('res.users', 'User', readonly=1),
+    }
+
+    def save(self, cr, uid, ids, context=None):
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        if wiz.new_signature:
+            new_image = self.pool.get('signature.image').create(cr, real_uid, {
+                'user_id': real_uid,
+                'image': wiz.new_signature
+            }, context=context)
+            self.pool.get('res.users').write(cr, real_uid, real_uid, {'esignature_id': new_image}, context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+signature_set_user()

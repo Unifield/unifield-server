@@ -22,7 +22,6 @@
 import time
 
 from report import report_sxw
-from tools import misc
 
 class order(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -52,20 +51,9 @@ class order(report_sxw.rml_parse):
         if field == 'date' and data.date:
             return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, d_type='datetime', datetime=data.date)
 
-        if field == 'signature':
-            print data.signature
-            #ffile = open('/home/jf/GitLigth/odoo/addons/hr/static/img/employee_lur-image.png', 'rb')
-            #a = ffile.read()
-            if data.signature:
-                a = data.signature.split(',')[1]
-                f = open('/tmp/123.png', 'w')
-                f.write(a)
-                f.close()
-                return a
-                a = misc.convert_sig_to_png(data.signature)
-                if a:
-                    import base64
-                    return base64.encodestring(a)
+        if field == 'image':
+            if data.image:
+                return data.image
         return ''
 
 

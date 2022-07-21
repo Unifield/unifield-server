@@ -263,7 +263,10 @@ class _rml_styles(object,):
         return style
 
 class _rml_doc(object):
-    def __init__(self, node, localcontext, images={}, path='.', title=None):
+    def __init__(self, node, localcontext, images=None, path='.', title=None):
+        if images is None:
+            images = {}
+
         self.localcontext = localcontext
         self.etree = node
         self.filename = self.etree.get('filename')
@@ -348,7 +351,9 @@ class _rml_doc(object):
             self.canvas.save()
 
 class _rml_canvas(object):
-    def __init__(self, canvas, localcontext, doc_tmpl=None, doc=None, images={}, path='.', title=None):
+    def __init__(self, canvas, localcontext, doc_tmpl=None, doc=None, images=None, path='.', title=None):
+        if images is None:
+            images = {}
         self.localcontext = localcontext
         self.canvas = canvas
         self.styles = doc.styles
@@ -844,7 +849,7 @@ class _rml_flowable(object):
             else:
                 self._logger.debug("Image get from file %s", node.get('file'))
                 image = _open_image(node.get('file'), path=self.doc.path)
-            return platypus.Image(image, mask=(250,255,250,255,250,255), **(utils.attr_get(node, ['width','height'])))
+            return platypus.Image(image, mask=node.get('mask', (250,255,250,255,250,255)), **(utils.attr_get(node, ['width','height'])))
         elif node.tag=='spacer':
             if node.get('width'):
                 width = utils.unit_get(node.get('width'))

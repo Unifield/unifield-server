@@ -16,5 +16,23 @@
                 </form>
             </field>
         </record>
+
+        <record id="signature_set_user_form" model="ir.ui.view">
+            <field name="name">signature_set_user_form</field>
+            <field name="model">signature.set_user</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Edit Signature">
+                    <field name="user_id"/>
+                    <newline />
+                    <field name="new_signature" widget="signature" colspan="4"/>
+                    <group colspan="4">
+                      <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                      <button string="Confirm" icon="terp-check" name="save" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>
