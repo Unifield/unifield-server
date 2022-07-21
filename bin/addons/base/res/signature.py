@@ -141,27 +141,73 @@ class signature_line(osv.osv):
         'name_key': fields.char('key', size=10),
         'signed': fields.boolean('Signed'),
         'image_id': fields.many2one('signature.image', 'Image'),
-        'image': fields.related('image_id', 'pngb64', type='text', string='Image', readonly=1),
-        'data_image': fields.related('image_id', 'image', type='text', string='Image', readonly=1),
+        'image': fields.related('image_id', 'pngb64', type='text', string='Signature', readonly=1),
+        'data_image': fields.related('image_id', 'image', type='text', string='Signature', readonly=1),
         'date': fields.datetime('Date'),
     }
 
+
+    def _check_sign_unsign(self, cr, uid, ids, check_has_sign=False, context=None):
+        assert len(ids) < 2, '_check_sign_unsign: only 1 id is allowed'
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+
+        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
+        if real_uid not in [x.id for x in sign_line.signature_id.signature_users]:
+            raise osv.except_osv(_('Warning'), _("Operation denied"))
+
+        if sign_line.signature_id.signature_is_closed:
+            raise osv.except_osv(_('Warning'), _("Signature Closed."))
+
+        if check_has_sign:
+            user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['esignature_id'], context=context)
+            if not user_d.esignature_id:
+                raise osv.except_osv(_('Warning'), _("No signature defined in user's profile"))
+            return user_d.esignature_id.id
+
+        return True
+
+    def open_sign_wizard(self, cr, uid, ids, context=None):
+        esignature_id = self._check_sign_unsign(cr, uid, ids, check_has_sign=True, context=context)
+        line = self.browse(cr, uid, ids[0], context=context)
+        doc = self.pool.get(line.signature_id.signature_res_model).browse(cr, uid, line.signature_id.signature_res_id, fields_to_fetch=['name', 'functional_amount_total', 'functional_currency_id'], context=context)
+
+        image = self.pool.get('signature.image').browse(cr, uid, esignature_id, context=context).pngb64
+
+        wiz_id = self.pool.get('signature.document.wizard').create(cr, uid, {
+            'name': '%s %s %s' % (doc.name, doc.functional_amount_total, doc.functional_currency_id.name),
+            'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
+            'role': line.name,
+            'line_id': line.id,
+            'image': image,
+        }, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'signature.document.wizard',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'height': '400px',
+            'width': '720px',
+        }
+
     def action_sign(self, cr, uid, ids, context=None):
-        assert len(ids) < 2, 'action_sign: ànly 1 id is allowed'
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
+        esignature_id = sign_line._check_sign_unsign(check_has_sign=True, context=context)
 
-        user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['esignature_id'], context=context)
-        if not user_d.esignature_id:
-            raise osv.except_osv(_('Warning'), _("No signature defined in user's profile"))
-
-        self.write(cr, uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': user_d.esignature_id.id}, context=context)
+        self.write(cr, uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id}, context=context)
         sign_line.signature_id._set_signature_state(context=context)
+
         return True
 
     def action_unsign(self, cr, uid, ids, context=None):
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
+        sign_line._check_sign_unsign(context=context)
+
         self.write(cr, uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False}, context=context)
         sign_line.signature_id._set_signature_state(context=context)
         return True
@@ -189,6 +235,24 @@ class signature_image(osv.osv):
     }
 
 signature_image()
+
+class signature_document_wizard(osv.osv_memory):
+    _name = 'signature.document.wizard'
+    _columns = {
+        'name': fields.char('Document', size=256, readonly=1),
+        'user_id': fields.many2one('Users', readonly=1),
+        'role': fields.char('Role/Function', size=256, readonly=1),
+        'line_id': fields.many2one('signature.line', 'Line', readonly=1),
+        'image': fields.text('Signature', readonly=1),
+    }
+
+    def save(self, cr, uid, ids, context=None):
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        self.pool.get('signature.line').action_sign(cr, uid, [wiz.line_id.id], context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+signature_document_wizard()
+
 
 class signature_add_user_wizard(osv.osv_memory):
     _name = 'signature.add_user.wizard'

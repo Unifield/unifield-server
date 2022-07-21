@@ -152,8 +152,9 @@
                             <newline/>
                             <group colspan="2" col="2">
                                 <separator string="Signature" colspan="2"/>
-                                <field name="current_signature" widget="image" width="200" height="50" nolabel="1" colspan="2"/>
-                                <button type="object" string="Add Signature" name="add_signature" colspan="2"/>
+                                <field name="current_signature" widget="image" height="100" nolabel="1" colspan="2"/>
+                                <button type="object" string="Add Signature" name="add_signature" icon="gtk-edit" colspan="2"/>
+                                <!-- <field name="signature" colspan="4" nolabel="1" /> -->
                             </group>
                             <group colspan="2" col="2" expand="1">
                                 <separator string="Groups" colspan="2"/>

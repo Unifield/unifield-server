@@ -22,13 +22,32 @@
             <field name="model">signature.set_user</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Edit Signature">
+                <form string="Change Signature">
                     <field name="user_id"/>
                     <newline />
                     <field name="new_signature" widget="signature" colspan="4"/>
                     <group colspan="4">
                       <button string="Cancel" special="cancel" icon="gtk-cancel" />
                       <button string="Confirm" icon="terp-check" name="save" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="signature_document_wizard_form" model="ir.ui.view">
+            <field name="name">signature_document_wizard_form</field>
+            <field name="model">signature.document.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Sign Document">
+                    <field name="name" invisible="1"/>
+                    <field name="role" colspan="4" />
+                    <newline />
+                    <field name="image" widget="image" />
+                    <newline />
+                    <group colspan="4">
+                      <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                      <button string="Sign" icon="terp-check" name="save" type="object"/>
                     </group>
                 </form>
             </field>
