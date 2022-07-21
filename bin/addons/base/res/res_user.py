@@ -472,6 +472,7 @@ class users(osv.osv):
         'signature': fields.text('Signature', size=64),
         'esignature_id': fields.many2one('signature.image', 'Current Signature'),
         'current_signature': fields.related('esignature_id', 'pngb64', string='Signature', type='text', readonly=1),
+        'change_signature': fields.function(tools.misc.get_fake, string='Pref. change signature', type='text', method=1),
         'address_id': fields.many2one('res.partner.address', 'Address'),
         'force_password_change':fields.boolean('Change password on next login',
                                                help="Check out this box to force this user to change his "\
@@ -637,7 +638,7 @@ class users(osv.osv):
         return self._get_company(cr, uid, context=context, uid2=uid2)
 
     # User can write to a few of her own fields (but not her groups for example)
-    SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email']
+    SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email', 'change_signature']
 
     def remove_higer_level_groups(self, cr, uid, ids, context=None):
         '''
@@ -703,6 +704,15 @@ class users(osv.osv):
                     if not (values['company_id'] in self.read(cr, 1, uid, ['company_ids'], context=context)['company_ids']):
                         del values['company_id']
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
+
+            if values and values.get('change_signature'):
+                new_image = self.pool.get('signature.image').create(cr, uid, {
+                    'user_id': ids[0],
+                    'image': values['change_signature'],
+                }, context=context)
+                values['esignature_id'] = new_image
+                del values['change_signature']
+
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
