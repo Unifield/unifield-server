@@ -397,15 +397,29 @@ $(selector).signature({color: 'blue', guideline: true}) */
 			this.canvas = this.ctx = this.lines = null;
 			this._mouseDestroy();
 		},
-        setText: function(txt) {
+        setText: function(txt, posY_txt) {
           var json_d = this.toJSON();
           this.clear(true);
           this._drawJSON(json_d, this.options.scale);
           if (txt) {
               this.empty_txt = false;
               this.ctx.fillStyle = 'black';
-              this.ctx.font = "50px cursive"
-              this.ctx.fillText(txt, 0, 50, this.element.width());
+              this.ctx.font = "30px cursive"
+              var metrics = this.ctx.measureText(txt);
+              var txt_width = metrics.width;
+              var txt_height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+              var posX = 0;
+              var posY = this.element.height(); // default bottom
+              if (txt_width < this.element.width()) {
+                  posX = (this.element.width() - txt_width)/2;
+              }
+              if (posY_txt == 'top') {
+                  posY = txt_height;
+
+              } else if (posY_txt == 'middle') {
+                  posY = this.element.height() / 2 + txt_height/2;
+              }
+              this.ctx.fillText(txt, posX, posY, this.element.width());
               this.ctx.fillStyle = this.options.background;
           }
           this._changed();

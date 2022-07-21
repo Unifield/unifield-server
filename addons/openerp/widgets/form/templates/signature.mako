@@ -6,6 +6,13 @@
         <input id="${name}_txt" type="text" />
     </td>
     <td class="item">
+        <select id="${name}_posY">
+            <option value="top">top</option>
+            <option value="middle">middle</option>
+            <option value="bottom" selected="selected">bottom</option>
+        </select>
+    </td>
+    <td>
         <button id="${name}_set_txt" type="button">Add text</button>
     </td>
     </tr>
@@ -23,7 +30,8 @@ $('#sig_${name}').signature('option', 'syncFormat', 'PNG');
 <script>
 $('#${name}_set_txt').click(function() {
   var txt = $('#${name}_txt').val();
-  $('#sig_${name}').signature('setText', txt);
+  var posY = $('#${name}_posY').val();
+  $('#sig_${name}').signature('setText', txt, posY);
 });
 
 $('#${name}_clear').click(function() {
