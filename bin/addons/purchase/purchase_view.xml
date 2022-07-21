@@ -451,6 +451,14 @@
                                         <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|',('signature_is_closed', '=', True), ('signed', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
                                         <field name="signed" />
                                     </tree>
+                                    <form>
+                                        <field name="name" />
+                                        <field name="is_active" />
+                                        <field name="user_id" />
+                                        <field name="data_image" widget="image" height="50" />
+                                        <field name="date" />
+                                        <field name="signed" />
+                                    </form>
                                 </field>
                                 <field name="signature_state" />
                                 <group colspan="2" col="4">
