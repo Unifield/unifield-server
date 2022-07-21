@@ -409,7 +409,7 @@ $(selector).signature({color: 'blue', guideline: true}) */
               var txt_width = metrics.width;
               var txt_height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
               var posX = 0;
-              var posY = this.element.height(); // default bottom
+              var posY = this.element.height() - metrics.actualBoundingBoxDescent; // default bottom
               if (txt_width < this.element.width()) {
                   posX = (this.element.width() - txt_width)/2;
               }
