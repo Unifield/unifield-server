@@ -455,7 +455,7 @@
                                         <field name="name" />
                                         <field name="is_active" />
                                         <field name="user_id" />
-                                        <field name="data_image" widget="image" height="50" />
+                                        <field name="image" widget="image" height="50" />
                                         <field name="date" />
                                         <field name="signed" />
                                     </form>
