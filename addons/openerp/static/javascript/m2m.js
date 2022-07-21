@@ -203,6 +203,10 @@ Many2Many.prototype = {
      */
     function open($this, options) {
         var url;
+        var width = '90%';
+        if ($this[0]['model'] == 'signature.add_user.wizard') {
+            width = '800';
+        }
         if(options.record) {
             url = '/openerp/openm2m/create'
         } else {
@@ -214,7 +218,7 @@ Many2Many.prototype = {
                 'source-window': $this[0],
                 source_id: options.source || null
             }, {
-                width: '90%',
+                width: width,
                 height: '95%'
             });
         $frame.focus();
