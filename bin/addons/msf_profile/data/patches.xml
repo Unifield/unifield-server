@@ -800,5 +800,8 @@
             <field name="method">us_10010_hide_import_export_product_menu</field>
         </record>
 
+        <record id="fix_us_10163_ocbhq_funct_amount" model="patch.scripts">
+            <field name="method">fix_us_10163_ocbhq_funct_amount</field>
+        </record>
     </data>
 </openerp>
