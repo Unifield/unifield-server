@@ -77,6 +77,8 @@ class account_invoice_import(osv.osv_memory):
         product_obj = self.pool.get('product.product')
         import_cell_data_obj = self.pool.get('import.cell.data')
         errors_obj = self.pool.get('account.invoice.import.errors')
+        ana_obj = self.pool.get('analytic.distribution')
+        aac_obj = self.pool.get('account.analytic.account')
 
         try:
             for wiz in self.browse(cr, uid, ids, context):
@@ -104,6 +106,10 @@ class account_invoice_import(osv.osv_memory):
                     'unit_price': 4,
                     'description': 5,
                     'notes': 6,
+                    'analytic_distribution': 7,
+                    'cost_center': 8,
+                    'destination': 9,
+                    'funding_pool': 10,
                 }
                 # number of the first line in the file containing data (not header)
                 base_num = 10
@@ -168,6 +174,14 @@ class account_invoice_import(osv.osv_memory):
                     unit_price = line[cols['unit_price']] or 0.0
                     description = line[cols['description']] and tools.ustr(line[cols['description']])
                     notes = line[cols['notes']] and tools.ustr(line[cols['notes']])
+                    analytic_distribution_type = line[cols['analytic_distribution']] and tools.ustr(line[cols['analytic_distribution']])
+                    cost_center_code = line[cols['cost_center']] and tools.ustr(line[cols['cost_center']])
+                    destination_code = line[cols['destination']] and tools.ustr(line[cols['destination']])
+                    funding_pool_code = line[cols['funding_pool']] and tools.ustr(line[cols['funding_pool']])
+
+                    if analytic_distribution_type and analytic_distribution_type.strip() == 'SPLIT':
+                        continue  # if AD is SPLIT, skip the line and check the next one
+
                     if not line_number:
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
                         continue
@@ -188,8 +202,7 @@ class account_invoice_import(osv.osv_memory):
                     if not account_ids:
                         errors.append(_("Line %s: the account %s doesn't exist.") % (current_line_num, account_code))
                         continue
-                    account = account_obj.browse(cr, uid, account_ids[0], fields_to_fetch=['activation_date', 'inactivation_date'],
-                                                 context=context)
+                    account = account_obj.browse(cr, uid, account_ids[0], context=context)
                     checking_date = posting_date or datetime.now().strftime('%Y-%m-%d')
                     if checking_date < account.activation_date or (account.inactivation_date and checking_date >= account.inactivation_date):
                         errors.append(_("Line %s: the account %s is inactive.") % (current_line_num, account_code))
@@ -236,7 +249,50 @@ class account_invoice_import(osv.osv_memory):
                     vals['name'] = description
                     vals['note'] = notes
 
+                    if analytic_distribution_type and analytic_distribution_type.strip() in ('100%', '100'):
+                        if account.user_type and account.user_type.code == 'expense' and (not cost_center_code or not destination_code or not funding_pool_code):
+                            errors.append(_("Line %s: An expense account is set while the analytic distribution values (mandatory) are missing.") % (current_line_num,))
+                            continue
+                        # If the AD is left blank, remove AD, including from header
+                        if account.user_type and account.user_type.code != 'expense' and (not cost_center_code or not destination_code or not funding_pool_code):
+                            if invoice.analytic_distribution_id:
+                                ana_obj.unlink(cr, uid, [invoice.analytic_distribution_id.id], context=context)  # delete header AD if any
+                                # invoice.analytic_distribution_id = False
+                            il_ad = invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context)
+                            if il_ad and il_ad.analytic_distribution_id:
+                                ana_obj.unlink(cr, uid, [il_ad.analytic_distribution_id.id], context=context)  # delete line level AD if any
+                                vals['analytic_distribution_id'] = False
+                        # If AD is filled - write on each line the AD on the import file. Remove from header.
+                        if cost_center_code and destination_code and funding_pool_code:
+                            ad_vals = {}
+                            distrib_id = ana_obj.create(cr, uid, {'name': 'Line Distribution Import'}, context=context)
+                            cc_ids = aac_obj.search(cr, uid,[('code', '=', cost_center_code),('category', '=', 'OC'),('filter_active', '=', True)],
+                                                             limit=1, context=context)
+                            if not cc_ids:
+                                errors.append(_("Line %s: the cost center %s doesn't exist or is inactive.") % (current_line_num, cost_center_code))
+                                continue
+                            fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING'),
+                                                             ('filter_active', '=', True)], limit=1, context=context)
+                            if not fp_ids:
+                                errors.append(_("Line %s: the funding pool %s doesn't exist or is inactive.") % (current_line_num, funding_pool_code))
+                                continue
+                            dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST'),
+                                                               ('filter_active', '=', True)], limit=1, context=context)
+                            if not dest_ids:
+                                errors.append(_("Line %s: the destination %s doesn't exist or is inactive.") % (current_line_num, destination_code))
+                                continue
+                            ad_vals.update({'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': currency_ids[0],
+                                            'destination_id': dest_ids[0], 'cost_center_id': cc_ids[0],
+                                            'funding_pool_id': fp_ids[0]})
+                            # Create funding pool lines
+                            ad_vals.update({'analytic_id': fp_ids[0]})
+                            self.pool.get('funding.pool.distribution.line').create(cr, uid, ad_vals)
+                            # Then cost center lines
+                            ad_vals.update({'analytic_id': ad_vals.get('cost_center_id'), })
+                            self.pool.get('cost.center.distribution.line').create(cr, uid, ad_vals)
+
                     # update the line
+                    vals['analytic_distribution_id'] = distrib_id
                     invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals, context=context)
                     # update the percent
                     if current_line_num == nb_rows:
