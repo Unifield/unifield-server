@@ -13,6 +13,9 @@
             % if item.get('update_title'):
                 id="update_me_with_title"
             % endif
+            % if model == 'product.product' and 'sale.action_order_form' in item.get('code', ''):
+                class="sidebar_field_orders"
+            % endif
             >${item['name']}</a>
         </li>
     % else:
