@@ -1015,12 +1015,6 @@
             </field>
         </record>
 
-
-        <act_window context="{}"
-                    domain="[('rfq_ok', '=', False), ('product_id', '=', active_id)]"
-                    id="purchase.action_purchase_line_product_tree2" name="Purchases"
-                    res_model="purchase.order" src_model="product.product" groups=""/>
-
         <record id="purchase_line_form_action2" model="ir.actions.act_window">
             <field name="name">Purchase Lines Not Invoiced</field>
             <field name="type">ir.actions.act_window</field>

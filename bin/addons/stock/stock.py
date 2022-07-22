@@ -746,6 +746,27 @@ class stock_picking(osv.osv):
     _name = "stock.picking"
     _description = "Picking List"
 
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        '''
+        overwrite to allow search on customer and self instance
+        '''
+        new_dom = []
+        product_id = False
+        for x in domain:
+            if x[0] == 'product_id':
+                product_id = x[2]
+            else:
+                new_dom.append(x)
+
+        ret = super(stock_picking, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if product_id and isinstance(product_id, int):
+            ret.tables.append('"stock_move"')
+            ret.joins.setdefault('"stock_picking"', [])
+            ret.joins['"stock_picking"'] += [('"stock_move"', 'id', 'picking_id', 'LEFT JOIN')]
+            ret.where_clause.append(''' "stock_move"."product_id" = %s  ''')
+            ret.where_clause_params.append(product_id)
+        return ret
+
     def _set_maximum_date(self, cr, uid, ids, name, value, arg, context=None):
         """ Calculates planned date if it is greater than 'value'.
         @param name: Name of field
@@ -893,6 +914,19 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        '''
+        Fake method for 'product_id' field
+        '''
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
     _columns = {
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title'),
         'name': fields.char('Reference', size=64, select=True),
@@ -952,6 +986,7 @@ class stock_picking(osv.osv):
         'customers': fields.char('Customers', size=1026),
         'customer_ref': fields.char('Customer Ref.', size=1026),
         'sync_dpo_in': fields.boolean('Synced IN for DPO reception', internal=1, help='Used to flag a IN linked to a DPO'),
+        'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
     }
 
     _defaults = {

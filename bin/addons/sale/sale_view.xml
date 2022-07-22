@@ -504,6 +504,8 @@
                         <filter domain="[('user_id','=',uid)]" help="My Sale Orders" icon="terp-personal"/>
                     </field>
                     <newline />
+                    <field name="product_id" />
+                    <newline />
                     <group string="Type" expand="0">
                         <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]"/>
                         <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]"/>
