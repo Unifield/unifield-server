@@ -804,5 +804,9 @@
             <field name="method">us_9406_empty_sign</field>
         </record>
 
+        <record id="us_9406_create_common_acl" model="patch.scripts">
+            <field name="method">us_9406_create_common_acl</field>
+        </record>
+
     </data>
 </openerp>

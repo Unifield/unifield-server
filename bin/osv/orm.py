@@ -92,6 +92,13 @@ class except_orm(Exception):
 class BrowseRecordError(Exception):
     pass
 
+class AccessError(except_orm):
+    def __init__(self, mode, model, message):
+        super(AccessError, self).__init__(_('AccessError'), message)
+        self.model = model
+        self.mode = mode
+
+
 # Readonly python database object browser
 class browse_null(object):
 
@@ -1350,11 +1357,16 @@ class orm_template(object):
     def write(self, cr, user, ids, vals, context=None):
         raise NotImplementedError(_('The write method is not implemented on this object !'))
 
-    def write_web(self, cr, user, ids, vals, context=None):
+    def write_web(self, cr, user, ids, vals, context=None, ignore_access_error=False):
         """
         Method called by the Web on write
         """
-        return self.write(cr, user, ids, vals, context=context)
+        try:
+            return self.write(cr, user, ids, vals, context=context)
+        except AccessError as e:
+            if ignore_access_error and e.mode == 'write' and e.model == self._name:
+                return ids
+            raise
 
 
     def create(self, cr, user, vals, context=None):

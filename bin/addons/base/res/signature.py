@@ -2,7 +2,7 @@
 
 from osv import fields, osv
 from tools.translate import _
-
+from tools.misc import fakeUid
 
 list_sign = {
     'purchase.order': [
@@ -18,7 +18,7 @@ list_sign = {
 class signature(osv.osv):
     _name = 'signature'
     _rec_name = 'signature_users'
-    _description = 'List of signatures'
+    _description = 'Signature options on documents'
     _record_source = True
 
     _columns = {
@@ -79,6 +79,8 @@ class signature_object(osv.osv):
     """
 
     _name = 'signature.object'
+    _description = 'Abstract object to enable signature on document'
+
     _inherits = {'signature': 'signature_id'}
 
     # do not create table signature_object
@@ -130,7 +132,7 @@ signature_object()
 
 class signature_line(osv.osv):
     _name = 'signature.line'
-    _description = 'Document Signature'
+    _description = 'Document line to sign by role'
 
 
     _columns = {
@@ -199,24 +201,25 @@ class signature_line(osv.osv):
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
         esignature_id = sign_line._check_sign_unsign(check_has_sign=True, context=context)
 
-        self.write(cr, uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id}, context=context)
-        sign_line.signature_id._set_signature_state(context=context)
-
+        root_uid = hasattr(uid, 'realUid') or fakeUid(1, uid)
+        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id}, context=context)
+        self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
     def action_unsign(self, cr, uid, ids, context=None):
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
         sign_line._check_sign_unsign(context=context)
 
-        self.write(cr, uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False}, context=context)
-        sign_line.signature_id._set_signature_state(context=context)
+        root_uid = hasattr(uid, 'realUid') or fakeUid(1, uid)
+        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False}, context=context)
+        self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
 signature_line()
 
 class signature_image(osv.osv):
     _name = 'signature.image'
-    _description = 'Image'
+    _description = "Image of user signature in png"
     _rec_name = 'user_id'
 
     def _get_image(self, cr, uid, ids, name=None, arg=None, context=None):
@@ -238,6 +241,7 @@ signature_image()
 
 class signature_document_wizard(osv.osv_memory):
     _name = 'signature.document.wizard'
+    _description = 'Wizard used on to sign a document'
     _columns = {
         'name': fields.char('Document', size=256, readonly=1),
         'user_id': fields.many2one('Users', readonly=1),
@@ -256,6 +260,8 @@ signature_document_wizard()
 
 class signature_add_user_wizard(osv.osv_memory):
     _name = 'signature.add_user.wizard'
+    _description = 'Wizard used on Users from view to change own signature'
+
     _columns = {
         'name': fields.char('Document', size=256, readonly=1),
         'signature_id': fields.many2one('signature', readonly=1),

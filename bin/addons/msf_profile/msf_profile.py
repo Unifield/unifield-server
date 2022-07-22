@@ -56,6 +56,17 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_9406_create_common_acl(self, cr, uid, *a, **b):
+        model_obj = self.pool.get('ir.model')
+        acl_obj = self.pool.get('ir.model.access')
+        for model in ['signature', 'signature.object', 'signature.line', 'signature.image']:
+            model_id = model_obj.search(cr, uid, [('model', '=', model)])
+            acl_obj.create(cr, uid, {
+                'name': 'common',
+                'model_id': model_id[0],
+                'perm_read': True
+            })
+        return True
     def us_9406_empty_sign(self, cr, uid, *a, **b):
         cr.execute('select id from purchase_order where signature_id is null')
         for x in cr.fetchall():

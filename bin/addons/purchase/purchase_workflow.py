@@ -5,7 +5,7 @@ import netsvc
 from tools.translate import _
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from msf_button_access_rights.osv_override import fakeUid
+from tools.misc import fakeUid
 
 
 class purchase_order_line(osv.osv):

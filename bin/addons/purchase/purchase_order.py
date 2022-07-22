@@ -1153,7 +1153,7 @@ class purchase_order(osv.osv):
 
         return res
 
-    def write_web(self, cr, uid, ids, vals, context=None):
+    def write_web(self, cr, uid, ids, vals, context=None, ignore_access_error=False):
         """
         Overridden method called by the Web on write
         """
@@ -1206,7 +1206,7 @@ class purchase_order(osv.osv):
                             tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=context)
 
 
-        return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context)
+        return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
