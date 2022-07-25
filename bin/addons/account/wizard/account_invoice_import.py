@@ -281,6 +281,16 @@ class account_invoice_import(osv.osv_memory):
                             if not dest_ids:
                                 errors.append(_("Line %s: the destination %s doesn't exist or is inactive.") % (current_line_num, destination_code))
                                 continue
+                            # check destination and cc compatibility
+                            if not ana_obj.check_dest_cc_compatibility(cr, uid, dest_ids[0], cc_ids[0], context=context):
+                                errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, destination_code, cost_center_code))
+                            # check
+                            if not ana_obj.check_fp_acc_dest_compatibility(cr, uid, fp_ids[0], account.id, dest_ids[0], context=context):
+                                errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, funding_pool_code, account_code))
+                            # check funding pool and cc compatibility
+                            if not ana_obj.check_fp_cc_compatibility(cr, uid, fp_ids[0], cc_ids[0], context=context):
+                                errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, funding_pool_code, cost_center_code))
+
                             ad_vals.update({'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': currency_ids[0],
                                             'destination_id': dest_ids[0], 'cost_center_id': cc_ids[0],
                                             'funding_pool_id': fp_ids[0]})
