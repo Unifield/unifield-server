@@ -43,7 +43,7 @@ class account_invoice_import(osv.osv_memory):
         'filename': fields.char(string="Imported filename", size=256),
         'progression': fields.float(string="Progression", readonly=True),
         'message': fields.char(string="Message", size=256, readonly=True),
-        'state': fields.selection([('draft', 'Created'), ('inprogress', 'In Progress'), ('error', 'Error'), ('done', 'Done')],
+        'state': fields.selection([('draft', 'Created'), ('inprogress', 'In Progress'), ('error', 'Error'), ('ad_error', 'AD Error'), ('done', 'Done')],
                                   string="State", readonly=True, required=True),
         'error_ids': fields.one2many('account.invoice.import.errors', 'wizard_id', "Errors", readonly=True),
         'invoice_id': fields.many2one('account.invoice', 'Invoice', required=True, readonly=True),
@@ -69,6 +69,7 @@ class account_invoice_import(osv.osv_memory):
             context = {}
         cr = pooler.get_db(dbname).cursor()
         errors = []
+        ad_errors = []
         invoice_obj = self.pool.get('account.invoice')
         invoice_line_obj = self.pool.get('account.invoice.line')
         currency_obj = self.pool.get('res.currency')
@@ -283,13 +284,13 @@ class account_invoice_import(osv.osv_memory):
                                 continue
                             # check destination and cc compatibility
                             if not ana_obj.check_dest_cc_compatibility(cr, uid, dest_ids[0], cc_ids[0], context=context):
-                                errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, destination_code, cost_center_code))
-                            # check
+                                ad_errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, destination_code, cost_center_code))
+                            # check funding pool and analytic account compatibility
                             if not ana_obj.check_fp_acc_dest_compatibility(cr, uid, fp_ids[0], account.id, dest_ids[0], context=context):
-                                errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, funding_pool_code, account_code))
+                                ad_errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, funding_pool_code, account_code))
                             # check funding pool and cc compatibility
                             if not ana_obj.check_fp_cc_compatibility(cr, uid, fp_ids[0], cc_ids[0], context=context):
-                                errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, funding_pool_code, cost_center_code))
+                                ad_errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, funding_pool_code, cost_center_code))
 
                             ad_vals.update({'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': currency_ids[0],
                                             'destination_id': dest_ids[0], 'cost_center_id': cc_ids[0],
@@ -323,6 +324,16 @@ class account_invoice_import(osv.osv_memory):
                 for e in errors:
                     errors_obj.create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context)
                 wiz_state = 'error'
+            # if it's AD error, handle it separately to allow import invalid AD combination
+            elif ad_errors:
+                message = _('Import successful but with analytic distribution invalid combination.')
+                # delete old errors and create new ones
+                error_ids = errors_obj.search(cr, uid, [], context)
+                if error_ids:
+                    errors_obj.unlink(cr, uid, error_ids, context)
+                for e in ad_errors:
+                    errors_obj.create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context)
+                wiz_state = 'ad_error'
             else:
                 message = _('Import successful.')
             # 100% progression
