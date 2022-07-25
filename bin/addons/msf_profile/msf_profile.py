@@ -67,13 +67,16 @@ class patch_scripts(osv.osv):
                 'perm_read': True
             })
         return True
+
     def us_9406_empty_sign(self, cr, uid, *a, **b):
-        cr.execute('select id from purchase_order where signature_id is null')
-        for x in cr.fetchall():
-            cr.execute("insert into signature (signature_res_model, signature_res_id) values ('purchase.order', %s) returning id", (x[0], ))
-            a = cr.fetchone()
-            cr.execute("update purchase_order set signature_id=%s where id=%s", (a[0], x[0]))
+        for model, table in [('purchase.order', 'purchase_order'), ('sale.order', 'sale_order')]:
+            cr.execute('select id from %s where signature_id is null' % (table, )) # not_a_user_entry
+            for x in cr.fetchall():
+                cr.execute("insert into signature (signature_res_model, signature_res_id) values (%s, %s) returning id", (model, x[0]))
+                a = cr.fetchone()
+                cr.execute("update %s set signature_id=%%s where id=%%s" % (table,) , (a[0], x[0])) # not_a_user_entry
         return True
+
     # UF26.0
     def us_8259_remove_currency_table_wkf(self, cr, uid, *a, **b):
         cr.execute("delete from wkf_workitem where act_id in (select id from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table'))")

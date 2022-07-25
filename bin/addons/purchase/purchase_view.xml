@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE SIGNATURE_TEMPLATE [
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
+]>
+
+
 <openerp>
     <data>
 
@@ -428,52 +433,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Signature">
-                            <field name="signature_available" attrs="{'readonly': [('signature_state', '!=', False)]}"/>
-                            <group colspan="4" col="4" attrs="{'invisible': [('signature_available', '=', False)]}">
-                                <button name="add_user_signatures"
-                                    string="Manage Users allowed to sign"
-                                    type="object"
-                                    colspan="2"
-                                    icon="terp-personal"
-                                    attrs="{'readonly': ['|', ('signature_is_closed', '=', True), ('signature_state', '=', 'signed')]}"
-                                    ignore_access_error="1"
-                                />
-                                <field name="signed_off_line" attrs="{'readonly': [('signature_state', '!=', False)]}" />
-                                <!-- <group colspan="2" /> -->
-                                <field name="signature_users" readonly="1" nolabel="1" colspan="2" attrs="{'readonly': [('signature_is_closed', '=', True)]}">
-                                    <tree string="Users allowed to sign">
-                                        <field name="name" />
-                                        <field name="login" />
-                                    </tree>
-                                </field>
-                                <field name="signature_line_ids" readonly="1" nolabel="1" colspan="2" on_change="sig_line_change()">
-                                    <tree string="Signatures">
-                                        <field name="name" />
-                                        <field name="is_active" />
-                                        <field name="user_id" />
-                                        <field name="data_image" widget="image" height="50" />
-                                        <field name="date" />
-                                        <button name="open_sign_wizard" string="Sign" icon="sign.png" attrs="{'invisible': ['|', '|',('signature_is_closed', '=', True), ('signed', '=', True), ('is_active', '=', False)]}" type="object" />
-                                        <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|',('signature_is_closed', '=', True), ('signed', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
-                                        <field name="signed" />
-                                    </tree>
-                                    <form>
-                                        <field name="name" />
-                                        <field name="is_active" />
-                                        <field name="user_id" />
-                                        <field name="image" widget="image" height="50" />
-                                        <field name="date" />
-                                        <field name="signed" />
-                                    </form>
-                                </field>
-                                <field name="signature_state" />
-                                <group colspan="2" col="4">
-                                    <button name="action_close_signature" string="Close Signature" type="object" icon="terp-locked" attrs="{'readonly': [('signature_is_closed', '=', True)]}"/>
-                                    <field name="signature_is_closed" />
-                                </group>
-                            </group>
-                        </page>
+                        &signature_template;
                     </notebook>
                     <group col="11" colspan="4">
                         <group colspan="12" col="19" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}">

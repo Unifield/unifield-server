@@ -444,13 +444,17 @@ class users(osv.osv):
                         res.append(('id', '=', '0'))
         return res
 
-    def _get_current_signature(self, cr, uid, ids, name=None, arg=None, context=None):
+    def _get_has_signature(self, cr, uid, ids, name=None, arg=None, context=None):
         res = {}
-        for u in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id'], context=context):
+        for u in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to'], context=context):
+            res[u.id] = {'has_signature': False, 'has_valid_signature': False}
             if u.esignature_id:
-                res[u.id] = u.esignature_id.image.split(',')[-1]
-            else:
-                res[u.id] = False
+                res[u.id]['has_signature'] = True
+                res[u.id]['has_valid_signature'] = True
+                if u['signature_from'] and fields.date.today() < u['signature_from']:
+                    res[u.id]['has_valid_signature'] = False
+                elif u['signature_to'] and fields.date.today() > u['signature_to']:
+                    res[u.id]['has_valid_signature'] = False
         return res
 
     _columns = {
@@ -470,10 +474,14 @@ class users(osv.osv):
                              " aren't configured, it won't be possible to email new "
                              "users."),
         'signature': fields.text('Signature', size=64),
+
         'esignature_id': fields.many2one('signature.image', 'Current Signature'),
         'current_signature': fields.related('esignature_id', 'pngb64', string='Signature', type='text', readonly=1),
-        'change_signature': fields.function(tools.misc.get_fake, string='Pref. change signature', type='text', method=1),
+        'signature_from': fields.date('Signature From Date'),
+        'signature_to': fields.date('Signature To Date'),
         'address_id': fields.many2one('res.partner.address', 'Address'),
+        'has_signature': fields.function(_get_has_signature, type='boolean', string='Has Signature', method=1, multi='sign_state'),
+        'has_valid_signature': fields.function(_get_has_signature, type='boolean', string='Is Signature Valid', method=1, multi='sign_state'),
         'force_password_change':fields.boolean('Change password on next login',
                                                help="Check out this box to force this user to change his "\
                                                "password on next login."),
@@ -553,7 +561,8 @@ class users(osv.osv):
     ]
 
     _sql_constraints = [
-        ('login_key', 'UNIQUE (login)',  'You can not have two users with the same login !')
+        ('login_key', 'UNIQUE (login)',  'You can not have two users with the same login !'),
+        ('dates_ok', 'CHECK (signature_from<=signature_to)',  'Signature: Start Date must be before End Date !')
     ]
 
     def _get_email_from(self, cr, uid, ids, context=None):
@@ -981,6 +990,17 @@ class users(osv.osv):
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1
 
+    def reset_signature(self, cr, uid, ids, context=None):
+        for user in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to'] , context=context):
+            if user.esignature_id:
+                self.pool.get('signature.image').write(cr, uid, user.esignature_id.id, {
+                    'from_date': user.signature_from,
+                    'to_date': user.signature_to,
+                    'inactivation_date': fields.date.today()
+                }, context=context)
+        self.write(cr, uid, ids, {'esignature_id': False, 'signature_from': False, 'signature_to': False}, context=context)
+        return True
+
     def add_signature(self, cr, uid, ids, context=None):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         if real_uid != ids[0]:
@@ -996,6 +1016,7 @@ class users(osv.osv):
             'context': context,
             'height': '400px',
             'width': '720px',
+            'opened': True,
         }
 
 users()

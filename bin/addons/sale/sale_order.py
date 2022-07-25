@@ -61,6 +61,8 @@ class sale_order(osv.osv):
     _name = "sale.order"
     _description = "Sales Order"
 
+    _inherit = 'signature.object'
+
     def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy the sale.order. When copy the sale.order:

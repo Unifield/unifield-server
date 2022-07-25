@@ -3,6 +3,8 @@
 from osv import fields, osv
 from tools.translate import _
 from tools.misc import fakeUid
+from lxml import etree
+
 
 list_sign = {
     'purchase.order': [
@@ -13,8 +15,16 @@ list_sign = {
         ('mr', _('Mission Responsible'), False),
         ('hq', _('HQ'), False),
     ],
+    'sale.order': [
+        ('tr', _('Technical Responsible'), True),
+        ('sr', _('Supply Responsible'), True),
+    ]
 }
 
+txt_validation = {
+    'purchase.order': lambda doc : '%s %s %s' % (doc.name, doc.functional_amount_total, doc.functional_currency_id.name),
+    'sale.order': lambda doc : '%s %s %s' % (doc.name, doc.ir_total_amount, doc.functional_currency_id.name)
+}
 class signature(osv.osv):
     _name = 'signature'
     _rec_name = 'signature_users'
@@ -128,6 +138,18 @@ class signature_object(osv.osv):
             'width': '720px',
         }
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        fvg = super(signature_object, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        # TODO
+        if False and view_type == 'form':
+            arch = etree.fromstring(fvg['arch'])
+            fields = arch.xpath('//page[@name="signature_tab"]')
+            if fields:
+                parent_node = fields[0].getparent()
+                parent_node.remove(fields[0])
+                fvg['arch'] = etree.tostring(arch)
+        return fvg
+
 signature_object()
 
 class signature_line(osv.osv):
@@ -161,8 +183,8 @@ class signature_line(osv.osv):
             raise osv.except_osv(_('Warning'), _("Signature Closed."))
 
         if check_has_sign:
-            user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['esignature_id'], context=context)
-            if not user_d.esignature_id:
+            user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['has_valid_signature'], context=context)
+            if not user_d.has_valid_signature:
                 raise osv.except_osv(_('Warning'), _("No signature defined in user's profile"))
             return user_d.esignature_id.id
 
@@ -171,12 +193,12 @@ class signature_line(osv.osv):
     def open_sign_wizard(self, cr, uid, ids, context=None):
         esignature_id = self._check_sign_unsign(cr, uid, ids, check_has_sign=True, context=context)
         line = self.browse(cr, uid, ids[0], context=context)
-        doc = self.pool.get(line.signature_id.signature_res_model).browse(cr, uid, line.signature_id.signature_res_id, fields_to_fetch=['name', 'functional_amount_total', 'functional_currency_id'], context=context)
+        doc = self.pool.get(line.signature_id.signature_res_model).browse(cr, uid, line.signature_id.signature_res_id, context=context)
 
         image = self.pool.get('signature.image').browse(cr, uid, esignature_id, context=context).pngb64
 
         wiz_id = self.pool.get('signature.document.wizard').create(cr, uid, {
-            'name': '%s %s %s' % (doc.name, doc.functional_amount_total, doc.functional_currency_id.name),
+            'name': txt_validation[line.signature_id.signature_res_model](doc),
             'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
             'role': line.name,
             'line_id': line.id,
@@ -235,6 +257,10 @@ class signature_image(osv.osv):
         'user_id': fields.many2one('res.users', required=1, string='User'),
         'image': fields.text('Signature'),
         'pngb64': fields.function(_get_image, method=1, type='text', string='Image'),
+        'from_date': fields.date('From Date', readonly=True),
+        'to_date': fields.date('To Date', readonly=True),
+        'create_date': fields.datetime('Creation Date', readonly=True),
+        'inactivation_date': fields.datetime('Inactivation Date', readonly=True),
     }
 
 signature_image()
@@ -260,7 +286,7 @@ signature_document_wizard()
 
 class signature_add_user_wizard(osv.osv_memory):
     _name = 'signature.add_user.wizard'
-    _description = 'Wizard used on Users from view to change own signature'
+    _description = 'Wizard used on document to add users allowed to sign'
 
     _columns = {
         'name': fields.char('Document', size=256, readonly=1),
@@ -297,13 +323,16 @@ signature_add_user_wizard()
 
 class signature_set_user(osv.osv_memory):
     _name = 'signature.set_user'
-    _description = "Wizard to edit user's signature"
+    _description = "Wizard to add new signature on user profile"
     _rec_name = 'user_id'
 
     _columns = {
         'new_signature': fields.text('New signature'),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
     }
+
+    def closepref(self, cr, uid, ids, context=None):
+        return {'type': 'closepref'}
 
     def save(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
@@ -315,6 +344,7 @@ class signature_set_user(osv.osv_memory):
             }, context=context)
             self.pool.get('res.users').write(cr, real_uid, real_uid, {'esignature_id': new_image}, context=context)
 
-        return {'type': 'ir.actions.act_window_close'}
+        return {'type': 'closepref'}
 
 signature_set_user()
+
