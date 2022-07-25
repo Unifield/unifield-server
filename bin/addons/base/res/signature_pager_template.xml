@@ -25,6 +25,7 @@
                 <field name="user_id" />
                 <field name="data_image" widget="image" height="50" />
                 <field name="date" />
+                <field name="format_value" />
                 <button name="open_sign_wizard" string="Sign" icon="sign.png" attrs="{'invisible': ['|', '|',('signature_is_closed', '=', True), ('signed', '=', True), ('is_active', '=', False)]}" type="object" />
                 <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|',('signature_is_closed', '=', True), ('signed', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
                 <field name="signed" />

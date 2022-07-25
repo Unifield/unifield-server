@@ -21,10 +21,20 @@ list_sign = {
     ]
 }
 
-txt_validation = {
-    'purchase.order': lambda doc : '%s %s %s' % (doc.name, doc.functional_amount_total, doc.functional_currency_id.name),
-    'sale.order': lambda doc : '%s %s %s' % (doc.name, doc.ir_total_amount, doc.functional_currency_id.name)
+saved_name = {
+    'purchase.order': lambda doc: doc.name,
+    'sale.order': lambda doc: doc.name,
 }
+saved_value = {
+    'purchase.order': lambda doc: round(doc.amount_total, 2),
+    'sale.order': lambda doc: round(doc.ir_total_amount, 2),
+}
+
+saved_unit = {
+    'purchase.order': lambda doc: doc.currency_id.name,
+    'sale.order': lambda doc: doc.functional_currency_id.name,
+}
+
 class signature(osv.osv):
     _name = 'signature'
     _rec_name = 'signature_users'
@@ -156,6 +166,17 @@ class signature_line(osv.osv):
     _name = 'signature.line'
     _description = 'Document line to sign by role'
 
+    def _format_value(self, cr, uid, ids, name=None, arg=None, context=None):
+        res = {}
+        user_lang = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
+        lang_obj = self.pool.get('res.lang')
+        lang_id = lang_obj.search(cr, uid, [('code', '=', user_lang)])[0]
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['signed', 'value', 'unit'], context=context):
+            if not x.signed:
+                res[x.id] = False
+            else:
+                res[x.id] = '%s %s' % (lang_obj.format(cr, uid, [lang_id], '%.2lf', x.value, grouping=True, monetary=True),  x.unit)
+        return res
 
     _columns = {
         'signature_id': fields.many2one('signature', 'Parent', required=1),
@@ -168,6 +189,9 @@ class signature_line(osv.osv):
         'image': fields.related('image_id', 'pngb64', type='text', string='Signature', readonly=1),
         'data_image': fields.related('image_id', 'image', type='text', string='Signature', readonly=1),
         'date': fields.datetime('Date'),
+        'value': fields.float('Value', digits=(16,2)),
+        'unit': fields.char('Unit', size=16),
+        'format_value': fields.function(_format_value, method=1, type='char', string='Value'),
     }
 
 
@@ -183,7 +207,7 @@ class signature_line(osv.osv):
             raise osv.except_osv(_('Warning'), _("Signature Closed."))
 
         if check_has_sign:
-            user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['has_valid_signature'], context=context)
+            user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['has_valid_signature', 'esignature_id'], context=context)
             if not user_d.has_valid_signature:
                 raise osv.except_osv(_('Warning'), _("No signature defined in user's profile"))
             return user_d.esignature_id.id
@@ -197,8 +221,14 @@ class signature_line(osv.osv):
 
         image = self.pool.get('signature.image').browse(cr, uid, esignature_id, context=context).pngb64
 
+        unit = saved_unit[line.signature_id.signature_res_model](doc)
+        value = saved_value[line.signature_id.signature_res_model](doc)
+        name = '%s %g %s' % (saved_name[line.signature_id.signature_res_model](doc), value, unit or '')
+
         wiz_id = self.pool.get('signature.document.wizard').create(cr, uid, {
-            'name': txt_validation[line.signature_id.signature_res_model](doc),
+            'name': name,
+            'unit': unit,
+            'value': value,
             'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
             'role': line.name,
             'line_id': line.id,
@@ -217,14 +247,14 @@ class signature_line(osv.osv):
             'width': '720px',
         }
 
-    def action_sign(self, cr, uid, ids, context=None):
+    def action_sign(self, cr, uid, ids, value, unit, context=None):
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
         esignature_id = sign_line._check_sign_unsign(check_has_sign=True, context=context)
 
         root_uid = hasattr(uid, 'realUid') or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id}, context=context)
+        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id, 'value': value, 'unit': unit}, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
@@ -233,15 +263,20 @@ class signature_line(osv.osv):
         sign_line._check_sign_unsign(context=context)
 
         root_uid = hasattr(uid, 'realUid') or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False}, context=context)
+        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False}, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
     def toggle_active(self, cr, uid, ids, context=None):
-        for line in self.read(cr, uid, ids, ['is_active', 'signed'], context=context):
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['is_active', 'signed'], context=context):
             if line['signed']:
                 raise osv.except_osv(_('Warning'), _("You can't change Active value on an already signed role."))
             self.write(cr, uid, line['id'], {'is_active': not line['is_active']}, context=context)
+
+            nb_users = len([x.id for x in line.signature_id.signature_users])
+            nb_active = len([x for x in line.signature_id.signature_line_ids if x.is_active])
+            if nb_users > nb_active:
+                raise osv.except_osv(_('Warning'), _('%d users are allowed to sign, you cannot disable this line.') % nb_users)
         return True
 
 
@@ -282,11 +317,13 @@ class signature_document_wizard(osv.osv_memory):
         'role': fields.char('Role/Function', size=256, readonly=1),
         'line_id': fields.many2one('signature.line', 'Line', readonly=1),
         'image': fields.text('Signature', readonly=1),
+        'value': fields.float('Value', digits=(16, 2)),
+        'unit': fields.char('Unit', size=16),
     }
 
     def save(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
-        self.pool.get('signature.line').action_sign(cr, uid, [wiz.line_id.id], context=context)
+        self.pool.get('signature.line').action_sign(cr, uid, [wiz.line_id.id], wiz.value, wiz.unit, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 signature_document_wizard()

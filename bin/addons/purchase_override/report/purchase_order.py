@@ -54,6 +54,9 @@ class order(report_sxw.rml_parse):
         if field == 'image':
             if data.image:
                 return data.image
+        if field == 'format_value':
+            return data.format_value or ''
+
         return ''
 
 

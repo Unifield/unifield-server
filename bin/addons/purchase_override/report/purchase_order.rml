@@ -809,6 +809,26 @@
             </tr>
             <tr>
                 <td>
+                    <para style="Standard">Total PO :</para>
+                </td>
+                <td>
+                    <para style="Standard">[[ getSign(objects[0], 'sr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="Standard">[[ getSign(objects[0], 'tr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="Standard">[[ getSign(objects[0], 'fr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="Standard">[[ getSign(objects[0], 'mr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="Standard">[[ getSign(objects[0], 'hq', 'format_value') ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <para style="Standard">Signature :</para>
                     <para style="Standard"> </para>
                 </td>
