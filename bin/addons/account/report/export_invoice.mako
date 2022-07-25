@@ -49,6 +49,18 @@
     </Borders>
     <Protection/>
   </Style>
+  <Style ss:ID="non_editable_red_bold">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+    <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+    <Font ss:Bold="1" ss:Color="#FF0000"/>
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Protection/>
+  </Style>
   <Style ss:ID="non_editable_number">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
     <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
@@ -132,6 +144,10 @@
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Description')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Notes')}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Analytic Distribution')}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Destination')}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Funding Pool')}</Data></Cell>
   </Row>
 
   <% is_ro = is_readonly(o) %>
@@ -158,8 +174,39 @@
 
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.name or ''|x}</Data></Cell>
 
-        <!-- export Notes including line breaks (|xn) -->
-        <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|xn}</Data></Cell>
+        <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|x}</Data></Cell>
+        % if (inv_line.analytic_distribution_id and len(inv_line.analytic_distribution_id.cost_center_lines) == 1) or (inv_line.invoice_id.analytic_distribution_id and len(inv_line.invoice_id.analytic_distribution_id.cost_center_lines) == 1):
+            <Cell ss:StyleID="non_editable"><Data ss:Type="String">${'100%'|x}</Data></Cell>
+        % elif (inv_line.analytic_distribution_id and len(inv_line.analytic_distribution_id.cost_center_lines) > 1) or (inv_line.invoice_id.analytic_distribution_id and len(inv_line.invoice_id.analytic_distribution_id.cost_center_lines) > 1):
+            <Cell ss:StyleID="non_editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
+        % endif
+        % if not inv_line.analytic_distribution_id and not inv_line.invoice_id.analytic_distribution_id:
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <!-- export Funding Pool including line breaks (|xn) -->
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|xn}</Data></Cell>
+        % elif inv_line.analytic_distribution_id:
+            % if len(inv_line.analytic_distribution_id.cost_center_lines) == 1:
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.analytic_distribution_id.cost_center_lines[0].analytic_id.code or ''|x}</Data></Cell>
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.analytic_distribution_id.cost_center_lines[0].destination_id.code or ''|x}</Data></Cell>
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.analytic_distribution_id.funding_pool_lines[0].analytic_id.code or ''|xn}</Data></Cell>
+            % elif len(inv_line.analytic_distribution_id.cost_center_lines) > 1:
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|xn}</Data></Cell>
+            % endif
+        % elif inv_line.invoice_id.analytic_distribution_id:
+            % if len(inv_line.invoice_id.analytic_distribution_id.cost_center_lines) == 1:
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.invoice_id.analytic_distribution_id.cost_center_lines[0].analytic_id.code or ''|x}</Data></Cell>
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.invoice_id.analytic_distribution_id.cost_center_lines[0].destination_id.code or ''|x}</Data></Cell>
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.invoice_id.analytic_distribution_id.funding_pool_lines[0].analytic_id.code or ''|xn}</Data></Cell>
+            % elif len(inv_line.invoice_id.analytic_distribution_id.cost_center_lines) > 1:
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|xn}</Data></Cell>
+            % endif
+        % endif
+
     </Row>
   % endfor
 
