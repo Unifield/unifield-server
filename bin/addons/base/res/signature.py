@@ -237,6 +237,14 @@ class signature_line(osv.osv):
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
+    def toggle_active(self, cr, uid, ids, context=None):
+        for line in self.read(cr, uid, ids, ['is_active', 'signed'], context=context):
+            if line['signed']:
+                raise osv.except_osv(_('Warning'), _("You can't change Active value on an already signed role."))
+            self.write(cr, uid, line['id'], {'is_active': not line['is_active']}, context=context)
+        return True
+
+
 signature_line()
 
 class signature_image(osv.osv):
