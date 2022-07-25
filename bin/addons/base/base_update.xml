@@ -149,6 +149,14 @@
                                 <field name="has_signature" invisible="1" />
                                 <button type="object" string="Reset Signature" name="reset_signature" icon="gtk-stop" colspan="4" confirm="Do you want to delete the signature ?" attrs="{'invisible': [('has_signature', '=', False)]}"/>
                                 <!-- <field name="signature" colspan="4" nolabel="1" /> -->
+                                <field name="signature_history_ids" colspan="4" mode="tree" readonly="1" nolabel="1">
+                                    <tree string="Inactive Signature">
+                                        <field name="legal_name" />
+                                        <field name="create_date" />
+                                        <field name="inactivation_date" />
+                                        <field name="image" widget="image" height="50"/>
+                                    </tree>
+                                </field>
                             </group>
                             <group colspan="2" col="2" expand="1">
                                 <separator string="Groups" colspan="2"/>

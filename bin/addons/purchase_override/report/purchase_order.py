@@ -32,32 +32,8 @@ class order(report_sxw.rml_parse):
             'enumerate': enumerate,
             'getOrigin': self._get_origin,
             'filter_lines': self.filter_lines,
-            'getSign': self.getSign,
         })
 
-    def getSign(self, po, key, field):
-        sign_id = po.signature_id
-        if not sign_id:
-            return ''
-
-        sign_line_obj = self.pool.get('signature.line')
-        sign_ids = sign_line_obj.search(self.cr, self.uid, [('signature_id', '=', sign_id.id), ('name_key', '=', key), ('is_active', '=', True), ('signed', '=', True)])
-        if not sign_ids:
-            return ''
-
-        data = sign_line_obj.browse(self.cr, self.uid, sign_ids[0], fields_to_fetch=[field])
-        if field == 'user_id':
-            return data.user_id.name
-        if field == 'date' and data.date:
-            return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, d_type='datetime', datetime=data.date)
-
-        if field == 'image':
-            if data.image:
-                return data.image
-        if field == 'format_value':
-            return data.format_value or ''
-
-        return ''
 
 
     def filter_lines(self, o):

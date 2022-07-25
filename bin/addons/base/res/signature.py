@@ -181,6 +181,7 @@ class signature_line(osv.osv):
     _columns = {
         'signature_id': fields.many2one('signature', 'Parent', required=1),
         'user_id': fields.many2one('res.users', 'Signee User'),
+        'legal_name': fields.char('Legal name', size=64),
         'is_active': fields.boolean('Active'),
         'name': fields.char('Role/Function', size=128),
         'name_key': fields.char('key', size=10),
@@ -252,9 +253,10 @@ class signature_line(osv.osv):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
         esignature_id = sign_line._check_sign_unsign(check_has_sign=True, context=context)
+        user = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['name'], context=context)
 
         root_uid = hasattr(uid, 'realUid') or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id, 'value': value, 'unit': unit}, context=context)
+        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id, 'value': value, 'unit': unit, 'legal_name': user.name}, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
@@ -263,7 +265,7 @@ class signature_line(osv.osv):
         sign_line._check_sign_unsign(context=context)
 
         root_uid = hasattr(uid, 'realUid') or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False}, context=context)
+        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False}, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
@@ -286,6 +288,7 @@ class signature_image(osv.osv):
     _name = 'signature.image'
     _description = "Image of user signature in png"
     _rec_name = 'user_id'
+    _order = 'id desc'
 
     def _get_image(self, cr, uid, ids, name=None, arg=None, context=None):
         res = {}
@@ -298,6 +301,7 @@ class signature_image(osv.osv):
 
     _columns = {
         'user_id': fields.many2one('res.users', required=1, string='User'),
+        'legal_name': fields.char('Legal name', size=64),
         'image': fields.text('Signature'),
         'pngb64': fields.function(_get_image, method=1, type='text', string='Image'),
         'from_date': fields.date('From Date', readonly=True),
@@ -385,7 +389,8 @@ class signature_set_user(osv.osv_memory):
         if wiz.new_signature:
             new_image = self.pool.get('signature.image').create(cr, real_uid, {
                 'user_id': real_uid,
-                'image': wiz.new_signature
+                'image': wiz.new_signature,
+                'legal_name': wiz.user_id.name,
             }, context=context)
             self.pool.get('res.users').write(cr, real_uid, real_uid, {'esignature_id': new_image}, context=context)
 

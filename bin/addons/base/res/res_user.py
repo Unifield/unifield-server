@@ -482,6 +482,8 @@ class users(osv.osv):
         'address_id': fields.many2one('res.partner.address', 'Address'),
         'has_signature': fields.function(_get_has_signature, type='boolean', string='Has Signature', method=1, multi='sign_state'),
         'has_valid_signature': fields.function(_get_has_signature, type='boolean', string='Is Signature Valid', method=1, multi='sign_state'),
+        'signature_history_ids': fields.one2many('signature.image', 'user_id', string='Inactive Signature', readonly=1, domain=[('inactivation_date', '!=', False)]),
+
         'force_password_change':fields.boolean('Change password on next login',
                                                help="Check out this box to force this user to change his "\
                                                "password on next login."),
@@ -996,7 +998,7 @@ class users(osv.osv):
                 self.pool.get('signature.image').write(cr, uid, user.esignature_id.id, {
                     'from_date': user.signature_from,
                     'to_date': user.signature_to,
-                    'inactivation_date': fields.date.today()
+                    'inactivation_date': fields.datetime.now()
                 }, context=context)
         self.write(cr, uid, ids, {'esignature_id': False, 'signature_from': False, 'signature_to': False}, context=context)
         return True

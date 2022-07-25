@@ -772,19 +772,19 @@
                     <para style="Standard">Name :</para>
                 </td>
                 <td>
-                    <para style="Standard">[[ getSign(objects[0], 'sr', 'user_id') ]]</para>
+                    <para style="Standard">[[ getSign(objects[0], 'sr', 'legal_name') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard">[[ getSign(objects[0], 'tr', 'user_id') ]]</para>
+                    <para style="Standard">[[ getSign(objects[0], 'tr', 'legal_name') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard">[[ getSign(objects[0], 'fr', 'user_id') ]]</para>
+                    <para style="Standard">[[ getSign(objects[0], 'fr', 'legal_name') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard">[[ getSign(objects[0], 'mr', 'user_id') ]]</para>
+                    <para style="Standard">[[ getSign(objects[0], 'mr', 'legal_name') ]]</para>
                 </td>
                 <td>
-                    <para style="Standard">[[ getSign(objects[0], 'hq', 'user_id') ]]</para>
+                    <para style="Standard">[[ getSign(objects[0], 'hq', 'legal_name') ]]</para>
                 </td>
             </tr>
             <tr>
