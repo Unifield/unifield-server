@@ -66,5 +66,22 @@
             </field>
         </record>
 
+        <record id="signature_change_date_form" model="ir.ui.view">
+            <field name="name">signature_change_date_form</field>
+            <field name="model">signature.change_date</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Change End Date">
+                    <field name="current_from" />
+                    <field name="current_to" />
+                    <field name="new_to" on_change="change_new_to(current_from, new_to)" />
+                    <group colspan="4">
+                      <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
+                      <button string="Confirm" icon="terp-check" name="save" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>

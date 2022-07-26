@@ -83,13 +83,14 @@
                     <field name="context_lang" completion="1" readonly="0"/>
                     <field name="context_tz" completion="1" readonly="0"/>
                     <field name="menu_tips" colspan="2" readonly="0"/>
+                    <field name="new_signature_required" invisible="1"/>
                     <newline/>
                     <field name="has_valid_signature" invisible="1" />
                     <group colspan="2" col="2" attrs="{'invisible': [('has_valid_signature', '=', False)]}">
                         <separator string="Current Signature" colspan="2"/>
                         <field name="current_signature" widget="image" height="100" nolabel="1" colspan="2"/>
                     </group>
-                    <button type="object" string="Create Signature" name="add_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': [('has_valid_signature', '=', True)]}"/>
+                    <button type="object" string="Create Signature" name="add_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': ['|', ('new_signature_required', '=', False), ('has_valid_signature', '=', True)]}"/>
                 </form>
             </field>
         </record>
@@ -142,13 +143,20 @@
                             </group>
                             <newline/>
                             <group colspan="2" col="4">
-                                <separator string="Signature" colspan="4"/>
-                                <field name="signature_from" string="Start Date"/>
-                                <field name="signature_to" string="End Date" depends="signature_from"/>
-                                <field name="current_signature" widget="image" height="100" nolabel="1" colspan="4"/>
-                                <field name="has_signature" invisible="1" />
-                                <button type="object" string="Reset Signature" name="reset_signature" icon="gtk-stop" colspan="4" confirm="Do you want to delete the signature ?" attrs="{'invisible': [('has_signature', '=', False)]}"/>
+                                <field name="signature_enabled" attrs="{'readonly': [('has_signature', '=', True)]}"/>
+                                <group colspan="4" col="4" attrs="{'invisible': [('signature_enabled', '=', False)]}">
+                                    <separator string="Signature" colspan="4"/>
+                                    <group colspan="4" col="6">
+                                        <field name="signature_from" string="Start Date" attrs="{'readonly': [('has_signature', '=', True)], 'required': [('has_signature', '=', False), ('signature_enabled', '=', True)]}" />
+                                        <field name="signature_to" string="End Date" depends="signature_from" attrs="{'readonly': [('has_signature', '=', True)], 'required': [('has_signature', '=', False), ('signature_enabled', '=', True)]}" />
+                                        <button type="object" string="Change End Date" name="change_date" attrs="{'invisible': [('has_signature', '=', False)]}" icon="terp-go-month" />
+                                    </group>
+                                    <field name="current_signature" widget="image" height="100" nolabel="1" colspan="4"/>
+                                    <field name="has_signature" invisible="1" />
+                                    <field name="has_valid_signature" invisible="1" />
+                                    <button type="object" string="Archive Signature" name="reset_signature" icon="gtk-stop" colspan="4" confirm="Do you want to disable this signature ?" attrs="{'invisible': [('has_signature', '=', False)]}"/>
                                 <!-- <field name="signature" colspan="4" nolabel="1" /> -->
+                                </group>
                                 <field name="signature_history_ids" colspan="4" mode="tree" readonly="1" nolabel="1">
                                     <tree string="Inactive Signature">
                                         <field name="legal_name" />

@@ -446,15 +446,19 @@ class users(osv.osv):
 
     def _get_has_signature(self, cr, uid, ids, name=None, arg=None, context=None):
         res = {}
-        for u in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to'], context=context):
-            res[u.id] = {'has_signature': False, 'has_valid_signature': False}
+        for u in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to', 'signature_enabled'], context=context):
+            res[u.id] = {'has_signature': False, 'has_valid_signature': False, 'new_signature_required': False}
             if u.esignature_id:
                 res[u.id]['has_signature'] = True
                 res[u.id]['has_valid_signature'] = True
-                if u['signature_from'] and fields.date.today() < u['signature_from']:
+                if not u.signature_enabled:
+                    res[u.id]['has_valid_signature'] = False
+                elif u['signature_from'] and fields.date.today() < u['signature_from']:
                     res[u.id]['has_valid_signature'] = False
                 elif u['signature_to'] and fields.date.today() > u['signature_to']:
                     res[u.id]['has_valid_signature'] = False
+            elif u.signature_enabled and u['signature_from'] and fields.date.today() >= u['signature_from'] and u['signature_to'] and fields.date.today() <= u['signature_to']:
+                res[u.id]['new_signature_required'] = True
         return res
 
     _columns = {
@@ -474,14 +478,16 @@ class users(osv.osv):
                              " aren't configured, it won't be possible to email new "
                              "users."),
         'signature': fields.text('Signature', size=64),
+        'address_id': fields.many2one('res.partner.address', 'Address'),
 
+        'signature_enabled': fields.boolean('Enable Signature'),
         'esignature_id': fields.many2one('signature.image', 'Current Signature'),
         'current_signature': fields.related('esignature_id', 'pngb64', string='Signature', type='text', readonly=1),
         'signature_from': fields.date('Signature From Date'),
         'signature_to': fields.date('Signature To Date'),
-        'address_id': fields.many2one('res.partner.address', 'Address'),
         'has_signature': fields.function(_get_has_signature, type='boolean', string='Has Signature', method=1, multi='sign_state'),
         'has_valid_signature': fields.function(_get_has_signature, type='boolean', string='Is Signature Valid', method=1, multi='sign_state'),
+        'new_signature_required': fields.function(_get_has_signature, type='boolean', string='Is Signature required', method=1, multi='sign_state'),
         'signature_history_ids': fields.one2many('signature.image', 'user_id', string='Inactive Signature', readonly=1, domain=[('inactivation_date', '!=', False)]),
 
         'force_password_change':fields.boolean('Change password on next login',
@@ -1019,6 +1025,21 @@ class users(osv.osv):
             'height': '400px',
             'width': '720px',
             'opened': True,
+        }
+
+    def change_date(self, cr, uid, ids, context=None):
+        user = self.pool.get('res.users').browse(cr, uid, ids[0], context=context)
+        wiz_id = self.pool.get('signature.change_date').create(cr, uid, {'user_id': ids[0], 'current_from': user.signature_from, 'current_to': user.signature_to}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'signature.change_date',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'height': '250px',
+            'width': '720px',
         }
 
 users()

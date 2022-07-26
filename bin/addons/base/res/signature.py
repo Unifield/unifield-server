@@ -386,15 +386,53 @@ class signature_set_user(osv.osv_memory):
     def save(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+
         if wiz.new_signature:
             new_image = self.pool.get('signature.image').create(cr, real_uid, {
                 'user_id': real_uid,
                 'image': wiz.new_signature,
                 'legal_name': wiz.user_id.name,
+                'date_from': wiz.user_id.signature_from,
+                'date_to': wiz.user_id.signature_to,
             }, context=context)
             self.pool.get('res.users').write(cr, real_uid, real_uid, {'esignature_id': new_image}, context=context)
 
         return {'type': 'closepref'}
 
 signature_set_user()
+
+
+class signature_change_date(osv.osv_memory):
+    _name = 'signature.change_date'
+    _rec_name = 'user_id'
+    _description = "Change Dates on user's signature"
+
+    _columns = {
+        'user_id': fields.many2one('res.users', 'User', readonly=1),
+        'current_from': fields.date('Current Date From', readonly=1),
+        'current_to': fields.date('Current Date To', readonly=1),
+        'new_to': fields.date('New Date To', required=1),
+    }
+
+    def change_new_to(self, cr, uid, ids, current_from, new_to, context=None):
+        if new_to < current_from:
+            return {
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('New Date To can not be before Date From')
+                }
+            }
+        return {}
+
+    def save(self, cr, uid, ids, context=None):
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        if wiz.new_to < wiz.current_from:
+            raise osv.except_osv(_('Warning'), _('Date To can not be before Date From'))
+
+        self.pool.get('res.users').write(cr, uid, wiz.user_id.id, {'signature_to': wiz.new_to}, context=context)
+        self.pool.get('signature.image').write(cr, uid, wiz.user_id.esignature_id.id, {'to_date': wiz.new_to}, context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+signature_change_date()
 
