@@ -22,16 +22,18 @@
             <field name="model">signature.set_user</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Change Signature">
+                <form string="Create Signature">
                     <html colspan="4">
                          <script language="javascript">
                             $(document).ready(function() {
                                 $('#view_form').submit(function(e){
-                                    var is_empty = $('#sig_new_signature').signature('isEmpty');
-                                    if (is_empty) {
-                                        var save_sign = confirm('New signature is empty ! It will not be save.');
-                                        }
+                                    var ret = true;
+                                    if ($('#sig_new_signature').signature('isEmpty')) {
+                                        ret = confirm('New signature is empty ! It will not be saved.');
+                                    } else {
+                                        ret = confirm('Do you want to save this signature ?');
                                     }
+                                    return ret;
                                 });
                             });
                     </script>
@@ -41,7 +43,7 @@
                     <field name="new_signature" widget="signature" colspan="4"/>
                     <group colspan="4">
                       <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
-                      <button string="Confirm" icon="terp-check" name="save" type="object" confirm="Do you want to save this signature ?"/>
+                      <button string="Confirm" icon="terp-check" name="save" type="object" />
                     </group>
                 </form>
             </field>
