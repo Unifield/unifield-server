@@ -256,7 +256,7 @@ class signature_line(osv.osv):
         esignature_id = sign_line._check_sign_unsign(check_has_sign=True, context=context)
         user = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['name'], context=context)
 
-        root_uid = hasattr(uid, 'realUid') or fakeUid(1, uid)
+        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id, 'value': value, 'unit': unit, 'legal_name': user.name}, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
@@ -265,7 +265,7 @@ class signature_line(osv.osv):
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
         sign_line._check_sign_unsign(context=context)
 
-        root_uid = hasattr(uid, 'realUid') or fakeUid(1, uid)
+        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False}, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
@@ -388,15 +388,16 @@ class signature_set_user(osv.osv_memory):
         wiz = self.browse(cr, uid, ids[0], context=context)
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
 
+        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         if wiz.new_signature:
-            new_image = self.pool.get('signature.image').create(cr, real_uid, {
+            new_image = self.pool.get('signature.image').create(cr, root_uid, {
                 'user_id': real_uid,
                 'image': wiz.new_signature,
                 'legal_name': wiz.user_id.name,
                 'from_date': wiz.user_id.signature_from,
                 'to_date': wiz.user_id.signature_to,
             }, context=context)
-            self.pool.get('res.users').write(cr, real_uid, real_uid, {'esignature_id': new_image}, context=context)
+            self.pool.get('res.users').write(cr, root_uid, real_uid, {'esignature_id': new_image}, context=context)
 
         return {'type': 'closepref'}
 

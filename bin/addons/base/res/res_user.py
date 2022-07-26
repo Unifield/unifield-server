@@ -670,7 +670,7 @@ class users(osv.osv):
         return self._get_company(cr, uid, context=context, uid2=uid2)
 
     # User can write to a few of her own fields (but not her groups for example)
-    SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email', 'change_signature']
+    SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email']
 
     def remove_higer_level_groups(self, cr, uid, ids, context=None):
         '''

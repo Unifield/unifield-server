@@ -64,7 +64,8 @@ class patch_scripts(osv.osv):
             acl_obj.create(cr, uid, {
                 'name': 'common',
                 'model_id': model_id[0],
-                'perm_read': True
+                'perm_read': True,
+                'perm_create': model == 'model',
             })
         return True
 
