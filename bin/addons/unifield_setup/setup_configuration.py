@@ -61,6 +61,7 @@ class unifield_setup_configuration(osv.osv):
         'vat_ok': fields.boolean(string='System manages VAT locally ?'),
         'previous_fy_dates_allowed': fields.boolean(string='Does the system allow document dates on previous Fiscal Year?'),
         'customer_commitment': fields.boolean(string='Does the system allow Customer Commitment Vouchers ?'),
+        'signature': fields.boolean(string='Activate Elecronique Validation ?'),
     }
 
     _defaults = {
@@ -77,13 +78,14 @@ class unifield_setup_configuration(osv.osv):
         'vat_ok': lambda *a: True,
         'previous_fy_dates_allowed': lambda *a: False,
         'customer_commitment': False,
+        'signature': False,
     }
 
     _constraints = [
         (_check_uniqueness, _non_uniqueness_msg, ['id'])
     ]
 
-    def get_config(self, cr, uid):
+    def get_config(self, cr, uid, key=None):
         '''
         Return the current config or create a new one
         '''
@@ -95,6 +97,9 @@ class unifield_setup_configuration(osv.osv):
 
         if not setup_id:
             raise osv.except_osv(_('Error'), _('No configuration found !'))
+
+        if key:
+            return self.browse(cr, uid, setup_id, fields_to_fetch=[key])[key]
 
         return self.browse(cr, uid, setup_id)
 

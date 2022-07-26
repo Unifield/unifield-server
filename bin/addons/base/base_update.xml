@@ -142,7 +142,7 @@
                                 </group>
                             </group>
                             <newline/>
-                            <group colspan="2" col="4">
+                            <group colspan="2" col="4" name="signature_tab">
                                 <field name="signature_enabled" attrs="{'readonly': [('has_signature', '=', True)]}"/>
                                 <group colspan="4" col="4" attrs="{'invisible': [('signature_enabled', '=', False)]}">
                                     <separator string="Signature" colspan="4"/>

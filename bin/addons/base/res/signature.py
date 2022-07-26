@@ -150,14 +150,15 @@ class signature_object(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         fvg = super(signature_object, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        # TODO
-        if False and view_type == 'form':
-            arch = etree.fromstring(fvg['arch'])
-            fields = arch.xpath('//page[@name="signature_tab"]')
-            if fields:
-                parent_node = fields[0].getparent()
-                parent_node.remove(fields[0])
-                fvg['arch'] = etree.tostring(arch)
+        if view_type == 'form':
+            signature_enable = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature')
+            if not signature_enable:
+                arch = etree.fromstring(fvg['arch'])
+                fields = arch.xpath('//page[@name="signature_tab"]')
+                if fields:
+                    parent_node = fields[0].getparent()
+                    parent_node.remove(fields[0])
+                    fvg['arch'] = etree.tostring(arch)
         return fvg
 
 signature_object()
@@ -436,3 +437,40 @@ class signature_change_date(osv.osv_memory):
 
 signature_change_date()
 
+class signature_setup(osv.osv_memory):
+    _name = 'signature.setup'
+    _inherit = 'res.config'
+
+    _columns = {
+        'signature': fields.boolean(string='Activate Elecronique Validation ?'),
+    }
+
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        """
+        """
+        if context is None:
+            context = {}
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        res = super(signature_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
+        res['signature'] = setup.signature
+        return res
+
+    def execute(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not isinstance(ids, list) or len(ids) != 1:
+            raise osv.except_osv(_('Error'), _('An error has occurred with the item retrieved from the form. Please contact an administrator if the problem persists.'))
+        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['signature'], context=context)
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        setup = setup_obj.get_config(cr, uid)
+        if setup:
+            if not wiz.signature:
+                if self.pool.get('signature.image').search_exists(cr, uid, [], context=context):
+                    pass
+                    #raise osv.except_osv(_('Warning'), _('Signature Already Created, you cannot disable this feature !'))
+            menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_image_menu')[1]
+            self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
+            setup_obj.write(cr, uid, [setup.id], {'signature': wiz.signature}, context=context)
+
+
+signature_setup()

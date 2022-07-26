@@ -34,6 +34,8 @@ from passlib.hash import bcrypt
 from service import http_server
 from msf_field_access_rights.osv_override import _get_instance_level
 import time
+from lxml import etree
+
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -535,6 +537,19 @@ class users(osv.osv):
             fg['never_expire']['help'] = _('On this sandbox passwords never expire')
 
         return fg
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        fvg = super(users, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'form':
+            signature_enable = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature')
+            if not signature_enable:
+                arch = etree.fromstring(fvg['arch'])
+                fields = arch.xpath('//group[@name="signature_tab"]')
+                if fields:
+                    parent_node = fields[0].getparent()
+                    parent_node.remove(fields[0])
+                    fvg['arch'] = etree.tostring(arch)
+        return fvg
 
     def on_change_company_id(self, cr, uid, ids, company_id):
         return {

@@ -1,0 +1,48 @@
+<openerp>
+  <data>
+    <record id="view_signature_setup" model="ir.ui.view">
+      <field name="name">Electonique Validation</field>
+      <field name="model">signature.setup</field>
+      <field name="type">form</field>
+      <field name="inherit_id" ref="base.res_config_view_base"/>
+      <field name="arch" type="xml">
+        <data>
+          <form position="attributes">
+            <attribute name="string">Activate Electonique Validation</attribute>
+          </form>
+          <xpath expr="//label[@string='description']" position="attributes">
+                <attribute name="string"></attribute>
+          </xpath>
+          <xpath expr='//separator[@string="title"]' position='attributes'>
+                    <attribute name='string'>Activate Electonique Validation</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="vsep"]' position='attributes'>
+                    <attribute name='rowspan'>25</attribute>
+                    <attribute name='string'></attribute>
+          </xpath>
+          <group string="res_config_contents" position="replace">
+              <group colspan="5">
+                <field name="signature" />
+              </group>
+           </group>
+        </data>
+      </field>
+    </record>
+
+    <record id="action_signature_setup" model="ir.actions.act_window">
+      <field name="name">Activate Electonique Validation</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">signature.setup</field>
+      <field name="view_id" ref="view_signature_setup"/>
+      <field name="view_type">form</field>
+      <field name="view_mode">form</field>
+      <field name="target">new</field>
+    </record>
+
+    <record id="signature_setup_todo" model="ir.actions.todo">
+        <field name="action_id" ref="action_signature_setup"/>
+        <field name="sequence">15</field>
+        <field name="restart">always</field>
+    </record>
+  </data>
+</openerp>
