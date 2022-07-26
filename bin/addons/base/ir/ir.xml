@@ -750,8 +750,8 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Signature">
-                    <filter name="active" string="Active" icon="terp-personal+" domain="[('inactivation_date', '=', False)]" />
-                    <filter name="inactive" string="Inactive" icon="terp-personal-" domain="[('inactivation_date', '!=', False)]" />
+                    <filter name="active" string="Active" icon="terp-personal+" domain="[('inactivation_date', '=', False), ('to_date', '&ge;', current_date)]" />
+                    <filter name="inactive" string="Inactive" icon="terp-personal-" domain="['|', ('inactivation_date', '!=', False), ('to_date', '&lt;', current_date)]" />
                     <separator orientation="vertical"/>
 
                     <field name="user_id"/>
@@ -760,6 +760,7 @@
                     <field name="to_date"/>
                     <newline />
                     <field name="create_date"/>
+                    <field name="inactivation_date"/>
                 </search>
             </field>
         </record>
@@ -769,13 +770,14 @@
             <field name="model">signature.image</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Signature">
+                <tree string="Signature" colors="red:inactivation_date or to_date&lt;current_date">
                     <field name="user_id"/>
                     <field name="legal_name"/>
                     <field name="image" widget="image" height="50"/>
                     <field name="from_date"/>
                     <field name="to_date"/>
                     <field name="create_date"/>
+                    <field name="inactivation_date" />
                 </tree>
             </field>
         </record>

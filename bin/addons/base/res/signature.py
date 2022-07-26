@@ -392,8 +392,8 @@ class signature_set_user(osv.osv_memory):
                 'user_id': real_uid,
                 'image': wiz.new_signature,
                 'legal_name': wiz.user_id.name,
-                'date_from': wiz.user_id.signature_from,
-                'date_to': wiz.user_id.signature_to,
+                'from_date': wiz.user_id.signature_from,
+                'to_date': wiz.user_id.signature_to,
             }, context=context)
             self.pool.get('res.users').write(cr, real_uid, real_uid, {'esignature_id': new_image}, context=context)
 
