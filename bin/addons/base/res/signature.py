@@ -315,7 +315,7 @@ signature_image()
 
 class signature_document_wizard(osv.osv_memory):
     _name = 'signature.document.wizard'
-    _description = 'Wizard used on to sign a document'
+    _description = 'Wizard used to sign a document'
     _columns = {
         'name': fields.char('Document', size=256, readonly=1),
         'user_id': fields.many2one('Users', readonly=1),
@@ -341,7 +341,7 @@ class signature_add_user_wizard(osv.osv_memory):
     _columns = {
         'name': fields.char('Document', size=256, readonly=1),
         'signature_id': fields.many2one('signature', readonly=1),
-        'res_users': fields.many2many('res.users', string='Signature users'),
+        'res_users': fields.many2many('res.users', string='Signature users', domain=[('signature_enabled', '=', True)]),
     }
 
     def save(self, cr, uid, ids, context=None):
