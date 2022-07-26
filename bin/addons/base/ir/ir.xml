@@ -750,7 +750,7 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Signature">
-                    <filter name="active" string="Active" icon="terp-personal+" domain="[('inactivation_date', '=', False), ('to_date', '&gt;=', current_date)]" />
+                    <filter name="active" string="Active" icon="terp-personal+" domain="['&amp;', ('inactivation_date', '=', False), ('to_date', '&gt;=', current_date)]" />
                     <filter name="inactive" string="Inactive" icon="terp-personal-" domain="['|', ('inactivation_date', '!=', False), ('to_date', '&lt;', current_date)]" />
                     <separator orientation="vertical"/>
 
