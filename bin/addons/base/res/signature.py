@@ -161,6 +161,22 @@ class signature_object(osv.osv):
                     fvg['arch'] = etree.tostring(arch)
         return fvg
 
+    def activate_signature(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'signature_available': True}, context=context)
+        return True
+
+    def disable_signature(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'signature_available': False}, context=context)
+        return True
+
+    def activate_offline(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'signed_off_line': True}, context=context)
+        return True
+
+    def disable_offline(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'signed_off_line': False}, context=context)
+        return True
+
 signature_object()
 
 class signature_line(osv.osv):
