@@ -65,7 +65,7 @@ class patch_scripts(osv.osv):
                 'name': 'common',
                 'model_id': model_id[0],
                 'perm_read': True,
-                'perm_create': model == 'model',
+                'perm_create': model == 'signature',
             })
         return True
 
