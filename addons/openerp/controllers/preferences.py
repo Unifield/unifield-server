@@ -31,6 +31,8 @@ from openerp.utils import rpc, TinyDict, cache
 import database
 from form import Form
 
+from openerp.controllers import actions
+
 class PrefsPassword(database.FormPassword):
     action = "/openerp/pref/password"
     string = _('Change your password')
@@ -55,6 +57,13 @@ int_pattern = re.compile(r'^\d+$')
 class Preferences(Form):
 
     _cp_path = "/openerp/pref"
+
+    @expose()
+    def create_signature(self):
+        proxy = rpc.RPCProxy('res.users')
+        action_data = proxy.add_signature([rpc.session.uid], rpc.session.context)
+        action_data['opened'] = True
+        return actions.execute(action_data)
 
     @expose(template="/openerp/controllers/templates/preferences/index.mako")
     def create(self, saved=False):

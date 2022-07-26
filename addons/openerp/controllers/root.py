@@ -157,9 +157,11 @@ class Root(SecuredController):
             # display home action
             tools = None
 
-        force_password_change = rpc.RPCProxy("res.users").read([rpc.session.uid],
-                                                               ['force_password_change'],
-                                                               rpc.session.context)[0]['force_password_change']
+        user_info = rpc.RPCProxy("res.users").read([rpc.session.uid],
+                                                               ['force_password_change', 'new_signature_required'],
+                                                               rpc.session.context)[0]
+        force_password_change = user_info['force_password_change']
+        signature_required = user_info['new_signature_required']
         widgets= openobject.pooler.get_pool()\
             .get_controller('/openerp/widgets')\
             .user_home_widgets(ctx)
@@ -182,13 +184,16 @@ class Root(SecuredController):
                 main_survey = surveys[0]
             if len(surveys) > 1:
                 other_surveys = surveys[1:]
+        else:
+            signature_required = False
         return dict(parents=parents, tools=tools, load_content=(next and next or ''),
                     survey=main_survey,
                     other_surveys=json.dumps(other_surveys),
                     show_close_btn=rpc.session.uid == 1,
                     widgets=widgets,
                     from_login=from_login,
-                    display_shortcut=display_shortcut)
+                    display_shortcut=display_shortcut,
+                    signature_required=signature_required)
 
     @expose()
     def do_login(self, *arg, **kw):
