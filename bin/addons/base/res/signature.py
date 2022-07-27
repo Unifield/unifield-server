@@ -272,21 +272,52 @@ class signature_line(osv.osv):
             'width': '720px',
         }
 
+    def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, context=None):
+        audit_line_obj = self.pool.get('audittrail.log.line')
+        audit_rule_obj = self.pool.get('audittrail.rule')
+
+        model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', res_model)], context=context)[0]
+
+        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
+        return audit_line_obj.create(cr, root_uid, {
+            'description': desc,
+            'name': desc,
+            'log': audit_rule_obj.get_sequence(cr, uid, res_model, res_id, context=context),
+            'object_id': model_id,
+            'user_id': uid,
+            'method': log_type,
+            'res_id': res_id,
+            'new_value': new,
+            'new_value_text': new,
+            'old_value': old,
+            'old_value_text': old,
+            'field_description': desc,
+        }, context=context)
+
     def action_sign(self, cr, uid, ids, value, unit, context=None):
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
+        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name'], context=context)
         esignature_id = sign_line._check_sign_unsign(check_has_sign=True, context=context)
         user = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['name'], context=context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id, 'value': value, 'unit': unit, 'legal_name': user.name}, context=context)
+
+        new = "signed by %s, %s %s" % (user.name, value, unit)
+        desc = "Signature added on role %s" % (sign_line.name, )
+        self._register_log(cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, '', new, 'create', context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
     def action_unsign(self, cr, uid, ids, context=None):
-        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
+        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name', 'legal_name', 'value', 'unit'], context=context)
         sign_line._check_sign_unsign(context=context)
+
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        old = "signed by %s, %s %s" % (sign_line.legal_name, sign_line.value, sign_line.unit)
+        desc = 'Delete signature on role %s' % (sign_line.name, )
+        self._register_log(cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False}, context=context)
@@ -294,9 +325,13 @@ class signature_line(osv.osv):
         return True
 
     def toggle_active(self, cr, uid, ids, context=None):
-        for line in self.browse(cr, uid, ids, fields_to_fetch=['is_active', 'signed'], context=context):
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['is_active', 'signed', 'name', 'signature_id'], context=context):
             if line['signed']:
                 raise osv.except_osv(_('Warning'), _("You can't change Active value on an already signed role."))
+            txt = 'Signature active on role %s' % (line.name, )
+            real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+            self._register_log(cr, real_uid, line.signature_id.signature_res_id, line.signature_id.signature_res_model, txt, '%s'%line.is_active, '%s'%(not line.is_active,), 'write', context)
+
             self.write(cr, uid, line['id'], {'is_active': not line['is_active']}, context=context)
 
             nb_users = len([x.id for x in line.signature_id.signature_users])
@@ -352,7 +387,7 @@ class signature_document_wizard(osv.osv_memory):
     def save(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
         self.pool.get('signature.line').action_sign(cr, uid, [wiz.line_id.id], wiz.value, wiz.unit, context=context)
-        return {'type': 'ir.actions.act_window_close'}
+        return {'type': 'ir.actions.act_window_close', 'o2m_refresh': 'signature_line_ids'}
 
 signature_document_wizard()
 
