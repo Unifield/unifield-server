@@ -44,7 +44,7 @@
             % if reload:
             */
                 % if o2m_refresh:
-                    new topWindow.ListView('${o2m_refresh}').reload();
+                    new topWindow.ListView('${o2m_refresh}').reload(undefined, undefined, undefined, undefined, undefined, undefined, true);
                 % else:
                     var $doc = jQuery(topWindow.document);
                     switch($doc.find('#_terp_view_type').val()) {

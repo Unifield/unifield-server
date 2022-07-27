@@ -181,7 +181,10 @@ function doLoadingSuccess(app, url) {
         }
         form_hookStateChange();
         form_hookAttrChange();
-        $("[onload]").trigger('onload');
+        var onload = $("[onload]")
+        if (onload) {
+            onload.trigger('onload');
+        }
     };
 }
 
@@ -391,7 +394,7 @@ function updateConcurrencyInfo(info) {
 
             var id_to_look_for = model.replace(/\./g, '-') + '-' + id;
 
-            $.each(input_by_id[id_to_look_for] || [], function(a,b){
+            jQuery.each(input_by_id[id_to_look_for] || [], function(a,b){
                 b.val(formatted_concurrency_value);
             });
         });
