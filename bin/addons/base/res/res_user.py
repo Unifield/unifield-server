@@ -737,14 +737,6 @@ class users(osv.osv):
                         del values['company_id']
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
 
-            if values and values.get('change_signature'):
-                new_image = self.pool.get('signature.image').create(cr, uid, {
-                    'user_id': ids[0],
-                    'image': values['change_signature'],
-                }, context=context)
-                values['esignature_id'] = new_image
-                del values['change_signature']
-
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
