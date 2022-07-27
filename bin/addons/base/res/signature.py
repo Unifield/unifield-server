@@ -497,8 +497,9 @@ class signature_setup(osv.osv_memory):
             if not wiz.signature:
                 if self.pool.get('signature.image').search_exists(cr, uid, [], context=context):
                     raise osv.except_osv(_('Warning'), _('Signature Already Created, you cannot disable this feature !'))
-            menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_image_menu')[1]
-            self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
+            for module, xmlid in [('useability_dashboard_and_menu', 'signature_follow_up_menu'), ('base', 'signature_image_menu')]:
+                menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
+                self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
             setup_obj.write(cr, uid, [setup.id], {'signature': wiz.signature}, context=context)
 
 

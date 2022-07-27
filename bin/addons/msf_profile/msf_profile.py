@@ -76,6 +76,11 @@ class patch_scripts(osv.osv):
                 cr.execute("insert into signature (signature_res_model, signature_res_id) values (%s, %s) returning id", (model, x[0]))
                 a = cr.fetchone()
                 cr.execute("update %s set signature_id=%%s where id=%%s" % (table,) , (a[0], x[0])) # not_a_user_entry
+        # hide menuitems
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+
         return True
 
     # UF26.0
