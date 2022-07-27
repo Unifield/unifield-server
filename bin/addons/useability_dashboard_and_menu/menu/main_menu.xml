@@ -76,6 +76,5 @@
                   action="hr.open_view_employee_list_my"
                   sequence="10"/>
 
-        <menuitem id="base.signature_follow_up_menu" action="base.signature_follow_up_action" parent="object_query.menu_preferences" sequence="5"/>
     </data>
 </openerp>
