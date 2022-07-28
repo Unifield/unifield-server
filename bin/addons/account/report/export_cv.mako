@@ -135,7 +135,7 @@
   </Row>
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Type')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.type or ''|x}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${dict((x,y) for x,y in o.get_cv_type()).get(o.type, False) or ''|x}</Data></Cell>
   </Row>
 
   <Row><Cell ss:StyleID="editable"><Data ss:Type="String"></Data></Cell></Row>
