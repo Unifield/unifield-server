@@ -358,6 +358,13 @@ class signature_image(osv.osv):
                 res[u.id] = False
         return res
 
+    def name_get(self, cr, uid, ids, context=None):
+        ret = []
+        for img in self.browse(cr, uid, ids, fields_to_fetch=['legal_name'], context=context):
+            ret.append((img.id, '%s (id:%s)' % (img.legal_name, img.id)))
+
+        return ret
+
     _columns = {
         'user_id': fields.many2one('res.users', required=1, string='User'),
         'legal_name': fields.char('Legal name', size=64),

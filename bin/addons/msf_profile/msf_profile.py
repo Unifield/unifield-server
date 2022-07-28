@@ -59,7 +59,7 @@ class patch_scripts(osv.osv):
     def us_9406_create_common_acl(self, cr, uid, *a, **b):
         model_obj = self.pool.get('ir.model')
         acl_obj = self.pool.get('ir.model.access')
-        for model in ['signature', 'signature.object', 'signature.line', 'signature.image']:
+        for model in ['signature', 'signature.object', 'signature.line', 'signature.image', 'signature.follow_up']:
             model_id = model_obj.search(cr, uid, [('model', '=', model)])
             acl_obj.create(cr, uid, {
                 'name': 'common',
