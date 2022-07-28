@@ -300,6 +300,9 @@ class account_cv_import(osv.osv_memory):
                             # Then cost center lines
                             ad_vals.update({'analytic_id': ad_vals.get('cost_center_id'), })
                             self.pool.get('cost.center.distribution.line').create(cr, uid, ad_vals)
+                            # delete header AD if any
+                            if cv.analytic_distribution_id:
+                                ana_obj.unlink(cr, uid, [cv.analytic_distribution_id.id], context=context)
 
                     # update the line
                     vals['analytic_distribution_id'] = distrib_id
