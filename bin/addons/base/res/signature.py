@@ -590,5 +590,28 @@ class signature_setup(osv.osv_memory):
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
             setup_obj.write(cr, uid, [setup.id], {'signature': wiz.signature}, context=context)
 
-
 signature_setup()
+
+class signature_export_wizard(osv.osv_memory):
+    _name = 'signature.export.wizard'
+    _description = 'Wizard to export signatures'
+    _rec_name = 'start_date'
+
+    _columns = {
+        'start_date': fields.date('Start Date', required=1),
+        'end_date': fields.date('End Date', required=1),
+    }
+
+    _defaults = {
+        'start_date': lambda *a: fields.date.today(),
+        'end_date': lambda *a: fields.date.today(),
+    }
+
+    def export(self, cr, uid, ids, context=None):
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'signature.export.report',
+            'context': context,
+        }
+
+signature_export_wizard()

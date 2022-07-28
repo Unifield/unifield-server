@@ -770,7 +770,7 @@
             <field name="model">signature.image</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Signature" colors="red:inactivation_date or to_date&lt;current_date">
+                <tree string="Signature" colors="red:inactivation_date or to_date&lt;current_date" hide_new_button="1" hide_delete_button="1" hide_edit_button="1">
                     <field name="user_id"/>
                     <field name="legal_name"/>
                     <field name="image" widget="image" height="50"/>
@@ -782,12 +782,30 @@
             </field>
         </record>
 
+        <record id="signature_image_form" model="ir.ui.view">
+            <field name="name">signature_image_form</field>
+            <field name="model">signature.image</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Signature">
+                    <field name="user_id" readonly="1"/>
+                    <field name="legal_name" readonly="1" />
+                    <field name="pngb64" widget="image" height="50" readonly="1"/>
+                    <newline />
+                    <field name="from_date" readonly="1"/>
+                    <field name="to_date" readonly="1"/>
+                    <field name="create_date" readonly="1" />
+                    <field name="inactivation_date" readonly="1" />
+                </form>
+            </field>
+        </record>
+
         <record id="signature_image_action" model="ir.actions.act_window">
             <field name="name">Signature</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">signature.image</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree</field>
+            <field name="view_mode">tree,form</field>
             <field name="view_id" ref="signature_image_tree"/>
             <field name="search_view_id" ref="signature_image_search"/>
             <field name="context">{'search_default_active': True}</field>

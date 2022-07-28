@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<document filename="liquidity_position.pdf">
+  <docinit>
+    <color id="CMYK_YELLOW" CMYK="rgb(255,255,153)"/>
+  </docinit>
+  <template pageSize="(842.0,595.0)" title="liquidity_position" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="42.0" y1="42.0" width="756" height="500" />
+      <pageGraphics>
+        <fill color="blue"/>
+        <setFont name="Helvetica" size="8"/>
+        <fill color="black"/>
+        <drawString x="20.0" y="10.0">Page : <pageNumber /> / </drawString>
+        <drawString x="58.0" y="10.0"><pageCount /> </drawString>
+
+      </pageGraphics>
+    </pageTemplate>
+  </template>
+
+  <stylesheet>
+
+    <blockTableStyle id="table_header">
+      <blockTopPadding value="0"/>
+      <blockBottomPadding value="0"/>
+    </blockTableStyle>
+
+    <blockTableStyle id="table_header1">
+      <blockTopPadding length="20" />
+      <blockBottomPadding length="20" />
+    </blockTableStyle>
+
+    <blockTableStyle id="table_title">
+      <blockBackground colorName="peachpuff" start="0,0" stop="-1,0"/>
+      <lineStyle kind="GRID" colorName="grey"/>
+      <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+    </blockTableStyle>
+
+    <blockTableStyle id="table">
+      <lineStyle kind="GRID" colorName="grey"/>
+      <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+
+    <paraStyle name="right" fontName="Helvetica" fontSize="8" alignment="RIGHT"/>
+    <paraStyle name="center" fontName="Helvetica" fontSize="8" alignment="CENTER"/>
+    <paraStyle name="line" fontName="Helvetica" fontSize="8" alignment="LEFT"/>
+    <paraStyle name="text" fontName="Helvetica" fontSize="8"/>
+    <paraStyle name="title" fontName="Helvetica-bold" fontSize="8"/>
+    <paraStyle name="toptitle" fontName="Helvetica-bold" fontSize="10" alignment="CENTER" />
+
+  </stylesheet>
+
+  <story>
+
+      <blockTable style="table_header" colWidths="30mm,148mm,30mm,48mm">
+         <tr>
+            <td><para style="text">Instance</para></td>
+            <td><para style="text">[[ company.instance_id.code ]]</para></td>
+            <td><para style="text">Report Date</para></td>
+            <td><para style="text">[[ formatLang(time.strftime('%Y-%m-%d'),date = True) ]]</para></td>
+        </tr>
+        <tr>
+            <td><para style="text">Instance Level</para></td>
+            <td><para style="text">[[ getSel(company.instance_id, 'level') ]]</para></td>
+            <td> </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td><para style="text">Mission</para></td>
+            <td><para style="text">[[ company.instance_id.mission ]]</para></td>
+            <td> </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td><para style="text">Report Start Date</para></td>
+            <td><para style="text">[[ formatLang(objects[0].start_date, date=True) ]]</para></td>
+            <td> </td>
+            <td> </td>
+        </tr>
+        <tr>
+            <td><para style="text">Report End Date</para></td>
+            <td><para style="text">[[ formatLang(objects[0].end_date, date=True) ]]</para></td>
+            <td> </td>
+            <td> </td>
+        </tr>
+      </blockTable>
+      <blockTable htmlSpans="1" style="table_header1" colWidths="256mm">
+        <tr>
+          <td><para style="toptitle"><b>LIST OF ACTIVE SIGNATURE</b></para></td>
+        </tr>
+      </blockTable>
+
+      <blockTable htmlSpans="1" style="table_title" colWidths="42mm,62mm,62mm,42mm,22mm,22mm">
+          <tr>
+            <td><para style="title">User Name</para></td>
+            <td><para style="title">Legal Name</para></td>
+            <td><para style="title">Signature Access</para></td>
+            <td><para style="title">Signature Sample</para></td>
+            <td><para style="title">From</para></td>
+            <td><para style="title">To</para></td>
+          </tr>
+        </blockTable>
+
+
+        <blockTable htmlSpans="1" style="table" colWidths="42mm,62mm,62mm,42mm,22mm,22mm">
+          <tr>
+          [[ repeatIn(getSign(objects), 'sign') ]]
+            <td><para style="line">[[sign.user_id.login]]</para></td>
+            <td><para style="line">[[sign.legal_name]]</para></td>
+            <td><para style="line"> </para></td>
+            <td><image width="100" height="25" mask="auto">[[ sign.pngb64 or removeParentNode('image')]]</image></td>
+            <td><para style="line">[[ formatLang(sign.from_date, date=True) ]]</para></td>
+            <td><para style="line">[[ formatLang(sign.to_date, date=True) ]]</para></td>
+          </tr>
+        </blockTable>
+  </story>
+</document>

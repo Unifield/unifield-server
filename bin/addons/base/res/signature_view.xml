@@ -102,6 +102,42 @@
             </field>
         </record>
 
+        <act_window id="export_list_signatures"
+            name="List of Signatures"
+            res_model="signature.export.wizard"
+            src_model="signature.image"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            />
+
+        <record id="signature_export_wizard_form" model="ir.ui.view">
+            <field name="name">signature_export_wizard_form</field>
+            <field name="model">signature.export.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export Signatures">
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <group colspan="4">
+                      <button string="Cancel"  icon="gtk-cancel" special="cancel" />
+                      <button string="Export" icon="gtk-justify-fill" name="export" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <report id="signature_export_report"
+                string="Signatures PDF"
+                model="signature.export.wizard"
+                name="signature.export.report"
+                rml="base/res/report/signature.rml"
+                auto="False"
+                />
+
+
+
 
     </data>
 </openerp>
