@@ -152,13 +152,15 @@ class account_cv_import(osv.osv_memory):
                 rows.next()  # period is ignored
                 type_line = import_cell_data_obj.get_line_values(cr, uid, ids, rows.next())
                 try:
-                    type = type_line[1]
+                    type_desc = type_line[1]
                 except IndexError as e:
                     raise osv.except_osv(_('Warning'), _('No CV type found.'))
                 cv_types = cv_obj.get_cv_type(cr, uid, context=context)
-                type_list = [type_code for (type_code, type_name) in cv_types]
-                if type not in type_list:
+                type_list = [type_name for (type_code, type_name) in cv_types]
+                if type_desc not in type_list:
                     raise osv.except_osv(_('Error'), _("CV type '%s' not found or doesn't exist.") % (type or '',))
+                type_dct = dict((x, y) for x, y in cv_types)
+                type = list(type_dct.keys())[list(type_dct.values()).index(type_desc)]
                 cv_dom = [('id', '=', cv.id), ('name', '=', name), ('currency_id', '=', currency_ids[0]),
                           ('partner_id', '=', partner_ids[0]), ('purchase_id', '=', po_ids[0]), ('type', '=', type)]
                 if not cv_obj.search_exist(cr, uid, cv_dom, context=context):
