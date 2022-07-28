@@ -88,7 +88,7 @@
 </Styles>
 % for o in objects:
 <!-- Sheet must be protected otherwise the protection on the cells has no effect -->
-<!-- Default Sheet name is "Sheet1" (we can export only one inv. at a time) -->
+<!-- Default Sheet name is "Sheet1" (we can export only one cv at a time) -->
 <ss:Worksheet ss:Name="${o.name or "%s%s" % (_('Sheet'), 1)|x}" ss:Protected="1">
 <Table x:FullColumns="1" x:FullRows="1">
   <Column ss:AutoFitWidth="1" ss:Width="100"/>
@@ -127,7 +127,7 @@
   </Row>
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.purchase_id.origin or ''|x}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.purchase_id.name or ''|x}</Data></Cell>
   </Row>
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Period')}</Data></Cell>
@@ -159,7 +159,7 @@
         <Cell ss:StyleID="editable"><Data ss:Type="String">${cv_line.account_id and cv_line.account_id.code or ''|x}</Data></Cell>
         <Cell ss:StyleID="non_editable_number"><Data ss:Type="Number">${cv_line.initial_amount|x}</Data></Cell>
         <Cell ss:StyleID="non_editable_number"><Data ss:Type="Number">${cv_line.amount|x}</Data></Cell>
-        % if (cv_line.analytic_distribution_id and len(cv_line.analytic_distribution_id.cost_center_lines) == 1) or (cv_line.commit_id.analytic_distribution_id and len(inv_line.commit_id.analytic_distribution_id.cost_center_lines) == 1):
+        % if (cv_line.analytic_distribution_id and len(cv_line.analytic_distribution_id.cost_center_lines) == 1) or (cv_line.commit_id.analytic_distribution_id and len(cv_line.commit_id.analytic_distribution_id.cost_center_lines) == 1):
             <Cell ss:StyleID="non_editable"><Data ss:Type="String">${'100%'|x}</Data></Cell>
         % elif (cv_line.analytic_distribution_id and len(cv_line.analytic_distribution_id.cost_center_lines) > 1) or (cv_line.commit_id.analytic_distribution_id and len(cv_line.commit_id.analytic_distribution_id.cost_center_lines) > 1):
             <Cell ss:StyleID="non_editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>

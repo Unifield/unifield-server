@@ -39,15 +39,15 @@ class account_commitment(osv.osv):
 
     def import_cv(self, cr, uid, ids, data, context=None):
         """
-        Opens the Import Invoice wizard
+        Opens the Import CV wizard
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        wiz_id = self.pool.get('account.invoice.import').create(cr, uid, {'invoice_id': ids[0]}, context=context)
+        wiz_id = self.pool.get('account.cv.import').create(cr, uid, {'commit_id': ids[0]}, context=context)
         return {
             'name': _('Import CV'),
             'type': 'ir.actions.act_window',
-            'res_model': 'account.invoice.import',
+            'res_model': 'account.cv.import',
             'target': 'new',
             'view_mode': 'form,tree',
             'view_type': 'form',
@@ -56,7 +56,7 @@ class account_commitment(osv.osv):
 
     def export_cv(self, cr, uid, ids, data, context=None):
         """
-        Opens the Export Invoice report
+        Opens the Export CV report
         """
         return {
             'type': 'ir.actions.report.xml',

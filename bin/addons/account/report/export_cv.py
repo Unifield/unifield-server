@@ -23,12 +23,12 @@ from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 
-class export_invoice(report_sxw.rml_parse):
+class export_cv(report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context=None):
-        super(export_invoice, self).__init__(cr, uid, name, context=context)
+        super(export_cv, self).__init__(cr, uid, name, context=context)
 
 
 SpreadsheetReport('report.account.export_cv', 'account.commitment',
-                  'addons/account/report/export_cv.mako', parser=export_invoice)
+                  'addons/account/report/export_cv.mako', parser=export_cv)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
