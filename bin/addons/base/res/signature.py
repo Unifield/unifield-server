@@ -447,13 +447,59 @@ class signature_set_user(osv.osv_memory):
     _description = "Wizard to add new signature on user profile"
     _rec_name = 'user_id'
 
+    def _get_b64(self,cr, uid, ids, name=None, arg=None, context=None):
+        ret = {}
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['new_signature'], context=context):
+            ret[x.id] = False
+            if x.new_signature:
+                ret[x.id] = x.new_signature.split(',')[-1]
+        return ret
+
     _columns = {
+        'b64_image': fields.function(_get_b64, method=1, type='text', string='New Signature'),
         'new_signature': fields.text('New signature'),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
+        'preview': fields.boolean('Preview'),
     }
 
+    _defaults = {
+        'preview': False,
+    }
     def closepref(self, cr, uid, ids, context=None):
         return {'type': 'closepref'}
+
+    def previous(self, cr, uid, ids, context=None):
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'height': '400px',
+            'width': '720px',
+            'opened': True
+        }
+
+    def preview(self, cr, uid, ids, context=None):
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        if not wiz.new_signature:
+            return {'type': 'closepref'}
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_set_user_form_preview')
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': wiz.id,
+            'view_id': [view_id[1]],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'height': '400px',
+            'width': '720px',
+            'opened': True
+        }
 
     def save(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)

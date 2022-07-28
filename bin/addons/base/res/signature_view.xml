@@ -30,8 +30,6 @@
                                     var ret = true;
                                     if ($('#sig_new_signature').signature('isEmpty')) {
                                         ret = confirm('New signature is empty ! It will not be saved.');
-                                    } else {
-                                        ret = confirm('Do you want to save this signature ?');
                                     }
                                     return ret;
                                 });
@@ -43,7 +41,26 @@
                     <field name="new_signature" widget="signature" colspan="4"/>
                     <group colspan="4">
                       <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
-                      <button string="Confirm" icon="terp-check" name="save" type="object" />
+                      <button string="Preview" icon="terp-check" name="preview" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="signature_set_user_form_preview" model="ir.ui.view">
+            <field name="name">signature_set_user_form_preview</field>
+            <field name="model">signature.set_user</field>
+            <field name="type">form</field>
+            <field name="priority">50</field>
+            <field name="arch" type="xml">
+                <form string="Create Signature">
+                    <field name="user_id"/>
+                    <newline />
+                    <field name="b64_image" widget="image" colspan="4" readonly="1"/>
+                    <group colspan="4">
+                      <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
+                      <button string="Go back" icon="terp-gtk-go-back-ltr" name="previous" type="object" />
+                      <button string="Save" icon="terp-check" name="save" type="object" confirm="Do you want to save this signature ?"/>
                     </group>
                 </form>
             </field>
