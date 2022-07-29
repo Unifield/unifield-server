@@ -59,7 +59,7 @@ class patch_scripts(osv.osv):
     def us_9406_create_common_acl(self, cr, uid, *a, **b):
         model_obj = self.pool.get('ir.model')
         acl_obj = self.pool.get('ir.model.access')
-        for model in ['signature', 'signature.object', 'signature.line', 'signature.image', 'signature.follow_up']:
+        for model in ['signature', 'signature.object', 'signature.line', 'signature.image', 'signature.follow_up', 'signature.users.allowed']:
             model_id = model_obj.search(cr, uid, [('model', '=', model)])
             acl_obj.create(cr, uid, {
                 'name': 'common',
@@ -70,7 +70,7 @@ class patch_scripts(osv.osv):
         return True
 
     def us_9406_empty_sign(self, cr, uid, *a, **b):
-        for model, table in [('purchase.order', 'purchase_order'), ('sale.order', 'sale_order')]:
+        for model, table in [('purchase.order', 'purchase_order'), ('sale.order', 'sale_order'), ('account.bank.statement', 'account_bank_statement')]:
             cr.execute('select id from %s where signature_id is null' % (table, )) # not_a_user_entry
             for x in cr.fetchall():
                 cr.execute("insert into signature (signature_res_model, signature_res_id) values (%s, %s) returning id", (model, x[0]))

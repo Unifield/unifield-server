@@ -8,36 +8,69 @@ from lxml import etree
 
 list_sign = {
     'purchase.order': [
-        # (key, label, active)
-        ('sr', _('Supply Responsible'), True),
-        ('tr', _('Technical Responsible'), True),
-        ('fr', _('Finance Responsible'), True),
-        ('mr', _('Mission Responsible'), False),
-        ('hq', _('HQ'), False),
+        # (key, label, active, subtyp)
+        ('sr', _('Supply Responsible'), True, ''),
+        ('tr', _('Technical Responsible'), True, ''),
+        ('fr', _('Finance Responsible'), True, ''),
+        ('mr', _('Mission Responsible'), False, ''),
+        ('hq', _('HQ'), False, False),
     ],
     'sale.order': [
-        ('tr', _('Technical Responsible'), True),
-        ('sr', _('Supply Responsible'), True),
-    ]
+        ('tr', _('Technical Responsible'), True, ''),
+        ('sr', _('Supply Responsible'), True, ''),
+    ],
+    'account.bank.statement': [
+        ('fr', _('Finance Responsible - reconciliation'), True, 'rec'),
+        ('mr', _('Mission Responsible - reconciliation'), True, 'rec'),
+        ('fr_report', _('Finance Responsible - full report'), True, 'full'),
+        ('mr_report', _('Mission Responsible - full report'), True, 'full'),
+    ],
 }
 
 saved_name = {
     'purchase.order': lambda doc: doc.name,
     'sale.order': lambda doc: doc.name,
+    'account.bank.statement': lambda doc: '%s %s' %(doc.journal_id.code, doc.period_id.name)
 }
 saved_value = {
     'purchase.order': lambda doc: round(doc.amount_total, 2),
     'sale.order': lambda doc: round(doc.ir_total_amount, 2),
+    'account.bank.statement': lambda doc: doc.journal_id.type == 'bank' and round(doc.balance_end, 2) or doc.journal_id.type == 'cash' and round(doc.msf_calculated_balance, 2) or 0,
 }
 
 saved_unit = {
     'purchase.order': lambda doc: doc.currency_id.name,
     'sale.order': lambda doc: doc.functional_currency_id.name,
+    'account.bank.statement': lambda doc: doc.currency.name,
 }
+
+
+class signature_users_allowed(osv.osv):
+    _name = 'signature.users.allowed'
+    _rec_name = 'signature_id'
+    _description = 'Users Allowed to Sign on document'
+
+    _doc_subtype = [('full', 'Full Report'), ('rec', 'Reconciliation')]
+    _columns = {
+        'signature_id': fields.many2one('signature','Document', required=1, ondelete='cascade'),
+        'user_id': fields.many2one('res.users', 'User', required=1),
+        'subtype': fields.selection(_doc_subtype, string='Subtype'),
+    }
+
+    _sql_constraints = [
+        ('unique_signature_user_subtype,', 'unique(signature_id, user_id, subtype)', 'Triplet must be unique'),
+    ]
+
+    _defaults = {
+        'subtype': '',
+    }
+
+signature_users_allowed()
+
 
 class signature(osv.osv):
     _name = 'signature'
-    _rec_name = 'signature_users'
+    _rec_name = 'signature_state'
     _description = 'Signature options on documents'
     _record_source = True
 
@@ -48,7 +81,7 @@ class signature(osv.osv):
             cr.execute('alter table user_signature_rel add column id serial');
 
     _columns = {
-        'signature_users': fields.many2many('res.users', 'user_signature_rel', 'signature_id', 'user_id', 'Users allowed to sign'),
+        'signature_user_ids': fields.one2many('signature.users.allowed', 'signature_id', 'Users allowed to sign'),
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
         'signature_res_model': fields.char('Model', size=254, index=1),
         'signature_res_id': fields.integer('Id', index=1),
@@ -136,13 +169,32 @@ class signature_object(osv.osv):
 
     def add_user_signatures(self, cr, uid, ids, context=None):
         doc_name = self.name_get(cr, uid, ids, context=context)[0][1]
-        doc = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
-        wiz_id = self.pool.get('signature.add_user.wizard').create(cr, uid, {
+        doc = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'signature_res_model'], context=context)
+
+
+        wiz_data = {
             'name': doc_name,
             'signature_id': doc.signature_id.id,
-            'res_users': [(6, 0, [x.id for x in doc.signature_id.signature_users])],
-        }, context=context)
+            'res_users_rec': [(6, 0, [])],
+            'res_users_full': [(6, 0, [])],
+        }
+        if doc.signature_res_model == 'account.bank.statement':
+            for user in doc.signature_id.signature_user_ids:
+                if user.subtype == 'rec':
+                    wiz_data['res_users_rec'][0][2].append(user.user_id.id)
+                else:
+                    wiz_data['res_users_full'][0][2].append(user.user_id.id)
+            view_id = [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_add_user_register_wizard_form')[1]]
+        else:
+            wiz_data['res_users'] = [(6, 0, [x.user_id.id for x in doc.signature_id.signature_user_ids])]
+            wiz_id = self.pool.get('signature.add_user.wizard').create(cr, uid, {
+                'name': doc_name,
+                'signature_id': doc.signature_id.id,
+                'res_users': [(6, 0, [x.user_id.id for x in doc.signature_id.signature_user_ids])],
+            }, context=context)
+            view_id = []
 
+        wiz_id = self.pool.get('signature.add_user.wizard').create(cr, uid, wiz_data, context=context)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'signature.add_user.wizard',
@@ -151,6 +203,7 @@ class signature_object(osv.osv):
             'view_mode': 'form',
             'target': 'new',
             'context': context,
+            'view_id': view_id,
             'height': '400px',
             'width': '720px',
         }
@@ -217,15 +270,19 @@ class signature_line(osv.osv):
         'value': fields.float('Value', digits=(16,2)),
         'unit': fields.char('Unit', size=16),
         'format_value': fields.function(_format_value, method=1, type='char', string='Value'),
+        'subtype': fields.selection([('full', 'Full Report'), ('rec', 'Reconciliation')], string='Type of signature', readonly=1),
     }
 
+    _defaults = {
+        'subtype': '',
+    }
 
     def _check_sign_unsign(self, cr, uid, ids, check_has_sign=False, context=None):
         assert len(ids) < 2, '_check_sign_unsign: only 1 id is allowed'
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
 
-        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id'], context=context)
-        if real_uid not in [x.id for x in sign_line.signature_id.signature_users]:
+        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'subtype'], context=context)
+        if (real_uid, sign_line.subtype) not in [(x.user_id.id, x.subtype) for x in sign_line.signature_id.signature_user_ids]:
             raise osv.except_osv(_('Warning'), _("Operation denied"))
 
         if sign_line.signature_id.signature_is_closed:
@@ -407,39 +464,68 @@ class signature_add_user_wizard(osv.osv_memory):
         'name': fields.char('Document', size=256, readonly=1),
         'signature_id': fields.many2one('signature', readonly=1),
         'res_users': fields.many2many('res.users', string='Signature users', domain=[('signature_enabled', '=', True)]),
+        'res_users_rec': fields.many2many('res.users', string='Signature users', domain=[('signature_enabled', '=', True)]),
+        'res_users_full': fields.many2many('res.users', string='Signature users', domain=[('signature_enabled', '=', True)]),
     }
 
     def save(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
-        if wiz.res_users:
-            list_users = [x.id for x in wiz.res_users]
-            data = {'signature_users': [(6, 0,  list_users)]}
+        data = {}
 
-            active_sign = len([x for x in list_sign.get(wiz.signature_id.signature_res_model, []) if x[2]])
+        if wiz.signature_id.signature_res_model == 'account.bank.statement':
+            wiz_type_users = [('rec', wiz.res_users_rec), ('full', wiz.res_users_full)]
+        else:
+            wiz_type_users = [('', wiz.res_users)]
 
-            if len([x.id for x in wiz.res_users]) > active_sign:
-                raise osv.except_osv(_('Warning'), _('A maximum of %d users are allowed to sign') % active_sign)
+        num_listed_users = 0
+        for subtype, users in wiz_type_users:
+            list_users = [x.id for x in users]
+            if users:
+                num_listed_users += len(list_users)
+                active_sign = len([x for x in list_sign.get(wiz.signature_id.signature_res_model, []) if x[2] and x[3] == subtype])
+
+                if len(list_users) > active_sign:
+                    raise osv.except_osv(_('Warning'), _('A maximum of %d users are allowed to sign') % active_sign)
+            else:
+                list_users = []
+                if wiz.signature_id.signature_state == 'open':
+                    data['signature_state'] = False
+
 
             for line in wiz.signature_id.signature_line_ids:
-                if line.signed and line.user_id.id not in list_users:
+                if line.signed and line.subtype == subtype and line.user_id.id not in list_users:
                     raise osv.except_osv(_('Warning'), _('Document already signed by %s, you cannot remove this user') % (line.user_id.name,))
 
-            if wiz.signature_id.signature_state not in ('partial', 'signed'):
-                data['signature_state'] = 'open'
-        else:
-            data = {'signature_users': [(6, 0, [])]}
-            if wiz.signature_id.signature_state == 'open':
-                data['signature_state'] = False
+            to_del = []
+            for allowed_obj in wiz.signature_id.signature_user_ids:
+                if allowed_obj.subtype == subtype:
+                    if allowed_obj.user_id.id not in list_users:
+                        to_del.append(allowed_obj.id)
+                    else:
+                        list_users.remove(allowed_obj.user_id.id)
 
-        wiz.signature_id.write(data, context=context)
+            for to_create in list_users:
+                self.pool.get('signature.users.allowed').create(cr, uid, {'signature_id': wiz.signature_id.id, 'user_id': to_create, 'subtype': subtype}, context=context)
+
+            if to_del:
+                self.pool.get('signature.users.allowed').unlink(cr, uid, to_del, context=context)
+
+        if num_listed_users and wiz.signature_id.signature_state not in ('partial', 'signed'):
+            data['signature_state'] = 'open'
+        elif not num_listed_users and wiz.signature_id.signature_state == 'open':
+            data['signature_state'] = False
+        if data:
+            wiz.signature_id.write(data, context=context)
 
 
-        existing_keys = [x.name_key for x in wiz.signature_id.signature_line_ids]
-
+        # create missing lines to be signed
+        existing_keys = [(x.name_key, x.subtype) for x in wiz.signature_id.signature_line_ids]
         if list_sign.get(wiz.signature_id.signature_res_model, []):
-            wiz.signature_id.write({'signature_line_ids': [(0, 0, {'name_key': x[0], 'name': x[1] , 'is_active': x[2]}) for x in list_sign.get(wiz.signature_id.signature_res_model) if x[0] not in existing_keys]}, context=context)
+            wiz.signature_id.write({'signature_line_ids': [(0, 0, {'name_key': x[0], 'name': x[1] , 'is_active': x[2], 'subtype': x[3]}) for x in list_sign.get(wiz.signature_id.signature_res_model) if (x[0], x[3]) not in existing_keys]}, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
+
+
 signature_add_user_wizard()
 
 class signature_set_user(osv.osv_memory):
@@ -604,7 +690,6 @@ class signature_export_wizard(osv.osv_memory):
 
     _defaults = {
         'start_date': lambda *a: fields.date.today(),
-        'end_date': lambda *a: fields.date.today(),
     }
 
     def export(self, cr, uid, ids, context=None):

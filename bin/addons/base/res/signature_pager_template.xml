@@ -21,10 +21,10 @@
             <button name="disable_offline" type="object" string="Sign On-line" attrs="{'invisible': ['|', ('signed_off_line', '=', False), ('signature_state', '!=', False)]}" icon="gtk-connect" ignore_access_error="1" colspan="6" />
         </group>
         <!-- <group colspan="2" /> -->
-        <field name="signature_users" readonly="1" nolabel="1" colspan="2" attrs="{'readonly': [('signature_is_closed', '=', True)]}">
+        <field name="signature_user_ids" readonly="1" nolabel="1" colspan="2" attrs="{'readonly': [('signature_is_closed', '=', True)]}">
             <tree string="Users allowed to sign">
-                <field name="name" />
-                <field name="login" />
+                <field name="user_id" />
+                <field name="subtype" />
             </tree>
         </field>
         <field name="signature_line_ids" readonly="1" nolabel="1" colspan="2" on_change="sig_line_change()" mode="tree">

@@ -141,7 +141,7 @@ account_journal()
 
 class account_bank_statement(osv.osv):
     _name = "account.bank.statement"
-    _inherit = "account.bank.statement"
+    _inherit = ["account.bank.statement", "signature.object"]
 
     _sql_constraints = [
         ('period_journal_uniq', 'unique (period_id, journal_id)', 'You cannot have a register on the same period and the same journal!')

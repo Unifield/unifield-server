@@ -1488,7 +1488,7 @@ class purchase_order(osv.osv):
             'delivery_requested_date', 'delivery_requested_date_modified', 'ready_to_ship_date',
             'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date',
             'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date',
-            'show_default_msg', 'signature_id', 'signature_users', 'signature_line_ids',
+            'show_default_msg', 'signature_id', 'signature_user_ids', 'signature_line_ids',
             'signature_state', 'signed_off_line', 'signature_is_closed', 'signature_available',
             'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model'
         ]

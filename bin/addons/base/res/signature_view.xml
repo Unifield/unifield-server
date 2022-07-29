@@ -8,7 +8,46 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Add Users">
-                    <field name="res_users"/>
+                    <field name="res_users" nolabel="1">
+                        <tree hide_edit_button="1">
+                            <field name="login" />
+                            <field name="name" />
+                        </tree>
+                    </field>
+                    <group colspan="4">
+                      <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                      <button string="Confirm" icon="terp-check" name="save" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="signature_add_user_register_wizard_form" model="ir.ui.view">
+            <field name="name">signature_add_user_register_wizard_form</field>
+            <field name="model">signature.add_user.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">40</field>
+            <field name="arch" type="xml">
+                <form string="Add Users">
+                    <group colspan="2" col="2">
+                        <separator string="Reconciliation" colspan="2" />
+                        <field name="res_users_rec" nolabel="1" colspan="2">
+                            <tree hide_edit_button="1">
+                                <field name="login" />
+                                <field name="name" />
+                            </tree>
+                        </field>
+                    </group>
+
+                    <group colspan="2" col="2">
+                        <separator string="Full Report" colspan="2" />
+                        <field name="res_users_full" nolabel="1" colspan="2">
+                            <tree hide_edit_button="1">
+                                <field name="login" />
+                                <field name="name" />
+                            </tree>
+                        </field>
+                    </group>
                     <group colspan="4">
                       <button string="Cancel" special="cancel" icon="gtk-cancel" />
                       <button string="Confirm" icon="terp-check" name="save" type="object"/>

@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE SIGNATURE_TEMPLATE [
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
+]>
+
+
 <openerp>
     <data>
 
@@ -176,6 +181,7 @@
                             <page string="Responsible">
                                 <field name="responsible_ids" nolabel="1" />
                             </page>
+                            &signature_template;
                         </notebook>
                         <separator string="Comments"/>
                         <field name="notes" nolabel="1" colspan="4"/>
@@ -368,6 +374,7 @@
                             <page string="Responsible">
                                 <field name="responsible_ids" nolabel="1" />
                             </page>
+                            &signature_template;
                         </notebook>
                         <group col="6" colspan="4">
                             <group col="2" colspan="2">

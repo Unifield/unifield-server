@@ -34,8 +34,9 @@
                     <field name="doc_name" />
                     <button name="open_doc" string="Open Document" type="object" icon="terp-gtk-go-back-rtl" />
                     <field name="doc_type" />
+                    <field name="subtype" />
                     <field name="status" />
-                    <field name="signed" type="boolean"/>
+                    <field name="signed" widget="boolean"/>
                     <field name="signature_date" />
                 </tree>
             </field>
