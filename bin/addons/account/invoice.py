@@ -31,6 +31,11 @@ from base import currency_date
 from tools.safe_eval import safe_eval
 
 class account_invoice(osv.osv):
+    _name = "account.invoice"
+    _description = 'Invoice'
+    _order = "id desc"
+    _inherit = 'signature.object'
+
     def _amount_all(self, cr, uid, ids, name, args, context=None):
         res = {}
         for invoice in self.browse(cr, uid, ids, context=context):
@@ -240,10 +245,6 @@ class account_invoice(osv.osv):
 
     def _get_journal_type(self, cr, uid, context=None):
         return self.pool.get('account.journal').get_journal_type(cr, uid, context)
-
-    _name = "account.invoice"
-    _description = 'Invoice'
-    _order = "id desc"
 
     _columns = {
         'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),

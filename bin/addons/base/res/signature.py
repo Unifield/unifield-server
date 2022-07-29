@@ -25,23 +25,30 @@ list_sign = {
         ('fr_report', _('Finance Responsible - full report'), True, 'full'),
         ('mr_report', _('Mission Responsible - full report'), True, 'full'),
     ],
+    'account.invoice': [
+        ('fr', _('Finance Responsible - reconciliation'), True, ''),
+        ('mr', _('Mission Responsible - reconciliation'), True, ''),
+    ]
 }
 
 saved_name = {
     'purchase.order': lambda doc: doc.name,
     'sale.order': lambda doc: doc.name,
-    'account.bank.statement': lambda doc: '%s %s' %(doc.journal_id.code, doc.period_id.name)
+    'account.bank.statement': lambda doc: '%s %s' %(doc.journal_id.code, doc.period_id.name),
+    'account.invoice': lambda doc: doc.name or doc.number,
 }
 saved_value = {
     'purchase.order': lambda doc: round(doc.amount_total, 2),
     'sale.order': lambda doc: round(doc.ir_total_amount, 2),
     'account.bank.statement': lambda doc: doc.journal_id.type == 'bank' and round(doc.balance_end, 2) or doc.journal_id.type == 'cash' and round(doc.msf_calculated_balance, 2) or 0,
+    'account.invoice': lambda doc: round(doc.amount_total, 2),
 }
 
 saved_unit = {
     'purchase.order': lambda doc: doc.currency_id.name,
     'sale.order': lambda doc: doc.functional_currency_id.name,
     'account.bank.statement': lambda doc: doc.currency.name,
+    'account.invoice': lambda doc: doc.currency_id.name,
 }
 
 
@@ -204,10 +211,12 @@ class signature_object(osv.osv):
         }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if not context:
+            context = {}
         fvg = super(signature_object, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'form':
             signature_enable = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature')
-            if not signature_enable:
+            if not signature_enable or self._name == 'account.invoice' and context.get('doc_type') not in ('si', 'donation'):
                 arch = etree.fromstring(fvg['arch'])
                 fields = arch.xpath('//page[@name="signature_tab"]')
                 if fields:

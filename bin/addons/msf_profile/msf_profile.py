@@ -70,7 +70,11 @@ class patch_scripts(osv.osv):
         return True
 
     def us_9406_empty_sign(self, cr, uid, *a, **b):
-        for model, table in [('purchase.order', 'purchase_order'), ('sale.order', 'sale_order'), ('account.bank.statement', 'account_bank_statement')]:
+        for model, table in [
+                ('purchase.order', 'purchase_order'), ('sale.order', 'sale_order'),
+                ('account.bank.statement', 'account_bank_statement'),
+                ('account.invoice', 'account_invoice')
+        ]:
             cr.execute('select id from %s where signature_id is null' % (table, )) # not_a_user_entry
             for x in cr.fetchall():
                 cr.execute("insert into signature (signature_res_model, signature_res_id) values (%s, %s) returning id", (model, x[0]))
