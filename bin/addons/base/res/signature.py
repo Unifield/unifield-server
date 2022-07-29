@@ -75,11 +75,6 @@ class signature(osv.osv):
     _record_source = True
 
 
-    def _auto_init(self, cr, context=None):
-        super(signature, self)._auto_init(cr, context)
-        if not cr.column_exists('user_signature_rel', 'id'):
-            cr.execute('alter table user_signature_rel add column id serial');
-
     _columns = {
         'signature_user_ids': fields.one2many('signature.users.allowed', 'signature_id', 'Users allowed to sign'),
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
