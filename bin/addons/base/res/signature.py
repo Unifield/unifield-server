@@ -58,6 +58,31 @@ saved_unit = {
     'stock.picking': lambda doc: doc.total_qty_str,
 }
 
+def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, context=None):
+    audit_line_obj = self.pool.get('audittrail.log.line')
+    audit_rule_obj = self.pool.get('audittrail.rule')
+
+    model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', res_model)], context=context)[0]
+
+    root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
+    if isinstance(res_id, (int, long)):
+        res_id = [res_id]
+
+    for _id in res_id:
+        audit_line_obj.create(cr, root_uid, {
+            'description': desc,
+            'name': desc,
+            'log': audit_rule_obj.get_sequence(cr, uid, res_model, _id, context=context),
+            'object_id': model_id,
+            'user_id': uid,
+            'method': log_type,
+            'res_id': _id,
+            'new_value': new,
+            'new_value_text': new,
+            'old_value': old,
+            'old_value_text': old,
+            'field_description': desc,
+        }, context=context)
 
 class signature_users_allowed(osv.osv):
     _name = 'signature.users.allowed'
@@ -160,6 +185,7 @@ class signature_object(osv.osv):
     }
 
     def action_close_signature(self, cr, uid, ids, context=None):
+        _register_log(self, cr, uid, ids, self._name, 'Close Singature', False, True, 'write', context)
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         self.write(cr, uid, ids, {
             'signature_is_closed': True,
@@ -233,18 +259,22 @@ class signature_object(osv.osv):
         return fvg
 
     def activate_signature(self, cr, uid, ids, context=None):
+        _register_log(self, cr, uid, ids, self._name, 'Signature Enabled', False, True, 'write', context)
         self.write(cr, uid, ids, {'signature_available': True}, context=context)
         return True
 
     def disable_signature(self, cr, uid, ids, context=None):
+        _register_log(self, cr, uid, ids, self._name, 'Signature Enabled', True, False, 'write', context)
         self.write(cr, uid, ids, {'signature_available': False}, context=context)
         return True
 
     def activate_offline(self, cr, uid, ids, context=None):
+        _register_log(self, cr, uid, ids, self._name, 'Sign offline', False, True, 'write', context)
         self.write(cr, uid, ids, {'signed_off_line': True}, context=context)
         return True
 
     def disable_offline(self, cr, uid, ids, context=None):
+        _register_log(self, cr, uid, ids, self._name, 'Sign offline', True, False, 'write', context)
         self.write(cr, uid, ids, {'signed_off_line': False}, context=context)
         return True
 
@@ -345,27 +375,6 @@ class signature_line(osv.osv):
             'width': '720px',
         }
 
-    def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, context=None):
-        audit_line_obj = self.pool.get('audittrail.log.line')
-        audit_rule_obj = self.pool.get('audittrail.rule')
-
-        model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', res_model)], context=context)[0]
-
-        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        return audit_line_obj.create(cr, root_uid, {
-            'description': desc,
-            'name': desc,
-            'log': audit_rule_obj.get_sequence(cr, uid, res_model, res_id, context=context),
-            'object_id': model_id,
-            'user_id': uid,
-            'method': log_type,
-            'res_id': res_id,
-            'new_value': new,
-            'new_value_text': new,
-            'old_value': old,
-            'old_value_text': old,
-            'field_description': desc,
-        }, context=context)
 
     def action_sign(self, cr, uid, ids, value, unit, context=None):
 
@@ -381,7 +390,7 @@ class signature_line(osv.osv):
             value = ''
         new = "signed by %s, %s %s" % (user.name, value, unit)
         desc = "Signature added on role %s" % (sign_line.name, )
-        self._register_log(cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, '', new, 'create', context)
+        _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, '', new, 'create', context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
@@ -395,7 +404,7 @@ class signature_line(osv.osv):
             value = ''
         old = "signed by %s, %s %s" % (sign_line.legal_name, value, sign_line.unit)
         desc = 'Delete signature on role %s' % (sign_line.name, )
-        self._register_log(cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
+        _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False}, context=context)
@@ -408,7 +417,7 @@ class signature_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _("You can't change Active value on an already signed role."))
             txt = 'Signature active on role %s' % (line.name, )
             real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-            self._register_log(cr, real_uid, line.signature_id.signature_res_id, line.signature_id.signature_res_model, txt, '%s'%line.is_active, '%s'%(not line.is_active,), 'write', context)
+            _register_log(self, cr, real_uid, line.signature_id.signature_res_id, line.signature_id.signature_res_model, txt, '%s'%line.is_active, '%s'%(not line.is_active,), 'write', context)
 
             self.write(cr, uid, line['id'], {'is_active': not line['is_active']}, context=context)
 
@@ -500,9 +509,8 @@ class signature_add_user_wizard(osv.osv_memory):
             wiz_type_users = [('', wiz.res_users)]
 
         num_listed_users = 0
-        for subtype, users in wiz_type_users:
-            list_users = [x.id for x in users]
-            if users:
+        for subtype, list_users in wiz_type_users:
+            if list_users:
                 num_listed_users += len(list_users)
                 active_sign = len([x for x in list_sign.get(wiz.signature_id.signature_res_model, []) if x[2] and x[3] == subtype])
 
@@ -515,22 +523,24 @@ class signature_add_user_wizard(osv.osv_memory):
 
 
             for line in wiz.signature_id.signature_line_ids:
-                if line.signed and line.subtype == subtype and line.user_id.id not in list_users:
+                if line.signed and line.subtype == subtype and line.user_id not in list_users:
                     raise osv.except_osv(_('Warning'), _('Document already signed by %s, you cannot remove this user') % (line.user_id.name,))
 
             to_del = []
             for allowed_obj in wiz.signature_id.signature_user_ids:
                 if allowed_obj.subtype == subtype:
-                    if allowed_obj.user_id.id not in list_users:
-                        to_del.append(allowed_obj.id)
+                    if allowed_obj.user_id not in list_users:
+                        to_del.append((allowed_obj.id, allowed_obj.user_id.name))
                     else:
-                        list_users.remove(allowed_obj.user_id.id)
+                        list_users.remove(allowed_obj.user_id)
 
             for to_create in list_users:
-                self.pool.get('signature.users.allowed').create(cr, uid, {'signature_id': wiz.signature_id.id, 'user_id': to_create, 'subtype': subtype}, context=context)
+                _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, 'Add User Allowed to sign %s' % (subtype), '', '%s (id:%s)' % (to_create.name, to_create.id) , 'create', context)
+                self.pool.get('signature.users.allowed').create(cr, uid, {'signature_id': wiz.signature_id.id, 'user_id': to_create.id, 'subtype': subtype}, context=context)
 
-            if to_del:
-                self.pool.get('signature.users.allowed').unlink(cr, uid, to_del, context=context)
+            for _to_del_id, _to_del_name in to_del:
+                _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, 'Delete User Allowed to sign %s' % (subtype), '%s (id:%s)' % (_to_del_name, _to_del_id), '', 'unlink', context)
+                self.pool.get('signature.users.allowed').unlink(cr, uid, _to_del_id, context=context)
 
         if num_listed_users and wiz.signature_id.signature_state not in ('partial', 'signed'):
             data['signature_state'] = 'open'
