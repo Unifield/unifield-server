@@ -377,7 +377,7 @@ class signature_line(osv.osv):
         return True
 
     def toggle_active(self, cr, uid, ids, context=None):
-        for line in self.browse(cr, uid, ids, fields_to_fetch=['is_active', 'signed', 'name', 'signature_id'], context=context):
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['is_active', 'signed', 'name', 'signature_id', 'subtype'], context=context):
             if line['signed']:
                 raise osv.except_osv(_('Warning'), _("You can't change Active value on an already signed role."))
             txt = 'Signature active on role %s' % (line.name, )
@@ -386,10 +386,11 @@ class signature_line(osv.osv):
 
             self.write(cr, uid, line['id'], {'is_active': not line['is_active']}, context=context)
 
-            nb_users = len([x.id for x in line.signature_id.signature_users])
-            nb_active = len([x for x in line.signature_id.signature_line_ids if x.is_active])
-            if nb_users > nb_active:
-                raise osv.except_osv(_('Warning'), _('%d users are allowed to sign, you cannot disable this line.') % nb_users)
+            if line['is_active']:
+                nb_users = len([x.id for x in line.signature_id.signature_user_ids if x.subtype == line.subtype])
+                nb_active = len([x for x in line.signature_id.signature_line_ids if x.is_active and x.subtype == line.subtype]) - 1
+                if nb_users > nb_active:
+                    raise osv.except_osv(_('Warning'), _('%d users are allowed to sign, you cannot disable this line.') % nb_users)
         return True
 
 
