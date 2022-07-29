@@ -688,6 +688,9 @@ class signature_export_wizard(osv.osv_memory):
     }
 
     def export(self, cr, uid, ids, context=None):
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        if wiz.start_date > wiz.end_date:
+            raise osv.except_osv(_('Warning'), _('Start Date must be before End Date'))
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'signature.export.report',
