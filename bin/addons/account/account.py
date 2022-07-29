@@ -748,6 +748,8 @@ class account_journal(osv.osv):
                     if not currency_id:
                         raise osv.except_osv(_('Warning'),
                                              _('The currency is mandatory for the journal %s.') % journal_code)
+                if not journal.currency.active:  # The chosen currency must be active
+                        raise osv.except_osv(_('Warning'), _('Currency is inactive.'))
                 # check on corresponding bank journal for a cheque journal
                 if journal_type == 'cheque':
                     if not journal.bank_journal_id:
