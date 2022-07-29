@@ -56,6 +56,11 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_10105_custom_order(self, cr, uid, *a, **b):
+        cr.execute("update account_invoice set order_val='1901-01-01' where state != 'draft'")
+        cr.execute("update account_invoice set order_val=date_invoice where state = 'draft'")
+        return True
+
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):
         ''' OCBHQ: fix amounts on EOY-2021-14020-OCBVE101-VES'''

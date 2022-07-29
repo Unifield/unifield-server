@@ -243,7 +243,7 @@ class account_invoice(osv.osv):
 
     _name = "account.invoice"
     _description = 'Invoice'
-    _order = "id desc"
+    _order = 'order_val desc, date_invoice desc, number desc'
 
     _columns = {
         'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -343,7 +343,8 @@ class account_invoice(osv.osv):
                                                   type='many2many', string='Payments', store=False),
         'move_name': fields.char('Journal Entry', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'user_id': fields.many2one('res.users', 'Salesman', readonly=True, states={'draft':[('readonly',False)]}),
-        'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position', readonly=True, states={'draft':[('readonly',False)]})
+        'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position', readonly=True, states={'draft':[('readonly',False)]}),
+        'order_val': fields.date("Custom sort field"),  # US-10105
     }
     _defaults = {
         'type': _get_type,
@@ -456,6 +457,7 @@ class account_invoice(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
+        vals.update({'order_val': vals['date_invoice'], })  # US-10105 At creation of draft invoice
         try:
             res = super(account_invoice, self).create(cr, uid, vals, context)
             for inv_id, name in self.name_get(cr, uid, [res], context=context):
@@ -479,6 +481,26 @@ class account_invoice(osv.osv):
                                      _('There is no Accounting Journal of type Sale/Purchase defined!'))
             else:
                 raise orm.except_orm(_('Unknown Error'), str(e))
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check document_date
+        """
+        if not ids:
+            return True
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        current_values = self.read(cr, uid, ids, ['date_invoice'], context=context)[0]
+        date_invoice = 'date_invoice' in vals and vals['date_invoice'] or current_values['date_invoice']
+        if date_invoice:
+            if 'state' in vals and vals['state'] == 'draft':
+                vals.update({'order_val': date_invoice })  # US-10105 At creation of draft invoice
+            elif 'state' in vals and vals['state'] != 'draft':
+                vals.update({'order_val': '1901-01-01'})
+        res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
+        return res
 
     def confirm_paid(self, cr, uid, ids, context=None):
         if context is None:

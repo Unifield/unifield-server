@@ -164,6 +164,7 @@
                     <field name="residual" />
                     <field name="amount_total"/>
                     <field name="state"/>
+                    <field name="order_val"/>
                     <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
                 </tree>
             </field>
