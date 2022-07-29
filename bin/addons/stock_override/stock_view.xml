@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE SIGN [
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
+]>
+
 <openerp>
     <data>
 
@@ -678,6 +682,7 @@
                             <field name="last_imported_filename" invisible="0" readonly="1" />
                             <field colspan="4" name="note" nolabel="1"/>
                         </page>
+                        &signature_template;
                     </notebook>
                 </form>
             </field>

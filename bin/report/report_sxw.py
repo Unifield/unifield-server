@@ -251,7 +251,7 @@ class rml_parse(object):
         self.sheet_name_used = []
         self.total_sheet_number = 0
 
-    def getSign(self, obj, key, field):
+    def getSign(self, obj, key, field, d_format=None):
         if not hasattr(obj, 'signature_id'):
             return ''
         sign_id = obj.signature_id
@@ -267,7 +267,10 @@ class rml_parse(object):
 
         if field == 'date':
             if data.date:
-                return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, d_type='datetime', datetime=data.date)
+                if d_format is None:
+                    return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, d_type='datetime', datetime=data.date)
+                else:
+                    return time.strftime(d_format, time.strptime(data.date, '%Y-%m-%d %H:%M:%S'))
         elif data[field]:
             return data[field]
         return ''

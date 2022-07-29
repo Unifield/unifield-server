@@ -28,7 +28,11 @@ list_sign = {
     'account.invoice': [
         ('fr', _('Finance Responsible - reconciliation'), True, ''),
         ('mr', _('Mission Responsible - reconciliation'), True, ''),
-    ]
+    ],
+    'stock.picking': [
+        ('tr', _('Technical Responsible'), True, ''),
+        ('sr', _('Supply Responsible'), True, ''),
+    ],
 }
 
 saved_name = {
@@ -36,12 +40,14 @@ saved_name = {
     'sale.order': lambda doc: doc.name,
     'account.bank.statement': lambda doc: '%s %s' %(doc.journal_id.code, doc.period_id.name),
     'account.invoice': lambda doc: doc.name or doc.number,
+    'stock.picking': lambda doc: doc.name,
 }
 saved_value = {
     'purchase.order': lambda doc: round(doc.amount_total, 2),
     'sale.order': lambda doc: round(doc.ir_total_amount, 2),
     'account.bank.statement': lambda doc: doc.journal_id.type == 'bank' and round(doc.balance_end, 2) or doc.journal_id.type == 'cash' and round(doc.msf_calculated_balance, 2) or 0,
     'account.invoice': lambda doc: round(doc.amount_total, 2),
+    'stock.picking': lambda doc: False,
 }
 
 saved_unit = {
@@ -49,6 +55,7 @@ saved_unit = {
     'sale.order': lambda doc: doc.functional_currency_id.name,
     'account.bank.statement': lambda doc: doc.currency.name,
     'account.invoice': lambda doc: doc.currency_id.name,
+    'stock.picking': lambda doc: doc.total_qty_str,
 }
 
 
@@ -255,8 +262,10 @@ class signature_line(osv.osv):
         for x in self.browse(cr, uid, ids, fields_to_fetch=['signed', 'value', 'unit'], context=context):
             if not x.signed:
                 res[x.id] = False
-            else:
+            elif x.value is not False:
                 res[x.id] = '%s %s' % (lang_obj.format(cr, uid, [lang_id], '%.2lf', x.value, grouping=True, monetary=True),  x.unit)
+            else:
+                res[x.id] = x.unit
         return res
 
     _columns = {
@@ -271,7 +280,7 @@ class signature_line(osv.osv):
         'image': fields.related('image_id', 'pngb64', type='text', string='Signature', readonly=1),
         'data_image': fields.related('image_id', 'image', type='text', string='Signature', readonly=1),
         'date': fields.datetime('Date'),
-        'value': fields.float('Value', digits=(16,2)),
+        'value': fields.float_null('Value', digits=(16,2)),
         'unit': fields.char('Unit', size=16),
         'format_value': fields.function(_format_value, method=1, type='char', string='Value'),
         'subtype': fields.selection([('full', 'Full Report'), ('rec', 'Reconciliation')], string='Type of signature', readonly=1),
@@ -309,7 +318,10 @@ class signature_line(osv.osv):
 
         unit = saved_unit[line.signature_id.signature_res_model](doc)
         value = saved_value[line.signature_id.signature_res_model](doc)
-        name = '%s %g %s' % (saved_name[line.signature_id.signature_res_model](doc), value, unit or '')
+        if value is not False:
+            name = '%s %g %s' % (saved_name[line.signature_id.signature_res_model](doc), value, unit or '')
+        else:
+            name = '%s %s' % (saved_name[line.signature_id.signature_res_model](doc), unit or '')
 
         wiz_id = self.pool.get('signature.document.wizard').create(cr, uid, {
             'name': name,
@@ -365,6 +377,8 @@ class signature_line(osv.osv):
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id, 'value': value, 'unit': unit, 'legal_name': user.name}, context=context)
 
+        if value is False:
+            value = ''
         new = "signed by %s, %s %s" % (user.name, value, unit)
         desc = "Signature added on role %s" % (sign_line.name, )
         self._register_log(cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, '', new, 'create', context)
@@ -376,7 +390,10 @@ class signature_line(osv.osv):
         sign_line._check_sign_unsign(context=context)
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-        old = "signed by %s, %s %s" % (sign_line.legal_name, sign_line.value, sign_line.unit)
+        value = sign_line.value
+        if value is False:
+            value = ''
+        old = "signed by %s, %s %s" % (sign_line.legal_name, value, sign_line.unit)
         desc = 'Delete signature on role %s' % (sign_line.name, )
         self._register_log(cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
 

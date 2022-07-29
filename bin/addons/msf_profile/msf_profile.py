@@ -73,7 +73,8 @@ class patch_scripts(osv.osv):
         for model, table in [
                 ('purchase.order', 'purchase_order'), ('sale.order', 'sale_order'),
                 ('account.bank.statement', 'account_bank_statement'),
-                ('account.invoice', 'account_invoice')
+                ('account.invoice', 'account_invoice'),
+                ('stock.picking', 'stock_picking'),
         ]:
             cr.execute('select id from %s where signature_id is null' % (table, )) # not_a_user_entry
             for x in cr.fetchall():

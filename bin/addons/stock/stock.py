@@ -745,6 +745,7 @@ stock_tracking()
 class stock_picking(osv.osv):
     _name = "stock.picking"
     _description = "Picking List"
+    _inherit = 'signature.object'
 
     def _set_maximum_date(self, cr, uid, ids, name, value, arg, context=None):
         """ Calculates planned date if it is greater than 'value'.
@@ -893,6 +894,34 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_total_qty_str(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        if not ids:
+            return {}
+
+        ret = {}
+
+        cr.execute('''
+            select
+                m.picking_id, sum(m.product_qty), u.name
+            from
+                stock_move m, product_uom u
+            where
+                u.id = m.product_uom and
+                m.state != 'cancel' and
+                m.picking_id in %s
+            group by
+                m.picking_id, u.name
+        ''', (tuple(ids), ))
+        temp = {}
+        for x in cr.fetchall():
+            temp.setdefault(x[0], []).append('%s %s' % (x[1], x[2]))
+        for _id in ids:
+            ret[_id] = ', '.join(temp.get(_id, []))
+        return ret
+
+
     _columns = {
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title'),
         'name': fields.char('Reference', size=64, select=True),
@@ -952,6 +981,7 @@ class stock_picking(osv.osv):
         'customers': fields.char('Customers', size=1026),
         'customer_ref': fields.char('Customer Ref.', size=1026),
         'sync_dpo_in': fields.boolean('Synced IN for DPO reception', internal=1, help='Used to flag a IN linked to a DPO'),
+        'total_qty_str': fields.function(_get_total_qty_str, method=1, string='Qties', type='char'),
     }
 
     _defaults = {
