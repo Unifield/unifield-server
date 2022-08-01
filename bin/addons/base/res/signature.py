@@ -576,12 +576,21 @@ class signature_set_user(osv.osv_memory):
     _columns = {
         'b64_image': fields.function(_get_b64, method=1, type='text', string='New Signature'),
         'new_signature': fields.text('New signature'),
+        'json_signature': fields.text('Json Signature'),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
         'preview': fields.boolean('Preview'),
+        'legal_name': fields.char('Legal Name', size=128, required=1),
+        'position': fields.selection([('top', 'Top'), ('middle', 'Middle'), ('bottom', 'Bottom')], string='Position'),
     }
+
+    def _get_name(self, cr, uid, *a, **b):
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        return self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['name']).name
 
     _defaults = {
         'preview': False,
+        'position': 'bottom',
+        'legal_name': lambda self, cr, uid, *a, **b: self._get_name(cr, uid, *a, **b),
     }
     def closepref(self, cr, uid, ids, context=None):
         return {'type': 'closepref'}
