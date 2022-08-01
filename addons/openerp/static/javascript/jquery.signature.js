@@ -388,6 +388,9 @@ $(selector).signature({color: 'blue', guideline: true}) */
 			return this.lines.length === 0 && this.empty_txt ;
 		},
 
+        isTxtEmpty: function() {
+            return this.empty_txt;
+        },
 		/** Remove the signature functionality.
 			@memberof Signature
 			@private */
@@ -401,7 +404,7 @@ $(selector).signature({color: 'blue', guideline: true}) */
           var json_d = this.toJSON();
           this.clear(true);
           this._drawJSON(json_d, this.options.scale);
-          if (txt) {
+          if (txt && txt.trim()) {
               this.empty_txt = false;
               this.ctx.fillStyle = 'black';
               this.ctx.font = "30px cursive"
