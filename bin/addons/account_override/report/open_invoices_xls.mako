@@ -344,7 +344,7 @@
     <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
 <% inv = invoices(data) %>
-<% doc_type_list = [('si_di', _('Supplier Invoices')), ('sr', _('Supplier Refunds')),
+<% doc_type_list = [('si', _('Supplier Invoices')), ('sr', _('Supplier Refunds')),
                     ('isi', _('Intersection Supplier Invoices')), ('isr', _('Intersection Supplier Refunds')),
                     ('donation', _('Donations')), ('ivi', _('Intermission Vouchers IN')),
                     ('stv', _('Stock Transfer Vouchers')), ('str', _('Stock Transfer Refunds')), ('cr', _('Customer Refunds')),
@@ -379,7 +379,7 @@
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
 % if doc_type in ['stv', 'ivo', 'dn', 'cr', 'str']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
-% elif doc_type in ['si_di', 'ivi', 'donation', 'sr', 'isi', 'isr']:
+% elif doc_type in ['si', 'ivi', 'donation', 'sr', 'isi', 'isr']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Supplier')}</Data></Cell>
 % else:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Partner')}</Data></Cell>
@@ -407,7 +407,7 @@
 
 % if doc_type in inv:
 % for o in inv[doc_type]:
-    % if o.state == 'draft' and doc_type in ['si_di', 'stv', 'ivi', 'donation']:
+    % if o.state == 'draft' and doc_type in ['si', 'stv', 'ivi', 'donation']:
         <Row>
             <% nb_line += 1 %>
             <% update_percent(nb_line, context) %>
