@@ -446,7 +446,7 @@
             <Cell ss:StyleID="s33Wrapbis"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join([ p.move_id.name for p in o.payment_to_display_ids]) or '')|x}</Data></Cell>
             <Cell ss:StyleID="s33Wrapbis"><Data ss:Type="String">${(o.down_payment_ids and ", ".join([ p.move_id.name for p in o.down_payment_ids]) or '')|x}</Data></Cell>
         </Row>
-    % else:
+    % elif doc_type != 'di':
         <Row>
             <% nb_line += 1 %>
             <% update_percent(nb_line, context) %>
