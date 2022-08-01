@@ -68,11 +68,10 @@ class hr_payroll(osv.osv):
         # 4/ FP, DEST => Check C, D except B, E
         ##
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = 'none' # by default
+            res[line.id] = 'valid' # by default
             #### SOME CASE WHERE DISTRO IS OK
             # if account is not analytic-a-holic, so it's valid
             if line.account_id and not line.account_id.is_analytic_addicted:
-                res[line.id] = 'valid'
                 continue
             # Date checks
             # F Check
@@ -97,7 +96,7 @@ class hr_payroll(osv.osv):
                     res[line.id] = 'invalid'
                     continue
             # if just a cost center, it's also valid! (CASE 1/)
-            if not line.funding_pool_id and not line.destination_id:
+            if line.cost_center_id and not line.funding_pool_id and not line.destination_id:
                 continue
             # if FP is MSF Private Fund and no destination_id, then all is OK.
             if line.funding_pool_id and line.funding_pool_id.id == fp_id and not line.destination_id:
