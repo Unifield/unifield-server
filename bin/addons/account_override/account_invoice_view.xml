@@ -52,6 +52,7 @@
                     <field name="residual"/>
                     <field name="amount_total"/>
                     <field name="state"/>
+                    <field name="order_val" invisible="1"/>
                 </tree>
             </field>
         </record>
@@ -151,6 +152,7 @@
                     <field name="currency_id"/>
                     <field name="amount_total"/>
                     <field name="state"/>
+                    <field name="order_val" invisible="1"/>
                 </tree>
             </field>
         </record>
@@ -314,6 +316,7 @@
                     <field name="currency_id"/>
                     <field name="amount_total"/>
                     <field name="state"/>
+                    <field name="order_val" invisible="1"/>
                 </tree>
             </field>
         </record>
