@@ -107,6 +107,19 @@
         run_in_background="True"
         menu="True"/>
 
+        <report id="fully_report_pdf"
+        string="Full Report PDF"
+        target_filename="${_('Full Report')}_${name}_${period_id.name}_%(year)s%(month)s%(day)s"
+        model="account.bank.statement"
+        name="fully.report.pdf"
+        file="register_accounting/report/fully_report_xls.mako"
+        report_type="txt"
+        header="False"
+        auto="False"
+        run_in_background="True"
+        menu="True"/>
+
+
     </data>
 </openerp>
 

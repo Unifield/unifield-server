@@ -261,6 +261,13 @@ setup(name=name,
           'openpyxl==2.6.4',
           'jdcal==1.4.1',
           'et-xmlfile==1.0.1',
+          'cairocffi==0.9.0',
+          'CairoSVG==1.0.22',
+          'cssselect2==0.2.2',
+          'pdfrw==0.4',
+          'Pyphen==0.10.0',
+          'tinycss2==0.6.1',
+          'WeasyPrint==0.42.3',
       ],
       **py2exe_keywords
       )

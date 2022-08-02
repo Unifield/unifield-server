@@ -24,6 +24,14 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 import pooler
 from tools.translate import _
 
+from mako.template import Template
+from mako import exceptions
+import netsvc
+from osv.osv import except_osv
+import weasyprint
+import tools
+import os
+
 
 class report_fully_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -298,6 +306,8 @@ class report_fully_report(report_sxw.rml_parse):
             color = 'red'
         return color
 
+
+
 class SpreadsheetReportX(SpreadsheetReport):
     def create(self, cr, uid, ids, data, context=None):
         if not context:
@@ -306,7 +316,42 @@ class SpreadsheetReportX(SpreadsheetReport):
         return super(SpreadsheetReportX, self).create(cr, uid, ids, data, context=context)
 
 
+class report_fully_report2(report_sxw.report_sxw):
+    _name = 'report.fully.report.pdf'
+
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def getObjects(self, cr, uid, ids, context):
+        table_obj = pooler.get_pool(cr.dbname).get(self.table)
+        return table_obj.browse(cr, uid, ids, list_class=report_sxw.browse_record_list, context=context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        parser_instance = self.parser(cr, uid, self.name2, context=context)
+        parser_instance.orig_file = os.path.join(tools.config['addons_path'], 'register_accounting/report/fully_report_pdf.html')
+        parser_instance.localcontext.update({'formatLang':parser_instance.format_xls_lang})
+        parser_instance.localcontext.update({'objects': self.getObjects(cr, uid, ids, context)})
+
+
+        body = Template(filename=parser_instance.orig_file, input_encoding='utf-8', output_encoding='utf-8', default_filters=['decode.utf8'])
+        try :
+            html = body.render(
+                _=parser_instance.translate_call,
+                **parser_instance.localcontext
+            )
+        except Exception:
+            msg = exceptions.text_error_template().render()
+            netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
+            raise except_osv(_('Webkit render'), msg)
+
+        wp = weasyprint.HTML(string=html)
+        pdf = wp.write_pdf(stylesheets=[os.path.join(tools.config['addons_path'], 'register_accounting/report/fully_report_pdf.css')])
+
+        return (pdf, 'pdf')
+
 
 
 SpreadsheetReportX('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
+report_fully_report2('report.fully.report.pdf', 'account.bank.statement', False, parser=report_fully_report)
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
