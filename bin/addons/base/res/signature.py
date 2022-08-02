@@ -30,8 +30,8 @@ list_sign = {
         ('mr', _('Mission Responsible - reconciliation'), True, ''),
     ],
     'stock.picking': [
-        ('tr', _('Technical Responsible'), True, ''),
-        ('sr', _('Supply Responsible'), True, ''),
+        ('tr', _('Receiver'), True, ''),
+        ('sr', _('Controller'), True, ''),
     ],
 }
 
