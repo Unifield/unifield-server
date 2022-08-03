@@ -61,6 +61,7 @@ table#signature {
   border: 1px solid black;
   border-collapse: collapse;
   margin-top: 10px;
+  page-break-inside: avoid;
 }
 #signature tr {
   border: 1px solid black;
