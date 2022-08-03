@@ -1,12 +1,30 @@
 @page {
     size: A4 landscape;
-    margin: 10px 1px  10px 1px;
+    margin: 7mm 7mm  7mm 7mm;
     @bottom-left{
         font-size: 7px;
         content: counter(page) "/" counter(pages);
+        margin-left: 50px;
+        margin-bottom: 5px;
+    }
+    @bottom-right {
+        content: string(heading);
+        font-size: 7px;
+        margin-right: 50px;
+        margin-bottom: 5px;
     }
 }
 
+h1 {
+    text-align: center;
+    font-size: 10px;
+    page-break-before: always;
+}
+
+h4 {
+  visibility: hidden;
+  string-set: heading content();
+}
 
 html * {
     font-size: 8px;
@@ -15,6 +33,7 @@ html * {
 table#data {
   border: 1px solid black;
   border-collapse: collapse;
+  width: 100%;
 }
 #data tr {
   border: 1px solid black;
@@ -24,6 +43,9 @@ table#data {
     background-color: #ffff66;
 }
 
+.mainline {
+    font-weight: bold;
+}
 tr.loop1 {
     background-color: gainsboro;
 }
@@ -52,11 +74,6 @@ table#signature {
   border: 1px solid black;
   text-align: center;
   vertical-align: middle;
-}
-
-h1 {
-    text-align: center;
-    font-size: 10px;
 }
 
 .blue {

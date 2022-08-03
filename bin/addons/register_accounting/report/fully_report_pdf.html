@@ -18,8 +18,8 @@ else:
   calculated_bal = o.balance_end or 0.0
 %>
 
-
 <h1>${o.journal_id.type == 'cash' and _('CASH REGISTER FULL REPORT') or o.journal_id.type == 'bank' and _('BANK REGISTER FULL REPORT') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER FULL REPORT') or ''|x}</h1>
+<h4>${o.journal_id.code|x} - ${o.period_id and o.period_id.name or ''|x}</h4>
 <table id="header">
 <tr>
     <td>${_('Report Date:')|x}</td>
@@ -85,7 +85,7 @@ else:
 % for line in sorted(o.line_ids, key=lambda x: x.sequence_for_reference):
       <% nbloop += 1 %>
       <% update_percent(nbloop, tot_line) %>
-      <tr class="loop${nbloop%2}">
+      <tr class="loop${nbloop%2} mainline">
           <td>${ getEntryType(line) |x}</td>
           <td>${formatLang(line.document_date, date=True)|x}</td>
           <td>${formatLang(line.date,  date=True)|x}</td>
