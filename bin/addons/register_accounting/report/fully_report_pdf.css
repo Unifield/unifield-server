@@ -17,7 +17,7 @@
 
 h1 {
     text-align: center;
-    font-size: 10px;
+    font-size: 12px;
     page-break-before: always;
 }
 
@@ -26,7 +26,7 @@ h4 {
   string-set: heading content();
 }
 
-html * {
+html {
     font-size: 8px;
 }
 
