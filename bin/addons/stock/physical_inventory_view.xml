@@ -32,21 +32,23 @@
                     <field name="products_added" invisible="1" readonly="1"/>
                     <notebook colspan="4">
                         <page string="Products" attrs="{'readonly': [('state', 'not in', ['draft'])]}">
-                            <button name="action_select_products" states="draft" string="Products Selection" type="object"
-                                    icon="gtk-add" attrs="{'invisible': [('type', '=', 'correction')]}"/>
-                                <field colspan="4" name="product_ids" nolabel="1" on_change="onchange_products(product_ids)"
-                                       attrs="{'readonly': ['|', ('type', '=', 'full'), ('state', '!=', 'draft')]}">
-                                <tree string="Products" noteditable="1">
-                                    <field name="default_code"/>
-                                    <field name="name"/>
-                                    <field name="uom_id"/>
-                                    <field name="batch_management" string="BN mandatory"/>
-                                    <field name="perishable" string="ED mandatory"/>
-                                    <field name="is_kc" string="CC"/>
-                                    <field name="is_dg" string="DG"/>
-                                    <field name="is_cs" string="CS"/>
-                                </tree>
-                            </field>
+                            <group colspan="4" attrs="{'invisible': [('type', '=', False)]}">
+                                <button name="action_select_products" states="draft" string="Products Selection" type="object"
+                                        icon="gtk-add" attrs="{'invisible': [('type', '=', 'correction')]}"/>
+                                    <field colspan="4" name="product_ids" nolabel="1" on_change="onchange_products(product_ids)"
+                                           attrs="{'readonly': ['|', ('type', '=', 'full'), ('state', '!=', 'draft')]}">
+                                    <tree string="Products" noteditable="1">
+                                        <field name="default_code"/>
+                                        <field name="name"/>
+                                        <field name="uom_id"/>
+                                        <field name="batch_management" string="BN mandatory"/>
+                                        <field name="perishable" string="ED mandatory"/>
+                                        <field name="is_kc" string="CC"/>
+                                        <field name="is_dg" string="DG"/>
+                                        <field name="is_cs" string="CS"/>
+                                    </tree>
+                                </field>
+                            </group>
                         </page>
                         <page string="Counting sheet" attrs="{'invisible': [('state', 'in', ['draft'])], 'readonly': ['|', ('state', 'not in', ['counting', 'counted']), ('discrepancies_generated', '=', True)]}">
                             <group col="4" colspan="4"
