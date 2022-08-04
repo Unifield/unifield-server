@@ -259,7 +259,7 @@
                         <field name="name"/>
                         <field name="date"/>
                         <field name="location_id" domain="[('usage','=','internal')]"/>
-                        <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                        <field name="type" />
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="4" groups="base.group_extended">
