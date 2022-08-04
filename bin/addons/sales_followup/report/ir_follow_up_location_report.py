@@ -201,6 +201,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
             received_qty = 0.00  # for received non-stockable products
             if len(line.move_ids) > 0:
+                pick_data = {}
                 for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
                     data = {
                         'state': line.state,
@@ -347,26 +348,66 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             if data.get('first_line'):
                                 fl_index = m_index
                             m_index += 1
+                    elif not pick_data and move.picking_id.subtype == 'picking':
+                        pick_data = {
+                            'po_name': po_name,
+                            'edd': edd,
+                            'cdd': cdd,
+                            'line_number': line.line_number,
+                            'line_comment': line.comment or '-',
+                            'product_name': line.product_id.name or '-',
+                            'product_code': line.product_id.code or '-',
+                            'is_delivered': False,
+                            'delivery_order': move.picking_id.name,
+                            'packing': '-',
+                            'shipment': '-',
+                            'uom_id': line.product_uom.name,
+                            'ordered_qty': line.product_uom_qty,
+                            'backordered_qty': move.state not in ('cancel', 'cancel_r') and line.product_uom_qty or 0,
+                            'delivered_uom': line.product_uom.name,
+                            'first_line': True,
+                            'state': line.state,
+                            'state_display': line_state_display_dict.get(line.state_to_display),
+                            'cancelled_move': move.state in ('cancel', 'cancel_r')
+                        }
             else:  # No move found
+                cancel_qty = 0
                 # Look for received qty in the IN(s)
                 self.cr.execute("""
-                    SELECT m.product_qty FROM stock_move m 
+                    SELECT sum(m.product_qty) FROM stock_move m
                     LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
                     LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
                     WHERE m.state = 'done' AND m.type = 'in' AND sl.id = %s
                 """, (line.id,))
                 for move in self.cr.fetchall():
-                    received_qty += move[0]
+                    if move[0]:
+                        received_qty += move[0]
+
+
+                # count cancelled qty on INT / to process qty on INT
+                self.cr.execute("""
+                    SELECT sum(int.product_qty), int.state FROM stock_move m
+                    LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+                    LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
+                    LEFT JOIN stock_move int on int.id = m.move_dest_id
+                    WHERE int.state in ('assigned', 'confirmed', 'cancel') and m.type = 'in' AND sl.id = %s
+                    GROUP BY int.state
+                """, (line.id,))
+                for move in self.cr.fetchall():
+                    if move[0]:
+                        received_qty -= move[0]
+                        if move[1] == 'cancel':
+                            cancel_qty = move[0]
 
                 # Get the name of the linked INT
                 int_name = False
                 if not from_stock:
                     self.cr.execute("""
-                        SELECT p.name FROM stock_move m 
+                        SELECT p.name FROM stock_move m
                         LEFT JOIN stock_picking p ON m.picking_id = p.id
                         LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
                         LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
-                        WHERE m.state = 'done' AND p.type = 'internal' AND p.subtype = 'standard' AND sl.id = %s
+                        WHERE p.type = 'internal' AND p.subtype = 'standard' AND sl.id = %s
                         LIMIT 1
                     """, (line.id,))
                     int_info = self.cr.fetchone()
@@ -377,7 +418,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     data = {
                         'state': line.state,
                         'state_display': line_state_display_dict.get(line.state_to_display),
-                        'cancelled_move': False,
+                        'cancelled_move': abs(line.product_uom_qty - cancel_qty) < 0.01,
                         'line_number': line.line_number,
                         'line_comment': line.comment or '-',
                         'po_name': po_name,
@@ -389,7 +430,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'delivered_qty': received_qty,
                         'delivered_uom': line.product_uom.name or '-',
                         'delivery_order': int_name or '-',
-                        'backordered_qty': line.order_id.state != 'cancel' and line.product_uom_qty - received_qty or 0.00,
+                        'backordered_qty': line.order_id.state != 'cancel' and max(line.product_uom_qty - received_qty - cancel_qty, 0) or 0.00,
                         'edd': edd,
                         'cdd': cdd,
                     }
@@ -397,7 +438,10 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
             # Put the backorderd qty on the first line
             if not lines:
-                continue
+                if pick_data:
+                    lines.append(pick_data)
+                else:
+                    continue
             if bo_qty and bo_qty > 0 and not first_line and line.state not in ('cancel', 'cancel_r', 'done'):
                 lines.append({
                     'po_name': po_name,
