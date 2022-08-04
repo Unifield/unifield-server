@@ -244,6 +244,7 @@
                     <field name="ref"/>
                     <field name="name"/>
                     <field name="location_id"/>
+                    <field name="type"/>
                     <field name="date"/>
                     <field name="state"/>
                     <field name="has_bad_stock" invisible="1" />
