@@ -461,7 +461,7 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
-                    % if line.get('delivered_qty') and not line.get('cancelled_move'):
+                    % if line.get('delivered_qty') or not line.get('cancelled_move'):
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
