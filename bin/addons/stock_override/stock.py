@@ -189,6 +189,33 @@ class stock_picking(osv.osv):
 
         return res
 
+    def list_reason_type_outgoing(self, cr, uid, id, name, context=None):
+
+        dom = [('outgoing_ok', '=', True)]
+        if id:
+            cr.execute('''
+                select
+                    bool(coalesce(sale_id, 0)) or from_wkf or claim or bool(coalesce(rac_id, 0)), reason_type_id
+                from
+                    stock_picking
+                where
+                    id = %s
+                ''', (id, )
+            )
+
+            is_not_fs, current_rt_id = cr.fetchone()
+            if not is_not_fs:
+                dom = ['&', ('is_fs', '=', True)] + dom
+            if current_rt_id:
+                dom = ['|',('id', '=', current_rt_id)] + dom
+        rt_obj = self.pool.get('stock.reason.type')
+        if context is None:
+            lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
+            if lang_dict.get('context_lang'):
+                context = {'lang': lang_dict.get('context_lang')}
+        ret = rt_obj._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
+        return ret
+
     _columns = {
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
@@ -1315,8 +1342,8 @@ class stock_move(osv.osv):
         picking = False
         sync_dpo_in = False
         if vals.get('picking_id', False):
-            picking = pick_obj.read(cr, uid, vals['picking_id'],
-                                    ['move_sequence_id', 'type', 'reason_type_id', 'sync_dpo_in'], context=context)
+            picking = pick_obj.read(cr, uid, vals['picking_id'], ['move_sequence_id', 'type', 'reason_type_id',
+                                                                  'sync_dpo_in', 'sale_id'], context=context)
             if not vals.get('line_number', False):
                 # new number need - gather the line number form the sequence
                 sequence_id = picking['move_sequence_id'][0]
@@ -1392,11 +1419,18 @@ class stock_move(osv.osv):
                 vals['state'] = 'done'
 
         # Change the reason type of the picking if it is not the same
-        other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        rt_name = 'reason_type_other'
+        if picking['type'] == 'out' and (picking['sale_id'] and self.pool.get('sale.order').search_exist(cr, uid,
+                                                                                                         [('id', '=', picking['sale_id'][0]), ('procurement_request', '=', 't'),
+                                                                                                          ('location_requestor_id.location_category', '=', 'consumption_unit')], context=context))\
+                or not picking['sale_id']:
+            rt_name = 'reason_type_deliver_unit'
+        rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', rt_name)[1]
         if picking and not context.get('from_claim') and not context.get('from_chaining') \
-                and picking['reason_type_id'][0] != other_type_id \
+                and picking['reason_type_id'][0] != rt_id \
                 and vals.get('reason_type_id', False) != picking['reason_type_id'][0]:
-            pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': other_type_id}, context=context)
+            pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': rt_id}, context=context)
+            vals.update({'reason_type_id': rt_id})
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
 

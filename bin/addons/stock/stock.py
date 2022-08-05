@@ -1289,8 +1289,7 @@ class stock_picking(osv.osv):
                 if move.state == 'assigned':
                     todo.append(move.id)
             if len(todo):
-                move_obj.action_done(cr, uid, todo,
-                                     return_goods=return_goods, context=context)
+                move_obj.action_done(cr, uid, todo, return_goods=return_goods, context=context)
         return True
 
     def get_currency_id(self, cr, uid, picking):

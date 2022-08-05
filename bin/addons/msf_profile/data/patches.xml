@@ -808,5 +808,8 @@
             <field name="method">us_8428_pi_type_migration</field>
         </record>
 
+        <record id="us_9229_fix_rt" model="patch.scripts">
+            <field name="method">us_9229_fix_rt</field>
+        </record>
     </data>
 </openerp>

@@ -357,9 +357,7 @@
                                             <field name="dg_check" widget="null_boolean" />
                                             <field name="np_check" widget="null_boolean" />
                                         </group>
-                                        <field name="reason_type_id"
-                                               domain="[('outgoing_ok', '=', True)]"
-                                               attrs="{'readonly': [('state', '!=', 'draft')]}" widget="selection"/>
+                                        <field name="reason_type_id" widget="selection" readonly="1"/>
                                     </group>
                                     <group colspan="2" col="2">
                                         <separator string="Dates" colspan="2" />

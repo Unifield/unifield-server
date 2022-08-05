@@ -129,6 +129,62 @@ class patch_scripts(osv.osv):
         '''
         cr.execute("""UPDATE physical_inventory SET type = 'full' WHERE full_inventory = 't'""")
         cr.execute("""UPDATE physical_inventory SET type = 'partial' WHERE type is null""")
+
+    def us_9229_fix_rt(self, cr, uid, *a, **b):
+        '''
+        Updates to do:
+            - All OUTs and Picks plus their lines created from IR with Ext CU to have RT Deliver Unit
+            - All OUTs and Picks plus their lines created from FO to have RT Deliver Partner
+            - All OUT-CONSOs plus their lines to have RT Consumption Report
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        deli_unit_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_unit')[1]
+        deli_partner_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        consu_rep_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_consumption_report')[1]
+
+        # To Deliver Unit
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN sale_order s ON p.sale_id = s.id LEFT JOIN stock_location l ON s.location_requestor_id = l.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 't' 
+                    AND l.location_category = 'consumption_unit')
+        ''', (deli_unit_rt_id,))
+        self.log_info(cr, uid, "US-9229: %d OUTs/Picks and their lines had their Reason Type set to 'Deliver Unit'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN sale_order s ON p.sale_id = s.id LEFT JOIN stock_location l ON s.location_requestor_id = l.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 't' 
+                    AND l.location_category = 'consumption_unit')
+        ''', (deli_unit_rt_id,))
+
+        # To Deliver Partner
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f')
+        ''', (deli_partner_rt_id,))
+        self.log_info(cr, uid, "US-9229: %d OUTs/Picks and their lines had their Reason Type set to 'Deliver Partner'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f')
+        ''', (deli_partner_rt_id,))
+
+        # To Consumption Report
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT id FROM stock_picking WHERE type = 'out' AND subtype IN ('standard', 'picking') 
+                AND rac_id IS NOT NULL)
+        ''', (consu_rep_rt_id,))
+        self.log_info(cr, uid, "US-9229: %d OUT-CONSOs and their lines had their Reason Type set to 'Consumption Report'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT id FROM stock_picking WHERE type = 'out' AND subtype IN ('standard', 'picking') 
+                AND rac_id IS NOT NULL)
+        ''', (consu_rep_rt_id,))
+
         return True
 
     # UF25.0
