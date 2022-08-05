@@ -433,4 +433,9 @@ class wizard_account_invoice_line(osv.osv):
 
 wizard_account_invoice_line()
 
+class account_invoice(osv.osv):
+    _name = 'account.invoice'
+    _inherit = ['account.invoice', 'signature.object']
+
+account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

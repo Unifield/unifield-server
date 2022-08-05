@@ -34,7 +34,7 @@ class account_invoice(osv.osv):
     _name = "account.invoice"
     _description = 'Invoice'
     _order = "id desc"
-    _inherit = 'signature.object'
+#    _inherit = 'signature.object'
 
     def _amount_all(self, cr, uid, ids, name, args, context=None):
         res = {}
