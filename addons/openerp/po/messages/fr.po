@@ -395,8 +395,8 @@ msgid "Export Error"
 msgstr "Erreur d'exportation"
 
 #: controllers/impex.py:469
-msgid "Database ID"
-msgstr "Identifiant de base de donnée"
+msgid "ID"
+msgstr "Identifiant"
 
 #: controllers/impex.py:476
 msgid "Error opening .CSV file"
@@ -560,7 +560,15 @@ msgstr "Propriétaire du groupe"
 msgid "Access Level"
 msgstr "Niveau d'accès"
 
-#: controllers/view_log.py:40
+#: controllers/view_log.py:101
+msgid "SDref"
+msgstr "SDref"
+
+#: controllers/view_log.py:103
+msgid "xmlid_code"
+msgstr "xmlid_code"
+
+#: controllers/view_log.py:107
 msgid "Internal module data ID"
 msgstr "ID du module de données interne"
 
