@@ -189,6 +189,33 @@ class stock_picking(osv.osv):
 
         return res
 
+    def list_reason_type_outgoing(self, cr, uid, id, name, context=None):
+
+        dom = [('outgoing_ok', '=', True)]
+        if id:
+            cr.execute('''
+                select
+                    bool(coalesce(sale_id, 0)) or from_wkf or claim or bool(coalesce(rac_id, 0)), reason_type_id
+                from
+                    stock_picking
+                where
+                    id = %s
+                ''', (id, )
+            )
+
+            is_not_fs, current_rt_id = cr.fetchone()
+            if not is_not_fs:
+                dom += [('is_fs', '=', True)]
+            if current_rt_id:
+                dom = ['|',('id', '=', current_rt_id)] + dom
+        rt_obj = self.pool.get('stock.reason.type')
+        if context is None:
+            lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
+            if lang_dict.get('context_lang'):
+                context = {'lang': lang_dict.get('context_lang')}
+        ret = rt_obj._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
+        return ret
+
     _columns = {
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
@@ -1394,8 +1421,8 @@ class stock_move(osv.osv):
         # Change the reason type of the picking if it is not the same
         rt_name = 'reason_type_other'
         if picking['type'] == 'out' and (picking['sale_id'] and self.pool.get('sale.order').search_exist(cr, uid,
-                [('id', '=', picking['sale_id'][0]), ('procurement_request', '=', 't'),
-                 ('location_requestor_id.location_category', '=', 'consumption_unit')], context=context))\
+                                                                                                         [('id', '=', picking['sale_id'][0]), ('procurement_request', '=', 't'),
+                                                                                                          ('location_requestor_id.location_category', '=', 'consumption_unit')], context=context))\
                 or not picking['sale_id']:
             rt_name = 'reason_type_deliver_unit'
         rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', rt_name)[1]

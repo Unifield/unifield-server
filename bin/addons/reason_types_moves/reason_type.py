@@ -118,6 +118,12 @@ class stock_reason_type(osv.osv):
         res = self.name_get(cr, uid, ids, context=context)
         return dict(res)
 
+    def _search_is_fs(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[0] == 'is_fs' and arg[1] == '=' and arg[2] in (True, 1, 'True', 'true', '1'):
+                return [('code', 'in', [6, 20])]
+        return []
+
     _columns = {
         'name': fields.char(size=128, string='Name', required=True, translate=1),
         'code': fields.integer(string='Code', required=True),
@@ -131,6 +137,7 @@ class stock_reason_type(osv.osv):
         'incoming_ok': fields.boolean(string='Available for incoming shipment ?'),
         'internal_ok': fields.boolean(string='Available for internal picking ?'),
         'outgoing_ok': fields.boolean(string='Available for outgoing movements ?'),
+        'is_fs': fields.function(tools.misc.get_fake, type='boolean', string='For FS out', method=True, fnct_search=_search_is_fs),
     }
 
     def unlink(self, cr, uid, ids, context=None):

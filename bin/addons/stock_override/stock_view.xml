@@ -767,7 +767,8 @@
                                 />
                             <field name="order_category"/>
                             <field name="reason_type_id"
-                                domain="[('outgoing_ok', '=', True)]"
+                                domain="[('outgoing_ok', '=', True), ('is_fs', '=', True)]"
+                                get_selection="list_reason_type_outgoing"
                                 widget="selection"
                                 attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
                                 />
