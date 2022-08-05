@@ -1152,8 +1152,7 @@ class account_bank_statement_line(osv.osv):
         res = {}
         aal_obj = self.pool.get('account.analytic.line')
         for absl in self.browse(cr, uid, ids, context=context):
-            # UTP-1055: In case of Cash Advance register line, we don't need to see all other advance lines allocation (analytic lines). So we keep only analytic lines with the same "name" than register line
-            aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)), ('account_id.category', '=', 'FUNDING'), ('name', '=ilike', '%%%s' % absl.name)])
+            aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)), ('account_id.category', '=', 'FUNDING')])
             # Then retrieve all corrections/reversals from them
             res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
         return res
@@ -1167,10 +1166,8 @@ class account_bank_statement_line(osv.osv):
         res = {}
         aal_obj = self.pool.get('account.analytic.line')
         for absl in self.browse(cr, uid, ids, context=context):
-            # UTP-1055: In case of Cash Advance register line, we don't need to see all other advance lines allocation (analytic lines).
-            # So we keep only analytic lines with the same "name" than register line
             aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)),
-                                                                              ('account_id.category', 'in', ['FREE1', 'FREE2']), ('name', '=ilike', '%%%s' % absl.name)])
+                                                                              ('account_id.category', 'in', ['FREE1', 'FREE2'])])
             # Then retrieve all corrections/reversals from them
             res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
         return res
