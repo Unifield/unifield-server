@@ -699,7 +699,7 @@ class product_product(osv.osv):
         return [('international_status', 'in', prod_creator_ids)]
 
     _defaults = {
-        'active': lambda *a: 1,
+        'active': lambda *a: True,
         'price_extra': lambda *a: 0.0,
         'price_margin': lambda *a: 1.0,
     }

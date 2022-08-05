@@ -458,24 +458,23 @@ class import_data(osv.osv_memory):
                 if self.post_hook.get(impobj._name):
                     self.post_hook[impobj._name](impobj, cr, uid, data, row, headers)
 
+                # US-10051: Remove MSFID attr
+                if impobj._name == 'product.product' and data.get('msfid'):
+                    del data['msfid']
                 if import_mode == 'update':
-
                     # Search if an object already exist. If not, create it.
                     ids_to_update = []
 
                     if impobj._name == 'product.product':
                         # UF-2254: Allow to update the product, use xmlid_code now for searching
-                        ids_to_update = impobj.search(cr, uid, [('xmlid_code',
-                                                                 '=', data['xmlid_code'])], order='NO_ORDER')
+                        ids_to_update = impobj.search(cr, uid, [('xmlid_code', '=', data['xmlid_code'])], order='NO_ORDER')
                     elif impobj._name == 'product.nomenclature':
-                        ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                                                                 data['msfid'])], order='NO_ORDER')
+                        ids_to_update = impobj.search(cr, uid, [('msfid', '=',  data['msfid'])], order='NO_ORDER')
                     elif impobj._name == 'product.category':
-                        ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                                                                 data['msfid'])], order='NO_ORDER')
+                        ids_to_update = impobj.search(cr, uid, [('msfid', '=', data['msfid'])], order='NO_ORDER')
 
                     if ids_to_update:
-                        #UF-2170: remove the standard price value from the list for update product case
+                        # UF-2170: remove the standard price value from the list for update product case
                         # US-6468: remove BN/ED attr for update
                         for to_remove in ['standard_price', 'perishable', 'batch_management']:
                             if to_remove in data:
