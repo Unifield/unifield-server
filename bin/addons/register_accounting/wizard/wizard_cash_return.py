@@ -278,6 +278,7 @@ class wizard_advance_line(osv.osv_memory):
             'active_ids': ids,
         })
         # Open it!
+        print 'KKKK'
         return {
             'name': _('Analytic distribution'),
             'type': 'ir.actions.act_window',
@@ -1127,6 +1128,7 @@ class wizard_cash_return(osv.osv_memory):
             'wiz_id': ids[0],
             'cash_return_id': ids[0]})
         # Open it!
+        print 'OOOO'
         return {
             'name': _('Global analytic distribution'),
             'type': 'ir.actions.act_window',

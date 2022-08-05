@@ -20,14 +20,16 @@ list_sign = {
         ('sr', _('Supply Responsible'), True, ''),
     ],
     'account.bank.statement': [
-        ('fr', _('Finance Responsible - reconciliation'), True, 'rec'),
-        ('mr', _('Mission Responsible - reconciliation'), True, 'rec'),
-        ('fr_report', _('Finance Responsible - full report'), True, 'full'),
-        ('mr_report', _('Mission Responsible - full report'), True, 'full'),
+        ('fr', _('Signature 1 - reconciliation'), True, 'rec'),
+        ('mr', _('Signature 2 - reconciliation'), True, 'rec'),
+        ('fr_report', _('Signature 1 - full report'), True, 'full'),
+        ('mr_report', _('Signature 2 - full report'), True, 'full'),
     ],
     'account.invoice': [
-        ('fr', _('Finance Responsible - reconciliation'), True, ''),
-        ('mr', _('Mission Responsible - reconciliation'), True, ''),
+        ('sr', _('Supply Responsible'), True, ''),
+        ('tr', _('Technical Responsible'), True, ''),
+        ('fr', _('Finance Responsible'), True, ''),
+        ('mr', _('Mission Responsible'), False, ''),
     ],
     'stock.picking': [
         ('tr', _('Receiver'), True, ''),
