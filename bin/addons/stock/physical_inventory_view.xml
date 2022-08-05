@@ -25,7 +25,8 @@
                     <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="responsible"/>
                     <field name="date_done"/>
-                    <field name="type" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('products_added', '=', True)]}"/>
+                    <field name="type" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('products_added', '=', True)]}" on_change="change_inventory_type(type)"/>
+                    <field name="hidden_type" invisible="1" readonly="0" />
                     <field name="discrepancies_generated" invisible="1" readonly="1"/>
                     <field name="max_filter_months" invisible="1"/>
                     <field name="multiple_filter_months" invisible="1"/>

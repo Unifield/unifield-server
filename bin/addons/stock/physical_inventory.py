@@ -149,6 +149,7 @@ class PhysicalInventory(osv.osv):
         'full_inventory': fields.boolean('Full inventory', readonly=True),
         'type': fields.selection([('full', 'Full Inventory count (planned)'), ('partial', 'Partial Inventory count (planned)'),
                                   ('correction', 'Stock correction (unplanned)')], 'Inventory Type', required=True, select=True, add_empty=True),
+        'hidden_type': fields.function(tools.misc.get_fake, method=True, internal="1", type='char', string="Hidden Type"),
         'discrepancies_generated': fields.boolean('Discrepancies Generated', readonly=True),
         'file_to_import': fields.binary(string='File to import', filters='*.xml'),
         'file_to_import2': fields.binary(string='File to import', filters='*.xml'),
@@ -187,11 +188,22 @@ class PhysicalInventory(osv.osv):
         context = context is None and {} or context
         values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
 
+        if values and 'type' not in values and values.get('hidden_type'):
+            values['type'] = values['hidden_type']
+
         new_id = super(PhysicalInventory, self).create(cr, uid, values, context=context)
 
         if self.search(cr, uid, [('id', '=', new_id), ('location_id.active', '=', False)]):
             raise osv.except_osv(_('Warning'), _("Location is inactive"))
         return new_id
+
+    def write_web(self, cr, uid, ids, values, context=None):
+        if values and 'type' not in values and values.get('hidden_type'):
+            values['type'] = values['hidden_type']
+        return super(PhysicalInventory, self).write_web(cr, uid, ids, values, context=context)
+
+    def change_inventory_type(self, cr, uid, ids, inv_type, context=None):
+        return {'value': {'hidden_type': inv_type}}
 
     def copy(self, cr, uid, id_, default=None, context=None):
         default = default is None and {} or default
