@@ -205,7 +205,7 @@ class stock_picking(osv.osv):
 
             is_not_fs, current_rt_id = cr.fetchone()
             if not is_not_fs:
-                dom += [('is_fs', '=', True)]
+                dom = ['&', ('is_fs', '=', True)] + dom
             if current_rt_id:
                 dom = ['|',('id', '=', current_rt_id)] + dom
         rt_obj = self.pool.get('stock.reason.type')
