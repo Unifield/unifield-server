@@ -803,5 +803,10 @@
         <record id="fix_us_10163_ocbhq_funct_amount" model="patch.scripts">
             <field name="method">fix_us_10163_ocbhq_funct_amount</field>
         </record>
+
+        <record id="us_8428_pi_type_migration" model="patch.scripts">
+            <field name="method">us_8428_pi_type_migration</field>
+        </record>
+
     </data>
 </openerp>

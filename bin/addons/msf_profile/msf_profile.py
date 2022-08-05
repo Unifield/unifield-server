@@ -121,7 +121,14 @@ class patch_scripts(osv.osv):
         import_prod_menu_id = data_obj.get_object_reference(cr, uid, 'import_data', 'menu_action_import_products')[1]
         update_prod_menu_id = data_obj.get_object_reference(cr, uid, 'import_data', 'menu_action_update_products')[1]
         self.pool.get('ir.ui.menu').write(cr, uid, [import_prod_menu_id, update_prod_menu_id], {'active': instance.level != 'project'}, context={})
+        return True
 
+    def us_8428_pi_type_migration(self, cr, uid, *a, **b):
+        '''
+        In PIs, if full_inventory == True, set the type to 'full'
+        '''
+        cr.execute("""UPDATE physical_inventory SET type = 'full' WHERE full_inventory = 't'""")
+        cr.execute("""UPDATE physical_inventory SET type = 'partial' WHERE type is null""")
         return True
 
     # UF25.0

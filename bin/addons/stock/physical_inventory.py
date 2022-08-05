@@ -105,6 +105,25 @@ class PhysicalInventory(osv.osv):
 
         return totals
 
+    def _get_products_added(self, cr, uid, ids, field_name, arg, context=None):
+        if not ids:
+            return False
+
+        cr.execute("""
+            SELECT pi.id, count(rel.product_id)
+            FROM
+                physical_inventory pi
+            LEFT JOIN
+                physical_inventory_product_rel rel ON rel.product_id = pi.id
+            WHERE
+                pi.id in %s
+            GROUP BY pi.id
+        """, (tuple(ids), ))
+        ret = {}
+        for x in cr.fetchall():
+            ret[x[0]] = x[1] > 0
+
+        return ret
 
     _columns = {
         'ref': fields.char('Reference', size=64, readonly=True, sort_column='id'),
@@ -113,6 +132,7 @@ class PhysicalInventory(osv.osv):
         'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
         'date_done': fields.datetime('Date done', readonly=True),
         'date_confirmed': fields.datetime('Date confirmed', readonly=True),
+        # 'inventory_id' and 'product_id' seem to be inverted in product_ids
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
                                         'product_id', 'inventory_id', string="Product selection", domain=[('type', 'not in', ['service_recep', 'consu'])], order_by="default_code"),
         'discrepancy_line_ids': fields.one2many('physical.inventory.discrepancy', 'inventory_id', 'Discrepancy lines',
@@ -127,6 +147,9 @@ class PhysicalInventory(osv.osv):
         'company_id': fields.many2one('res.company', 'Company', readonly=True, select=True, required=True,
                                       states={'draft': [('readonly', False)]}),
         'full_inventory': fields.boolean('Full inventory', readonly=True),
+        'type': fields.selection([('full', 'Full Inventory count (planned)'), ('partial', 'Partial Inventory count (planned)'),
+                                  ('correction', 'Stock correction (unplanned)')], 'Inventory Type', required=True, select=True, add_empty=True),
+        'hidden_type': fields.function(tools.misc.get_fake, method=True, internal="1", type='char', string="Hidden Type"),
         'discrepancies_generated': fields.boolean('Discrepancies Generated', readonly=True),
         'file_to_import': fields.binary(string='File to import', filters='*.xml'),
         'file_to_import2': fields.binary(string='File to import', filters='*.xml'),
@@ -143,8 +166,9 @@ class PhysicalInventory(osv.osv):
         'discrepancy_lines_percent_absvalue': fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Percent of absolute value of discrepancies")),
         'bad_stock_msg': fields.text('Bad Stock', readonly=1),
         'has_bad_stock': fields.boolean('Has bad Stock', readonly=1),
-        'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection', readonly=1),
-        'multiple_filter_months': fields.boolean('Multiple Selection', readonly=1),
+        'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection'),
+        'multiple_filter_months': fields.boolean('Multiple Selection'),
+        'products_added': fields.function(_get_products_added, method=True, type='boolean', string='Has products'),
     }
 
     _defaults = {
@@ -157,12 +181,15 @@ class PhysicalInventory(osv.osv):
         'discrepancies_generated': False,
         'max_filter_months': -1,
         'multiple_filter_months': False,
+        'products_added': False,
     }
-
 
     def create(self, cr, uid, values, context):
         context = context is None and {} or context
         values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
+
+        if values and 'type' not in values and values.get('hidden_type'):
+            values['type'] = values['hidden_type']
 
         new_id = super(PhysicalInventory, self).create(cr, uid, values, context=context)
 
@@ -170,6 +197,13 @@ class PhysicalInventory(osv.osv):
             raise osv.except_osv(_('Warning'), _("Location is inactive"))
         return new_id
 
+    def write_web(self, cr, uid, ids, values, context=None):
+        if values and 'type' not in values and values.get('hidden_type'):
+            values['type'] = values['hidden_type']
+        return super(PhysicalInventory, self).write_web(cr, uid, ids, values, context=context)
+
+    def change_inventory_type(self, cr, uid, ids, inv_type, context=None):
+        return {'value': {'hidden_type': inv_type}}
 
     def copy(self, cr, uid, id_, default=None, context=None):
         default = default is None and {} or default
@@ -178,6 +212,7 @@ class PhysicalInventory(osv.osv):
 
         default['state'] = 'draft'
         default['date'] = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        default['type'] = 'partial'
         fields_to_empty = ["ref",
                            "full_inventory",
                            "date_done",
@@ -197,19 +232,14 @@ class PhysicalInventory(osv.osv):
 
         return super(PhysicalInventory, self).copy(cr, uid, id_, default, context=context)
 
-
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
 
-
-    def set_full_inventory(self, cr, uid, ids, context=None):
-        context = context is None and {} or context
-
-        # Set full inventory as true and unlink all products already selected
-        self.write(cr, uid, ids, {'full_inventory': True,
-                                  'product_ids': [(5)]}, context=context)
-        return {}
-
+    def onchange_products(self, cr, uid, ids, product_ids, context=None):
+        res = {'value': {'products_added': product_ids != [(6, 0, [])]}}
+        if product_ids == [(6, 0, [])]:
+            res['value'].update({'max_filter_months': -1, 'multiple_filter_months': False})
+        return res
 
     def action_select_products(self, cr, uid, ids, context=None):
         """
@@ -229,13 +259,12 @@ class PhysicalInventory(osv.osv):
         assert len(ids) == 1
         inventory_id = ids[0]
 
-        # Is it a full inventory ?
-        full_inventory = read_single(self._name, inventory_id, 'full_inventory')
-
-        # Create the wizard
+        # Create the wizard, check if it is a full inventory
         wiz_model = 'physical.inventory.select.products'
-        wiz_values = {"inventory_id": inventory_id,
-                      "full_inventory": full_inventory }
+        wiz_values = {
+            "inventory_id": inventory_id,
+            "full_inventory": read_single(self._name, inventory_id, 'type') == 'full'
+        }
         wiz_id = create(wiz_model, wiz_values)
         context['wizard_id'] = wiz_id
 
