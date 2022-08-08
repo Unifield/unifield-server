@@ -490,11 +490,12 @@ class product_product(osv.osv):
 
         ret = super(product_product, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
         if filter_qty:
-            stock_warehouse_obj = self.pool.get('stock.warehouse')
             stock_location_obj = self.pool.get('stock.location')
             if not location_id:
-                wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
-                location_id = stock_warehouse_obj.read(cr, uid, wids[0], ['lot_stock_id'], context=context)['lot_stock_id'][0]
+                default_locs_domain = ['|', ('eprep_location', '=', True), '&', ('usage', '=', 'internal'),
+                                       ('location_category', 'in', ('stock', 'consumption_unit', 'eprep'))]
+                location_id = stock_location_obj.search(cr, uid, default_locs_domain, context=context)
+
             if isinstance(location_id, basestring):
                 location_id = stock_location_obj.search(cr, uid, [('name','ilike', location_id)], context=context)
 
