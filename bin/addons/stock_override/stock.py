@@ -472,6 +472,35 @@ class stock_picking(osv.osv):
                 'res_id': simu_id,
                 'context': context}
 
+    def _get_rt_for_fs_out(self, cr, uid, partner_id):
+        current_partner = self.pool.get('res.users').get_current_company_partner_id(cr, uid)[0]
+        if partner_id == current_partner:
+            rt = 'reason_type_deliver_unit'
+        else:
+            rt = 'reason_type_deliver_partner'
+        return  self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', rt)[1]
+
+    def on_change_partner_out(self, cr, uid, ids, partner_id, address_id, context=None):
+        res = self.on_change_partner(cr, uid, ids, partner_id, address_id, context=context)
+        if partner_id and not res.get('warning'):
+            res['value']['reason_type_id'] = self._get_rt_for_fs_out(cr, uid, partner_id)
+        return res
+
+    def on_change_rt_out(self, cr, uid, ids, partner_id, rt_id, context=None):
+        if not partner_id or not rt_id:
+            return {}
+        rt = self._get_rt_for_fs_out(cr, uid, partner_id)
+        if rt != rt_id:
+            return {
+                'value': {'reason_type_id': rt},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('Wrong reason type for this OUT'),
+                }
+            }
+        return {}
+
+
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
         Change the delivery address when the partner change.
@@ -1419,18 +1448,15 @@ class stock_move(osv.osv):
                 vals['state'] = 'done'
 
         # Change the reason type of the picking if it is not the same
-        rt_name = 'reason_type_other'
-        if picking['type'] == 'out' and (picking['sale_id'] and self.pool.get('sale.order').search_exist(cr, uid,
-                                                                                                         [('id', '=', picking['sale_id'][0]), ('procurement_request', '=', 't'),
-                                                                                                          ('location_requestor_id.location_category', '=', 'consumption_unit')], context=context))\
-                or not picking['sale_id']:
-            rt_name = 'reason_type_deliver_unit'
-        rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', rt_name)[1]
+        rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        if picking and picking['type'] == 'out':
+            if not vals.get('reason_type_id'):
+                vals['reason_type_id'] = picking['reason_type_id'][0]
+
         if picking and not context.get('from_claim') and not context.get('from_chaining') \
                 and picking['reason_type_id'][0] != rt_id \
                 and vals.get('reason_type_id', False) != picking['reason_type_id'][0]:
             pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': rt_id}, context=context)
-            vals.update({'reason_type_id': rt_id})
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
 
