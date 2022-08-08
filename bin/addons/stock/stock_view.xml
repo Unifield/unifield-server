@@ -1127,7 +1127,7 @@
                         <separator string="Traceability" colspan="4" />
                         <field name="purchase_line_id" colspan="2" />
                         <field name="sale_line_id" colspan="2"/>
-                        <field name="reason_type_id" widget="selection" domain="[('internal_ok', '=', True)]" attrs="{'readonly': [('state', 'not in', ('draft', 'waiting', 'confirmed', 'assigned'))]}" />
+                        <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'waiting', 'confirmed', 'assigned'))]}" />
                         <field name="comment" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
                         <field name="tracking_id" colspan="3" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"/>
                         <field name="prodlot_id"
