@@ -379,7 +379,7 @@
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
                     % if line.get('delivered_qty') or not line.get('cancelled_move'):
-                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
+                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('delivered_qty', 0)}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
@@ -462,7 +462,7 @@
                     % endif
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
                     % if line.get('delivered_qty') or not line.get('cancelled_move'):
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty', 0)}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
