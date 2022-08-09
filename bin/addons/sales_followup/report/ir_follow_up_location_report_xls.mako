@@ -467,7 +467,7 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivery_order', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(line.get('delivery_order', '-') != '-' and line.get('delivery_order') or line.get('shipment', '-') != '-' and line.get('shipment')  or line.get('packing') or '-')|x}</Data></Cell>
                     % if not line.get('cancelled_move'):
                         % if line.get('extra_qty', False):
                         <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
