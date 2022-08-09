@@ -77,12 +77,12 @@ class stock_picking(osv.osv):
 
         if po_name.find(':') != -1:
             for part in po_name.split(':'):
-                re_res = re.findall(r'PO[0-9]+$', part)
+                re_res = re.findall(r'PO[0-9]+$', part, re.I)
                 if re_res:
                     po_name = part
                     break
 
-        po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_name)], context=context)
+        po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=ilike', po_name)], context=context)
         if not po_id:
             raise osv.except_osv(_('Error'), _('PO with name %s not found') % po_name)
         in_id = self.pool.get('stock.picking').search(cr, uid, [
@@ -109,10 +109,10 @@ class stock_picking(osv.osv):
             file_obj = SpreadsheetXML(xmlstring=xmlstring)
             po_name = False
             for index, row in enumerate(file_obj.getRows()):
-                if row.cells[0].data == 'Origin':
+                if (row.cells[0].data or '').lower() == 'origin':
                     po_name = row.cells[1].data or ''
                     if isinstance(po_name, (str,unicode)):
-                        po_name = po_name.strip()
+                        po_name = po_name.strip().lower()
                     if not po_name:
                         raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
                     break
@@ -125,7 +125,7 @@ class stock_picking(osv.osv):
             orig = root.findall('.//field[@name="origin"]')
             if orig:
                 po_name = orig[0].text or ''
-                po_name = po_name.strip()
+                po_name = po_name.strip().lower()
                 if not po_name:
                     raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
             else:

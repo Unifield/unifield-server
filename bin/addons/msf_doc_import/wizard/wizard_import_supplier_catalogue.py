@@ -205,7 +205,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                     else:
                         try:
                             product_code = product_code.strip()
-                            code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+                            code_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)])
                             if not code_ids:
                                 default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
                                 to_correct_ok = True
@@ -227,7 +227,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                     else:
                         try:
                             uom_name = p_uom.strip()
-                            uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
+                            uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', uom_name)], context=context)
                             if not uom_ids:
                                 uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
                                 error_list_line.append(_("The UoM '%s' was not found.") % uom_name)

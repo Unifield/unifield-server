@@ -236,7 +236,7 @@ class wizard_pick_import(osv.osv_memory):
 
         prod_obj = self.pool.get('product.product')
 
-        product_ids = prod_obj.search(cr, uid, [('default_code', '=', line_data['code'])], limit=1, context=context)
+        product_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', line_data['code'])], limit=1, context=context)
         if not product_ids:
             raise osv.except_osv(
                 _('Error'),
@@ -255,7 +255,7 @@ class wizard_pick_import(osv.osv_memory):
         import_file = SpreadsheetXML(xmlstring=base64.decodestring(wiz.import_file))
         import_data_header, import_data_lines = self.get_import_data(cr, uid, ids, import_file, context=context)
 
-        if import_data_header['reference'] != wiz.picking_id.name:
+        if (import_data_header['reference'] or '').lower() != wiz.picking_id.name.lower():
             raise osv.except_osv(_('Error'), _('PICK reference in the import file doesn\'t match with the current PICK'))
 
         moves_data = []
