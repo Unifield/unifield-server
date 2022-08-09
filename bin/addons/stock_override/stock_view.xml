@@ -753,7 +753,7 @@
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1" />
                             <field name="partner_id2"
-                                on_change="on_change_partner(partner_id2, address_id)"
+                                on_change="on_change_partner_out(partner_id2, address_id)"
                                 required="1"
                                 domain="[('partner_type', 'in', ['esc', 'external'])]"
                                 attrs="{'readonly': ['|', ('sale_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
@@ -771,6 +771,7 @@
                                 get_selection="list_reason_type_outgoing"
                                 widget="selection"
                                 attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
+                                on_change="on_change_rt_out(partner_id2, reason_type_id)"
                                 />
                         </group>
                         <group colspan="2" col="2">

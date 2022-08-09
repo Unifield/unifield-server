@@ -1574,7 +1574,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         'type': 'out',
                         'subtype': 'standard',
                         'already_replicated': False,
-                        'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1],
+                        'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_unit')[1],
                         'requestor': order.requestor,
                     })
                     seq_name = 'stock.picking.out'
@@ -1670,12 +1670,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if order.procurement_request and order.location_requestor_id:
             move_data.update({
                 'type': 'internal',
-                'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1],
                 'location_dest_id': order.location_requestor_id.id,
             })
-
+            rt = 'reason_type_internal_move'
             if order.location_requestor_id.usage in ('supplier', 'customer'):
                 move_data['type'] = 'out'
+                rt = 'reason_type_deliver_unit'
+            move_data['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', rt)[1]
         else:
             # first go to packing location (PICK/PACK/SHIP) or output location (Simple OUT)
             # according to the configuration

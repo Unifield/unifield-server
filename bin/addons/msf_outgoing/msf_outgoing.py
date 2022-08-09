@@ -3148,8 +3148,9 @@ class stock_picking(osv.osv):
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id or False,
                     'original_qty_partial': orig_qty,
                     'location_id': line.location_id and line.location_id.id,
-                    'reason_type_id': picking.reason_type_id.id,
                 }
+                if picking.type == 'out':
+                    values['reason_type_id'] = picking.reason_type_id.id
 
                 # If claim expects replacement
                 # or claim is from INT created by processing an IN to Stock instead of Cross Docking
