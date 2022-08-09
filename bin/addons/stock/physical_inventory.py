@@ -705,7 +705,7 @@ class PhysicalInventory(osv.osv):
                 inventory_reference = row.cells[2].data  # Cell C5
                 inventory_location = row.cells[5].data  # Cell F5
                 # Check location
-                if inventory_rec.location_id and inventory_rec.location_id.name.lower() != (inventory_location or '').strip().lower():
+                if inventory_rec.location_id and inventory_rec.location_id.name != (inventory_location or '').strip():
                     add_error(_('Location is different to inventory location'), row_index, 5)
 
                 # Check reference
