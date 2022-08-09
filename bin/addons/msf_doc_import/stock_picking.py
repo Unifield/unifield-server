@@ -82,7 +82,7 @@ class stock_picking(osv.osv):
                     po_name = part
                     break
 
-        po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=like', po_name)], context=context)
+        po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=ilike', po_name)], context=context)
         if not po_id:
             raise osv.except_osv(_('Error'), _('PO with name %s not found') % po_name)
         in_id = self.pool.get('stock.picking').search(cr, uid, [

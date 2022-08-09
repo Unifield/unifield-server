@@ -449,7 +449,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             index += 1
             values.setdefault(index, [])
             if len(row) > 2 and row[1] and row[1].data and (row[1].data == PACK_HEADER[1][0] or
-                    (row[1].type == 'str' and row[1].data.lower() == PACK_HEADER[1][0].lower())):
+                                                            (row[1].type == 'str' and row[1].data.lower() == PACK_HEADER[1][0].lower())):
                 # this line is for pack header
                 nb_pack += 1
                 for nb, x in enumerate(PACK_HEADER):
@@ -706,7 +706,7 @@ Nothing has been imported because of %s. See below:
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
-                if origin and wiz.purchase_id.name not in origin:
+                if origin and wiz.purchase_id.name.lower() not in origin.lower():
                     message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
                         % (origin, wiz.picking_id.name, wiz.origin)
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
