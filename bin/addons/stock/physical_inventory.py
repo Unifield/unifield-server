@@ -705,11 +705,11 @@ class PhysicalInventory(osv.osv):
                 inventory_reference = row.cells[2].data  # Cell C5
                 inventory_location = row.cells[5].data  # Cell F5
                 # Check location
-                if inventory_rec.location_id and inventory_rec.location_id.name != (inventory_location or '').strip():
+                if inventory_rec.location_id and inventory_rec.location_id.name.lower() != (inventory_location or '').strip().lower():
                     add_error(_('Location is different to inventory location'), row_index, 5)
 
                 # Check reference
-                if inventory_rec.ref != (inventory_reference or '').strip():
+                if inventory_rec.ref.lower() != (inventory_reference or '').strip().lower():
                     add_error(_('Reference is different to inventory reference'), row_index, 2)
                 counting_sheet_header.update({
                     'location_id': inventory_rec.location_id,

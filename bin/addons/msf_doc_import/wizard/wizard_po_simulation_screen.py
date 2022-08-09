@@ -808,7 +808,7 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                 '''
                 # Line 1: Order reference
                 order_ref = values.get(1, [])[1]
-                if order_ref != wiz.order_id.name:
+                if (order_ref or '').lower() != wiz.order_id.name.lower():
                     message = '''## IMPORT STOPPED ##
 
     LINE 1 OF THE IMPORTED FILE: THE ORDER REFERENCE \

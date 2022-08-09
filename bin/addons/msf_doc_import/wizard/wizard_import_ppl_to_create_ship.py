@@ -107,12 +107,12 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         if not header_data[0][2]:
             error_log += _(' The Packing reference is mandatory.')
         else:
-            if header_data[0][2] != picking.name:
+            if header_data[0][2].lower() != picking.name.lower():
                 error_log += _(' The Packing reference in the file doesn\'t match the one from the Pre-Packing header.')
         if not header_data[3][2]:
             error_log += _(' Our Ref (origin) is mandatory.')
         else:
-            if header_data[3][2] != picking.origin:
+            if header_data[3][2].lower() != picking.origin.lower():
                 error_log += _(' Our Ref (origin) in the file doesn\'t match the one from the Pre-Packing header.')
 
         if error_log:
