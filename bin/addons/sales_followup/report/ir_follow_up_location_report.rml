@@ -308,8 +308,7 @@
                     <para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('cancelled_move') and '0.00' or '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and line.get('delivery_order', '-') or removeParentNode('para') ]]</para>
-	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('delivery_order', '-') or removeParentNode('para') ]]</para>
+	    			<para style="LinesBlue">[[ line.get('delivery_order', '-') != '-' and line.get('shipment', '-') != '-' and line.get('shipment') or line.get('packing', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and line.get('state_display', '-') or removeParentNode('para') ]]</para>
@@ -317,10 +316,10 @@
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('edd', '') and (isDate(line['edd']) and formatLang(line['edd'], date=True) or line['edd']) or 'N/A') or removeParentNode('para') ]]</para>
-	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('cdd', '') and (isDate(line['cdd']) and formatLang(line['cdd'], date=True) or line['cdd']) or 'N/A') or removeParentNode('para') ]]</para>
+	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('edd', '') and (isDate(line['edd']) and formatLang(line['edd'], date=True) or line['edd']) or 'N/A') or removeParentNode('para') ]]</para>
                 </td>
                 <td>
-	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('edd', '') and (isDate(line['edd']) and formatLang(line['edd'], date=True) or line['edd']) or 'N/A') or removeParentNode('para') ]]</para>
+	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('cdd', '') and (isDate(line['cdd']) and formatLang(line['cdd'], date=True) or line['cdd']) or 'N/A') or removeParentNode('para') ]]</para>
 	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('cdd', '') and (isDate(line['cdd']) and formatLang(line['cdd'], date=True) or line['cdd']) or 'N/A') or removeParentNode('para') ]]</para>
                 </td>
                 <td>
