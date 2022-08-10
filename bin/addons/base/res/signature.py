@@ -280,6 +280,24 @@ class signature_object(osv.osv):
         self.write(cr, uid, ids, {'signed_off_line': False}, context=context)
         return True
 
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        fields_to_reset = [
+            'signature_id', 'signature_user_ids', 'signature_line_ids',
+            'signature_state', 'signed_off_line', 'signature_is_closed', 'signature_available',
+            'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model'
+        ]
+        to_del = []
+        for ftr in fields_to_reset:
+            if ftr not in default:
+                to_del.append(ftr)
+        res = super(signature_object, self).copy_data(cr, uid, id, default=default, context=context)
+        for ftd in to_del:
+            if ftd in res:
+                del(res[ftd])
+        return res
+
 signature_object()
 
 class signature_line(osv.osv):
