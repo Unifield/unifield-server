@@ -136,7 +136,7 @@
                             domain="[('state', '=', 'cancel')]" />
                     <field name="name" />
                     <field name="supplier_ids" string="Supplier" widget="many2one" />
-                    <field name="product_id" string="Product" widget="many2one" />
+                    <field name="product_id" />
                     <field name="sale_order_id" string="Sale Order" />
                     <field name="creator" />
                     <field name="creation_date" />

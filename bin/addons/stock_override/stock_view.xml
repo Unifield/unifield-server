@@ -758,7 +758,7 @@
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1" />
                             <field name="partner_id2"
-                                on_change="on_change_partner(partner_id2, address_id)"
+                                on_change="on_change_partner_out(partner_id2, address_id)"
                                 required="1"
                                 domain="[('partner_type', 'in', ['esc', 'external'])]"
                                 attrs="{'readonly': ['|', ('sale_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
@@ -772,9 +772,11 @@
                                 />
                             <field name="order_category"/>
                             <field name="reason_type_id"
-                                domain="[('outgoing_ok', '=', True)]"
+                                domain="[('outgoing_ok', '=', True), ('is_fs', '=', True)]"
+                                get_selection="list_reason_type_outgoing"
                                 widget="selection"
                                 attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
+                                on_change="on_change_rt_out(partner_id2, reason_type_id)"
                                 />
                         </group>
                         <group colspan="2" col="2">
@@ -898,9 +900,7 @@
                                             <field name="dg_check" widget="null_boolean" />
                                             <field name="np_check" widget="null_boolean" />
                                         </group>
-                                        <field name="reason_type_id" widget="selection"
-                                               domain="[('outgoing_ok', '=', True)]" 
-                                               attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('from_wkf_line', '=', True)]}"/>
+                                        <field name="reason_type_id" widget="selection" readonly="1"/>
                                     </group>
 
                                     <group colspan="2" col="2">

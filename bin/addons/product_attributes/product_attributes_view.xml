@@ -184,6 +184,7 @@
                             </group>
                         </page>
                         <page string="Miscellaneous">
+                            <field name="msfid" invisible="1" readonly="1"/>
                             <group colspan="4" col="4">
                                 <group colspan="2" col="2">
                                     <separator string="Information" colspan="2"/>
@@ -542,22 +543,196 @@
             </field>
         </record>
 
-        <act_window
-            context="{}"
-            domain="[('procurement_request', '=', False), ('product_id', '=', active_id)]"
-            id="action_order_line_product_tree"
-            name="Field orders"
-            res_model="sale.order"
-            src_model="product.product" />
+        <!-- List of actions at the bottom of the list, the dashed line-break is located on the web's side -->
+        <!-- FO -->
+        <record id="action_product_fo_tree" model="ir.actions.server">
+            <field name="name">Field Orders</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.view_docs_with_product(cr, uid, ids, menu_action='sale.action_order_form', context=context)
+            </field>
+        </record>
 
-        <act_window
-            context="{}"
-            domain="[('product_id', '=', active_id)]"
-            id="action_tender_product_tree"
-            name="Tenders"
-            res_model="tender"
-            src_model="product.product" />
+        <record id="open_product_fo_tree" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Field Orders</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_product_fo_tree"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="100001"/>
+        </record>
 
+        <!-- IR -->
+        <record id="action_product_ir_tree" model="ir.actions.server">
+            <field name="name">Internal Requests</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.view_docs_with_product(cr, uid, ids, menu_action='procurement_request.action_procurement_request', context=context)
+            </field>
+        </record>
+
+        <record id="open_product_ir_tree" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Internal Requests</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_product_ir_tree"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="100002"/>
+        </record>
+
+        <!-- PO -->
+        <record id="action_product_po_tree" model="ir.actions.server">
+            <field name="name">Purchases</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.view_docs_with_product(cr, uid, ids, menu_action='purchase.purchase_form_action', context=context)
+            </field>
+        </record>
+
+        <record id="open_product_po_tree" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Purchases</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_product_po_tree"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="100003"/>
+        </record>
+
+        <!-- RfQ -->
+        <record id="action_product_rfq_tree" model="ir.actions.server">
+            <field name="name">RfQs</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.view_docs_with_product(cr, uid, ids, menu_action='purchase.purchase_rfq', context=context)
+            </field>
+        </record>
+
+        <record id="open_product_rfq_tree" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">RfQs</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_product_rfq_tree"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="100004"/>
+        </record>
+
+        <!-- Tender -->
+        <record id="action_product_tender_tree" model="ir.actions.server">
+            <field name="name">Tenders</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.view_docs_with_product(cr, uid, ids, menu_action='tender_flow.tender_action', context=context)
+            </field>
+        </record>
+
+        <record id="open_product_tender_tree" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Tenders</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_product_tender_tree"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="100005"/>
+        </record>
+
+        <!-- IN -->
+        <record id="action_product_in_tree" model="ir.actions.server">
+            <field name="name">Incoming Shipments</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.view_docs_with_product(cr, uid, ids, menu_action='stock.action_picking_tree4', context=context)
+            </field>
+        </record>
+
+        <record id="open_product_in_tree" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Incoming Shipments</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_product_in_tree"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="100006"/>
+        </record>
+
+        <!-- INT -->
+        <record id="action_product_int_tree" model="ir.actions.server">
+            <field name="name">Internal Moves</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.view_docs_with_product(cr, uid, ids, menu_action='stock.action_picking_tree6', context=context)
+            </field>
+        </record>
+
+        <record id="open_product_int_tree" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Internal Moves</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_product_int_tree"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="100007"/>
+        </record>
+
+        <!-- OUT -->
+        <record id="action_product_out_tree" model="ir.actions.server">
+            <field name="name">Delivery Orders</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.view_docs_with_product(cr, uid, ids, menu_action='stock.action_picking_tree', context=context)
+            </field>
+        </record>
+
+        <record id="open_product_out_tree" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Delivery Orders</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_product_out_tree"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="100008"/>
+        </record>
+
+        <!-- Pick -->
+        <record id="action_product_pick_tree" model="ir.actions.server">
+            <field name="name">Pickings</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.action_picking_ticket', context=context)
+            </field>
+        </record>
+
+        <record id="open_product_pick_tree" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Pickings</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_product_pick_tree"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="100009"/>
+        </record>
+
+        <!-- PPL -->
+        <record id="action_product_pack_tree" model="ir.actions.server">
+            <field name="name">Packings</field>
+            <field name="model_id" ref="product.model_product_product"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.action_ppl', context=context)
+            </field>
+        </record>
+
+        <record id="open_product_pack_tree" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">product.product</field>
+            <field name="name">Packings</field>
+            <field name="value" eval="'ir.actions.server,%d'%action_product_pack_tree"/>
+            <field name="object" eval="True"/>
+            <field name="sequence" eval="100010"/>
+        </record>
 
         <!-- Add a link to see all inactivated products -->
         <act_window

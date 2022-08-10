@@ -26,6 +26,7 @@
                             <field name="register_type"/>
                             <field name="currency_id"/>
                             <field name="prev_reg_id"/>
+                            <field name="journal_id"/>
                             <field name="prev_instance_id"/>
                         </tree>
                     </field>

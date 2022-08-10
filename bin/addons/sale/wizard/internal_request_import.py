@@ -612,7 +612,7 @@ class internal_request_import(osv.osv):
                     comment = vals[7]
                     if product_code:
                         product_code = tools.ustr(product_code)
-                        prod_ids = prod_obj.search(cr, uid, [('default_code', '=', product_code)], limit=1, context=context)
+                        prod_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', product_code)], limit=1, context=context)
                         if prod_ids:
                             product_id = prod_ids[0]
                             prod_cols = ['standard_price', 'uom_id', 'uom_po_id']
@@ -665,7 +665,7 @@ class internal_request_import(osv.osv):
                         line_errors += _('Quantity must be a number. ')
 
                     # Cost Price and UoM
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', vals[5])], limit=1, context=context)
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', vals[5])], limit=1, context=context)
                     if product_id and product:
                         cost_price = vals[4]
                         try:
