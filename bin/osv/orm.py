@@ -4311,7 +4311,7 @@ class orm(orm_template):
 
             v = {}
             for val in updend:
-                if self._inherit_fields[val][0] == table:
+                if val in self._inherit_fields and self._inherit_fields[val][0] == table:
                     v[val] = vals[val]
             if v:
                 self.pool.get(table).write(cr, user, nids, v, context)

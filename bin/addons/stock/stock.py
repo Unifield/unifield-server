@@ -1512,8 +1512,6 @@ class stock_picking(osv.osv):
             sale_obj.write(cr, uid, [picking.sale_id.id], {
                 'invoice_ids': [(4, invoice_id)],
             })
-        if picking.purchase_id:
-            purchase_obj.write(cr, uid, [picking.purchase_id.id], {'invoice_id': invoice_id, })
         return
 
     # action_invoice_create method has been removed because of the impossibility to retrieve DESTINATION from SO.
