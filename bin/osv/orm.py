@@ -3353,7 +3353,6 @@ class orm(orm_template):
                             if f.required and f_pg_notnull == 0:
                                 # set the field to the default value if any
                                 if k in self._defaults:
-                                    print self._table,  k
                                     if callable(self._defaults[k]):
                                         default = self._defaults[k](self, cr, 1, context)
                                     else:
