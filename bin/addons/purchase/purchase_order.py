@@ -41,11 +41,9 @@ from msf_order_date import TRANSPORT_TYPE
 from msf_order_date import ZONE_SELECTION
 from sourcing.purchase_order import COMPATS
 
-
 class purchase_order(osv.osv):
     _name = "purchase.order"
     _description = "Purchase Order"
-    _inherit = 'signature.object'
     _order = "id desc"
 
     def _where_calc(self, cr, uid, domain, active_test=True, context=None):

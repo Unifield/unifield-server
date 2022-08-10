@@ -742,10 +742,10 @@ stock_tracking()
 #----------------------------------------------------------
 # Stock Picking
 #----------------------------------------------------------
+
 class stock_picking(osv.osv):
     _name = "stock.picking"
     _description = "Picking List"
-    _inherit = 'signature.object'
 
     def _where_calc(self, cr, uid, domain, active_test=True, context=None):
         '''

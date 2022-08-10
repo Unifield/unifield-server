@@ -60,7 +60,6 @@ sale_shop()
 class sale_order(osv.osv):
     _name = "sale.order"
     _description = "Sales Order"
-    _inherit = 'signature.object'
 
     def _where_calc(self, cr, uid, domain, active_test=True, context=None):
         '''
