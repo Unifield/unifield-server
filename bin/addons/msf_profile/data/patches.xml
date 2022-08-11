@@ -820,5 +820,10 @@
             <field name="method">us_9406_create_common_acl</field>
         </record>
 
+        <record id="us_9406_create_bar" model="patch.scripts">
+           <!-- TODO : to be removed at integration ? -->
+            <field name="method">us_9406_create_bar</field>
+        </record>
+
     </data>
 </openerp>

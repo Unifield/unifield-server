@@ -56,6 +56,19 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_9406_create_bar(self, cr, uid, *a, **b):
+        # TODO: remove me at integration
+        b_names = ['add_user_signatures', 'action_close_signature', 'toggle_active', 'activate_offline']
+        bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+        for group_name, model in [
+            ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement']),
+            ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order'])
+        ]:
+            group_id = self.pool.get('res.groups').create(cr, uid, {'name': group_name})
+            bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
+            bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
+        return True
+
     def us_9406_create_common_acl(self, cr, uid, *a, **b):
         model_obj = self.pool.get('ir.model')
         acl_obj = self.pool.get('ir.model.access')
