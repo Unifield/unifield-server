@@ -255,6 +255,9 @@ class signature_object(osv.osv):
                 arch = etree.fromstring(fvg['arch'])
                 fields = arch.xpath('//page[@name="signature_tab"]')
                 if fields:
+                    for to_remove in ['signature_state', 'signature_available', 'signature_user_ids', 'signed_off_line', 'signature_line_ids', 'signature_is_closed']:
+                        if fvg.get('fields') and to_remove in fvg['fields']:
+                            del fvg['fields'][to_remove]
                     parent_node = fields[0].getparent()
                     parent_node.remove(fields[0])
                     fvg['arch'] = etree.tostring(arch)
