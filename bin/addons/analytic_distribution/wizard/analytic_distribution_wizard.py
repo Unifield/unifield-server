@@ -1276,7 +1276,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                     cr, uid, [cash_return_line_id],
                     {'analytic_distribution_id': distr_id},
                     context=context)
-            return {'type': 'ir.actions.act_window_close', 'o2m_refresh': 'advance_line_ids'}
             return_wiz = {
                 'name': _('Advance Return - Wizard'),
                 'type': 'ir.actions.act_window',
