@@ -13,7 +13,7 @@ list_sign = {
         ('tr', _('Technical Responsible'), True, ''),
         ('fr', _('Finance Responsible'), True, ''),
         ('mr', _('Mission Responsible'), False, ''),
-        ('hq', _('HQ'), False, False),
+        ('hq', _('HQ'), False, ''),
     ],
     'sale.order': [
         ('tr', _('Technical Responsible'), True, ''),
