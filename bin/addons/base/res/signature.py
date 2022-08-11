@@ -532,7 +532,10 @@ class signature_add_user_wizard(osv.osv_memory):
         for subtype, list_users in wiz_type_users:
             if list_users:
                 num_listed_users += len(list_users)
-                active_sign = len([x for x in list_sign.get(wiz.signature_id.signature_res_model, []) if x[2] and x[3] == subtype])
+                if wiz.signature_id.signature_line_ids:
+                    active_sign = len([x for x in wiz.signature_id.signature_line_ids if x.is_active and x.subtype == subtype])
+                else:
+                    active_sign = len([x for x in list_sign.get(wiz.signature_id.signature_res_model, []) if x[2] and x[3] == subtype])
 
                 if len(list_users) > active_sign:
                     raise osv.except_osv(_('Warning'), _('A maximum of %d users are allowed to sign') % active_sign)
