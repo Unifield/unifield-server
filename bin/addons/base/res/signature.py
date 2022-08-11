@@ -358,16 +358,16 @@ class signature_line(osv.osv):
             user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['has_valid_signature', 'esignature_id'], context=context)
             if not user_d.has_valid_signature:
                 raise osv.except_osv(_('Warning'), _("No signature defined in user's profile"))
-            return user_d.esignature_id.id
+            return user_d.esignature_id
 
         return True
 
     def open_sign_wizard(self, cr, uid, ids, context=None):
-        esignature_id = self._check_sign_unsign(cr, uid, ids, check_has_sign=True, context=context)
+        esignature = self._check_sign_unsign(cr, uid, ids, check_has_sign=True, context=context)
         line = self.browse(cr, uid, ids[0], context=context)
         doc = self.pool.get(line.signature_id.signature_res_model).browse(cr, uid, line.signature_id.signature_res_id, context=context)
 
-        image = self.pool.get('signature.image').browse(cr, uid, esignature_id, context=context).pngb64
+        image = esignature.pngb64
 
         unit = saved_unit[line.signature_id.signature_res_model](doc)
         value = saved_value[line.signature_id.signature_res_model](doc)
@@ -403,11 +403,11 @@ class signature_line(osv.osv):
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name'], context=context)
-        esignature_id = sign_line._check_sign_unsign(check_has_sign=True, context=context)
+        esignature = sign_line._check_sign_unsign(check_has_sign=True, context=context)
         user = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['name'], context=context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature_id, 'value': value, 'unit': unit, 'legal_name': user.name}, context=context)
+        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature.id, 'value': value, 'unit': unit, 'legal_name': esignature.legal_name}, context=context)
 
         if value is False:
             value = ''
@@ -609,14 +609,14 @@ class signature_set_user(osv.osv_memory):
         'position': fields.selection([('top', 'Top'), ('middle', 'Middle'), ('bottom', 'Bottom')], string='Position'),
     }
 
-    def _get_name(self, cr, uid, *a, **b):
-        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-        return self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['name']).name
+    #def _get_name(self, cr, uid, *a, **b):
+    #    real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+    #    return self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['name']).name
 
     _defaults = {
         'preview': False,
         'position': 'bottom',
-        'legal_name': lambda self, cr, uid, *a, **b: self._get_name(cr, uid, *a, **b),
+        #'legal_name': lambda self, cr, uid, *a, **b: self._get_name(cr, uid, *a, **b),
     }
     def closepref(self, cr, uid, ids, context=None):
         return {'type': 'closepref'}
@@ -663,7 +663,7 @@ class signature_set_user(osv.osv_memory):
             new_image = self.pool.get('signature.image').create(cr, root_uid, {
                 'user_id': real_uid,
                 'image': wiz.new_signature,
-                'legal_name': wiz.user_id.name,
+                'legal_name': wiz.legal_name,
                 'from_date': wiz.user_id.signature_from,
                 'to_date': wiz.user_id.signature_to,
             }, context=context)
