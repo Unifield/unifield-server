@@ -135,6 +135,10 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
             search_obj = ['sale.order.line', 'sale.order']
         elif obj == 'purchase.order.line':
             search_obj = ['purchase.order.line', 'purchase.order']
+        elif obj == 'signature.line' and args and args[0] and method == 'toggle_active':
+            assert len(args[0]) == 1, 'Toggle active can be called on one record only'
+            search_obj = [pool.get('signature.line').browse(cr, adminUid, args[0][0], fields_to_fetch=['signature_id']).signature_id.signature_res_model]
+
 
         model_id = pool.get('ir.model').search(cr, adminUid, [('model', 'in', search_obj)])
         rules_pool = pool.get('msf_button_access_rights.button_access_rule')
