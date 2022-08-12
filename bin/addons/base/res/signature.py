@@ -265,7 +265,14 @@ class signature_object(osv.osv):
 
     def activate_signature(self, cr, uid, ids, context=None):
         _register_log(self, cr, uid, ids, self._name, 'Signature Enabled', False, True, 'write', context)
-        self.write(cr, uid, ids, {'signature_available': True}, context=context)
+        for _id in ids:
+            data = {'signature_available': True}
+            record = self.browse(cr, uid, _id, fields_to_fetch=['signature_line_ids'], context=context)
+            if list_sign.get(self._name):
+                existing_keys = [(x.name_key, x.subtype) for x in record.signature_line_ids]
+                data['signature_line_ids'] = [(0, 0, {'name_key': x[0], 'name': x[1] , 'is_active': x[2], 'subtype': x[3]}) for x in list_sign.get(self._name) if (x[0], x[3]) not in existing_keys]
+
+            self.write(cr, uid, _id, data, context=context)
         return True
 
     def disable_signature(self, cr, uid, ids, context=None):
@@ -577,6 +584,7 @@ class signature_add_user_wizard(osv.osv_memory):
 
 
         # create missing lines to be signed
+        # TODO to disable / here to manage RB migration
         existing_keys = [(x.name_key, x.subtype) for x in wiz.signature_id.signature_line_ids]
         if list_sign.get(wiz.signature_id.signature_res_model, []):
             wiz.signature_id.write({'signature_line_ids': [(0, 0, {'name_key': x[0], 'name': x[1] , 'is_active': x[2], 'subtype': x[3]}) for x in list_sign.get(wiz.signature_id.signature_res_model) if (x[0], x[3]) not in existing_keys]}, context=context)
