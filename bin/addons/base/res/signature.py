@@ -538,6 +538,17 @@ class signature_add_user_wizard(osv.osv_memory):
         else:
             wiz_type_users = [('', wiz.res_users)]
 
+
+        fake_uid = uid
+        rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
+        rule_ids = rules_pool.search(cr, 1, [('name', '=', 'add_user_signatures'), ('model_id', '=', wiz.signature_id.signature_res_model)])
+        if rule_ids:
+            user_group = set(self.pool.get('res.users').read(cr, 1, uid, ['groups_id'])['groups_id'])
+            for rule in rules_pool.browse(cr, 1, rule_ids, fields_to_fetch=['group_ids']):
+                if user_group.intersection([g.id for g in rule.group_ids]):
+                    fake_uid = fakeUid(1, uid)
+                    break
+
         num_listed_users = 0
         for subtype, list_users in wiz_type_users:
             if list_users:
@@ -569,25 +580,18 @@ class signature_add_user_wizard(osv.osv_memory):
 
             for to_create in list_users:
                 _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, 'Add User Allowed to sign %s' % (subtype), '', '%s (id:%s)' % (to_create.name, to_create.id) , 'create', context)
-                self.pool.get('signature.users.allowed').create(cr, uid, {'signature_id': wiz.signature_id.id, 'user_id': to_create.id, 'subtype': subtype}, context=context)
+                self.pool.get('signature.users.allowed').create(cr, fake_uid, {'signature_id': wiz.signature_id.id, 'user_id': to_create.id, 'subtype': subtype}, context=context)
 
             for _to_del_id, _to_del_name in to_del:
                 _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, 'Delete User Allowed to sign %s' % (subtype), '%s (id:%s)' % (_to_del_name, _to_del_id), '', 'unlink', context)
-                self.pool.get('signature.users.allowed').unlink(cr, uid, _to_del_id, context=context)
+                self.pool.get('signature.users.allowed').unlink(cr, fake_uid, _to_del_id, context=context)
 
         if num_listed_users and wiz.signature_id.signature_state not in ('partial', 'signed'):
             data['signature_state'] = 'open'
         elif not num_listed_users and wiz.signature_id.signature_state == 'open':
             data['signature_state'] = False
         if data:
-            wiz.signature_id.write(data, context=context)
-
-
-        # create missing lines to be signed
-        # TODO to disable / here to manage RB migration
-        existing_keys = [(x.name_key, x.subtype) for x in wiz.signature_id.signature_line_ids]
-        if list_sign.get(wiz.signature_id.signature_res_model, []):
-            wiz.signature_id.write({'signature_line_ids': [(0, 0, {'name_key': x[0], 'name': x[1] , 'is_active': x[2], 'subtype': x[3]}) for x in list_sign.get(wiz.signature_id.signature_res_model) if (x[0], x[3]) not in existing_keys]}, context=context)
+            self.pool.get('signature').write(cr, fake_uid, wiz.signature_id.id, data, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
