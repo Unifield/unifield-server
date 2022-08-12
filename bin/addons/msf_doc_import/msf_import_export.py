@@ -1328,6 +1328,10 @@ class msf_import_export(osv.osv_memory):
                         if data.get('product_id') and data['product_id'] not in forbid_creation_of:
                             line_created = impobj.create(cr, uid, data, context=context)
                             lines_already_updated.append(line_created)
+                    elif import_brw.model_list_selection == 'cost_centers':
+                        keys_to_extract = ['category','code', 'name', 'date_start', 'parent_id', 'type']
+                        data_subset = {key: data[key] for key in keys_to_extract}
+                        id_created = impobj.create(cr, uid, data_subset, context=context)
                     else:
                         id_created = impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
