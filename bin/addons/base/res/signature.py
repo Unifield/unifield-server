@@ -272,7 +272,7 @@ class signature_object(osv.osv):
                 existing_keys = [(x.name_key, x.subtype) for x in record.signature_line_ids]
                 data['signature_line_ids'] = [(0, 0, {'name_key': x[0], 'name': x[1] , 'is_active': x[2], 'subtype': x[3]}) for x in list_sign.get(self._name) if (x[0], x[3]) not in existing_keys]
 
-            self.write(cr, uid, _id, data, context=context)
+            self.write(cr, uid, [_id], data, context=context)
         return True
 
     def disable_signature(self, cr, uid, ids, context=None):
