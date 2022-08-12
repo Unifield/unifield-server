@@ -98,11 +98,13 @@
                         </page>
                         <page string="Description">
                             <field colspan="4" name="description" nolabel="1"/>
+                        </page>
+                        <page string="Tied Instances" attrs="{'invisible':[('category', '!=', 'OC')]}">
                             <!-- exportable fields -->
-                            <field name="top_cc_instance_ids" invisible="1"/>
-                            <field name="is_target_cc_instance_ids" invisible="1"/>
-                            <field name="po_fo_cc_instance_ids" invisible="1"/>
-                            <field name="cc_missions" invisible="1"/>
+                            <field name="top_cc_instance_ids" readonly="1"/>
+                            <field name="is_target_cc_instance_ids" readonly="1"/>
+                            <field name="po_fo_cc_instance_ids" readonly="1"/>
+                            <field name="cc_instance_ids" readonly="1"/>
                         </page>
                     </notebook>
                 </form>

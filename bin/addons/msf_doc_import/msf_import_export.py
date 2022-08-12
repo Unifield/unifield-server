@@ -712,6 +712,8 @@ class msf_import_export(osv.osv_memory):
         acc_analytic_obj = self.pool.get('account.analytic.account')
         acc_dest_obj = self.pool.get('account.destination.link')
         dest_cc_link_obj = self.pool.get('dest.cc.link')
+        inst_obj = self.pool.get('msf.instance')
+        cc_target_obj = self.pool.get('account.target.costcenter')
 
         cost_centers_cache = {}
         gl_account_cache = {}
@@ -1210,6 +1212,8 @@ class msf_import_export(osv.osv_memory):
                 # Cost Centers
                 if import_brw.model_list_selection == 'cost_centers':
                     ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'OC')])
+                    if ids_to_update:
+                        raise Exception(_('Cost center %s already exists in the system and update of CCs via import is not allowed.') % (data.get('code')))
                     context['from_import_menu'] = True
                     data['category'] = 'OC'
                     # Parent Analytic Account
@@ -1220,6 +1224,47 @@ class msf_import_export(osv.osv_memory):
                         parent_category = parent_id.category or ''
                         if parent_type != 'view' or parent_category != 'OC':
                             raise Exception(_('The Parent Analytic Account must be a View type Cost Center.'))
+                    cc_inst = data.get('cc_instance_ids') and data.get('cc_instance_ids')[0]
+                    top_cc = data.get('top_cc_instance_ids') and data.get('top_cc_instance_ids')[0]
+                    target_cc = data.get('is_target_cc_instance_ids') and data.get('is_target_cc_instance_ids')[0]
+                    po_fo_cc = data.get('po_fo_cc_instance_ids') and data.get('po_fo_cc_instance_ids')[0]
+                    if (top_cc or po_fo_cc) and not target_cc:
+                        raise Exception(_('CCs with "Instances having the CC as Top CC / Code" '
+                                          'or "Instances having the CC as CC picked for PO/FO ref / Code" filled should '
+                                          'have the column "Instances having the CC as Target CC / Code" filled.'))
+                    for inst in (cc_inst, top_cc, target_cc, po_fo_cc):
+                        curr_inst = False
+                        if inst == cc_inst:
+                            curr_inst = 'cc_inst'
+                        elif inst == top_cc:
+                            curr_inst = 'top_cc'
+                        elif inst == target_cc:
+                            curr_inst = 'target_cc'
+                        elif inst == po_fo_cc:
+                            curr_inst = 'po_fo_cc'
+                        if inst and isinstance(inst, tuple) and len(inst) == 3:
+                            inst_codes = [x.strip() for x in (inst[2]['code']).split(',')]
+                            for inst_code in inst_codes:
+                                inst_ids = inst_obj.search(cr, uid,[('code', '=', inst_code), ('state', '=', 'active')])
+                                if not inst_ids:
+                                    raise Exception(_('The instance %s doesn\'t exist or is not active.') % inst_code)
+                                if curr_inst == 'cc_inst' and inst_obj.search(cr, uid,[('code', '=', inst_code), ('level', '!=', 'coordo')]):
+                                        raise Exception(_('You should provide only instances that are coordinations '
+                                                          'for the column "Instances where the CC is added to / Code".'))
+                                if curr_inst == 'top_cc' and \
+                                        cc_target_obj.search(cr, uid, [('instance_id', '=', inst_ids[0]),
+                                                                       ('is_top_cost_center', '=', True)]):
+                                    raise Exception(_('The instance %s already have a top cost centre for '
+                                                          'budget consolidation.') % inst_code)
+                                if curr_inst == 'po_fo_cc' and \
+                                        cc_target_obj.search(cr, uid, [('instance_id', '=', inst_ids[0]),
+                                                                      ('is_po_fo_cost_center', '=', True)]):
+                                    raise Exception(_('The instance %s already have a cost centre picked for '
+                                                          'PO/FO reference.') % inst_code)
+                                    # target_ids = cc_target_obj.search(cr, uid,
+                                    #                                   [('instance_id', '=', inst_ids[0]),
+                                    #                                    ('cost_center_code', '=', data['code'])])
+                                    # cc_target_obj.write(cr, uid, target_ids, {'cost_center_code': data['code']}, context=context)
 
                 # Free 1
                 if import_brw.model_list_selection == 'free1':
