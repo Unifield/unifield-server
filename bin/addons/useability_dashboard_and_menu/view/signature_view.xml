@@ -32,6 +32,7 @@
                 <tree hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <field name="user_id" />
                     <field name="doc_name" />
+                    <field name="doc_state" />
                     <button name="open_doc" string="Open Document" type="object" icon="terp-gtk-go-back-rtl" />
                     <field name="doc_type" />
                     <field name="subtype" />

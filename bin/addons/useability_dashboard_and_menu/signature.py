@@ -3,6 +3,7 @@
 from osv import fields, osv
 from tools.sql import drop_view_if_exists
 
+
 class signature_follow_up(osv.osv):
     _name = 'signature.follow_up'
     _description = 'Signatures Follow-up'
@@ -27,7 +28,8 @@ class signature_follow_up(osv.osv):
                     l.subtype as subtype,
                     count(l.user_id=user_rel.user_id or NULL) as signed,
                     coalesce(po.name, so.name, invoice.number, invoice.name, pick.name, jour.code|| ' ' ||per.name) as doc_name,
-                    min(case when l.user_id=user_rel.user_id then l.date else NULL end) as signature_date
+                    min(case when l.user_id=user_rel.user_id then l.date else NULL end) as signature_date,
+                    coalesce(po.state, so.state, invoice.state, st.name, pick.state) as doc_state
                 from
                     signature s
                 inner join signature_users_allowed user_rel on user_rel.signature_id = s.id
@@ -43,9 +45,17 @@ class signature_follow_up(osv.osv):
                 left join stock_picking pick on pick.id =  s.signature_res_id and s.signature_res_model='stock.picking'
                 group by
                     user_rel.id, user_rel.user_id, s.signature_res_id, s.signature_state, s.signature_res_model, po.name, so.name, jour.code, jour.type, per.name, l.subtype, pick.name,
-                    invoice.real_doc_type, invoice.type, invoice.is_debit_note, invoice.is_inkind_donation, invoice.is_direct_invoice, invoice.is_intermission, invoice.number, invoice.name
+                    invoice.real_doc_type, invoice.type, invoice.is_debit_note, invoice.is_inkind_donation, invoice.is_direct_invoice, invoice.is_intermission, invoice.number, invoice.name,
+                    po.state, so.state, invoice.state, st.name, pick.state
             )
         """)
+
+
+    def _get_all_states(self, cr, uid, context=None):
+        st = {}
+        for obj in ['purchase.order', 'sale.order', 'stock.picking', 'account.bank.statement', 'account.invoice']:
+            st.update(dict(self.pool.get(obj)._columns['state'].selection))
+        return st.items()
 
     _columns = {
         'user_id': fields.many2one('res.users', 'User', readonly=1),
@@ -58,6 +68,7 @@ class signature_follow_up(osv.osv):
         ], 'Document Type', readonly=1),
         'doc_id': fields.integer('Doc ID', readonly=1),
         'status': fields.selection([('open', 'Open'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=1),
+        'doc_state': fields.selection(_get_all_states, string='Doc State', readonly=1),
         'signed': fields.integer('Signed', readonly=1),
         'signature_date': fields.datetime('Signature Date', readonly=1),
         'subtype': fields.selection([('full', 'Full Report'), ('rec', 'Reconciliation')], string='Type of signature', readonly=1),
