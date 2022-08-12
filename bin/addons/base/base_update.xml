@@ -154,7 +154,7 @@
                                     <field name="current_signature" widget="image" height="100" nolabel="1" colspan="4"/>
                                     <field name="has_signature" invisible="1" />
                                     <field name="has_valid_signature" invisible="1" />
-                                    <button type="object" string="Archive Signature" name="reset_signature" icon="gtk-stop" colspan="4" confirm="Do you want to disable this signature ?" attrs="{'invisible': [('has_signature', '=', False)]}"/>
+                                    <button type="object" string="De-activate Signature" name="reset_signature" icon="gtk-stop" colspan="4" confirm="Do you want to disable this signature, this operation cannot be undone ?" attrs="{'invisible': [('has_signature', '=', False)]}"/>
                                 <!-- <field name="signature" colspan="4" nolabel="1" /> -->
                                 </group>
                                 <field name="signature_history_ids" colspan="4" mode="tree" readonly="1" nolabel="1">
