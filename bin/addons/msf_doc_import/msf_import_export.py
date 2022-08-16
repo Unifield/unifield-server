@@ -1211,6 +1211,10 @@ class msf_import_export(osv.osv_memory):
 
                 # Cost Centers
                 if import_brw.model_list_selection == 'cost_centers':
+                    where_added_inst = []
+                    top_cc_inst = []
+                    po_fo_inst = []
+                    target_inst = []
                     ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'OC')])
                     if ids_to_update:
                         raise Exception(_('Cost center %s already exists in the system and update of CCs via import is not allowed.') % (data.get('code')))
@@ -1242,29 +1246,43 @@ class msf_import_export(osv.osv_memory):
                             curr_inst = 'target_cc'
                         elif inst == po_fo_cc:
                             curr_inst = 'po_fo_cc'
-                        if inst and isinstance(inst, tuple) and len(inst) == 3:
+                        if inst and isinstance(inst, tuple) and len(inst) == 3 and 'code' in inst[2]\
+                                and inst[2]['code'] is not None:
                             inst_codes = [x.strip() for x in (inst[2]['code']).split(',')]
                             for inst_code in inst_codes:
+                                # Instance check
                                 inst_ids = inst_obj.search(cr, uid,[('code', '=', inst_code), ('state', '=', 'active')])
                                 if not inst_ids:
                                     raise Exception(_('The instance %s doesn\'t exist or is not active.') % inst_code)
-                                if curr_inst == 'cc_inst' and inst_obj.search(cr, uid,[('code', '=', inst_code), ('level', '!=', 'coordo')]):
+                                not_a_coord_ids = inst_obj.search(cr, uid, [('code', '=', inst_code), ('level', '!=', 'coordo')])
+                                top_cc_ids = cc_target_obj.search(cr, uid, [('instance_id', '=', inst_ids[0]),
+                                                               ('is_top_cost_center', '=', True)])
+                                po_fo_ids = cc_target_obj.search(cr, uid, [('instance_id', '=', inst_ids[0]),
+                                                               ('is_po_fo_cost_center', '=', True)])
+                                if curr_inst == 'cc_inst' and not_a_coord_ids:
                                         raise Exception(_('You should provide only instances that are coordinations '
                                                           'for the column "Instances where the CC is added to / Code".'))
-                                if curr_inst == 'top_cc' and \
-                                        cc_target_obj.search(cr, uid, [('instance_id', '=', inst_ids[0]),
-                                                                       ('is_top_cost_center', '=', True)]):
+                                if curr_inst == 'top_cc' and top_cc_ids:
                                     raise Exception(_('The instance %s already have a top cost centre for '
                                                           'budget consolidation.') % inst_code)
-                                if curr_inst == 'po_fo_cc' and \
-                                        cc_target_obj.search(cr, uid, [('instance_id', '=', inst_ids[0]),
-                                                                      ('is_po_fo_cost_center', '=', True)]):
+                                if curr_inst == 'po_fo_cc' and po_fo_ids:
                                     raise Exception(_('The instance %s already have a cost centre picked for '
                                                           'PO/FO reference.') % inst_code)
-                                    # target_ids = cc_target_obj.search(cr, uid,
-                                    #                                   [('instance_id', '=', inst_ids[0]),
-                                    #                                    ('cost_center_code', '=', data['code'])])
-                                    # cc_target_obj.write(cr, uid, target_ids, {'cost_center_code': data['code']}, context=context)
+                                # Instance update: Once all the checks on instances are OK, we store their ids in
+                                # dictionaries to use it later to link the instances to the new created CC
+                                if curr_inst == 'cc_inst' and inst_ids:
+                                    where_added_inst.append(inst_ids[0])
+                                    # Add also the ids of active projects depending on this coordo
+                                    project_ids = inst_obj.browse(cr, uid, inst_ids[0], fields_to_fetch=['child_ids'], context=context).child_ids
+                                    for project in project_ids:
+                                        if project.state == 'active':
+                                            where_added_inst.append(project.id)
+                                if curr_inst == 'top_cc' and inst_ids:
+                                    top_cc_inst.append(inst_ids[0])
+                                if curr_inst == 'target_cc':
+                                    target_inst.append(inst_ids[0])
+                                if curr_inst == 'po_fo_cc':
+                                    po_fo_inst.append(inst_ids[0])
 
                 # Free 1
                 if import_brw.model_list_selection == 'free1':
@@ -1329,9 +1347,38 @@ class msf_import_export(osv.osv_memory):
                             line_created = impobj.create(cr, uid, data, context=context)
                             lines_already_updated.append(line_created)
                     elif import_brw.model_list_selection == 'cost_centers':
-                        keys_to_extract = ['category','code', 'name', 'date_start', 'parent_id', 'type']
-                        data_subset = {key: data[key] for key in keys_to_extract}
+                        keys_to_extract = ['category', 'code', 'name', 'date_start', 'date','parent_id', 'type']
+                        data_subset = {key: data[key] for key in keys_to_extract if key in data.keys()}
                         id_created = impobj.create(cr, uid, data_subset, context=context)
+                        if where_added_inst:
+                            for inst_id in where_added_inst:
+                                cc_target_obj.create(cr, uid, {'instance_id': inst_id, 'cost_center_id':id_created}, context=context)
+                        if top_cc_inst:
+                            top_cc_id = cc_target_obj.search(cr, uid, [('instance_id', '=', top_cc_inst[0]),
+                                                                            ('cost_center_id', '=', id_created)])
+                            if top_cc_id:
+                                cc_target_obj.write(cr, uid, top_cc_id, {'is_top_cost_center': True}, context=context)
+                            else:
+                                cc_target_obj.create(cr, uid, {'instance_id': top_cc_inst[0], 'cost_center_id': id_created,
+                                                               'is_top_cost_center': True}, context=context)
+                        if target_inst:
+                            target_id = cc_target_obj.search(cr, uid, [('instance_id', '=', target_inst[0]),
+                                                                       ('cost_center_id', '=', id_created)])
+                            if target_id:
+                                cc_target_obj.write(cr, uid, target_id, {'is_target': True}, context=context)
+                            else:
+                                cc_target_obj.create(cr, uid, {'instance_id': target_inst[0], 'cost_center_id': id_created,
+                                                               'is_target': True}, context=context)
+                        if po_fo_inst:
+                            po_fo_id = cc_target_obj.search(cr, uid, [('instance_id', '=', po_fo_inst[0]),
+                                                                       ('cost_center_id', '=', id_created)])
+                            if po_fo_id:
+                                cc_target_obj.write(cr, uid, po_fo_id, {'is_po_fo_cost_center': True}, context=context)
+                            else:
+                                cc_target_obj.create(cr, uid, {'instance_id': po_fo_inst[0], 'cost_center_id': id_created,
+                                                               'is_po_fo_cost_center': True}, context=context)
+
+
                     else:
                         id_created = impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
