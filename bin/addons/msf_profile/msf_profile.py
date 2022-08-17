@@ -56,6 +56,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF27
+    def us_9842_remove_space(self, cr, uid, *a, **b):
+        cr.execute('''SELECT id, identification_id FROM hr_employee''')
+        for x in cr.fetchall():
+            cr.execute('''UPDATE hr_employee SET identification_id = %s WHERE id = %s''', (x[1].strip(), x[0]))
+
     # UF25.0
     def us_8451_split_rr(self, cr, uid, *a, **b):
         if not cr.column_exists('replenishment_segment_line', 'rr_fmc_1') or not cr.column_exists('replenishment_segment_line', 'rr_max_1'):
