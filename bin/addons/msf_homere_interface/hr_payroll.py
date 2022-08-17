@@ -99,7 +99,7 @@ class hr_payroll(osv.osv):
             if line.cost_center_id and not line.funding_pool_id and not line.destination_id:
                 res[line.id] = 'invalid'
                 continue
-            # if FP is MSF Private Fund and no destination_id, then all is OK.
+            # if FP is MSF Private Fund and no destination_id, it's also invalid (since US-10228).
             if line.funding_pool_id and line.funding_pool_id.id == fp_id and not line.destination_id:
                 res[line.id] = 'invalid'
                 continue
