@@ -211,7 +211,7 @@ class Local(RemoteInterface):
         return []
 
     def get_file_content(self, path):
-        return open(file).read()
+        return open(path).read()
 
 class Remote():
     connection_type = False
@@ -290,7 +290,7 @@ class Remote():
         return False
 
     def get_file_content(self, path):
-        logging.getLogger('automated.import').info(_('Reading %s content') % file)
+        logging.getLogger('automated.import').info(_('Reading %s content') % path)
         if not self.source_is_remote:
             if not self.local_connection:
                 self.local_connection = Local(**{})
