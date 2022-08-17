@@ -30,6 +30,8 @@ from msf_partner import PARTNER_TYPE
 from base import currency_date
 from tools.safe_eval import safe_eval
 
+from datetime import datetime
+
 class account_invoice(osv.osv):
     def _amount_all(self, cr, uid, ids, name, args, context=None):
         res = {}
@@ -457,7 +459,9 @@ class account_invoice(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
-        vals.update({'order_val': vals['date_invoice'], })  # US-10105 At creation of draft invoice
+        date_invoice = 'date_invoice' in vals and vals['date_invoice'] or datetime.today()
+        if date_invoice:
+            vals.update({'order_val': date_invoice, })  # US-10105 At creation of draft invoice
         try:
             res = super(account_invoice, self).create(cr, uid, vals, context)
             for inv_id, name in self.name_get(cr, uid, [res], context=context):
