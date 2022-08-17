@@ -76,7 +76,7 @@
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
                     <button name="local_autoconfig" string="Local Auto Configuration" colspan="2" type="object" icon="terp-dialog-close" confirm="This action should only be executed on a Sandbox, it will override the current configuration. Do you confirm ?" attrs="{'invisible': [('is_admin', '=', False)]}"/>
 
-                    <separator colspan="4" string="FTP server" />
+                    <separator colspan="4" string="Remote server" />
                     <group col="4" colspan="4">
                         <field name="ftp_ok" on_change="onchange_ftp_ok(ftp_ok)" />
                         <field name="ftp_protocol" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>

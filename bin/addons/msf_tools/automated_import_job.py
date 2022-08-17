@@ -22,13 +22,11 @@
 import os
 import csv
 import time
-import shutil
 import base64
 import hashlib
 import tools
 import tempfile
 import logging
-import posixpath
 import traceback
 import threading
 import pooler
@@ -37,132 +35,9 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-from StringIO import StringIO
 from mission_stock.mission_stock import UnicodeWriter
 
 from threading import RLock
-import re
-
-def all_files_under(path, startswith=False, already=None):
-    """
-    Iterates through all files that are under the given path.
-    :param path: Path on which we want to iterate
-    """
-    if already is None:
-        already = []
-
-    for cur_path, dirnames, filenames in os.walk(path):
-        if startswith:
-            filenames = [fn for fn in filenames if fn.startswith(startswith)]
-        res = []
-        for fn in filenames:
-            full_name = os.path.join(cur_path, fn)
-            if full_name not in already:
-                res.append((os.stat(full_name).st_ctime, full_name))
-        return res
-    return []
-
-
-
-def get_file_content(file, from_ftp=False, ftp_connec=None, sftp=None):
-    '''
-    get file content from local of FTP
-    If ftp_connec is given then we try to retrieve line from FTP server
-    '''
-    def add_line(line):
-        ch.write('%s\n' % line)
-    logging.getLogger('automated.import').info(_('Reading %s content') % file)
-    if not from_ftp:
-        return open(file).read()
-    elif ftp_connec:
-        ch = StringIO()
-        ftp_connec.retrlines('RETR %s' % file, add_line)
-        return ch.getvalue()
-    elif sftp:
-        tmp_file_path = os.path.join(tempfile.gettempdir(), remove_special_chars(os.path.basename(file)))
-        sftp.get(file, tmp_file_path)
-        with open(tmp_file_path, 'r') as fich:
-            return fich.read()
-    return False
-
-def remove_special_chars(filename):
-    if os.name == 'nt' and filename:
-        return re.sub(r'[\\/:*?"<>|]', '_', filename)
-
-    return filename
-
-def move_to_process_path(import_brw, ftp_connec, sftp, file, success):
-    """
-    Move the file `file` from `src_path` to `dest_path`
-    :return: return True
-    """
-    if not import_brw.ftp_source_ok:
-        srcname = os.path.join(import_brw.src_path, file)
-    else:
-        srcname = posixpath.join(import_brw.src_path, file)
-
-    dest_on_ftp = import_brw.ftp_dest_ok if success else import_brw.ftp_dest_fail_ok
-    if dest_on_ftp:
-        destname = posixpath.join(import_brw.dest_path if success else import_brw.dest_path_failure, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
-    else:
-        destname = os.path.join(import_brw.dest_path if success else import_brw.dest_path_failure, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), remove_special_chars(file)))
-
-    logging.getLogger('automated.import').info(_('Moving %s to %s') % (srcname, destname))
-
-
-    ############################################## FTP #########################################################
-    if import_brw.ftp_source_ok and dest_on_ftp and import_brw.ftp_protocol == 'ftp':
-        # from FTP to FTP
-        rep = ftp_connec.rename(srcname, destname)
-        if not rep.startswith('2'):
-            raise osv.except_osv(_('Error'), ('Unable to move file to destination location on FTP server'))
-    elif not import_brw.ftp_source_ok and dest_on_ftp and import_brw.ftp_protocol == 'ftp':
-        # from local to FTP
-        rep = ftp_connec.storbinary('STOR %s' % destname, open(srcname, 'rb'))
-        if not rep.startswith('2'):
-            raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on FTP server'))
-        else:
-            os.remove(srcname)
-    elif import_brw.ftp_source_ok and not dest_on_ftp and import_brw.ftp_protocol == 'ftp':
-        # from FTP to local
-        rep = ''
-        with open(destname, 'wb') as f:
-            def write_callback(data):
-                f.write(data)
-            rep = ftp_connec.retrbinary('RETR %s' % srcname, write_callback)
-        if not rep.startswith('2'):
-            raise osv.except_osv(_('Error'), ('Unable to move remote file to local destination location on FTP server'))
-        else:
-            rep2 = ftp_connec.delete(srcname)
-            if not rep2.startswith('2'):
-                raise osv.except_osv(_('Error'), ('Unable to remove remote file on FTP server'))
-    ############################################## SFTP #########################################################
-    elif import_brw.ftp_source_ok and dest_on_ftp and import_brw.ftp_protocol == 'sftp':
-        # from FTP to FTP
-        try:
-            sftp.rename(srcname, destname)
-        except:
-            raise osv.except_osv(_('Error'), ('Unable to move file to destination location %s on SFTP server') % destname)
-    elif not import_brw.ftp_source_ok and dest_on_ftp and import_brw.ftp_protocol == 'sftp':
-        # from local to FTP
-        try:
-            sftp.put(srcname, destname)
-            os.remove(srcname)
-        except:
-            raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on SFTP server'))
-    elif import_brw.ftp_source_ok and not dest_on_ftp and import_brw.ftp_protocol == 'sftp':
-        # from FTP to local
-        try:
-            sftp.get(srcname, destname, preserve_mtime=True)
-            sftp.remove(srcname)
-        except:
-            raise osv.except_osv(_('Error'), ('Unable to move remote file to local destination location on SFTP server'))
-    ############################################### LOCAL ####################################################
-    else:
-        # from local to local
-        shutil.move(srcname, destname)
-
-    return True
 
 
 class automated_import_job(osv.osv):
@@ -275,47 +150,6 @@ class automated_import_job(osv.osv):
     }
 
 
-    def get_oldest_filename(self, job, ftp_connec=None, sftp=None, already=None):
-        '''
-        Get the oldest file in local or on FTP server
-        '''
-        if already is None:
-            already = []
-        logging.getLogger('automated.import').info(_('Getting the oldest file at location %s') % job.import_id.src_path)
-
-        res = []
-        if not job.import_id.ftp_source_ok:
-            res = all_files_under(job.import_id.src_path, job.import_id.function_id.startswith, already)
-        elif job.import_id.ftp_protocol == 'ftp':
-            files = []
-            ftp_connec.dir(job.import_id.src_path, files.append)
-            file_names = []
-            for file in files:
-                if file.startswith('d'): # directory
-                    continue
-                if job.import_id.function_id.startswith and not file.split(' ')[-1].startswith(job.import_id.function_id.startswith):
-                    continue
-                file_names.append( posixpath.join(job.import_id.src_path, file.split(' ')[-1]) )
-            for file in file_names:
-                if file not in already:
-                    dt = ftp_connec.sendcmd('MDTM %s' % file).split(' ')[-1]
-                    dt = time.strptime(dt, '%Y%m%d%H%M%S') # '20180228170748'
-                    res.append((dt, file))
-
-        elif job.import_id.ftp_protocol == 'sftp':
-            with sftp.cd(job.import_id.src_path):
-                for fileattr in sftp.listdir_attr():
-                    if sftp.isfile(fileattr.filename):
-                        if job.import_id.function_id.startswith and not fileattr.filename.startswith(job.import_id.function_id.startswith):
-                            continue
-                        posix_name = posixpath.join(job.import_id.src_path, fileattr.filename)
-                        if posix_name not in already:
-                            res.append((fileattr.st_mtime, posix_name))
-        for x in sorted(res, key=lambda x:x[0]):
-            if not self.is_processing_filename(x[1]):
-                return x[1]
-        return False
-
     def manual_process_import(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -395,6 +229,7 @@ class automated_import_job(osv.osv):
         no_file = False
         already_done = []
         job_id = False
+        remote = False
         while not no_file:
             start_time = time.strftime('%Y-%m-%d %H:%M:%S')
             nb_rejected = 0
@@ -413,14 +248,9 @@ class automated_import_job(osv.osv):
             data64 = None
             filename = False
             oldest_file = False
-            ftp_connec = None
-            sftp = None
             context.update({'no_raise_if_ok': True, 'auto_import_ok': True})
             try:
-                if import_data.ftp_ok and import_data.ftp_protocol == 'ftp':
-                    ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, import_data.id, context=context)
-                elif import_data.ftp_ok and import_data.ftp_protocol == 'sftp':
-                    sftp = self.pool.get('automated.import').sftp_test_connection(cr, uid, import_data.id, context=context)
+                remote = self.pool.get('automated.import')._connect(cr, uid, import_data.id, context=context)
             except Exception, e:
                 if job.id:
                     if isinstance(e, osv.except_osv):
@@ -446,13 +276,13 @@ class automated_import_job(osv.osv):
                 orig_file_name = False
                 if not job.file_to_import:
                     try:
-                        oldest_file = self.get_oldest_filename(job, ftp_connec, sftp, already_done)
+                        oldest_file = remote.get_oldest_filename(job.import_id.function_id.startswith, already_done, is_processing_filename=self.is_processing_filename)
                         orig_file_name = oldest_file
                         already_done.append(oldest_file)
                         if not oldest_file:
                             raise ValueError()
                         filename = os.path.split(oldest_file)[1]
-                        file_content = get_file_content(oldest_file, import_data.ftp_source_ok, ftp_connec, sftp)
+                        file_content = remote.get_file_content(oldest_file)
                         md5 = hashlib.md5(file_content).hexdigest()
                         data64 = base64.encodestring(file_content)
                     except ValueError:
@@ -472,7 +302,7 @@ class automated_import_job(osv.osv):
 
                         elif md5 and self.search_exist(cr, uid, [('import_id', '=', import_data.id), ('file_sum', '=', md5)], context=context):
                             error = _('A file with same checksum has been already imported !')
-                            move_to_process_path(import_data, ftp_connec, sftp, filename, success=False)
+                            remote.move_to_process_path(filename, success=False)
                             self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
 
                     if error:
@@ -493,40 +323,33 @@ class automated_import_job(osv.osv):
                 else: # file to import given
                     no_file = True
                     md5 = hashlib.md5(job.file_to_import).hexdigest()
-                    oldest_file = os.path.join(job.import_id.src_path, job.filename)
-
-                    oldest_file_desc = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
+                    clean_filename = job.filename and job.filename.replace('C:\\fakepath\\', '')
+                    oldest_file = os.path.join(job.import_id.src_path, clean_filename)
+                    oldest_file_desc = open(oldest_file, 'wb+')
                     oldest_file_desc.write(base64.decodestring(job.file_to_import))
                     oldest_file_desc.close()
 
-                    filename = job.filename
+                    filename = clean_filename
                     data64 = base64.encodestring(job.file_to_import)
 
                 # Process import
                 error_message = []
                 state = 'done'
                 try:
-                    if import_data.ftp_source_ok and import_data.ftp_protocol == 'ftp':
-                        prefix = '%s_' % filename.split('.')[0]
-                        suffix = '.xls' if self.pool.get('stock.picking').get_import_filetype(cr, uid, filename) == 'excel' else '.xml'
-                        temp_file = tempfile.NamedTemporaryFile(delete=False, prefix=prefix, suffix=suffix)
-                        ftp_connec.retrbinary('RETR %s' % oldest_file, temp_file.write)
-                        temp_file.close()
-                        oldest_file = temp_file.name
-                    elif import_data.ftp_source_ok and import_data.ftp_protocol == 'sftp':
-                        tmp_dest_path = os.path.join(tempfile.gettempdir(), remove_special_chars(filename))
-                        sftp.get(oldest_file, tmp_dest_path)
-                        oldest_file = tmp_dest_path
+                    if import_data.ftp_source_ok:
+                        tmp_dest_file = os.path.join(tempfile.gettempdir(), remote.connection.remove_special_chars(filename))
+                        remote.connection.get(oldest_file, tmp_dest_file)
+                        oldest_file = tmp_dest_file
 
                     processed, rejected, headers = getattr(
                         self.pool.get(import_data.function_id.model_id.model),
                         import_data.function_id.method_to_call
                     )(cr, uid, oldest_file, context=context)
                     if processed:
-                        nb_processed += self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
+                        nb_processed += self.generate_file_report(cr, uid, job, processed, headers, remote=remote)
 
                     if rejected:
-                        nb_rejected += self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
+                        nb_rejected += self.generate_file_report(cr, uid, job, rejected, headers, remote=remote, rejected=True)
                         state = 'error'
                         for resjected_line in rejected:
                             line_message = ''
@@ -573,7 +396,7 @@ class automated_import_job(osv.osv):
                         'state': state,
                     }, context=context)
                     is_success = True if not rejected else False
-                    move_to_process_path(import_data, ftp_connec, sftp, filename, success=is_success)
+                    remote.move_to_process_path(filename, success=is_success)
                     self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
                     cr.commit()
                 except Exception as e:
@@ -594,15 +417,17 @@ class automated_import_job(osv.osv):
                         'file_to_import': data64,
                         'state': 'error',
                     }, context=context)
-                    move_to_process_path(import_data, ftp_connec, sftp, filename, success=False)
+                    remote.move_to_process_path(filename, success=False)
                     self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
             finally:
                 if orig_file_name:
                     self.end_processing_filename(orig_file_name)
 
+        if remote:
+            remote.disconnect()
         return True
 
-    def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False, ftp_connec=None, sftp=None):
+    def generate_file_report(self, cr, uid, job_brw, data_lines, headers, remote, rejected=False):
         """
         Create a csv file that contains the processed lines and put this csv file
         on the report_path directory and attach it to the automated.import.job.
@@ -623,18 +448,10 @@ class automated_import_job(osv.osv):
         )
         delimiter = ','
         quotechar = '"'
-        on_ftp = job_brw.import_id.ftp_report_ok
-        assert not on_ftp or (on_ftp and ftp_connec) or (on_ftp and sftp), _('FTP connection issue')
 
-        if on_ftp:
-            pth_filename = posixpath.join(job_brw.import_id.report_path, filename)
-        else:
-            pth_filename = os.path.join(job_brw.import_id.report_path, filename)
-
-        self.infolog(cr, uid, _('Writing file report at %s') % pth_filename)
-        csvfile = tempfile.NamedTemporaryFile(mode='wb', delete=False) if on_ftp else open(pth_filename, 'wb')
-        if on_ftp:
-            temp_path = csvfile.name
+        report_file_name = remote.get_report_file_name(filename)
+        self.infolog(cr, uid, _('Writing file report at %s') % report_file_name)
+        csvfile = open(report_file_name, 'wb')
         spamwriter = UnicodeWriter(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
         headers_row = [_('Line number')] + headers
         if rejected:
@@ -647,19 +464,9 @@ class automated_import_job(osv.osv):
             spamwriter.writerow(pl_row)
         csvfile.close()
 
-        if on_ftp and job_brw.import_id.ftp_protocol == 'ftp':
-            with open(temp_path, 'rb') as temp_file:
-                rep = ftp_connec.storbinary('STOR %s' % pth_filename, temp_file)
-                if not rep.startswith('2'):
-                    raise osv.except_osv(_('Error'), _('Unable to write report on FTP server'))
-        elif on_ftp and job_brw.import_id.ftp_protocol == 'sftp':
-            try:
-                with sftp.cd(job_brw.import_id.report_path):
-                    sftp.put(temp_path, filename, preserve_mtime=True)
-            except:
-                raise osv.except_osv(_('Error'), _('Unable to write report on SFTP server'))
+        remote.push_report(report_file_name, filename)
 
-        csvfile = open(on_ftp and temp_path or pth_filename, 'r')
+        csvfile = open(report_file_name, 'r')
         att_obj.create(cr, uid, {
             'name': filename,
             'datas_fname': filename,
