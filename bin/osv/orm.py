@@ -3140,7 +3140,7 @@ class orm(orm_template):
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
-                cr.execute('CREATE TABLE "%s" (id SERIAL NOT NULL, PRIMARY KEY(id)) WITHOUT OIDS' % (self._table,))  # not_a_user_entry
+                cr.execute('CREATE TABLE "%s" (id SERIAL NOT NULL, PRIMARY KEY(id))' % (self._table,))  # not_a_user_entry
                 cr.execute("COMMENT ON TABLE \"%s\" IS '%s'" % (self._table, self._description.replace("'", "''")))  # not_a_user_entry
                 create = True
                 self.__schema.debug("Table '%s': created", self._table)
@@ -3370,7 +3370,7 @@ class orm(orm_template):
                                 cr.commit()
                                 if f._type == 'text':
                                     # FIXME: for fields.text columns we should try creating GIN indexes instead (seems most suitable for an ERP context)
-                                    msg = "Table '%s': Adding (b-tree) index for text column '%s'."\
+                                    msg = "Table '%s': Adding (b-tree) index for text column '%s'(%s)."\
                                         "This is probably useless (does not work for fulltext search) and prevents INSERTs of long texts"\
                                         " because there is a length limit for indexable btree values!\n"\
                                         "Use a search view instead if you simply want to make the field searchable."
