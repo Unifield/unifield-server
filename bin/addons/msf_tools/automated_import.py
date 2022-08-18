@@ -547,7 +547,7 @@ class automated_import(osv.osv):
             string='Report Path',
         ),
         'start_time': fields.datetime(
-            string='Date and time of first planned execution',
+            string='Force Date and time of next execution',
         ),
         'interval': fields.integer(
             string='Interval number',
@@ -578,6 +578,7 @@ class automated_import(osv.osv):
             string='Associated cron job',
             readonly=True,
         ),
+        'next_scheduled_task': fields.related('cron_id', 'nextcall', type='datetime', readonly=1, string="Next Execution Date"),
         'priority': fields.integer(
             string='Priority',
             required=True,
