@@ -241,7 +241,7 @@ class hr_employee(osv.osv):
             context = {}
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
-        if vals.get('identification_id'):
+        if vals.get('identification_id', False) and vals.get('employee_type', False) == 'ex':
             vals['identification_id'] = vals['identification_id'].strip()
         allow_edition = False
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
@@ -281,7 +281,7 @@ class hr_employee(osv.osv):
         # Prepare some variable for process
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
-        if vals.get('identification_id'):
+        if vals.get('identification_id', False) and vals.get('employee_type', False) == 'ex':
             vals['identification_id'] = vals['identification_id'].strip()
         if vals.get('employee_type', False):
             if vals.get('employee_type') == 'local':

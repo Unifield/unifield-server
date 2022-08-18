@@ -58,7 +58,7 @@ class patch_scripts(osv.osv):
 
     # UF27
     def us_9842_remove_space(self, cr, uid, *a, **b):
-        cr.execute('''SELECT id, identification_id FROM hr_employee''')
+        cr.execute('''SELECT id, identification_id FROM hr_employee WHERE employee_type = %s''', 'ex')
         for x in cr.fetchall():
             cr.execute('''UPDATE hr_employee SET identification_id = %s WHERE id = %s''', (x[1].strip(), x[0]))
 
