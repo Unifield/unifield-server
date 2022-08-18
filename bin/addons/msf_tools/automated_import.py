@@ -269,6 +269,18 @@ class Remote():
         self.infolog(_('FTP connection succeeded'))
         return True
 
+    def list_files(self, startwith, already=None):
+        if already is None:
+            already = []
+        if not self.source_is_remote:
+            if not self.local_connection:
+                self.local_connection = Local(**{})
+            res = self.local_connection.list_files(self.source, startwith, already)
+        else:
+            res = self.connection.list_files(self.source, startwith, already)
+
+        return res
+
     def get_oldest_filename(self, startwith, already=None, is_processing_filename=False):
         '''
         Get the oldest file in local or on FTP server
@@ -277,12 +289,7 @@ class Remote():
             already = []
         logging.getLogger('automated.import').info(_('Getting the oldest file at location %s') % self.source)
 
-        if not self.source_is_remote:
-            if not self.local_connection:
-                self.local_connection = Local(**{})
-            res = self.local_connection.list_files(self.source, startwith, already)
-        else:
-            res = self.connection.list_files(self.source, startwith, already)
+        res = self.list_files(startwith, already)
 
         for x in sorted(res, key=lambda x:x[0]):
             if not is_processing_filename or not is_processing_filename(x[1]):
