@@ -38,8 +38,10 @@ import posixpath
 from StringIO import StringIO
 import tempfile
 
+from tools import webdav
+from urlparse import urlparse
 
-class RemoteInterface():
+class RemoteInterface(object):
     port = 0
     url = False
     username = False
@@ -60,6 +62,65 @@ class RemoteInterface():
 
     def disconnect(self):
         return True
+
+class RemoteOneDrive(RemoteInterface):
+    dav = False
+
+    host = False
+    protocol = False
+    path = False
+
+    def __init__(self, **data):
+        super(RemoteOneDrive, self).__init__(**data)
+        if self.url:
+            parsed_url = urlparse(self.url)
+            self.host = parsed_url.netloc
+            self.protocol = parsed_url.scheme
+            self.path = parsed_url.path
+
+    def connect(self):
+        try:
+            self.dav = webdav.Client(host=self.host ,port=self.port, protocol=self.protocol, username=self.username, password=self.password, path=self.path)
+        except webdav.ConnectionFailed, e:
+            raise osv.except_osv(_('Warning !'), _('Unable to connect: %s') % (e.message))
+
+    def list_files(self, path, startswith, already=None):
+        if already is None:
+            already = []
+
+        res = []
+        for filename in self.dav.list(path):
+            fn = filename['Name']
+            if startswith and not fn.startswith(startswith):
+                continue
+            posix_name = posixpath.join(path, fn)
+            if posix_name not in already:
+                res.append((filename['TimeLastModified'], posixpath.join(path, fn)))
+        return res
+
+    def get_file_content(self, path):
+        tmp_file_path = os.path.join(tempfile.gettempdir(), self.remove_special_chars(os.path.basename(path)))
+        self.dav.download(path, tmp_file_path)
+        with open(tmp_file_path, 'r') as fich:
+            return fich.read()
+
+    def rename(self, src_file_name, dest_file_name):
+        self.dav.move(src_file_name, dest_file_name)
+        return True
+
+    def push(self, local_name, remote_name):
+        f = open(local_name, 'r')
+        self.dav.upload(f, remote_name)
+        f.close()
+
+    def get(self, remote_name, dest_name, delete=False):
+        self.dav.download(remote_name, dest_name)
+        if delete:
+            self.dav.delete(remote_name)
+
+    def disconnect(self):
+        pass
+
 
 class RemoteSFTP(RemoteInterface):
     sftp = False
@@ -240,6 +301,10 @@ class Remote():
             self.connection = RemoteSFTP(**data)
             self._name = 'SFTP Connection'
             self.connection_type = protocol
+        elif data.get('ftp_ok') and protocol == 'onedrive':
+            self.connection = RemoteOneDrive(**data)
+            self._name = 'OneDrive Connection'
+            self.connection_type = protocol
         else:
             self.connection = Local(**{})
             self.local_connection = self.connection
@@ -266,7 +331,7 @@ class Remote():
             self.infolog(e.message)
             raise osv.except_osv(_('Error'), e.message)
 
-        self.infolog(_('FTP connection succeeded'))
+        self.infolog(_('Connection succeeded'))
         return True
 
     def list_files(self, startwith, already=None):
