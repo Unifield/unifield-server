@@ -248,7 +248,7 @@ class automated_import_job(osv.osv):
             data64 = None
             filename = False
             oldest_file = False
-            context.update({'no_raise_if_ok': True, 'auto_import_ok': True})
+            context.update({'auto_import_ok': True})
             try:
                 remote = self.pool.get('automated.import')._connect(cr, uid, import_data.id, context=context)
             except Exception, e:
