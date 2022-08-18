@@ -60,9 +60,9 @@ def bcl(self, cr, uid, ids, context=None):
         ids = [ids]
 
     # If there is no line to cancel.
-    for obj in self.browse(cr, uid, ids, context=context):
-        if not obj[DOCUMENT_DATA.get(self._name)[2]]:
-            raise osv.except_osv(_('Error'), _('No line to cancel'))
+    obj = self.browse(cr, uid, ids[0], context=context)
+    if not obj[DOCUMENT_DATA.get(self._name)[2]]:
+        raise osv.except_osv(_('Error'), _('No line to cancel'))
 
     context.update({
         'active_id': ids[0],
@@ -88,7 +88,10 @@ def bcl(self, cr, uid, ids, context=None):
             domain.append(('state', 'in', ['draft', 'validated']))
         else:
             line_obj = self.pool.get('purchase.order.line')
-            domain.append(('state', 'in', ['draft', 'validated_n', 'validated']))
+            if obj.partner_id.partner_type in ['esc', 'external']:
+                domain.append(('state', 'in', ['draft', 'validated_n', 'validated']))
+            else:
+                domain.append(('state', 'in', ['draft']))
         line_ids = line_obj.search(cr, uid, domain, context=context)
         if line_ids:
             wiz_fields.update({'line_ids': line_ids, 'has_sel_lines': True})
@@ -359,13 +362,22 @@ class wizard_cancel_lines(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('The select empty lines is not available for this document'))
 
             line_obj = self.pool.get(wiz.to_cancel_type)
+            dom = [(wiz.linked_field_name, '=', wiz.initial_doc_id)]
             if select_only_empty:
-                line_ids = line_obj.search(cr, uid, [(wiz.linked_field_name, '=', wiz.initial_doc_id), (wiz.qty_field, '=', 0.00)], context=context)
-            else:
-                line_ids = line_obj.search(cr, uid, [(wiz.linked_field_name, '=', wiz.initial_doc_id)], context=context)
+                dom += [(wiz.qty_field, '=', 0.00)]
 
-            if wiz.to_cancel_type in ['sale.order.line', 'purchase.order.line']:
-                line_ids = line_obj.search(cr, uid, [('id', 'in', line_ids), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
+            if wiz.to_cancel_type == 'sale.order.line':
+                states = ['draft', 'validated']
+            else:
+                # purchase.order.line
+                po = self.pool.get('purchase.order').browse(cr, uid, wiz.initial_doc_id, fields_to_fetch=['partner_type'], context=context)
+                if po.partner_type in ('esc', 'external'):
+                    states = ['draft', 'validated', 'validated_n']
+                else:
+                    states = ['draft']
+
+            dom += [('state', 'in', states)]
+            line_ids = line_obj.search(cr, uid, dom, context=context)
 
             self.write(cr, uid, [wiz.id], {'line_ids': line_ids}, context=context)
 

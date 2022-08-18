@@ -224,7 +224,7 @@ class account_move_line(osv.osv):
         partner_obj = self.pool.get('res.partner')
         lines = self.browse(cr, uid, ids, context=context)
         unrec_lines = [x for x in lines if not x['reconcile_id']]
-        credit = debit = func_debit = func_credit = currency = 0.0
+        currency = 0.0
         account_id = partner_id = False
         current_company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         current_instance_level = current_company.instance_id.level
@@ -257,21 +257,19 @@ class account_move_line(osv.osv):
             different_level = False
             multi_instance_level_creation = 'coordo'
         partial_reconcile_ids = set()
+        func_balance = 0
+        book_balance = 0
         for line in unrec_lines:
             if line.state != 'valid':
                 raise osv.except_osv(_('Error'),
                                      _('Entry "%s" is not valid !') % line.name)
-            credit += line['credit_currency']
-            debit += line['debit_currency']
-            func_debit += line['debit']
-            func_credit += line['credit']
+            book_balance += line['debit_currency'] - line['credit_currency']
+            func_balance += line['debit'] - line['credit']
             currency += line['amount_currency'] or 0.0
             account_id = line['account_id']['id']
             partner_id = (line['partner_id'] and line['partner_id']['id']) or False
             if line.reconcile_partial_id:
                 partial_reconcile_ids.add(line.reconcile_partial_id)
-        func_balance = func_debit - func_credit
-        book_balance = debit - credit
 
         cr.execute('SELECT account_id, reconcile_id '\
                    'FROM account_move_line '\
@@ -313,7 +311,6 @@ class account_move_line(osv.osv):
             'is_multi_instance': different_level,
             'multi_instance_level_creation': multi_instance_level_creation,
         })
-
         if partial_reconcile_ids:
             # delete old partial rec
             self.pool.get('account.move.reconcile').unlink(cr, uid, [x.id for x in partial_reconcile_ids], context=context)

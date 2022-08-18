@@ -71,6 +71,7 @@ class purchase_order_line_allocation_report(osv.osv):
             size=64,
             string='Product Code',
             store=False,
+            write_relate=False,
         ),
         'product_name': fields.related(
             'product_id',
@@ -79,6 +80,7 @@ class purchase_order_line_allocation_report(osv.osv):
             size=128,
             string='Product Name',
             store=False,
+            write_relate=False,
         ),
         'product_qty': fields.float(digits=(16,2), string='Qty', related_uom='uom_id'),
         'uom_id': fields.many2one('product.uom', string='UoM'),

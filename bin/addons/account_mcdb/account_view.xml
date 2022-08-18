@@ -162,7 +162,7 @@
                         </group>
                         <newline/>
                         <group>
-                            <field name="partner_id" select='1' string="3RD Party Partner"/>
+                            <field name="partner_id" select='1' string="3RD Party Partner" context="{'show_button_show_inactive': True}"/>
                             <field name="employee_id" select='1' string="3RD Party Employee"/>
                             <field name="transfer_journal_id" select='1' string="3RD Party Journal"
                                    context="{'exclude_journals': ['IB'], 'search_default_filter_is_active': 1}"/>
@@ -189,7 +189,7 @@
                         </group>
                         <newline/>
                         <group expand="0" string="Group By..." colspan="4" col="20">
-                            <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                            <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id', 'show_button_show_inactive': True}"/>
                             <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
                             <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id', 'exclude_journals': ['IB']}"/>
                             <separator orientation="vertical"/>
@@ -354,7 +354,7 @@
                             </group>
                             <newline/>
                             <group col='8' colspan='4'>
-                                <field name="partner_id" select="1" string="3RD Party Partner"/>
+                                <field name="partner_id" select="1" string="3RD Party Partner" context="{'show_button_show_inactive': True}"/>
                                 <field name="employee_id" select="1" string="3RD Party Employee"/>
                                 <field name="transfer_journal_id" select="1" string="3RD Party Journal"
                                        context="{'exclude_journals': ['IB'], 'search_default_filter_is_active': 1}"/>
@@ -367,7 +367,7 @@
                             </group>
                             <newline/>
                             <group expand="0" string="Group By..." colspan="12" col="10">
-                                <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                                <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id', 'show_button_show_inactive': True}"/>
                                 <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
                                 <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
                                 <separator orientation="vertical"/>

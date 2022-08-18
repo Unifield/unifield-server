@@ -428,12 +428,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         return res
 
     _columns = {
-        'customer': fields.related(
-            'order_id',
-            'partner_id',
-            string='Customer',
-            readonly=True,
-        ),
+        'customer': fields.related('order_id', 'partner_id', string='Customer', readonly=True),
         'po_cft': fields.selection(
             _SELECTION_PO_CFT,
             string="PO/CFT",
@@ -605,6 +600,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             size=64,
             string='Product code',
             store=False,
+            write_relate=False,
         ),
         'product_name': fields.related(
             'product_id',
@@ -613,6 +609,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             size=128,
             string='Product description',
             store=False,
+            write_relate=False,
         ),
     }
 

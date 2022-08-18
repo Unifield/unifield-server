@@ -33,7 +33,7 @@ class stock_card_wizard(osv.osv_memory):
         'product_id': fields.many2one('product.product', string='Product',
                                       required=True),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one',
-                                 relation='product.uom', string='UoM'),
+                                 relation='product.uom', string='UoM', write_relate=False),
         'perishable': fields.boolean(string='Perishable'),
         'prodlot_id': fields.many2one('stock.production.lot',
                                       string='Batch number'),

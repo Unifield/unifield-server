@@ -436,6 +436,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
             string='Selected supplier',
             type='char',
             size=256,
+            write_relate=False,
         ),
     }
 

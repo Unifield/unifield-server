@@ -403,7 +403,7 @@ class msf_budget_line(osv.osv):
         'line_type': fields.selection([('view','View'),
                                        ('normal','Normal'),
                                        ('destination', 'Destination')], 'Line type', required=True),
-        'account_code': fields.related('account_id', 'code', type='char', string='Account code', size=64, store=True),
+        'account_code': fields.related('account_id', 'code', type='char', string='Account code', size=64, store=True, write_relate=False),
         'account_order': fields.function(_get_account_order, type='integer', string='order', method=True, store=True),
     }
 

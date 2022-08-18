@@ -161,7 +161,7 @@ class wkf_transition(osv.osv):
                                     help="Source activity. When this activity is over, the condition is tested to determine if we can start the ACT_TO activity."),
         'act_to': fields.many2one('workflow.activity', 'Destination Activity', required=True, select=True, ondelete='cascade',
                                   help="The destination activity."),
-        'wkf_id': fields.related('act_from','wkf_id', type='many2one', relation='workflow', string='Workflow', select=True),
+        'wkf_id': fields.related('act_from','wkf_id', type='many2one', relation='workflow', string='Workflow', select=True, write_relate=False),
         'sequence': fields.integer('Sequence'),
     }
     _defaults = {
@@ -203,7 +203,7 @@ class wkf_workitem(osv.osv):
     _rec_name = 'state'
     _columns = {
         'act_id': fields.many2one('workflow.activity', 'Activity', required=True, ondelete="restrict", select=True),
-        'wkf_id': fields.related('act_id','wkf_id', type='many2one', relation='workflow', string='Workflow'),
+        'wkf_id': fields.related('act_id','wkf_id', type='many2one', relation='workflow', string='Workflow', write_relate=False),
         'subflow_id': fields.many2one('workflow.instance', 'Subflow', ondelete="cascade", select=True),
         'inst_id': fields.many2one('workflow.instance', 'Instance', required=True, ondelete="cascade", select=True),
         'state': fields.char('State', size=64, select=True),

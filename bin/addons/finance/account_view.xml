@@ -143,8 +143,18 @@
         model="account.partner.balance.tree"
         name="account.partner.balance.tree_xls"
         file="finance/report/account_partner_balance_tree_xls.mako"
-        report_type="webkit" 
+        report_type="webkit"
         string="Partner Balance"/>
+
+    <report id="account_employee_balance_tree_xls"
+        auto="False"
+        menu="False"
+        header="False"
+        model="account.employee.balance.tree"
+        name="account.employee.balance.tree_xls"
+        file="finance/report/account_employee_balance_tree_xls.mako"
+        report_type="webkit"
+        string="Employee Balance"/>
 
     <record id="account.action_account_moves_all_a" model="ir.actions.act_window">
         <field name="context">{'search_default_posted': 1, 'target_filename_prefix': 'Journal Items'}</field>

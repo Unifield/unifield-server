@@ -175,13 +175,15 @@ class hq_entries(osv.osv):
         1) Search for the instance:
            - to which the CC used in the entry is targeted to
            - if there isn't any, to which the PARENT CC is targeted to
-        2) The entry will sync to the coordo of the corresponding mission
+           - if not (CC is IM targeted) -> send to HQ
+        2) The entry will sync to the coordo of the corresponding mission if any or HQ
         """
         if context is None:
             context = {}
         target_cc_obj = self.pool.get('account.target.costcenter')
         if dest_field == 'cost_center_id':
             res = dict.fromkeys(ids, False)
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
             for line_data in self.browse(cr, uid, ids, context=context):
                 if line_data.cost_center_id:
                     targeted_instance = False
@@ -192,6 +194,10 @@ class hq_entries(osv.osv):
                             targeted_instance = target.instance_id
                         elif target.instance_id.level == 'project':
                             targeted_instance = target.instance_id.parent_id or False
+                    if not target_id and current_instance and current_instance.parent_id:
+                        # CC is intermission targeted / send to HQ
+                        targeted_instance = current_instance.parent_id
+
                     if targeted_instance:
                         res[line_data.id] = targeted_instance.instance
             return res
@@ -442,6 +448,15 @@ class msf_instance(osv.osv):
             return True
         if isinstance(ids, int):
             ids = [ids]
+
+        if context is None:
+            context = {}
+
+        changed_state_ids = []
+
+        if context.get('sync_update_execution') and vals.get('state') in ['active', 'inactive']:
+            changed_state_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '!=', vals['state'])], context=context)
+
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         if 'state' in vals and vals['state'] == 'active' and current_instance.level == 'section':
             for instance in self.browse(cr, uid, ids, context=context):
@@ -450,7 +465,17 @@ class msf_instance(osv.osv):
                     self._synchronize_cc_related_fields(cr, uid, instance, context=context)
                     if instance.level == 'project' and instance.parent_id:
                         self.pool.get('sync.trigger.something.target.lower').create(cr, uid, {'name': 'sync_fp', 'destination': instance.parent_id.instance}, context={})
-        return super(msf_instance, self).write(cr, uid, ids, vals, context=context)
+
+        res = super(msf_instance, self).write(cr, uid, ids, vals, context=context)
+        if changed_state_ids:
+            partner_obj = self.pool.get('res.partner')
+            for instance in self.browse(cr, uid, changed_state_ids, fields_to_fetch=['instance'], context=context):
+                active = vals['state'] == 'active'
+                p_id = partner_obj.search(cr, uid, [('partner_type', '=', 'internal'), ('name', '=', instance.instance), ('active', '!=', active)], context=context)
+                if p_id:
+                    partner_obj.write(cr, uid, p_id, {'active': active}, context={})  # empty context: in sync ctx active field is disabled
+
+        return res
 
 msf_instance()
 

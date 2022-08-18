@@ -287,42 +287,50 @@ class msf_budget_tools(osv.osv):
 
         # Analytic domain is now done; lines are retrieved and added
         analytic_line_obj = self.pool.get('account.analytic.line')
-        analytic_lines = analytic_line_obj.search(cr, uid, domain, context=context)
-        # use currency_table_id
-        currency_table = None
-        if 'currency_table_id' in context:
-            currency_table = context['currency_table_id']
+        keep_looping = True
+        offset = 0
+        while keep_looping:
+            analytic_lines = analytic_line_obj.search(cr, uid, domain, offset=offset, limit=1000, context=context)
+            if not analytic_lines:
+                break
+            if isinstance(analytic_lines, int) or len(analytic_lines) < 1000:
+                keep_looping = False
+            offset += 1000
+            # use currency_table_id
+            currency_table = None
+            if 'currency_table_id' in context:
+                currency_table = context['currency_table_id']
 
-        if 'background_id' in context:
-            bg_id = context['background_id']
-            bg_report_obj = self.pool.get('memory.background.report')
-        else:
-            bg_id = None
-            bg_report_obj = None
+            if 'background_id' in context:
+                bg_id = context['background_id']
+                bg_report_obj = self.pool.get('memory.background.report')
+            else:
+                bg_id = None
+                bg_report_obj = None
 
-        # parse each line and add it to the right array
-        analytic_line_count = 0
-        for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-            curr_date = currency_date.get_date(self, cr, analytic_line.document_date, analytic_line.date, source_date=analytic_line.source_date)
-            date_context = {'currency_date': curr_date,
-                            'currency_table_id': currency_table}
-            actual_amount = self.pool.get('res.currency').compute(cr,
-                                                                  uid,
-                                                                  analytic_line.currency_id.id,
-                                                                  output_currency_id,
-                                                                  analytic_line.amount_currency or 0.0,
-                                                                  round=True,
-                                                                  context=date_context)
-            # add the amount to correct month
-            month = datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').month
-            res[analytic_line.general_account_id.id, analytic_line.destination_id.id][month - 1] += round(actual_amount, 2)
+            # parse each line and add it to the right array
+            analytic_line_count = 0
+            for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
+                curr_date = currency_date.get_date(self, cr, analytic_line.document_date, analytic_line.date, source_date=analytic_line.source_date)
+                date_context = {'currency_date': curr_date,
+                                'currency_table_id': currency_table}
+                actual_amount = self.pool.get('res.currency').compute(cr,
+                                                                      uid,
+                                                                      analytic_line.currency_id.id,
+                                                                      output_currency_id,
+                                                                      analytic_line.amount_currency or 0.0,
+                                                                      round=True,
+                                                                      context=date_context)
+                # add the amount to correct month
+                month = datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').month
+                res[analytic_line.general_account_id.id, analytic_line.destination_id.id][month - 1] += round(actual_amount, 2)
 
-            if bg_report_obj:
-                analytic_line_count += 1
-                percent = analytic_line_count / float(len(analytic_lines) + 1)  # add 1
-                # to the total because task is not finish at the end of the for
-                # loop, there is some ZIP work to do
-                bg_report_obj.update_percent(cr, uid, [bg_id], percent)
+                if bg_report_obj:
+                    analytic_line_count += 1
+                    percent = analytic_line_count / float(len(analytic_lines) + 1)  # add 1
+                    # to the total because task is not finish at the end of the for
+                    # loop, there is some ZIP work to do
+                    bg_report_obj.update_percent(cr, uid, [bg_id], percent)
 
         # after all lines are parsed, absolute of every column
         for line in list(res.keys()):

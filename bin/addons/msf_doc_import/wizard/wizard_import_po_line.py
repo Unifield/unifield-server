@@ -186,18 +186,17 @@ class wizard_import_po_line(osv.osv_memory):
                             total_line_num -= 1
                             continue
 
-
                         # Cell 0 : Line Number (RfQ)
                         if is_rfq:
                             ln_value = check_line.line_number_value(
-                                row=row, cell_nb=header_index[_('Line Number')], to_write=to_write, context=context)
+                                row=row, cell_nb=header_index[_('line number')], to_write=to_write, context=context)
                             to_write.update(
                                 line_number=ln_value['line_number'],
                                 error_list=ln_value['error_list'])
 
                         # Cell 1: Product Code
                         p_value = check_line.product_value(
-                            cr, uid, obj_data=obj_data, cell_nb=header_index[_('Product Code')],
+                            cr, uid, obj_data=obj_data, cell_nb=header_index[_('product code')],
                             product_obj=product_obj, row=row, to_write=to_write, context=context)
                         to_write.update(
                             default_code=p_value['default_code'],
@@ -209,7 +208,7 @@ class wizard_import_po_line(osv.osv_memory):
 
                         # Cell 2: Quantity
                         qty_value = check_line.quantity_value(
-                            product_obj=product_obj, cell_nb=header_index[_('Quantity')],
+                            product_obj=product_obj, cell_nb=header_index[_('quantity')],
                             row=row, to_write=to_write, max_qty=max_qty, context=context)
                         to_write.update(
                             product_qty=qty_value['product_qty'],
@@ -218,7 +217,7 @@ class wizard_import_po_line(osv.osv_memory):
 
                         # Cell 3: UOM
                         uom_value = check_line.compute_uom_value(
-                            cr, uid, obj_data=obj_data, cell_nb=header_index[_('UoM')], product_obj=product_obj,
+                            cr, uid, obj_data=obj_data, cell_nb=header_index[_('uom')], product_obj=product_obj,
                             uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                         to_write.update(
                             product_uom=uom_value['uom_id'],
@@ -236,7 +235,7 @@ class wizard_import_po_line(osv.osv_memory):
 
                         # Cell 4: Price
                         price_value = check_line.compute_price_value(
-                            row=row, to_write=to_write, cell_nb=header_index[_('Price')], price='Cost Price',
+                            row=row, to_write=to_write, cell_nb=header_index[_('price')], price='Cost Price',
                             is_rfq=is_rfq, context=context)
                         to_write.update(
                             price_unit=price_value['price_unit'],
@@ -246,7 +245,7 @@ class wizard_import_po_line(osv.osv_memory):
 
                         # Cell 5: Requested Delivery Date
                         # for Rfq 'Requested Delivery Date' tolerated (5th column)
-                        cell_nb = header_index[_('Requested Delivery Date')] if _('Requested Delivery Date') in header_index else 6
+                        cell_nb = header_index[_('requested delivery date')] if _('requested delivery date') in header_index else 6
                         date_value = check_line.compute_date_value(
                             cell_nb=cell_nb, row=row, to_write=to_write, context=context)
                         to_write.update(
@@ -255,7 +254,7 @@ class wizard_import_po_line(osv.osv_memory):
 
                         # Cell 7: Confirmed Delivery Date
                         if is_rfq:
-                            cell_nb = header_index[_('Confirmed Delivery Date')] if _('Confirmed Delivery Date') in header_index else 7
+                            cell_nb = header_index[_('confirmed delivery date')] if _('confirmed delivery date') in header_index else 7
                             cdd_value = check_line.compute_confirmed_delivery_date_value(
                                 cell_nb=cell_nb, row=row, to_write=to_write, context=context)
                             to_write.update(
@@ -264,7 +263,7 @@ class wizard_import_po_line(osv.osv_memory):
 
                         # Cell 6: Currency
                         curr_value = check_line.compute_currency_value(
-                            cr, uid, cell_nb=header_index[_('Currency')], browse_purchase=wiz.po_id,
+                            cr, uid, cell_nb=header_index[_('currency')], browse_purchase=wiz.po_id,
                             currency_obj=currency_obj, row=row, to_write=to_write, context=context)
                         to_write.update(
                             functional_currency_id=curr_value['functional_currency_id'],
@@ -272,7 +271,7 @@ class wizard_import_po_line(osv.osv_memory):
 
                         # Cell 7: Comment
                         c_value = check_line.comment_value(
-                            row=row, cell_nb=header_index[_('Comment')], to_write=to_write, context=context)
+                            row=row, cell_nb=header_index[_('comment')], to_write=to_write, context=context)
                         to_write.update(
                             comment=c_value['comment'],
                             warning_list=c_value['warning_list'])
@@ -462,7 +461,7 @@ Importation completed in %s!
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(
-                    cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
+                    cr, uid, ids, first_row, error_list=[], line_num=0, origin='PO', context=context)
                 context.update({'po_id': po_id, 'header_index': header_index})
                 rfq = purchase_obj.read(cr, uid, po_id, ['state', 'rfq_ok'], context=context)
                 is_rfq = rfq['rfq_ok']

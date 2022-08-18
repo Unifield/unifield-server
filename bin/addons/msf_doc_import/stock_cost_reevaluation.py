@@ -123,10 +123,10 @@ Product Code*, Product Description*, Product Cost*, Currency*"""))
 
             # Currency
             currency_name = row.cells[3].data
-            if not currency_name or currency_name != comp_currency_name:
+            if not currency_name or currency_name.lower() != comp_currency_name.lower():
                 raise osv.except_osv(_('Error'),
-                _("The Product [%s] %s is not in company currency. Company currency is '%s' and the product currency is '%s'.") % (
-                product_code or '', product_name or '', comp_currency_name, currency_name or '', ))
+                                     _("The Product [%s] %s is not in company currency. Company currency is '%s' and the product currency is '%s'.") % (
+                    product_code or '', product_name or '', comp_currency_name, currency_name or '', ))
 
             to_write = {
                 'product_id': product_id,

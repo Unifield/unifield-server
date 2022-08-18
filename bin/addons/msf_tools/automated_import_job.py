@@ -699,6 +699,7 @@ class automated_import_job_progress(osv.osv_memory):
         'import_id': fields.related(
             'automated.import',
             string='Import',
+            write_relate=False,
         ),
     }
 

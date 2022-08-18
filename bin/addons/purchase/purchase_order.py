@@ -54,9 +54,12 @@ class purchase_order(osv.osv):
         '''
         new_dom = []
         dest_partner_names = False
+        product_id = False
         for x in domain:
             if x[0] == 'dest_partner_names':
                 dest_partner_names = x[2]
+            elif x[0] == 'product_id':
+                product_id = x[2]
             else:
                 new_dom.append(x)
 
@@ -72,6 +75,12 @@ class purchase_order(osv.osv):
                 ret.where_clause.append(' "res_partner"."name" ilike %s ')
             ret.where_clause_params.append('%%%s%%'%dest_partner_names)
             ret.having_group_by = ' GROUP BY "purchase_order"."id" '
+        if product_id and isinstance(product_id, int):
+            ret.tables.append('"purchase_order_line"')
+            ret.joins.setdefault('"purchase_order"', [])
+            ret.joins['"purchase_order"'] += [('"purchase_order_line"', 'id', 'order_id', 'LEFT JOIN')]
+            ret.where_clause.append(''' "purchase_order_line"."product_id" = %s  ''')
+            ret.where_clause_params.append(product_id)
         return ret
 
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
@@ -708,9 +717,13 @@ class purchase_order(osv.osv):
 
     def _get_fake(self, cr, uid, ids, name, arg, context=None):
         """
-        Fake method for 'has_confirmed_line' field
+        Fake method for 'has_confirmed_line', 'has_confirmed_or_further_line' and 'product_id' fields
         """
         res = {}
+        if not ids:
+            return res
+        if isinstance(ids, int):
+            ids = [ids]
         for po_id in ids:
             res[po_id] = False
         return res
@@ -806,7 +819,6 @@ class purchase_order(osv.osv):
 
         return ret
 
-
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -841,7 +853,7 @@ class purchase_order(osv.osv):
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
         'partner_ref': fields.char('Supplier Reference', size=128),
         'short_partner_ref': fields.function(_get_short_partner_ref, method=True, string='Supplier Reference', type='char', size=64, store=False),
-        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
+        'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
         'po_from_ir': fields.function(_po_from_x, method=True, type='boolean', string='Is PO from IR ?', multi='po_from_x'),

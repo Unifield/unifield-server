@@ -787,6 +787,31 @@
             <field name="method">us_5722_update_accruals</field>
         </record>
 
+        <!-- UF26.0 -->
+        <record id="us_8259_remove_currency_table_wkf" model="patch.scripts">
+            <field name="method">us_8259_remove_currency_table_wkf</field>
+        </record>
+
+        <record id="us_10090_new_dep_journals" model="patch.scripts">
+            <field name="method">us_10090_new_dep_journals</field>
+        </record>
+
+        <record id="us_10010_hide_import_export_product_menu" model="patch.scripts">
+            <field name="method">us_10010_hide_import_export_product_menu</field>
+        </record>
+
+        <record id="fix_us_10163_ocbhq_funct_amount" model="patch.scripts">
+            <field name="method">fix_us_10163_ocbhq_funct_amount</field>
+        </record>
+
+        <record id="us_8428_pi_type_migration" model="patch.scripts">
+            <field name="method">us_8428_pi_type_migration</field>
+        </record>
+
+        <record id="us_9229_fix_rt" model="patch.scripts">
+            <field name="method">us_9229_fix_rt</field>
+        </record>
+
         <record id="py3_migrate_pickle_ir_values" model="patch.scripts">
             <field name="method">py3_migrate_pickle_ir_values</field>
         </record>

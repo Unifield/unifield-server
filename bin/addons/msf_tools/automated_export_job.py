@@ -312,6 +312,7 @@ class automated_export_job_progress(osv.osv_memory):
         'export_id': fields.related(
             'automated.export',
             string='Export',
+            write_relate=False,
         ),
     }
 

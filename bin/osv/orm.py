@@ -3113,8 +3113,9 @@ class orm(orm_template):
                 cr.commit()
 
     def _create_m2m_table(self, cr, f):
-        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
-        if not cr.dictfetchall():
+        cr.execute("SELECT relname, relhasoids FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
+        x = cr.dictfetchall()
+        if not x:
             if not self.pool.get(f._obj):
                 raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
             ref = self.pool.get(f._obj)._table
@@ -3125,6 +3126,9 @@ class orm(orm_template):
             cr.commit()
             self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
                                 f._rel, self._table, ref)
+        elif x[0].get('relhasoids'):
+            cr.execute('ALTER TABLE "%s" SET WITHOUT OIDS' % (f._rel, )) # not_a_user_entry
+            cr.commit()
 
 
     def _auto_init(self, cr, context=None):

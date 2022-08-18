@@ -36,6 +36,7 @@ from . import down_payment
 from . import wizard_register_import
 from . import wizard_liquidity_position
 from . import register_opening
+from . import modify_responsible
 
 
 

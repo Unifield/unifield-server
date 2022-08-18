@@ -28,7 +28,7 @@ class purchase_order_line_cancel_wizard(osv.osv_memory):
 
     _columns = {
         'pol_id': fields.many2one('purchase.order.line', string='PO line to delete'),
-        'linked_sol_id': fields.related('pol_id', 'linked_sol_id', type='many2one', relation='sale.order.line', string='SO line'),
+        'linked_sol_id': fields.related('pol_id', 'linked_sol_id', type='many2one', relation='sale.order.line', string='SO line', write_relate=False),
     }
 
     def cancel_pol(self, cr, uid, ids, resource=False, context=None):

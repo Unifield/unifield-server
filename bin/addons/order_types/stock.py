@@ -280,17 +280,17 @@ class stock_picking(osv.osv):
                     'target': 'new',
                 }
 
-                if not context.get('force_process', False) and pick.type == 'in' \
-                   and not pick.in_dpo \
-                   and pick.state != 'shipped' and pick.partner_id.partner_type in ('internal', 'section', 'intermission') \
-                   and self.pool.get('stock.move').search_exists(cr, uid, [('picking_id', '=', pick.id), ('in_forced', '=', False)], context=context):
-                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
-                                                                                  'msf_outgoing', 'stock_incoming_processor_internal_warning_form_view')[1]
+                if not context.get('force_process', False) and pick.type == 'in' and not pick.in_dpo and pick.state != 'shipped' \
+                        and pick.partner_id and pick.partner_id.partner_type in ('internal', 'section', 'intermission') \
+                        and pick.company_id.partner_id.id != pick.partner_id.id \
+                        and self.pool.get('stock.move').search_exists(cr, uid, [('picking_id', '=', pick.id), ('in_forced', '=', False)], context=context):
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_internal_warning_form_view')[1]
                     res['view_id'] = [view_id]
 
                 return res
 
         return super(stock_picking, self).action_process(cr, uid, ids, context=context)
+
 
 stock_picking()
 

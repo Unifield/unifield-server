@@ -393,7 +393,7 @@ class physical_inventory_select_products(osv.osv_memory):
         product_ids = self.pool.get("product.product").search(cr, uid, [("id", 'in', product_ids)], context=context)
 
         # '6' is the code for 'replace all'
-        vals = {'product_ids': [(6, 0, product_ids)]}
+        vals = {'product_ids': [(6, 0, product_ids)], 'products_added': True}
 
         # Check if 'recent_movements' has been used
         if wiz_data['products_preview'] and (wiz_data['first_filter'] == 'recent_movements' or wiz_data['full_inventory'] and wiz_data['recent_moves_months_fullinvo']):

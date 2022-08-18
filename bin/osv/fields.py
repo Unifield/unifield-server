@@ -609,6 +609,7 @@ class many2many(_column):
     _prefetch = False
     _type = 'many2many'
     def __init__(self, obj, rel, id1, id2, string='unknown', limit=None, **args):
+        self.display_inactive = False
         _column.__init__(self, string=string, **args)
         self._obj = obj
         if '.' in rel:
@@ -642,9 +643,10 @@ class many2many(_column):
         # FIXME: make this distinction explicit in API!
         domain = isinstance(self._domain, list) and self._domain or []
 
-        wquery = obj._where_calc(cr, user, domain, context=context)
+        wquery = obj._where_calc(cr, user, domain, active_test=not self.display_inactive, context=context)
         obj._apply_ir_rules(cr, user, wquery, 'read', context=context)
         from_c, where_c, where_params = wquery.get_sql()
+
         if where_c:
             where_c = ' AND ' + where_c
 
@@ -1027,11 +1029,18 @@ class related(function):
     def __init__(self, *arg, **args):
         self.arg = arg
         self._relations = []
-        write_fnct = self._fnct_write
-        if not args.get('write_relate', True):
-            write_fnct = None
+        write_fnct = None
+        if args.get('write_relate', False):
+            write_fnct = self._fnct_write
 
         super(related, self).__init__(self._fnct_read, arg, write_fnct, fnct_inv_arg=arg, method=True, fnct_search=self._fnct_search, **args)
+
+        if not write_fnct and args.get('store'):
+            # example on account.move, partner_id fields.related store=True
+            # is set as hidden in form view
+            # without this the value s not cleaned by the web, and empty partner_id is written as '' instead of False
+            self.readonly = args.get('readonly')
+
         if self.store is True:
             # TODO: improve here to change self.store = {...} according to related objects
             pass

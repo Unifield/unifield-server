@@ -601,7 +601,6 @@ class kit_mass_import(osv.osv):
 
         return True
 
-
     def _get_record(self, cr, uid, field, value, model, cache=None):
         """
         Search in cache or fill the cache with the ID of the db.
@@ -610,9 +609,7 @@ class kit_mass_import(osv.osv):
             cache = {}
 
         if value not in cache:
-            record_ids = self.pool.get(model).search(cr, uid, [
-                (field, '=', value),
-            ])
+            record_ids = self.pool.get(model).search(cr, uid, [(field, '=ilike', value)])
             if record_ids:
                 cache[value] = record_ids[0]
             else:

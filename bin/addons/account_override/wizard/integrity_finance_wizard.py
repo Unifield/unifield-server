@@ -109,8 +109,39 @@ class integrity_finance_wizard(osv.osv_memory):
         })
         company = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
         current_instance = company.instance_id and company.instance_id.code or ''
-        current_date = datetime.today().strftime('%Y%m%d')
-        data['target_filename'] = "%s %s %s" % (_('Entries Data Integrity'), current_instance, current_date)
+        current_date = datetime.today()
+        data['target_filename'] = "%s %s %s" % (_('Entries Data Integrity'), current_instance, current_date.strftime('%Y%m%d'))
+        selected_fisc = ''
+        if wiz.fiscalyear_id:
+            selected_fisc = wiz.fiscalyear_id.name or ''
+        data['selected_fisc'] = selected_fisc
+        filter_used = _('No Filters')
+        if wiz.filter == 'filter_date_doc' or wiz.filter == 'filter_date':
+            data['date_from'] = datetime.strptime(wiz.date_from, '%Y-%m-%d').strftime('%d/%m/%Y')
+            data['date_to'] = datetime.strptime(wiz.date_to, '%Y-%m-%d').strftime('%d/%m/%Y')
+            if wiz.filter == 'filter_date_doc':
+                filter_used = _('Document Date')
+            if wiz.filter == 'filter_date':
+                filter_used = _('Posting Date')
+        elif wiz.filter == 'filter_period':
+            filter_used = _('Period')
+            period_from = wiz.period_from.name or ''
+            period_to = wiz.period_to.name or ''
+            data['period_from'] = period_from
+            data['period_to'] = period_to
+        data['filter_used'] = filter_used
+        entry_status = ''
+        if wiz.move_state == 'posted':
+            entry_status = _('Posted')
+        elif wiz.move_state == 'draft':
+            entry_status = _('Unposted')
+        data['entry_status'] = entry_status
+        data['reportdate'] = current_date.strftime('%d/%m/%Y')
+        selected_instances = company.instance_id.code or ''
+        if wiz.instance_ids:
+            selected_instances = ', '.join([inst.name for inst in wiz.instance_ids])
+        data['selected_instances'] = selected_instances
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'integrity.finance',

@@ -142,7 +142,7 @@ class hr_employee(osv.osv):
         'homere_uuid_key': fields.char(string='Homere field: UUID_key', size=64, readonly=True, required=False),
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
-        'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True),
+        'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True, write_relate=False),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
         'photo': fields.binary('Photo', readonly=True),

@@ -85,8 +85,8 @@ class msf_budget_summary(osv.osv_memory):
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', required=True),
 
-        'name': fields.related('budget_id', 'name', type="char", string="Budget Name", store=False),
-        'code': fields.related('budget_id', 'code', type="char", string="Budget Code", store=False),
+        'name': fields.related('budget_id', 'name', type="char", string="Budget Name", store=False, write_relate=False),
+        'code': fields.related('budget_id', 'code', type="char", string="Budget Code", store=False, write_relate=False),
         'budget_amount': fields.function(_get_amounts, method=True, store=False, string="Budget Amount", type="float", multi="all"),
         'actual_amount': fields.function(_get_amounts, method=True, store=False, string="Actual Amount", type="float", multi="all"),
         'balance_amount': fields.function(_get_amounts, method=True, store=False, string="Balance Amount", type="float", multi="all"),  # utp-857

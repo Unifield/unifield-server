@@ -54,10 +54,12 @@ class account_account(osv.osv):
             string=_("Included in revaluation?")),
         'user_type_code': fields.related(
             'user_type', 'code',
-            type='char', string=_("Type (code)")),
+            type='char', string=_("Type (code)"),
+            write_relate=False),
         'instance_level': fields.related(
             'company_id', 'instance_id', 'level',
-            type='char', string=_("Instance level")),
+            type='char', string=_("Instance level"),
+            write_relate=False),
     }
 
     _defaults = {'currency_revaluation': False}

@@ -61,6 +61,7 @@ class return_shipment_processor(osv.osv):
             type='many2one',
             relation='res.partner',
             string='Customer',
+            write_relate=False,
         ),
         'step': fields.selection(
             string='Step',

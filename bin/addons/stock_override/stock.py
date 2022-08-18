@@ -189,6 +189,33 @@ class stock_picking(osv.osv):
 
         return res
 
+    def list_reason_type_outgoing(self, cr, uid, id, name, context=None):
+
+        dom = [('outgoing_ok', '=', True)]
+        if id:
+            cr.execute('''
+                select
+                    bool(coalesce(sale_id, 0)) or from_wkf or claim or bool(coalesce(rac_id, 0)), reason_type_id
+                from
+                    stock_picking
+                where
+                    id = %s
+                ''', (id, )
+            )
+
+            is_not_fs, current_rt_id = cr.fetchone()
+            if not is_not_fs:
+                dom = ['&', ('is_fs', '=', True)] + dom
+            if current_rt_id:
+                dom = ['|',('id', '=', current_rt_id)] + dom
+        rt_obj = self.pool.get('stock.reason.type')
+        if context is None:
+            lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
+            if lang_dict.get('context_lang'):
+                context = {'lang': lang_dict.get('context_lang')}
+        ret = rt_obj._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
+        return ret
+
     _columns = {
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
@@ -444,6 +471,35 @@ class stock_picking(osv.osv):
                 'target': 'same',
                 'res_id': simu_id,
                 'context': context}
+
+    def _get_rt_for_fs_out(self, cr, uid, partner_id):
+        current_partner = self.pool.get('res.users').get_current_company_partner_id(cr, uid)[0]
+        if partner_id == current_partner:
+            rt = 'reason_type_deliver_unit'
+        else:
+            rt = 'reason_type_deliver_partner'
+        return  self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', rt)[1]
+
+    def on_change_partner_out(self, cr, uid, ids, partner_id, address_id, context=None):
+        res = self.on_change_partner(cr, uid, ids, partner_id, address_id, context=context)
+        if partner_id and not res.get('warning'):
+            res['value']['reason_type_id'] = self._get_rt_for_fs_out(cr, uid, partner_id)
+        return res
+
+    def on_change_rt_out(self, cr, uid, ids, partner_id, rt_id, context=None):
+        if not partner_id or not rt_id:
+            return {}
+        rt = self._get_rt_for_fs_out(cr, uid, partner_id)
+        if rt != rt_id:
+            return {
+                'value': {'reason_type_id': rt},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('Wrong reason type for this OUT'),
+                }
+            }
+        return {}
+
 
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
@@ -1130,9 +1186,9 @@ class stock_move(osv.osv):
         'dpo_line_id': fields.integer(string='Direct PO line', help='PO line from where this stock move is sourced (for sync. engine).'),
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
         'sync_dpo': fields.boolean(string='Sync. DPO'),
-        'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
+        'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf', write_relate=False),
         'is_ext_cu': fields.related('picking_id', 'ext_cu', type='boolean', string='Ext. CU', write_relate=False),
-        'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
+        'fake_state': fields.related('state', type='char', store=False, string="Internal use", write_relate=False),
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
@@ -1142,13 +1198,15 @@ class stock_move(osv.osv):
         'expired_lot': fields.function(_is_expired_lot, method=True, type='boolean', string='Lot expired', store=False, multi='attribute'),
         'product_tbd': fields.function(_is_expired_lot, method=True, type='boolean', string='TbD', store=False, multi='attribute'),
         'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
-        'from_wkf': fields.related('picking_id', 'from_wkf', type='boolean', string='From wkf'),
+        'from_wkf': fields.related('picking_id', 'from_wkf', type='boolean', string='From wkf', write_relate=False),
         'price_changed': fields.function(_is_price_changed, method=True, type='boolean', string='Price changed',
                                          store={
                                              'stock.move': (lambda self, cr, uid, ids, c=None: ids, ['price_unit', 'purchase_order_line'], 10),
                                          },
                                          ),
         'linked_incoming_move': fields.many2one('stock.move', 'Linked Incoming move', readonly=True, help="Link between INT and IN"),
+        'from_pick_move_cancel_id': fields.many2one('stock.move', string='Linked Picking/Out move', readonly=True,
+                                                    help='Move from Picking or Out that created that Internal Move after cancellation'),
     }
 
     _defaults = {
@@ -1158,6 +1216,7 @@ class stock_move(osv.osv):
         'inactive_error': lambda *a: '',
         'has_to_be_resourced': False,
         'is_ext_cu': _default_is_ext_cu,
+        'from_pick_move_cancel_id': False,
     }
 
     @check_rw_warning
@@ -1315,8 +1374,8 @@ class stock_move(osv.osv):
         picking = False
         sync_dpo_in = False
         if vals.get('picking_id', False):
-            picking = pick_obj.read(cr, uid, vals['picking_id'],
-                                    ['move_sequence_id', 'type', 'reason_type_id', 'sync_dpo_in'], context=context)
+            picking = pick_obj.read(cr, uid, vals['picking_id'], ['move_sequence_id', 'type', 'reason_type_id',
+                                                                  'sync_dpo_in', 'sale_id'], context=context)
             if not vals.get('line_number', False):
                 # new number need - gather the line number form the sequence
                 sequence_id = picking['move_sequence_id'][0]
@@ -1392,11 +1451,15 @@ class stock_move(osv.osv):
                 vals['state'] = 'done'
 
         # Change the reason type of the picking if it is not the same
-        other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        if picking and picking['type'] == 'out':
+            if not vals.get('reason_type_id'):
+                vals['reason_type_id'] = picking['reason_type_id'][0]
+
         if picking and not context.get('from_claim') and not context.get('from_chaining') \
-                and picking['reason_type_id'][0] != other_type_id \
+                and picking['reason_type_id'][0] != rt_id \
                 and vals.get('reason_type_id', False) != picking['reason_type_id'][0]:
-            pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': other_type_id}, context=context)
+            pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': rt_id}, context=context)
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
 
@@ -1555,6 +1618,9 @@ class stock_move(osv.osv):
 
         if not 'sync_dpo' in default:
             default['sync_dpo'] = False
+
+        if not 'from_pick_move_cancel_id' in default:
+            default['from_pick_move_cancel_id'] = False
 
         return super(stock_move, self).copy_data(cr, uid, id, default, context=context)
 
@@ -2190,6 +2256,7 @@ class stock_move_cancel_more_wizard(osv.osv_memory):
                         'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
                         'expired_date': move.expired_date or False,
                         'reason_type_id': int_reason_type_id,
+                        'from_pick_move_cancel_id': move.id,
                     }
                     move_obj.create(cr, uid, m_data, context=context)
 
@@ -2443,6 +2510,7 @@ class stock_picking_cancel_more_wizard(osv.osv_memory):
                     'prodlot_id': m.prodlot_id and m.prodlot_id.id or False,
                     'expired_date': m.expired_date or False,
                     'reason_type_id': int_reason_type_id,
+                    'from_pick_move_cancel_id': m.id,
                 }
                 move_obj.create(cr, uid, m_data, context=context)
                 moves_ids_to_cancel.append(m.id)

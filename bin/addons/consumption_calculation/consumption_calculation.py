@@ -1580,7 +1580,7 @@ class monthly_review_consumption_line(osv.osv):
         'valid_until': fields.date(string='Valid until'),
         'valid_ok': fields.boolean(string='Validated', readonly=False),
         'mrc_id': fields.many2one('monthly.review.consumption', string='MRC', required=True, ondelete='cascade'),
-        'mrc_creation_date': fields.related('mrc_id', 'creation_date', type='date', store=True),
+        'mrc_creation_date': fields.related('mrc_id', 'creation_date', type='date', store=True, write_relate=False),
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
     }

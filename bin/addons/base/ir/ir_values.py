@@ -235,11 +235,23 @@ class ir_values(osv.osv):
         # for the admin only add the "Update Sent / Received" links in the menu on the right for all synched objects
         if key == 'action' and key2 == 'client_action_relate' and uid == 1 and self.pool.get('update.link') and models:
             obj_model = models[0][0]
+            act_to_add = []
             if self.pool.get('sync.client.rule').search_exist(cr, uid, [('model', '=', obj_model), ('type', '!=', 'USB')]):
                 act_sent_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'action_open_updates_sent')[1]
-                result.append((act_sent_id, 'Updates_Sent', 'ir.actions.server,%d' % act_sent_id, True, None, 'action'))
+                act_to_add.append((act_sent_id, 'Updates_Sent', 'ir.actions.server,%d' % act_sent_id, True, None, 'action'))
                 act_rcv_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'action_open_updates_received')[1]
-                result.append((act_rcv_id, 'Updates_Received', 'ir.actions.server,%d' % act_rcv_id, True, None, 'action'))
+                act_to_add.append((act_rcv_id, 'Updates_Received', 'ir.actions.server,%d' % act_rcv_id, True, None, 'action'))
+
+                if obj_model == 'product.product':
+                    # on product updates links are not at the end
+                    new_res = []
+                    for x in result:
+                        new_res.append(x)
+                        if x[1] == 'View_log_product.product':
+                            new_res += act_to_add
+                    result = new_res
+                else:
+                    result += act_to_add
 
         if not result:
             return []

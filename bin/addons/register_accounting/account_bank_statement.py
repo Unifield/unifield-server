@@ -134,6 +134,8 @@ class account_journal(osv.osv):
 
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
+        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field",
+                                                                    fnct_search=_search_filter_third, method=True),
     }
 account_journal()
 
@@ -2209,7 +2211,8 @@ class account_bank_statement_line(osv.osv):
                     old_distrib = line.get('analytic_distribution_id')[0]
 
                 # US-427: Do not update the AD from Employee/Third party if it comes from sync, only use the one provided by sync
-                if not context.get('sync_update_execution'):
+                # US-9752: Keep AD that is applied on the entry when we correct info on the entry in temp state
+                if not context.get('sync_update_execution') and state != 'temp':
                     values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance
 
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
@@ -2745,7 +2748,8 @@ class account_bank_statement_line(osv.osv):
         if stl.cash_register_op_advance_po_id:
             context['cash_register_op_advance_po_id'] = stl.cash_register_op_advance_po_id.id
         wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
-                                          'currency_id': stl.statement_id.currency.id, 'reference': stl.ref or ''}, context=context)
+                                          'currency_id': stl.statement_id.currency.id,
+                                          'reference': stl.ref or '', 'journal_id':stl.statement_id.journal_id.id}, context=context)
         if statement_id:
             return {
                 'name' : "Advance Return",

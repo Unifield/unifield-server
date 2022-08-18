@@ -519,8 +519,12 @@ class ir_fields(osv.osv):
                         all_fields_ids.append(field.id)
                         col = model_obj._columns.get(field.name)
                         if col and hasattr(col, '_properties') and col._properties and not col.store:
-                            if a[0] == 'is_function' or not isinstance(col, fields.related):
+                            if a[0] == 'is_function':
                                 field_ids.append(field.id)
+                            elif not isinstance(col, fields.related):
+                                # only allow fnct_search on product.sdref to prevent traceback: "Filter not implemented'
+                                if obj.model != 'product.product' or field.name != 'sdref':
+                                    field_ids.append(field.id)
 
                 if (a[1] == '=' and a[2] == False) or (a[1] == '!=' and a[2] == True):
                     return [('id', 'not in', field_ids)]
