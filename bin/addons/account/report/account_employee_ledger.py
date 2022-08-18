@@ -22,7 +22,7 @@
 import time
 import re
 from report import report_sxw
-from common_report_header import common_report_header
+from .common_report_header import common_report_header
 import pooler
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
