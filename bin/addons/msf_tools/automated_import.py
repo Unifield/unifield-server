@@ -46,6 +46,7 @@ class RemoteInterface(object):
     url = False
     username = False
     password = False
+    localcontext = None
 
     def __init__(self, **data):
         if data.get('ftp_port'):
@@ -54,6 +55,8 @@ class RemoteInterface(object):
         self.username = data.get('ftp_login')
         self.password = data.get('ftp_password')
         self.connection_type = data.get('ftp_ok') and data.get('ftp_protocol')
+        if data.get('lang'):
+            self.localcontext = {'lang': data['lang']}
 
     def remove_special_chars(self, filename):
         if os.name == 'nt' and filename:
@@ -82,7 +85,7 @@ class RemoteOneDrive(RemoteInterface):
         try:
             self.dav = webdav.Client(host=self.host ,port=self.port, protocol=self.protocol, username=self.username, password=self.password, path=self.path)
         except webdav.ConnectionFailed, e:
-            raise osv.except_osv(_('Warning !'), _('Unable to connect: %s') % (e.message))
+            raise Exception(_('Unable to connect: %s') % (e.message))
 
     def list_files(self, path, startswith, already=None):
         if already is None:
@@ -132,7 +135,7 @@ class RemoteSFTP(RemoteInterface):
             self.sftp = pysftp.Connection(self.url, username=self.username, password=self.password, cnopts=cnopts)
             self.sftp._transport.set_keepalive(15)
         except:
-            raise Exception(_('No able to connect to SFTP server at location %s') % (self.url, ))
+            raise Exception(_('Not able to connect to SFTP server at location %s') % (self.url, ))
 
     def list_files(self, path, startswith, already=None):
         if already is None:
@@ -221,13 +224,13 @@ class RemoteFTP(RemoteInterface):
     def rename(self, src_file_name, dest_file_name):
         rep = self.ftp.rename(src_file_name, dest_file_name)
         if not rep.startswith('2'):
-            raise osv.except_osv(_('Error'), ('Unable to move file to destination location on FTP server'))
+            raise osv.except_osv(_('Error'), _('Unable to move file to destination location on FTP server'))
         return True
 
     def push(self, local_name, remote_name):
         rep = self.ftp.storbinary('STOR %s' % remote_name, open(local_name, 'rb'))
         if not rep.startswith('2'):
-            raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on FTP server'))
+            raise osv.except_osv(_('Error'), _('Unable to move local file to destination location on FTP server'))
         return True
 
     def get(self, remote_name, dest_name, delete=False):
@@ -236,12 +239,12 @@ class RemoteFTP(RemoteInterface):
                 f.write(data)
             rep = self.ftp.retrbinary('RETR %s' % remote_name, write_callback)
         if not rep.startswith('2'):
-            raise osv.except_osv(_('Error'), ('Unable to move remote file to local destination location on FTP server'))
+            raise osv.except_osv(_('Error'), _('Unable to move remote file to local destination location on FTP server'))
 
         if delete:
             rep = self.ftp.delete(remote_name)
             if not rep.startswith('2'):
-                raise osv.except_osv(_('Error'), ('Unable to remove remote file on FTP server'))
+                raise osv.except_osv(_('Error'), _('Unable to remove remote file on FTP server'))
         return True
 
     def disconnect(self):
@@ -274,7 +277,7 @@ class Local(RemoteInterface):
     def get_file_content(self, path):
         return open(path).read()
 
-class Remote():
+class Remote(object):
     connection_type = False
     connection = False
     local_connection = False
@@ -662,6 +665,8 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             ids = [ids]
 
         data = self.read(cr, uid, ids[0], context=context)
+        if context.get('lang'):
+            data['lang'] = context['lang']
         remote = Remote(cr, uid, **data)
         remote.test_connection()
         return remote
