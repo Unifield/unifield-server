@@ -1140,9 +1140,12 @@ class Form(TinyInputWidget):
         if self.readonly:
             attrs['readonly'] = True
 
-        if attrs.get('get_selection') and kind == 'selection' and attrs.get('type2') == 'many2one' and self.id:
-            proxy = rpc.RPCProxy(self.model)
-            attrs['selection'] = getattr(proxy, attrs['get_selection'])(self.id, name)
+        if attrs.get('get_selection') and kind == 'selection' and attrs.get('type2') == 'many2one':
+            if self.id:
+                proxy = rpc.RPCProxy(self.model)
+                attrs['selection'] = getattr(proxy, attrs['get_selection'])(self.id, name)
+            elif name == 'reason_type_id' and self.model == 'stock.picking':
+                del(attrs['get_selection'])
         if attrs.get('force_readonly', False) and 'states' in attrs:
             del attrs['states']
 

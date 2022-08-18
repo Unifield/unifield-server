@@ -152,6 +152,10 @@ msgstr ""
 msgid "New database name:"
 msgstr "Nom de la nouvelle base de données :"
 
+#: controllers/templates/database.mako:72
+msgid "You will automatically be redirected to the Login screen after the database is fully restored. Please wait until the process is completed."
+msgstr "Vous serez automatiquement redirigé(e) vers l'écran d'Identification une fois que la base de données sera complètement restaurée. Veuillez attendre que le processus soit entièrement terminé."
+
 #: controllers/database.py:69
 msgid ""
 "Choose the name of the database that will be created. The name must not "
@@ -391,8 +395,8 @@ msgid "Export Error"
 msgstr "Erreur d'exportation"
 
 #: controllers/impex.py:469
-msgid "Database ID"
-msgstr "Identifiant de base de donnée"
+msgid "ID"
+msgstr "Identifiant"
 
 #: controllers/impex.py:476
 msgid "Error opening .CSV file"
@@ -520,6 +524,10 @@ msgstr "Mauvais nom d'utilisateur ou mot de passe"
 msgid "Your IP have been blocked because of too many bad login attempts. It will be unblocked after %s minutes."
 msgstr "Votre IP à été bloquée à cause d'un trop grand nombre de connexion infructueuses. Elle sera débloquée dans %s minutes."
 
+#: controllers/utils.py:225
+msgid "Login refused. The database restoration has failed, please delete it and try again"
+msgstr "Identification refusée. La restauration de la base de données a échoué, veuillez la supprimer et recommencer"
+
 #: controllers/view_log.py:32
 msgid "ID"
 msgstr "ID"
@@ -552,7 +560,15 @@ msgstr "Propriétaire du groupe"
 msgid "Access Level"
 msgstr "Niveau d'accès"
 
-#: controllers/view_log.py:40
+#: controllers/view_log.py:101
+msgid "SDref"
+msgstr "SDref"
+
+#: controllers/view_log.py:103
+msgid "xmlid_code"
+msgstr "xmlid_code"
+
+#: controllers/view_log.py:107
 msgid "Internal module data ID"
 msgstr "ID du module de données interne"
 
@@ -1265,6 +1281,15 @@ msgstr "Champ"
 #: controllers/templates/view_log.mako:4 controllers/templates/view_log.mako:12
 msgid "Information"
 msgstr "Information"
+
+#: controllers/templates/view_log.mako:4 controllers/templates/view_log.mako:27
+msgid "Show fields"
+msgstr "Afficher les champs"
+
+#: controllers/templates/show_fields.mako:4
+#: controllers/templates/show_fields.mako:12
+msgid "%s's fields"
+msgstr "Champs de %s"
 
 #: controllers/templates/viewed.mako:17
 #, python-format

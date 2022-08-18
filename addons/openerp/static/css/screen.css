@@ -2074,6 +2074,13 @@ td.tertiary div.wrap {
 }
 
 /*#sidebar li a { color: #5b5b5b; }*/
+#sidebar li a.sidebar_field_orders {
+    display: block;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #5b5b5b;
+}
+
 #sidebar li a:hover,#sidebar li a:focus,#sidebar li a:active {
     color: #111;
 }

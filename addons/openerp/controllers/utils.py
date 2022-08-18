@@ -223,7 +223,10 @@ def secured(fn):
             if action == 'login' and login_ret == -4:
                 return login(cherrypy.request.path_info, message=_('A script during patch failed! Login is forbidden for the moment. Please contact your administrator'),
                              db=db, user=user, action=action, origArgs=get_orig_args(kw))
-            if action == 'login' and login_ret in (-5, -7): # must change password
+            if action == 'login' and login_ret == -8:
+                return login(cherrypy.request.path_info, message=_('Login refused. The database restoration has failed, please delete it and try again'),
+                             db=db, user=user, action=action, origArgs=get_orig_args(kw))
+            if action == 'login' and login_ret in (-5, -7):  # must change password
                 if 'confirm_password' in kw:
                     message = rpc.session.change_password(db, user, password, kw['new_password'], kw['confirm_password'])
                     if message is not True:

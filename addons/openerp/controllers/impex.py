@@ -198,7 +198,7 @@ class ImpEx(SecuredController):
         else:
             m2ofields = []
 
-        fields.update({'id': {'string': 'ID'}, '.id': {'string': 'Database ID'}})
+        fields.update({'id': {'string': 'SDref'}, '.id': {'string': 'ID'}})
 
         fields_order = sorted(fields.keys(), key=lambda x: fields[x].get('string', ''), reverse=True)
         records = []
@@ -325,7 +325,7 @@ class ImpEx(SecuredController):
             fields.update(f2)
 
         def rec(fields):
-            _fields = {'id': 'ID' , '.id': 'Database ID' }
+            _fields = {'id': 'SDref', '.id': 'ID'}
 
             def model_populate(fields, prefix_node='', prefix=None, prefix_value='', level=2):
                 fields_order = sorted(fields.keys(), key=lambda x: fields[x].get('string', ''), reverse=True)
@@ -468,7 +468,7 @@ class ImpEx(SecuredController):
         error = None
 
         fields = dict(rpc.RPCProxy(params.model).fields_get(False, rpc.session.context))
-        fields.update({'id': {'string': 'ID'}, '.id': {'string': 'Database ID'}})
+        fields.update({'id': {'string': 'SDref'}, '.id': {'string': 'ID'}})
 
         def model_populate(fields, prefix_node='', prefix=None, prefix_value='', level=2):
             def str_comp(x,y):
@@ -491,9 +491,9 @@ class ImpEx(SecuredController):
                         model_populate(fields2, prefix_node+field+'/', None, st_name+'/', level-1)
 
                     if fields[field].get('relation',False) and level>0:
-                        model_populate({'/id': {'type': 'char', 'string': 'ID'}, '.id': {'type': 'char', 'string': 'Database ID'}},
+                        model_populate({'/id': {'type': 'char', 'string': 'SDref'}, '.id': {'type': 'char', 'string': 'ID'}},
                                        prefix_node+field, None, st_name+'/', level-1)
-        fields.update({'id':{'string':'ID'},'.id':{'string':_('Database ID')}})
+        fields.update({'id': {'string': 'SDref'}, '.id': {'string': _('ID')}})
         model_populate(fields)
 
 
