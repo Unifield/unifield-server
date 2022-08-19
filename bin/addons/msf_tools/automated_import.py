@@ -600,7 +600,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
     }
 
     _defaults = {
-        'interval': lambda *a: 1,
+        'interval': lambda *a: 12,
         'interval_unit': lambda *a: 'hours',
         'active': lambda *a: False,
         'priority': lambda *a: 10,
