@@ -816,8 +816,14 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
                 'state': 'in_progress',
             }
             job_id = job_obj.create(cr, uid, params, context=context)
-            self.infolog(cr, uid, _('%s :: New import job created') % self.read(cr, uid, import_id, ['name'])['name'])
+
+            auto_data = self.browse(cr, uid, import_id, fields_to_fetch=['name', 'function_id'], context=context)
+            self.infolog(cr, uid, _('%s :: New import job created') % auto_data.name)
             cr.commit()
+            if not context.get('lang') and auto_data.function_id.method_to_call == 'auto_import_destination':
+                # translatable name field is set, use the correct lang
+                context['lang'] = 'en_MF'
+
             res = job_obj.process_import(cr, uid, import_id, job_id, context=context)
             cr.commit()
 

@@ -147,12 +147,15 @@ class automated_import_job(osv.osv):
 
     _defaults = {
         'state': lambda *a: 'draft',
+        'start_time': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
 
 
     def manual_process_import(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['import_id', 'file_to_import', 'file_sum'], context=context)
         if wiz.file_to_import:
             if wiz.import_id.ftp_source_ok:
@@ -171,9 +174,13 @@ class automated_import_job(osv.osv):
                         'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
                         'context': context,
                     }
-        self.write(cr, uid, ids[0], {'start_time': time.strftime('%Y-%m-%d %H:%M:%S'), 'state': 'in_progress'}, context=context)
+        self.write(cr, uid, ids[0], {'state': 'in_progress'}, context=context)
         # Background import
-        thread = threading.Thread(target=self.process_import_bg, args=(cr.dbname, uid, wiz.import_id.id, ids[0], None))
+        ctx_import = None
+        if wiz.import_id.function_id.method_to_call == 'auto_import_destination':
+            ctx_import = {'lang': context.get('lang')}
+
+        thread = threading.Thread(target=self.process_import_bg, args=(cr.dbname, uid, wiz.import_id.id, ids[0], ctx_import))
         thread.start()
 
         return {
@@ -224,14 +231,12 @@ class automated_import_job(osv.osv):
 
         if isinstance(import_id, (int, long)):
             import_id = [import_id]
-
         import_data = import_obj.browse(cr, uid, import_id[0], context=context)
         no_file = False
         already_done = []
         job_id = False
         remote = False
         while not no_file:
-            start_time = time.strftime('%Y-%m-%d %H:%M:%S')
             nb_rejected = 0
             nb_processed = 0
             if started_job_id:
@@ -257,7 +262,7 @@ class automated_import_job(osv.osv):
                         msg = e.value
                     else:
                         msg = e
-                    self.write(cr, uid, job_id, {'state': 'error', 'end_time': time.strftime('%Y-%m-%d %H:%M:%S'), 'start_time': start_time, 'comment': tools.ustr(msg)}, context=context)
+                    self.write(cr, uid, job_id, {'state': 'error', 'end_time': time.strftime('%Y-%m-%d %H:%M:%S'), 'comment': tools.ustr(msg)}, context=context)
                     cr.commit()
                 raise
 
@@ -310,7 +315,6 @@ class automated_import_job(osv.osv):
                         self.write(cr, uid, [job.id], {
                             'filename': filename,
                             'file_to_import': data64,
-                            'start_time': start_time,
                             'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                             'nb_processed_records': 0,
                             'nb_rejected_records': 0,
@@ -386,7 +390,6 @@ class automated_import_job(osv.osv):
 
                     self.write(cr, uid, [job.id], {
                         'filename': filename,
-                        'start_time': start_time,
                         'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                         'nb_processed_records': nb_processed,
                         'nb_rejected_records': nb_rejected,
@@ -408,7 +411,6 @@ class automated_import_job(osv.osv):
                     self.infolog(cr, uid, '%s :: %s' % (import_data.name, trace_b))
                     self.write(cr, uid, [job.id], {
                         'filename': False,
-                        'start_time': start_time,
                         'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                         'nb_processed_records': 0,
                         'nb_rejected_records': 0,
