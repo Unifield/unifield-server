@@ -268,19 +268,23 @@ class account_invoice_import(osv.osv_memory):
                         if cost_center_code and destination_code and funding_pool_code:
                             ad_vals = {}
                             distrib_id = ana_obj.create(cr, uid, {'name': 'Line Distribution Import'}, context=context)
-                            cc_ids = aac_obj.search(cr, uid,[('code', '=', cost_center_code),('category', '=', 'OC'),('filter_active', '=', True)],
+                            cc_ids = aac_obj.search(cr, uid,[('code', '=', cost_center_code),('category', '=', 'OC')],
                                                              limit=1, context=context)
-                            if not cc_ids:
+                            if cc_ids:
+                                cc = aac_obj.browse(cr, uid, cc_ids[0], context=context)
+                            if not cc_ids or cc.date_start >= checking_date or (cc.date and cc.date < checking_date):
                                 errors.append(_("Line %s: the cost center %s doesn't exist or is inactive.") % (current_line_num, cost_center_code))
                                 continue
-                            fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING'),
-                                                             ('filter_active', '=', True)], limit=1, context=context)
-                            if not fp_ids:
+                            fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING')], limit=1, context=context)
+                            if fp_ids:
+                                fp = aac_obj.browse(cr, uid, fp_ids[0], context=context)
+                            if not fp_ids or fp.date_start >= checking_date or (fp.date and fp.date < checking_date):
                                 errors.append(_("Line %s: the funding pool %s doesn't exist or is inactive.") % (current_line_num, funding_pool_code))
                                 continue
-                            dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST'),
-                                                               ('filter_active', '=', True)], limit=1, context=context)
-                            if not dest_ids:
+                            dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST')], limit=1, context=context)
+                            if dest_ids:
+                                dest = aac_obj.browse(cr, uid, dest_ids[0], context=context)
+                            if not dest_ids or dest.date_start >= checking_date or (dest.date and dest.date < checking_date):
                                 errors.append(_("Line %s: the destination %s doesn't exist or is inactive.") % (current_line_num, destination_code))
                                 continue
                             # check destination and cc compatibility
