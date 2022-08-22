@@ -162,6 +162,11 @@
             <field name="incoming_ok" eval="False" />
             <field name="outgoing_ok" eval="False" />
         </record>
-    
+
+        <record id="reason_type_deliver_unit" model="stock.reason.type">
+            <field name="name">Deliver Unit</field>
+            <field name="code">20</field>
+            <field name="outgoing_ok">True</field>
+        </record>
     </data>
 </openerp>

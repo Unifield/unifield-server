@@ -228,12 +228,12 @@
                                 </group>
                                 <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             </group>
-                            <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                            <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}">
                                 <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                                 <button name="wizard_import_ad" string="Import AD" icon="terp-stock_symbol-selection" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                                <button name="button_cancel_lines" string="Cancel Lines" icon="gtk-remove" colspan="1" type="object" />
-                                <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': False}"/>
-                                <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object"/>
+                                <button name="button_cancel_lines" string="Cancel Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['&amp;', ('state', 'not in', ['draft', 'draft_p']), '|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['validated', 'validated_p'])]}" />
+                                <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" context="{'rfq_ok': False}"/>
+                                <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                             </group>
                             <group colspan="4" col="4" attrs="{'invisible':['&amp;', ('state', 'not in', ['validated', 'validated_p']), '|', ('partner_type', 'not in', ['esc', 'external']), ('state', 'not in', ['confirmed', 'confirmed_p'])]}">
                                 <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" />
@@ -1014,12 +1014,6 @@
                 </search>
             </field>
         </record>
-
-
-        <act_window context="{}"
-                    domain="[('rfq_ok', '=', False), ('product_id', '=', active_id)]"
-                    id="purchase.action_purchase_line_product_tree2" name="Purchases"
-                    res_model="purchase.order" src_model="product.product" groups=""/>
 
         <record id="purchase_line_form_action2" model="ir.actions.act_window">
             <field name="name">Purchase Lines Not Invoiced</field>

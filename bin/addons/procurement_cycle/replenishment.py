@@ -3605,7 +3605,7 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
             prod_code = row.cells[0].data
             if not prod_code:
                 continue
-            prod_code = prod_code.strip()
+            prod_code = prod_code.strip().upper()
 
             seg_ref = row.cells[3].data
             if not seg_ref:
@@ -4215,7 +4215,6 @@ class product_stock_out(osv.osv):
             else:
                 data_towrite['product_id'] = prod_id[0]
 
-
             if cells_nb < 5:
                 line_error.append(_('XLS Line %d: dates from and to required') % (idx,))
                 error += line_error
@@ -4223,12 +4222,12 @@ class product_stock_out(osv.osv):
                 continue
 
             if not row.cells[3].type == 'datetime':
-                line_error.append(_('XLS Line %d: FROM DATE %d, date is not valid, found %s') % (idx, row.cells[3].data))
+                line_error.append(_('XLS Line %d: "FROM DATE" date is not valid, found %s') % (idx, row.cells[3].data))
                 error += line_error
                 continue
 
             if not row.cells[4].type == 'datetime':
-                line_error.append(_('XLS Line %d: TO DATE %d, date is not valid, found %s') % (idx, row.cells[4].data))
+                line_error.append(_('XLS Line %d: "TO DATE" date is not valid, found %s') % (idx, row.cells[4].data))
                 error += line_error
                 continue
 
@@ -4239,11 +4238,11 @@ class product_stock_out(osv.osv):
             if error_date.get('warning', {}).get('message'):
                 line_error.append(_('XLS Line %d: %s') % (idx, error_date['warning']['message']))
 
-
-            if cells_nb > 6 and row.cells[6].data and not isinstance(row.cells[6].data, (int, long, float)):
-                line_error.append(_('XLS Line %d: Missing Qty must be a number, found %s') % (idx, row.cells[6].data))
-            else:
-                data_towrite['qty_missed'] = row.cells[6].data
+            if cells_nb > 6:
+                if row.cells[6].data and not isinstance(row.cells[6].data, (int, long, float)):
+                    line_error.append(_('XLS Line %d: Missing Qty must be a number, found %s') % (idx, row.cells[6].data))
+                else:
+                    data_towrite['qty_missed'] = row.cells[6].data
 
             replace_prod_col = 7
             for sub in [1, 2, 3]:

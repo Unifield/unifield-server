@@ -41,6 +41,27 @@ class tender(osv.osv):
     _description = 'Tender'
     _trace = True
 
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        '''
+        overwrite to allow search on customer and self instance
+        '''
+        new_dom = []
+        product_id = False
+        for x in domain:
+            if x[0] == 'product_id':
+                product_id = x[2]
+            else:
+                new_dom.append(x)
+
+        ret = super(tender, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if product_id and isinstance(product_id, int):
+            ret.tables.append('"tender_line"')
+            ret.joins.setdefault('"tender"', [])
+            ret.joins['"tender"'] += [('"tender_line"', 'id', 'tender_id', 'LEFT JOIN')]
+            ret.where_clause.append(''' "tender_line"."product_id" = %s  ''')
+            ret.where_clause_params.append(product_id)
+        return ret
+
     def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         if not default:
             default = {}
@@ -116,6 +137,19 @@ class tender(osv.osv):
             res[tender.id] = diff_number
         return res
 
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        '''
+        Fake method for 'product_id' field
+        '''
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
     _columns = {
         'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True, sort_column='id'),
         'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
@@ -136,7 +170,7 @@ class tender(osv.osv):
         'notes': fields.text('Notes'),
         'internal_state': fields.selection([('draft', 'Draft'), ('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
         'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
-        'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product', write_relate=False),
+        'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
         'delivery_address': fields.many2one('res.partner.address', string='Delivery address', required=True),
         'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
         'diff_nb_rfq_supplier': fields.function(_diff_nb_rfq_supplier, method=True, type="boolean", string="Compare the number of rfqs and the number of suppliers", store=False),

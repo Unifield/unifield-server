@@ -357,9 +357,7 @@
                                             <field name="dg_check" widget="null_boolean" />
                                             <field name="np_check" widget="null_boolean" />
                                         </group>
-                                        <field name="reason_type_id"
-                                               domain="[('outgoing_ok', '=', True)]"
-                                               attrs="{'readonly': [('state', '!=', 'draft')]}" widget="selection"/>
+                                        <field name="reason_type_id" widget="selection" readonly="1"/>
                                     </group>
                                     <group colspan="2" col="2">
                                         <separator string="Dates" colspan="2" />
@@ -467,6 +465,7 @@
 						<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
 						<field name="date" />
 						<field name="min_date" />
+						<field name="product_id" />
                     </group>
                     <newline />
                     <group string="State of lines" col="8" colspan="4">
@@ -803,8 +802,10 @@
                         <field name="order_category" />
 						<field name="reason_type_id" widget="selection" />
 						<field name="company_id" widget="selection" groups="base.group_multi_company"/>
+                        <newline/>
 						<field name="date" />
 						<field name="min_date" />
+						<field name="product_id" />
 					</group>
 					<newline/>
 					<group expand="0" string="Group By..." colspan="4" col="8">
