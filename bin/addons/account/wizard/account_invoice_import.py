@@ -165,6 +165,7 @@ class account_invoice_import(osv.osv_memory):
                 for num, r in enumerate(rows):
                     current_line_num = num + base_num
                     vals = {}
+                    distrib_id = False
                     line = import_cell_data_obj.get_line_values(cr, uid, ids, r)
                     line.extend([False for i in range(len(cols) - len(line))])
                     # get the data
