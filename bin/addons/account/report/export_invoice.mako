@@ -174,7 +174,7 @@
 
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.name or ''|x}</Data></Cell>
 
-        <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|x}</Data></Cell>
+        <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|xn}</Data></Cell>
         % if (inv_line.analytic_distribution_id and len(inv_line.analytic_distribution_id.cost_center_lines) == 1) :
             <Cell ss:StyleID="non_editable"><Data ss:Type="String">${'100gg%'|x}</Data></Cell>
         % elif (inv_line.analytic_distribution_id and len(inv_line.analytic_distribution_id.cost_center_lines) > 1):
