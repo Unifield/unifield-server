@@ -100,8 +100,11 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
     def _get_order_line(self, order_id):
         order_line_ids = self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)])
+        ftf = ['id', 'order_id', 'line_number', 'state', 'state_to_display', 'product_id', 'type', 'product_uom_qty',
+               'product_uom', 'esti_dd', 'confirmed_delivery_date', 'move_ids', 'comment']
         for order_line_id in order_line_ids:
-            yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id, context=self.localcontext)
+            yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id,
+                                                          fields_to_fetch=ftf, context=self.localcontext)
 
         raise StopIteration
 
@@ -111,10 +114,10 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
         '''
         if not move.picking_id or not move.picking_id.shipment_id:
             return False
-        for pack_fam_mem in move.picking_id.shipment_id.pack_family_memory_ids:
-            for m in pack_fam_mem.move_lines:
-                if m.not_shipped and m.id == move.id:
-                    return True
+        self.cr.execute('''SELECT id FROM stock_move WHERE not_shipped = 't' AND pick_shipment_id = %s AND id = %s''',
+                        (move.picking_id.shipment_id.id, move.id))
+        if self.cr.fetchone():
+            return True
         return False
 
     def in_line_data(self, po_id, prod_id, pol_id):
