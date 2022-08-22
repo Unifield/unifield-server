@@ -181,9 +181,6 @@ class account_invoice_import(osv.osv_memory):
                     destination_code = line[cols['destination']] and tools.ustr(line[cols['destination']])
                     funding_pool_code = line[cols['funding_pool']] and tools.ustr(line[cols['funding_pool']])
 
-                    if analytic_distribution_type and analytic_distribution_type.strip() == 'SPLIT':
-                        continue  # if AD is SPLIT, skip the line and check the next one
-
                     if not line_number:
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
                         continue
@@ -250,7 +247,6 @@ class account_invoice_import(osv.osv_memory):
                         continue
                     vals['name'] = description
                     vals['note'] = notes
-
                     if analytic_distribution_type and analytic_distribution_type.strip() in ('100%', '100'):
                         if account.user_type and account.user_type.code == 'expense' and (not cost_center_code or not destination_code or not funding_pool_code):
                             errors.append(_("Line %s: An expense account is set while the analytic distribution values (mandatory) are missing.") % (current_line_num,))
@@ -306,9 +302,9 @@ class account_invoice_import(osv.osv_memory):
                             # Then cost center lines
                             ad_vals.update({'analytic_id': ad_vals.get('cost_center_id'), })
                             self.pool.get('cost.center.distribution.line').create(cr, uid, ad_vals)
+                            vals['analytic_distribution_id'] = distrib_id
 
                     # update the line
-                    vals['analytic_distribution_id'] = distrib_id
                     invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals, context=context)
                     # update the percent
                     if current_line_num == nb_rows:
