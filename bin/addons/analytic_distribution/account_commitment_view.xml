@@ -39,6 +39,13 @@
                     <field name="analytic_distribution_id" invisible="1"/>
                     <notebook colspan="4">
                         <page string="Commitment voucher lines">
+                            <group name="import" string=" Import Lines " colspan="4" col="4"
+                               attrs="{'invisible': [('state', '!=', 'draft')]}">
+                                    <button name="import_cv" string="Import CV Lines" icon="gtk-execute" colspan="2" type="object"
+                                            attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                    <button name="export_cv" string="Export CV Lines" icon="gtk-execute" colspan="2" type="object"/>
+                                    <newline/>
+                           </group>
                             <field name="line_ids" nolabel="1" colspan="4"
                                    attrs="{'readonly': ['|', ('state', '=', 'done'),
                                                         '&amp;',

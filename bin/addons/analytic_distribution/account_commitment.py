@@ -37,6 +37,33 @@ class account_commitment(osv.osv):
     _order = "id desc"
     _trace = True
 
+    def import_cv(self, cr, uid, ids, data, context=None):
+        """
+        Opens the Import CV wizard
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        wiz_id = self.pool.get('account.cv.import').create(cr, uid, {'commit_id': ids[0]}, context=context)
+        return {
+            'name': _('Import CV'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.cv.import',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [wiz_id],
+        }
+
+    def export_cv(self, cr, uid, ids, data, context=None):
+        """
+        Opens the Export CV report
+        """
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.export_cv',
+            'datas': data,
+        }
+
     def _get_total(self, cr, uid, ids, name, args, context=None):
         """
         Give total of given commitments

@@ -237,6 +237,14 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         multiple = False
         value = {}
         if function_id:
+            instance_level = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'],
+                                                               context=context).company_id.instance_id.level
+            prod_func_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'auto_import_fnct_product')[1]
+            if instance_level == 'project' and function_id == prod_func_id:
+                return {
+                    'value': {'function_id': False},
+                    'warning': {'title': _('Error'), 'message': _("You can not select 'Import Products' on a Project instance")}
+                }
             fct_data = self.pool.get('automated.import.function').browse(cr, uid, function_id, context=context)
             multiple = fct_data.multiple
             if not multiple:

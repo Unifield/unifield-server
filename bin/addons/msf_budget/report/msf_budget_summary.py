@@ -26,12 +26,12 @@ def filter_chars(text):
     # US-583: exclude chars in action name
     # (chars to exclude list obtained using string.printable and testing)
     exclude_list = "\"'`^\@~;$&#"
-    
+
     res = text
     for c in exclude_list:
         res = res.replace(c, '')
     return res
-    
+
 
 class msf_budget_summary(osv.osv_memory):
     _name = "msf.budget.summary"
@@ -85,8 +85,8 @@ class msf_budget_summary(osv.osv_memory):
     _columns = {
         'budget_id': fields.many2one('msf.budget', 'Budget', required=True),
 
-        'name': fields.related('budget_id', 'name', type="char", string="Budget Name", store=False),
-        'code': fields.related('budget_id', 'code', type="char", string="Budget Code", store=False),
+        'name': fields.related('budget_id', 'name', type="char", string="Budget Name", store=False, write_relate=False),
+        'code': fields.related('budget_id', 'code', type="char", string="Budget Code", store=False, write_relate=False),
         'budget_amount': fields.function(_get_amounts, method=True, store=False, string="Budget Amount", type="float", multi="all"),
         'actual_amount': fields.function(_get_amounts, method=True, store=False, string="Actual Amount", type="float", multi="all"),
         'balance_amount': fields.function(_get_amounts, method=True, store=False, string="Balance Amount", type="float", multi="all"),  # utp-857
@@ -138,7 +138,6 @@ class msf_budget_summary(osv.osv_memory):
         if context is None:
             context = {}
 
-        mb_obj = self.pool.get('msf.budget')
         mbs_obj = self.pool.get('msf.budget.summary')
         mbsl_obj = self.pool.get('msf.budget.summary.line')
 
@@ -153,13 +152,13 @@ class msf_budget_summary(osv.osv_memory):
 
         # get summary line data and do checks
         summary_br = mbs_obj.browse(cr, uid, [summary_line_id],
-            context=context)[0]
+                                    context=context)[0]
         # abort if no budget found or not a last level summary node (perfs)
         if not summary_br.budget_id:
             raise osv.except_osv(_('Error'), _('Budget not found'))
         if summary_br.child_ids:
             raise osv.except_osv(_('Warning'),
-                _('Only childest budgets are drillable'))
+                                 _('Only childest budgets are drillable'))
 
         # build tree
         root_id = mbsl_obj.build_tree(cr, uid, summary_br, context=context)
@@ -168,7 +167,7 @@ class msf_budget_summary(osv.osv_memory):
         name = self._budget_summary_line_label_pattern.format(
             budget_code=summary_br.budget_id.code or '')
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
-            'msf_budget', 'view_msf_budget_summary_budget_line_tree')[1]
+                                                                      'msf_budget', 'view_msf_budget_summary_budget_line_tree')[1]
         res = {
             'name': filter_chars(name),
             'type': 'ir.actions.act_window',
@@ -196,7 +195,7 @@ class msf_budget_summary_line(osv.osv_memory):
             return res
 
         for r in self.read(cr, uid, ids, ['parent_id', 'name'],
-            context=context):
+                           context=context):
             if r['parent_id']:
                 parts = r['name'].split(' ')
                 res[r['id']] = parts and parts[0] or ''
@@ -225,16 +224,16 @@ class msf_budget_summary_line(osv.osv_memory):
     def build_tree(self, cr, uid, summary_line_br, context=None):
         aa_obj = self.pool.get('account.account')
         mbl_obj = self.pool.get('msf.budget.line')
-        
+
         if context is None:
             context = {}
         context['commitment'] = 1
-        
+
         # get account tree
         account_ids = aa_obj.search(cr, uid, [])
         account_tree = {}
         for a in aa_obj.read(cr, uid, account_ids, ['parent_id', ],
-            context=context):
+                             context=context):
             account_tree[a['id']] = a['parent_id'] and a['parent_id'][0] \
                 or False
 
@@ -254,7 +253,6 @@ class msf_budget_summary_line(osv.osv_memory):
 
         # build nodes from budget lines
         id = False
-        parent_level_ids = {}
         fields = [ 'name', 'budget_amount', 'actual_amount', 'balance', ]
 
         budget_lines_ids = mbl_obj.search(cr, uid, [
@@ -264,21 +262,21 @@ class msf_budget_summary_line(osv.osv_memory):
 
         # mapping between build tree lines and budget lines by account
         mapping = {}
-        
+
         # get line truely in parent_left order
         # (the native order of budget lines)
         line_read = {}
         for bl_r in mbl_obj.read(cr, uid, budget_lines_ids,
-            fields + [ 'account_id', 'comm_amount', ], context=context):
+                                 fields + [ 'account_id', 'comm_amount', ], context=context):
             line_read[bl_r['id']] = bl_r
-            
+
         for bl_id in budget_lines_ids:
             bl_r = line_read[bl_id]
 
             # get account level
             parts = bl_r['name'].split(' ')
             account = parts and parts[0] or ''
- 
+
             # parent mapping
             account_id = bl_r['account_id'][0]
             parent_id = root_id
@@ -306,13 +304,13 @@ class msf_budget_summary_line(osv.osv_memory):
             mapping[account_id] = id
             if not id:
                 break
-  
+
         return root_id
 
     def action_open_analytic_lines(self, cr, uid, ids, context):
         def get_analytic_domain(sl_br):
             cc_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(cr,
-                uid, sl_br.budget_id.cost_center_id)
+                                                                            uid, sl_br.budget_id.cost_center_id)
 
             return [
                 ('cost_center_id', 'in', cc_ids),
@@ -334,7 +332,7 @@ class msf_budget_summary_line(osv.osv_memory):
         if not sl_br.budget_line_id:
             # no AJI drill for the root line: only from 1 level (like 6, 7)
             raise osv.except_osv(_('Warning'),
-                _('You can not drill analytic journal items of the root line'))
+                                 _('You can not drill analytic journal items of the root line'))
         name = self._aji_label_pattern.format(
             budget_code=sl_br.budget_id.code or '',
             budget_line=sl_br.name or '')

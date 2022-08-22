@@ -318,6 +318,14 @@ class msf_import_export(osv.osv_memory):
         if context is None:
             context = {}
         result = {'value': {}}
+
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.instance_id.level
+        if instance_level == 'project' and model_list_selection == 'products':
+            return {
+                'value': {'model_list_selection': False},
+                'warning': {'title': _('Error'), 'message': _("You can not select 'Products' on a Project instance")}
+            }
+
         result['value']['supplier_catalogue_id'] = False
         result['value']['product_list_id'] = False
         result['value']['display_file_import'] = True
