@@ -187,6 +187,7 @@
         % if not inv_line.analytic_distribution_id and not inv_line.invoice_id.analytic_distribution_id:
             <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
             <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
             <!-- export Funding Pool including line breaks (|xn) -->
             <Cell ss:StyleID="editable"><Data ss:Type="String">${''|xn}</Data></Cell>
         % elif inv_line.analytic_distribution_id:
