@@ -362,6 +362,12 @@ class automated_import_job(osv.osv):
                             line_message += resjected_line[2]
                             error_message.append(line_message)
 
+                        if import_data.function_id.method_to_call == 'auto_import_destination':
+                            error_message.append(_("no data will be imported until all the error messages are corrected"))
+                            tools.cache.clean_caches_for_db(cr.dbname)
+                            tools.read_cache.clean_caches_for_db(cr.dbname)
+
+
                     if context.get('rejected_confirmation'):
                         nb_rejected += context.get('rejected_confirmation')
                         state = 'error'
