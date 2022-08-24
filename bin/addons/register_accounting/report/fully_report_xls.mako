@@ -943,8 +943,9 @@ for adv_return_l in adv_return_aal:
         adv_return_free_lines.append(adv_return_l)
     else:
         adv_return_fp_lines.append(adv_return_l)
+        a_lines = adv_return_fp_lines
 if not line.invoice_id and not line.imported_invoice_line_ids and line.fp_analytic_lines:
-    a_lines = adv_return_fp_lines or line.fp_analytic_lines
+    a_lines = line.fp_analytic_lines
 %>
 % if a_lines:
 % for ana_line in sorted(a_lines, key=lambda x: x.id):
@@ -1001,9 +1002,9 @@ endif
 
 <!-- Display analytic lines Free 1 and Free 2 linked to this register line -->
 <%
-a_lines = False
+a_lines = adv_return_free_lines
 if not line.invoice_id and not line.imported_invoice_line_ids and line.free_analytic_lines:
-    a_lines = adv_return_free_lines or line.free_analytic_lines
+    a_lines = line.free_analytic_lines
 %>
 % if a_lines:
 % for ana_line in sorted(a_lines, key=lambda x: x.id):
