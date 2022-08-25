@@ -115048,3 +115048,9 @@ msgstr "Cellule E7: la Règle de Réappro du fichier: \"%s\" ne correspond pas a
 #, python-format
 msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
 msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
+
+#. module: account_mcdb
+#: view:account.period.state:0
+msgid "Active Instances"
+msgstr "Instances actives"
+
