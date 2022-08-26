@@ -38,8 +38,8 @@
                     <field name="debit" sum="Total Functional Debit"/>
                     <field name="credit" sum="Total Functional Credit"/>
                     <field name="functional_currency_id"/>
-                    <field name="output_amount_debit"/>
-                    <field name="output_amount_credit"/>
+                    <field name="output_amount_debit" sum="Total Output Debit"/>
+                    <field name="output_amount_credit" sum="Total Output Credit"/>
                     <field name="output_currency"/>
                     <field name="reconcile_txt" />
                     <field name="state"/>
@@ -79,7 +79,7 @@
                     <field name="currency_id"/>
                     <field name="amount" sum="Total Functional Amount"/>
                     <field name="functional_currency_id"/>
-                    <field name="output_amount"/>
+                    <field name="output_amount" sum="Total Output Amount"/>
                     <field name="output_currency"/>
                     <field name="reversal_origin_txt"/>
                     <field name="user_id" invisible="1"/>
