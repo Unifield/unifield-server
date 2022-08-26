@@ -519,7 +519,7 @@ class stock_move(osv.osv):
                                                        ('unallocated', 'Unallocated'),
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
         'purchase_line_id': fields.many2one('purchase.order.line', 'Purchase Order Line', ondelete='set null', select=True, readonly=True),
-        'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], write_relate=False),
+        'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing'), ('sysint', 'System Internal')], write_relate=False),
         'parent_doc_id': fields.function(_get_parent_doc, method=True, type='char', string='Picking', readonly=True),
 
         'order_priority': fields.function(_get_order_information, method=True, string='Priority', type='selection',

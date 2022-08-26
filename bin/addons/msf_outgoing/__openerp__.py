@@ -49,6 +49,7 @@
                  ],
     'update_xml': [
         'data/msf_outgoing_data.xml',
+        'data/audittrail_data_picking.yml',
         'outgoing_sequence.xml',
         'security/ir.model.access.csv',
         'msf_outgoing_view.xml',
