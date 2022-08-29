@@ -137,6 +137,9 @@ class account_mcdb(osv.osv):
         'copied_id': fields.many2one('account.mcdb', help='Id of the template loaded'),
         'template_name': fields.char('Template name', size=255),  # same size as the "Query name"
         'display_mcdb_load_button': fields.boolean('Display the Load button'),
+        'create_date': fields.date('Creation Date', readonly=True),
+        'write_date': fields.date('Last Edit Date', readonly=True),
+        'write_uid': fields.many2one('res.users', "Last Editor", readonly=True),
     }
 
     _defaults = {
