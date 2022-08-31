@@ -45,8 +45,11 @@ class account_analytic_line(osv.osv):
             else:
                 res[l.id] = False
             if l.move_id:
-                if l.move_id.partner_type and l.move_id.partner_type.name:
-                    res[l.id] = l.move_id.partner_type.name or False
+                if l.move_id.partner_type:
+                    if l.move_id.partner_type._table_name != 'account.journal' and l.move_id.partner_type.name:
+                        res[l.id] = l.move_id.partner_type.name or False
+                    elif l.move_id.partner_type._table_name == 'account.journal' and l.move_id.partner_type.code:
+                        res[l.id] = l.move_id.partner_type.code or False
                 # UTP-1106: In case of HQ Entries, we don't have any "real 3RD party", but just a partner_txt. That's why we use it as it is!
                 else:
                     res[l.id] = l.move_id.partner_txt or False
@@ -71,7 +74,7 @@ class account_analytic_line(osv.osv):
         return True
 
     _columns = {
-        'partner_txt': fields.function(_get_partner, fnct_inv=_set_partner, method=True, string="Third Party", readonly=True, type="text", store=True),
+        'partner_txt': fields.function(_get_partner, fnct_inv=_set_partner, method=True, string="Third Party", readonly=True, type="text"),
         'imported_partner_txt': fields.text("Imported Third Party"),
     }
 
