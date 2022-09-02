@@ -74,7 +74,7 @@ class account_analytic_line(osv.osv):
         return True
 
     _columns = {
-        'partner_txt': fields.function(_get_partner, fnct_inv=_set_partner, method=True, string="Third Party", readonly=True, type="text"),
+        'partner_txt': fields.function(_get_partner, fnct_inv=_set_partner, method=True, string="Third Party", readonly=True, type="text", store=True),
         'imported_partner_txt': fields.text("Imported Third Party"),
     }
 
