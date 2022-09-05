@@ -56,6 +56,27 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF27.0
+    def us_9394_fix_pi_and_reason_type(self, cr, uid, *a, **b):
+        '''
+        Set the new Reason Type column pi_discrepancy_type to True for 'Discrepancy' and 'Other', False otherwise
+        Remove the Adjustment Type of discrepancy lines in PIs that are Counted or Validated
+        '''
+        # Fix the RT
+        data_obj = self.pool.get('ir.model.data')
+        other_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        discr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+
+        cr.execute("""UPDATE stock_reason_type SET pi_discrepancy_type = 't' WHERE id IN %s""", (tuple([other_rt_id, discr_rt_id]),))
+        cr.execute("""UPDATE stock_reason_type SET pi_discrepancy_type = 't' WHERE id NOT IN %s""", (tuple([other_rt_id, discr_rt_id]),))
+
+        # Fix the discrepancy lines
+        cr.execute("""UPDATE physical_inventory_discrepancy SET reason_type_id = NULL WHERE inventory_id IN (
+            SELECT id FROM physical_inventory WHERE state IN ('counted', 'validated'))
+        """)
+
+        return True
+
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):
         ''' OCBHQ: fix amounts on EOY-2021-14020-OCBVE101-VES'''

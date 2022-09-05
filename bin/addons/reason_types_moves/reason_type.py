@@ -137,6 +137,7 @@ class stock_reason_type(osv.osv):
         'incoming_ok': fields.boolean(string='Available for incoming shipment ?'),
         'internal_ok': fields.boolean(string='Available for internal picking ?'),
         'outgoing_ok': fields.boolean(string='Available for outgoing movements ?'),
+        'pi_discrepancy_type': fields.boolean(string="Is an Adjustment Type in the Physical Inventory's Discrepany lines"),
         'is_fs': fields.function(tools.misc.get_fake, type='boolean', string='For FS out', method=True, fnct_search=_search_is_fs),
     }
 

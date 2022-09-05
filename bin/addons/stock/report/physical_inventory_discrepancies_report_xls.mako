@@ -527,7 +527,7 @@
    <NamedRange ss:Name="_FilterDatabase" ss:RefersTo="=stock!R10C2:R10C9"
     ss:Hidden="1"/>
    <NamedRange ss:Name="Print_Titles" ss:RefersTo="=stock!R1:R10"/>
-   <NamedRange ss:Name="Print_Area" ss:RefersTo="=stock!R1C1:R11C20"/>
+   <NamedRange ss:Name="Print_Area" ss:RefersTo="=stock!R1C1:R11C21"/>
   </Names>
   <Table x:FullColumns="1"
    x:FullRows="1" ss:DefaultColumnWidth="60.75" ss:DefaultRowHeight="15">
@@ -537,11 +537,13 @@
    <Column ss:AutoFitWidth="0" ss:Width="63" ss:Span="3"/>
    <Column ss:Index="9" ss:AutoFitWidth="0" ss:Width="60" ss:Span="6"/>
    <Column ss:Index="16" ss:Width="67.5"/>
-   <Column ss:AutoFitWidth="0" ss:Width="78" ss:Span="2"/>
-   <Column ss:Index="20" ss:AutoFitWidth="0" ss:Width="273"/>
+   <Column ss:AutoFitWidth="0" ss:Width="78" ss:Span="3"/>
+   <Column ss:Index="21" ss:AutoFitWidth="0" ss:Width="273"/>
    <Row ss:Height="35" ss:StyleID="s71">
     <Cell ss:StyleID="s70"><Data ss:Type="String">${_('INVENTORY REPORT')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s69"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s69"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s69"><NamedCell ss:Name="Print_Titles"/><NamedCell
@@ -620,6 +622,8 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
     <Cell ss:Index="2" ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
@@ -633,6 +637,8 @@
     <Cell ss:StyleID="s73" ss:MergeAcross="1"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="DateTime">${ to_excel(objects[0].date) }</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="17" ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -656,6 +662,8 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s22"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s22"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
    </Row>
    <Row>
     <Cell ss:Index="5" ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
@@ -666,7 +674,9 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:Index="16" ss:StyleID="s61"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:Index="17" ss:StyleID="s61"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s62"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -692,7 +702,9 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:Index="16" ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">${_('Total at the end')|x}</Data><NamedCell
+    <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:Index="17" ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">${_('Total at the end')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s58"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="Number">${objects[0].inventory_lines_number}</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -722,6 +734,8 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">${_('With discrepancies')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s58"><Data ss:Type="Number">${objects[0].discrepancy_lines_number}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
@@ -735,6 +749,8 @@
     <Cell ss:Index="2" ss:StyleID="s23"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s23"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -808,6 +824,8 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s56"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="46.5" ss:StyleID="s24">
@@ -857,6 +875,8 @@
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Adjustment type')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Sub Reason Type')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Comments / actions (in case of discrepancy)')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
 <% index = 0 %>
@@ -882,6 +902,7 @@
     <Cell ss:StyleID="s36"><Data ss:Type="Number">${item.total_product_discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s46"><Data ss:Type="Number">${item.total_product_discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s50"><Data ss:Type="String">${item.reason_type_id and item.reason_type_id.complete_name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s48"><Data ss:Type="String">${getSel(item, 'sub_reason_type') or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s48"><Data ss:Type="String">${item.comment or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    % endfor
@@ -921,5 +942,11 @@
     <CellRangeList/>
     <Value>&quot;${get_adjustement()|x}&quot;</Value>
   </DataValidation>
+  <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
+    <Range>R11C20:R${index+11}C20</Range>
+    <Type>List</Type>
+    <CellRangeList/>
+    <Value>&quot;${_('Encoding Error,Process Error,Picking Error,Reception Error,Batch Number related Error,Unjustified/Unexplained Error')|x}&quot;</Value>
+</DataValidation>
  </Worksheet>
 </Workbook>

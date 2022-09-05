@@ -8,6 +8,16 @@ from openpyxl.cell import WriteOnlyCell
 import tools
 
 
+SUB_RT_SEL = {
+    'encoding_err': _('Encoding Error'),
+    'process_err': _('Process Error'),
+    'pick_err': _('Picking Error'),
+    'recep_err': _('Reception Error'),
+    'bn_err': _('Batch Number related Error'),
+    'unexpl_err': _('Unjustified/Unexplained Error')
+}
+
+
 class closed_physical_inventory_parser(XlsxReportParser):
 
     def add_cell(self, value=None, style='default_style'):
@@ -38,7 +48,8 @@ class closed_physical_inventory_parser(XlsxReportParser):
         sheet.column_dimensions['K'].width = 15.0
         sheet.column_dimensions['L'].width = 15.0
         sheet.column_dimensions['M'].width = 15.0
-        sheet.column_dimensions['N'].width = 65.0
+        sheet.column_dimensions['N'].width = 25.0
+        sheet.column_dimensions['O'].width = 65.0
 
         # Styles
         default_style = self.create_style_from_template('default_style', 'A1')
@@ -131,6 +142,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
             (_('BN Management')),
             (_('ED Management')),
             (_('Reason Type')),
+            (_('Sub Reason Type')),
             (_('Comment')),
         ]
 
@@ -176,6 +188,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 'prodlot': disc_line.batch_number and tools.ustr(disc_line.batch_number) or '',
                 'expiry_date': disc_line.expiry_date and datetime.strptime(disc_line.expiry_date[0:10], '%Y-%m-%d') or '',
                 'reason_type': disc_line.reason_type_id.complete_name,
+                'sub_reason_type': SUB_RT_SEL.get(disc_line.sub_reason_type, ''),
                 'comment': disc_line.comment or '',
             })
 
@@ -221,6 +234,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                     'prodlot': count_line.batch_number and tools.ustr(count_line.batch_number) or '',
                     'expiry_date': count_line.expiry_date and datetime.strptime(count_line.expiry_date[0:10], '%Y-%m-%d') or '',
                     'reason_type': '',
+                    'sub_reason_type': '',
                     'comment': '',
                 })
 
@@ -248,6 +262,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
             self.add_cell('', top_line_style)
             self.add_cell('', top_line_style)
             self.add_cell('', top_line_style)
+            self.add_cell('', top_line_style)
 
             sheet.append(self.rows)
             for line in sorted(rep_lines[product_id].get('lines', []), key=lambda x: x['line_number']):
@@ -266,6 +281,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 self.add_cell(need_bn, line_style)
                 self.add_cell(need_ed, line_style)
                 self.add_cell(line['reason_type'], line_style)
+                self.add_cell(line['sub_reason_type'], line_style)
                 self.add_cell(line['comment'], line_style)
 
                 sheet.append(self.rows)
