@@ -813,8 +813,8 @@
         </record>
 
         <!-- UF27.0 -->
-<!--        <record id="us_9394_fix_pi_and_reason_type" model="patch.scripts">-->
-<!--            <field name="method">us_9394_fix_pi_and_reason_type</field>-->
-<!--        </record>-->
+        <record id="us_9394_fix_pi_and_reason_type" model="patch.scripts">
+            <field name="method">us_9394_fix_pi_and_reason_type</field>
+        </record>
     </data>
 </openerp>

@@ -68,11 +68,11 @@ class patch_scripts(osv.osv):
         discr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
 
         cr.execute("""UPDATE stock_reason_type SET pi_discrepancy_type = 't' WHERE id IN %s""", (tuple([other_rt_id, discr_rt_id]),))
-        cr.execute("""UPDATE stock_reason_type SET pi_discrepancy_type = 't' WHERE id NOT IN %s""", (tuple([other_rt_id, discr_rt_id]),))
+        cr.execute("""UPDATE stock_reason_type SET pi_discrepancy_type = 'f' WHERE id NOT IN %s""", (tuple([other_rt_id, discr_rt_id]),))
 
         # Fix the discrepancy lines
         cr.execute("""UPDATE physical_inventory_discrepancy SET reason_type_id = NULL WHERE inventory_id IN (
-            SELECT id FROM physical_inventory WHERE state IN ('counted', 'validated'))
+            SELECT id FROM physical_inventory WHERE state NOT IN ('confirmed', 'closed', 'cancel'))
         """)
 
         return True
