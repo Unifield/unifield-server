@@ -511,7 +511,7 @@ class audittrail_rule(osv.osv):
         return super(audittrail_rule, self).write(cr, uid, ids, value, context=context)
 
 
-    def subscribe(self, cr, uid, ids, *args):
+    def subscribe(self, cr, uid, ids, with_msf_outgoing=None, *args):
         """
         Subscribe Rule for auditing changes on object and apply shortcut for logs on that object.
         @param cr: the current row, from the database cursor,
@@ -559,13 +559,15 @@ class audittrail_rule(osv.osv):
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1])
 
             elif thisrule.object_id.model == 'stock.picking':
-                # TC only on IN, OUT and Picks
+                # TC only on IN, OUT
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_out_tree')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')[1])
-                view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_tree')[1])
-                view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1])
+                if with_msf_outgoing:
+                    # TC only on Pick
+                    view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_tree')[1])
+                    view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1])
 
             # search if the view does not already exists
             search_domain = [('name', '=', val['name']),

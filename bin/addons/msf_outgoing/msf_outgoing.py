@@ -4744,3 +4744,20 @@ class stock_reserved_products(osv.osv):
         """)
 
 stock_reserved_products()
+
+
+class audittrail_rule(osv.osv):
+    _inherit = 'audittrail.rule'
+
+    def subscribe(self, cr, uid, ids, *args):
+        """
+        Subscribe Rule for auditing changes on object and apply shortcut for logs on that object.
+        But only after we're sure that the msf_outgoing module exist. To display Pick TC
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return super(audittrail_rule, self).subscribe(cr, uid, ids, with_msf_outgoing=True)
+
+
+audittrail_rule()
