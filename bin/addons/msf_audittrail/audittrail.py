@@ -564,7 +564,7 @@ class audittrail_rule(osv.osv):
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_out_tree')[1])
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')[1])
-                if with_msf_outgoing:
+                if with_msf_outgoing and self._module == 'msf_outgoing':
                     # TC only on Pick
                     view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_tree')[1])
                     view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1])
