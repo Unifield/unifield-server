@@ -1491,7 +1491,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         return discrepancies
 
-    def _get_discrepancy_data(self, cr, uid, ids, name, args,  context=None):
+    def _is_discrepancy_rt(self, cr, uid, ids, name, args,  context=None):
         res = {}
         if not ids:
             return res
@@ -1499,10 +1499,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
             ids = [ids]
         discr_rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
         for discr_line in self.browse(cr, uid, ids, fields_to_fetch=['reason_type_id'], context=context):
-            res[discr_line.id] = {
-                'display_all_reason_type': discr_line.reason_type_id and discr_line.reason_type_id.complete_name or False,
-                'discrepancy_rt': discr_line.reason_type_id and discr_line.reason_type_id.id == discr_rt_id or False
-            }
+            res[discr_line.id] = discr_line.reason_type_id and discr_line.reason_type_id.id == discr_rt_id or False
         return res
 
     def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
@@ -1562,11 +1559,11 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Discrepancy analysis
         'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', select=True),
-        'display_all_reason_type': fields.function(_get_discrepancy_data, type='char', size='64', multi="discrepancy_data", method=True, string='Adjustment type'),
+        'display_all_reason_type_id': fields.related('reason_type_id', type='many2one', relation='stock.reason.type', string='Adjustment type', readonly=True),
         'sub_reason_type': fields.selection([('encoding_err', 'Encoding Error'), ('process_err', 'Process Error'),  ('pick_err', 'Picking Error'), ('recep_err', 'Reception Error'),
                                              ('bn_err', 'Batch Number related Error'), ('unexpl_err', 'Unjustified/Unexplained Error')], string='Sub Reason type'),
         'comment': fields.char(size=128, string='Comment'),
-        'discrepancy_rt': fields.function(_get_discrepancy_data, type='boolean', string='The Adjustment type is Discrepancy', multi="discrepancy_data", method=True, store=False),
+        'discrepancy_rt': fields.function(_is_discrepancy_rt, type='boolean', string='The Adjustment type is Discrepancy', method=True, store=False),
 
         # Total for product
         'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),

@@ -152,7 +152,7 @@
                                     <field name="reason_type_id" widget="selection" domain="[('pi_discrepancy_type', '=', True)]"
                                            on_change="onchange_reason_type(reason_type_id)"
                                            attrs="{'readonly': [('inv_state', 'not in', ['counted', 'validated'])], 'invisible': [('inv_state', 'in', ['confirmed', 'closed', 'cancel'])]}"/>
-                                    <field name="display_all_reason_type" readonly="1" attrs="{'invisible': [('inv_state', 'not in', ['confirmed', 'closed', 'cancel'])]}"/>
+                                    <field name="display_all_reason_type_id" attrs="{'invisible': [('inv_state', 'not in', ['confirmed', 'closed', 'cancel'])]}"/>
                                     <field name="sub_reason_type" attrs="{'readonly': ['|', ('inv_state', 'not in', ['counted', 'validated', 'confirmed']), ('discrepancy_rt', '!=', True)]}"/>
                                     <field name="comment" attrs="{'readonly': [('inv_state', 'not in', ['counted', 'validated', 'confirmed'])]}"/>
                                     <field name="ignored" invisible="True"/>
@@ -177,7 +177,7 @@
                                     <field name="total_product_discrepancy_qty" />
                                     <field name="total_product_discrepancy_value" />
                                     <field name="reason_type_id" widget="selection" domain="[('pi_discrepancy_type', '=', True)]" attrs="{'invisible': [('inv_state', 'in', ['confirmed', 'closed', 'cancel'])]}" />
-                                    <field name="display_all_reason_type" readonly="1" attrs="{'invisible': [('inv_state', 'not in', ['confirmed', 'closed', 'cancel'])]}" />
+                                    <field name="display_all_reason_type_id" attrs="{'invisible': [('inv_state', 'not in', ['confirmed', 'closed', 'cancel'])]}" />
                                     <field name="sub_reason_type" />
                                     <field name="comment" />
                                     <field name="ignored" invisible="True"/>
