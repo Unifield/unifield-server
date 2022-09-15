@@ -239,52 +239,53 @@ class closed_physical_inventory_parser(XlsxReportParser):
                 })
 
         for product_id in line_order:
-            self.rows = []
-
-            p_code = rep_lines[product_id]['product_code']
-            p_desc = rep_lines[product_id]['description']
-            uom = rep_lines[product_id]['uom']
-            spec = rep_lines[product_id]['specification']
-            need_bn = rep_lines[product_id]['need_bn']
-            need_ed = rep_lines[product_id]['need_ed']
-
-            self.add_cell('', top_line_style)
-            self.add_cell(p_code, top_left_line_style)
-            self.add_cell(p_desc, top_left_line_style)
-            self.add_cell(uom, top_line_style)
-            self.add_cell('', top_float_style)
-            self.add_cell('', top_float_style)
-            self.add_cell('', top_line_style)
-            self.add_cell('', top_date_style)
-            self.add_cell(rep_lines[product_id]['total_qty'] or 0, top_float_style)
-            self.add_cell('', top_line_style)
-            self.add_cell('', top_line_style)
-            self.add_cell('', top_line_style)
-            self.add_cell('', top_line_style)
-            self.add_cell('', top_line_style)
-            self.add_cell('', top_line_style)
-
-            sheet.append(self.rows)
-            for line in sorted(rep_lines[product_id].get('lines', []), key=lambda x: x['line_number']):
+            if rep_lines.get(product_id, False):
                 self.rows = []
 
-                self.add_cell(line['line_number'], line_style)
-                self.add_cell(p_code, left_line_style)
-                self.add_cell(p_desc, left_line_style)
-                self.add_cell(uom, line_style)
-                self.add_cell(line['qty_counted'], float_style)
-                self.add_cell(line['qty_ignored'], float_style)
-                self.add_cell(line['prodlot'], line_style)
-                self.add_cell(line['expiry_date'], date_style)
-                self.add_cell('', float_style)
-                self.add_cell(spec, line_style)
-                self.add_cell(need_bn, line_style)
-                self.add_cell(need_ed, line_style)
-                self.add_cell(line['reason_type'], line_style)
-                self.add_cell(line['sub_reason_type'], line_style)
-                self.add_cell(line['comment'], line_style)
+                p_code = rep_lines[product_id]['product_code']
+                p_desc = rep_lines[product_id]['description']
+                uom = rep_lines[product_id]['uom']
+                spec = rep_lines[product_id]['specification']
+                need_bn = rep_lines[product_id]['need_bn']
+                need_ed = rep_lines[product_id]['need_ed']
+
+                self.add_cell('', top_line_style)
+                self.add_cell(p_code, top_left_line_style)
+                self.add_cell(p_desc, top_left_line_style)
+                self.add_cell(uom, top_line_style)
+                self.add_cell('', top_float_style)
+                self.add_cell('', top_float_style)
+                self.add_cell('', top_line_style)
+                self.add_cell('', top_date_style)
+                self.add_cell(rep_lines[product_id]['total_qty'] or 0, top_float_style)
+                self.add_cell('', top_line_style)
+                self.add_cell('', top_line_style)
+                self.add_cell('', top_line_style)
+                self.add_cell('', top_line_style)
+                self.add_cell('', top_line_style)
+                self.add_cell('', top_line_style)
 
                 sheet.append(self.rows)
+                for line in sorted(rep_lines[product_id].get('lines', []), key=lambda x: x['line_number']):
+                    self.rows = []
+
+                    self.add_cell(line['line_number'], line_style)
+                    self.add_cell(p_code, left_line_style)
+                    self.add_cell(p_desc, left_line_style)
+                    self.add_cell(uom, line_style)
+                    self.add_cell(line['qty_counted'], float_style)
+                    self.add_cell(line['qty_ignored'], float_style)
+                    self.add_cell(line['prodlot'], line_style)
+                    self.add_cell(line['expiry_date'], date_style)
+                    self.add_cell('', float_style)
+                    self.add_cell(spec, line_style)
+                    self.add_cell(need_bn, line_style)
+                    self.add_cell(need_ed, line_style)
+                    self.add_cell(line['reason_type'], line_style)
+                    self.add_cell(line['sub_reason_type'], line_style)
+                    self.add_cell(line['comment'], line_style)
+
+                    sheet.append(self.rows)
 
 
 XlsxReport('report.report_closed_physical_inventory', parser=closed_physical_inventory_parser, template='addons/stock/report/closed_physical_inventory_report.xlsx')

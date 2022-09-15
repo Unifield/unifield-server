@@ -149,7 +149,7 @@
                                     <field name="total_product_counted_value" readonly="1"/>
                                     <field name="total_product_discrepancy_qty" readonly="1"/>
                                     <field name="total_product_discrepancy_value" readonly="1"/>
-                                    <field name="reason_type_id" widget="selection" domain="[('pi_discrepancy_type', '=', True)]"
+                                    <field name="reason_type_id" widget="selection" domain="[('pi_discrepancy_type', '=', True)]" former_domain="[('is_inventory', '=', True)]"
                                            on_change="onchange_reason_type(reason_type_id)"
                                            attrs="{'readonly': [('inv_state', 'not in', ['counted', 'validated'])]}"/>
                                     <field name="sub_reason_type" attrs="{'readonly': ['|', ('inv_state', 'not in', ['counted', 'validated', 'confirmed']), ('discrepancy_rt', '!=', True)]}"/>
@@ -174,7 +174,7 @@
                                     <field name="total_product_counted_value" />
                                     <field name="total_product_discrepancy_qty" />
                                     <field name="total_product_discrepancy_value" />
-                                    <field name="reason_type_id" widget="selection" domain="[('pi_discrepancy_type', '=', True)]" />
+                                    <field name="reason_type_id" widget="selection" domain="[('pi_discrepancy_type', '=', True)]" former_domain="[('is_inventory', '=', True)]" />
                                     <field name="sub_reason_type" />
                                     <field name="comment" />
                                     <field name="ignored" invisible="True"/>
