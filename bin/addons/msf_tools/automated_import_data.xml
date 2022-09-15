@@ -38,6 +38,12 @@
             <field name="method_to_call">import_data_from_csv</field>
         </record>
 
+        <record id="auto_import_fnct_analytic_account" model="automated.import.function">
+            <field name="name">Import Destinations</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'account.analytic.account')]" />
+            <field name="method_to_call">auto_import_destination</field>
+        </record>
+
         <record id="auto_import_fnct_analytic_journal" model="automated.import.function">
             <field name="name">Import Analytic Journals</field>
             <field name="model_id" model="ir.model" search="[('model', '=', 'account.analytic.journal')]" />
