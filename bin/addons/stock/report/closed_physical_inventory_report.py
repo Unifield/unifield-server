@@ -47,7 +47,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
         sheet.column_dimensions['J'].width = 15.0
         sheet.column_dimensions['K'].width = 15.0
         sheet.column_dimensions['L'].width = 15.0
-        sheet.column_dimensions['M'].width = 15.0
+        sheet.column_dimensions['M'].width = 25.0
         sheet.column_dimensions['N'].width = 25.0
         sheet.column_dimensions['O'].width = 65.0
 
