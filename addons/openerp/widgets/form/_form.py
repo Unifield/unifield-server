@@ -537,10 +537,24 @@ register_widget(ProgressBar, ["progressbar"])
 class Selection(TinyInputWidget):
     template = "/openerp/widgets/form/templates/selection.mako"
 
-    params = ['options', 'search_context', 'type2', 'operator', 'readonly_before_state', 'add_empty']
+    params = ['options', 'search_context', 'type2', 'operator', 'readonly_before_state', 'add_empty', 'hidden_selection']
     options = []
     search_context = {}
     add_empty = False
+
+    def _get_sel_from_domain(self, relation, domain):
+        proxy = rpc.RPCProxy(relation)
+        try:
+            if isinstance(domain, (str, unicode)):
+                try:
+                    domain = eval(domain)
+                except:
+                    domain = []
+            ids = proxy.search(domain)
+            ctx = rpc.session.context.copy()
+            return proxy.name_get(ids, ctx)
+        except:
+            return []
 
     def __init__(self, **attrs):
         super(Selection, self).__init__(**attrs)
@@ -548,23 +562,13 @@ class Selection(TinyInputWidget):
         self.type2 = attrs.get('type2')
         self.operator = attrs.get('operator', '=')
         self.search_context = attrs.get('context', {})
+        self.hidden_selection = attrs.get('hidden_selection', [])
         self.add_empty = attrs.get('add_empty', False)
         #Below mentioned process should be followed for m2o as selection and for boolean field on search panel
         if not self.options and attrs.get('relation') and attrs.get('widget') == 'selection' and not attrs.get('get_selection'):
-            proxy = rpc.RPCProxy(attrs['relation'])
-            try:
-                domain = attrs.get('domain', [])
-                if isinstance(domain, (str, unicode)):
-                    try:
-                        domain = eval(domain)
-                    except:
-                        domain = []
-                ids = proxy.search(domain)
-                ctx = rpc.session.context.copy()
-#                ctx.update(attrs.get('context', {})) # In search view this will create problem for m2o field having widget='selection' and context as attr.
-                self.options = proxy.name_get(ids, ctx)
-            except:
-                self.options = []
+            self.options = self._get_sel_from_domain(attrs['relation'], attrs.get('domain', []))
+        if not self.hidden_selection and attrs.get('widget') == 'selection' and 'former_domain' in attrs:
+            self.hidden_selection = self._get_sel_from_domain(attrs['relation'], attrs.get('former_domain', []))
 
         if self.options and self.options[0][0] == '' and isinstance(self.options[0][0], unicode):
             self.validator = validators.Selection()
