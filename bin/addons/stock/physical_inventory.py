@@ -1559,7 +1559,6 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Discrepancy analysis
         'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', select=True),
-        'display_all_reason_type_id': fields.related('reason_type_id', type='many2one', relation='stock.reason.type', string='Adjustment type', readonly=True),
         'sub_reason_type': fields.selection([('encoding_err', 'Encoding Error'), ('process_err', 'Process Error'),  ('pick_err', 'Picking Error'), ('recep_err', 'Reception Error'),
                                              ('bn_err', 'Batch Number related Error'), ('unexpl_err', 'Unjustified/Unexplained Error')], string='Sub Reason type'),
         'comment': fields.char(size=128, string='Comment'),
