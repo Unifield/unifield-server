@@ -8,16 +8,6 @@ from openpyxl.cell import WriteOnlyCell
 import tools
 
 
-SUB_RT_SEL = {
-    'encoding_err': _('Encoding Error'),
-    'process_err': _('Process Error'),
-    'pick_err': _('Picking Error'),
-    'recep_err': _('Reception Error'),
-    'bn_err': _('Batch Number related Error'),
-    'unexpl_err': _('Unjustified/Unexplained Error')
-}
-
-
 class closed_physical_inventory_parser(XlsxReportParser):
 
     def add_cell(self, value=None, style='default_style'):
@@ -31,6 +21,15 @@ class closed_physical_inventory_parser(XlsxReportParser):
         pi = self.pool.get('physical.inventory').browse(self.cr, self.uid, self.ids[0], context=context)
         if pi.state != 'closed':
             raise osv.except_osv(_('Error'), _('This export is only available for closed Physical Inventories'))
+
+        SUB_RT_SEL = {
+            'encoding_err': _('Encoding Error'),
+            'process_err': _('Process Error'),
+            'pick_err': _('Picking Error'),
+            'recep_err': _('Reception Error'),
+            'bn_err': _('Batch Number related Error'),
+            'unexpl_err': _('Unjustified/Unexplained Error')
+        }
 
         sheet = self.workbook.active
         sheet.sheet_view.showGridLines = False
@@ -47,7 +46,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
         sheet.column_dimensions['J'].width = 15.0
         sheet.column_dimensions['K'].width = 15.0
         sheet.column_dimensions['L'].width = 15.0
-        sheet.column_dimensions['M'].width = 25.0
+        sheet.column_dimensions['M'].width = 20.0
         sheet.column_dimensions['N'].width = 25.0
         sheet.column_dimensions['O'].width = 65.0
 
