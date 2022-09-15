@@ -1571,6 +1571,13 @@ class orm_template(object):
                         attrs['selection'] = relation._name_search(cr, user, '', dom, context=search_context, limit=None, name_get_uid=1)
                         if (node.get('required') and not int(node.get('required'))) or not column.required:
                             attrs['selection'].append((False, ''))
+                    if node.get('widget') and node.get('widget') == 'selection' and node.get('former_domain'):
+                        hidden_dom = eval(node.get('former_domain', '[]'), {'uid': user, 'time': time})
+                        search_context = dict(context)
+                        if column._context and not isinstance(column._context, basestring):
+                            search_context.update(column._context)
+                        attrs['hidden_selection'] = relation._name_search(cr, user, '', hidden_dom, context=search_context, limit=None, name_get_uid=1)
+
                 fields[node.get('name')] = attrs
 
         elif node.tag in ('form', 'tree'):
