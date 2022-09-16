@@ -34,6 +34,10 @@ class account_cashbox_line(osv.osv):
     _description = 'CashBox Line'
     _rec_name = 'number'
 
+    _max_amount = 10 ** 10
+    _max_msg = _('The Total amount of the line is more than 10 digits.'
+                 'Please check that the Values and Number are correct to avoid loss of exact information')
+
     def _sub_total(self, cr, uid, ids, name, arg, context=None):
 
         """ Calculates Sub total
@@ -43,6 +47,8 @@ class account_cashbox_line(osv.osv):
         """
         res = {}
         for obj in self.browse(cr, uid, ids, context=context):
+            if obj.pieces >= self._max_amount or (obj.pieces * obj.number) >= self._max_amount:
+                raise osv.except_osv(_('Error !'), self._max_msg)
             res[obj.id] = obj.pieces * obj.number
         return res
 
@@ -52,6 +58,8 @@ class account_cashbox_line(osv.osv):
         @param pieces: Names of fields.
         @param number:
         """
+        if pieces >= self._max_amount or (pieces * number) >= self._max_amount:
+            raise osv.except_osv(_('Error !'), self._max_msg)
         sub = pieces * number
         return {'value': {'subtotal': sub or 0.0}}
 
