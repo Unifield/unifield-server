@@ -41948,11 +41948,12 @@ msgstr "Montrer les comptes inactifs?"
 msgid "Create additional users and assign them groups that will allow them to have access to selected functionalities within the system. Click on 'Done' if you do not wish to add more users at this stage, you can always do this later."
 msgstr "Créez des utilisateurs en plus et assignez-les à des groupes, ce qui leur permettra d'avoir accès à des fonctionnalités choisies dans le système. Cliquez sur 'Terminé' si vous ne désirez pas ajouter d'autres utilisateurs pour l'instant, vous pourrez toujours en ajouter plus tard."
 
-#. modules: msf_accrual, analytic_distribution
+#. modules: msf_accrual, analytic_distribution, account
 #: field:analytic.distribution.wizard,accrual_line_id:0
 #: field:msf.accrual.line.expense,accrual_line_id:0
 #: field:account.move.line,accrual_line_id:0
 #: view:msf.accrual.line.expense:0
+#: selection:account.journal.column,field:0
 msgid "Accrual Line"
 msgstr "Ligne de Régularisation"
 
@@ -115048,3 +115049,33 @@ msgstr "Cellule E7: la Règle de Réappro du fichier: \"%s\" ne correspond pas a
 #, python-format
 msgid "Cannot update these products, ED/BN attributes have not changed since the KCL creation"
 msgstr "Impossible de mettre à jour ces produits. Les attributs NL/DE n'ont pas changé depuis la création du Kit"
+
+#. module: account
+#: view:account.invoice:0
+msgid "Closed Counterparts"
+msgstr "Contreparties Fermées"
+
+#. module: account
+#: view:account.invoice:0
+msgid "Draft Counterparts"
+msgstr "Brouillons de Contreparties"
+
+#. module: account
+#: view:account.invoice:0
+msgid "Draft Counterparts Invoices"
+msgstr "Brouillons de Factures Contreparties"
+
+#. module: account
+#: view:account.invoice:0
+msgid "Open Counterparts"
+msgstr "Contreparties Ouvertes"
+
+#. module: account
+#: view:account.invoice:0
+msgid "Open Counterparts Invoices"
+msgstr "Factures Contreparties Ouvertes"
+
+#. module: account
+#: view:account.invoice:0
+msgid "Paid Counterparts"
+msgstr "Contreparties Payées"
