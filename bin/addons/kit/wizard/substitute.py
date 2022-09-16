@@ -305,10 +305,15 @@ class substitute(osv.osv_memory):
                 raise osv.except_osv(_('Warning !'), _('Items to replace cannot be empty.'))
             # for each item to replace, we create a stock move from kitting to destination location
             for item in obj.composition_item_ids:
+                kit_item = item_obj.browse(cr, uid, item.item_id_mirror, fields_to_fetch=['item_qty'], context=context)
                 # analyze each item
                 self._handle_compo_item(cr, uid, ids, obj, item, items_to_stock_ids, pick_id, context=context)
-            # we delete the corresponding items from the kit
-            item_obj.unlink(cr, uid, items_to_stock_ids, context=context)
+                if item.qty_substitute_item == kit_item.item_qty:
+                    # we delete the corresponding items from the kit if the whole quantity is removed
+                    item_obj.unlink(cr, uid, item.item_id_mirror, context=context)
+                else:
+                    # we remove the chosen qty from the corresponding kit item
+                    item_obj.write(cr, uid, item.item_id_mirror, {'item_qty': kit_item.item_qty - item.qty_substitute_item}, context=context)
             # items to replace cannot be empty
             if not len(obj.replacement_item_ids):
                 raise osv.except_osv(_('Warning !'), _('Replacement Items cannot be empty.'))
@@ -1174,6 +1179,27 @@ class substitute_item_mirror(osv.osv_memory):
         validation interface to allow modifying behavior in inherited classes
         '''
         return self._validate_item_mirror(cr, uid, id, context=context)
+
+    def onchange_qty(self, cr, uid, ids, kit_item_id, uom_id, qty):
+        '''
+        Check qty
+        '''
+        item_obj = self.pool.get('composition.item')
+        kit_item = item_obj.browse(cr, uid, kit_item_id, fields_to_fetch=['item_product_id', 'item_qty'])
+        if qty <= 0:
+            return {'value': {'qty_substitute_item': kit_item.item_qty}, 'warning': {
+                'title': _('Warning !'),
+                'message': _('Product %s: Please put a positive and non-zero quantity to remove on the Kit Item.')
+                           % (kit_item.item_product_id.default_code,)
+            }}
+        if qty > kit_item.item_qty:
+            return {'value': {'qty_substitute_item': kit_item.item_qty}, 'warning': {
+                'title': _('Warning !'),
+                'message': _('Product %s: You can not remove more quantity (%s) than there is on the Kit Item (%s).')
+                           % (kit_item.item_product_id.default_code, qty, kit_item.item_qty)
+            }}
+
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty_substitute_item', result={})
 
     _columns = {'item_id_mirror': fields.integer(string='Id of original Item', readonly=True),
                 'kit_id_mirror': fields.many2one('composition.kit', string='Kit', readonly=True),
