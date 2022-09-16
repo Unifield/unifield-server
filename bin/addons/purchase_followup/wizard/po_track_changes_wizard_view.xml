@@ -30,8 +30,8 @@
         <menuitem
             id="menu_po_track_changes"
             action="action_po_track_changes_wizard"
-            parent="purchase.menu_procurement_management"
-            sequence="2"
+            parent="base.next_id_73"
+            sequence="7"
             />
 
     </data>

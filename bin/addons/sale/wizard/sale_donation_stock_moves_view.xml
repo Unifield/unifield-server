@@ -32,7 +32,7 @@
             <field name="target">new</field>
         </record>
 
-        <menuitem id="menu_sale_donation_stock_moves" action="action_sale_donation_stock_moves"
+        <menuitem id="menu_sale_donation_stock_moves" action="action_sale_donation_stock_moves" sequence="2"
             parent="base.next_id_64"/>
     </data>
 </openerp>
