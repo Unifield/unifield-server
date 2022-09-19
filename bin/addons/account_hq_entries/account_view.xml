@@ -23,14 +23,18 @@
                     <field name="partner_txt"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
+                    <field name="cost_center_id"
+                           on_change="onchange_cost_center(cost_center_id, analytic_id)"
+                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
+                           domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"
+                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="destination_id"
                            on_change="onchange_destination(destination_id, analytic_id, account_id)"
-                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
-                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
-                    <field name="cost_center_id"
+                           domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id), ('dest_compatible_with_cc_ids', '=', cost_center_id)]"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
                            attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="analytic_id"
+                           domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('fp_compatible_with_cc_ids', '=', cost_center_id), ('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id))]"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"
                            attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="free_1_id"
@@ -66,8 +70,8 @@
                         <field name="account_id" select='1'/>
                         <field name="partner_txt" select='1'/>
                         <newline/>
-                        <field name="destination_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"/>
                         <field name="cost_center_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
+                        <field name="destination_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"/>
                         <field name="analytic_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
                         <newline/>
                         <field name="name" />
@@ -112,14 +116,14 @@
                   </group>
                   <group colspan="2" col="2">
                       <separator string="Analytic Allocation (At import)"/>
-                      <field name="destination_id_first_value" readonly="1"/>
                       <field name="cost_center_id_first_value" readonly="1"/>
+                      <field name="destination_id_first_value" readonly="1"/>
                       <field name="analytic_id_first_value" readonly="1"/>
                   </group>
                   <group colspan="2" col="2">
                       <separator string="Analytic Allocation (Current)"/>
-                      <field name="destination_id" readonly="1"/>
                       <field name="cost_center_id" readonly="1"/>
+                      <field name="destination_id" readonly="1"/>
                       <field name="analytic_id" readonly="1"/>
                       <field name="free_1_id" readonly="1"/>
                       <field name="free_2_id" readonly="1"/>
