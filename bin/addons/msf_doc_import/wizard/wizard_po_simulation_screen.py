@@ -808,7 +808,7 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                 '''
                 # Line 1: Order reference
                 order_ref = values.get(1, [])[1]
-                if order_ref != wiz.order_id.name:
+                if (order_ref or '').lower() != wiz.order_id.name.lower():
                     message = '''## IMPORT STOPPED ##
 
     LINE 1 OF THE IMPORTED FILE: THE ORDER REFERENCE \
@@ -1552,7 +1552,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             else:
                 if values[2]:
                     if not PRODUCT_CODE_ID.get(values[2]):
-                        prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[2])], context=context)
+                        prod_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', values[2])], context=context)
                         if prod_ids:
                             PRODUCT_CODE_ID[values[2]] = prod_ids[0]
                         else:
@@ -1605,9 +1605,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             else:
                 uom_id = UOM_NAME_ID.get(tools.ustr(uom_value))
                 if not uom_id:
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', tools.ustr(uom_value))], context=context)
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', tools.ustr(uom_value))], context=context)
                     if uom_ids:
-                        UOM_NAME_ID[tools.ustr(uom_value)] =  uom_ids[0]
+                        UOM_NAME_ID[tools.ustr(uom_value)] = uom_ids[0]
                         write_vals['imp_uom'] = uom_ids[0]
                     else:
                         errors.append(_('UoM not found in database.'))
@@ -1646,8 +1646,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals.update({'imp_qty': 0.00, 'imp_price': 0.00, 'type_change': 'error'})
 
             # Currency
-            currency_value = values[7]
-            if tools.ustr(currency_value) == line.in_currency.name:
+            currency_value = values[7].lower()
+            if line.in_currency and tools.ustr(currency_value.lower()) == line.in_currency.name.lower():
                 write_vals['imp_currency'] = line.in_currency.id
             elif line.in_currency.name:
                 err_msg = _('The currency on the file is not the same as the currency of the PO line - You must have the same currency on both side - Currency of the initial line kept.')

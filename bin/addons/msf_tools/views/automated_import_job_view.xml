@@ -43,6 +43,7 @@
             <field name="arch" type="xml">
                 <form string="Import job report">
                     <field name="import_id" />
+                    <newline />
                     <field name="start_time" />
                     <field name="end_time" />
                     <separator colspan="4" string="Import file" />

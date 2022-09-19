@@ -6,7 +6,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.product')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['default_code', 'old_code', 'new_code', 'type', 'subtype', 'categ_id', 'international_status', 'state', 'active', 'perishable', 'batch_management', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods', 'standard_ok', 'justification_code_id', 'restricted_country', 'country_restriction', 'form_value', 'fit_value', 'function_value', 'procure_delay', 'soq_volume', 'soq_weight', 'soq_quantity', 'valuation', 'donation_expense_account', 'replace_product_id', 'replaced_by_product_id', 'oc_subscription', 'state_ud', 'un_code']
+        fields = ['default_code', 'old_code', 'new_code', 'type', 'subtype', 'categ_id', 'international_status', 'state', 'active', 'perishable', 'batch_management', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods', 'standard_ok', 'justification_code_id', 'restricted_country', 'country_restriction', 'form_value', 'fit_value', 'function_value', 'procure_delay', 'soq_volume', 'soq_weight', 'soq_quantity', 'valuation', 'donation_expense_account', 'replace_product_id', 'replaced_by_product_id', 'oc_subscription', 'state_ud', 'un_code', 'msfid']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.product'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],

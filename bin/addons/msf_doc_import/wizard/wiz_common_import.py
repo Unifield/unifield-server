@@ -74,33 +74,32 @@ class wiz_common_import(osv.osv_memory):
             cell_data = row.cells[cell_nb].data
         return cell_data
 
-    def get_header_index(self, cr, uid, ids, row, error_list, line_num, context):
+    def get_header_index(self, cr, uid, ids, row, error_list, line_num, origin=False, context=None):
         """
         Return dict with {'header_name0': header_index0, 'header_name1': header_index1...}
         """
+        if context is None:
+            context = {}
         header_dict = {}
         for cell_nb in range(len(row.cells)):
-            header_dict.update({self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context): cell_nb})
+            col_name = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context)
+            if col_name and origin == 'PO':
+                col_name = col_name.lower()
+            header_dict.update({col_name: cell_nb})
         return header_dict
 
-    def check_header_values(self, cr, uid, ids, context, header_index,
-                            real_columns, origin=False, ignore_case=False):
+    def check_header_values(self, cr, uid, ids, context, header_index, real_columns, origin=False):
         """
         Check that the columns in the header will be taken into account.
         """
         translated_headers = [_(f) for f in real_columns]
-        upper_translated_headers = translated_headers
-        if origin == 'FO' or ignore_case:
-            upper_translated_headers = [_(f).upper() for f in real_columns]
-        for k,v in header_index.items():
-            upper_k = k
-            if k and (origin == 'FO' or ignore_case):
-                upper_k = k.upper()
+        upper_translated_headers = [_(f).upper() for f in real_columns]
+        for k, v in header_index.items():
+            upper_k = k and k.upper() or ''
             if upper_k not in upper_translated_headers:
                 if origin:
                     # special case from document origin
-                    if origin == 'PO' and k == _('Delivery requested date') \
-                            and 'Delivery Request Date' in real_columns:
+                    if origin == 'PO' and k == _('Delivery requested date') and 'Delivery Request Date' in real_columns:
                         continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
                 vals = {'state': 'draft',
                         'message': _('The column "%s" is not taken into account. Please correct it. The list of columns accepted is: %s'

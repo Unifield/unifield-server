@@ -214,6 +214,7 @@
             <rng:optional> <rng:attribute name="empty_ids"/> </rng:optional>
             <rng:optional> <rng:attribute name="auto_refresh"/> </rng:optional>
             <rng:optional> <rng:attribute name="search_view_id"/> </rng:optional>
+            <rng:optional> <rng:attribute name="sequence"/> </rng:optional>
             <rng:empty />
         </rng:element>
     </rng:define>

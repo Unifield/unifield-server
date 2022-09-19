@@ -105,6 +105,25 @@ class PhysicalInventory(osv.osv):
 
         return totals
 
+    def _get_products_added(self, cr, uid, ids, field_name, arg, context=None):
+        if not ids:
+            return False
+
+        cr.execute("""
+            SELECT pi.id, count(rel.product_id)
+            FROM
+                physical_inventory pi
+            LEFT JOIN
+                physical_inventory_product_rel rel ON rel.product_id = pi.id
+            WHERE
+                pi.id in %s
+            GROUP BY pi.id
+        """, (tuple(ids), ))
+        ret = {}
+        for x in cr.fetchall():
+            ret[x[0]] = x[1] > 0
+
+        return ret
 
     _columns = {
         'ref': fields.char('Reference', size=64, readonly=True, sort_column='id'),
@@ -113,6 +132,7 @@ class PhysicalInventory(osv.osv):
         'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
         'date_done': fields.datetime('Date done', readonly=True),
         'date_confirmed': fields.datetime('Date confirmed', readonly=True),
+        # 'inventory_id' and 'product_id' seem to be inverted in product_ids
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
                                         'product_id', 'inventory_id', string="Product selection", domain=[('type', 'not in', ['service_recep', 'consu'])], order_by="default_code"),
         'discrepancy_line_ids': fields.one2many('physical.inventory.discrepancy', 'inventory_id', 'Discrepancy lines',
@@ -127,6 +147,9 @@ class PhysicalInventory(osv.osv):
         'company_id': fields.many2one('res.company', 'Company', readonly=True, select=True, required=True,
                                       states={'draft': [('readonly', False)]}),
         'full_inventory': fields.boolean('Full inventory', readonly=True),
+        'type': fields.selection([('full', 'Full Inventory count (planned)'), ('partial', 'Partial Inventory count (planned)'),
+                                  ('correction', 'Stock correction (unplanned)')], 'Inventory Type', required=True, select=True, add_empty=True),
+        'hidden_type': fields.function(tools.misc.get_fake, method=True, internal="1", type='char', string="Hidden Type"),
         'discrepancies_generated': fields.boolean('Discrepancies Generated', readonly=True),
         'file_to_import': fields.binary(string='File to import', filters='*.xml'),
         'file_to_import2': fields.binary(string='File to import', filters='*.xml'),
@@ -143,8 +166,9 @@ class PhysicalInventory(osv.osv):
         'discrepancy_lines_percent_absvalue': fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Percent of absolute value of discrepancies")),
         'bad_stock_msg': fields.text('Bad Stock', readonly=1),
         'has_bad_stock': fields.boolean('Has bad Stock', readonly=1),
-        'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection', readonly=1),
-        'multiple_filter_months': fields.boolean('Multiple Selection', readonly=1),
+        'max_filter_months': fields.integer('Months selected in "Products with recent movement at location" during Product Selection'),
+        'multiple_filter_months': fields.boolean('Multiple Selection'),
+        'products_added': fields.function(_get_products_added, method=True, type='boolean', string='Has products'),
     }
 
     _defaults = {
@@ -157,12 +181,15 @@ class PhysicalInventory(osv.osv):
         'discrepancies_generated': False,
         'max_filter_months': -1,
         'multiple_filter_months': False,
+        'products_added': False,
     }
-
 
     def create(self, cr, uid, values, context):
         context = context is None and {} or context
         values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
+
+        if values and 'type' not in values and values.get('hidden_type'):
+            values['type'] = values['hidden_type']
 
         new_id = super(PhysicalInventory, self).create(cr, uid, values, context=context)
 
@@ -170,6 +197,13 @@ class PhysicalInventory(osv.osv):
             raise osv.except_osv(_('Warning'), _("Location is inactive"))
         return new_id
 
+    def write_web(self, cr, uid, ids, values, context=None):
+        if values and 'type' not in values and values.get('hidden_type'):
+            values['type'] = values['hidden_type']
+        return super(PhysicalInventory, self).write_web(cr, uid, ids, values, context=context)
+
+    def change_inventory_type(self, cr, uid, ids, inv_type, context=None):
+        return {'value': {'hidden_type': inv_type}}
 
     def copy(self, cr, uid, id_, default=None, context=None):
         default = default is None and {} or default
@@ -178,6 +212,7 @@ class PhysicalInventory(osv.osv):
 
         default['state'] = 'draft'
         default['date'] = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        default['type'] = 'partial'
         fields_to_empty = ["ref",
                            "full_inventory",
                            "date_done",
@@ -197,19 +232,14 @@ class PhysicalInventory(osv.osv):
 
         return super(PhysicalInventory, self).copy(cr, uid, id_, default, context=context)
 
-
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
 
-
-    def set_full_inventory(self, cr, uid, ids, context=None):
-        context = context is None and {} or context
-
-        # Set full inventory as true and unlink all products already selected
-        self.write(cr, uid, ids, {'full_inventory': True,
-                                  'product_ids': [(5)]}, context=context)
-        return {}
-
+    def onchange_products(self, cr, uid, ids, product_ids, context=None):
+        res = {'value': {'products_added': product_ids != [(6, 0, [])]}}
+        if product_ids == [(6, 0, [])]:
+            res['value'].update({'max_filter_months': -1, 'multiple_filter_months': False})
+        return res
 
     def action_select_products(self, cr, uid, ids, context=None):
         """
@@ -229,13 +259,12 @@ class PhysicalInventory(osv.osv):
         assert len(ids) == 1
         inventory_id = ids[0]
 
-        # Is it a full inventory ?
-        full_inventory = read_single(self._name, inventory_id, 'full_inventory')
-
-        # Create the wizard
+        # Create the wizard, check if it is a full inventory
         wiz_model = 'physical.inventory.select.products'
-        wiz_values = {"inventory_id": inventory_id,
-                      "full_inventory": full_inventory }
+        wiz_values = {
+            "inventory_id": inventory_id,
+            "full_inventory": read_single(self._name, inventory_id, 'type') == 'full'
+        }
         wiz_id = create(wiz_model, wiz_values)
         context['wizard_id'] = wiz_id
 
@@ -657,7 +686,6 @@ class PhysicalInventory(osv.osv):
             context = {}
 
         counting_sheet_header = {}
-        counting_sheet_lines = []
         counting_sheet_errors = []
         counting_sheet_warnings = []
 
@@ -679,211 +707,199 @@ class PhysicalInventory(osv.osv):
         product_obj = self.pool.get('product.product')
         product_uom_obj = self.pool.get('product.uom')
         counting_obj = self.pool.get('physical.inventory.counting')
+        wizard_obj = self.pool.get('physical.inventory.import.wizard')
 
-        line_list = []
         line_items = []
 
         all_uom = {}
-        cs_to_reset = []
         uom_ids = product_uom_obj.search(cr, uid, [], context=context)
         for uom in product_uom_obj.read(cr, uid, uom_ids, ['name'], context=context):
-            all_uom[uom['name']] = uom['id']
+            all_uom[uom['name'].lower()] = uom['id']
 
-        for row_index, row in enumerate(counting_sheet_file.getRows()):
-            # === Process header ===
+        context['import_in_progress'] = True
+        result = False
+        try:
+            # Reset the qty of each CS line
+            cr.execute("""UPDATE physical_inventory_counting SET quantity = NULL WHERE inventory_id = %s""", (inventory_rec.id,))
 
-            # ignore empty line
-            if not row.cells:
-                continue
+            for row_index, row in enumerate(counting_sheet_file.getRows()):
+                # === Process header ===
 
-            if row_index == 2:
-                counting_sheet_header.update({
-                    'inventory_counter_name': row.cells[2].data,  # Cell C3
-                    'inventory_date': row.cells[5].data  # Cell F3
-                })
-            elif row_index == 4:
-                inventory_reference = row.cells[2].data  # Cell C5
-                inventory_location = row.cells[5].data  # Cell F5
-                # Check location
-                if inventory_rec.location_id and inventory_rec.location_id.name != (inventory_location or '').strip():
-                    add_error(_('Location is different to inventory location'), row_index, 5)
+                # ignore empty line
+                if not row.cells:
+                    continue
 
-                # Check reference
-                if inventory_rec.ref != (inventory_reference or '').strip():
-                    add_error(_('Reference is different to inventory reference'), row_index, 2)
-                counting_sheet_header.update({
-                    'location_id': inventory_rec.location_id,
-                    'inventory_reference': inventory_reference
-                })
-            elif row_index == 6:
-                counting_sheet_header['inventory_name'] = row.cells[2].data  # Cell C7
-            if row_index < 9:
-                continue
+                if row_index == 2:
+                    counting_sheet_header.update({
+                        'inventory_counter_name': row.cells[2].data,  # Cell C3
+                        'inventory_date': row.cells[5].data  # Cell F3
+                    })
+                elif row_index == 4:
+                    inventory_reference = row.cells[2].data  # Cell C5
+                    inventory_location = row.cells[5].data  # Cell F5
+                    # Check location
+                    if inventory_rec.location_id and inventory_rec.location_id.name != (inventory_location or '').strip():
+                        add_error(_('Location is different to inventory location'), row_index, 5)
 
-            # === Process lines ===
+                    # Check reference
+                    if inventory_rec.ref.lower() != (inventory_reference or '').strip().lower():
+                        add_error(_('Reference is different to inventory reference'), row_index, 2)
+                    counting_sheet_header.update({
+                        'location_id': inventory_rec.location_id,
+                        'inventory_reference': inventory_reference
+                    })
+                elif row_index == 6:
+                    counting_sheet_header['inventory_name'] = row.cells[2].data  # Cell C7
+                if row_index < 9:
+                    continue
 
-            # Check number of columns
-            if len(row) != 10:
-                add_error(_("""The number of columns is incorrect, you should have exactly 10 columns in this order:
-Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date, Specification, BN Management, ED Management"""), row_index)
-                break
+                # === Process lines ===
 
-            # Check line number
-            line_no = row.cells[0].data
-            if line_no is not None:
-                try:
-                    line_no = int(line_no)
-                    if line_no in line_list:
-                        add_error(_("""Line number is duplicate. If you added a line, please keep the line number empty."""), row_index, 0)
-                    line_list.append(line_no)
-                except ValueError:
-                    line_no = None
-                    add_error(_("""Invalid line number"""), row_index, 0)
+                # Check number of columns
+                if len(row) != 10:
+                    add_error(_("""The number of columns is incorrect, you should have exactly 10 columns in this order:
+    Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date, Specification, BN Management, ED Management"""), row_index)
+                    break
 
-            # Check product_code and type
-            product_code = row.cells[1].data
-            product_ids = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
-            product_id = False
-            if len(product_ids) == 1:
-                product_id = product_ids[0]
-                # Check if product is non-stockable
-                if product_obj.search_exist(cr, uid, [('id', '=', product_id), ('type', 'in', ['service_recep', 'consu'])]):
-                    add_error("""Impossible to import non-stockable product %s""" % product_code, row_index, 1)
-            else:
-                add_error(_("""Product %s not found""") % product_code, row_index, 1)
+                # Check product_code and type
+                product_code = row.cells[1].data
+                product_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
+                product_id = False
+                if len(product_ids) == 1:
+                    product_id = product_ids[0]
+                    # Check if product is non-stockable
+                    if product_obj.search_exist(cr, uid, [('id', '=', product_id), ('type', 'in', ['service_recep', 'consu'])]):
+                        add_error("""Impossible to import non-stockable product %s""" % product_code, row_index, 1)
+                else:
+                    add_error(_("""Product %s not found""") % product_code, row_index, 1)
 
-            # Check UoM
-            product_uom_id = False
-            product_uom = row.cells[3].data
-            if product_uom not in all_uom:
-                add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
-            else:
-                product_uom_id = all_uom[product_uom]
+                # Check UoM
+                product_uom_id = False
+                product_uom = row.cells[3].data.lower()
+                if product_uom not in all_uom:
+                    add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
+                else:
+                    product_uom_id = all_uom[product_uom]
 
-            # Check quantity
-            quantity = row.cells[4].data
-            if quantity is not None:
-                if isinstance(quantity, int) and quantity == 0:
-                    quantity = '0'
-                try:
-                    quantity = counting_obj.quantity_validate(cr, uid, quantity, product_uom_id)
-                except NegativeValueError:
-                    add_error(_('Quantity %s is negative') % quantity, row_index, 4)
-                    quantity = 0.0
-                except ValueError:
-                    quantity = 0.0
-                    add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
+                # Check quantity
+                quantity = row.cells[4].data
+                if quantity is not None:
+                    if isinstance(quantity, int) and quantity == 0:
+                        quantity = '0'
+                    try:
+                        quantity = counting_obj.quantity_validate(cr, uid, quantity, product_uom_id)
+                    except NegativeValueError:
+                        add_error(_('Quantity %s is negative') % quantity, row_index, 4)
+                        quantity = 0.0
+                    except ValueError:
+                        quantity = 0.0
+                        add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
 
-            if product_id:
-                product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
-            else:
-                product_info = {'batch_management': False, 'perishable': False, 'default_code': product_code, 'uom_id': False}
+                if product_id:
+                    product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
+                else:
+                    product_info = {'batch_management': False, 'perishable': False, 'default_code': product_code, 'uom_id': False}
 
-            if product_info['uom_id'] and product_uom_id and product_info['uom_id'][0] != product_uom_id:
-                add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
+                if product_info['uom_id'] and product_uom_id and product_info['uom_id'][0] != product_uom_id:
+                    add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
 
+                # Check batch number
+                batch_name = row.cells[5].data
+                if not batch_name and product_info['batch_management'] and quantity is not None:
+                    add_error(_('Batch number is required'), row_index, 5)
 
-            # Check batch number
-            batch_name = row.cells[5].data
-            if not batch_name and product_info['batch_management'] and quantity is not None:
-                add_error(_('Batch number is required'), row_index, 5)
+                if batch_name and not product_info['batch_management']:
+                    add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
+                    batch_name = False
 
-            if batch_name and not product_info['batch_management']:
-                add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
-                batch_name = False
+                # Check expiry date
+                expiry_date = row.cells[6].data
+                if expiry_date and not product_info['perishable']:
+                    add_error(_("Product %s is not ED managed, ED ignored") % (product_info['default_code'], ), row_index, 6, is_warning=True)
+                    expiry_date = False
+                elif expiry_date:
+                    expiry_date_type = row.cells[6].type
+                    year = False
+                    try:
+                        if expiry_date_type == 'datetime':
+                            expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                            year = row.cells[6].data.year
+                        elif expiry_date_type == 'str':
+                            expiry_date_dt = parse(expiry_date)
+                            year = expiry_date_dt.year
+                            expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                        else:
+                            raise ValueError()
+                    except ValueError:
+                        if not year or year >= 1900:
+                            add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
 
-            # Check expiry date
-            expiry_date = row.cells[6].data
-            if expiry_date and not product_info['perishable']:
-                add_error(_("Product %s is not ED managed, ED ignored") % (product_info['default_code'], ), row_index, 6, is_warning=True)
-                expiry_date = False
-            elif expiry_date:
-                expiry_date_type = row.cells[6].type
-                year = False
-                try:
-                    if expiry_date_type == 'datetime':
-                        expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                        year = row.cells[6].data.year
-                    elif expiry_date_type == 'str':
-                        expiry_date_dt = parse(expiry_date)
-                        year = expiry_date_dt.year
-                        expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                    else:
-                        raise ValueError()
-                except ValueError:
-                    if not year or year >= 1900:
-                        add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
+                    if year and year < 1900:
+                        add_error(_('Expiry date: year must be after 1899'), row_index, 6)
 
-                if year and year < 1900:
-                    add_error(_('Expiry date: year must be after 1899'), row_index, 6)
+                if not expiry_date and product_info['perishable'] and quantity is not None:
+                    add_error(_('Expiry date is required'), row_index, 6)
 
-            if not expiry_date and product_info['perishable'] and quantity is not None:
-                add_error(_('Expiry date is required'), row_index, 6)
+                # Check duplicate line (Same product_id, batch_number, expirty_date)
+                item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
+                if item in line_items:
+                    add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
+                elif quantity is not None:
+                    line_items.append(item)
 
-            # Check duplicate line (Same product_id, batch_number, expirty_date)
-            item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
-            if item in line_items:
-                add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
-            elif quantity is not None:
-                line_items.append(item)
+                data = {
+                    'product_id': product_id,
+                    'batch_number': batch_name,
+                    'expiry_date': expiry_date,
+                    'quantity': False,
+                    'product_uom_id': product_uom_id,
+                }
 
-            data = {
-                'line_no': line_no,
-                'product_id': product_id,
-                'batch_number': batch_name,
-                'expiry_date': expiry_date,
-                'quantity': False,
-                'product_uom_id': product_uom_id,
-            }
-
-            if quantity is not None:
-                data['quantity'] = quantity
-            # Check if line exist
-            if line_no:
-                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no), ('product_id', '=', product_id)])
-            else:
+                if quantity is not None:
+                    data['quantity'] = quantity
+                # Check if line exist
                 line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
                                                          ('product_id', '=', product_id),
                                                          ('batch_number', '=', batch_name),
-                                                         ('expiry_date', '=', expiry_date)])
+                                                         ('expiry_date', '=', expiry_date)], context=context)
+                if not line_ids and (batch_name or expiry_date):  # Search for empty BN/ED lines
+                    line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
+                                                             ('product_id', '=', product_id),
+                                                             ('batch_number', '=', False),
+                                                             ('expiry_date', '=', False)], context=context)
+
                 if line_ids:
-                    del data["line_no"]
+                    counting_obj.write(cr, uid, line_ids[0], data, context=context)
+                else:
+                    data['inventory_id'] = inventory_rec.id
+                    counting_obj.create(cr, uid, data, context=context)
 
-            if len(line_ids) > 0:
-                cs_to_reset.append(line_ids[0])
-                counting_sheet_lines.append((1, line_ids[0], data))
-            elif quantity is not None:
-                data['line_no'] = False
-                counting_sheet_lines.append((0, 0, data))
+            # endfor
 
-        # endfor
-
-        context['import_in_progress'] = True
-        wizard_obj = self.pool.get('physical.inventory.import.wizard')
-        if counting_sheet_errors:
-            # Errors found, open message box for exlain
-            #self.write(cr, uid, ids, {'file_to_import': False}, context=context)
-            cr.execute('update physical_inventory set file_to_import=NULL where id=%s', (ids[0], ))
-            if counting_sheet_warnings:
-                counting_sheet_errors.append("\n%s" % _("Warning"))
-                counting_sheet_errors += counting_sheet_warnings
-            result = wizard_obj.message_box(cr, uid, title=_('Importation errors'), message='\n'.join(counting_sheet_errors))
-        else:
-            # No error found. Write counting lines on Inventory
-            vals = {
-                'file_to_import': False,
-                'responsible': counting_sheet_header.get('inventory_counter_name'),
-                'counting_line_ids': counting_sheet_lines
-            }
-            # first reset batch number to prevent sql constraint error
-            if cs_to_reset:
-                counting_obj.write(cr, uid, cs_to_reset, {'batch_number': False}, context=context)
-            self.write(cr, uid, ids, vals, context=context)
-            counting_sheet_warnings.insert(0, _('Counting sheet successfully imported.'))
-            result = wizard_obj.message_box(cr, uid, title='Information', message='\n'.join(counting_sheet_warnings))
-        context['import_in_progress'] = False
-
-        return result
+            if counting_sheet_errors:
+                cr.rollback()
+                # Errors found, open message box for explain
+                #self.write(cr, uid, ids, {'file_to_import': False}, context=context)
+                cr.execute('update physical_inventory set file_to_import = NULL where id = %s', (ids[0], ))
+                if counting_sheet_warnings:
+                    counting_sheet_errors.append("\n%s" % _("Warning"))
+                    counting_sheet_errors += counting_sheet_warnings
+                result = wizard_obj.message_box(cr, uid, title=_('Importation errors'), message='\n'.join(counting_sheet_errors))
+            else:
+                # No error found
+                vals = {
+                    'file_to_import': False,
+                    'responsible': counting_sheet_header.get('inventory_counter_name'),
+                }
+                self.write(cr, uid, ids, vals, context=context)
+                counting_sheet_warnings.insert(0, _('Counting sheet successfully imported.'))
+                result = wizard_obj.message_box(cr, uid, title='Information', message='\n'.join(counting_sheet_warnings))
+        except Exception as e:
+            cr.rollback()
+            result = wizard_obj.message_box(cr, uid, title='Information', message=_('An error occured: %s') % (e.message,))
+        finally:
+            context['import_in_progress'] = False
+            return result
 
     def import_xls_discrepancy_report(self, cr, uid, ids, context=None):
         """Import an exported discrepancy report"""
@@ -922,7 +938,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             product_code = row.cells[2].data
             line_no = row.cells[0].data
             # check if line number and product code are matching together
-            product_id = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
+            product_id = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
             disc_line_found = self.pool.get('physical.inventory.discrepancy').search(cr, uid, [
                 ('inventory_id', '=', inventory_rec.id),
                 ('line_no', '=', int(line_no)),

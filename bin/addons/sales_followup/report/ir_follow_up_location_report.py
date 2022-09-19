@@ -201,10 +201,12 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
             received_qty = 0.00  # for received non-stockable products
             if len(line.move_ids) > 0:
+                pick_data = {}
                 for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
                     data = {
                         'state': line.state,
                         'state_display': line_state_display_dict.get(line.state_to_display),
+                        'cancelled_move': move.state in ('cancel', 'cancel_r')
                     }
                     m_type = move.state in ('cancel', 'cancel_r') or move.product_qty != 0.00 and move.picking_id.type == 'out'
                     ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
@@ -223,8 +225,21 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 line.product_uom.id,
                             )
                         delivery_order = move.picking_id.name
-                        if move.picking_id.state not in ('done', 'delivered'):
+                        if move.state != 'done':
                             delivery_order = '-'
+                            # Search if there is an INT created from the cancellation, even if it is not closed
+                            if move.state in ('cancel', 'cancel_r') and not from_stock:
+                                self.cr.execute("""
+                                    SELECT p.name FROM stock_move m 
+                                    LEFT JOIN stock_picking p ON m.picking_id = p.id
+                                    LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+                                    LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
+                                    WHERE p.type = 'internal' AND p.subtype = 'standard' AND from_pick_move_cancel_id = %s
+                                    LIMIT 1
+                                """, (move.id,))
+                                int_cancel_info = self.cr.fetchone()
+                                if int_cancel_info:
+                                    delivery_order = int_cancel_info[0]
                         data.update({
                             'po_name': po_name,
                             'edd': edd,
@@ -254,6 +269,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             if ppl:
                                 packing = move.picking_id.previous_step_id.name or '-'
                                 shipment = move.picking_id.shipment_id and move.picking_id.shipment_id.name or '-'
+                                if shipment:
+                                    data['delivery_order'] = shipment
                                 eta = datetime.strptime(move.picking_id.shipment_id.shipment_actual_date[0:10],'%Y-%m-%d')
                                 eta += timedelta(days=line.order_id.partner_id.supplier_lt or 0.00)
                                 is_delivered = move.picking_id.shipment_id.state == 'delivered' or False
@@ -266,8 +283,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 'packing': packing,
                                 'shipment': shipment,
                                 'is_delivered': is_delivered,
-                                'delivered_qty': (is_shipment_done or is_delivered) and move.product_qty or 0.00,
-                                'delivered_uom': (is_shipment_done or is_delivered) and move.product_uom.name or '-',
+                                'delivered_qty': move.state == 'cancel' and 'N/A' or (is_shipment_done or is_delivered) and move.product_qty or 0.00,
+                                'delivered_uom': move.product_uom.name or '-',
                                 'backordered_qty': not is_shipment_done and not is_delivered and line.order_id.state != 'cancel' and move.product_qty or 0.00,
                                 'rts': move.picking_id.shipment_id and move.picking_id.shipment_id.shipment_expected_date[0:10],
                                 'eta': eta and eta.strftime('%Y-%m-%d'),
@@ -311,7 +328,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             data.update({
                                 'packing': packing,
                                 'delivered_qty': is_shipment_done and move.product_qty or 0.00,
-                                'delivered_uom': is_shipment_done and move.product_uom.name or '-',
+                                'delivered_uom': move.product_uom.name or '-',
                                 'rts': line.order_id.ready_to_ship_date,
                                 'shipment': shipment,
                             })
@@ -333,26 +350,66 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             if data.get('first_line'):
                                 fl_index = m_index
                             m_index += 1
+                    elif not pick_data and move.picking_id.subtype == 'picking':
+                        pick_data = {
+                            'po_name': po_name,
+                            'edd': edd,
+                            'cdd': cdd,
+                            'line_number': line.line_number,
+                            'line_comment': line.comment or '-',
+                            'product_name': line.product_id.name or '-',
+                            'product_code': line.product_id.code or '-',
+                            'is_delivered': False,
+                            'delivery_order': move.picking_id.name,
+                            'packing': '-',
+                            'shipment': '-',
+                            'uom_id': line.product_uom.name,
+                            'ordered_qty': line.product_uom_qty,
+                            'backordered_qty': move.state not in ('cancel', 'cancel_r') and line.product_uom_qty or 0,
+                            'delivered_uom': line.product_uom.name,
+                            'first_line': True,
+                            'state': line.state,
+                            'state_display': line_state_display_dict.get(line.state_to_display),
+                            'cancelled_move': move.state in ('cancel', 'cancel_r')
+                        }
             else:  # No move found
+                cancel_qty = 0
                 # Look for received qty in the IN(s)
                 self.cr.execute("""
-                    SELECT m.product_qty FROM stock_move m 
+                    SELECT sum(m.product_qty) FROM stock_move m
                     LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
                     LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
                     WHERE m.state = 'done' AND m.type = 'in' AND sl.id = %s
                 """, (line.id,))
                 for move in self.cr.fetchall():
-                    received_qty += move[0]
+                    if move[0]:
+                        received_qty += move[0]
+
+
+                # count cancelled qty on INT / to process qty on INT
+                self.cr.execute("""
+                    SELECT sum(int.product_qty), int.state FROM stock_move m
+                    LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+                    LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
+                    LEFT JOIN stock_move int on int.id = m.move_dest_id
+                    WHERE int.state in ('assigned', 'confirmed', 'cancel') and m.type = 'in' AND sl.id = %s
+                    GROUP BY int.state
+                """, (line.id,))
+                for move in self.cr.fetchall():
+                    if move[0]:
+                        received_qty -= move[0]
+                        if move[1] == 'cancel':
+                            cancel_qty = move[0]
 
                 # Get the name of the linked INT
                 int_name = False
                 if not from_stock:
                     self.cr.execute("""
-                        SELECT p.name FROM stock_move m 
+                        SELECT p.name FROM stock_move m
                         LEFT JOIN stock_picking p ON m.picking_id = p.id
                         LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
                         LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id
-                        WHERE m.state = 'done' AND p.type = 'internal' AND p.subtype = 'standard' AND sl.id = %s
+                        WHERE p.type = 'internal' AND p.subtype = 'standard' AND sl.id = %s
                         LIMIT 1
                     """, (line.id,))
                     int_info = self.cr.fetchone()
@@ -363,6 +420,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     data = {
                         'state': line.state,
                         'state_display': line_state_display_dict.get(line.state_to_display),
+                        'cancelled_move': abs(line.product_uom_qty - cancel_qty) < 0.01,
                         'line_number': line.line_number,
                         'line_comment': line.comment or '-',
                         'po_name': po_name,
@@ -372,9 +430,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'ordered_qty': line.product_uom_qty,
                         'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
                         'delivered_qty': received_qty,
-                        'delivered_uom': received_qty and line.product_uom.name or '-',
+                        'delivered_uom': line.product_uom.name or '-',
                         'delivery_order': int_name or '-',
-                        'backordered_qty': line.order_id.state != 'cancel' and line.product_uom_qty - received_qty or 0.00,
+                        'backordered_qty': line.order_id.state != 'cancel' and max(line.product_uom_qty - received_qty - cancel_qty, 0) or 0.00,
                         'edd': edd,
                         'cdd': cdd,
                     }
@@ -382,7 +440,10 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
             # Put the backorderd qty on the first line
             if not lines:
-                continue
+                if pick_data:
+                    lines.append(pick_data)
+                else:
+                    continue
             if bo_qty and bo_qty > 0 and not first_line and line.state not in ('cancel', 'cancel_r', 'done'):
                 lines.append({
                     'po_name': po_name,

@@ -11,6 +11,8 @@ import cgi
 import uuid
 import logging
 import os
+import posixpath
+import time
 
 class ConnectionFailed(Exception):
     pass
@@ -189,4 +191,59 @@ class Client(object):
 
                 logger.info('OneDrive: %d bytes sent on %s bytes %s' % (self.session_offset, size or 'unknown', percent_txt))
         return (True, '')
+
+    def list(self, remote_path):
+        if not remote_path.startswith(self.path):
+            remote_path = posixpath.join(self.path, remote_path)
+        request_url = "%s/_api/web/getfolderbyserverrelativeurl('%s')/files" % (self.baseurl, remote_path)
+        options = RequestOptions(request_url)
+        options.method = HttpMethod.Get
+        options.set_header("X-HTTP-Method", "GET")
+        options.set_header('accept', 'application/json;odata=verbose')
+        self.request.context.authenticate_request(options)
+        self.request.context.ensure_form_digest(options)
+        result = requests.get(url=request_url, headers=options.headers, auth=options.auth)
+
+        result = result.json()
+        files=[]
+        for i in range(len(result['d']['results'])):
+            item = result['d']['results'][i]
+            files.append(item)
+
+        return files
+
+
+    def download(self, remote_path, filename):
+        if not remote_path.startswith(self.path):
+            remote_path = posixpath.join(self.path, remote_path)
+        request_url = "%s_api/web/getfilebyserverrelativeurl('%s')/$value" % (self.baseurl, remote_path)
+        options = RequestOptions(request_url)
+        options.method = HttpMethod.Get
+        options.set_header("X-HTTP-Method", "GET")
+        options.set_header('accept', 'application/json;odata=verbose')
+        retry = 5
+        while retry:
+            try:
+                self.request.context.authenticate_request(options)
+                self.request.context.ensure_form_digest(options)
+                with requests.get(url=request_url, headers=options.headers, auth=options.auth, stream=True, timeout=120) as r:
+                    if r.status_code not in (200, 201):
+                        error = self.parse_error(r)
+                        raise requests.exceptions.RequestException(error)
+
+                    with open(filename, 'wb') as file:
+                        for chunk in r.iter_content(chunk_size=8192):
+                            if chunk:
+                                file.write(chunk)
+            except requests.exceptions.RequestException:
+                time.sleep(3)
+                self.login()
+                retry -= 1
+                if not retry:
+                    raise
+                continue
+
+            retry = 0
+
+        return filename
 
