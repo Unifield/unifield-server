@@ -61,7 +61,7 @@ class unifield_setup_configuration(osv.osv):
         'vat_ok': fields.boolean(string='System manages VAT locally ?'),
         'previous_fy_dates_allowed': fields.boolean(string='Does the system allow document dates on previous Fiscal Year?'),
         'customer_commitment': fields.boolean(string='Does the system allow Customer Commitment Vouchers ?'),
-        'signature': fields.boolean(string='Activate Elecronique Validation ?'),
+        'signature': fields.boolean(string='Activate Electronic Validation ?'),
     }
 
     _defaults = {

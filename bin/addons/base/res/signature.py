@@ -725,7 +725,7 @@ class signature_setup(osv.osv_memory):
     _inherit = 'res.config'
 
     _columns = {
-        'signature': fields.boolean(string='Activate Elecronique Validation ?'),
+        'signature': fields.boolean(string='Activate Electronic Validation ?'),
     }
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):
