@@ -35,7 +35,7 @@ class account_cashbox_line(osv.osv):
     _rec_name = 'number'
 
     _max_amount = 10 ** 10
-    _max_msg = _('The Total amount of the line is more than 10 digits.'
+    _max_msg = _('The Values or the Total amount of the line is more than 10 digits.'
                  'Please check that the Values and Number are correct to avoid loss of exact information')
 
     def _sub_total(self, cr, uid, ids, name, arg, context=None):
