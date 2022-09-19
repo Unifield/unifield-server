@@ -318,6 +318,14 @@ class msf_import_export(osv.osv_memory):
         if context is None:
             context = {}
         result = {'value': {}}
+
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.instance_id.level
+        if instance_level == 'project' and model_list_selection == 'products':
+            return {
+                'value': {'model_list_selection': False},
+                'warning': {'title': _('Error'), 'message': _("You can not select 'Products' on a Project instance")}
+            }
+
         result['value']['supplier_catalogue_id'] = False
         result['value']['product_list_id'] = False
         result['value']['display_file_import'] = True
@@ -1426,4 +1434,21 @@ class msf_import_export(osv.osv_memory):
 
 msf_import_export()
 
+class account_analytic_account(osv.osv):
+    _inherit = 'account.analytic.account'
+
+    def auto_import_destination(self, cr, uid, file_to_import, context=None):
+        processed = []
+        rejected = []
+        headers = []
+
+        import_obj = self.pool.get('msf.import.export')
+        import_id = import_obj.create(cr, uid, {
+            'model_list_selection': 'destinations',
+            'import_file': base64.encodestring(open(file_to_import, 'r').read()),
+        }, context=context)
+        processed, rejected, headers = import_obj.import_xml(cr, uid, [import_id], context=context)
+        return processed, rejected, headers
+
+account_analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

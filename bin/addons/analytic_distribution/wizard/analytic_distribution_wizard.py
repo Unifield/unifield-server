@@ -224,16 +224,9 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 for field in fields:
                     field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
                 # Change FP field
-                try:
-                    fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-                except ValueError:
-                    fp_id = 0
                 fp_fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fp_fields:
-                    if context.get('is_intermission', False):
-                        field.set('domain', "[('id', '=', %s)]" % fp_id)
-                    # If context with "from" exists AND its content is an integer (so an object id)
-                    elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) \
+                    if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) \
                             or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                             or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
@@ -504,20 +497,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'draft_p', 'validated']:
                 res[el.id] = False
             # verify move state
-            # UFTP-363: Do not edit any element of JI or JE if the JE is imported
-            if el.move_id and el.move_id.state not in ['draft']:
+            # Do not edit AD on JI or JE if JE is system or JE is posted
+            if el.move_id and (el.move_id.state != 'draft' or el.move_id.status == 'sys'):
                 res[el.id] = False
-            if el.move_id and el.move_id.imported is True and el.move_id.state not in ['draft']:
-                # US-99 JE imported posted: AD not writable
+            if el.move_line_id and el.move_line_id.move_id and (el.move_line_id.move_id.state != 'draft' or el.move_line_id.move_id.status == 'sys') and not context.get('from_correction', False):
                 res[el.id] = False
-            if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.state not in ['draft'] and not context.get('from_correction', False):
-                res[el.id] = False
-            if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.imported:
-                # US-99 JI imported not draft: AD not writable
-                # (from correction wizard: always writable)
-                if not context.get('from_correction', False) and \
-                        el.move_id.state and el.move_id.state not in ['draft']:
-                    res[el.id] = False
             # check Recurring Model state
             if el.model_id and el.model_id.state == 'done':
                 res[el.id] = False

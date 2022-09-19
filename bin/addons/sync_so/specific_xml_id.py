@@ -175,13 +175,15 @@ class hq_entries(osv.osv):
         1) Search for the instance:
            - to which the CC used in the entry is targeted to
            - if there isn't any, to which the PARENT CC is targeted to
-        2) The entry will sync to the coordo of the corresponding mission
+           - if not (CC is IM targeted) -> send to HQ
+        2) The entry will sync to the coordo of the corresponding mission if any or HQ
         """
         if context is None:
             context = {}
         target_cc_obj = self.pool.get('account.target.costcenter')
         if dest_field == 'cost_center_id':
             res = dict.fromkeys(ids, False)
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
             for line_data in self.browse(cr, uid, ids, context=context):
                 if line_data.cost_center_id:
                     targeted_instance = False
@@ -192,6 +194,10 @@ class hq_entries(osv.osv):
                             targeted_instance = target.instance_id
                         elif target.instance_id.level == 'project':
                             targeted_instance = target.instance_id.parent_id or False
+                    if not target_id and current_instance and current_instance.parent_id:
+                        # CC is intermission targeted / send to HQ
+                        targeted_instance = current_instance.parent_id
+
                     if targeted_instance:
                         res[line_data.id] = targeted_instance.instance
             return res

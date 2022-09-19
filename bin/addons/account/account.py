@@ -1270,7 +1270,7 @@ class account_journal_period(osv.osv):
         'active': fields.boolean('Active', required=True, help="If the active field is set to False, it will allow you to hide the journal period without removing it."),
         'state': fields.selection([('draft','Draft'), ('printed','Printed'), ('done','Done')], 'State', required=True, readonly=True,
                                   help='When journal period is created. The state is \'Draft\'. If a report is printed it comes to \'Printed\' state. When all transactions are done, it comes in \'Done\' state.'),
-        'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', string='Fiscal Year', type='many2one', relation='account.fiscalyear'),
+        'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', string='Fiscal Year', type='many2one', relation='account.fiscalyear', write_relate=False),
         'company_id': fields.related('journal_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True)
     }
 
@@ -1418,13 +1418,13 @@ class account_move(osv.osv):
         'ref': fields.char('Reference', size=64),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}),
         'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear',
-                                        string='Fiscal Year', store=False),
+                                        string='Fiscal Year', store=False, write_relate=False),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}),
         'state': fields.selection([('draft','Unposted'), ('posted','Posted')], 'State', required=True, readonly=True,
                                   help='All manually created new journal entry are usually in the state \'Unposted\', but you can set the option to skip that state on the related journal. In that case, they will be behave as journal entries automatically created by the system on document validation (invoices, bank statements...) and will be created in \'Posted\' state.'),
         'line_id': fields.one2many('account.move.line', 'move_id', 'Entries', states={'posted':[('readonly',True)]}),
         'to_check': fields.boolean('To Review', help='Check this box if you are unsure of that journal entry and if you want to note it as \'to be reviewed\' by an accounting expert.'),
-        'partner_id': fields.related('line_id', 'partner_id', type="many2one", relation="res.partner", string="Partner", store=True),
+        'partner_id': fields.related('line_id', 'partner_id', type="many2one", relation="res.partner", string="Partner", store=True, write_relate=False),
         'amount': fields.function(_amount_compute, method=True, string='Amount', digits_compute=dp.get_precision('Account'), type='float', fnct_search=_search_amount),
         'date': fields.date('Date', required=True, states={'posted':[('readonly',True)]}, select=True),
         'narration':fields.text('Narration'),
@@ -2583,7 +2583,7 @@ class account_subscription(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=64, required=True),
-        'ref': fields.char('Reference', size=16),
+        'ref': fields.char('Reference', size=64),
         'model_id': fields.many2one('account.model', 'Model', required=True),
 
         'date_start': fields.date('Start Date', required=True),

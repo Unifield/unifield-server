@@ -107,14 +107,10 @@
                                     <field name="state_to_display"/>
                                     <field name="stock_take_date"/>
                                     <field name="price_subtotal" sum="Total"/>
-                                    <button name="open_split_wizard"
-                                        type="object"
-                                        string="Split Line"
-                                        icon="terp-stock_effects-object-colorize"
-                                        attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'cancel_r', 'done', 'exception'))]}"
-                                        />
+                                    <button name="open_split_wizard" type="object" string="Split Line" icon="terp-stock_effects-object-colorize"
+                                        attrs="{'invisible': [('fake_state', '!=', 'validated')]}"/>
                                     <button string="Validate" icon="terp-check" name="validated_ir" type="object" header="True"
-                                            attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
+                                        attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                     <button string="Cancel" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
                                 </tree>
                                 <form>
@@ -177,19 +173,18 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <search string="Internal Requests">
-                    <group string="Filters" expand="1">
-                        <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', 'in', ['draft','draft_p'])]" />
-                        <filter name="state_valid" string="Validated" icon="terp-check" domain="[('state', 'in', ['validated','validated_p'])]" />
-                        <filter name="sourced" string="Sourced" icon="gtk-paste-v" domain="[('state','in',['sourced','sourced_p'])]" />
-                        <filter name="state_proc_progress" string="Confirmed" icon="terp-camera_test" domain="[('state', 'in', ('confirmed', 'confirmed_p'))]" />
-                        <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
-                        <filter name="cancelled" string="Cancelled" icon="gtk-cancel" domain="[('state', '=', 'cancel')]" />
-                        <separator orientation="vertical" />
-                        <field name="name" />
-                        <field name="origin" />
-                        <field name="requestor" />
-                        <field name="location_requestor_id" />
-                    </group>
+                    <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', 'in', ['draft','draft_p'])]" />
+                    <filter name="state_valid" string="Validated" icon="terp-check" domain="[('state', 'in', ['validated','validated_p'])]" />
+                    <filter name="sourced" string="Sourced" icon="gtk-paste-v" domain="[('state','in',['sourced','sourced_p'])]" />
+                    <filter name="state_proc_progress" string="Confirmed" icon="terp-camera_test" domain="[('state', 'in', ('confirmed', 'confirmed_p'))]" />
+                    <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
+                    <filter name="cancelled" string="Cancelled" icon="gtk-cancel" domain="[('state', '=', 'cancel')]" />
+                    <separator orientation="vertical" />
+                    <field name="name" />
+                    <field name="origin" />
+                    <field name="requestor" />
+                    <field name="location_requestor_id" />
+                    <field name="product_id" />
                     <newline />
                     <group string="Group By...">
                         <filter string="State" icon="terp-gtk-select-all" domain="[]" context="{'group_by': 'state'}" />
@@ -220,7 +215,7 @@
             <field name="res_model">sale.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_search_id" ref="procurement_request_search_view" />
+            <field name="search_view_id" ref="procurement_request_search_view" />
             <field name="context">{'procurement_request': True}</field>
             <field name="domain">[('procurement_request', '=', True)]</field>
         </record>

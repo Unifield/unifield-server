@@ -56,10 +56,135 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF26.0
+    def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):
+        ''' OCBHQ: fix amounts on EOY-2021-14020-OCBVE101-VES'''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.name == 'OCBHQ':
+            cr.execute('''update account_move_line set credit_currency='636077529292.81' where id = (select res_id from ir_model_data where name='8e980ca1-dee3-11e5-a9b9-94659c5434c6/account_move_line/226517')''')
+            cr.execute('''update account_move_line set debit_currency='636077529292.81' where id = (select res_id from ir_model_data where name='8e980ca1-dee3-11e5-a9b9-94659c5434c6/account_move_line/226518')''')
+
+        return True
+
     def us_8259_remove_currency_table_wkf(self, cr, uid, *a, **b):
         cr.execute("delete from wkf_workitem where act_id in (select id from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table'))")
         cr.execute("delete from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table')")
         cr.execute("delete from wkf where name='wkf.res.currency.table' and osv='res.currency.table'")
+        return True
+
+    def us_10090_new_dep_journals(self, cr, uid, *a, **b):
+        """
+        Creates the DEP G/L journals in all OCB instances and DEP analytic journals in all existing instances.
+        This is done in Python as the objects created must sync normally.
+        """
+        user_obj = self.pool.get('res.users')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
+        journal_obj = self.pool.get('account.journal')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            # DEP analytic journal
+            dep_analytic_journal_ids = analytic_journal_obj.search(cr, uid,
+                                                                   [('code', '=', 'DEP'),
+                                                                    ('type', '=', 'depreciation'),
+                                                                    ('is_current_instance', '=', True)])
+            if dep_analytic_journal_ids:  # just in case the journal has been created before the release
+                dep_analytic_journal_id = dep_analytic_journal_ids[0]
+            else:
+                dep_analytic_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'DEP',
+                    'name': 'Depreciation',
+                    'type': 'depreciation',
+                }
+                dep_analytic_journal_id = analytic_journal_obj.create(cr, uid, dep_analytic_vals)
+            # DEP G/L journal in all OCB instances
+            if current_instance.name.startswith('OCB')\
+                    and not journal_obj.search_exist(cr, uid, [('code', '=', 'DEP'), ('type', '=', 'depreciation'),
+                                                               ('is_current_instance', '=', True),
+                                                               ('analytic_journal_id', '=', dep_analytic_journal_id)]):
+                dep_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'DEP',
+                    'name': 'Depreciation',
+                    'type': 'depreciation',
+                    'analytic_journal_id': dep_analytic_journal_id,
+                }
+                journal_obj.create(cr, uid, dep_vals)
+        return True
+
+    def us_10010_hide_import_export_product_menu(self, cr, uid, *a, **b):
+        data_obj = self.pool.get('ir.model.data')
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        import_prod_menu_id = data_obj.get_object_reference(cr, uid, 'import_data', 'menu_action_import_products')[1]
+        update_prod_menu_id = data_obj.get_object_reference(cr, uid, 'import_data', 'menu_action_update_products')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, [import_prod_menu_id, update_prod_menu_id], {'active': instance.level != 'project'}, context={})
+        return True
+
+    def us_8428_pi_type_migration(self, cr, uid, *a, **b):
+        '''
+        In PIs, if full_inventory == True, set the type to 'full'
+        '''
+        cr.execute("""UPDATE physical_inventory SET type = 'full' WHERE full_inventory = 't'""")
+        cr.execute("""UPDATE physical_inventory SET type = 'partial' WHERE type is null""")
+
+    def us_9229_fix_rt(self, cr, uid, *a, **b):
+        '''
+        Updates to do:
+            - All OUTs and Picks plus their lines created from IR with Ext CU to have RT Deliver Unit
+            - All OUTs and Picks plus their lines created from FO to have RT Deliver Partner
+            - All OUT-CONSOs plus their lines to have RT Consumption Report
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        deli_unit_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_unit')[1]
+        deli_partner_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        consu_rep_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_consumption_report')[1]
+
+        # To Deliver Unit
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN sale_order s ON p.sale_id = s.id LEFT JOIN stock_location l ON s.location_requestor_id = l.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 't' 
+                    AND l.location_category = 'consumption_unit')
+        ''', (deli_unit_rt_id,))
+        self.log_info(cr, uid, "US-9229: %d OUTs/Picks and their lines had their Reason Type set to 'Deliver Unit'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN sale_order s ON p.sale_id = s.id LEFT JOIN stock_location l ON s.location_requestor_id = l.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 't' 
+                    AND l.location_category = 'consumption_unit')
+        ''', (deli_unit_rt_id,))
+
+        # To Deliver Partner
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f')
+        ''', (deli_partner_rt_id,))
+        self.log_info(cr, uid, "US-9229: %d OUTs/Picks and their lines had their Reason Type set to 'Deliver Partner'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f')
+        ''', (deli_partner_rt_id,))
+
+        # To Consumption Report
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT id FROM stock_picking WHERE type = 'out' AND subtype IN ('standard', 'picking') 
+                AND rac_id IS NOT NULL)
+        ''', (consu_rep_rt_id,))
+        self.log_info(cr, uid, "US-9229: %d OUT-CONSOs and their lines had their Reason Type set to 'Consumption Report'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT id FROM stock_picking WHERE type = 'out' AND subtype IN ('standard', 'picking') 
+                AND rac_id IS NOT NULL)
+        ''', (consu_rep_rt_id,))
+
         return True
 
     # UF25.0

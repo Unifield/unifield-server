@@ -83,8 +83,11 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
     def _get_order_line(self, order_id):
         order_line_ids = self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)])
+        ftf = ['id', 'line_number', 'state', 'state_to_display', 'order_id', 'product_id', 'product_uom_qty',
+               'product_uom', 'esti_dd', 'confirmed_delivery_date', 'move_ids']
         for order_line_id in order_line_ids:
-            yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id, context=self.localcontext)
+            yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id,
+                                                          fields_to_fetch=ftf, context=self.localcontext)
 
         raise StopIteration
 
@@ -94,10 +97,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         '''
         if not move.picking_id or not move.picking_id.shipment_id:
             return False
-        for pack_fam_mem in move.picking_id.shipment_id.pack_family_memory_ids:
-            for m in pack_fam_mem.move_lines:
-                if m.not_shipped and m.id == move.id:
-                    return True
+        self.cr.execute('''SELECT id FROM stock_move WHERE not_shipped = 't' AND pick_shipment_id = %s AND id = %s''',
+                        (move.picking_id.shipment_id.id, move.id))
+        if self.cr.fetchone():
+            return True
         return False
 
     def in_line_data_expected_date(self, pol_id):
@@ -139,6 +142,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             m_index = 0
             bo_qty = line.product_uom_qty
             po_name = '-'
+
             supplier_name = '-'
 
             edd = False

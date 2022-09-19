@@ -27,6 +27,7 @@ from _common import rounding
 import re
 from tools.translate import _
 from tools import cache
+from tools.safe_eval import safe_eval
 
 def is_pair(x):
     return not x%2
@@ -490,11 +491,12 @@ class product_product(osv.osv):
 
         ret = super(product_product, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
         if filter_qty:
-            stock_warehouse_obj = self.pool.get('stock.warehouse')
             stock_location_obj = self.pool.get('stock.location')
             if not location_id:
-                wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
-                location_id = stock_warehouse_obj.read(cr, uid, wids[0], ['lot_stock_id'], context=context)['lot_stock_id'][0]
+                default_locs_domain = ['|', ('eprep_location', '=', True), '&', ('usage', '=', 'internal'),
+                                       ('location_category', 'in', ('stock', 'consumption_unit', 'eprep'))]
+                location_id = stock_location_obj.search(cr, uid, default_locs_domain, context=context)
+
             if isinstance(location_id, basestring):
                 location_id = stock_location_obj.search(cr, uid, [('name','ilike', location_id)], context=context)
 
@@ -698,7 +700,7 @@ class product_product(osv.osv):
         return [('international_status', 'in', prod_creator_ids)]
 
     _defaults = {
-        'active': lambda *a: 1,
+        'active': lambda *a: True,
         'price_extra': lambda *a: 0.0,
         'price_margin': lambda *a: 1.0,
     }
@@ -893,8 +895,28 @@ class product_product(osv.osv):
                     res.update({'value': {'list_price': list_price}})
         return res
 
+    def view_docs_with_product(self, cr, uid, ids, menu_action, context=None):
+        '''
+        Get info from the given menu action to return the right view with the right data
+        '''
+
+        if context is None:
+            context = {}
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, menu_action, ['tree', 'form'], new_tab=True, context=context)
+
+        res_context = res.get('context', False) and safe_eval(res['context']) or {}
+        for col in res_context:  # Remove the default filters
+            if 'search_default_' in col:
+                res_context[col] = False
+        res_context['search_default_product_id'] = context.get('active_id', False)
+        res['context'] = res_context
+
+        return res
+
 
 product_product()
+
 
 class product_packaging(osv.osv):
     _name = "product.packaging"
@@ -1005,7 +1027,7 @@ class product_supplierinfo(osv.osv):
         'product_name': fields.char('Supplier Product Name', size=128, help="This supplier's product name will be used when printing a request for quotation. Keep empty to use the internal one."),
         'product_code': fields.char('Supplier Product Code', size=64, help="This supplier's product code will be used when printing a request for quotation. Keep empty to use the internal one."),
         'sequence' : fields.integer('Sequence', help="Assigns the priority to the list of product supplier."),
-        'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom', help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
+        'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom', help="Choose here the Unit of Measure in which the prices and quantities are expressed below.", write_relate=False),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise.", related_uom='product_uom'),
         'qty': fields.function(_calc_qty, method=True, store=True, type='float', string='Quantity', multi="qty", help="This is a quantity which is converted into Default Uom.", related_uom='product_uom'),
         'product_id' : fields.many2one('product.template', 'Product', required=True, ondelete='cascade', select=True),

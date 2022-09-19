@@ -994,7 +994,7 @@ class product_attributes(osv.osv):
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
             }
         ),
-        'uom_category_id': fields.related('uom_id', 'category_id', string='Uom Category', type='many2one', relation='product.uom.categ'),
+        'uom_category_id': fields.related('uom_id', 'category_id', string='Uom Category', type='many2one', relation='product.uom.categ', write_relate=False),
         'no_external': fields.function(_get_restriction, method=True, type='boolean', string='External partners orders', readonly=True, multi='restriction',
                                        store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
                                               'product.status': (_get_product_status, ['no_external'], 10),
@@ -1876,9 +1876,15 @@ class product_attributes(osv.osv):
         Re-activate product.
         '''
         wiz_obj = self.pool.get('product.ask.activate.wizard')
+        data_obj = self.pool.get('ir.model.data')
 
         instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
+        hq_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
+        itc_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1]
+        esc_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1]
+        local_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
         for product in self.browse(cr, uid, ids, context=context):
+            vals = {'active': True}
             if product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already active.') % (product.default_code, product.name))
             if product.standard_ok == 'non_standard_local':
@@ -1894,9 +1900,12 @@ class product_attributes(osv.osv):
                     }
                 elif instance_level == 'project':
                     raise osv.except_osv(_('Error'), _('%s activation is not allowed at project') % (product.default_code,))
-
-        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-        self.write(cr, real_uid, ids, {'active': True}, context=context)
+            if (instance_level == 'section' and (product.international_status.id in (hq_status, itc_status, esc_status) or
+                                                 (product.oc_subscription and product.state_ud in ('valid', 'outdated', 'discontinued')))) or \
+                    (instance_level == 'coordo' and product.international_status.id == local_status):
+                vals.update({'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]})
+            real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+            self.write(cr, real_uid, product.id, vals, context=context)
 
         return True
 
@@ -3194,8 +3203,17 @@ class product_ask_activate_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        prod_id = self.browse(cr, uid, ids[0], context=context).product_id.id
-        self.pool.get('product.product').write(cr, uid, prod_id, {'active': True}, context=context)
+        data_obj = self.pool.get('ir.model.data')
+
+        prod = self.browse(cr, uid, ids[0], fields_to_fetch=['product_id'], context=context).product_id
+        local_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+
+        vals = {'active': True}
+        # US-9509: The flow can only go through there if the instance is coordo
+        if prod.international_status.id == local_status:
+            vals.update({'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]})
+
+        self.pool.get('product.product').write(cr, uid, prod.id, vals, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

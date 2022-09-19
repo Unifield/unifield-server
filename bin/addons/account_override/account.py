@@ -1011,7 +1011,7 @@ class account_move(osv.osv):
                                       hide_default_menu=True),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
-                                       help="This indicates which Journal Type is attached to this Journal Entry"),
+                                       help="This indicates which Journal Type is attached to this Journal Entry", write_relate=False),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this journal entry."),
         'manual_name': fields.char('Description', size=64, required=True),
