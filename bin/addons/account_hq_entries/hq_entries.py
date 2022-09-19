@@ -375,7 +375,7 @@ class hq_entries(osv.osv):
         if original.analytic_state != 'valid':
             raise osv.except_osv(_('Error'), _('You cannot split a HQ Entry which analytic distribution state is not valid!'))
         original_amount = original.amount
-        vals.update({'original_id': original_id, 'original_amount': original_amount, 'date': original.date})
+        vals.update({'original_id': original_id, 'original_amount': original_amount, 'date': original.date, 'document_date': original.document_date})
         wiz_id = self.pool.get('hq.entries.split').create(cr, uid, vals, context=context)
         # Return view with register_line id
         context.update({
