@@ -165,9 +165,9 @@
             <field name="arch" type="xml">
                 <form string="Analytic Reallocation">
                     <group  colspan="6" col="6">
-                        <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
-                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
-                        <field name="analytic_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)" context="{'search_default_active': 1, 'hide_inactive': 1}" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
+                        <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}" domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('dest_compatible_with_cc_ids', '=', cost_center_id)]" />
+                        <field name="analytic_id" context="{'search_default_active': 1, 'hide_inactive': 1}" domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('fp_compatible_with_cc_ids', '=', cost_center_id)]" />
                     </group>
                     <newline/>
                     <field name="free_1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
