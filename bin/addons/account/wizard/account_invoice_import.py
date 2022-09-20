@@ -252,18 +252,18 @@ class account_invoice_import(osv.osv_memory):
                             continue
                         # If AD is filled - write on each line the AD on the import file. Remove from header.
 
-                        cc_ids = aac_obj.search(cr, uid,[('code', '=', cost_center_code),('category', '=', 'OC')],
+                        cc_ids = aac_obj.search(cr, uid,[('code', '=', cost_center_code),('category', '=', 'OC'), ('type', '!=', 'view')],
                                                 limit=1, context=context)
                         if not cc_ids:
                             errors.append(_("Line %s: the cost center %s doesn't exist.") % (current_line_num, cost_center_code))
                             continue
 
-                        fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING')], limit=1, context=context)
+                        fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING'), ('type', '!=', 'view')], limit=1, context=context)
                         if not fp_ids:
                             errors.append(_("Line %s: the funding pool %s doesn't exist.") % (current_line_num, funding_pool_code))
                             continue
 
-                        dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST')], limit=1, context=context)
+                        dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST'), ('type', '!=', 'view')], limit=1, context=context)
                         if not dest_ids:
                             errors.append(_("Line %s: the destination %s doesn't exist.") % (current_line_num, destination_code))
                             continue

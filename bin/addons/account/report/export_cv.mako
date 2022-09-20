@@ -91,56 +91,58 @@
 <!-- Default Sheet name is "Sheet1" (we can export only one cv at a time) -->
 <ss:Worksheet ss:Name="${o.name or "%s%s" % (_('Sheet'), 1)|x}" ss:Protected="1">
 <Table x:FullColumns="1" x:FullRows="1">
-  <Column ss:AutoFitWidth="1" ss:Width="100"/>
-  <Column ss:AutoFitWidth="1" ss:Width="250"/>
+  <Column ss:AutoFitWidth="1" ss:Width="50"/>
+  <Column ss:AutoFitWidth="1" ss:Width="150"/>
+  <Column ss:AutoFitWidth="1" ss:Width="50"/>
   <Column ss:AutoFitWidth="1" ss:Width="100"/>
   <Column ss:AutoFitWidth="1" ss:Width="150" ss:Span="1"/>
   <Column ss:AutoFitWidth="1" ss:Width="300" ss:Span="1"/>
 
   <Row>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Journal')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.journal_id.code or ''|x}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${_('Journal')}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${o.journal_id.code or ''|x}</Data></Cell>
   </Row>
   <Row>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Number')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.name or ''|x}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${_('Number')}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${o.name or ''|x}</Data></Cell>
   </Row>
   <Row>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Commitment Date')}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${_('Commitment Date')}</Data></Cell>
       % if isDate(o.date):
-          <Cell ss:StyleID="non_editable_date"><Data ss:Type="DateTime">${o.date|n}T00:00:00.000</Data></Cell>
+          <Cell ss:StyleID="non_editable_date" ss:MergeAcross="1"><Data ss:Type="DateTime">${o.date|n}T00:00:00.000</Data></Cell>
       % else:
-          <Cell ss:StyleID="non_editable"><Data ss:Type="String"></Data></Cell>
+          <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String"></Data></Cell>
       % endif
   </Row>
   <Row>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Currency')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.currency_id.name or ''|x}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${_('Currency')}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${o.currency_id.name or ''|x}</Data></Cell>
   </Row>
   <Row>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Description')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.description or ''|x}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${_('Description')}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${o.description or ''|x}</Data></Cell>
   </Row>
   <Row>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Supplier')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.partner_id.name or ''|x}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${_('Supplier')}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${o.partner_id.name or ''|x}</Data></Cell>
   </Row>
   <Row>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.purchase_id.name or ''|x}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${o.purchase_id and o.purchase_id.name or o.sale_id and o.sale_id.name or ''|x}</Data></Cell>
   </Row>
   <Row>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Period')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.period_id.name or ''|x}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${_('Period')}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${o.period_id.name or ''|x}</Data></Cell>
   </Row>
   <Row>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Type')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${dict((x,y) for x,y in o.get_cv_type()).get(o.type, False) or ''|x}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${_('Type')}</Data></Cell>
+      <Cell ss:StyleID="non_editable" ss:MergeAcross="1"><Data ss:Type="String">${getSel(o, 'type')|x}</Data></Cell>
   </Row>
 
   <Row><Cell ss:StyleID="editable"><Data ss:Type="String"></Data></Cell></Row>
 
   <Row>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Internal ID')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Commitment Voucher Lines')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Line number')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Account')}</Data></Cell>
@@ -154,43 +156,29 @@
 
   % for cv_line in o.line_ids:
     <Row>
+        <Cell ss:StyleID="non_editable"><Data ss:Type="String">${cv_line.id or ''|x}</Data></Cell>
         <Cell ss:StyleID="non_editable"><Data ss:Type="String">${cv_line.line_product_id and cv_line.line_product_id.default_code or ''|x}</Data></Cell>
         <Cell ss:StyleID="non_editable"><Data ss:Type="String">${cv_line.line_number or ''|x}</Data></Cell>
         <Cell ss:StyleID="editable"><Data ss:Type="String">${cv_line.account_id and cv_line.account_id.code or ''|x}</Data></Cell>
         <Cell ss:StyleID="non_editable_number"><Data ss:Type="Number">${cv_line.initial_amount|x}</Data></Cell>
         <Cell ss:StyleID="non_editable_number"><Data ss:Type="Number">${cv_line.amount|x}</Data></Cell>
-        % if (cv_line.analytic_distribution_id and len(cv_line.analytic_distribution_id.cost_center_lines) == 1) or (cv_line.commit_id.analytic_distribution_id and len(cv_line.commit_id.analytic_distribution_id.cost_center_lines) == 1):
+        <% ad_obj = cv_line.analytic_distribution_id or cv_line.commit_id.analytic_distribution_id or False %>
+        % if ad_obj and len(ad_obj.funding_pool_lines) == 1 :
             <Cell ss:StyleID="non_editable"><Data ss:Type="String">${'100%'|x}</Data></Cell>
-        % elif (cv_line.analytic_distribution_id and len(cv_line.analytic_distribution_id.cost_center_lines) > 1) or (cv_line.commit_id.analytic_distribution_id and len(cv_line.commit_id.analytic_distribution_id.cost_center_lines) > 1):
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].cost_center_id.code or ''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].destination_id.code or ''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].analytic_id.code or ''|x}</Data></Cell>
+        % elif ad_obj and len(ad_obj.funding_pool_lines) > 1:
             <Cell ss:StyleID="non_editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String"></Data></Cell>
+        % else:
+            <Cell ss:StyleID="editable"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String"></Data></Cell>
         % endif
-        % if not cv_line.analytic_distribution_id and not cv_line.have_analytic_distribution_from_header:
-            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
-            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
-            <!-- export Funding Pool including line breaks (|xn) -->
-            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|xn}</Data></Cell>
-        % elif cv_line.analytic_distribution_id:
-            % if len(cv_line.analytic_distribution_id.cost_center_lines) == 1:
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${cv_line.analytic_distribution_id.cost_center_lines[0].analytic_id.code or ''|x}</Data></Cell>
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${cv_line.analytic_distribution_id.cost_center_lines[0].destination_id.code or ''|x}</Data></Cell>
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${cv_line.analytic_distribution_id.funding_pool_lines[0].analytic_id.code or ''|xn}</Data></Cell>
-            % elif len(cv_line.analytic_distribution_id.cost_center_lines) > 1:
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|xn}</Data></Cell>
-            % endif
-        % elif cv_line.commit_id.analytic_distribution_id:
-            % if len(cv_line.commit_id.analytic_distribution_id.cost_center_lines) == 1:
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${cv_line.commit_id.analytic_distribution_id.cost_center_lines[0].analytic_id.code or ''|x}</Data></Cell>
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${cv_line.commit_id.analytic_distribution_id.cost_center_lines[0].destination_id.code or ''|x}</Data></Cell>
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${cv_line.commit_id.analytic_distribution_id.funding_pool_lines[0].analytic_id.code or ''|xn}</Data></Cell>
-            % elif len(cv_line.commit_id.analytic_distribution_id.cost_center_lines) > 1:
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
-                <Cell ss:StyleID="editable"><Data ss:Type="String">${''|xn}</Data></Cell>
-            % endif
-        % endif
-
     </Row>
   % endfor
 

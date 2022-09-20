@@ -110,11 +110,11 @@ class account_commitment(osv.osv):
         """
         Returns the list of possible types for the Commitment Vouchers
         """
-        return [('manual', 'Manual'),
-                ('external', 'Automatic - External supplier'),
-                ('esc', 'Manual - ESC supplier'),
-                ('intermission', 'Automatic - Intermission'),
-                ('intersection', 'Automatic - Intersection'),
+        return [('manual', _('Manual')),
+                ('external', _('Automatic - External supplier')),
+                ('esc', _('Manual - ESC supplier')),
+                ('intermission', _('Automatic - Intermission')),
+                ('intersection', _('Automatic - Intersection')),
                 ]
 
     def get_current_cv_version(self, cr, uid, context=None):
