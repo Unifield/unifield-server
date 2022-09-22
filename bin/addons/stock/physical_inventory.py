@@ -840,39 +840,40 @@ class PhysicalInventory(osv.osv):
                 if not expiry_date and product_info['perishable'] and quantity is not None:
                     add_error(_('Expiry date is required'), row_index, 6)
 
-                # Check duplicate line (Same product_id, batch_number, expirty_date)
-                item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
-                if item in line_items:
-                    add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
-                elif quantity is not None:
-                    line_items.append(item)
+                if product_id:
+                    # Check duplicate line (Same product_id, batch_number, expirty_date)
+                    item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
+                    if item in line_items:
+                        add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
+                    elif quantity is not None:
+                        line_items.append(item)
 
-                data = {
-                    'product_id': product_id,
-                    'batch_number': batch_name,
-                    'expiry_date': expiry_date,
-                    'quantity': False,
-                    'product_uom_id': product_uom_id,
-                }
+                    data = {
+                        'product_id': product_id,
+                        'batch_number': batch_name,
+                        'expiry_date': expiry_date,
+                        'quantity': False,
+                        'product_uom_id': product_uom_id,
+                    }
 
-                if quantity is not None:
-                    data['quantity'] = quantity
-                # Check if line exist
-                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
-                                                         ('product_id', '=', product_id),
-                                                         ('batch_number', '=', batch_name),
-                                                         ('expiry_date', '=', expiry_date)], context=context)
-                if not line_ids and (batch_name or expiry_date):  # Search for empty BN/ED lines
+                    if quantity is not None:
+                        data['quantity'] = quantity
+                    # Check if line exist
                     line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
                                                              ('product_id', '=', product_id),
-                                                             ('batch_number', '=', False),
-                                                             ('expiry_date', '=', False)], context=context)
+                                                             ('batch_number', '=', batch_name),
+                                                             ('expiry_date', '=', expiry_date)], context=context)
+                    if not line_ids and (batch_name or expiry_date):  # Search for empty BN/ED lines
+                        line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
+                                                                 ('product_id', '=', product_id),
+                                                                 ('batch_number', '=', False),
+                                                                 ('expiry_date', '=', False)], context=context)
 
-                if line_ids:
-                    counting_obj.write(cr, uid, line_ids[0], data, context=context)
-                else:
-                    data['inventory_id'] = inventory_rec.id
-                    counting_obj.create(cr, uid, data, context=context)
+                    if line_ids:
+                        counting_obj.write(cr, uid, line_ids[0], data, context=context)
+                    else:
+                        data['inventory_id'] = inventory_rec.id
+                        counting_obj.create(cr, uid, data, context=context)
 
             # endfor
 
