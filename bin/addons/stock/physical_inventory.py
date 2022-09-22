@@ -797,50 +797,47 @@ class PhysicalInventory(osv.osv):
 
                 if product_id:
                     product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
-                else:
-                    product_info = {'batch_management': False, 'perishable': False, 'default_code': product_code, 'uom_id': False}
 
-                if product_info['uom_id'] and product_uom_id and product_info['uom_id'][0] != product_uom_id:
-                    add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
+                    if product_info['uom_id'] and product_uom_id and product_info['uom_id'][0] != product_uom_id:
+                        add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
 
-                # Check batch number
-                batch_name = row.cells[5].data
-                if not batch_name and product_info['batch_management'] and quantity is not None:
-                    add_error(_('Batch number is required'), row_index, 5)
+                    # Check batch number
+                    batch_name = row.cells[5].data
+                    if not batch_name and product_info['batch_management'] and quantity is not None:
+                        add_error(_('Batch number is required'), row_index, 5)
 
-                if batch_name and not product_info['batch_management']:
-                    add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
-                    batch_name = False
+                    if batch_name and not product_info['batch_management']:
+                        add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
+                        batch_name = False
 
-                # Check expiry date
-                expiry_date = row.cells[6].data
-                if expiry_date and not product_info['perishable']:
-                    add_error(_("Product %s is not ED managed, ED ignored") % (product_info['default_code'], ), row_index, 6, is_warning=True)
-                    expiry_date = False
-                elif expiry_date:
-                    expiry_date_type = row.cells[6].type
-                    year = False
-                    try:
-                        if expiry_date_type == 'datetime':
-                            expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                            year = row.cells[6].data.year
-                        elif expiry_date_type == 'str':
-                            expiry_date_dt = parse(expiry_date)
-                            year = expiry_date_dt.year
-                            expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                        else:
-                            raise ValueError()
-                    except ValueError:
-                        if not year or year >= 1900:
-                            add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
+                    # Check expiry date
+                    expiry_date = row.cells[6].data
+                    if expiry_date and not product_info['perishable']:
+                        add_error(_("Product %s is not ED managed, ED ignored") % (product_info['default_code'], ), row_index, 6, is_warning=True)
+                        expiry_date = False
+                    elif expiry_date:
+                        expiry_date_type = row.cells[6].type
+                        year = False
+                        try:
+                            if expiry_date_type == 'datetime':
+                                expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                                year = row.cells[6].data.year
+                            elif expiry_date_type == 'str':
+                                expiry_date_dt = parse(expiry_date)
+                                year = expiry_date_dt.year
+                                expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                            else:
+                                raise ValueError()
+                        except ValueError:
+                            if not year or year >= 1900:
+                                add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
 
-                    if year and year < 1900:
-                        add_error(_('Expiry date: year must be after 1899'), row_index, 6)
+                        if year and year < 1900:
+                            add_error(_('Expiry date: year must be after 1899'), row_index, 6)
 
-                if not expiry_date and product_info['perishable'] and quantity is not None:
-                    add_error(_('Expiry date is required'), row_index, 6)
+                    if not expiry_date and product_info['perishable'] and quantity is not None:
+                        add_error(_('Expiry date is required'), row_index, 6)
 
-                if product_id:
                     # Check duplicate line (Same product_id, batch_number, expirty_date)
                     item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
                     if item in line_items:
