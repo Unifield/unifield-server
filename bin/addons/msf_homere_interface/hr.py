@@ -150,6 +150,7 @@ class hr_employee(osv.osv):
         'payment_method_id': fields.many2one('hr.payment.method', string='Payment Method', required=False, ondelete='restrict'),
         'bank_name': fields.char('Bank Name', size=256, required=False),
         'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
+        'instance_creator': fields.char('Instance creator of the employee', size=64, readonly=1),
     }
 
     _defaults = {
@@ -238,6 +239,13 @@ class hr_employee(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        if not context.get('sync_update_execution') and not vals.get('instance_creator'):
+            c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+            instance_code = c and c.instance_id and c.instance_id.code
+
+            if instance_code:
+                vals['instance_creator'] = instance_code
+
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
         allow_edition = False
@@ -267,6 +275,10 @@ class hr_employee(osv.osv):
         # Some verifications
         if not context:
             context = {}
+
+        if 'instance_creator' in vals:
+            del(vals['instance_creator'])
+
         # Prepare some values
         local = False
         ex = False
@@ -415,6 +427,15 @@ class hr_employee(osv.osv):
         })
         processed, rejected, headers = import_obj.button_validate(cr, uid, [import_id], auto_import=True)
         return processed, rejected, headers
+
+    def update_exported_fields(self, cr, uid, fields):
+        res = super(hr_employee, self).update_exported_fields(cr, uid, fields)
+        if res:
+            res += [
+                ['company_id', _('Company')],
+                ['instance_creator', _('Instance creator of the employee')]
+            ]
+        return res
 
 hr_employee()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

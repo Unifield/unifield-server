@@ -19,6 +19,7 @@
                     <field colspan="6" name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                     <field name="user_id" on_change="onchange_user(user_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                     <field name="company_id" widget="selection" on_change="onchange_company(company_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                    <field name="instance_creator" />
                     <field name="active" />
                     <field name="employee_type" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}" on_change="onchange_type(employee_type)"/>
                     <newline/>
