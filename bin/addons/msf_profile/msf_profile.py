@@ -5705,8 +5705,7 @@ class sync_tigger_something_bidir_mission(osv.osv):
                             d.res_id = hr.id and
                             instance.instance_identifier = split_part(d.name, '/', 1) and
                             coalesce(hr.instance_creator, '') = '' and
-                            hr.employee_type='local' and
-                            instance.state='inactive'
+                            hr.employee_type='local'
                 """)
                 self.pool.get('patch.scripts').log_info(cr, uid, 'Instance creator set on %d local employees in %d sec' % (cr.rowcount, time.time() - b))
 
