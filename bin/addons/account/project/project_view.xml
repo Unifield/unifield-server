@@ -104,6 +104,7 @@
                             <field name="top_cc_instance_ids" readonly="1"/>
                             <field name="is_target_cc_instance_ids" readonly="1"/>
                             <field name="po_fo_cc_instance_ids" readonly="1"/>
+                            <field name="cc_missions" invisible="1"/>
                             <field name="cc_instance_ids" readonly="1"/>
                         </page>
                     </notebook>
