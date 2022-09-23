@@ -2,9 +2,11 @@
 
 from osv import fields, osv
 from tools.translate import _
+from tools import ustr
 from tools.misc import fakeUid
 from lxml import etree
-
+from datetime import datetime
+from datetime import timedelta
 
 list_sign = {
     'purchase.order': [
@@ -709,6 +711,24 @@ class signature_change_date(osv.osv_memory):
                     'message': _('New Date To can not be before Date From')
                 }
             }
+        current_sign = self.browse(cr, uid, ids[0], context=context).user_id.esignature_id
+        if current_sign:
+            sign_line_obj = self.pool.get('signature.line')
+            line_id = sign_line_obj.search(cr, uid, [('image_id', '=', current_sign.id), ('date', '>=', new_to)], order='date desc', limit=1, context=context)
+            if line_id:
+                sign_line = sign_line_obj.browse(cr, uid, line_id[0], context=context)
+                last_date = datetime.strptime(sign_line.date, '%Y-%m-%d %H:%M:%S')
+                date_lang_format = self.pool.get('date.tools').get_datetime_format(cr, uid, context=context)
+                return {
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _(u'Last document signed on %s, Date To can not be before.') % (ustr(last_date.strftime(date_lang_format)),)
+                    },
+                    'value': {
+                        'new_to': (last_date + timedelta(days=1)).strftime('%Y-%m-%d')
+                    }
+                }
+
         return {}
 
     def save(self, cr, uid, ids, context=None):

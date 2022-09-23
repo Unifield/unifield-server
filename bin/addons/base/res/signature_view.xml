@@ -158,6 +158,7 @@
                 <form string="Change End Date">
                     <field name="current_from" />
                     <field name="current_to" />
+                    <label colspan="2" />
                     <field name="new_to" on_change="change_new_to(current_from, new_to)" />
                     <group colspan="4">
                       <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />

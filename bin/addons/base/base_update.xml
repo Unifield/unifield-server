@@ -148,7 +148,7 @@
                                     <separator string="Signature" colspan="4"/>
                                     <group colspan="4" col="6">
                                         <field name="signature_from" string="Start Date" attrs="{'readonly': [('has_signature', '=', True)], 'required': [('has_signature', '=', False), ('signature_enabled', '=', True)]}" />
-                                        <field name="signature_to" string="End Date" depends="signature_from" attrs="{'readonly': [('has_signature', '=', True)], 'required': [('has_signature', '=', False), ('signature_enabled', '=', True)]}" />
+                                        <field name="signature_to" string="End Date" depends="signature_from" attrs="{'readonly': [('has_signature', '=', True)]}" />
                                         <button type="object" string="Change End Date" name="change_date" attrs="{'invisible': [('has_signature', '=', False)]}" icon="terp-go-month" />
                                     </group>
                                     <field name="current_signature" widget="image" height="100" nolabel="1" colspan="4"/>

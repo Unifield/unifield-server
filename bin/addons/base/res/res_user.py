@@ -1010,7 +1010,7 @@ class users(osv.osv):
             if user.esignature_id:
                 self.pool.get('signature.image').write(cr, uid, user.esignature_id.id, {
                     'from_date': user.signature_from,
-                    'to_date': user.signature_to,
+                    'to_date': user.signature_to or fields.date.today(),
                     'inactivation_date': fields.datetime.now()
                 }, context=context)
         self.write(cr, uid, ids, {'esignature_id': False, 'signature_from': False, 'signature_to': False}, context=context)
