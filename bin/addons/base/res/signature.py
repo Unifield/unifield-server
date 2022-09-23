@@ -133,6 +133,9 @@ class signature(osv.osv):
         ('unique_signature_res_id_model,', 'unique(signature_res_id, signature_res_model)', 'Signature must be unique'),
     ]
 
+    _defaults = {
+        'signature_available': lambda self, cr, uid, *a, **b: self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature')
+    }
     def _set_signature_state(self, cr, uid, ids, context=None):
         assert len(ids) < 2, '_set_signature_state: only 1 id is allowed'
 
@@ -753,6 +756,8 @@ class signature_setup(osv.osv_memory):
             for module, xmlid in [('useability_dashboard_and_menu', 'signature_follow_up_menu'), ('base', 'signature_image_menu')]:
                 menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
+            if wiz.signature:
+                cr.execute("update signature set signature_available='t'")
             setup_obj.write(cr, uid, [setup.id], {'signature': wiz.signature}, context=context)
 
 signature_setup()
