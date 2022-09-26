@@ -54,7 +54,7 @@
             <field name="context">{'search_default_my_sign': True, 'search_default_to_sign': True}</field>
         </record>
 
-        <menuitem id="signature_follow_up_menu" action="signature_follow_up_action" parent="object_query.menu_preferences" sequence="5"/>
+        <menuitem id="signature_follow_up_menu" action="signature_follow_up_action" parent="base.menu_users" sequence="16"/>
 
     </data>
 </openerp>
