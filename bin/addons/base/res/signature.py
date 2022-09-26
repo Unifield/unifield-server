@@ -69,6 +69,7 @@ def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, co
     model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', res_model)], context=context)[0]
 
     root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
+    user_uid = hasattr(uid, 'realUid') and uid.realUid or uid
     if isinstance(res_id, (int, long)):
         res_id = [res_id]
 
@@ -78,7 +79,7 @@ def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, co
             'name': desc,
             'log': audit_rule_obj.get_sequence(cr, uid, res_model, _id, context=context),
             'object_id': model_id,
-            'user_id': uid,
+            'user_id': user_uid,
             'method': log_type,
             'res_id': _id,
             'new_value': new,
