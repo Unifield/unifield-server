@@ -15,7 +15,7 @@
                         </tree>
                     </field>
                     <group colspan="4">
-                      <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                      <button string="Cancel" name="cancel" type="object" icon="gtk-cancel" />
                       <button string="Confirm" icon="terp-check" name="save" type="object"/>
                     </group>
                 </form>
@@ -49,7 +49,7 @@
                         </field>
                     </group>
                     <group colspan="4">
-                      <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                      <button string="Cancel" name="cancel" type="object" icon="gtk-cancel" />
                       <button string="Confirm" icon="terp-check" name="save" type="object"/>
                     </group>
                 </form>

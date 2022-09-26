@@ -211,8 +211,12 @@ class signature_object(osv.osv):
 
     def add_user_signatures(self, cr, uid, ids, context=None):
         doc_name = self.name_get(cr, uid, ids, context=context)[0][1]
-        doc = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'signature_res_model'], context=context)
+        doc = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'signature_res_model', 'signature_line_ids'], context=context)
 
+        if not doc.signature_line_ids and list_sign.get(self._name):
+            existing_keys = [(x.name_key, x.subtype) for x in doc.signature_line_ids]
+            data = {'signature_line_ids': [(0, 0, {'name_key': x[0], 'name': x[1] , 'is_active': x[2], 'subtype': x[3]}) for x in list_sign.get(self._name) if (x[0], x[3]) not in existing_keys]}
+            self.write(cr, uid, [ids[0]], data, context=context)
 
         wiz_data = {
             'name': doc_name,
@@ -598,6 +602,9 @@ class signature_add_user_wizard(osv.osv_memory):
         if data:
             self.pool.get('signature').write(cr, fake_uid, wiz.signature_id.id, data, context=context)
 
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel(self, cr, uid, ids, context=None):
         return {'type': 'ir.actions.act_window_close'}
 
 
