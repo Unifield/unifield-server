@@ -719,8 +719,9 @@ The starting balance will be proposed automatically and the closing balance is t
         cr.execute('''select l1.id from account_move_line l1
                  left join account_move_line l2 on l2.date > %s and (l2.reconcile_id = l1.reconcile_id or l2.reconcile_partial_id = l1.reconcile_partial_id)
                  where l1.id in %s
-                 group by l1.id,l2.journal_id
-                 having (l1.reconcile_id is null and l1.reconcile_partial_id is null) or (count(l2) > 1) or (count(l2) = 1 and l2.journal_id not in (select distinct id from account_journal where code='FXA'))
+                 and coalesce(l2.is_addendum_line) = 'f'
+                 group by l1.id
+                 having (l1.reconcile_id is null and l1.reconcile_partial_id is null) or count(l2) > 0
                 ''', (min_posting_date, tuple(aml_ids)))
         return [x[0] for x in cr.fetchall()]
 
