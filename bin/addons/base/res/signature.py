@@ -708,10 +708,13 @@ class signature_change_date(osv.osv_memory):
         'user_id': fields.many2one('res.users', 'User', readonly=1),
         'current_from': fields.date('Current Date From', readonly=1),
         'current_to': fields.date('Current Date To', readonly=1),
-        'new_to': fields.date('New Date To', required=1),
+        'new_to': fields.date('New Date To'),
     }
 
     def change_new_to(self, cr, uid, ids, current_from, new_to, context=None):
+        if not new_to:
+            return {}
+
         if new_to < current_from:
             return {
                 'warning': {
@@ -741,7 +744,7 @@ class signature_change_date(osv.osv_memory):
 
     def save(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
-        if wiz.new_to < wiz.current_from:
+        if wiz.new_to and wiz.new_to < wiz.current_from:
             raise osv.except_osv(_('Warning'), _('Date To can not be before Date From'))
 
         self.pool.get('res.users').write(cr, uid, wiz.user_id.id, {'signature_to': wiz.new_to}, context=context)

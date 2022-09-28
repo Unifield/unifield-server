@@ -459,7 +459,7 @@ class users(osv.osv):
                     res[u.id]['has_valid_signature'] = False
                 elif u['signature_to'] and fields.date.today() > u['signature_to']:
                     res[u.id]['has_valid_signature'] = False
-            elif u.signature_enabled and u['signature_from'] and fields.date.today() >= u['signature_from'] and u['signature_to'] and fields.date.today() <= u['signature_to']:
+            elif u.signature_enabled and u['signature_from'] and fields.date.today() >= u['signature_from'] and (u['signature_to'] and fields.date.today() <= u['signature_to'] or not u['signature_to']):
                 res[u.id]['new_signature_required'] = True
         return res
 
