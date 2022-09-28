@@ -9,7 +9,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="13"/>
             <field name="arch" type="xml">
-                <tree string="Account Entries" min_rows="100" hide_new_button="1" hide_delete_button="1"  noteditable="1" >
+                <tree string="Account Entries" hide_new_button="1" hide_delete_button="1"  noteditable="1" >
                     <field name="instance_id"/>
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>
@@ -54,7 +54,7 @@
             <field name="model">account.analytic.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Analytic Journal Items" min_rows="100" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
+                <tree string="Analytic Journal Items" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
                     <field name="is_reallocated" invisible="1"/>
                     <field name="instance_id"/>
                     <field name="is_reversal" invisible="1"/>
