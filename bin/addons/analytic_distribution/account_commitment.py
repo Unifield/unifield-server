@@ -496,7 +496,7 @@ class account_commitment(osv.osv):
                                                       c.journal_id and c.journal_id.id,
                                                       c.currency_id and c.currency_id.id, c.date or False,
                                                       (c.purchase_id and c.purchase_id.name or c.sale_id and c.sale_id.name) or c.name or False, c.date,
-                                                      cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
+                                                      cl.account_id and cl.account_id.id or False, False, False, cl.id, period_id=c.period_id.id, context=context)
         return True
 
     def action_commitment_open(self, cr, uid, ids, context=None):
@@ -706,7 +706,7 @@ class account_commitment_line(osv.osv):
                                                   cl.commit_id.date, sign * amount, cl.commit_id.journal_id.id, cl.commit_id.currency_id.id,
                                                   cl.commit_id and cl.commit_id.date or False, ref, cl.commit_id.date,
                                                   account_id or cl.account_id.id, move_id=False, invoice_line_id=False,
-                                                  commitment_line_id=cl.id, context=context)
+                                                  commitment_line_id=cl.id, period_id=cl.commit_id.period_id.id, context=context)
         return True
 
     def create(self, cr, uid, vals, context=None):

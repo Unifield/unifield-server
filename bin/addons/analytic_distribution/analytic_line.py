@@ -246,11 +246,6 @@ class analytic_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        # set real_period_id
-        context.update({'extend_december': True})  # To allow get_period_from_date to search special periods
-        real_period = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'], context=context)[0]
-        vals['real_period_id'] = real_period or False
-        context.pop('extend_december')
         # Default behaviour
         res = super(analytic_line, self).create(cr, uid, vals, context=context)
         # Check soft/hard closed contract
