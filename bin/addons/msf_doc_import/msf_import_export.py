@@ -1245,15 +1245,15 @@ class msf_import_export(osv.osv_memory):
                         if (target_cc and target_cc[2]['code'] != prop_inst.code) or\
                                 (top_cc and top_cc[2]['code'] not in (prop_inst.code, '', None)) or \
                                 (po_fo_cc and po_fo_cc[2]['code'] not in (prop_inst.code, '', None)):
-                            raise Exception(_('The columns "Instances having the CC as Top CC / Code", '
-                                              '"Instances having the CC as CC picked for PO/FO ref / Code" and '
-                                              '"Instances having the CC as Target CC / Code" shall be either empty or '
+                            raise Exception(_('The columns "Instance having the CC as Top CC / Code", '
+                                              '"Instance having the CC as CC picked for PO/FO ref / Code" and '
+                                              '"Instance having the CC as Target CC / Code" shall be either empty or '
                                               'filled in with the top proprietary instance code.'))
                     elif not top_prop_id and ((top_cc and top_cc[2]['code']) or (po_fo_cc and po_fo_cc[2]['code']) or
                                               (target_cc and target_cc[2]['code'])):
-                        raise Exception(_('The columns "Instances having the CC as Top CC / Code" '
-                                          'or "Instances having the CC as CC picked for PO/FO ref / Code" or '
-                                          '"Instances having the CC as Target CC / Code" should be empty as '
+                        raise Exception(_('The columns "Instance having the CC as Top CC / Code" '
+                                          'or "Instance having the CC as CC picked for PO/FO ref / Code" or '
+                                          '"Instance having the CC as Target CC / Code" should be empty as '
                                           'the Top proprietary instance column is not filled in.'))
                     for curr_inst in ('top_prop_id', 'top_cc', 'target_cc', 'po_fo_cc'):
                         inst = False
