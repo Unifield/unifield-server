@@ -426,12 +426,17 @@ class analytic_account(osv.osv):
             all_instance_ids = []
             missions = set()
             missions_str = ""
-            coordo_id = False
+            top_prop_ids = set()
             target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
             if target_cc_ids:
                 field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center', 'is_top_cost_center']
                 for target_cc in acc_target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=field_list, context=context):
                     instance = target_cc.instance_id
+                    if instance:
+                        if instance.level == 'project':
+                            top_prop_ids.add(instance.parent_id.id)
+                        else:
+                            top_prop_ids.add(instance.id)
                     all_instance_ids.append(instance.id)
                     if instance.mission:
                         missions.add(instance.mission)
@@ -443,16 +448,15 @@ class analytic_account(osv.osv):
                         po_fo_instance_ids.append(instance.id)
             if missions:
                 missions_str = ", ".join(missions)
-            company = users_obj.browse(cr, uid, uid).company_id
-            if company and company.instance_id and company.instance_id.level == 'project':
-                coordo_id = company.instance_id.parent_id.id
+            if len(top_prop_ids) > 1:
+                raise osv.except_osv(_('Error'), _('Only one top proprietary instance expected, more than one found.'))
             res[analytic_acc_id] = {
                 'top_cc_instance_ids': top_instance_ids,
                 'is_target_cc_instance_ids': target_instance_ids,
                 'po_fo_cc_instance_ids': po_fo_instance_ids,
                 'cc_missions': missions_str,
                 'cc_instance_ids': all_instance_ids,
-                'top_prop_instance': coordo_id,
+                'top_prop_instance': list(top_prop_ids) and list(top_prop_ids)[0],
             }
         return res
 
