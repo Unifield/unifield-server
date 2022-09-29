@@ -1228,61 +1228,75 @@ class msf_import_export(osv.osv_memory):
                         parent_category = parent_id.category or ''
                         if parent_type != 'view' or parent_category != 'OC':
                             raise Exception(_('The Parent Analytic Account must be a View type Cost Center.'))
-                    cc_inst = data.get('cc_instance_ids') and data.get('cc_instance_ids')[0]
+                    top_prop_id = data.get('top_prop_instance')
                     top_cc = data.get('top_cc_instance_ids') and data.get('top_cc_instance_ids')[0]
                     target_cc = data.get('is_target_cc_instance_ids') and data.get('is_target_cc_instance_ids')[0]
                     po_fo_cc = data.get('po_fo_cc_instance_ids') and data.get('po_fo_cc_instance_ids')[0]
-                    if (top_cc or po_fo_cc) and not target_cc:
+                    if top_prop_id:
+                        prop_inst = inst_obj.browse(cr, uid, top_prop_id, fields_to_fetch=['code', 'state', 'level'],
+                                                    context=context)
+                        if prop_inst.state == 'inactive':
+                            raise Exception(_('The instance %s is not active.') % prop_inst.code)
+                        if prop_inst.level != 'coordo':
+                            raise Exception(_('The top proprietary instance must be a coordo level instance.'))
+                        if not target_cc or not target_cc[2]['code']:
+                            raise Exception(_('Cost centers with a "Top proprietary instance" to be tied with must '
+                                              'have a target instance.'))
+                        if (target_cc and target_cc[2]['code'] != prop_inst.code) or\
+                                (top_cc and top_cc[2]['code'] not in (prop_inst.code, '', None)) or \
+                                (po_fo_cc and po_fo_cc[2]['code'] not in (prop_inst.code, '', None)):
+                            raise Exception(_('The columns "Instances having the CC as Top CC / Code", '
+                                              '"Instances having the CC as CC picked for PO/FO ref / Code" and '
+                                              '"Instances having the CC as Target CC / Code" shall be either empty or '
+                                              'filled in with the top proprietary instance code.'))
+                    elif not top_prop_id and ((top_cc and top_cc[2]['code']) or (po_fo_cc and po_fo_cc[2]['code']) or
+                                              (target_cc and target_cc[2]['code'])):
                         raise Exception(_('CCs with "Instances having the CC as Top CC / Code" '
-                                          'or "Instances having the CC as CC picked for PO/FO ref / Code" filled should '
-                                          'have the column "Instances having the CC as Target CC / Code" filled.'))
-                    for inst in (cc_inst, top_cc, target_cc, po_fo_cc):
-                        curr_inst = False
-                        if inst == cc_inst:
-                            curr_inst = 'cc_inst'
-                        elif inst == top_cc:
-                            curr_inst = 'top_cc'
-                        elif inst == target_cc:
-                            curr_inst = 'target_cc'
-                        elif inst == po_fo_cc:
-                            curr_inst = 'po_fo_cc'
-                        if inst and isinstance(inst, tuple) and len(inst) == 3 and 'code' in inst[2]\
-                                and inst[2]['code'] is not None:
-                            inst_codes = [x.strip() for x in (inst[2]['code']).split(',')]
-                            for inst_code in inst_codes:
-                                # Instance check
-                                inst_ids = inst_obj.search(cr, uid,[('code', '=', inst_code), ('state', '=', 'active')])
-                                if not inst_ids:
-                                    raise Exception(_('The instance %s doesn\'t exist or is not active.') % inst_code)
-                                not_a_coord_ids = inst_obj.search(cr, uid, [('code', '=', inst_code), ('level', '!=', 'coordo')])
+                                          'or "Instances having the CC as CC picked for PO/FO ref / Code" or '
+                                          '"Instances having the CC as Target CC / Code" should be empty as '
+                                          'the Top proprietary instance column is not filled in.'))
+                    for curr_inst in ('top_prop_id', 'top_cc', 'target_cc', 'po_fo_cc'):
+                        inst = False
+                        inst_ids = False
+                        if curr_inst == 'top_prop_id':
+                            inst = top_prop_id
+                        elif curr_inst == 'top_cc':
+                            inst = top_cc
+                        elif curr_inst == 'target_cc':
+                            inst = target_cc
+                        elif curr_inst == 'po_fo_cc':
+                            inst = po_fo_cc
+                        if inst:
+                            if isinstance(inst, tuple) and len(inst) == 3 and 'code' in inst[2] and \
+                                    inst[2]['code']:
+                                inst_code = inst[2]['code'].strip()
+                                inst_ids = inst_obj.search(cr, uid,
+                                                           [('code', '=', inst_code), ('state', '=', 'active')])
                                 top_cc_ids = cc_target_obj.search(cr, uid, [('instance_id', '=', inst_ids[0]),
-                                                               ('is_top_cost_center', '=', True)])
+                                                                            ('is_top_cost_center', '=', True)])
                                 po_fo_ids = cc_target_obj.search(cr, uid, [('instance_id', '=', inst_ids[0]),
-                                                               ('is_po_fo_cost_center', '=', True)])
-                                if curr_inst == 'cc_inst' and not_a_coord_ids:
-                                        raise Exception(_('You should provide only instances that are coordinations '
-                                                          'for the column "Instances where the CC is added to / Code".'))
+                                                                           ('is_po_fo_cost_center', '=', True)])
                                 if curr_inst == 'top_cc' and top_cc_ids:
                                     raise Exception(_('The instance %s already have a top cost centre for '
-                                                          'budget consolidation.') % inst_code)
+                                                      'budget consolidation.') % inst_code)
                                 if curr_inst == 'po_fo_cc' and po_fo_ids:
                                     raise Exception(_('The instance %s already have a cost centre picked for '
-                                                          'PO/FO reference.') % inst_code)
-                                # Instance update: Once all the checks on instances are OK, we store their ids in
-                                # dictionaries to use it later to link the instances to the new created CC
-                                if curr_inst == 'cc_inst' and inst_ids:
-                                    where_added_inst.append(inst_ids[0])
-                                    # Add also the ids of active projects depending on this coordo
-                                    project_ids = inst_obj.browse(cr, uid, inst_ids[0], fields_to_fetch=['child_ids'], context=context).child_ids
-                                    for project in project_ids:
-                                        if project.state == 'active':
-                                            where_added_inst.append(project.id)
-                                if curr_inst == 'top_cc' and inst_ids:
-                                    top_cc_inst.append(inst_ids[0])
-                                if curr_inst == 'target_cc':
-                                    target_inst.append(inst_ids[0])
-                                if curr_inst == 'po_fo_cc':
-                                    po_fo_inst.append(inst_ids[0])
+                                                      'PO/FO reference.') % inst_code)
+                            # Instance update: Once all the checks on instances are OK, we store their ids in
+                            # dictionaries to use it later to link the instances to the new created CC
+                            if curr_inst == 'top_prop_id' and top_prop_id:
+                                where_added_inst.append(top_prop_id)
+                                # Add also the ids of active projects depending on this coordo
+                                project_ids = inst_obj.browse(cr, uid, top_prop_id, fields_to_fetch=['child_ids'], context=context).child_ids
+                                for project in project_ids:
+                                    if project.state == 'active':
+                                        where_added_inst.append(project.id)
+                            if curr_inst == 'top_cc' and inst_ids:
+                                top_cc_inst.append(inst_ids[0])
+                            if curr_inst == 'target_cc' and inst_ids:
+                                target_inst.append(inst_ids[0])
+                            if curr_inst == 'po_fo_cc' and inst_ids:
+                                po_fo_inst.append(inst_ids[0])
 
                 # Free 1
                 if import_brw.model_list_selection == 'free1':
@@ -1377,7 +1391,6 @@ class msf_import_export(osv.osv_memory):
                             else:
                                 cc_target_obj.create(cr, uid, {'instance_id': po_fo_inst[0], 'cost_center_id': id_created,
                                                                'is_po_fo_cost_center': True}, context=context)
-
 
                     else:
                         id_created = impobj.create(cr, uid, data, context=context)
@@ -1479,6 +1492,7 @@ class msf_import_export(osv.osv_memory):
 
         if err_msg and not allow_partial:
             cr.rollback()
+            nb_succes = 0
 
         info_msg = _('''Processing of file completed in %s second(s)!
 - Total lines to import: %s

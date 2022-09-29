@@ -418,6 +418,7 @@ class analytic_account(osv.osv):
             ids = [ids]
         res = {}
         acc_target_cc_obj = self.pool.get('account.target.costcenter')
+        users_obj = self.pool.get('res.users')
         for analytic_acc_id in ids:
             top_instance_ids = []
             target_instance_ids = []
@@ -425,6 +426,7 @@ class analytic_account(osv.osv):
             all_instance_ids = []
             missions = set()
             missions_str = ""
+            coordo_id = False
             target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
             if target_cc_ids:
                 field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center', 'is_top_cost_center']
@@ -441,12 +443,16 @@ class analytic_account(osv.osv):
                         po_fo_instance_ids.append(instance.id)
             if missions:
                 missions_str = ", ".join(missions)
+            company = users_obj.browse(cr, uid, uid).company_id
+            if company and company.instance_id and company.instance_id.level == 'project':
+                coordo_id = company.instance_id.parent_id.id
             res[analytic_acc_id] = {
                 'top_cc_instance_ids': top_instance_ids,
                 'is_target_cc_instance_ids': target_instance_ids,
                 'po_fo_cc_instance_ids': po_fo_instance_ids,
                 'cc_missions': missions_str,
                 'cc_instance_ids': all_instance_ids,
+                'top_prop_instance': coordo_id,
             }
         return res
 
@@ -561,6 +567,9 @@ class analytic_account(osv.osv):
         'cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                            string="Instances where the CC is added to",
                                            type="one2many", relation="msf.instance", multi="cc_instances"),
+        'top_prop_instance': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                             string="Top Proprietary Instance", type="many2one",
+                                             relation="msf.instance", multi="cc_instances"),
         'select_accounts_only': fields.boolean(string="Select Accounts Only"),
         'fp_account_ids': fields.many2many('account.account', 'fp_account_rel', 'fp_id', 'account_id', string='G/L Accounts',
                                            domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('active', '=', 't')]",

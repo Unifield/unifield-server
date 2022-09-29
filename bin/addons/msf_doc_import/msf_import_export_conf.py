@@ -111,7 +111,8 @@ MODEL_DICT = {
         'name': 'Cost Centers',
         'domain_type': 'finance',
         'model': 'account.analytic.account',
-        'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)]
+        'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)],
+        'partial': False
     },
     'free1': {
         'name': 'Free 1',
@@ -535,7 +536,7 @@ MODEL_DATA_DICT = {
             'type',
             'date_start',
             'date',  # "inactive from"
-            'cc_instance_ids.code',
+            'top_prop_instance.code',
             'top_cc_instance_ids.code',
             'is_target_cc_instance_ids.code',
             'po_fo_cc_instance_ids.code',
