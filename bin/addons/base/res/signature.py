@@ -212,12 +212,7 @@ class signature_object(osv.osv):
 
     def add_user_signatures(self, cr, uid, ids, context=None):
         doc_name = self.name_get(cr, uid, ids, context=context)[0][1]
-        doc = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'signature_res_model', 'signature_line_ids'], context=context)
-
-        if not doc.signature_line_ids and list_sign.get(self._name):
-            existing_keys = [(x.name_key, x.subtype) for x in doc.signature_line_ids]
-            data = {'signature_line_ids': [(0, 0, {'name_key': x[0], 'name': x[1] , 'is_active': x[2], 'subtype': x[3]}) for x in list_sign.get(self._name) if (x[0], x[3]) not in existing_keys]}
-            self.write(cr, uid, [ids[0]], data, context=context)
+        doc = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'signature_res_model'], context=context)
 
         wiz_data = {
             'name': doc_name,
@@ -275,14 +270,7 @@ class signature_object(osv.osv):
 
     def activate_signature(self, cr, uid, ids, context=None):
         _register_log(self, cr, uid, ids, self._name, 'Signature Enabled', False, True, 'write', context)
-        for _id in ids:
-            data = {'signature_available': True}
-            record = self.browse(cr, uid, _id, fields_to_fetch=['signature_line_ids'], context=context)
-            if list_sign.get(self._name):
-                existing_keys = [(x.name_key, x.subtype) for x in record.signature_line_ids]
-                data['signature_line_ids'] = [(0, 0, {'name_key': x[0], 'name': x[1] , 'is_active': x[2], 'subtype': x[3]}) for x in list_sign.get(self._name) if (x[0], x[3]) not in existing_keys]
-
-            self.write(cr, uid, [_id], data, context=context)
+        self.write(cr, uid, ids, {'signature_available': True}, context=context)
         return True
 
     def disable_signature(self, cr, uid, ids, context=None):
