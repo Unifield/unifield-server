@@ -791,5 +791,8 @@
             <field name="method">us_8259_remove_currency_table_wkf</field>
         </record>
 
+        <record id="us_9588_set_real_period_on_aji_from_cv" model="patch.scripts">
+            <field name="method">us_9588_set_real_period_on_aji_from_cv</field>
+        </record>
     </data>
 </openerp>

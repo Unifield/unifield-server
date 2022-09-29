@@ -56,6 +56,11 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_9588_set_real_period_on_aji_from_cv(self, cr, uid, *a, **b):
+        cr.execute('update account_analytic_line  aji set real_period_id = cv.period_id from account_commitment cv, account_commitment_line cvline where cvline.commit_id=cv.id and aji.commitment_line_id=cvline.id')
+        self.log_info(cr, uid, '%d AJIs from CV: period updates.' % (cr.rowcount,))
+        return True
+
     def us_8259_remove_currency_table_wkf(self, cr, uid, *a, **b):
         cr.execute("delete from wkf_workitem where act_id in (select id from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table'))")
         cr.execute("delete from wkf_activity where wkf_id = (select id from wkf where name='wkf.res.currency.table' and osv='res.currency.table')")
