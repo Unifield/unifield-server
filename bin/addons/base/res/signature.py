@@ -307,12 +307,22 @@ class signature_object(osv.osv):
         return res
 
     def create(self, cr, uid, vals, context=None):
+        new_id = super(signature_object, self).create(cr, uid, vals, context=context)
         if vals and 'signature_line_ids' not in vals and list_sign.get(self._name) and \
                 self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature') and \
                 (self._name != 'stock.picking' or vals.get('type') == 'in'):
-            vals['signature_line_ids'] = [(0, 0, {'name_key': x[0], 'name': x[1] , 'is_active': x[2], 'subtype': x[3]}) for x in list_sign.get(self._name)]
-
-        return super(signature_object, self).create(cr, uid, vals, context=context)
+            line_obj = self.pool.get('signature.line')
+            obj = self.browse(cr, uid, new_id, fields_to_fetch=['signature_id'], context=context)
+            if obj.signature_id:
+                for x in list_sign.get(self._name):
+                    line_obj.create(cr, 1, {
+                        'name_key': x[0],
+                        'name': x[1],
+                        'is_active': x[2],
+                        'subtype': x[3],
+                        'signature_id': obj.signature_id.id
+                    }, context=context)
+        return new_id
 
 signature_object()
 
