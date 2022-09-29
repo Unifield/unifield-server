@@ -178,7 +178,10 @@ class Root(SecuredController):
 
         main_survey = False
         other_surveys = []
-        if from_login:
+
+        if rpc.session.has_logged:
+            rpc.session.has_logged = False
+        elif from_login:
             surveys = rpc.RPCProxy('sync_client.survey').get_surveys()
             if surveys:
                 main_survey = surveys[0]
