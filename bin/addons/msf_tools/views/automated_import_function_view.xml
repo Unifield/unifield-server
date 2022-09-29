@@ -24,6 +24,7 @@
                     <field name="name" />
                     <field name="model_id" />
                     <field name="method_to_call" />
+                    <field name="startswith" />
                 </tree>
             </field>
         </record>
