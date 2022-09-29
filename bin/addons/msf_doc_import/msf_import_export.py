@@ -1251,7 +1251,7 @@ class msf_import_export(osv.osv_memory):
                                               'filled in with the top proprietary instance code.'))
                     elif not top_prop_id and ((top_cc and top_cc[2]['code']) or (po_fo_cc and po_fo_cc[2]['code']) or
                                               (target_cc and target_cc[2]['code'])):
-                        raise Exception(_('CCs with "Instances having the CC as Top CC / Code" '
+                        raise Exception(_('The columns "Instances having the CC as Top CC / Code" '
                                           'or "Instances having the CC as CC picked for PO/FO ref / Code" or '
                                           '"Instances having the CC as Target CC / Code" should be empty as '
                                           'the Top proprietary instance column is not filled in.'))
