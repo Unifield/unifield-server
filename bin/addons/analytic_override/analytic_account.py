@@ -427,6 +427,7 @@ class analytic_account(osv.osv):
             missions = set()
             missions_str = ""
             top_prop_ids = set()
+            err_top_prop_set = set()
             target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
             if target_cc_ids:
                 field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center', 'is_top_cost_center']
@@ -435,8 +436,10 @@ class analytic_account(osv.osv):
                     if instance:
                         if instance.level == 'project':
                             top_prop_ids.add(instance.parent_id.id)
+                            err_top_prop_set.add(instance.code)
                         else:
                             top_prop_ids.add(instance.id)
+                            err_top_prop_set.add(instance.code)
                     all_instance_ids.append(instance.id)
                     if instance.mission:
                         missions.add(instance.mission)
@@ -449,7 +452,8 @@ class analytic_account(osv.osv):
             if missions:
                 missions_str = ", ".join(missions)
             if len(top_prop_ids) > 1:
-                raise osv.except_osv(_('Error'), _('Only one top proprietary instance expected, more than one found.'))
+                err_top_prop_str = ", ".join(err_top_prop_set)
+                raise osv.except_osv(_('Error'), _('Only one top proprietary instance expected, more than one found: %s') % (err_top_prop_str))
             res[analytic_acc_id] = {
                 'top_cc_instance_ids': top_instance_ids,
                 'is_target_cc_instance_ids': target_instance_ids,
