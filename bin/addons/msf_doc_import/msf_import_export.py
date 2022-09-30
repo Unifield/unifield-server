@@ -1366,7 +1366,8 @@ class msf_import_export(osv.osv_memory):
                         id_created = impobj.create(cr, uid, data_subset, context=context)
                         if where_added_inst:
                             for inst_id in where_added_inst:
-                                cc_target_obj.create(cr, uid, {'instance_id': inst_id, 'cost_center_id':id_created}, context=context)
+                                if not cc_target_obj.search(cr, uid, [('instance_id', '=', inst_id), ('cost_center_id', '=', id_created)]):
+                                    cc_target_obj.create(cr, uid, {'instance_id': inst_id, 'cost_center_id':id_created}, context=context)
                         if top_cc_inst:
                             top_cc_id = cc_target_obj.search(cr, uid, [('instance_id', '=', top_cc_inst[0]),
                                                                             ('cost_center_id', '=', id_created)])

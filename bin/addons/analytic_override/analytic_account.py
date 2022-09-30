@@ -437,7 +437,7 @@ class analytic_account(osv.osv):
                         if instance.level == 'project':
                             top_prop_ids.add(instance.parent_id.id)
                             err_top_prop_set.add(instance.code)
-                        else:
+                        elif instance.level == 'coordo':
                             top_prop_ids.add(instance.id)
                             err_top_prop_set.add(instance.code)
                     all_instance_ids.append(instance.id)
