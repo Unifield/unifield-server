@@ -317,9 +317,8 @@ class signature_object(osv.osv):
         new_id = super(signature_object, self).create(cr, uid, vals, context=context)
         if vals and 'signature_line_ids' not in vals and list_sign.get(self._name) and \
                 self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature') and \
-                (   self._name not in ('stock.picking', 'account.invoice', 'sale.order') or \
+                (   self._name not in ('stock.picking', 'sale.order') or \
                     self._name == 'stock.picking' and vals.get('type') == 'in' or \
-                    self._name == 'account.invoice' and vals.get('real_doc_type') in ('si', 'donation') or \
                     self._name == 'sale.order' and vals.get('location_requestor_id')
                     ):
 
@@ -327,10 +326,15 @@ class signature_object(osv.osv):
             ftf = ['signature_id']
             if self._name == 'account.bank.statement':
                 ftf += ['local_register', 'journal_id']
+            elif self._name == 'account.invoice':
+                ftf += ['doc_type']
 
             obj = self.browse(cr, uid, new_id, fields_to_fetch=ftf, context=context)
 
             if self._name == 'account.bank.statement' and (not obj.local_register or obj.journal_id.type == 'cheque'):
+                return new_id
+
+            if self._name == 'account.invoice' and obj.doc_type not in ('si', 'donation'):
                 return new_id
 
             if obj.signature_id:
@@ -827,7 +831,7 @@ class signature_setup(osv.osv_memory):
                     elif obj == 'account.bank.statement':
                         cond = "account_bank_statement o, account_journal j, res_company c where o.journal_id = j.id and o.signature_id is not null and j.type in ('bank', 'cash') and c.instance_id = j.instance_id"
                     elif obj == 'account.invoice':
-                        cond = "account_invoice o where o.signature_id is not null and o.real_doc_type in ('donation', 'si')"
+                        cond = "account_invoice o where o.signature_id is not null and o.real_doc_type in ('donation', 'si') or (o.real_doc_type is null and o.type='in_invoice' and o.is_direct_invoice='f' and o.is_inkind_donation='f' and o.is_debit_note='f' and o.is_intermission='f') or (o.real_doc_type is null and o.type='in_invoice' and o.is_debit_note='f' and o.is_inkind_donation='t')"
                     elif obj == 'stock.picking':
                         cond = "stock_picking o where o.signature_id is not null and o.type='in'"
 
