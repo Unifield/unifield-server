@@ -62,11 +62,18 @@ class patch_scripts(osv.osv):
         bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
         for group_name, model in [
             ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement']),
-            ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order'])
+            ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order']),
+            ('Sign_user', [])
         ]:
-            group_id = self.pool.get('res.groups').create(cr, uid, {'name': group_name})
-            bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
-            bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
+            if not group_ids:
+                group_id = self.pool.get('res.groups').create(cr, uid, {'name': group_name})
+            else:
+                group_id = group_ids[0]
+
+            if model:
+                bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
         return True
 
     def us_9406_create_common_acl(self, cr, uid, *a, **b):

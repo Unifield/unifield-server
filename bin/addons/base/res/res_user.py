@@ -1049,6 +1049,20 @@ class users(osv.osv):
             'width': '720px',
         }
 
+    def change_signature_enabled(self, cr, uid, ids, sign, groups, context=None):
+        if sign and groups and isinstance(groups, list) and groups[0] and isinstance(groups[0], tuple) and groups[0][0] == 6:
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')], context=context)
+            if group_ids:
+                if group_ids[0] not in groups[0][2]:
+                    return {
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('Please add the group Sign_user in order to Enable signatures'),
+                        }
+                    }
+
+        return True
+
 users()
 
 class wizard_add_users_synchronized(osv.osv_memory):
