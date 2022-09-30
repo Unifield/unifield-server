@@ -302,7 +302,8 @@ class signature_object(osv.osv):
                 user_allowed += [x.id for x in doc.signature_user_ids]
 
         if to_unsign:
-            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context)
+            # disable check if button as BAR (i.e: uid.realUid exists)
+            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'))
         if user_allowed:
             self.pool.get('signature.users.allowed').unlink(cr, uid, user_allowed, context=context)
 
@@ -485,9 +486,10 @@ class signature_line(osv.osv):
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
-    def action_unsign(self, cr, uid, ids, context=None):
+    def action_unsign(self, cr, uid, ids, context=None, check_ur=True):
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name', 'legal_name', 'value', 'unit'], context=context)
-        sign_line._check_sign_unsign(context=context)
+        if check_ur:
+            sign_line._check_sign_unsign(context=context)
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         value = sign_line.value
