@@ -317,9 +317,10 @@ class signature_object(osv.osv):
         new_id = super(signature_object, self).create(cr, uid, vals, context=context)
         if vals and 'signature_line_ids' not in vals and list_sign.get(self._name) and \
                 self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature') and \
-                (   self._name not in ('stock.picking', 'account.invoice') or \
+                (   self._name not in ('stock.picking', 'account.invoice', 'sale.order') or \
                     self._name == 'stock.picking' and vals.get('type') == 'in' or \
-                    self._name == 'account.invoice' and vals.get('real_doc_type') in ('si', 'donation')
+                    self._name == 'account.invoice' and vals.get('real_doc_type') in ('si', 'donation') or \
+                    self._name == 'sale.order' and vals.get('location_requestor_id')
                     ):
 
             line_obj = self.pool.get('signature.line')
@@ -822,7 +823,7 @@ class signature_setup(osv.osv_memory):
                     if obj == 'purchase.order':
                         cond = "purchase_order o where o.signature_id is not null and o.rfq_ok='f'"
                     elif obj == 'sale.order':
-                        cond = "sale_order o where o.signature_id is not null"
+                        cond = "sale_order o where o.signature_id is not null and o.procurement_request='t'"
                     elif obj == 'account.bank.statement':
                         cond = "account_bank_statement o, account_journal j, res_company c where o.journal_id = j.id and o.signature_id is not null and j.type in ('bank', 'cash') and c.instance_id = j.instance_id"
                     elif obj == 'account.invoice':
