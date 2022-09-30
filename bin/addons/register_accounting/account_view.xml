@@ -19,6 +19,7 @@
                 <xpath expr="/form" position="replace">
                     <form string="Bank Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                         <group col="6" colspan="4">
+                            <field name="local_register" invisible="1"/>
                             <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'confirm'))]}"/>
                             <field name="journal_id" domain="[('type', '=', 'bank'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
                             <newline/>
@@ -216,6 +217,7 @@
                         <group col="6" colspan="4">
                             <field name="name" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'confirm'))]}"/>
                             <field name="company_id" select="1" groups="base.group_multi_company" invisible="True"/>
+                            <field name="local_register" invisible="1"/>
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" domain="[('type','=','cash'),('is_current_instance','=',True)]" select="1"/>
                             <newline/>
 

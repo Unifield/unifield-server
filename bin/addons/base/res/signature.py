@@ -266,6 +266,13 @@ class signature_object(osv.osv):
                     parent_node = fields[0].getparent()
                     parent_node.remove(fields[0])
                     fvg['arch'] = etree.tostring(arch)
+            elif self._name == 'account.bank.statement':
+                arch = etree.fromstring(fvg['arch'])
+                fields = arch.xpath('//page[@name="signature_tab"]')
+                if fields:
+                    fields[0].attrib['attrs'] = "{'invisible': [('local_register', '=', False)]}"
+                    fvg['arch'] = etree.tostring(arch)
+
         return fvg
 
     def activate_signature(self, cr, uid, ids, context=None):
@@ -310,9 +317,21 @@ class signature_object(osv.osv):
         new_id = super(signature_object, self).create(cr, uid, vals, context=context)
         if vals and 'signature_line_ids' not in vals and list_sign.get(self._name) and \
                 self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature') and \
-                (self._name != 'stock.picking' or vals.get('type') == 'in'):
+                (   self._name not in ('stock.picking', 'account.invoice') or \
+                    self._name == 'stock.picking' and vals.get('type') == 'in' or \
+                    self._name == 'account.invoice' and vals.get('real_doc_type') in ('si', 'donation')
+                    ):
+
             line_obj = self.pool.get('signature.line')
-            obj = self.browse(cr, uid, new_id, fields_to_fetch=['signature_id'], context=context)
+            ftf = ['signature_id']
+            if self._name == 'account.bank.statement':
+                ftf += ['local_register', 'journal_id']
+
+            obj = self.browse(cr, uid, new_id, fields_to_fetch=ftf, context=context)
+
+            if self._name == 'account.bank.statement' and (not obj.local_register or obj.journal_id.type == 'cheque'):
+                return new_id
+
             if obj.signature_id:
                 for x in list_sign.get(self._name):
                     line_obj.create(cr, 1, {
@@ -366,6 +385,9 @@ class signature_line(osv.osv):
         'subtype': '',
     }
 
+    _sql_constraints = [
+        ('unique_signature_name_key', 'unique (signature_id,name_key)', 'Unique signature_id,name_key')
+    ]
     def _check_sign_unsign(self, cr, uid, ids, check_has_sign=False, context=None):
         assert len(ids) < 2, '_check_sign_unsign: only 1 id is allowed'
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
@@ -795,6 +817,31 @@ class signature_setup(osv.osv_memory):
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
             if wiz.signature:
                 cr.execute("update signature set signature_available='t'")
+
+                for obj in list_sign:
+                    if obj == 'purchase.order':
+                        cond = "purchase_order o where o.signature_id is not null and o.rfq_ok='f'"
+                    elif obj == 'sale.order':
+                        cond = "sale_order o where o.signature_id is not null"
+                    elif obj == 'account.bank.statement':
+                        cond = "account_bank_statement o, account_journal j, res_company c where o.journal_id = j.id and o.signature_id is not null and j.type in ('bank', 'cash') and c.instance_id = j.instance_id"
+                    elif obj == 'account.invoice':
+                        cond = "account_invoice o where o.signature_id is not null and o.real_doc_type in ('donation', 'si')"
+                    elif obj == 'stock.picking':
+                        cond = "stock_picking o where o.signature_id is not null and o.type='in'"
+
+                    for role in list_sign[obj]:
+                        cr.execute("""
+                            insert into signature_line (signature_id, is_active, name, name_key, subtype)
+                                    select o.signature_id, %%(is_active)s, %%(name)s, %%(name_key)s, %%(subtype)s from
+                                    %s
+                            on conflict on constraint signature_line_unique_signature_name_key do nothing
+                        """ % cond, { # not_a_user_entry
+                            'is_active': role[2],
+                            'name': role[1],
+                            'name_key': role[0],
+                            'subtype': role[3],
+                        })
             setup_obj.write(cr, uid, [setup.id], {'signature': wiz.signature}, context=context)
 
 signature_setup()

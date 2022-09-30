@@ -32,7 +32,7 @@
             <tree string="Signatures">
                 <field name="name" />
                 <field name="is_active" />
-                <button name="toggle_active" string="Toggle Active" attrs="{'invisible': ['|', ('signature_is_closed', '=', True), ('signed', '=', True)]}" type="object" icon="terp-stock_effects-object-colorize"/>
+                <button name="toggle_active" string="Toggle Active" attrs="{'invisible': ['|', ('signature_is_closed', '=', True), ('signed', '=', True)]}" type="object" icon="terp-camera_test"/>
                 <field name="legal_name" string="Signee User" />
                 <field name="data_image" widget="image" height="50" />
                 <field name="date" />
