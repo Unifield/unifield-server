@@ -29,7 +29,8 @@ class signature_follow_up(osv.osv):
                     count(l.user_id=user_rel.user_id or NULL) as signed,
                     coalesce(po.name, so.name, invoice.number, invoice.name, pick.name, jour.code|| ' ' ||per.name) as doc_name,
                     min(case when l.user_id=user_rel.user_id then l.date else NULL end) as signature_date,
-                    coalesce(po.state, so.state, invoice.state, st.name, pick.state) as doc_state
+                    coalesce(po.state, so.state, invoice.state, st.state, pick.state) as doc_state,
+                    s.signature_is_closed as signature_is_closed
                 from
                     signature s
                 inner join signature_users_allowed user_rel on user_rel.signature_id = s.id
@@ -44,9 +45,9 @@ class signature_follow_up(osv.osv):
 
                 left join stock_picking pick on pick.id =  s.signature_res_id and s.signature_res_model='stock.picking'
                 group by
-                    user_rel.id, user_rel.user_id, s.signature_res_id, s.signature_state, s.signature_res_model, po.name, so.name, jour.code, jour.type, per.name, l.subtype, pick.name,
+                    user_rel.id, user_rel.user_id, s.signature_res_id, s.signature_state, s.signature_res_model, s.signature_is_closed, po.name, so.name, jour.code, jour.type, per.name, l.subtype, pick.name,
                     invoice.real_doc_type, invoice.type, invoice.is_debit_note, invoice.is_inkind_donation, invoice.is_direct_invoice, invoice.is_intermission, invoice.number, invoice.name,
-                    po.state, so.state, invoice.state, st.name, pick.state
+                    po.state, so.state, invoice.state, st.name, pick.state, st.state
             )
         """)
 
@@ -72,6 +73,7 @@ class signature_follow_up(osv.osv):
         'signed': fields.integer('Signed', readonly=1),
         'signature_date': fields.datetime('Signature Date', readonly=1),
         'subtype': fields.selection([('full', 'Full Report'), ('rec', 'Reconciliation')], string='Type of signature', readonly=1),
+        'signature_is_closed': fields.boolean('Signature Closed', readonly=1),
     }
 
     def open_doc(self, cr, uid, ids, context=None):
