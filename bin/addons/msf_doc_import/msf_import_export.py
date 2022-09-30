@@ -1372,25 +1372,16 @@ class msf_import_export(osv.osv_memory):
                                                                             ('cost_center_id', '=', id_created)])
                             if top_cc_id:
                                 cc_target_obj.write(cr, uid, top_cc_id, {'is_top_cost_center': True}, context=context)
-                            else:
-                                cc_target_obj.create(cr, uid, {'instance_id': top_cc_inst[0], 'cost_center_id': id_created,
-                                                               'is_top_cost_center': True}, context=context)
                         if target_inst:
                             target_id = cc_target_obj.search(cr, uid, [('instance_id', '=', target_inst[0]),
                                                                        ('cost_center_id', '=', id_created)])
                             if target_id:
                                 cc_target_obj.write(cr, uid, target_id, {'is_target': True}, context=context)
-                            else:
-                                cc_target_obj.create(cr, uid, {'instance_id': target_inst[0], 'cost_center_id': id_created,
-                                                               'is_target': True}, context=context)
                         if po_fo_inst:
                             po_fo_id = cc_target_obj.search(cr, uid, [('instance_id', '=', po_fo_inst[0]),
                                                                        ('cost_center_id', '=', id_created)])
                             if po_fo_id:
                                 cc_target_obj.write(cr, uid, po_fo_id, {'is_po_fo_cost_center': True}, context=context)
-                            else:
-                                cc_target_obj.create(cr, uid, {'instance_id': po_fo_inst[0], 'cost_center_id': id_created,
-                                                               'is_po_fo_cost_center': True}, context=context)
 
                     else:
                         id_created = impobj.create(cr, uid, data, context=context)
