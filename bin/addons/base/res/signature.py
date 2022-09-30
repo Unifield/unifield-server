@@ -287,8 +287,26 @@ class signature_object(osv.osv):
 
     def activate_offline(self, cr, uid, ids, context=None):
         _register_log(self, cr, uid, ids, self._name, 'Sign offline', False, True, 'write', context)
-        self.write(cr, uid, ids, {'signed_off_line': True}, context=context)
+        self.write(cr, uid, ids, {'signed_off_line': True, 'signature_state': False}, context=context)
         return True
+
+
+    def activate_offline_reset(self, cr, uid, ids, context=None):
+        to_unsign = []
+        user_allowed = []
+        for doc in self.browse(cr, uid, ids, fields_to_fetch=['signature_line_ids', 'signature_user_ids'], context=context):
+            for line in doc.signature_line_ids:
+                if line.signed:
+                    to_unsign.append(line.id)
+            if doc.signature_user_ids:
+                user_allowed += [x.id for x in doc.signature_user_ids]
+
+        if to_unsign:
+            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context)
+        if user_allowed:
+            self.pool.get('signature.users.allowed').unlink(cr, uid, user_allowed, context=context)
+
+        return self.activate_offline(cr, uid, ids, context=context)
 
     def disable_offline(self, cr, uid, ids, context=None):
         _register_log(self, cr, uid, ids, self._name, 'Sign offline', True, False, 'write', context)
