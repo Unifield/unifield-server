@@ -654,7 +654,7 @@ class signature_set_user(osv.osv_memory):
 
     _columns = {
         'b64_image': fields.function(_get_b64, method=1, type='text', string='New Signature'),
-        'new_signature': fields.text('New signature'),
+        'new_signature': fields.text("Draw your signature"),
         'json_signature': fields.text('Json Signature'),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
         'preview': fields.boolean('Preview'),
