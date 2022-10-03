@@ -811,5 +811,9 @@
         <record id="us_9229_fix_rt" model="patch.scripts">
             <field name="method">us_9229_fix_rt</field>
         </record>
+
+        <record id="us_7852_set_journal_code" model="patch.scripts">
+            <field name="method">us_7852_set_journal_code</field>
+        </record>
     </data>
 </openerp>

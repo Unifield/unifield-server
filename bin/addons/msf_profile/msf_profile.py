@@ -56,6 +56,24 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_7852_set_journal_code(self, cr, uid, *a, **b):
+        self.set_journal_code_on_aji(cr, uid)
+        self.pool.get('ir.config_parameter').set_param(cr, 1, 'exec_set_journal_code_on_aji', True)
+        return True
+
+    def set_journal_code_on_aji(self, cr, uid, *a, **b):
+        cr.execute("""
+            update account_analytic_line a set
+                partner_txt=j.code
+            from
+                account_move_line l, account_journal j
+            where
+                l.id = a.move_id and
+                j.id = l.transfer_journal_id and
+                a.partner_txt != j.code
+        """)
+        self.log_info(cr, uid, "US-7852: set journal code on %d AJIs" % (cr.rowcount,))
+
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):
         ''' OCBHQ: fix amounts on EOY-2021-14020-OCBVE101-VES'''
