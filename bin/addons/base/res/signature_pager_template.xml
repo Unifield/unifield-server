@@ -2,7 +2,7 @@
     <group colspan="2" col="14">
         <field name="signature_available" readonly="1" colspan="2"/>
         <button name="activate_signature" type="object" string="Activate Signature" attrs="{'invisible': ['|', ('signature_available', '=', True),('signature_state', '!=', False)]}" icon="gtk-edit" ignore_access_error="1" colspan="6"/>
-        <button name="disable_signature" type="object" string="De-activate Signature" attrs="{'invisible': ['|', ('signature_available', '=', False), ('signature_state', '!=', False)]}" icon="gtk-close" ignore_access_error="1" colspan="6" />
+        <button name="disable_signature" type="object" string="De-activate Signature" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signature_available', '=', False), ('signature_state', '!=', False)]}" icon="gtk-close" ignore_access_error="1" colspan="6" />
     </group>
     <group colspan="2" />
 
@@ -17,9 +17,9 @@
         />
         <group colspan="2" col="14">
             <field name="signed_off_line" readonly="1" />
-            <button name="activate_offline" type="object" string="Sign Off-line" attrs="{'invisible': ['|', ('signed_off_line', '=', True), ('signature_state', '!=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="6"/>
-            <button name="activate_offline_reset" type="object" string="Sign Off-line" attrs="{'invisible': ['|', ('signed_off_line', '=', True), ('signature_state', '=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="6" confirm="Warning, by setting this document as 'signed off-line' all online signatures will be removed from this document and all signatures must be handled outside of system."/>
-            <button name="disable_offline" type="object" string="Sign On-line" attrs="{'invisible': ['|', ('signed_off_line', '=', False), ('signature_state', '!=', False)]}" icon="gtk-connect" ignore_access_error="1" colspan="6" />
+            <button name="activate_offline" type="object" string="Sign Off-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('signature_state', '!=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="6"/>
+            <button name="activate_offline_reset" type="object" string="Sign Off-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('signature_state', '=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="6" confirm="Warning, by setting this document as 'signed off-line' all online signatures will be removed from this document and all signatures must be handled outside of system."/>
+            <button name="disable_offline" type="object" string="Sign On-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', False), ('signature_state', '!=', False)]}" icon="gtk-connect" ignore_access_error="1" colspan="6" />
         </group>
         <newline />
         <!-- <group colspan="2" /> -->
