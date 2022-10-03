@@ -55,6 +55,14 @@ class report_fully_report(report_sxw.rml_parse):
         self._cache_move = {}
         self._cache_ana = {}
 
+    def translate_weasyprint(self, src):
+        ir_translation = self.pool.get('ir.translation')
+        res = ir_translation._get_source(self.cr, self.uid, False, 'report', self.localcontext.get('lang', 'en_US'), src)
+        if not res:
+            return src
+        return res
+
+
     def update_percent(self, nbloop, tot):
         bk_id = self.localcontext.get('background_id')
         if bk_id:
@@ -336,7 +344,7 @@ class report_fully_report2(report_sxw.report_sxw):
         body = Template(filename=parser_instance.orig_file, input_encoding='utf-8', output_encoding='utf-8', default_filters=['decode.utf8'])
         try :
             html = body.render(
-                _=parser_instance.translate_call,
+                _=parser_instance.translate_weasyprint,
                 **parser_instance.localcontext
             )
         except Exception:
