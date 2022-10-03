@@ -74,6 +74,21 @@ class patch_scripts(osv.osv):
             if model:
                 bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
                 bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
+
+        for group_name, menus in [
+            ('Sign_user', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu']),
+            ('User_Manager', ['base.signature_image_menu'])
+        ]:
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
+            if not group_ids:
+                continue
+            for menu in menus:
+                module, xmlid = menu.split('.')
+                try:
+                    menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
+                except:
+                    continue
+                self.pool.get('ir.ui.menu').write(cr, uid, [menu_id], {'groups_id': [(4, group_ids[0])]})
         return True
 
     def us_9406_create_common_acl(self, cr, uid, *a, **b):
