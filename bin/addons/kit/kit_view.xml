@@ -234,6 +234,7 @@
             <field name="arch" type="xml">
                 <search string="Search Theoretical Kit Composition">
                     <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
+                    <filter icon="gtk-paste-v" name="completed" string="Completed" domain="[('state','=','completed')]" />
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                     <filter icon="gtk-cancel" name="cancel" string="Canceled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
@@ -282,7 +283,8 @@
                 <search string="Search Real Kit Composition">
                     <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
                     <filter icon="gtk-execute" name="in_production" string="In Production" domain="[('state','=', 'in_production')]" separator="1" />
-                    <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                    <filter icon="gtk-paste-v" name="completed" string="Completed" domain="[('state','=','completed')]" />
+					<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                     <filter icon="gtk-cancel" name="cancel" string="Canceled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
                     <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
