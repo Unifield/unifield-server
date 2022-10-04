@@ -811,5 +811,9 @@
         <record id="us_9229_fix_rt" model="patch.scripts">
             <field name="method">us_9229_fix_rt</field>
         </record>
+
+	<record id="us_fix_segment_version" model="patch.scripts">
+            <field name="method">us_fix_segment_version</field>
+        </record>
     </data>
 </openerp>
