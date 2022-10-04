@@ -2918,8 +2918,10 @@ class replenishment_segment_line(osv.osv):
                 rr_to = datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d')
                 if rr_to + relativedelta(months=1, day=1, days=-1) != rr_to:
                     self._raise_error(cr, uid, vals,  _('TO %d must be the last day of the month') % (x,), context)
+
                 try:
-                    vals['rr_fmc_from_%d'%(x+1)] = (datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+                    if vals.get('rr_fmc_to_%d' % (x+1)):
+                        vals['rr_fmc_from_%d'%(x+1)] = (datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
                 except:
                     pass
                 if x > 1 and vals.get('rr_fmc_to_%d' % x) <= vals.get('rr_fmc_to_%d' % (x-1)):
@@ -2937,8 +2939,8 @@ class replenishment_segment_line(osv.osv):
         cr.execute("select line.id, seg.state from replenishment_segment seg, replenishment_segment_line line where line.segment_id = seg.id and seg.rule = 'cycle'")
         for x in cr.fetchall():
             cycle_line_state[x[0]] = x[1]
-            for x in range(1, 19):
-                all_fields+=['rr_fmc_%d' % x, 'rr_fmc_from_%d' % x, 'rr_fmc_to_%d' % x]
+        for x in range(1, 19):
+            all_fields+=['rr_fmc_%d' % x, 'rr_fmc_from_%d' % x, 'rr_fmc_to_%d' % x]
 
         for _id in ids:
             p_ids = []
@@ -2962,7 +2964,8 @@ class replenishment_segment_line(osv.osv):
                         if 'rr_fmc_to_%d' % x in vals:
                             data['to_date'] = vals.get('rr_fmc_to_%d' % x) or None
                             try:
-                                vals['rr_fmc_from_%d'%(x+1)] = (datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+                                if vals.get('rr_fmc_to_%d' % (x+1)):
+                                    vals['rr_fmc_from_%d'%(x+1)] = (datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
                             except:
                                 pass
                         if 'rr_max_%d' % x in vals:
