@@ -30,9 +30,9 @@ from msf_partner import PARTNER_TYPE
 from base import currency_date
 from tools.safe_eval import safe_eval
 
-from datetime import datetime
 
 class account_invoice(osv.osv):
+
     def _amount_all(self, cr, uid, ids, name, args, context=None):
         res = {}
         for invoice in self.browse(cr, uid, ids, context=context):
@@ -245,7 +245,7 @@ class account_invoice(osv.osv):
 
     _name = "account.invoice"
     _description = 'Invoice'
-    _order = 'order_val desc, date_invoice desc, number desc'
+    _order = 'is_draft desc, internal_number desc, id desc'
 
     _columns = {
         'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -257,8 +257,8 @@ class account_invoice(osv.osv):
             ('in_refund','Supplier Refund'),
         ],'Type', readonly=True, select=True, change_default=True),
 
-        'number': fields.related('move_id','name', type='char', readonly=True, size=64, relation='account.move', store=True, string='Number'),
-        'internal_number': fields.char('Invoice Number', size=32, readonly=True, help="Unique number of the invoice, computed automatically when the invoice is created."),
+        'number': fields.related('move_id','name', type='char', readonly=True, size=64, relation='account.move', store=True, string='Number', select=1),
+        'internal_number': fields.char('Invoice Number', size=32, readonly=True, help="Unique number of the invoice, computed automatically when the invoice is created.", select=1),
         'reference': fields.char('Invoice Reference', size=64, help="The partner reference of this invoice."),
         'reference_type': fields.selection(_get_reference_type, 'Reference Type',
                                            readonly=True, states={'draft':[('readonly',False)]}),
@@ -346,15 +346,16 @@ class account_invoice(osv.osv):
         'move_name': fields.char('Journal Entry', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'user_id': fields.many2one('res.users', 'Salesman', readonly=True, states={'draft':[('readonly',False)]}),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position', readonly=True, states={'draft':[('readonly',False)]}),
-        'order_val': fields.date("Custom sort field"),  # US-10105
+        'is_draft': fields.boolean('Is draft', help='used to sort invoices (draft on top)', readonly=1, select=1),
     }
     _defaults = {
         'type': _get_type,
         'state': 'draft',
+        'is_draft': True,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.invoice', context=c),
         'reference_type': 'none',
         'check_total': 0.0,
-        'internal_number': False,
+        'internal_number': '',
         'user_id': lambda s, cr, u, c: u,
     }
 
@@ -459,9 +460,7 @@ class account_invoice(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
-        date_invoice = 'date_invoice' in vals and vals['date_invoice'] or datetime.today()
-        if date_invoice:
-            vals.update({'order_val': date_invoice, })  # US-10105 At creation of draft invoice
+        vals['is_draft']=  vals.get('state', 'draft') == 'draft'
         try:
             res = super(account_invoice, self).create(cr, uid, vals, context)
             for inv_id, name in self.name_get(cr, uid, [res], context=context):
@@ -494,17 +493,11 @@ class account_invoice(osv.osv):
             return True
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        current_values = self.read(cr, uid, ids, ['date_invoice'], context=context)[0]
-        date_invoice = 'date_invoice' in vals and vals['date_invoice'] or current_values['date_invoice']
-        if date_invoice:
-            if 'state' in vals and vals['state'] == 'draft':
-                vals.update({'order_val': date_invoice })  # US-10105 At creation of draft invoice
-            elif 'state' in vals and vals['state'] != 'draft':
-                vals.update({'order_val': '1901-01-01'})
-        res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
-        return res
+
+        if 'state' in vals:
+            vals['is_draft'] = vals['state'] == 'draft'
+
+        return super(account_invoice, self).write(cr, uid, ids, vals, context=context)
 
     def confirm_paid(self, cr, uid, ids, context=None):
         if context is None:
@@ -777,20 +770,25 @@ class account_invoice(osv.osv):
             res[r[0]].append(r[1])
         return res
 
-    def copy(self, cr, uid, id, default={}, context=None):
+    def copy(self, cr, uid, id, default=None, context=None):
         if context is None:
             context = {}
+
+        if default is None:
+            default = {}
+
         default.update({
             'state':'draft',
-            'number':False,
+            'number': False,
             'move_id':False,
             'move_name':False,
-            'internal_number': False,
+            'internal_number': '',
             'main_purchase_id': False,
             'counterpart_inv_number': False,
             'counterpart_inv_status': False,
             'refunded_invoice_id': False,
         })
+
         inv = self.browse(cr, uid, [id], fields_to_fetch=['analytic_distribution_id', 'doc_type'], context=context)[0]
         if not context.get('from_split'):  # some values are kept in case of inv. generated via the "Split" feature
             default.update({

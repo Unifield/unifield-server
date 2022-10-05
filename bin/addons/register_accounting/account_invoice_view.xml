@@ -258,7 +258,6 @@
                     <field name="amount_untaxed" sum="Untaxed Amount" invisible="1"/>
                     <field name="amount_total" sum="Total Amount"/>
                     <field name="state"/>
-                    <field name="order_val" invisible="1"/>
                 </tree>
             </field>
         </record>

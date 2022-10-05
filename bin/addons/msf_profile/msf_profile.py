@@ -57,8 +57,11 @@ class patch_scripts(osv.osv):
     }
 
     def us_10105_custom_order(self, cr, uid, *a, **b):
-        cr.execute("update account_invoice set order_val='1901-01-01' where state != 'draft'")
-        cr.execute("update account_invoice set order_val=date_invoice where state = 'draft'")
+        cr.execute("update account_invoice set is_draft=state='draft'")
+        # fix wrong DF on OCBHT101 / OCBHT143
+        cr.execute("update account_invoice set internal_number=number where number is not null and internal_number!=number")
+        # emulate: order by internal_number desc null lasts
+        cr.execute("update account_invoice set internal_number='' where internal_number is null")
         return True
 
     # UF26.0
