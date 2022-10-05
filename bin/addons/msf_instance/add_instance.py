@@ -97,10 +97,23 @@ class account_journal(osv.osv):
             res[journal.id] = (current_instance_id == journal.instance_id.id)
         return res
 
+    def _get_is_coordo_editable(self, cr, uid, ids, name, args, context=None):
+        """
+        @return: Get True if current instance is a coordo and the proprietary instance of the journal is
+        an inactive project
+        """
+        res = {}
+        current_instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
+        for journal in self.browse(cr, uid, ids, context=context):
+            res[journal.id] = (current_instance_level == 'coordo' and journal.instance_id.level == 'project'
+                               and journal.instance_id.state == 'inactive')
+        return res
+
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True, translate=True),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', required=True),
-        'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?")
+        'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?"),
+        'is_coordo_editable': fields.function(_get_is_coordo_editable, type='boolean', method=True, readonly=True, store=True, string='Editable from Coordo', help="Is this journal from an inactive project and current instance a coordo?")
     }
 
     _defaults = {

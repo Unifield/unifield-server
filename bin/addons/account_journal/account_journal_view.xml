@@ -10,9 +10,10 @@
             <field name="inherit_id" ref="account.view_account_journal_form"/>
             <field name="arch" type="xml">
                 <form string="Account Journal" position="replace">
-                    <form string="Account Journal" hide_duplicate_button="1" noteditable="is_current_instance==False">
+                    <form string="Account Journal" hide_duplicate_button="1" noteditable="is_current_instance==False and is_coordo_editable==False">
                         <group colspan="4" col="6">
                             <field name="is_current_instance" invisible="1"/>
+                            <field name="is_coordo_editable" invisible="1"/>
                             <field name="has_entries" invisible="1"/>
                             <field name="name" select="1"/>
                             <field name="code" select="1"
