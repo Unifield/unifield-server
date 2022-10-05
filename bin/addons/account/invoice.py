@@ -33,6 +33,14 @@ from tools.safe_eval import safe_eval
 
 class account_invoice(osv.osv):
 
+    def _auto_init(self, cr, context=None):
+        d = super(account_invoice, self)._auto_init(cr, context=context)
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'account_invoice_sort_idx'")
+        if not cr.fetchone():
+            cr.execute('create index account_invoice_sort_idx on account_invoice (is_draft desc, internal_number desc, id desc)')
+            cr.commit()
+        return d
+
     def _amount_all(self, cr, uid, ids, name, args, context=None):
         res = {}
         for invoice in self.browse(cr, uid, ids, context=context):
@@ -258,7 +266,7 @@ class account_invoice(osv.osv):
         ],'Type', readonly=True, select=True, change_default=True),
 
         'number': fields.related('move_id','name', type='char', readonly=True, size=64, relation='account.move', store=True, string='Number', select=1),
-        'internal_number': fields.char('Invoice Number', size=32, readonly=True, help="Unique number of the invoice, computed automatically when the invoice is created.", select=1),
+        'internal_number': fields.char('Invoice Number', size=32, readonly=True, help="Unique number of the invoice, computed automatically when the invoice is created."),
         'reference': fields.char('Invoice Reference', size=64, help="The partner reference of this invoice."),
         'reference_type': fields.selection(_get_reference_type, 'Reference Type',
                                            readonly=True, states={'draft':[('readonly',False)]}),
@@ -346,7 +354,7 @@ class account_invoice(osv.osv):
         'move_name': fields.char('Journal Entry', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'user_id': fields.many2one('res.users', 'Salesman', readonly=True, states={'draft':[('readonly',False)]}),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position', readonly=True, states={'draft':[('readonly',False)]}),
-        'is_draft': fields.boolean('Is draft', help='used to sort invoices (draft on top)', readonly=1, select=1),
+        'is_draft': fields.boolean('Is draft', help='used to sort invoices (draft on top)', readonly=1),
     }
     _defaults = {
         'type': _get_type,
