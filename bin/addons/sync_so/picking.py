@@ -530,7 +530,7 @@ class stock_picking(osv.osv):
                                     in_name, po_name,
                                 )
                                 self._logger.info(message)
-                                raise Exception(message)
+                                return message
 
                     move_id = False
                     if move_ids and len(move_ids) == 1:  # if there is only one move, take it for process
@@ -628,24 +628,30 @@ class stock_picking(osv.osv):
             # still try to check whether this IN has already been manually processed
             in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'shipped'], context)
             if not in_id:
-                message = "The IN linked to " + po_name + " is not found in the system!"
-                self._logger.info(message)
-                raise Exception(message)
+                in_cancel_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['cancel'], context)
+                if not in_cancel_id:
+                    message = "The IN linked to " + po_name + " is not found in the system!"
+                    self._logger.info(message)
+                    raise Exception(message)
+                else:
+                    message = "The IN linked to " + po_name + " is already cancelled in the system!"
+                    self._logger.info(message)
+                    return message
 
             #UFTP-332: Check if shipment/out is given
             if shipment_ref:
                 same_in = self.search(cr, uid, [('id', '=', in_id), ('shipment_ref', '=', shipment_ref)], context=context)
-                processed_in = None
                 if not same_in:
                     # Check if the IN has not been manually processed (forced)
-                    processed_in = self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context)
-                    if processed_in:
+                    if self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context):
                         in_name = self.browse(cr, uid, in_id, context=context)['name']
                         message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
                             in_name, po_name,
                         )
-                if not same_in and not processed_in:
-                    message = "Sorry, this seems to be an extra ship. This feature is not available now!"
+                        self._logger.info(message)
+                        return message
+                    else:
+                        message = "Sorry, this seems to be an extra ship. This feature is not available now!"
             else:
                 same_in = self.search(cr, uid, [('id', '=', in_id)], context=context)
                 message = "Sorry, this seems to be an extra ship. This feature is not available now!"
