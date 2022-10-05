@@ -468,7 +468,7 @@ class account_invoice(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
-        vals['is_draft']=  vals.get('state', 'draft') == 'draft'
+        vals['is_draft'] = vals.get('state', 'draft') == 'draft'
         try:
             res = super(account_invoice, self).create(cr, uid, vals, context)
             for inv_id, name in self.name_get(cr, uid, [res], context=context):
