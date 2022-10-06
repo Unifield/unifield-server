@@ -56,6 +56,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF27.0
+    def us_9842_remove_space(self, cr, uid, *a, **b):
+        cr.execute("UPDATE hr_employee SET identification_id = TRIM(identification_id) WHERE employee_type='ex' and identification_id is not null and identification_id!=TRIM(identification_id)")
+        self.log_info(cr, uid, "US-9843: extra space removed on %d expat" % (cr.rowcount,))
+        return True
+
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):
         ''' OCBHQ: fix amounts on EOY-2021-14020-OCBVE101-VES'''

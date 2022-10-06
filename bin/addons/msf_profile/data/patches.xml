@@ -811,5 +811,11 @@
         <record id="us_9229_fix_rt" model="patch.scripts">
             <field name="method">us_9229_fix_rt</field>
         </record>
+
+        <!-- UF27 -->
+        <record id="us_9842_remove_space" model="patch.scripts">
+            <field name="method">us_9842_remove_space</field>
+        </record>
+
     </data>
 </openerp>

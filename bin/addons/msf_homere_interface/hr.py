@@ -166,14 +166,15 @@ class hr_employee(osv.osv):
             return False
 
         employee_name = data['name'].strip()
+        employee_id = data['identification_id']
         existing_id = self.find_sd_ref(cr, uid, sdref)
         if not existing_id:
             # never run, but exists with the same id and name => ignore
-            if self.search_exist(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', employee_name)]):
+            if self.search_exist(cr, uid, [('identification_id', '=', employee_id), ('name', '=', employee_name)]):
                 return True
 
         else:
-            same_ids = self.search(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', employee_name)])
+            same_ids = self.search(cr, uid, [('identification_id', '=', employee_id), ('name', '=', employee_name)])
             if same_ids and existing_id not in same_ids:
                 # Run on the instance but has a different Employee ID (identification_id) than on the one run on the instance
                 return True
@@ -240,6 +241,8 @@ class hr_employee(osv.osv):
             context = {}
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
+        if vals.get('identification_id', False) and vals.get('employee_type', False) == 'ex':
+            vals['identification_id'] = vals['identification_id'].strip()
         allow_edition = False
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
             # Search Payroll functionnality preference (activated or not)
@@ -278,6 +281,8 @@ class hr_employee(osv.osv):
         # Prepare some variable for process
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
+        if vals.get('identification_id', False) and vals.get('employee_type', False) == 'ex':
+            vals['identification_id'] = vals['identification_id'].strip()
         if vals.get('employee_type', False):
             if vals.get('employee_type') == 'local':
                 local = True
