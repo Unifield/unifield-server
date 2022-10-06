@@ -814,6 +814,11 @@ class users(osv.osv):
                        address_id=False, # avoid sharing the address of the copied user!
                        synchronize=False,
                        is_synchronizable=False,
+                       signature_enabled=False,
+                       esignature_id=False,
+                       signature_from=False,
+                       signature_to=False,
+                       signature_history_ids=False,
                        )
         copydef.update(default)
         return super(users, self).copy(cr, uid, id, copydef, context)
