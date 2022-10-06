@@ -196,7 +196,7 @@ class account_move_line(osv.osv):
             context = {}
         if not args:
             return []
-        where = ' AND '.join(map(lambda x: '(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')',args))
+        where = ' AND '.join(map(lambda x: '(sum(debit_currency-credit_currency)'+x[1]+str(x[2])+')',args))
         cursor.execute('SELECT id, SUM(debit_currency-credit_currency) FROM account_move_line \
                      GROUP BY id, debit_currency, credit_currency having '+where) # not_a_user_entry
         res = cursor.fetchall()
