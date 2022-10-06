@@ -8,7 +8,7 @@
             <field name="model">hq.entries</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="HQ Entries List" editable="top" noteditable="user_validated==True or is_original==True" hide_new_button="1" colors="black: analytic_state=='valid' and is_split==True;blue:analytic_state in ('valid') and is_original==False and is_split==False;gray:is_original==True;red:analytic_state in ('invalid')" limit="50">
+                <tree string="HQ Entries List" editable="top" noteditable="user_validated==True or is_original==True" hide_new_button="1" colors="black:user_validated==True;green:is_split==True and user_validated==False and analytic_state!='invalid';blue:user_validated==False and analytic_state!='invalid' and is_original==False and is_split==False;gray:is_original==True and user_validated==False and analytic_state!='invalid';red:analytic_state=='invalid' and user_validated==False" limit="50">
                     <field name="current_instance_level" invisible="1"/>
                     <field name="account_user_type_code" invisible="1"/>
                     <field name="name"/>
