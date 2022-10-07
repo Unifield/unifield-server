@@ -113,7 +113,7 @@ class account_journal(osv.osv):
         'name': fields.char('Journal Name', size=64, required=True, translate=True),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', required=True),
         'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?"),
-        'is_coordo_editable': fields.function(_get_is_coordo_editable, type='boolean', method=True, readonly=True, store=True, string='Editable from Coordo', help="Is this journal from an inactive project and current instance a coordo?")
+        'is_coordo_editable': fields.function(_get_is_coordo_editable, type='boolean', method=True, readonly=True, store=False, string='Editable from Coordo', help="Is this journal from an inactive project and current instance a coordo?")
     }
 
     _defaults = {
