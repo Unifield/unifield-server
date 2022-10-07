@@ -864,6 +864,9 @@ class account_journal(osv.osv):
         if 'code' in vals and vals['code']:
             code = vals['code'].strip()
             vals.update({'code': code})
+        if 'name' in vals and vals['name']:
+            name = vals['name'].strip()
+            vals.update({'name': name})
         for journal in self.browse(cr, uid, ids, context=context):
             if 'company_id' in vals and journal.company_id.id != vals['company_id']:
                 move_lines = self.pool.get('account.move.line').search(cr, uid, [('journal_id', 'in', ids)])
@@ -914,6 +917,9 @@ class account_journal(osv.osv):
         if 'code' in vals and vals['code']:
             code = vals['code'].strip()
             vals.update({'code': code})
+        if 'name' in vals and vals['name']:
+            name = vals['name'].strip()
+            vals.update({'name': name})
         self._remove_unnecessary_links(cr, uid, vals, context=context)
         journal_id = super(account_journal, self).create(cr, uid, vals, context)
         self._check_journal_constraints(cr, uid, [journal_id], context=context)

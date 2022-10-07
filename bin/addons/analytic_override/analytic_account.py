@@ -944,6 +944,9 @@ class analytic_account(osv.osv):
         if 'code' in vals and vals['code']:
             code = vals['code'].strip()
             vals.update({'code': code})
+        if 'name' in vals and vals['name']:
+            name = vals['name'].strip()
+            vals.update({'name': name})
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
@@ -977,6 +980,9 @@ class analytic_account(osv.osv):
         if 'code' in vals and vals['code']:
             code = vals['code'].strip()
             vals.update({'code': code})
+        if 'name' in vals and vals['name']:
+            name = vals['name'].strip()
+            vals.update({'name': name})
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
