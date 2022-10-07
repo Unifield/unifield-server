@@ -941,12 +941,6 @@ class analytic_account(osv.osv):
         # Check that instance_id is filled in for FP
         if context.get('from_web', False) or context.get('from_import_menu', False):
             self.check_fp(cr, uid, vals, to_update=True, context=context)
-        if 'code' in vals and vals['code']:
-            code = vals['code'].strip()
-            vals.update({'code': code})
-        if 'name' in vals and vals['name']:
-            name = vals['name'].strip()
-            vals.update({'name': name})
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
@@ -977,12 +971,6 @@ class analytic_account(osv.osv):
         # US-166: Ids needs to always be a list
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if 'code' in vals and vals['code']:
-            code = vals['code'].strip()
-            vals.update({'code': code})
-        if 'name' in vals and vals['name']:
-            name = vals['name'].strip()
-            vals.update({'name': name})
         self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
