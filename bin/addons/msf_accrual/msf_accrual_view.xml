@@ -139,6 +139,7 @@
                         <field name="functional_currency_id"/>
                         <field name="accrual_type"/>
                         <field name="state"/>
+                        <field name="order_accrual" invisible="1"/>
                         <button name="button_delete" states="draft" string="Delete" type="object" icon="gtk-del"/>
                     </tree>
                 </field>

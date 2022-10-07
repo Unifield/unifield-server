@@ -817,5 +817,9 @@
             <field name="method">us_9842_remove_space</field>
         </record>
 
+        <record id="us_9999_custom_accrual_order" model="patch.scripts">
+            <field name="method">us_9999_custom_accrual_order</field>
+        </record>
+
     </data>
 </openerp>

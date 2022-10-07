@@ -57,6 +57,11 @@ class patch_scripts(osv.osv):
     }
 
     # UF27.0
+    def us_9999_custom_accrual_order(self, cr, uid, *a, **b):
+        cr.execute("update msf_accrual_line set order_accrual='1901-01-01' where state != 'draft'")
+        cr.execute("update msf_accrual_line set order_accrual=document_date where state = 'draft'")
+        return True
+
     def us_9842_remove_space(self, cr, uid, *a, **b):
         cr.execute("UPDATE hr_employee SET identification_id = TRIM(identification_id) WHERE employee_type='ex' and identification_id is not null and identification_id!=TRIM(identification_id)")
         self.log_info(cr, uid, "US-9843: extra space removed on %d expat" % (cr.rowcount,))
