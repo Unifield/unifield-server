@@ -775,11 +775,14 @@ class PhysicalInventory(osv.osv):
 
                 # Check UoM
                 product_uom_id = False
-                product_uom = row.cells[3].data.lower()
-                if product_uom not in all_uom:
-                    add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
+                if row.cells[3].data:
+                    product_uom = row.cells[3].data.lower()
+                    if product_uom not in all_uom:
+                        add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
+                    else:
+                        product_uom_id = all_uom[product_uom]
                 else:
-                    product_uom_id = all_uom[product_uom]
+                    add_error(_("""UoM is mandatory"""), row_index, 3)
 
                 # Check quantity
                 quantity = row.cells[4].data
@@ -795,10 +798,10 @@ class PhysicalInventory(osv.osv):
                         quantity = 0.0
                         add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
 
-                if product_id:
+                if product_id and product_uom_id:
                     product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
 
-                    if product_info['uom_id'] and product_uom_id and product_info['uom_id'][0] != product_uom_id:
+                    if product_info['uom_id'] and product_info['uom_id'][0] != product_uom_id:
                         add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
 
                     # Check batch number
