@@ -27,6 +27,17 @@
     </Borders>
     <Protection ss:Protected="0"/>
   </Style>
+  <Style ss:ID="editable_red_bold">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+    <Font ss:Bold="1" ss:Color="#FF0000"/>
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Protection ss:Protected="0"/>
+  </Style>
   <Style ss:ID="editable_number">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
     <Borders>
@@ -178,11 +189,11 @@
         % if (inv_line.analytic_distribution_id and len(inv_line.analytic_distribution_id.cost_center_lines) == 1) :
             <Cell ss:StyleID="non_editable"><Data ss:Type="String">${'100%'|x}</Data></Cell>
         % elif (inv_line.analytic_distribution_id and len(inv_line.analytic_distribution_id.cost_center_lines) > 1):
-            <Cell ss:StyleID="non_editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
+            <Cell ss:StyleID="editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
         % elif (inv_line.invoice_id.analytic_distribution_id and len(inv_line.invoice_id.analytic_distribution_id.cost_center_lines) == 1):
             <Cell ss:StyleID="non_editable"><Data ss:Type="String">${'100%'|x}</Data></Cell>
         % elif (inv_line.invoice_id.analytic_distribution_id and len(inv_line.invoice_id.analytic_distribution_id.cost_center_lines) > 1):
-            <Cell ss:StyleID="non_editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
+            <Cell ss:StyleID="editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
         % endif
         % if not inv_line.analytic_distribution_id and not inv_line.invoice_id.analytic_distribution_id:
             <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
