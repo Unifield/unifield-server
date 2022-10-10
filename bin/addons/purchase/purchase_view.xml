@@ -251,7 +251,7 @@
                                     <field name="default_code" displayon="noteditable"/>
                                     <field name="default_name" displayon="noteditable"/>
 
-                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,nomen_manda_0,comment,context, parent.categ)" attrs="{'readonly': [('tender_line_id', '!=', False)], 'required': [('comment', '=', False)]}" displayon="editable" />
+                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,nomen_manda_0,comment,context, parent.categ, False, linked_sol_id, po_order_type)" attrs="{'readonly': [('tender_line_id', '!=', False)], 'required': [('comment', '=', False)]}" displayon="editable" />
                                     <field name="comment"  attrs="{'required': [('product_id', '=', False)]}"/>
                                     <field name="nomenclature_description" readonly="1" />
                                     <button name="openform"
@@ -293,6 +293,8 @@
                                     <field name="origin" invisible="1" readonly="1"/>
                                     <field name="soq_updated" invisible="1" readonly="1"/>
                                     <field name="order_state_purchase_order_line" invisible="True"/>
+                                    <field name="linked_sol_id" invisible="True"/>
+                                    <field name="po_order_type" invisible="True"/>
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated', 'validated_n'))]}"/>
                                     <button string="Validate" icon="terp-check" name="validated" type="object" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
                                     <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated', 'validated_n'])]}" header="True"/>
@@ -654,7 +656,7 @@
                             </html>
                             </group>
                             <separator string="Product" colspan="4" />
-                            <field name="product_id" colspan="4" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,state,old_price_unit,nomen_manda_0,comment,context, parent.categ, True)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" default_focus="1"/>
+                            <field name="product_id" colspan="4" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,state,old_price_unit,nomen_manda_0,comment,context, parent.categ, True, linked_sol_id, po_order_type)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" default_focus="1"/>
                             <field name="comment" colspan="4" attrs="{'required':[('product_id', '=', False)]}"/>
                             <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
 
@@ -673,8 +675,8 @@
                             <separator string="Linked Information" colspan="4" />
                                 <group colspan="2" col="3">
                                 <field name="po_order_type" invisible="1"/>
-                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', '|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('link_so_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}" string="Source Document"/>
-                                <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f']), ('order_type', '=', 'regular')]" attrs="{'invisible': ['|', '|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}"/>
+                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type, product_id, po_order_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', '|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('link_so_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}" string="Source Document"/>
+                                <field name="select_fo" on_change="on_change_select_fo(select_fo, product_id, po_order_type)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f']), ('order_type', '=', 'regular')]" attrs="{'invisible': ['|', '|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}"/>
                                 </group>
                                 <field name="customer_ref" string="Customer ref" widget="char"/>
                                 <field name="external_ref" readonly="1"/>
@@ -823,7 +825,7 @@
                                     </div>
                                 </html>
                             </group>
-                            <field name="product_id" colspan="4" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" default_focus="1"/>
+                            <field name="product_id" colspan="4" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context,linked_sol_id,po_order_type)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" default_focus="1"/>
                             <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment, context)"/>
                             <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
                             <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)"/>
@@ -835,9 +837,11 @@
                             <field name="third_manufacturer_id" readonly="1"/>
                             <field name="from_fo" invisible="1"/>
                             <field name="tender_id" invisible="1"/>
+                            <field name="linked_sol_id" invisible="1"/>
+                            <field name="po_order_type" invisible="1"/>
                             <group colspan="2" col="3">
-                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}" string="Source Document"/>
-                                <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="['|', ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']), ('procurement_request', '=', True)]" attrs="{'invisible': ['|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}"/>
+                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type, product_id, po_order_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}" string="Source Document"/>
+                                <field name="select_fo" on_change="on_change_select_fo(select_fo, product_id, po_order_type)" nolabel="1" domain="['|', ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']), ('procurement_request', '=', True)]" attrs="{'invisible': ['|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}"/>
                                 <field name="customer_ref" string="Customer ref" widget="char"/>
                                 <field name="display_sync_ref" invisible="1"/>
                                 <field name="instance_sync_order_ref" attrs="{'required': [('display_sync_ref', '=', True), ('created_by_vi_import', '=', False)], 'invisible': ['|', ('display_sync_ref', '=', False), ('origin', '=', False)]}" domain="[('order_id.name', '=', origin)]"/>

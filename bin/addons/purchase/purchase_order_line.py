@@ -1634,26 +1634,32 @@ class purchase_order_line(osv.osv):
 
     msg_selected_po = _("Please ensure that you selected the correct Source document because once the line is saved you will not be able to edit this field anymore. In case of mistake, the only option will be to Cancel the line and Create a new one with the correct Source document.")
 
-    def on_change_select_fo(self, cr, uid, ids, fo_id, context=None):
+    def on_change_select_fo(self, cr, uid, ids, fo_id, product_id, po_order_type, context=None):
         '''
         Fill the origin field if a FO is selected
         '''
         if fo_id:
-            fo_domain = ['name', 'sourced_references', 'state', 'order_type']
+            fo_domain = ['name', 'sourced_references', 'state', 'order_type', 'procurement_request']
             fo = self.pool.get('sale.order').read(cr, uid, fo_id, fo_domain, context=context)
-            if fo['state'] not in ['done', 'cancel'] and fo['order_type'] == 'regular':
-                return {
-                    'value': {
-                        'origin': fo['name'],
-                        'display_sync_ref': len(fo['sourced_references']) and True or False,
-                    },
-                    'warning': {
-                        'message': _(self.msg_selected_po),
+            if fo['state'] not in ['done', 'cancel']:
+                if not fo['procurement_request'] and po_order_type == 'regular' and product_id and \
+                        self.pool.get('product.product').read(cr, uid, product_id, ['type'])['type'] == 'service_recep':
+                    return {'warning': {'title': _('Error'),
+                                        'message': _('A Service Product can not be linked to a FO on a Regular PO/RfQ')},
+                            'value': {'origin': False}}
+                elif fo['order_type'] == 'regular':
+                    return {
+                        'value': {
+                            'origin': fo['name'],
+                            'display_sync_ref': len(fo['sourced_references']) and True or False,
+                        },
+                        'warning': {
+                            'message': _(self.msg_selected_po),
+                        }
                     }
-                }
         return {}
 
-    def on_change_origin(self, cr, uid, ids, origin, linked_sol_id=False, partner_type='external', context=None):
+    def on_change_origin(self, cr, uid, ids, origin, linked_sol_id=False, partner_type='external', product_id=False, po_order_type=False, context=None):
         '''
         Check if the origin is a known FO/IR
         '''
@@ -1676,18 +1682,26 @@ class purchase_order_line(osv.osv):
                     'origin': '',
                 }
             else:
-                fo = self.pool.get('sale.order').read(cr, uid, sale_id[0], ['sourced_references'], context=context)
-                res['value'] = {
-                    'display_sync_ref': len(fo['sourced_references']) and True or False,
-                }
-                res['warning'] = {'message': self.msg_selected_po}
+                fo = self.pool.get('sale.order').read(cr, uid, sale_id[0], ['sourced_references', 'procurement_request'], context=context)
+                if not fo['procurement_request'] and po_order_type == 'regular' and product_id and \
+                        self.pool.get('product.product').read(cr, uid, product_id, ['type'])['type'] == 'service_recep':
+                    res.update({
+                        'warning': {'title': _('Error'),
+                                    'message': _('A Service Product can not be linked to a FO on a Regular PO/RfQ')},
+                        'value': {'origin': False}
+                    })
+                else:
+                    res['value'] = {
+                        'display_sync_ref': len(fo['sourced_references']) and True or False,
+                    }
+                    res['warning'] = {'message': self.msg_selected_po}
 
         return res
 
-    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
-                             partner_id, date_order=False, fiscal_position=False, date_planned=False,
-                             name=False, price_unit=False, notes=False, state=False, old_price_unit=False,
-                             nomen_manda_0=False, comment=False, context=None, categ=False, from_product=False):
+    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom, partner_id, date_order=False,
+                             fiscal_position=False, date_planned=False, name=False, price_unit=False, notes=False,
+                             state=False, old_price_unit=False, nomen_manda_0=False, comment=False, context=None,
+                             categ=False, from_product=False, linked_sol_id=False, po_order_type=False):
         all_qty = qty
         partner_price = self.pool.get('pricelist.partnerinfo')
         product_obj = self.pool.get('product.product')
@@ -1699,8 +1713,15 @@ class purchase_order_line(osv.osv):
             for line_id in self.read(cr, uid, ids, ['product_qty'], context=context):
                 all_qty -= line_id['product_qty']
 
+        if product and linked_sol_id and po_order_type == 'regular' and \
+                product_obj.read(cr, uid, product, ['type'])['type'] == 'service_recep' and \
+                not self.pool.get('sale.order.line').read(cr, uid, linked_sol_id, ['procurement_request'])['procurement_request']:
+            return {'warning': {'title': _('Error'),
+                                'message': _('You can not select a Service Product on a Regular PO/RfQ if the line has been sourced from a FO')},
+                    'value': {'product_id': False}}
+
         if product and not uom:
-            uom = self.pool.get('product.product').read(cr, uid, product, ['uom_id'])['uom_id'][0]
+            uom = product_obj.read(cr, uid, product, ['uom_id'])['uom_id'][0]
 
         if context and context.get('purchase_id') and state == 'draft' and product:
             domain = [('product_id', '=', product),
@@ -1737,7 +1758,7 @@ class purchase_order_line(osv.osv):
         if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00 and qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
             currency_id = self.pool.get('product.pricelist').read(cr, uid, pricelist, ['currency_id'])['currency_id'][0]
-            tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
+            tmpl_id = product_obj.read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
             info_prices = []
             suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id),
                                                                                   ('product_id', '=', tmpl_id)],
