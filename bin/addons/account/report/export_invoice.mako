@@ -49,7 +49,7 @@
     </Borders>
     <Protection/>
   </Style>
-  <Style ss:ID="non_editable_red_bold">
+  <Style ss:ID="editable_red_bold">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
     <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
     <Font ss:Bold="1" ss:Color="#FF0000"/>
@@ -59,7 +59,7 @@
       <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
-    <Protection/>
+    <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="non_editable_number">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -185,7 +185,7 @@
             <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].destination_id.code or ''|x}</Data></Cell>
             <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].analytic_id.code or ''|x}</Data></Cell>
         % elif ad_obj and len(ad_obj.funding_pool_lines) > 1:
-            <Cell ss:StyleID="non_editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
+            <Cell ss:StyleID="editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
             <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
             <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
             <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
