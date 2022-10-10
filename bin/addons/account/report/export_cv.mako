@@ -51,7 +51,6 @@
   </Style>
   <Style ss:ID="editable_red_bold">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-    <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
     <Font ss:Bold="1" ss:Color="#FF0000"/>
     <Borders>
       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
