@@ -185,6 +185,8 @@
 
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.name or ''|x}</Data></Cell>
 
+
+        <!-- export Notes including line breaks (|xn) -->
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|xn}</Data></Cell>
         % if (inv_line.analytic_distribution_id and len(inv_line.analytic_distribution_id.cost_center_lines) == 1) :
             <Cell ss:StyleID="non_editable"><Data ss:Type="String">${'100%'|x}</Data></Cell>
@@ -223,6 +225,23 @@
             % endif
         % endif
 
+        <% ad_obj = inv_line.account_id.is_analytic_addicted and (inv_line.analytic_distribution_id or inv_line.invoice_id.analytic_distribution_id) or False %>
+        % if ad_obj and len(ad_obj.funding_pool_lines) == 1 :
+            <Cell ss:StyleID="non_editable"><Data ss:Type="String">${'100%'|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].cost_center_id.code or ''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].destination_id.code or ''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].analytic_id.code or ''|x}</Data></Cell>
+        % elif ad_obj and len(ad_obj.funding_pool_lines) > 1:
+            <Cell ss:StyleID="non_editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+        % else:
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+        % endif
     </Row>
   % endfor
 

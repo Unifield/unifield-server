@@ -373,6 +373,8 @@ class act_window(osv.osv):
         if not new_tab:
             res['target'] = 'crush'
         return res
+
+
 act_window()
 
 class act_window_view(osv.osv):

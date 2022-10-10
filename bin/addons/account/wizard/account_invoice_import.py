@@ -165,7 +165,6 @@ class account_invoice_import(osv.osv_memory):
                 for num, r in enumerate(rows):
                     current_line_num = num + base_num
                     vals = {}
-                    distrib_id = False
                     line = import_cell_data_obj.get_line_values(cr, uid, ids, r)
                     line.extend([False for i in range(len(cols) - len(line))])
                     # get the data
@@ -247,68 +246,56 @@ class account_invoice_import(osv.osv_memory):
                         continue
                     vals['name'] = description
                     vals['note'] = notes
-                    if analytic_distribution_type and analytic_distribution_type.strip() in ('100%', '100'):
-                        if account.user_type and account.user_type.code == 'expense' and (not cost_center_code or not destination_code or not funding_pool_code):
+                    if account.is_analytic_addicted and analytic_distribution_type and analytic_distribution_type.strip() in ('100%', '100', '1'):
+                        if not cost_center_code or not destination_code or not funding_pool_code:
                             errors.append(_("Line %s: An expense account is set while the analytic distribution values (mandatory) are missing.") % (current_line_num,))
                             continue
-                        # If the AD is left blank, remove AD, including from header
-                        if account.user_type and account.user_type.code != 'expense' and (not cost_center_code or not destination_code or not funding_pool_code):
-                            if invoice.analytic_distribution_id:
-                                ana_obj.unlink(cr, uid, [invoice.analytic_distribution_id.id], context=context)  # delete header AD if any
-                                # invoice.analytic_distribution_id = False
-                            il_ad = invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context)
-                            if il_ad and il_ad.analytic_distribution_id:
-                                ana_obj.unlink(cr, uid, [il_ad.analytic_distribution_id.id], context=context)  # delete line level AD if any
-                                vals['analytic_distribution_id'] = False
                         # If AD is filled - write on each line the AD on the import file. Remove from header.
-                        if cost_center_code and destination_code and funding_pool_code:
-                            ad_vals = {}
-                            distrib_id = ana_obj.create(cr, uid, {'name': 'Line Distribution Import'}, context=context)
-                            cc = False
-                            cc_ids = aac_obj.search(cr, uid,[('code', '=', cost_center_code),('category', '=', 'OC')],
-                                                             limit=1, context=context)
-                            if cc_ids:
-                                cc = aac_obj.browse(cr, uid, cc_ids[0], context=context)
-                            if not cc_ids or cc and cc.date_start >= checking_date or (cc.date and cc.date < checking_date):
-                                errors.append(_("Line %s: the cost center %s doesn't exist or is inactive.") % (current_line_num, cost_center_code))
-                                continue
-                            fp = False
-                            fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING')], limit=1, context=context)
-                            if fp_ids:
-                                fp = aac_obj.browse(cr, uid, fp_ids[0], context=context)
-                            if not fp_ids or fp and fp.date_start >= checking_date or (fp.date and fp.date < checking_date):
-                                errors.append(_("Line %s: the funding pool %s doesn't exist or is inactive.") % (current_line_num, funding_pool_code))
-                                continue
-                            dest = False
-                            dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST')], limit=1, context=context)
-                            if dest_ids:
-                                dest = aac_obj.browse(cr, uid, dest_ids[0], context=context)
-                            if not dest_ids or dest and dest.date_start >= checking_date or (dest.date and dest.date < checking_date):
-                                errors.append(_("Line %s: the destination %s doesn't exist or is inactive.") % (current_line_num, destination_code))
-                                continue
-                            # check destination and cc compatibility
-                            if not ana_obj.check_dest_cc_compatibility(cr, uid, dest_ids[0], cc_ids[0], context=context):
-                                ad_errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, destination_code, cost_center_code))
-                            # check funding pool and analytic account compatibility
-                            if not ana_obj.check_fp_acc_dest_compatibility(cr, uid, fp_ids[0], account.id, dest_ids[0], context=context):
-                                ad_errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, funding_pool_code, account_code))
-                            # check funding pool and cc compatibility
-                            if not ana_obj.check_fp_cc_compatibility(cr, uid, fp_ids[0], cc_ids[0], context=context):
-                                ad_errors.append(_("Line %s: the combination %s/%s is not valid.") % (current_line_num, funding_pool_code, cost_center_code))
 
-                            ad_vals.update({'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': currency_ids[0],
-                                            'destination_id': dest_ids[0], 'cost_center_id': cc_ids[0],
-                                            'funding_pool_id': fp_ids[0]})
-                            # Create funding pool lines
-                            ad_vals.update({'analytic_id': fp_ids[0]})
-                            self.pool.get('funding.pool.distribution.line').create(cr, uid, ad_vals)
-                            # Then cost center lines
-                            ad_vals.update({'analytic_id': ad_vals.get('cost_center_id'), })
-                            self.pool.get('cost.center.distribution.line').create(cr, uid, ad_vals)
+                        cc_ids = aac_obj.search(cr, uid,[('code', '=', cost_center_code),('category', '=', 'OC'), ('type', '!=', 'view')],
+                                                limit=1, context=context)
+                        if not cc_ids:
+                            errors.append(_("Line %s: the cost center %s doesn't exist.") % (current_line_num, cost_center_code))
+                            continue
+
+                        fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING'), ('type', '!=', 'view')], limit=1, context=context)
+                        if not fp_ids:
+                            errors.append(_("Line %s: the funding pool %s doesn't exist.") % (current_line_num, funding_pool_code))
+                            continue
+
+                        dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST'), ('type', '!=', 'view')], limit=1, context=context)
+                        if not dest_ids:
+                            errors.append(_("Line %s: the destination %s doesn't exist.") % (current_line_num, destination_code))
+                            continue
+
+                        current_ad =  invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+
+                        # create a new AD if diff from current AD on line
+                        if not current_ad or \
+                                len(current_ad.funding_pool_lines) != 1 or \
+                                current_ad.funding_pool_lines[0].analytic_id.id != fp_ids[0] or \
+                                current_ad.funding_pool_lines[0].cost_center_id.id != cc_ids[0] or \
+                                current_ad.funding_pool_lines[0].destination_id.id != dest_ids[0]:
+
+                            ad_state, ad_error = ana_obj.analytic_state_from_info(cr, uid, account.id, dest_ids[0], cc_ids[0], fp_ids[0],
+                                                                                  posting_date=checking_date, document_date=invoice.document_date, check_analytic_active=True, context=context)
+                            if ad_state != 'valid':
+                                ad_errors.append(_("Line %s: %s/%s/%s %s" ) % (current_line_num, cost_center_code, destination_code, funding_pool_code, ad_error))
+
+                            distrib_id = ana_obj.create(cr, uid, {'name': 'Line Distribution Import'}, context=context)
+                            ad_vals = {'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': currency_ids[0],
+                                       'destination_id': dest_ids[0]}
+
+                            ad_vals['analytic_id'] = cc_ids[0]
+                            self.pool.get('cost.center.distribution.line').create(cr, uid, ad_vals, context=context)
+
+                            ad_vals.update({'analytic_id': fp_ids[0], 'cost_center_id': cc_ids[0]})
+                            self.pool.get('funding.pool.distribution.line').create(cr, uid, ad_vals, context=context)
+
                             vals['analytic_distribution_id'] = distrib_id
-                            # delete header AD if any
-                            if invoice.analytic_distribution_id:
-                                ana_obj.unlink(cr, uid, [invoice.analytic_distribution_id.id], context=context)
+
+                            if current_ad:
+                                ana_obj.unlink(cr, uid, [current_ad.id], context=context)
 
                     # update the line
                     invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals, context=context)
