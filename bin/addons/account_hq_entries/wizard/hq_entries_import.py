@@ -40,7 +40,7 @@ class hq_entries_import_wizard(osv.osv_memory):
     _columns = {
         'file': fields.binary(string="File", filters="*.csv", required=True),
         'filename': fields.char(string="Imported filename", size=256),
-        'progress': fields.float(string="Progression", readonly=True),
+        'progress': fields.integer(string="Progression", readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('inprogress', 'In-progress'), ('error', 'Error'), ('done', 'Done')],'State', readonly=1),
         'created': fields.integer('Processed', readonly=1),
         'total': fields.integer('Total', readonly=1),
@@ -63,7 +63,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             res_id = False
             view_id = False
         return {
-            'name': 'HQ Entries Import',
+            'name': _('HQ Entries Import'),
             'type': 'ir.actions.act_window',
             'res_model': 'hq.entries.import',
             'view_mode': 'form',
@@ -360,7 +360,7 @@ class hq_entries_import_wizard(osv.osv_memory):
 
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'hq_entries_import_progress_wizard')[1]
         return {
-            'name': 'HQ Entries Import',
+            'name': _('HQ Entries Import'),
             'type': 'ir.actions.act_window',
             'res_model': 'hq.entries.import',
             'view_mode': 'form',
