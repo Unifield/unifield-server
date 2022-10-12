@@ -41,21 +41,23 @@ class hq_entries_import_wizard(osv.osv_memory):
         'file': fields.binary(string="File", filters="*.csv", required=True),
         'filename': fields.char(string="Imported filename", size=256),
         'progress': fields.integer(string="Progression", readonly=True),
-        'state': fields.selection([('draft', 'Draft'), ('inprogress', 'In-progress'), ('error', 'Error'), ('done', 'Done')],'State', readonly=1),
+        'state': fields.selection([('draft', 'Draft'), ('inprogress', 'In-progress'), ('error', 'Error'), ('done', 'Done'), ('ack', 'ack')],'State', readonly=1),
         'created': fields.integer('Processed', readonly=1),
         'total': fields.integer('Total', readonly=1),
         'nberrors': fields.integer('Errors', readonly=1),
         'error': fields.text('Error', readonly=1),
+        'start_date': fields.datetime('Start Date', readonly=1),
+        'end_date': fields.datetime('End Date', readonly=1),
     }
 
     _defaults = {
-        'state': 'draft'
+        'state': 'draft',
     }
     def open_wizard(self, cr, uid, ids, context=None):
         """
             on click on menutim: display the running hq import
         """
-        ids = self.search(cr, uid, [('state', '=', 'inprogress')], context=context)
+        ids = self.search(cr, uid, [('state', 'in', ['inprogress', 'error', 'done'])], context=context)
         if ids:
             res_id = ids[0]
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'hq_entries_import_progress_wizard')[1]
@@ -379,10 +381,10 @@ class hq_entries_import_wizard(osv.osv_memory):
             else:
                 errors.append(_('Line %s, %s') % (line_index, _(msg)))
 
-        a = time.time()
         cr = pooler.get_db(dbname).cursor()
         cache_data = {}
         cache_data['funding_pool'] = {'private_fund': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]}
+        self.write(cr, uid, wiz_id, {'start_date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
         try:
             fileobj = open(filename, 'r')
             reader = csv.reader(fileobj, delimiter=',', quotechar='"')
@@ -404,7 +406,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                 except osv.except_osv, e:
                     manage_error(line_index, e.value)
                 if processed%10 == 0:
-                    self.write(cr, uid, wiz_id, {'progress': int(processed/float(num_line)*100), 'created': created, 'nberrors': len(errors)}, context=context)
+                    self.write(cr, uid, wiz_id, {'progress': int(processed/float(num_line)*100), 'created': created, 'nberrors': len(errors), 'error': "\n".join(errors)}, context=context)
 
             state = 'done'
             if errors or rejected_lines:
@@ -417,8 +419,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             if auto_import:
                 return processed_lines, rejected_lines, headers
 
-            self.write(cr, uid, wiz_id, {'progress': 100, 'state': state, 'created': created, 'total': processed, 'error': msg, 'nberrors': len(errors)}, context=context)
-            print time.time() - a
+            self.write(cr, uid, wiz_id, {'progress': 100, 'state': state, 'created': created, 'total': processed, 'error': msg, 'nberrors': len(errors), 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
         except Exception, e:
             cr.rollback()
@@ -427,15 +428,20 @@ class hq_entries_import_wizard(osv.osv_memory):
             else:
                 error = e
             msg = self.read(cr, uid, wiz_id, ['error'])['error'] or ''
-            self.write(cr, uid, wiz_id, {'state': 'error', 'progress': 100, 'error': "%s\n%s\n%s" % (msg, tools.ustr(error), tools.get_traceback(e))})
+            self.write(cr, uid, wiz_id, {'state': 'error', 'progress': 100, 'error': "%s\n%s\n%s" % (msg, tools.ustr(error), tools.get_traceback(e)), 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')})
         finally:
             cr.commit()
             fileobj.close()
             cr.close(True)
 
     def done(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'ack'}, context=context)
         d = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'account_hq_entries.action_hq_entries_tree', context=context)
         return d
+
+    def ack(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'ack'}, context=context)
+        return {'type': 'ir.actions.act_window_close'}
 
 hq_entries_import_wizard()
 

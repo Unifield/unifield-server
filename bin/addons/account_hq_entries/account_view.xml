@@ -165,7 +165,11 @@
                     <field name="filename" readonly="1" />
                     <newline />
                     <field name="state" />
-                    <html>
+                    <group colspan="2" col="4">
+                        <field name="start_date" />
+                        <field name="end_date" attrs="{'invisible':[('state', '=', 'inprogress')]}"/>
+                    </group>
+                    <html colspan="4">
                     <script language="javascript">
                         $(document).ready(function() {
                             if ($('#state').val() == 'inprogress') {
@@ -184,7 +188,7 @@
                     <group colspan="4" col="2">
                         <button name="dummy" string="Update" icon="gtk-refresh" attrs="{'invisible':[('state', '!=', 'inprogress')]}"/>
                         <button string="Close" name="done" type="object" icon="gtk-ok" attrs="{'invisible':[('state', '!=', 'done')]}"/>
-                        <button string="Cancel" special="cancel" icon="gtk-cancel" attrs="{'invisible':[('state', '!=', 'error')]}"/>
+                        <button string="Cancel" name="ack" type="object" icon="gtk-cancel" attrs="{'invisible':[('state', '!=', 'error')]}"/>
                     </group>
                 </form>
             </field>
