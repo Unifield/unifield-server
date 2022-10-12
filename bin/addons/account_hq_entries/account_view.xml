@@ -184,7 +184,7 @@
                     <newline />
                     <field name="created" />
                     <field name="nberrors" />
-                    <field name="error" colspan="4" nolabel="1" rowspan="25"/>
+                    <field name="error" colspan="4" nolabel="1" />
                     <group colspan="4" col="2">
                         <button name="dummy" string="Update" icon="gtk-refresh" invisible="1"/>
                         <button string="Close" name="done" type="object" icon="gtk-ok" states="done" />
