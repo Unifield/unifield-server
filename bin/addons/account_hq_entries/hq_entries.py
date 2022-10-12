@@ -237,7 +237,7 @@ class hq_entries(osv.osv):
         'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_1_id': fields.many2one('account.analytic.account', "Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_2_id': fields.many2one('account.analytic.account', "Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'user_validated': fields.boolean("Validated", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
+        'user_validated': fields.boolean("Validated", help="Is this line validated by a user in a OpenERP field instance?", readonly=True, select=1),
         'date': fields.date("Posting Date", readonly=True, select=1),
         'partner_txt': fields.char("Third Party", size=255, readonly=True),
         'period_id': fields.many2one("account.period", "Period", readonly=True),
