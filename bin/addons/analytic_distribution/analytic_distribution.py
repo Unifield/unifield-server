@@ -214,7 +214,7 @@ class analytic_distribution(osv.osv):
                     return 'invalid'
         return 'valid'
 
-    def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, posting_date=False, context=None):
+    def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, posting_date=False, document_date=False, check_analytic_active=False, context=None):
         """
         Give analytic state from the given information.
         Return result and some info if needed.
@@ -227,8 +227,18 @@ class analytic_distribution(osv.osv):
         info = ''
         dest_cc_link_obj = self.pool.get('dest.cc.link')
         account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         # DISTRIBUTION VERIFICATION
         # Check that destination is compatible with account
+        if check_analytic_active:
+            for aa in analytic_acc_obj.browse(cr, uid, [destination_id, cost_center_id, analytic_id], context=context):
+                if aa.category == 'FUNDING':
+                    date_check = document_date or time.strftime('%Y-%m-%d')
+                else:
+                    date_check = posting_date or time.strftime('%Y-%m-%d')
+
+                if not analytic_acc_obj.is_account_active(aa, date_check):
+                    return 'invalid', _('Account %s is inactive on %s') % (aa.code, date_check)
         if destination_id not in [x.id for x in account.destination_ids]:
             return 'invalid', _('Destination not compatible with account')
         # Check that Destination and Cost Center are compatible

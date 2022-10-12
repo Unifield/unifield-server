@@ -153,6 +153,42 @@
                 </form>
             </field>
         </record>
+        <record id="hq_entries_import_progress_wizard" model="ir.ui.view">
+            <field name="name">hq.entries.import.wizard</field>
+            <field name="model">hq.entries.import</field>
+            <field name="priority" eval="100" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import HQ Entries">
+                    <field name="progress" widget="progressbar" colspan="4"/>
+                    <newline />
+                    <field name="filename" readonly="1" />
+                    <newline />
+                    <field name="state" />
+                    <html>
+                    <script language="javascript">
+                        $(document).ready(function() {
+                            if ($('#state').val() == 'inprogress') {
+                                setTimeout(function(){
+                                    $('#dummy').click();
+                                },2400)
+                            }
+                        });
+                    </script>
+                    </html>
+
+                    <newline />
+                    <field name="created" />
+                    <field name="nberrors" />
+                    <field name="error" colspan="4" nolabel="1" />
+                    <group colspan="4" col="2">
+                        <button name="dummy" string="Update" icon="gtk-refresh" attrs="{'invisible':[('state', '!=', 'inprogress')]}"/>
+                        <button string="Close" name="done" type="object" icon="gtk-ok" attrs="{'invisible':[('state', '!=', 'done')]}"/>
+                        <button string="Cancel" special="cancel" icon="gtk-cancel" attrs="{'invisible':[('state', '!=', 'error')]}"/>
+                    </group>
+                </form>
+            </field>
+        </record>
 
         <record id="analytic_hq_reallocation_wizard" model="ir.ui.view">
             <field name="name">analytic.hq.reallocation.wizard</field>
@@ -193,13 +229,11 @@
         </record>
 
     <!-- Actions: Menu actions -->
-        <record id="action_hq_entries_import_wizard" model="ir.actions.act_window">
+        <record id="action_hq_entries_import_wizard" model="ir.actions.server">
             <field name="name">Import HQ Entries</field>
-            <field name="res_model">hq.entries.import</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="hq_entries_import_wizard"/>
-            <field name="target">new</field>
+            <field name="model_id" ref="model_hq_entries_import" />
+            <field name="state">code</field>
+            <field name="code">action = obj.open_wizard(context=context)</field>
         </record>
 
         <record model="ir.actions.act_window" id="action_hq_entries_tree">
@@ -285,7 +319,7 @@
 
     <!-- Menu -->
         <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="6"/>
-        <menuitem name="HQ Import" action="action_hq_entries_import_wizard" id="menu_hq_entries_import" parent="menu_hq" sequence="1"/>
+        <menuitem name="HQ Import" action="action_hq_entries_import_wizard" type="server" id="menu_hq_entries_import" parent="menu_hq" sequence="1"/>
         <menuitem name="HQ Entries" action="action_hq_entries_tree" id="menu_hq_entries" parent="menu_hq" sequence="2"/>
         
 
