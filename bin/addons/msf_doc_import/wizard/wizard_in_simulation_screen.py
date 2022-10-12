@@ -1680,30 +1680,34 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'imp_exp_date': False,
                 })
 
-            # Check stock in Cross Docking
-            if with_pack and write_vals.get('imp_product_qty'):
-                cd_ctx = context.copy()
-                cd_ctx['location'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
-                                                                                         'stock_location_cross_docking')[1],
-                new_bn = False
-                if lot_check or exp_check:
-                    bn_domain = [('product_id', '=', prod_id)]
-                    if write_vals.get('imp_batch_name', False):
-                        bn_domain.append(('name', '=', write_vals['imp_batch_name']))
-                    if write_vals.get('imp_exp_date', False):
-                        bn_domain.append(('life_date', '=', write_vals['imp_exp_date']))
-                    bn_ids = self.pool.get('stock.production.lot').search(cr, uid, bn_domain, context=context)
-                    if bn_ids:
-                        cd_ctx['prodlot_id'] = bn_ids and bn_ids[0]
-                    else:
-                        new_bn = True
+            # Check stock in Cross Docking and flow goes to PPS
+            sol = line.move_id and line.move_id.purchase_line_id and line.move_id.purchase_line_id.linked_sol_id or False
+            if sol:
+                pick_move_domain = [('sale_line_id', '=', sol.id), ('type', '=', 'out'), ('picking_subtype', '=', 'picking'),
+                                    ('state', 'in', ['confirmed', 'assigned']), ('picking_id.is_subpick', '=', False)]
+                if with_pack and write_vals.get('imp_product_qty') and \
+                        self.pool.get('stock.move').search(cr, uid, pick_move_domain, context=context):
+                    cd_ctx = context.copy()
+                    cd_ctx['location'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1],
+                    new_bn = False
+                    if lot_check or exp_check:
+                        bn_domain = [('product_id', '=', prod_id)]
+                        if write_vals.get('imp_batch_name', False):
+                            bn_domain.append(('name', '=', write_vals['imp_batch_name']))
+                        if write_vals.get('imp_exp_date', False):
+                            bn_domain.append(('life_date', '=', write_vals['imp_exp_date']))
+                        bn_ids = self.pool.get('stock.production.lot').search(cr, uid, bn_domain, context=context)
+                        if bn_ids:
+                            cd_ctx['prodlot_id'] = bn_ids and bn_ids[0]
+                        else:
+                            new_bn = True
 
-                if not new_bn and prod_obj.browse(cr, uid, prod_id, fields_to_fetch=['qty_allocable'],
-                                                  context=cd_ctx).qty_allocable < 0:
-                    err_msg = _('There is not enough stock in Cross Docking which can be allocated to process the product %s with a quantity of %s. Please check if there is some other (forced) availability of this product.') \
-                        % (product.default_code, write_vals['imp_product_qty'])
-                    errors.append(err_msg)
-                    write_vals['type_change'] = 'error'
+                    if not new_bn and prod_obj.browse(cr, uid, prod_id, fields_to_fetch=['qty_allocable'],
+                                                      context=cd_ctx).qty_allocable < 0:
+                        err_msg = _('There is not enough stock in Cross Docking which can be allocated to process the product %s with a quantity of %s. Please check if there is some other (forced) availability of this product.') \
+                            % (product.default_code, write_vals['imp_product_qty'])
+                        errors.append(err_msg)
+                        write_vals['type_change'] = 'error'
 
             # Message ESC 1
             write_vals['message_esc1'] = values.get('message_esc1')
