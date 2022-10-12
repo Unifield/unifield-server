@@ -44,7 +44,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             required=True),
         'period_id': fields.many2one(
             'account.period', string=_("Period"),
-            domain="[('fiscalyear_id', '=', fiscalyear_id)]"),
+            domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '<=', 12)]"),
         'currency_table_id': fields.many2one(
             'res.currency.table', string=_("Currency table"),
             domain=[('state', '=', 'valid')]),
