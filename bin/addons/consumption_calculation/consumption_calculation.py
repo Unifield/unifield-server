@@ -2331,7 +2331,7 @@ class product_product(osv.osv):
             fromd = max(report_from, dt_from_date)
             tod = min(report_to, dt_to_date)
             total_age = (tod - fromd).days + 1
-            while fromd < tod:
+            while fromd <= tod:
                 amc_by_month.setdefault(line.product_id.id, {}).setdefault(fromd.strftime('%Y-%m'), 0)
                 amc_by_month[line.product_id.id][fromd.strftime('%Y-%m')] += consumed_qty/float(total_age) * (min(tod+relativedelta(days=1), fromd+relativedelta(months=1))-fromd).days
                 fromd += relativedelta(months=1)
