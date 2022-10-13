@@ -36,6 +36,7 @@
             <field name="partial_run" invisible="1"/>
             <field name="create_date"/>
             <field name="execution_date"/>
+            <field name="manually_set_run_date" widget="boolean" string="Run without exec"/>
             <newline />
             <field name="target_object"/>
             <field name="target_id"/>
@@ -90,6 +91,7 @@
                   name="current" domain="[('run','=', False)]"/>
           <filter icon="gtk-close" string="Partially Not Run"
                   name="partial" domain="[('partial_run','=', True)]"/>
+          <filter icon="gtk-missing-image" name="run_wo_exec" string="Run without execution" domain="[('manually_set_run_date', '!=', False)]" />
           </group>
           <newline/>
           <newline/>
