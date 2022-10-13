@@ -67,6 +67,12 @@ class patch_scripts(osv.osv):
         self.log_info(cr, uid, "US-9843: extra space removed on %d expat" % (cr.rowcount,))
         return True
 
+    def set_creator_on_employee(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            self.pool.get('sync.trigger.something.bidir_mission').create(cr, uid, {'name': 'instance_creator_employee', 'args': current_instance.code})
+        return True
+
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):
         ''' OCBHQ: fix amounts on EOY-2021-14020-OCBVE101-VES'''
@@ -5680,3 +5686,50 @@ class sync_tigger_something_up(osv.osv):
         return super(sync_tigger_something_up, self).create(cr, uid, vals, context)
 
 sync_tigger_something_up()
+
+class sync_tigger_something_bidir_mission(osv.osv):
+    _name = 'sync.trigger.something.bidir_mission'
+
+    _columns = {
+        'name': fields.char('Name', size=256),
+        'args': fields.text('Args'),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if vals.get('name') == 'instance_creator_employee' and vals.get('args'):
+            # populate instance_creator on hr.employee
+            # triggered from sync to process sync in-pipe employee or after init sync
+            entity = self.pool.get('sync.client.entity')
+            if entity:
+                b = time.time()
+                cr.execute("""
+                    update hr_employee hr
+                        set instance_creator=instance.code
+                        from
+                            ir_model_data d,
+                            msf_instance instance
+                        where
+                            d.module = 'sd' and
+                            d.model = 'hr.employee' and
+                            d.res_id = hr.id and
+                            instance.instance_identifier = split_part(d.name, '/', 1) and
+                            coalesce(hr.instance_creator, '') = '' and
+                            hr.employee_type='local'
+                """)
+                self.pool.get('patch.scripts').log_info(cr, uid, 'Instance creator set on %d local employees in %d sec' % (cr.rowcount, time.time() - b))
+
+                c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+                instance = c and c.instance_id and c.instance_id
+                main_parent = instance.code
+                if instance.parent_id:
+                    main_parent = instance.parent_id.code
+                    if instance.parent_id.parent_id:
+                        main_parent = instance.parent_id.parent_id.code
+                cr.execute("update hr_employee set instance_creator=%s where employee_type='ex' and coalesce(instance_creator, '') = ''", (main_parent, ))
+                self.pool.get('patch.scripts').log_info(cr, uid, 'Instance creator set on %d expat employees' % (cr.rowcount, ))
+
+        return super(sync_tigger_something_bidir_mission, self).create(cr, uid, vals, context)
+
+sync_tigger_something_bidir_mission()

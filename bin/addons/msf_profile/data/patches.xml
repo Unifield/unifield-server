@@ -821,5 +821,8 @@
             <field name="method">us_9999_custom_accrual_order</field>
         </record>
 
+        <record id="set_creator_on_employee" model="patch.scripts">
+            <field name="method">set_creator_on_employee</field>
+        </record>
     </data>
 </openerp>

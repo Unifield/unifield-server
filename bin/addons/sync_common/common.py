@@ -150,6 +150,7 @@ WHITE_LIST_MODEL = [
     'sync.trigger.something.up',
     'sync.trigger.something.target',
     'sync.trigger.something.target.lower',
+    'sync.trigger.something.bidir_mission',
     'sync.version.instance.monitor',
     'tender',
     'tender.line',
