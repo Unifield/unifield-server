@@ -24,7 +24,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from lxml import etree
 import netsvc
 
 class hq_entries(osv.osv):
@@ -376,7 +375,7 @@ class hq_entries(osv.osv):
         if original.analytic_state != 'valid':
             raise osv.except_osv(_('Error'), _('You cannot split a HQ Entry which analytic distribution state is not valid!'))
         original_amount = original.amount
-        vals.update({'original_id': original_id, 'original_amount': original_amount, 'date': original.date})
+        vals.update({'original_id': original_id, 'original_amount': original_amount, 'date': original.date, 'document_date': original.document_date})
         wiz_id = self.pool.get('hq.entries.split').create(cr, uid, vals, context=context)
         # Return view with register_line id
         context.update({
@@ -466,29 +465,17 @@ class hq_entries(osv.osv):
             'context': context,
         }
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+    def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):
         """
-        Adapts domain for AD fields
+        Resets the FP and Dest if not compatible with CC and update DEST domain
         """
-        if context is None:
-            context = {}
-        view = super(hq_entries, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        arch = etree.fromstring(view['arch'])
-        fields = arch.xpath('field[@name="analytic_id"]')
-        if fields:
-            fields[0].set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
-                                    "('fp_compatible_with_cc_ids', '=', cost_center_id), "
-                                    "('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id))]")
-        # Change Destination field
-        dest_fields = arch.xpath('field[@name="destination_id"]')
-        for field in dest_fields:
-            field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id)]")
-            view['arch'] = etree.tostring(arch)
-        return view
+        return self.pool.get('analytic.distribution').\
+            onchange_ad_cost_center(cr, uid, ids, cost_center_id=cost_center_id, funding_pool_id=funding_pool_id, fp_field_name='analytic_id')
 
     def onchange_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False):
         return self.pool.get('analytic.distribution').\
             onchange_ad_destination(cr, uid, ids, destination_id=destination_id, funding_pool_id=funding_pool_id, account_id=account_id)
+
 
     def _check_cc(self, cr, uid, ids, context=None):
         """
