@@ -191,7 +191,7 @@
                     <field name="error" colspan="4" nolabel="1" />
                     <group colspan="4" col="2">
                         <button name="dummy" string="Update" icon="gtk-refresh" invisible="1"/>
-                        <button string="Close" name="done" type="object" icon="gtk-ok" states="done" />
+                        <button string="Ok" name="done" type="object" icon="gtk-ok" states="done" />
                         <button string="Cancel" name="ack" type="object" icon="gtk-cancel" states="error"/>
                     </group>
                 </form>
