@@ -827,5 +827,9 @@
         <record id="us_9588_set_real_period_on_aji_from_cv" model="patch.scripts">
             <field name="method">us_9588_set_real_period_on_aji_from_cv</field>
         </record>
+
+        <record id="us_7852_set_journal_code" model="patch.scripts">
+            <field name="method">us_7852_set_journal_code</field>
+        </record>
     </data>
 </openerp>

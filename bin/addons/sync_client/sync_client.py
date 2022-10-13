@@ -1043,6 +1043,13 @@ class Entity(osv.osv):
                 notrun_count = updates.search(cr, uid, [('run','=',False)], count=True, context=context)
                 if notrun_count > 0: logger.append(_("Update(s) not run left: %d") % notrun_count)
                 logger.write()
+
+        param = self.pool.get('ir.config_parameter')
+        if param.get_param(cr, uid, 'exec_set_journal_code_on_aji'):
+            # here to process in-pipe AJI on the 1st sync after the release
+            self.pool.get('patch.scripts').set_journal_code_on_aji(cr, uid)
+            param.set_param(cr, uid, 'exec_set_journal_code_on_aji', '')
+
         return update_count
 
     @sync_process('msg_push')
