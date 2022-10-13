@@ -91,7 +91,7 @@
                   name="current" domain="[('run','=', False)]"/>
           <filter icon="gtk-close" string="Partially Not Run"
                   name="partial" domain="[('partial_run','=', True)]"/>
-          <filter icon="gtk-missing-image" name="run_wo_exec" string="Run without execution" domain="[('manually_set_run_date', '!=', False)]" />
+          <filter icon="gtk-missing-image" name="run_wo_exec" string="Run Without Execution" domain="[('manually_set_run_date', '!=', False)]" />
           </group>
           <newline/>
           <newline/>
