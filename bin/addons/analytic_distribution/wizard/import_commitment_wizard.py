@@ -198,10 +198,13 @@ class import_commitment_wizard(osv.osv_memory):
                             line_date = time.strftime('%Y-%m-%d', time.strptime(date, '%d/%m/%Y'))
                         except ValueError, e:
                             raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Posting date wrong format for date: %s: %s') % (date, e)))
-                    period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
+                    context.update({'extend_december': True})  # To allow get_period_from_date to search special periods
+                    period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date, context=context)
                     if not period_ids:
                         raise osv.except_osv(_('Warning'), raise_msg_prefix + (_('No open period found for given date: %s') % (date,)))
                     vals['date'] = line_date
+                    vals['real_period_id'] = period_ids[0] or False
+                    context.pop('extend_december')
                     if not document_date:
                         if not now:
                             # 1st use of default posting/doc date from now

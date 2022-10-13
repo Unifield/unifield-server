@@ -73,6 +73,11 @@ class patch_scripts(osv.osv):
             self.pool.get('sync.trigger.something.bidir_mission').create(cr, uid, {'name': 'instance_creator_employee', 'args': current_instance.code})
         return True
 
+    def us_9588_set_real_period_on_aji_from_cv(self, cr, uid, *a, **b):
+        cr.execute('update account_analytic_line  aji set real_period_id = cv.period_id from account_commitment cv, account_commitment_line cvline where cvline.commit_id=cv.id and aji.commitment_line_id=cvline.id')
+        self.log_info(cr, uid, '%d AJIs from CV: period updates.' % (cr.rowcount,))
+        return True
+
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):
         ''' OCBHQ: fix amounts on EOY-2021-14020-OCBVE101-VES'''
@@ -80,7 +85,6 @@ class patch_scripts(osv.osv):
         if instance and instance.name == 'OCBHQ':
             cr.execute('''update account_move_line set credit_currency='636077529292.81' where id = (select res_id from ir_model_data where name='8e980ca1-dee3-11e5-a9b9-94659c5434c6/account_move_line/226517')''')
             cr.execute('''update account_move_line set debit_currency='636077529292.81' where id = (select res_id from ir_model_data where name='8e980ca1-dee3-11e5-a9b9-94659c5434c6/account_move_line/226518')''')
-
         return True
 
     def us_8259_remove_currency_table_wkf(self, cr, uid, *a, **b):

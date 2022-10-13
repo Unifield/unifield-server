@@ -823,6 +823,9 @@
 
         <record id="set_creator_on_employee" model="patch.scripts">
             <field name="method">set_creator_on_employee</field>
+
+        <record id="us_9588_set_real_period_on_aji_from_cv" model="patch.scripts">
+            <field name="method">us_9588_set_real_period_on_aji_from_cv</field>
         </record>
     </data>
 </openerp>
