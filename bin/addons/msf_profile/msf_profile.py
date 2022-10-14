@@ -62,6 +62,9 @@ class patch_scripts(osv.osv):
         cr.execute("update account_invoice set internal_number=number where number is not null and internal_number!=number")
         # emulate: order by internal_number desc null lasts
         cr.execute("update account_invoice set internal_number='' where internal_number is null")
+
+        # CV is_draft field for custom ordering
+        cr.execute("update account_commitment set is_draft=state='draft'")
         return True
 
     # UF26.0
