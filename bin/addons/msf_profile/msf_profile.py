@@ -56,6 +56,72 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF27.0
+    def us_10587_fix_rt_donation_loan(self, cr, uid, *a, **b):
+        '''
+        Fix the Reason Type of all Picks and OUTs coming from a Loan, Donation (standard) or Donation before expiry FO
+        Set the Reason Type of those documents and their moves to the one corresponding to the FO's Type
+        Set the Reason Type of PICK/01410-return and PICK/01410-return-01 in NG_COOR_OCA to Goods Return
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        loan_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        don_st_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
+        don_exp_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+        goods_ret_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+
+        # Loan
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
+                s.order_type = 'loan' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
+        ''', (loan_rt,))
+        self.log_info(cr, uid, "US-10587: %d OUTs/Picks and their lines had their Reason Type set to 'Loan'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
+                s.order_type = 'loan' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
+        ''', (loan_rt,))
+
+        # Donation (standard)
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
+                s.order_type = 'donation_st' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
+        ''', (don_st_rt,))
+        self.log_info(cr, uid, "US-10587: %d OUTs/Picks and their lines had their Reason Type set to 'Donation (standard)'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
+                s.order_type = 'donation_st' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
+        ''', (don_st_rt,))
+
+        # Donation before expiry
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
+                s.order_type = 'donation_exp' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
+        ''', (don_exp_rt,))
+        self.log_info(cr, uid, "US-10587: %d OUTs/Picks and their lines had their Reason Type set to 'Donation before expiry'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
+                s.order_type = 'donation_exp' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
+        ''', (don_exp_rt,))
+
+        # Fix the RT of a claim PICKs in NG_COOR_OCA
+        if self.pool.get('res.company')._get_instance_record(cr, uid).instance == 'NG_COOR_OCA':
+            cr.execute('''UPDATE stock_picking SET reason_type_id = %s WHERE id IN (11193, 13420)''', (goods_ret_rt,))
+            cr.execute('''UPDATE stock_move SET reason_type_id = %s WHERE picking_id IN (11193, 13420)''', (goods_ret_rt,))
+            self.log_info(cr, uid, "US-10587: PICK/01410-return, PICK/01410-return-01 and their lines had their Reason Type set to 'Goods Return'")
+
+        return True
+
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):
         ''' OCBHQ: fix amounts on EOY-2021-14020-OCBVE101-VES'''

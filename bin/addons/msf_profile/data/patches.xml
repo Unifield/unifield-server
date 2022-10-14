@@ -811,5 +811,10 @@
         <record id="us_9229_fix_rt" model="patch.scripts">
             <field name="method">us_9229_fix_rt</field>
         </record>
+
+        <!-- UF27.0 -->
+        <record id="us_10587_fix_rt_donation_loan" model="patch.scripts">
+            <field name="method">us_10587_fix_rt_donation_loan</field>
+        </record>
     </data>
 </openerp>
