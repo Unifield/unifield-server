@@ -115061,3 +115061,27 @@ msgstr "Veuillez lancer la réévaluation de la trésorerie de fin d'année avan
 #, python-format
 msgid "You should run the year-end revaluation regular balance before closing P15."
 msgstr "Veuillez lancer la réévaluation de la balance de bilan de fin d'année avant de fermer la période P15."
+
+#. module: msf_currency_revaluation
+#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:855
+#, python-format
+msgid "No revaluation accounting entries found to book: the period is now marked as revaluated for %s, you can proceed with the period closing process."
+msgstr "Pas d'entrées de réévaluation trouvées: La période est maintenant marquée comme réévaluée pour %s, vous pouvez continuer le processus de clôture de periode."
+
+#. module: msf_currency_revaluation
+#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:843
+#, python-format
+msgid "Month-end Liquidity"
+msgstr "la trésorerie de fin de mois"
+
+#. module: msf_currency_revaluation
+#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:848
+#, python-format
+msgid "Year-end Liquidity"
+msgstr "la trésorerie de fin d'année"
+
+#. module: msf_currency_revaluation
+#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:853
+#, python-format
+msgid "Year-end Other B/S"
+msgstr "la balance de bilan de fin d'année"

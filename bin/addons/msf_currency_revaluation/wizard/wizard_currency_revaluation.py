@@ -840,17 +840,17 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 # Month-end reval: set the period as revaluated even if no entries have been generated
                 period_obj.write(cr, uid, form.period_id.id, {'is_revaluated': True}, context=context)
                 cr.commit()  # so that the tag is kept despite the warning raised
-                rev_type = 'Month-end Liquidity'
+                rev_type = _('Month-end Liquidity')
             if form.revaluation_method == 'liquidity_year' and form.period_id:
                 # Year-end reval: set the period as revaluated even if no entries have been generated
                 period_obj.write(cr, uid, form.period_id.id, {'is_eoy_liquidity_revaluated': True}, context=context)
                 cr.commit()  # so that the tag is kept despite the warning raised
-                rev_type = 'Year-end Liquidity'
+                rev_type = _('Year-end Liquidity')
             if form.revaluation_method == 'other_bs' and form.period_id:
                 # Year-end reval: set the period as revaluated even if no entries have been generated
                 period_obj.write(cr, uid, form.period_id.id, {'is_eoy_regular_bs_revaluated': True}, context=context)
                 cr.commit()  # so that the tag is kept despite the warning raised
-                rev_type = 'Year-end Other B/S'
+                rev_type = _('Year-end Other B/S')
             raise osv.except_osv(_("Warning"),
                                  _("No revaluation accounting entries found to book: the period is now marked as "
                                    "revaluated for %s, you can proceed with the period closing process.") % rev_type)
