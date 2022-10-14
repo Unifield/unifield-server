@@ -74,48 +74,49 @@ class patch_scripts(osv.osv):
             UPDATE stock_picking SET reason_type_id = %s 
             WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
                 WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
-                s.order_type = 'loan' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
-        ''', (loan_rt,))
+                s.order_type = 'loan' AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (loan_rt, '%-return%', '%-surplus%'))
         self.log_info(cr, uid, "US-10587: %d OUTs/Picks and their lines had their Reason Type set to 'Loan'" % (cr.rowcount,))
         cr.execute('''
             UPDATE stock_move SET reason_type_id = %s 
             WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
                 WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
-                s.order_type = 'loan' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
-        ''', (loan_rt,))
+                s.order_type = 'loan' AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (loan_rt, '%-return%', '%-surplus%'))
 
         # Donation (standard)
         cr.execute('''
             UPDATE stock_picking SET reason_type_id = %s 
             WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
                 WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
-                s.order_type = 'donation_st' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
-        ''', (don_st_rt,))
+                s.order_type = 'donation_st' AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_st_rt, '%-return%', '%-surplus%'))
         self.log_info(cr, uid, "US-10587: %d OUTs/Picks and their lines had their Reason Type set to 'Donation (standard)'" % (cr.rowcount,))
         cr.execute('''
             UPDATE stock_move SET reason_type_id = %s 
             WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
                 WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
-                s.order_type = 'donation_st' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
-        ''', (don_st_rt,))
+                s.order_type = 'donation_st' AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_st_rt, '%-return%', '%-surplus%'))
 
         # Donation before expiry
         cr.execute('''
             UPDATE stock_picking SET reason_type_id = %s 
             WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
                 WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
-                s.order_type = 'donation_exp' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
-        ''', (don_exp_rt,))
+                s.order_type = 'donation_exp' AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_exp_rt, '%-return%', '%-surplus%'))
         self.log_info(cr, uid, "US-10587: %d OUTs/Picks and their lines had their Reason Type set to 'Donation before expiry'" % (cr.rowcount,))
         cr.execute('''
             UPDATE stock_move SET reason_type_id = %s 
             WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
                 WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f' AND
-                s.order_type = 'donation_exp' AND p.name NOT LIKE '%-return%' AND p.name NOT LIKE '%-surplus%')
-        ''', (don_exp_rt,))
+                s.order_type = 'donation_exp' AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_exp_rt, '%-return%', '%-surplus%'))
 
         # Fix the RT of a claim PICKs in NG_COOR_OCA
-        if self.pool.get('res.company')._get_instance_record(cr, uid).instance == 'NG_COOR_OCA':
+        msf_instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+        if msf_instance and msf_instance.instance == 'NG_COOR_OCA':
             cr.execute('''UPDATE stock_picking SET reason_type_id = %s WHERE id IN (11193, 13420)''', (goods_ret_rt,))
             cr.execute('''UPDATE stock_move SET reason_type_id = %s WHERE picking_id IN (11193, 13420)''', (goods_ret_rt,))
             self.log_info(cr, uid, "US-10587: PICK/01410-return, PICK/01410-return-01 and their lines had their Reason Type set to 'Goods Return'")
