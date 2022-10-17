@@ -807,5 +807,9 @@
         <record id="us_10105_custom_order" model="patch.scripts">
             <field name="method">us_10105_custom_order</field>
         </record>
+
+        <record id="us_10105_custom_order_cv" model="patch.scripts">
+            <field name="method">us_10105_custom_order_cv</field>
+        </record>
     </data>
 </openerp>
