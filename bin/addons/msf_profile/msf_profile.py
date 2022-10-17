@@ -57,6 +57,56 @@ class patch_scripts(osv.osv):
     }
 
     # UF27.0
+    def us_10475_create_user_sup_config_hq(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            context = {}
+
+            group_obj = self.pool.get('res.groups')
+            to_copy_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Supply_System_Administrator')], context=context)
+            if not to_copy_ids:
+                return True
+
+            menu_ids = self.pool.get('ir.ui.menu').search(cr, uid, [('groups_id', '=', to_copy_ids[0]), ('active', 'in', ['t', 'f'])], context={'ir.ui.menu.full_list': True})
+            menu_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'menu_action_res_users_whitelist')[1])
+            menu_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'menu_users')[1])
+            gp_id = group_obj.create(cr, uid, {
+                'name': ' Sup_Config_HQ',
+                'level': 'hq',
+                'visible_res_groups': True,
+                'menu_access': [(6, 0, menu_ids)],
+            }, context={})
+
+            far_obj = self.pool.get('msf_field_access_rights.field_access_rule')
+            far_ids = far_obj.search(cr, uid, [('group_ids', 'in', to_copy_ids), ('instance_level', '=', 'hq'), ('active', 'in', ['t', 'f'])], context=context)
+            if far_ids:
+                far_obj.write(cr, uid, far_ids, {'group_ids': [(4, gp_id)]}, context=context)
+            self.log_info(cr, uid, "US-10475: %d far updated" % len(far_ids))
+
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            bar_ids = bar_obj.search(cr, uid, [('group_ids', 'in', to_copy_ids), ('active', 'in', ['t', 'f'])], context=context)
+            if bar_ids:
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(4, gp_id)]}, context=context)
+            self.log_info(cr, uid, "US-10475: %d bar updated" % len(bar_ids))
+
+
+            acl_obj = self.pool.get('ir.model.access')
+            acl_ids = acl_obj.search(cr, uid, [('group_id', '=', to_copy_ids[0])], context=context)
+            acl_nb = 0
+            for acl in acl_obj.read(cr, uid, acl_ids, ['perm_unlink', 'perm_write', 'perm_read', 'perm_create', 'model_id'], context=context):
+                del(acl['id'])
+                acl['group_id'] = gp_id
+                acl['name'] = 'Sup_Config_HQ'
+                acl['model_id'] = acl['model_id'] and acl['model_id'][0] or False
+                acl_obj.create(cr, uid, acl, context=context)
+                acl_nb += 1
+            self.log_info(cr, uid, "US-10475: %d acl created on Sup_Config_HQ" % acl_nb)
+
+            # Window Actions not applicable
+
+            return True
+
+
     def us_9999_custom_accrual_order(self, cr, uid, *a, **b):
         cr.execute("update msf_accrual_line set order_accrual='1901-01-01' where state != 'draft'")
         cr.execute("update msf_accrual_line set order_accrual=document_date where state = 'draft'")

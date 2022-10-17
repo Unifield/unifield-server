@@ -832,5 +832,9 @@
         <record id="us_7852_set_journal_code" model="patch.scripts">
             <field name="method">us_7852_set_journal_code</field>
         </record>
+
+        <record id="us_10475_create_user_sup_config_hq" model="patch.scripts">
+            <field name="method">us_10475_create_user_sup_config_hq</field>
+        </record>
     </data>
 </openerp>
