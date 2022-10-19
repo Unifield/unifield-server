@@ -266,8 +266,21 @@ class msf_instance(osv.osv):
             return True
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if not context:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        user_obj = self.pool.get('res.users')
         if 'code' in vals:  # US-972: If the user clicks on Save button, then perform this check
             self.check_cc_not_target(cr, uid, ids, context)
+        current_instance_level = user_obj.browse(cr, uid, uid, context=context).company_id.instance_id.current_instance_level
+        if context.get('sync_update_execution', False) and current_instance_level == 'coordo' and 'level' in vals and \
+            vals['level'] == 'project' and 'state' in vals and 'code' in vals and vals['code']:
+            proj_id = self.search(cr, uid, [('code', '=', vals['code'])])
+            for journal_id in journal_obj.search(cr, uid, [('instance_id', '=', proj_id)]):
+                if vals['state'] == 'inactive':
+                    journal_obj.write(cr, uid, [journal_id], {'is_coordo_editable': True}, context=context)
+                elif vals['state']=='active':
+                    journal_obj.write(cr, uid, [journal_id], {'is_coordo_editable': False}, context=context)
         res = super(msf_instance, self).write(cr, uid, ids, vals, context=context)
         return res
 
