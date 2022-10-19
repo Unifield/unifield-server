@@ -924,6 +924,9 @@ class PhysicalInventory(osv.osv):
         product_obj = self.pool.get('product.product')
         reason_type_obj = self.pool.get('stock.reason.type')
         discrepancy_obj = self.pool.get('physical.inventory.discrepancy')
+        data_obj = self.pool.get('ir.model.data')
+        other_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        discr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
         ids_seen = {}
 
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
@@ -962,7 +965,11 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                     int(code)
                     reason_ids = reason_type_obj.search(cr, uid, [('code', '=', code), ('name', '=', adjustement_split[-1].strip())], context=context)
                     if reason_ids:
-                        adjustment_type = reason_ids[0]
+                        if reason_ids[0] in [discr_rt_id, other_rt_id]:
+                            adjustment_type = reason_ids[0]
+                        else:
+                            add_error(_('The adjustment type %s is not allowed') % adjustment_type, row_index, 18)
+                            adjustment_type = False
                 except ValueError:
                     reason_ids = []
 
