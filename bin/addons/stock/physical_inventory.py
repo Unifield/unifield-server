@@ -775,11 +775,14 @@ class PhysicalInventory(osv.osv):
 
                 # Check UoM
                 product_uom_id = False
-                product_uom = row.cells[3].data.lower()
-                if product_uom not in all_uom:
-                    add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
+                if row.cells[3].data:
+                    product_uom = row.cells[3].data.lower()
+                    if product_uom not in all_uom:
+                        add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
+                    else:
+                        product_uom_id = all_uom[product_uom]
                 else:
-                    product_uom_id = all_uom[product_uom]
+                    add_error(_("""UoM is mandatory"""), row_index, 3)
 
                 # Check quantity
                 quantity = row.cells[4].data
@@ -795,84 +798,82 @@ class PhysicalInventory(osv.osv):
                         quantity = 0.0
                         add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
 
-                if product_id:
+                if product_id and product_uom_id:
                     product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
-                else:
-                    product_info = {'batch_management': False, 'perishable': False, 'default_code': product_code, 'uom_id': False}
 
-                if product_info['uom_id'] and product_uom_id and product_info['uom_id'][0] != product_uom_id:
-                    add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
+                    if product_info['uom_id'] and product_info['uom_id'][0] != product_uom_id:
+                        add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
 
-                # Check batch number
-                batch_name = row.cells[5].data
-                if not batch_name and product_info['batch_management'] and quantity is not None:
-                    add_error(_('Batch number is required'), row_index, 5)
+                    # Check batch number
+                    batch_name = row.cells[5].data
+                    if not batch_name and product_info['batch_management'] and quantity is not None:
+                        add_error(_('Batch number is required'), row_index, 5)
 
-                if batch_name and not product_info['batch_management']:
-                    add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
-                    batch_name = False
+                    if batch_name and not product_info['batch_management']:
+                        add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
+                        batch_name = False
 
-                # Check expiry date
-                expiry_date = row.cells[6].data
-                if expiry_date and not product_info['perishable']:
-                    add_error(_("Product %s is not ED managed, ED ignored") % (product_info['default_code'], ), row_index, 6, is_warning=True)
-                    expiry_date = False
-                elif expiry_date:
-                    expiry_date_type = row.cells[6].type
-                    year = False
-                    try:
-                        if expiry_date_type == 'datetime':
-                            expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                            year = row.cells[6].data.year
-                        elif expiry_date_type == 'str':
-                            expiry_date_dt = parse(expiry_date)
-                            year = expiry_date_dt.year
-                            expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                        else:
-                            raise ValueError()
-                    except ValueError:
-                        if not year or year >= 1900:
-                            add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
+                    # Check expiry date
+                    expiry_date = row.cells[6].data
+                    if expiry_date and not product_info['perishable']:
+                        add_error(_("Product %s is not ED managed, ED ignored") % (product_info['default_code'], ), row_index, 6, is_warning=True)
+                        expiry_date = False
+                    elif expiry_date:
+                        expiry_date_type = row.cells[6].type
+                        year = False
+                        try:
+                            if expiry_date_type == 'datetime':
+                                expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                                year = row.cells[6].data.year
+                            elif expiry_date_type == 'str':
+                                expiry_date_dt = parse(expiry_date)
+                                year = expiry_date_dt.year
+                                expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                            else:
+                                raise ValueError()
+                        except ValueError:
+                            if not year or year >= 1900:
+                                add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
 
-                    if year and year < 1900:
-                        add_error(_('Expiry date: year must be after 1899'), row_index, 6)
+                        if year and year < 1900:
+                            add_error(_('Expiry date: year must be after 1899'), row_index, 6)
 
-                if not expiry_date and product_info['perishable'] and quantity is not None:
-                    add_error(_('Expiry date is required'), row_index, 6)
+                    if not expiry_date and product_info['perishable'] and quantity is not None:
+                        add_error(_('Expiry date is required'), row_index, 6)
 
-                # Check duplicate line (Same product_id, batch_number, expirty_date)
-                item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
-                if item in line_items:
-                    add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
-                elif quantity is not None:
-                    line_items.append(item)
+                    # Check duplicate line (Same product_id, batch_number, expirty_date)
+                    item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
+                    if item in line_items:
+                        add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
+                    elif quantity is not None:
+                        line_items.append(item)
 
-                data = {
-                    'product_id': product_id,
-                    'batch_number': batch_name,
-                    'expiry_date': expiry_date,
-                    'quantity': False,
-                    'product_uom_id': product_uom_id,
-                }
+                    data = {
+                        'product_id': product_id,
+                        'batch_number': batch_name,
+                        'expiry_date': expiry_date,
+                        'quantity': False,
+                        'product_uom_id': product_uom_id,
+                    }
 
-                if quantity is not None:
-                    data['quantity'] = quantity
-                # Check if line exist
-                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
-                                                         ('product_id', '=', product_id),
-                                                         ('batch_number', '=', batch_name),
-                                                         ('expiry_date', '=', expiry_date)], context=context)
-                if not line_ids and (batch_name or expiry_date):  # Search for empty BN/ED lines
+                    if quantity is not None:
+                        data['quantity'] = quantity
+                    # Check if line exist
                     line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
                                                              ('product_id', '=', product_id),
-                                                             ('batch_number', '=', False),
-                                                             ('expiry_date', '=', False)], context=context)
+                                                             ('batch_number', '=', batch_name),
+                                                             ('expiry_date', '=', expiry_date)], context=context)
+                    if not line_ids and (batch_name or expiry_date):  # Search for empty BN/ED lines
+                        line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
+                                                                 ('product_id', '=', product_id),
+                                                                 ('batch_number', '=', False),
+                                                                 ('expiry_date', '=', False)], context=context)
 
-                if line_ids:
-                    counting_obj.write(cr, uid, line_ids[0], data, context=context)
-                else:
-                    data['inventory_id'] = inventory_rec.id
-                    counting_obj.create(cr, uid, data, context=context)
+                    if line_ids:
+                        counting_obj.write(cr, uid, line_ids[0], data, context=context)
+                    else:
+                        data['inventory_id'] = inventory_rec.id
+                        counting_obj.create(cr, uid, data, context=context)
 
             # endfor
 
