@@ -997,7 +997,7 @@
                         <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Internal Moves already processed"/>
                         <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
                         <separator orientation="vertical"/>
-                        <filter icon="gtk-execute" name="sysint" string="System INT" domain="[('subtype', '!=', 'sysint')]" help="System internal moves"/>
+                        <filter icon="gtk-execute" name="sysint" string="Non-System INT" domain="[('subtype', '!=', 'sysint')]" help="System internal moves"/>
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="origin"/>
