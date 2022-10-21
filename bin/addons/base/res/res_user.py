@@ -52,6 +52,13 @@ class groups(osv.osv):
                                    ('project', 'Project')],
                                   'Level',
                                   help="Level selected and all higher ones will be able to use this group.",),
+
+        # field defined in module msf_button_access_rights
+        #'bar_ids': fields.many2many('msf_button_access_rights.button_access_rule', 'button_access_rule_groups_rel', 'group_id', 'button_access_rule_id', 'Buttons Access Rules', readonly=1),
+
+        # field defined in module msf_field_access_rights
+        #'far_ids': fields.many2many('msf_field_access_rights.field_access_rule', 'field_access_rule_groups_rel', 'group_id', 'field_access_rule_id', 'Fields Access Rules', readonly=1),
+        'act_window_ids': fields.many2many('ir.actions.act_window', 'ir_act_window_group_rel', 'gid', 'act_id', 'Window Actions', readonly=1),
     }
 
     _defaults = {

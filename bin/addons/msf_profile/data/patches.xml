@@ -840,5 +840,9 @@
         <record id="us_10105_custom_order_cv" model="patch.scripts">
             <field name="method">us_10105_custom_order_cv</field>
         </record>
+
+        <record id="us_10475_create_user_sup_config_hq" model="patch.scripts">
+            <field name="method">us_10475_create_user_sup_config_hq</field>
+        </record>
     </data>
 </openerp>
