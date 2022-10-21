@@ -934,7 +934,7 @@ class PhysicalInventory(osv.osv):
                 continue
             if len(row) != 21:
                 add_error(_("""The number of columns is incorrect, you should have exactly 20 columns in this order:
-Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theorical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Sub Reason Type, Comments / actions (in case of discrepancy)"""),
+Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theoretical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Sub Reason Type, Comments / actions (in case of discrepancy)"""),
                           row_index, len(row))
                 break
 
@@ -990,7 +990,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                     if not sub_rt_index:
                         add_error(_('Unknown Sub Reason Type %s') % sub_rt, row_index, 19)
                 else:
-                    add_error(_('It is not possible to add a Sub Reason Type for this type of Adjustment'), row_index, 19)
+                    add_error(_('It is not possible to add a Sub Reason Type for this Adjustment Type'), row_index, 19)
 
             comment = row.cells[20].data
 
@@ -1021,7 +1021,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                     # In case the imported line has Discr adj type + sub RT when og line has Other adj type
                     current_line_rt = discrepancy_obj.read(cr, uid, line_id, ['reason_type_id'], context=context)['reason_type_id']
                     if current_line_rt and current_line_rt[0] != discr_rt_id and sub_rt_index:
-                        add_error(_('It is not possible to add a Sub Reason Type for this type of Adjustment on the Confirmed line')
+                        add_error(_('It is not possible to add a Sub Reason Type for this Adjustment Type on the Confirmed line')
                                   , row_index, 19)
                         sub_rt_index = False
 

@@ -849,7 +849,7 @@
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('currency (functional)')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Quantity Theorical')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Quantity Theoretical')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Quantity counted')|x}</Data><NamedCell
