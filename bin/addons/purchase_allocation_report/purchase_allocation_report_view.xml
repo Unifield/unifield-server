@@ -70,8 +70,8 @@
 		
 		<menuitem id="menu_po_line_allocation_report"
 				  action="action_purchase_order_line_allocation_report"
-				  sequence="8"
-				  parent="purchase.menu_procurement_management" />
+				  parent="base.next_id_73"
+            	  sequence="8" />
 				  
 				  
 		<record id="purchase_order_allocation_line_report_from_po" model="ir.ui.view">
