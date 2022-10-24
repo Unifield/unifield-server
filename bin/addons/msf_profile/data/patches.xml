@@ -832,5 +832,10 @@
         <record id="us_7852_set_journal_code" model="patch.scripts">
             <field name="method">us_7852_set_journal_code</field>
         </record>
+
+        <record id="us_10353_inactivation_date" model="patch.scripts">
+            <field name="method">us_10353_inactivation_date</field>
+        </record>
+
     </data>
 </openerp>

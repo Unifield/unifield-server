@@ -678,6 +678,7 @@ class account_journal(osv.osv):
         'inv_doc_type': fields.function(_get_false, method=True, type='boolean', string='Document Type', store=False,
                                         fnct_search=_search_inv_doc_type),
         'is_active': fields.boolean('Active'),
+        'inactivation_date': fields.date('Inactivation date', readonly=True),
         'is_default': fields.function(_get_is_default, method=True, type='boolean', string='Default Journal',
                                       store=False, help="Journals created by default in new instances"),
         'current_id': fields.function(_get_current_id, method=True, type='integer', string="DB Id (used by the UI)",
@@ -877,6 +878,27 @@ class account_journal(osv.osv):
             if not journal.is_current_instance and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
             self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
+            if 'is_active' in vals and not vals['is_active']:
+                newest_entry_sql = "SELECT date(max(coalesce(write_date, create_date))) FROM account_move WHERE journal_id=%s"
+                last_inactiv_sql = """
+                    SELECT date(write_date)
+                    FROM audittrail_log_line
+                    WHERE
+                        object_id in (SELECT id FROM ir_model WHERE model='account.journal') AND
+                        res_id=%s AND
+                        name='is_active' AND
+                        new_value_text='False'
+                    order by write_date desc limit 1
+                """
+                cr.execute(newest_entry_sql, (journal.id,))
+                newest_entry_date = cr.fetchone()[0]
+                cr.execute(last_inactiv_sql, (journal.id,))
+                last_inactivation_date = cr.fetchone()[0]
+                if (not newest_entry_date and last_inactivation_date) or \
+                        (newest_entry_date < last_inactivation_date):
+                    vals.update({'inactivation_date': last_inactivation_date})
+                else:
+                    vals.update({'inactivation_date': datetime.today().date()})
         self._check_journal_inactivation(cr, uid, ids, vals, context=context)
         ret = super(account_journal, self).write(cr, uid, ids, vals, context=context)
         if vals.get('currency', False):

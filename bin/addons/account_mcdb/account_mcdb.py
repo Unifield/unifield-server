@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 from tools import flatten
 from lxml import etree
+from datetime import datetime
 
 
 class account_mcdb(osv.osv):
@@ -108,6 +109,8 @@ class account_mcdb(osv.osv):
         'rev_partner_ids': fields.boolean('Exclude partner selection'),
         'rev_employee_ids': fields.boolean('Exclude employee selection'),
         'rev_transfer_journal_ids': fields.boolean('Exclude journal selection'),  # Third Party Journal
+        'excl_inactive_journal_ids': fields.boolean('Exclude inactive journals'),
+        'inactive_at': fields.date('Journals Inactive at'),
         'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
         'rev_analytic_account_dest_ids': fields.boolean('Exclude Destination selection'),
         'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_dest_mcdb", id1="mcdb_id", id2="analytic_account_id",
@@ -161,6 +164,7 @@ class account_mcdb(osv.osv):
         'display_destination': lambda *a: False,
         'user': lambda self, cr, uid, c: uid or False,
         'display_mcdb_load_button': lambda *a: True,
+        'inactive_at': datetime.today().date(),
     }
 
     _order = 'user, description, id'
@@ -427,6 +431,12 @@ class account_mcdb(osv.osv):
                     # journal_ids with reversal
                     elif m2m[0] == 'journal_ids' and wiz.rev_journal_ids:
                         operator = 'not in'
+                    # exclude inactive journals
+                    elif m2m[0] == 'journal_ids' and wiz.excl_inactive_journal_ids:
+                        operator = 'not in'
+                        inactiv_date = wiz.inactive_at or datetime.today().date()
+                        inactive_journal_ids = journal_obj.search(cr, uid, [('is_active', '=', 'f'), ('inactivation_date', '<', inactiv_date)], context=context)
+                        value = [x.id for x in getattr(wiz, m2m[0])] + inactive_journal_ids
                     # account_type_ids with reversal
                     elif m2m[0] == 'account_type_ids' and wiz.rev_account_type_ids:
                         operator = 'not in'
