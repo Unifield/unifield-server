@@ -43,18 +43,18 @@
                         <field name="replacement_item_ids" nolabel="True" context="{'comp_item_ids': composition_item_ids}">
                         	<tree string="Products from the stock to the Kit" editable="top" colors="red:integrity_status_func_substitute_item != 'empty' or availability_status_hidden_func_substitute_item != 'available'">
                         		<field name="product_id_substitute_item"
-                					on_change="on_change_product_id(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,parent.composition_item_ids,comment, context)"
+                					on_change="on_change_product_id(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,parent.composition_item_ids,comment,wiz_step_substitute,context)"
                 					context="location=location_id_substitute_item, uom=uom_id_substitute_item" />
                 				<field name="location_id_substitute_item"
-                        			on_change="on_change_location_id(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
+                        			on_change="on_change_location_id(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,wiz_step_substitute,context)"
                         			context="{'product_id':product_id_substitute_item, 'prodlot_id':lot_id_substitute_item, 'specific_rules_tree_view':True, 'compute_child':False}" />
                 				<field name="lot_id_substitute_item"
-               						on_change="change_lot(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
+               						on_change="change_lot(location_id_substitute_item,product_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,wiz_step_substitute,context)"
                						context="{'location_id':location_id_substitute_item, 'product_id':product_id_substitute_item, 'expiry_date_check':hidden_perishable_mandatory, 'batch_number_check':hidden_batch_management_mandatory, 'search_default_real': True}"
                         			domain="[('check_type','=', True), ('product_id', '=?', product_id_substitute_item)]"
                         			attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', False)]}" />
                 				<field name="exp_substitute_item"
-                					on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
+                					on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,wiz_step_substitute,context)"
                 					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': ['|', ('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', True)]}" />
                 				<field name="qty_substitute_item" on_change="onchange_uom_qty(uom_id_substitute_item, qty_substitute_item)" />
                 				<field name="uom_id_substitute_item" on_change="onchange_uom_qty(uom_id_substitute_item, qty_substitute_item)" />
@@ -70,6 +70,7 @@
             					<field name="integrity_status_func_substitute_item" />
             					<field name="availability_status_func_substitute_item" />
             					<field name="availability_status_hidden_func_substitute_item" invisible="True" />
+								<field name="wiz_step_substitute" invisible="True" />
                         	</tree>
                         </field>
                     </group>

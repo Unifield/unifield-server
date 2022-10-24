@@ -385,7 +385,7 @@ class substitute(osv.osv_memory):
 
         for obj in self.browse(cr, uid, ids, context=context):
             # we check the availability of selected src location for processed product - uom_id is false, we take the default one from kit product
-            res = item_obj.common_on_change(cr, uid, ids, obj.source_location_id.id, obj.product_id_substitute.id, obj.lot_id_substitute.id, uom_id=False, result=None, context=context)
+            res = item_obj.common_on_change(cr, uid, ids, obj.source_location_id.id, obj.product_id_substitute.id, obj.lot_id_substitute.id, uom_id=False, step_substitute='de_kitting', result=None, context=context)
             # de-kitting need 1 PCE, if less available, we open the confirmation wizard
             available_qty = res['value']['qty_substitute_item']
             if available_qty < 1.0:
@@ -660,7 +660,7 @@ class substitute_item(osv.osv_memory):
         vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item, self).write(cr, uid, ids, vals, context=context)
 
-    def common_on_change(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, result=None, context=None):
+    def common_on_change(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, step_substitute=False, result=None, context=None):
         '''
         commmon qty computation
         '''
@@ -682,14 +682,15 @@ class substitute_item(osv.osv_memory):
             ctx['prodlot_id'] = prodlot_id
         else:
             ctx['prodlot_id'] = False
-        product_obj = prod_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_allocable'], context=ctx)
+        qty = 0.0
+        if step_substitute != 'substitute':
+            product_obj = prod_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_allocable'], context=ctx)
+            qty = product_obj.qty_allocable
         # update the result
-        result.setdefault('value', {}).update({'qty_substitute_item': product_obj.qty_allocable,
-                                               'uom_id_substitute_item': uom_id,
-                                               })
+        result.setdefault('value', {}).update({'qty_substitute_item': qty, 'uom_id_substitute_item': uom_id})
         return result
 
-    def change_lot(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
+    def change_lot(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, step_substitute=False, context=None):
         '''
         prod lot changes, update the expiry date
         '''
@@ -701,10 +702,10 @@ class substitute_item(osv.osv_memory):
         else:
             result['value'].update(exp_substitute_item=False)
         # compute qty
-        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
+        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, step_substitute, result=result, context=context)
         return result
 
-    def change_expiry(self, cr, uid, ids, expiry_date, product_id, type_check, location_id, prodlot_id, uom_id, context=None):
+    def change_expiry(self, cr, uid, ids, expiry_date, product_id, type_check, location_id, prodlot_id, uom_id, step_substitute=False, context=None):
         '''
         expiry date changes, find the corresponding internal prod lot
         '''
@@ -738,19 +739,19 @@ class substitute_item(osv.osv_memory):
                                    exp_substitute_item=False,
                                    )
         # compute qty
-        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
+        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, step_substitute, result=result, context=context)
         return result
 
-    def on_change_location_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
+    def on_change_location_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, step_substitute=False, context=None):
         """ 
         location changes
         """
         result = {}
         # compute qty
-        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
+        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, step_substitute, result=result, context=context)
         return result
 
-    def on_change_product_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, composition_item_ids=False, comment=False, context=None):
+    def on_change_product_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, composition_item_ids=False, comment=False, step_substitute=False, context=None):
         '''
         the product changes, set the hidden flag if necessary
         '''
@@ -780,7 +781,7 @@ class substitute_item(osv.osv_memory):
                 comp_items = self.pool.get('substitute.item.mirror').browse(cr, uid, comp_item_ids, fields_to_fetch=['comment'], context=context)
                 result.setdefault('value', {})['comment'] = comp_items[0].comment or ''
         # compute qty
-        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
+        result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, step_substitute, result=result, context=context)
         return result
 
     def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
@@ -876,7 +877,7 @@ class substitute_item(osv.osv_memory):
             # hidden_asset_mandatory
             result[obj.id].update({'hidden_asset_mandatory': obj.product_id_substitute_item.type == 'product' and obj.product_id_substitute_item.subtype == 'asset'})
             # call common_on_change
-            compute_avail = self.common_on_change(cr, uid, [obj.id], obj.location_id_substitute_item.id, obj.product_id_substitute_item.id, obj.lot_id_substitute_item.id, obj.uom_id_substitute_item.id, result=None, context=context)
+            compute_avail = self.common_on_change(cr, uid, [obj.id], obj.location_id_substitute_item.id, obj.product_id_substitute_item.id, obj.lot_id_substitute_item.id, obj.uom_id_substitute_item.id, step_substitute=False, result=None, context=context)
             # availability_value_func_substitute_item
             result[obj.id].update({'availability_value_func_substitute_item': compute_avail['value']['qty_substitute_item']})
             # integrity_status_func_substitute_item
@@ -899,6 +900,7 @@ class substitute_item(osv.osv_memory):
                 'exp_substitute_item': fields.date(string='Expiry Date'),
                 'type_check': fields.char(string='Type Check', size=1024, readonly=True),
                 'comment': fields.char(size=256, string='Comment'),
+                'wiz_step_substitute': fields.char(string='Step', size=128),
                 # functions
                 'hidden_perishable_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='Exp', multi='get_vals_substitute_item', store=False, readonly=True),
                 'hidden_batch_management_mandatory': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='B.Num', multi='get_vals_substitute_item', store=False, readonly=True),
@@ -933,6 +935,7 @@ class substitute_item(osv.osv_memory):
     _defaults = {
         'type_check': 'out',  # in is used, meaning a new prod lot will be created if the specified expiry date does not exist
         'comment': _get_comment,
+        'wiz_step_substitute': lambda s, cr, uid, c: c.get('step', False),
     }
 
 substitute_item()

@@ -129,7 +129,7 @@
                     <notebook colspan="4">
                     	<page string="Composition Items">
                     		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4">
-								<form string="Theoretical Kit Item" noteditable="state != 'draft'">
+								<form string="Kit Composition Item" noteditable="state != 'draft'">
 				                    <field name="kit_state" invisible="1" />
 									<group col="6" colspan="4">
 				            			<notebook colspan="4">
@@ -145,7 +145,7 @@
 				            			</notebook>
 				                    </group>
 				            	</form>
-                    			<tree string="Theoretical Kit Item" editable="top" noteditable="kit_state in ['done', 'cancel']" colors="red: inactive_product==True">
+                    			<tree string="Kit Composition Item" editable="top" noteditable="kit_state in ['done', 'cancel']" colors="red: inactive_product==True">
 				            		<field name="kit_state" invisible="1" />
 									<field name="item_module" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
