@@ -18,12 +18,12 @@
                 <data>
                     <xpath expr="/form/notebook" position="replace" >
                             <field name="context_lang" completion="1" readonly="0"/>
-                            <field name="context_tz" completion="1" readonly="0"/>
+                            <group colspan="2" />
                             <field name="menu_tips" colspan="2" readonly="0"/>
                     </xpath>
                 </data>
             </field>
         </record>
-        
+
     </data>
 </openerp>

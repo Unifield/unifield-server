@@ -57,6 +57,11 @@ class patch_scripts(osv.osv):
     }
 
     # UF27.0
+    def us_10662_remove_user_tz(self, cr, uid, *a, **b):
+        cr.execute("update res_users set context_tz=NULL where context_tz IS NOT NULL")
+        self.log_info(cr, uid, "US-10662: Timezone removed on %d user(s)" % (cr.rowcount,))
+        return True
+
     def us_9999_custom_accrual_order(self, cr, uid, *a, **b):
         cr.execute("update msf_accrual_line set order_accrual='1901-01-01' where state != 'draft'")
         cr.execute("update msf_accrual_line set order_accrual=document_date where state = 'draft'")
