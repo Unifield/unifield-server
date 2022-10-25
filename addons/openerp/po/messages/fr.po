@@ -1904,3 +1904,19 @@ msgstr "en haut à droite de l'écran pour être redirigé sur la documentation 
 #: controllers/templates/header.mako:76 controllers/templates/header.mako:78
 msgid "User Manuals"
 msgstr "Manuels d'Utilisateur"
+
+#: controllers/templates/index.mako:267
+msgid "New signature required"
+msgstr "Nouvelle signature requise"
+
+#: controllers/templates/index.mako:268
+msgid "Create my signature"
+msgstr "Créer ma signature"
+
+#: controllers/templates/index.mako:269
+msgid "Ask Later"
+msgstr "Demander plus tard"
+
+#: widgets/form/templates/signature.mako:4
+msgid "Clear Signature"
+msgstr "Effacer la Signature"

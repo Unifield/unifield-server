@@ -4,7 +4,7 @@
         <td><p id="sig_${name}" /></td>
     <td>
 <div>
-    <button id="${name}_clear" type="button">Clear Signature</button>
+    <button id="${name}_clear" type="button">${_('Clear Signature')}</button>
 </div>
     </td>
     </tr>

@@ -161,7 +161,7 @@ class Root(SecuredController):
                                                                ['force_password_change', 'new_signature_required'],
                                                                rpc.session.context)[0]
         force_password_change = user_info['force_password_change']
-        signature_required = user_info['new_signature_required']
+        signature_required = user_info.get('new_signature_required')
         widgets= openobject.pooler.get_pool()\
             .get_controller('/openerp/widgets')\
             .user_home_widgets(ctx)
