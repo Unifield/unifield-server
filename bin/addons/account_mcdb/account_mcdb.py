@@ -164,7 +164,6 @@ class account_mcdb(osv.osv):
         'display_destination': lambda *a: False,
         'user': lambda self, cr, uid, c: uid or False,
         'display_mcdb_load_button': lambda *a: True,
-        'inactive_at': datetime.today().date(),
     }
 
     _order = 'user, description, id'

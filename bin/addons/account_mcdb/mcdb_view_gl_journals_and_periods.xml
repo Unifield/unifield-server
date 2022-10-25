@@ -12,7 +12,7 @@
                 <group col="6" colspan="2">
                     <field name="rev_journal_ids" />
                     <field name="excl_inactive_journal_ids" />
-                    <field name="inactive_at"/>
+                    <field name="inactive_at" attrs="{'invisible': [('excl_inactive_journal_ids', '=', False)]}"/>
                 </group>
                 <field name="journal_ids" colspan="2" nolabel="1" context="{'search_default_filter_is_active': 1}">
                     <tree string="Journals" editable="top" noteditable="1">
