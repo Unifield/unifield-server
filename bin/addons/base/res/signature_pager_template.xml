@@ -1,12 +1,7 @@
 <page string="Signature" name="signature_tab">
-    <group colspan="2" col="14">
-        <field name="signature_available" readonly="1" colspan="2"/>
-        <button name="activate_signature" type="object" string="Activate Signature" attrs="{'invisible': ['|', ('signature_available', '=', True),('signature_state', '!=', False)]}" icon="gtk-edit" ignore_access_error="1" colspan="6"/>
-        <button name="disable_signature" type="object" string="De-activate Signature" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signature_available', '=', False), ('signature_state', '!=', False)]}" icon="gtk-close" ignore_access_error="1" colspan="6" />
-    </group>
     <group colspan="2" />
 
-    <group colspan="4" col="4" attrs="{'invisible': [('signature_available', '=', False)]}">
+    <group colspan="4" col="4">
         <button name="add_user_signatures"
             string="Manage Users allowed to sign"
             type="object"

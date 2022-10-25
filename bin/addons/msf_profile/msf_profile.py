@@ -58,7 +58,7 @@ class patch_scripts(osv.osv):
 
     def us_9406_create_bar(self, cr, uid, *a, **b):
         # TODO: remove me at integration
-        b_names = ['add_user_signatures', 'action_close_signature', 'toggle_active', 'activate_offline', 'disable_offline', 'activate_signature', 'disable_signature', 'activate_offline_reset']
+        b_names = ['add_user_signatures', 'action_close_signature', 'toggle_active', 'activate_offline', 'disable_offline', 'activate_offline_reset']
         bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
         for group_name, model in [
             ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement']),

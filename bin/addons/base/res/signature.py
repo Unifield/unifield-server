@@ -123,6 +123,13 @@ class signature(osv.osv):
     _record_source = True
 
 
+    def _get_signature_available(self, cr, uid, ids, *a, **b):
+        ret = []
+        available = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature')
+        for _id in ids:
+            ret[_id] = available
+        return ret
+
     _columns = {
         'signature_user_ids': fields.one2many('signature.users.allowed', 'signature_id', 'Users allowed to sign'),
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
@@ -131,7 +138,7 @@ class signature(osv.osv):
         'signature_state': fields.selection([('open', 'Open'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=True),
         'signed_off_line': fields.boolean('Signed Off Line'),
         'signature_is_closed': fields.boolean('Signature Closed', readonly=True),
-        'signature_available': fields.boolean('Activate Signature'),
+        'signature_available': fields.function(_get_signature_available, type='boolean', string='Signature Available', method=1),
         'signature_closed_date': fields.datetime('Date of signature closure', readonly=1),
         'signature_closed_user': fields.many2one('res.users', 'Closed by', readonly=1),
     }
@@ -140,9 +147,6 @@ class signature(osv.osv):
         ('unique_signature_res_id_model,', 'unique(signature_res_id, signature_res_model)', 'Signature must be unique'),
     ]
 
-    _defaults = {
-        'signature_available': lambda self, cr, uid, *a, **b: self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature')
-    }
     def _set_signature_state(self, cr, uid, ids, context=None):
         assert len(ids) < 2, '_set_signature_state: only 1 id is allowed'
 
@@ -264,7 +268,7 @@ class signature_object(osv.osv):
                 arch = etree.fromstring(fvg['arch'])
                 fields = arch.xpath('//page[@name="signature_tab"]')
                 if fields:
-                    for to_remove in ['signature_state', 'signature_available', 'signature_user_ids', 'signed_off_line', 'signature_line_ids', 'signature_is_closed']:
+                    for to_remove in ['signature_state', 'signature_user_ids', 'signed_off_line', 'signature_line_ids', 'signature_is_closed']:
                         if fvg.get('fields') and to_remove in fvg['fields']:
                             del fvg['fields'][to_remove]
                     parent_node = fields[0].getparent()
@@ -278,16 +282,6 @@ class signature_object(osv.osv):
                     fvg['arch'] = etree.tostring(arch)
 
         return fvg
-
-    def activate_signature(self, cr, uid, ids, context=None):
-        _register_log(self, cr, uid, ids, self._name, 'Signature Enabled', False, True, 'write', context)
-        self.write(cr, uid, ids, {'signature_available': True}, context=context)
-        return True
-
-    def disable_signature(self, cr, uid, ids, context=None):
-        _register_log(self, cr, uid, ids, self._name, 'Signature Enabled', True, False, 'write', context)
-        self.write(cr, uid, ids, {'signature_available': False}, context=context)
-        return True
 
     def activate_offline(self, cr, uid, ids, context=None):
         _register_log(self, cr, uid, ids, self._name, 'Sign offline', False, True, 'write', context)
@@ -323,7 +317,7 @@ class signature_object(osv.osv):
             default = {}
         fields_to_reset = [
             'signature_id', 'signature_user_ids', 'signature_line_ids',
-            'signature_state', 'signed_off_line', 'signature_is_closed', 'signature_available',
+            'signature_state', 'signed_off_line', 'signature_is_closed',
             'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model'
         ]
         to_del = []
@@ -869,7 +863,6 @@ class signature_setup(osv.osv_memory):
                 menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
             if wiz.signature:
-                cr.execute("update signature set signature_available='t'")
 
                 for obj in list_sign:
                     if obj == 'purchase.order':
