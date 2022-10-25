@@ -431,11 +431,12 @@ class account_mcdb(osv.osv):
                     elif m2m[0] == 'journal_ids' and wiz.rev_journal_ids:
                         operator = 'not in'
                     # exclude inactive journals
-                    elif m2m[0] == 'journal_ids' and wiz.excl_inactive_journal_ids:
+                    if m2m[0] == 'journal_ids' and wiz.excl_inactive_journal_ids:
                         operator = 'not in'
                         inactiv_date = wiz.inactive_at or datetime.today().date()
-                        inactive_journal_ids = journal_obj.search(cr, uid, [('is_active', '=', 'f'), ('inactivation_date', '<', inactiv_date)], context=context)
+                        inactive_journal_ids = journal_obj.search(cr, uid, [('is_active', '=', False), ('inactivation_date', '<', inactiv_date)], context=context)
                         value = [x.id for x in getattr(wiz, m2m[0])] + inactive_journal_ids
+                        domain.append((m2m[1], operator, value))
                     # account_type_ids with reversal
                     elif m2m[0] == 'account_type_ids' and wiz.rev_account_type_ids:
                         operator = 'not in'
