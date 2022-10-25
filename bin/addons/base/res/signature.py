@@ -8,6 +8,10 @@ from lxml import etree
 from datetime import datetime
 from datetime import timedelta
 
+from PIL import Image, ImageDraw, ImageFont
+import base64
+import StringIO
+
 list_sign = {
     'purchase.order': [
         # (key, label, active, subtyp)
@@ -717,6 +721,29 @@ class signature_set_user(osv.osv_memory):
         wiz = self.browse(cr, uid, ids[0], context=context)
         if not wiz.new_signature:
             return {'type': 'closepref'}
+
+        msg = wiz.legal_name
+
+        # Add legal name to signature
+        image = Image.open(StringIO.StringIO(base64.decodestring(wiz.b64_image)))
+        W, H = image.size
+        fit = False
+        init_font_size = 30
+        font_size = init_font_size
+        while not fit and font_size > 3:
+            arial = ImageFont.truetype("/usr/share/fonts/truetype/msttcorefonts/arial.ttf", font_size)
+            w,h = arial.getsize(msg)
+            fit = w <= W
+            font_size -= 1
+        new_img = Image.new("RGBA", (W, H+init_font_size))
+        new_img.paste(image, (0, 0))
+        draw = ImageDraw.Draw(new_img)
+        draw.text(((W-w)/2,H), msg, font=arial, fill="black")
+        txt_img = StringIO.StringIO()
+        new_img.save(txt_img, 'PNG')
+        wiz.write({'new_signature': 'data:image/png;base64,%s' % base64.encodestring(txt_img.getvalue())}, context=context)
+
+
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_set_user_form_preview')
         return {
             'type': 'ir.actions.act_window',

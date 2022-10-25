@@ -64,12 +64,6 @@
                 <form string="Create Signature">
                    <html colspan="4">
                     <script language="javascript">
-                        function change_text() {
-                          var txt = $('#legal_name').val();
-                          var posY = $('#position').val();
-                          $('#sig_new_signature').signature('setText', txt, posY);
-                        };
-
                         function set_preview() {
                             var preview = $('#json_signature').val();
                             if (preview) {
@@ -78,17 +72,9 @@
                         }
 
                         $(document).ready(function() {
-                            $('#legal_name').keyup(change_text);
-                            $('#position').change(change_text);
-
-
                             $('#view_form').submit(function(e){
                                 if ($('#sig_new_signature').signature('isEmpty')) {
                                     return confirm('New signature is empty ! It will not be saved.');
-                                }
-                                if ($('#sig_new_signature').signature('isTxtEmpty')) {
-                                    alert('Please add a "Legal Name" in the signature');
-                                    return false;
                                 }
                             $('#json_signature').val($('#sig_new_signature').signature('toJSON'));
 
@@ -102,7 +88,6 @@
                     <field name="json_signature" invisible="1" />
                     <newline />
                     <field name="legal_name" />
-                    <field name="position" nolabel="1" colspan="2" />
                     <field name="new_signature" widget="signature" colspan="4"/>
                     <group colspan="4">
                       <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
