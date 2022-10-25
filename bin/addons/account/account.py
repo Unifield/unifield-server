@@ -890,12 +890,16 @@ class account_journal(osv.osv):
                         new_value_text='False'
                     order by write_date desc limit 1
                 """
+                newest_entry_date = False
+                last_inactivation_date = False
                 cr.execute(newest_entry_sql, (journal.id,))
-                newest_entry_date = cr.fetchone()[0]
+                if all(cr.fetchone()):
+                    newest_entry_date = cr.fetchone()[0]
                 cr.execute(last_inactiv_sql, (journal.id,))
-                last_inactivation_date = cr.fetchone()[0]
+                if cr.fetchone() is not None:
+                    last_inactivation_date = cr.fetchone()[0]
                 if (not newest_entry_date and last_inactivation_date) or \
-                        (newest_entry_date < last_inactivation_date):
+                        (newest_entry_date and last_inactivation_date and (newest_entry_date < last_inactivation_date)):
                     vals.update({'inactivation_date': last_inactivation_date})
                 else:
                     vals.update({'inactivation_date': datetime.today().date()})
