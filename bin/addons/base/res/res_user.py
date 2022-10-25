@@ -1018,7 +1018,7 @@ class users(osv.osv):
                     'to_date': user.signature_to or fields.date.today(),
                     'inactivation_date': fields.datetime.now()
                 }, context=context)
-        self.write(cr, uid, ids, {'esignature_id': False, 'signature_from': False, 'signature_to': False}, context=context)
+        self.write(cr, uid, ids, {'esignature_id': False, 'signature_from': fields.date.today(), 'signature_to': False}, context=context)
         return True
 
     def add_signature(self, cr, uid, ids, context=None):
@@ -1055,18 +1055,18 @@ class users(osv.osv):
         }
 
     def change_signature_enabled(self, cr, uid, ids, sign, groups, context=None):
-        if sign and groups and isinstance(groups, list) and groups[0] and isinstance(groups[0], tuple) and groups[0][0] == 6:
-            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')], context=context)
-            if group_ids:
-                if group_ids[0] not in groups[0][2]:
-                    return {
-                        'warning': {
+        ret = {}
+        if sign:
+            ret['value'] = {'signature_from': fields.date.today()}
+            if groups and isinstance(groups, list) and groups[0] and isinstance(groups[0], tuple) and groups[0][0] == 6:
+                group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')], context=context)
+                if group_ids:
+                    if group_ids[0] not in groups[0][2]:
+                        ret['warning'] = {
                             'title': _('Warning'),
                             'message': _('Please add the group Sign_user in order to Enable signatures'),
                         }
-                    }
-
-        return True
+        return ret
 
 users()
 
