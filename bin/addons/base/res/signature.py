@@ -197,7 +197,7 @@ class signature_object(osv.osv):
     }
 
     def action_close_signature(self, cr, uid, ids, context=None):
-        _register_log(self, cr, uid, ids, self._name, 'Close Singature', False, True, 'write', context)
+        _register_log(self, cr, uid, ids, self._name, 'Close Signature', False, True, 'write', context)
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         self.write(cr, uid, ids, {
             'signature_is_closed': True,
