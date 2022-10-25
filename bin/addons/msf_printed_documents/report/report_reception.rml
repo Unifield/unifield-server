@@ -801,10 +801,10 @@
                   <para style="TextInformation" alignment="LEFT">Name :</para>
                 </td>
                 <td>
-                  <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'tr', 'legal_name') ]]</para>
+                  <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'tr', 'user_id') ]]</para>
                 </td>
                 <td>
-                  <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'sr', 'legal_name') ]]</para>
+                  <para style="TextInformation" alignment="LEFT">[[ getSign(objects[0], 'sr', 'user_id') ]]</para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>

@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<document filename="liquidity_position.pdf">
+<document filename="list_of_signatures.pdf">
   <docinit>
     <color id="CMYK_YELLOW" CMYK="rgb(255,255,153)"/>
   </docinit>
-  <template pageSize="(842.0,595.0)" title="liquidity_position" author="Medecins Sans Frontieres" allowSplitting="20">
+  <template pageSize="(842.0,595.0)" title="list_of_signatures" author="Medecins Sans Frontieres" allowSplitting="20">
     <pageTemplate id="first">
       <frame id="first" x1="42.0" y1="42.0" width="756" height="500" />
       <pageGraphics>
@@ -81,27 +81,27 @@
       </blockTable>
       <blockTable htmlSpans="1" style="table_header1" colWidths="256mm">
         <tr>
-          <td><para style="toptitle"><b>LIST OF ACTIVE SIGNATURE</b></para></td>
+          <td><para style="toptitle"><b>LIST OF SIGNATURES</b></para></td>
         </tr>
       </blockTable>
 
-      <blockTable htmlSpans="1" style="table_title" colWidths="42mm,62mm,62mm,42mm,22mm,22mm">
+      <blockTable htmlSpans="1" style="table_title" colWidths="52mm,72mm,62mm,22mm,22mm,22mm">
           <tr>
             <td><para style="title">User Name</para></td>
             <td><para style="title">Legal Name</para></td>
-            <td><para style="title">Signature Access</para></td>
             <td><para style="title">Signature Sample</para></td>
             <td><para style="title">From</para></td>
             <td><para style="title">To</para></td>
+            <td><para style="title">Active</para></td>
           </tr>
           <tr>
           [[ repeatIn(getSign(objects), 'sign') ]]
             <td><para style="line">[[sign.user_id.login]]</para></td>
             <td><para style="line">[[sign.legal_name]]</para></td>
-            <td><para style="line"> </para></td>
             <td><image width="100" height="25" mask="auto">[[ sign.pngb64 or removeParentNode('image')]]</image></td>
             <td><para style="line">[[ formatLang(sign.from_date, date=True) ]]</para></td>
             <td><para style="line">[[ formatLang(sign.to_date, date=True) ]]</para></td>
+            <td><para style="line">[[ sign.is_active and translate('Y') or translate('N') ]]</para></td>
           </tr>
         </blockTable>
 

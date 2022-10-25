@@ -77,6 +77,7 @@ def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, co
     if isinstance(res_id, (int, long)):
         res_id = [res_id]
 
+
     for _id in res_id:
         audit_line_obj.create(cr, root_uid, {
             'description': desc,
@@ -87,9 +88,9 @@ def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, co
             'method': log_type,
             'res_id': _id,
             'new_value': new,
-            'new_value_text': new,
+            'new_value_text': '%s' % new,
             'old_value': old,
-            'old_value_text': old,
+            'old_value_text': '%s' % old,
             'field_description': desc,
         }, context=context)
 
@@ -544,6 +545,19 @@ class signature_image(osv.osv):
 
         return ret
 
+    def _get_is_active(self, cr, uid, ids, name=None, arg=None, context=None):
+        res = {}
+        today = fields.date.today()
+        for s in self.browse(cr, uid, ids, fields_to_fetch=['from_date', 'to_date', 'inactivation_date'], context=context):
+            if s.inactivation_date or not s.from_date:
+                res[s.id] = False
+            elif s.to_date:
+                res[s.id] = today >= s.from_date and today <= s.to_date
+            else:
+                res[s.id] = today >= s.from_date
+        return res
+
+
     _columns = {
         'user_id': fields.many2one('res.users', required=1, string='User'),
         'legal_name': fields.char('Legal name', size=64),
@@ -553,6 +567,7 @@ class signature_image(osv.osv):
         'to_date': fields.date('To Date', readonly=True),
         'create_date': fields.datetime('Creation Date', readonly=True),
         'inactivation_date': fields.datetime('Inactivation Date', readonly=True),
+        'is_active': fields.function(_get_is_active, method=1, type='boolean', string='Active'),
     }
 
 signature_image()

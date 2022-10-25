@@ -319,10 +319,10 @@
                     <para style="Line">Name</para>
                 </td>
                 <td>
-                    <para style="Line">[[ getSign(objects[0], 'tr', 'legal_name') ]]</para>
+                    <para style="Line">[[ getSign(objects[0], 'tr', 'user_id') ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ getSign(objects[0], 'sr', 'legal_name') ]]</para>
+                    <para style="Line">[[ getSign(objects[0], 'sr', 'user_id') ]]</para>
                 </td>
             </tr>
             <tr>

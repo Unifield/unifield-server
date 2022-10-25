@@ -749,7 +749,7 @@
             <field name="model">signature.image</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Signature">
+                <search string="List of Signatures">
                     <filter name="active" string="Active" icon="terp-personal+" domain="['&amp;', ('inactivation_date', '=', False), '|', ('to_date', '&gt;=', current_date), ('to_date', '=', False)]"/>
                     <filter name="inactive" string="Inactive" icon="terp-personal-" domain="['|', ('inactivation_date', '!=', False), '&amp;', ('to_date', '!=', False), ('to_date', '&lt;', current_date)]"/>
                     <separator orientation="vertical"/>
@@ -770,7 +770,7 @@
             <field name="model">signature.image</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Signature" colors="red:inactivation_date or to_date and to_date&lt;current_date" hide_new_button="1" hide_delete_button="1" hide_edit_button="1">
+                <tree string="List of Signatures" colors="red:inactivation_date or to_date and to_date&lt;current_date" hide_new_button="1" hide_delete_button="1" hide_edit_button="1">
                     <field name="user_id"/>
                     <field name="legal_name"/>
                     <field name="image" widget="image" height="50"/>
@@ -801,7 +801,7 @@
         </record>
 
         <record id="signature_image_action" model="ir.actions.act_window">
-            <field name="name">Signature</field>
+            <field name="name">List of Signatures</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">signature.image</field>
             <field name="view_type">form</field>

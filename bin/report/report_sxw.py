@@ -271,6 +271,8 @@ class rml_parse(object):
                     return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, d_type='datetime', datetime=data.date)
                 else:
                     return time.strftime(d_format, time.strptime(data.date, '%Y-%m-%d %H:%M:%S'))
+        elif field == 'user_id':
+            return data.user_id and data.user_id.name or ''
         elif data[field]:
             return data[field]
         return ''
