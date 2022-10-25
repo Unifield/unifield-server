@@ -686,6 +686,7 @@ class signature_set_user(osv.osv_memory):
         'new_signature': fields.text("Draw your signature"),
         'json_signature': fields.text('Json Signature'),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
+        'user_name': fields.related('user_id', 'name', type='char', string='User', readonly=1),
         'preview': fields.boolean('Preview'),
         'legal_name': fields.char('Legal Name', size=128, required=1),
         'position': fields.selection([('top', 'Top'), ('middle', 'Middle'), ('bottom', 'Bottom')], string='Position'),

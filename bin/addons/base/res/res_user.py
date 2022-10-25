@@ -490,7 +490,7 @@ class users(osv.osv):
         'has_signature': fields.function(_get_has_signature, type='boolean', string='Has Signature', method=1, multi='sign_state'),
         'has_valid_signature': fields.function(_get_has_signature, type='boolean', string='Is Signature Valid', method=1, multi='sign_state'),
         'new_signature_required': fields.function(_get_has_signature, type='boolean', string='Is Signature required', method=1, multi='sign_state'),
-        'signature_history_ids': fields.one2many('signature.image', 'user_id', string='Inactive Signature', readonly=1, domain=[('inactivation_date', '!=', False)]),
+        'signature_history_ids': fields.one2many('signature.image', 'user_id', string='De-activated Signatures', readonly=1, domain=[('inactivation_date', '!=', False)]),
 
         'force_password_change':fields.boolean('Change password on next login',
                                                help="Check out this box to force this user to change his "\

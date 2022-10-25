@@ -84,7 +84,7 @@
                     </script>
                     </html>
 
-                    <field name="user_id"/>
+                    <field name="user_name"/>
                     <field name="json_signature" invisible="1" />
                     <newline />
                     <field name="legal_name" />
@@ -104,7 +104,7 @@
             <field name="priority">50</field>
             <field name="arch" type="xml">
                 <form string="Create Signature">
-                    <field name="user_id"/>
+                    <field name="user_name"/>
                     <newline />
                     <field name="b64_image" widget="image" colspan="4" readonly="1"/>
                     <group colspan="4">

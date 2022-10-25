@@ -158,7 +158,7 @@
                                 <!-- <field name="signature" colspan="4" nolabel="1" /> -->
                                 </group>
                                 <field name="signature_history_ids" colspan="4" mode="tree" readonly="1" nolabel="1">
-                                    <tree string="Inactive Signature">
+                                    <tree string="De-activated Signatures">
                                         <field name="legal_name" />
                                         <field name="create_date" />
                                         <field name="inactivation_date" />
