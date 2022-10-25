@@ -430,13 +430,6 @@ class account_mcdb(osv.osv):
                     # journal_ids with reversal
                     elif m2m[0] == 'journal_ids' and wiz.rev_journal_ids:
                         operator = 'not in'
-                    # exclude inactive journals
-                    if m2m[0] == 'journal_ids' and wiz.excl_inactive_journal_ids:
-                        operator = 'not in'
-                        inactiv_date = wiz.inactive_at or datetime.today().date()
-                        inactive_journal_ids = journal_obj.search(cr, uid, [('is_active', '=', False), ('inactivation_date', '<', inactiv_date)], context=context)
-                        value = [x.id for x in getattr(wiz, m2m[0])] + inactive_journal_ids
-                        domain.append((m2m[1], operator, value))
                     # account_type_ids with reversal
                     elif m2m[0] == 'account_type_ids' and wiz.rev_account_type_ids:
                         operator = 'not in'
@@ -579,6 +572,12 @@ class account_mcdb(osv.osv):
                     domain.append(('is_reversal', '=', True))
                 elif wiz.reversed == 'notreversed':
                     domain.append(('is_reversal', '=', False))
+            # exclude inactive journals
+            if wiz.excl_inactive_journal_ids:
+                operator = 'not in'
+                inactiv_date = wiz.inactive_at or datetime.today().date()
+                inactive_journal_ids = journal_obj.search(cr, uid, [('is_active', '=', False), ('inactivation_date', '<', inactiv_date)], context=context)
+                domain.append(('journal_id', operator, inactive_journal_ids))
             # ANALYTIC AXIS FIELD
             if res_model == 'account.analytic.line':
                 if wiz.analytic_axis == 'fp':
