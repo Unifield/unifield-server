@@ -732,7 +732,7 @@ class signature_set_user(osv.osv_memory):
         if not wiz.new_signature:
             return {'type': 'closepref'}
 
-        msg = wiz.legal_name
+        msg = ustr(wiz.legal_name)
 
         # Add legal name to signature
         image = Image.open(StringIO.StringIO(base64.decodestring(wiz.b64_image)))
@@ -741,6 +741,7 @@ class signature_set_user(osv.osv_memory):
         init_font_size = 30
         font_size = init_font_size
         while not fit and font_size > 3:
+            # TODO JFB path
             arial = ImageFont.truetype("/usr/share/fonts/truetype/msttcorefonts/arial.ttf", font_size)
             w,h = arial.getsize(msg)
             fit = w <= W
@@ -748,7 +749,8 @@ class signature_set_user(osv.osv_memory):
         new_img = Image.new("RGBA", (W, H+init_font_size))
         new_img.paste(image, (0, 0))
         draw = ImageDraw.Draw(new_img)
-        draw.text(((W-w)/2,H), msg, font=arial, fill="black")
+        # H-5 to emulate anchor='md' which does not work on this PIL version
+        draw.text(((W-w)/2,H-5), msg, font=arial, fill="black")
         txt_img = StringIO.StringIO()
         new_img.save(txt_img, 'PNG')
         wiz.write({'new_signature': 'data:image/png;base64,%s' % base64.encodestring(txt_img.getvalue())}, context=context)
@@ -775,6 +777,9 @@ class signature_set_user(osv.osv_memory):
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         if wiz.new_signature:
+            if wiz.user_id.esignature_id:
+                self.pool.get('res.users')._archive_signature(cr, root_uid, [real_uid], force=False, context=context)
+
             new_image = self.pool.get('signature.image').create(cr, root_uid, {
                 'user_id': real_uid,
                 'image': wiz.new_signature,
@@ -784,7 +789,7 @@ class signature_set_user(osv.osv_memory):
             }, context=context)
             self.pool.get('res.users').write(cr, root_uid, real_uid, {'esignature_id': new_image}, context=context)
 
-        return {'type': 'closepref'}
+        return {'type': 'ir.actions.act_window_close'}
 
 signature_set_user()
 

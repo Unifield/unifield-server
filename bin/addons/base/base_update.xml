@@ -83,14 +83,6 @@
                     <field name="context_lang" completion="1" readonly="0"/>
                     <field name="context_tz" completion="1" readonly="0"/>
                     <field name="menu_tips" colspan="2" readonly="0"/>
-                    <field name="new_signature_required" invisible="1"/>
-                    <newline/>
-                    <field name="has_valid_signature" invisible="1" />
-                    <group colspan="2" col="2" attrs="{'invisible': [('has_valid_signature', '=', False)]}">
-                        <separator string="Current Signature" colspan="2"/>
-                        <field name="current_signature" widget="image" height="100" nolabel="1" colspan="2"/>
-                    </group>
-                    <button type="object" string="Create Signature" name="add_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': ['|', ('new_signature_required', '=', False), ('has_valid_signature', '=', True)]}"/>
                 </form>
             </field>
         </record>

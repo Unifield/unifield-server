@@ -58,5 +58,37 @@
 
         <menuitem id="signature_follow_up_menu" action="signature_follow_up_action" parent="base.menu_users" sequence="16"/>
 
+        <record id="res_users_my_signature_form" model="ir.ui.view">
+            <field name="name">my_Signature_form</field>
+            <field name="model">res.users</field>
+            <field name="type">form</field>
+            <field name="priority">201</field>
+            <field name="arch" type="xml">
+                <form hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1" hide_cancel_button="1" string="My Signature">
+                    <field name="name" readonly="1" />
+                    <field name="login" readonly="1" />
+                    <group colspan="2" col="4">
+                        <field name="signature_from" readonly="1"/>
+                        <field name="signature_to" readonly="1" />
+                        <field name="current_signature" widget="image" height="100" nolabel="1" colspan="4"/>
+                        <field name="new_signature_required" invisible="1" />
+                        <field name="has_valid_signature" invisible="1" />
+                        <button type="object" string="Create Signature" name="add_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': ['|', ('new_signature_required', '=', False), ('has_valid_signature', '=', True)]}" />
+                        <button type="object" string="Replace Signature" name="replace_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': [('new_signature_required', '=', True), ('has_valid_signature', '=', False)]}"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="my_signature_server_action" model="ir.actions.server">
+           <field name="name">My Signature</field>
+            <field name="model_id" ref="base.model_res_users"/>
+            <field name="state">code</field>
+            <field name="code">
+action = self.open_my_signature(cr, uid, context=context)
+            </field>
+        </record>
+
+        <menuitem id="my_signature_menu" name="My Signature" action="my_signature_server_action" type="server" parent="base.menu_users" sequence="17"/>
     </data>
 </openerp>

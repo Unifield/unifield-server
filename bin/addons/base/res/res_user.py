@@ -144,7 +144,6 @@ class groups(osv.osv):
 
         res = super(groups, self).write(cr, uid, ids, vals, context=context)
 
-
         if 'level' in vals:
             # if the new level is lower level, touch the related users
             user_to_touch_ids = []
@@ -750,6 +749,17 @@ class users(osv.osv):
             if cr.dbname in xmlrpc_uid_cache:
                 xmlrpc_uid_cache[cr.dbname] = None
 
+        if values.get('active') is False:
+            sign_follow_up = self.pool.get('signature.follow_up')
+            open_sign_ids = sign_follow_up.search(cr, uid, [('user_id', 'in', ids), ('signed', '=', 0), ('signature_is_closed', '=', False)], context=context)
+            if open_sign_ids:
+                list_of_doc = [x.doc_name for x in sign_follow_up.browse(cr, uid, open_sign_ids[0:5], fields_to_fetch=['doc_name'], context=context)]
+                if len(open_sign_ids) > 5:
+                    list_of_doc.append('...')
+                raise osv.except_osv(_('Warning'), _('You can not deactivate this user, %d documents have to be signed\n%s') % (len(open_sign_ids), ','.join(list_of_doc)))
+
+
+
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
         if values.get('groups_id'):
@@ -1010,16 +1020,26 @@ class users(osv.osv):
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1
 
-    def reset_signature(self, cr, uid, ids, context=None):
+    def _archive_signature(self, cr, uid, ids, new_from=None, force=True, context=None):
         for user in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to'] , context=context):
             if user.esignature_id:
-                self.pool.get('signature.image').write(cr, uid, user.esignature_id.id, {
-                    'from_date': user.signature_from,
-                    'to_date': user.signature_to or fields.date.today(),
-                    'inactivation_date': fields.datetime.now()
-                }, context=context)
-        self.write(cr, uid, ids, {'esignature_id': False, 'signature_from': fields.date.today(), 'signature_to': False}, context=context)
+                if force or self.pool.get('signature.line').search_exists(cr, uid, [('image_id','=', user.esignature_id.id)], context=context):
+                    self.pool.get('signature.image').write(cr, uid, user.esignature_id.id, {
+                        'from_date': user.signature_from,
+                        'to_date': user.signature_to or fields.date.today(),
+                        'inactivation_date': fields.datetime.now(),
+                    }, context=context)
+        new_data = {
+            'esignature_id': False,
+            'signature_to': False
+        }
+        if new_from is not None:
+            new_data['signature_from'] = new_from
+        self.write(cr, uid, ids, new_data, context=context)
         return True
+
+    def reset_signature(self, cr, uid, ids, context=None):
+        return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), force=True, context=context)
 
     def add_signature(self, cr, uid, ids, context=None):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
@@ -1036,8 +1056,10 @@ class users(osv.osv):
             'context': context,
             'height': '400px',
             'width': '720px',
-            'opened': True,
         }
+
+    def replace_signature(self, cr, uid, ids, context=None):
+        return self.add_signature(cr, uid, ids, context=context)
 
     def change_date(self, cr, uid, ids, context=None):
         user = self.pool.get('res.users').browse(cr, uid, ids[0], context=context)
@@ -1068,6 +1090,19 @@ class users(osv.osv):
                         }
         return ret
 
+    def open_my_signature(self, cr, uid, context=None):
+        user_data =  self.browse(cr, uid, uid, fields_to_fetch=['new_signature_required', 'has_valid_signature'], context=context)
+        if not user_data.new_signature_required and not user_data.has_valid_signature:
+            raise osv.except_osv(_('Warning'), _('Signature is not enabled on your profile'))
+
+        return {
+            'res_id': uid,
+            'res_model': 'res.users',
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'useability_dashboard_and_menu', 'res_users_my_signature_form')[1]],
+        }
 users()
 
 class wizard_add_users_synchronized(osv.osv_memory):
