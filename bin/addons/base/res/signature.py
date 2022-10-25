@@ -66,6 +66,14 @@ saved_unit = {
     'stock.picking': lambda doc: doc.total_qty_str,
 }
 
+saved_state = {
+    'purchase.order': lambda doc: doc.state,
+    'sale.order': lambda doc: doc.state,
+    'account.bank.statement': lambda doc: doc.state,
+    'account.invoice': lambda doc: doc.state,
+    'stock.picking': lambda doc: doc.state,
+}
+
 def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, context=None):
     audit_line_obj = self.pool.get('audittrail.log.line')
     audit_rule_obj = self.pool.get('audittrail.rule')
@@ -372,18 +380,26 @@ class signature_line(osv.osv):
     _name = 'signature.line'
     _description = 'Document line to sign by role'
 
-    def _format_value(self, cr, uid, ids, name=None, arg=None, context=None):
+    def _format_state_value(self, cr, uid, ids, name=None, arg=None, context=None):
         res = {}
         user_lang = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
         lang_obj = self.pool.get('res.lang')
         lang_id = lang_obj.search(cr, uid, [('code', '=', user_lang)])[0]
-        for x in self.browse(cr, uid, ids, fields_to_fetch=['signed', 'value', 'unit'], context=context):
+
+        cache_state = {}
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['signed', 'value', 'unit', 'doc_state', 'signature_id'], context=context):
             if not x.signed:
-                res[x.id] = False
-            elif x.value is not False:
-                res[x.id] = '%s %s' % (lang_obj.format(cr, uid, [lang_id], '%.2lf', x.value, grouping=True, monetary=True),  x.unit)
+                res[x.id] = {'format_value': False, 'format_state': False}
             else:
-                res[x.id] = x.unit
+                if x.value is not False:
+                    res[x.id] = {'format_value': '%s %s' % (lang_obj.format(cr, uid, [lang_id], '%.2lf', x.value, grouping=True, monetary=True),  x.unit)}
+                else:
+                    res[x.id] = {'format_value': x.unit}
+
+                key = '%s-%s' % (x.signature_id.signature_res_model, x.doc_state)
+                if key not in cache_state:
+                    cache_state[key] = self.pool.get('ir.model.fields').get_selection(cr, uid, x.signature_id.signature_res_model, 'state', x.doc_state, context=context)
+                res[x.id] = {'format_state': cache_state[key]}
         return res
 
     _columns = {
@@ -398,9 +414,11 @@ class signature_line(osv.osv):
         'image': fields.related('image_id', 'pngb64', type='text', string='Signature', readonly=1),
         'data_image': fields.related('image_id', 'image', type='text', string='Signature', readonly=1),
         'date': fields.datetime('Date'),
+        'doc_state': fields.char('Doc State at signature date', size=64, readonly=1),
         'value': fields.float_null('Value', digits=(16,2)),
         'unit': fields.char('Unit', size=16),
-        'format_value': fields.function(_format_value, method=1, type='char', string='Value'),
+        'format_value': fields.function(_format_state_value, method=1, type='char', string='Value', multi='fsv'),
+        'format_state': fields.function(_format_state_value, method=1, type='char', string='Document State', multi='fsv'),
         'subtype': fields.selection([('full', 'Full Report'), ('rec', 'Reconciliation')], string='Type of signature', readonly=1),
     }
 
@@ -439,6 +457,7 @@ class signature_line(osv.osv):
 
         unit = saved_unit[line.signature_id.signature_res_model](doc)
         value = saved_value[line.signature_id.signature_res_model](doc)
+        doc_state = saved_state[line.signature_id.signature_res_model](doc)
         if value is not False:
             name = '%s %g %s' % (saved_name[line.signature_id.signature_res_model](doc), value, unit or '')
         else:
@@ -451,6 +470,7 @@ class signature_line(osv.osv):
             'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
             'role': line.name,
             'line_id': line.id,
+            'doc_state': doc_state,
             'image': image,
         }, context=context)
 
@@ -467,7 +487,7 @@ class signature_line(osv.osv):
         }
 
 
-    def action_sign(self, cr, uid, ids, value, unit, context=None):
+    def action_sign(self, cr, uid, ids, value, unit, doc_state, context=None):
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name'], context=context)
@@ -475,7 +495,7 @@ class signature_line(osv.osv):
         user = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['name'], context=context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature.id, 'value': value, 'unit': unit, 'legal_name': esignature.legal_name}, context=context)
+        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature.id, 'value': value, 'unit': unit, 'legal_name': esignature.legal_name, 'doc_state': doc_state}, context=context)
 
         if value is False:
             value = ''
@@ -499,7 +519,7 @@ class signature_line(osv.osv):
         _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False}, context=context)
+        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False, 'doc_state': False}, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
@@ -583,11 +603,12 @@ class signature_document_wizard(osv.osv_memory):
         'image': fields.text('Signature', readonly=1),
         'value': fields.float('Value', digits=(16, 2)),
         'unit': fields.char('Unit', size=16),
+        'doc_state': fields.char('Doc state', size=64),
     }
 
     def save(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
-        self.pool.get('signature.line').action_sign(cr, uid, [wiz.line_id.id], wiz.value, wiz.unit, context=context)
+        self.pool.get('signature.line').action_sign(cr, uid, [wiz.line_id.id], wiz.value, wiz.unit, wiz.doc_state, context=context)
         return {'type': 'ir.actions.act_window_close', 'o2m_refresh': 'signature_line_ids'}
 
 signature_document_wizard()

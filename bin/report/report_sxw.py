@@ -263,14 +263,21 @@ class rml_parse(object):
         if not sign_ids:
             return ''
 
-        data = sign_line_obj.browse(self.cr, self.uid, sign_ids[0], fields_to_fetch=[field])
+        fields_to_fetch = [field]
+        if field == 'date':
+            fields_to_fetch.append('format_state')
+
+        data = sign_line_obj.browse(self.cr, self.uid, sign_ids[0], fields_to_fetch=fields_to_fetch, context={'lang': self.localcontext.get('lang')})
 
         if field == 'date':
+            formatted_date = ''
             if data.date:
                 if d_format is None:
-                    return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, d_type='datetime', datetime=data.date)
+                    formatted_date = self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, d_type='datetime', datetime=data.date)
                 else:
-                    return time.strftime(d_format, time.strptime(data.date, '%Y-%m-%d %H:%M:%S'))
+                    formatted_date = time.strftime(d_format, time.strptime(data.date, '%Y-%m-%d %H:%M:%S'))
+            return '%s %s' % (formatted_date, data.format_state)
+
         elif field == 'user_id':
             return data.user_id and data.user_id.name or ''
         elif data[field]:
