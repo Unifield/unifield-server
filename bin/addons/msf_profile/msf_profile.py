@@ -76,7 +76,7 @@ class patch_scripts(osv.osv):
                 bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
 
         for group_name, menus in [
-            ('Sign_user', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu']),
+            ('Sign_user', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'useability_dashboard_and_menu.my_signature_menu']),
             ('User_Manager', ['base.signature_image_menu'])
         ]:
             group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])

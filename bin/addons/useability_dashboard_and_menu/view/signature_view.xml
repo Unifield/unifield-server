@@ -65,9 +65,10 @@
             <field name="priority">201</field>
             <field name="arch" type="xml">
                 <form hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1" hide_cancel_button="1" string="My Signature">
+                    <group colspan="2" col="4">
                     <field name="name" readonly="1" />
                     <field name="login" readonly="1" />
-                    <group colspan="2" col="4">
+                    <newline />
                         <field name="signature_from" readonly="1"/>
                         <field name="signature_to" readonly="1" />
                         <field name="current_signature" widget="image" height="100" nolabel="1" colspan="4"/>
@@ -76,7 +77,17 @@
                         <button type="object" string="Replace Signature" name="replace_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': [('new_signature_required', '=', True), ('has_valid_signature', '=', False)]}"/>
                         <button type="object" string="Delete Signature" name="delete_signature" icon="gtk-del" colspan="2" attrs="{'invisible': [('new_signature_required', '=', True), ('has_valid_signature', '=', False)]}"/>
                         <button type="object" string="Create Signature" name="add_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': ['|', ('new_signature_required', '=', False), ('has_valid_signature', '=', True)]}" />
+
+                        <field name="signature_history_ids" colspan="4" mode="tree" readonly="1" nolabel="1">
+                            <tree string="De-activated Signatures">
+                                <field name="legal_name" />
+                                <field name="create_date" />
+                                <field name="inactivation_date" />
+                                <field name="image" widget="image" height="50"/>
+                            </tree>
+                        </field>
                     </group>
+                    <label colspan="2"/>
                 </form>
             </field>
         </record>
