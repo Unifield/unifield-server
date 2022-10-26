@@ -523,17 +523,25 @@ class signature_line(osv.osv):
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
-    def toggle_active(self, cr, uid, ids, context=None):
+    def activate_role(self, cr, uid, ids, context=None):
+        return self._toggle_active(cr, uid, ids, True, context=context)
+
+    def disable_role(self, cr, uid, ids, context=None):
+        return self._toggle_active(cr, uid, ids, False, context=context)
+
+    def _toggle_active(self, cr, uid, ids, value, context=None):
         for line in self.browse(cr, uid, ids, fields_to_fetch=['is_active', 'signed', 'name', 'signature_id', 'subtype'], context=context):
+            if line.is_active == value:
+                continue
             if line['signed']:
                 raise osv.except_osv(_('Warning'), _("You can't change Active value on an already signed role."))
             txt = 'Signature active on role %s' % (line.name, )
             real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-            _register_log(self, cr, real_uid, line.signature_id.signature_res_id, line.signature_id.signature_res_model, txt, '%s'%line.is_active, '%s'%(not line.is_active,), 'write', context)
+            _register_log(self, cr, real_uid, line.signature_id.signature_res_id, line.signature_id.signature_res_model, txt, '%s'%(not value, ), '%s'%(value, ), 'write', context)
 
-            self.write(cr, uid, line['id'], {'is_active': not line['is_active']}, context=context)
+            self.write(cr, uid, line['id'], {'is_active': value}, context=context)
 
-            if line['is_active']:
+            if not value:
                 nb_users = len([x.id for x in line.signature_id.signature_user_ids if x.subtype == line.subtype])
                 nb_active = len([x for x in line.signature_id.signature_line_ids if x.is_active and x.subtype == line.subtype]) - 1
                 if nb_users > nb_active:
@@ -583,8 +591,8 @@ class signature_image(osv.osv):
         'legal_name': fields.char('Legal name', size=64),
         'image': fields.text('Signature'),
         'pngb64': fields.function(_get_image, method=1, type='text', string='Image'),
-        'from_date': fields.date('From Date', readonly=True),
-        'to_date': fields.date('To Date', readonly=True),
+        'from_date': fields.date('Start Date', readonly=True),
+        'to_date': fields.date('End Date', readonly=True),
         'create_date': fields.datetime('Creation Date', readonly=True),
         'inactivation_date': fields.datetime('Inactivation Date', readonly=True),
         'is_active': fields.function(_get_is_active, method=1, type='boolean', string='Active'),
