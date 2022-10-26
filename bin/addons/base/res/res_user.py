@@ -1038,6 +1038,9 @@ class users(osv.osv):
         self.write(cr, uid, ids, new_data, context=context)
         return True
 
+    def delete_signature(self, cr, uid, ids, context=None):
+        return self._archive_signature(cr, uid, ids, force=False, context=context)
+
     def reset_signature(self, cr, uid, ids, context=None):
         return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), force=True, context=context)
 

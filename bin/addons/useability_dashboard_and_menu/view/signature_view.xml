@@ -73,8 +73,9 @@
                         <field name="current_signature" widget="image" height="100" nolabel="1" colspan="4"/>
                         <field name="new_signature_required" invisible="1" />
                         <field name="has_valid_signature" invisible="1" />
-                        <button type="object" string="Create Signature" name="add_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': ['|', ('new_signature_required', '=', False), ('has_valid_signature', '=', True)]}" />
                         <button type="object" string="Replace Signature" name="replace_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': [('new_signature_required', '=', True), ('has_valid_signature', '=', False)]}"/>
+                        <button type="object" string="Delete Signature" name="delete_signature" icon="gtk-del" colspan="2" attrs="{'invisible': [('new_signature_required', '=', True), ('has_valid_signature', '=', False)]}"/>
+                        <button type="object" string="Create Signature" name="add_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': ['|', ('new_signature_required', '=', False), ('has_valid_signature', '=', True)]}" />
                     </group>
                 </form>
             </field>

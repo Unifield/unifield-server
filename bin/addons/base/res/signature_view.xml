@@ -110,7 +110,7 @@
                     <group colspan="4">
                       <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
                       <button string="Go back" icon="terp-gtk-go-back-ltr" name="previous" type="object" />
-                      <button string="Save" icon="terp-check" name="save" type="object" confirm="Do you want to save this signature ?"/>
+                      <button string="Save" icon="terp-check" name="save" type="object" />
                     </group>
                 </form>
             </field>
