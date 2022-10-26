@@ -25,11 +25,21 @@ list_sign = {
         ('tr', _('Technical Responsible'), True, ''),
         ('sr', _('Supply Responsible'), True, ''),
     ],
-    'account.bank.statement': [
+    'account.bank.statement.cash': [
         ('fr', _('Signature 1 - reconciliation'), True, 'rec'),
         ('mr', _('Signature 2 - reconciliation'), True, 'rec'),
         ('fr_report', _('Signature 1 - full report'), True, 'full'),
         ('mr_report', _('Signature 2 - full report'), True, 'full'),
+    ],
+    'account.bank.statement.bank': [
+        ('fr', _('Signature 1 - reconciliation'), True, 'rec'),
+        ('mr', _('Signature 2 - reconciliation'), True, 'rec'),
+        ('fr_report', _('Signature 1 - full report'), True, 'full'),
+        ('mr_report', _('Signature 2 - full report'), True, 'full'),
+    ],
+    'account.bank.statement.cheque': [
+        ('fr_report', _('Signature 1 - full report'), True, ''),
+        ('mr_report', _('Signature 2 - full report'), True, ''),
     ],
     'account.invoice': [
         ('sr', _('Supply Responsible'), True, ''),
@@ -53,7 +63,7 @@ saved_name = {
 saved_value = {
     'purchase.order': lambda doc: round(doc.amount_total, 2),
     'sale.order': lambda doc: round(doc.ir_total_amount, 2),
-    'account.bank.statement': lambda doc: doc.journal_id.type == 'bank' and round(doc.balance_end, 2) or doc.journal_id.type == 'cash' and round(doc.msf_calculated_balance, 2) or 0,
+    'account.bank.statement': lambda doc: doc.journal_id.type in ('bank', 'cheque') and round(doc.balance_end, 2) or doc.journal_id.type == 'cash' and round(doc.msf_calculated_balance, 2) or 0,
     'account.invoice': lambda doc: round(doc.amount_total, 2),
     'stock.picking': lambda doc: False,
 }
@@ -229,7 +239,11 @@ class signature_object(osv.osv):
 
     def add_user_signatures(self, cr, uid, ids, context=None):
         doc_name = self.name_get(cr, uid, ids, context=context)[0][1]
-        doc = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'signature_res_model'], context=context)
+
+        ftf = ['signature_id', 'signature_res_model']
+        if self._name == 'account.bank.statement':
+            ftf += ['journal_id']
+        doc = self.browse(cr, uid, ids[0], fields_to_fetch=ftf, context=context)
 
         wiz_data = {
             'name': doc_name,
@@ -237,12 +251,14 @@ class signature_object(osv.osv):
             'res_users_rec': [(6, 0, [])],
             'res_users_full': [(6, 0, [])],
         }
-        if doc.signature_res_model == 'account.bank.statement':
+        if doc.signature_res_model == 'account.bank.statement' and doc.journal_id.type != 'cheque':
             for user in doc.signature_id.signature_user_ids:
                 if user.subtype == 'rec':
                     wiz_data['res_users_rec'][0][2].append(user.user_id.id)
+                    wiz_data['num_col'] = 2
                 else:
                     wiz_data['res_users_full'][0][2].append(user.user_id.id)
+                    wiz_data['num_col'] = 1
             view_id = [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_add_user_register_wizard_form')[1]]
         else:
             wiz_data['res_users'] = [(6, 0, [x.user_id.id for x in doc.signature_id.signature_user_ids])]
@@ -341,7 +357,8 @@ class signature_object(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         new_id = super(signature_object, self).create(cr, uid, vals, context=context)
-        if vals and 'signature_line_ids' not in vals and list_sign.get(self._name) and \
+        if vals and 'signature_line_ids' not in vals and \
+                ( list_sign.get(self._name) or self._name == 'account.bank.statement' ) and \
                 self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature') and \
                 (   self._name not in ('stock.picking', 'sale.order') or \
                     self._name == 'stock.picking' and vals.get('type') == 'in' or \
@@ -357,14 +374,19 @@ class signature_object(osv.osv):
 
             obj = self.browse(cr, uid, new_id, fields_to_fetch=ftf, context=context)
 
-            if self._name == 'account.bank.statement' and (not obj.local_register or obj.journal_id.type == 'cheque'):
+            if self._name == 'account.bank.statement' and not obj.local_register:
                 return new_id
 
             if self._name == 'account.invoice' and obj.doc_type not in ('si', 'donation'):
                 return new_id
 
             if obj.signature_id:
-                for x in list_sign.get(self._name):
+                if self._name == 'account.bank.statement':
+                    key = 'account.bank.statement.%s'%obj.journal_id.type
+                else:
+                    key = self._name
+
+                for x in list_sign.get(key):
                     line_obj.create(cr, 1, {
                         'name_key': x[0],
                         'name': x[1],
@@ -399,7 +421,7 @@ class signature_line(osv.osv):
                 key = '%s-%s' % (x.signature_id.signature_res_model, x.doc_state)
                 if key not in cache_state:
                     cache_state[key] = self.pool.get('ir.model.fields').get_selection(cr, uid, x.signature_id.signature_res_model, 'state', x.doc_state, context=context)
-                res[x.id] = {'format_state': cache_state[key]}
+                res[x.id]['format_state'] = cache_state[key]
         return res
 
     _columns = {
@@ -632,13 +654,17 @@ class signature_add_user_wizard(osv.osv_memory):
         'res_users': fields.many2many('res.users', string='Signature users', domain=[('signature_enabled', '=', True)]),
         'res_users_rec': fields.many2many('res.users', string='Signature users', domain=[('signature_enabled', '=', True)]),
         'res_users_full': fields.many2many('res.users', string='Signature users', domain=[('signature_enabled', '=', True)]),
+        'num_col': fields.integer('Num of profiles', readonly=1),
     }
 
+    _defaults = {
+        'num_col': 1,
+    }
     def save(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
         data = {}
 
-        if wiz.signature_id.signature_res_model == 'account.bank.statement':
+        if wiz.num_col == 2:
             wiz_type_users = [('rec', wiz.res_users_rec), ('full', wiz.res_users_full)]
         else:
             wiz_type_users = [('', wiz.res_users)]
@@ -918,8 +944,9 @@ class signature_setup(osv.osv_memory):
                         cond = "purchase_order o where o.signature_id is not null and o.rfq_ok='f'"
                     elif obj == 'sale.order':
                         cond = "sale_order o where o.signature_id is not null and o.procurement_request='t'"
-                    elif obj == 'account.bank.statement':
-                        cond = "account_bank_statement o, account_journal j, res_company c where o.journal_id = j.id and o.signature_id is not null and j.type in ('bank', 'cash') and c.instance_id = j.instance_id"
+                    elif obj.startswith('account.bank.statement'):
+                        obj_typ = obj.split('.')[-1]
+                        cond = "account_bank_statement o, account_journal j, res_company c where o.journal_id = j.id and o.signature_id is not null and j.type ='%s' and c.instance_id = j.instance_id" % (obj_typ, )
                     elif obj == 'account.invoice':
                         cond = "account_invoice o where o.signature_id is not null and o.real_doc_type in ('donation', 'si') or (o.real_doc_type is null and o.type='in_invoice' and o.is_direct_invoice='f' and o.is_inkind_donation='f' and o.is_debit_note='f' and o.is_intermission='f') or (o.real_doc_type is null and o.type='in_invoice' and o.is_debit_note='f' and o.is_inkind_donation='t')"
                     elif obj == 'stock.picking':

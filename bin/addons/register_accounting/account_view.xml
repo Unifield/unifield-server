@@ -868,6 +868,7 @@
                         <page string="Responsible">
                             <field name="responsible_ids" nolabel="1" />
                         </page>
+                            &signature_template;
                     </notebook>
                     <group col="8" colspan="4">
                         <field name="state" readonly="1"/>

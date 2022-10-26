@@ -63,7 +63,7 @@ class signature_follow_up(osv.osv):
         'doc_name': fields.char('Document Name', size=256, readonly=1),
         'doc_type': fields.selection([
             ('purchase.order', 'PO'), ('sale.order', 'IR'),
-            ('account.bank.statement.cash', 'Cash Register'), ('account.bank.statement.bank', 'Bank Register'),
+            ('account.bank.statement.cash', 'Cash Register'), ('account.bank.statement.bank', 'Bank Register'), ('account.bank.statement.cheque', 'Cheque Register'),
             ('account.invoice.si', 'Supplier Invoice'), ('account.invoice.donation', 'Donation'),
             ('stock.picking', 'IN'),
         ], 'Document Type', readonly=1),
