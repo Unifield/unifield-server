@@ -41,6 +41,7 @@ import zlib
 import random
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import hashlib
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
@@ -162,6 +163,28 @@ class patch_scripts(osv.osv):
                 a.partner_txt != j.code
         """)
         self.log_info(cr, uid, "US-7852: set journal code on %d AJIs" % (cr.rowcount,))
+
+    def us_fix_segment_version(self, cr, uid, *a, **b):
+        cr.execute('delete from replenishment_segment_line_period where from_date is not null and to_date is null and value=0')
+        all_fields = []
+        for x in range(1, 19):
+            all_fields+=['rr_fmc_%d' % x, 'rr_fmc_from_%d' % x, 'rr_fmc_to_%d' % x]
+        line_obj = self.pool.get('replenishment.segment.line')
+
+        offset = 0
+        while True:
+            seg_line_ids = line_obj.search(cr, uid, [], limit=200, offset=offset, order='id')
+            if not seg_line_ids:
+                break
+            for line in line_obj.read(cr, uid, seg_line_ids, all_fields):
+                all_data = ''
+                for x in all_fields:
+                    all_data +='%s'%line[x]
+                fmc_version = hashlib.md5(''.join(all_data)).hexdigest()
+                cr.execute("update replenishment_segment_line set fmc_version=%s where id=%s", (fmc_version, line['id']))
+            offset += 200
+        return True
+
 
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):

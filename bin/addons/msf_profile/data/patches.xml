@@ -848,5 +848,9 @@
         <record id="us_10662_remove_user_tz" model="patch.scripts">
             <field name="method">us_10662_remove_user_tz</field>
         </record>
+
+        <record id="us_fix_segment_version" model="patch.scripts">
+            <field name="method">us_fix_segment_version</field>
+        </record>
     </data>
 </openerp>
