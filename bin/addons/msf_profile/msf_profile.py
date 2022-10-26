@@ -79,7 +79,9 @@ class patch_scripts(osv.osv):
 
         for group_name, menus in [
             ('Sign_user', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'useability_dashboard_and_menu.my_signature_menu']),
-            ('User_Manager', ['base.signature_image_menu'])
+            ('User_Manager', ['base.signature_image_menu']),
+            ('Sign_document_creator_finance', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'base.signature_image_menu']),
+            ('Sign_document_creator_supply', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'base.signature_image_menu']),
         ]:
             group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
             if not group_ids:
