@@ -55,6 +55,8 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    # UF27.0
     def us_10105_custom_order_cv(self, cr, uid, *a, **b):
         # CV is_draft field for custom ordering
         cr.execute("update account_commitment set is_draft=state='draft'")
@@ -68,7 +70,6 @@ class patch_scripts(osv.osv):
         cr.execute("update account_invoice set internal_number='' where internal_number is null")
         return True
 
-    # UF27.0
     def us_10475_create_user_sup_config_hq(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if instance and instance.level == 'section':
@@ -118,6 +119,10 @@ class patch_scripts(osv.osv):
 
             return True
 
+    def us_10662_remove_user_tz(self, cr, uid, *a, **b):
+        cr.execute("update res_users set context_tz=NULL where context_tz IS NOT NULL")
+        self.log_info(cr, uid, "US-10662: Timezone removed on %d user(s)" % (cr.rowcount,))
+        return True
 
     def us_9999_custom_accrual_order(self, cr, uid, *a, **b):
         cr.execute("update msf_accrual_line set order_accrual='1901-01-01' where state != 'draft'")

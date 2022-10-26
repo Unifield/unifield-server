@@ -844,5 +844,9 @@
         <record id="us_10475_create_user_sup_config_hq" model="patch.scripts">
             <field name="method">us_10475_create_user_sup_config_hq</field>
         </record>
+
+        <record id="us_10662_remove_user_tz" model="patch.scripts">
+            <field name="method">us_10662_remove_user_tz</field>
+        </record>
     </data>
 </openerp>
