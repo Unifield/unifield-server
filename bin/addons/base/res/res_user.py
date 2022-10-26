@@ -578,6 +578,27 @@ class users(osv.osv):
     def _check_company(self, cr, uid, ids, context=None):
         return all(((this.company_id in this.company_ids) or not this.company_ids) for this in self.browse(cr, uid, ids, context))
 
+    def _check_signature_group(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        cr.execute("""
+            select u.login from res_users u
+                left join res_groups_users_rel rel on rel.uid = u.id
+                left join res_groups g on g.id = rel.gid and g.name = 'Sign_user'
+            where
+                u.id in %s and
+                u.signature_enabled = 't'
+            group by u.login
+            having count(g.name='Sign_user' or null) = 0
+        """, (tuple(ids), ))
+        wrong = [x[0] for x in cr.fetchall()]
+        if wrong:
+            raise osv.except_osv(_('Warning'), _('Please add the group Sign_user in order to Enable signatures on user(s) %s') % (','.join(wrong),))
+        return True
+
     _constraints = [
         (_check_company, 'The chosen company is not in the allowed companies for this user', ['company_id', 'company_ids']),
     ]
@@ -710,7 +731,11 @@ class users(osv.osv):
 
         if 'name' not in values:
             values['name'] = values['login']
+
         user_id = super(users, self).create(cr, uid, values, context)
+        if values.get('signature_enabled') or values.get('groups_id'):
+            self._check_signature_group(cr, uid, user_id, context=context)
+
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log
             xmlrpc_uid_cache = http_server.XMLRPCRequestHandler.xmlrpc_uid_cache
@@ -761,6 +786,8 @@ class users(osv.osv):
 
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
+        if values.get('signature_enabled') or values.get('groups_id'):
+            self._check_signature_group(cr, uid, ids, context=context)
 
         if values.get('groups_id'):
             self.remove_higer_level_groups(cr, uid, ids, context=context)
@@ -1083,14 +1110,6 @@ class users(osv.osv):
         ret = {}
         if sign:
             ret['value'] = {'signature_from': fields.date.today()}
-            if groups and isinstance(groups, list) and groups[0] and isinstance(groups[0], tuple) and groups[0][0] == 6:
-                group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')], context=context)
-                if group_ids:
-                    if group_ids[0] not in groups[0][2]:
-                        ret['warning'] = {
-                            'title': _('Warning'),
-                            'message': _('Please add the group Sign_user in order to Enable signatures'),
-                        }
         return ret
 
     def open_my_signature(self, cr, uid, context=None):
@@ -1251,7 +1270,9 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         '''
         all_user_ids = [] # previous user ids + current
         previous_values = []
-        user_ids = []
+        previous_user_ids = []
+        removed_user_ids = []
+        is_sign_group = False
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1260,17 +1281,23 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
             new_user_ids = []
             if vals['users'] and len(vals['users'][0]) > 2:
                 new_user_ids = vals['users'][0][2]
-            for record in self.read(cr, uid, ids, ['users'], context=context):
+            for record in self.read(cr, uid, ids, ['users', 'name'], context=context):
+                if record['name'] == 'Sign_user':
+                    is_sign_group = True
                 if record['users']:
-                    user_ids.extend(record['users'])
-            all_user_ids = set(new_user_ids).union(user_ids)
+                    previous_user_ids.extend(record['users'])
+            all_user_ids = set(new_user_ids).union(previous_user_ids)
+            removed_user_ids = set(previous_user_ids) - set(new_user_ids)
             user_obj = self.pool.get('res.users')
             previous_values = user_obj.read(cr, uid, all_user_ids, ['groups_id'], context=context)
 
         res = super(groups2, self).write(cr, uid, ids, vals, context=context)
         if 'users' in vals:
-            self._track_change_of_users(cr, uid, previous_values, user_ids,
+            self._track_change_of_users(cr, uid, previous_values, previous_user_ids,
                                         vals, context=context)
+        if is_sign_group and removed_user_ids:
+            self.pool.get('res.users')._check_signature_group(cr, uid, list(removed_user_ids), context=context)
+
         return res
 
     def unlink(self, cr, uid, ids, context=None):
