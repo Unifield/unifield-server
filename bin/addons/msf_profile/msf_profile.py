@@ -57,7 +57,9 @@ class patch_scripts(osv.osv):
     }
 
     def us_9406_create_bar(self, cr, uid, *a, **b):
-        # TODO: remove me at integration
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+
         b_names = ['add_user_signatures', 'action_close_signature', 'activate_role', 'disable_role', 'activate_offline', 'disable_offline', 'activate_offline_reset']
         bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
         for group_name, model in [
@@ -92,6 +94,8 @@ class patch_scripts(osv.osv):
         return True
 
     def us_9406_create_common_acl(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
         model_obj = self.pool.get('ir.model')
         acl_obj = self.pool.get('ir.model.access')
         for model in ['signature', 'signature.object', 'signature.line', 'signature.image', 'signature.follow_up', 'signature.users.allowed']:
