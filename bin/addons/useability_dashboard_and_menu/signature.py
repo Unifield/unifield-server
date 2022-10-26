@@ -69,7 +69,7 @@ class signature_follow_up(osv.osv):
         ], 'Document Type', readonly=1),
         'doc_id': fields.integer('Doc ID', readonly=1),
         'status': fields.selection([('open', 'Open'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=1),
-        'doc_state': fields.selection(_get_all_states, string='Doc State', readonly=1),
+        'doc_state': fields.selection(_get_all_states, string='Document State', readonly=1),
         'signed': fields.integer('Signed', readonly=1),
         'signature_date': fields.datetime('Signature Date', readonly=1),
         'subtype': fields.selection([('full', 'Full Report'), ('rec', 'Reconciliation')], string='Type of signature', readonly=1),

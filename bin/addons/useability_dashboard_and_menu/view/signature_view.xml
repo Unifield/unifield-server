@@ -17,6 +17,9 @@
                     <filter name="partial" string="Partially Signed" icon="terp-document-new" domain="[('status', '=', 'partial')]" />
                     <filter name="fully" string="Fully Signed" icon="terp-camera_test" domain="[('status', '=', 'signed')]" />
                     <separator orientation="vertical"/>
+                    <filter name="supply_doc" string="Supply" icon="terp-product" domain="[('doc_type', 'in', ['purchase.order', 'sale.order', 'stock.picking'])]" />
+                    <filter name="Finance_doc" string="Finance" icon="terp-stock_format-default" domain="[('doc_type', 'in', ['account.bank.statement.cash', 'account.bank.statement.bank', 'account.invoice.si', 'account.invoice.donation'])]" />
+                    <separator orientation="vertical"/>
                     <field name="user_id" />
                     <field name="doc_name" />
                     <field name="doc_type" />
