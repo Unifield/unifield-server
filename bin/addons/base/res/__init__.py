@@ -35,4 +35,4 @@ import res_log
 import ir_property
 import res_widget
 import signature
-import report
+import report_module

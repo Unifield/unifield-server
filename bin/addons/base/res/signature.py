@@ -8,6 +8,7 @@ from lxml import etree
 from datetime import datetime
 from datetime import timedelta
 
+from report.render.rml2pdf import customfonts
 from PIL import Image, ImageDraw, ImageFont
 import base64
 import StringIO
@@ -793,19 +794,19 @@ class signature_set_user(osv.osv_memory):
         image = Image.open(StringIO.StringIO(base64.decodestring(wiz.b64_image)))
         W, H = image.size
         fit = False
-        init_font_size = 30
+        init_font_size = 28
         font_size = init_font_size
         while not fit and font_size > 3:
-            # TODO JFB path
-            arial = ImageFont.truetype("/usr/share/fonts/truetype/msttcorefonts/arial.ttf", font_size)
-            w,h = arial.getsize(msg)
+            font_path = customfonts.GetFontPath('DejaVuSans.ttf')
+            font = ImageFont.truetype(font_path, font_size)
+            w,h = font.getsize(msg)
             fit = w <= W
             font_size -= 1
         new_img = Image.new("RGBA", (W, H+init_font_size))
         new_img.paste(image, (0, 0))
         draw = ImageDraw.Draw(new_img)
         # H-5 to emulate anchor='md' which does not work on this PIL version
-        draw.text(((W-w)/2,H-5), msg, font=arial, fill="black")
+        draw.text(((W-w)/2,H-5), msg, font=font, fill="black")
         txt_img = StringIO.StringIO()
         new_img.save(txt_img, 'PNG')
         wiz.write({'new_signature': 'data:image/png;base64,%s' % base64.encodestring(txt_img.getvalue())}, context=context)
