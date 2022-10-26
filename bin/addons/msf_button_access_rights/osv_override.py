@@ -135,7 +135,7 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
             search_obj = ['sale.order.line', 'sale.order']
         elif obj == 'purchase.order.line':
             search_obj = ['purchase.order.line', 'purchase.order']
-        elif obj == 'signature.line' and args and args[0] and method == 'toggle_active':
+        elif obj == 'signature.line' and args and args[0] and method in ('activate_role', 'disable_role'):
             assert len(args[0]) == 1, 'Toggle active can be called on one record only'
             search_obj = [pool.get('signature.line').browse(cr, adminUid, args[0][0], fields_to_fetch=['signature_id']).signature_id.signature_res_model]
 
