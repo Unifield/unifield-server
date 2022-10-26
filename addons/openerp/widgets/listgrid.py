@@ -677,11 +677,12 @@ class Selection(Char):
         if self.value:
             if isinstance(self.value, (tuple, list)):
                 self.value = self.value[0]
-
             selection = self.attrs['selection']
-            for k, v in selection:
+            hidden_selection = self.attrs.get('hidden_selection', [])
+            for k, v in selection + hidden_selection:
                 if k == self.value:
                     return v
+
         return ''
 
 class Float(Char):

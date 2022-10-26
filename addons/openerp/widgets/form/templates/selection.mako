@@ -13,6 +13,12 @@
         % if all(label for _, label in options) and (not required or add_empty):
             <option value=""></option>
         % endif
+
+        <% hidden_dict = dict(hidden_selection) %>
+        % if value in hidden_dict:
+            <option value="${value or ''}" selected="selected">${hidden_dict[value]}</option>
+        % endif
+
         % for (val, label) in options:
             <option value="${val or ''}" ${py.selector(val==(value or False))}>${label}</option>
         % endfor
