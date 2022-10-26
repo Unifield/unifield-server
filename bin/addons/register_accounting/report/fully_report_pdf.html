@@ -256,21 +256,14 @@ endif
 % endfor
 
 <!-- Display analytic lines linked to this register line -->
+<!-- since US-6527: each return line has its own JE: US-3612 and BKLG-60 no more needed here -->
 <%
 a_lines = False
-adv_return_aal = line.cash_return_move_line_id and line.cash_return_move_line_id.analytic_lines or []
-adv_return_fp_lines = []
-adv_return_free_lines = []
-for adv_return_l in adv_return_aal:
-    if adv_return_l.free_account:
-        adv_return_free_lines.append(adv_return_l)
-    else:
-        adv_return_fp_lines.append(adv_return_l)
 if not line.invoice_id and not line.imported_invoice_line_ids and line.fp_analytic_lines:
-    a_lines = adv_return_fp_lines or line.fp_analytic_lines
+    a_lines = line.fp_analytic_lines
 %>
 % if a_lines:
-% for ana_line in sorted(a_lines, key=lambda x: x.id):
+% for ana_line in [x for x in sorted(a_lines, key=lambda x: x.id) if not x.free_account]:
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:
@@ -281,7 +274,6 @@ elif ana_line.last_corrected_id:
     line_color = 'red'
 endif
 %>
-% if not ana_line.free_account:
       <tr class="loop${nbloop%2} ${line_color}">
           <td colspan="${colspan}" />
           <td>${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</td>
@@ -296,7 +288,6 @@ endif
           <td>${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</td>
           <td />
       </tr>
-% endif
 % endfor
 % endif
 
@@ -304,10 +295,10 @@ endif
 <%
 a_lines = False
 if not line.invoice_id and not line.imported_invoice_line_ids and line.free_analytic_lines:
-    a_lines = adv_return_free_lines or line.free_analytic_lines
+    a_lines = line.free_analytic_lines
 %>
 % if a_lines:
-% for ana_line in sorted(a_lines, key=lambda x: x.id):
+% for ana_line in [ x for x in sorted(a_lines, key=lambda x: x.id) if x.free_account]:
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:

@@ -40,6 +40,7 @@
             <field name="priority" eval="5"/>
             <field name="arch" type="xml">
                 <search string="Periods">
+                    <filter name="active" string="Active Instances" icon="terp-check" domain="[('instance_id.state', '=', 'active')]" />
                     <field name="instance_id" domain="[('instance_child_ids','=',True)]"/>
                     <field name="period_id" />
                     <field name="state" />

@@ -244,3 +244,10 @@ class field_access_rule(osv.osv):
         return True
 
 field_access_rule()
+
+class res_groups(osv.osv):
+    _inherit = 'res.groups'
+    _columns = {
+        'far_ids': fields.many2many('msf_field_access_rights.field_access_rule', 'field_access_rule_groups_rel', 'group_id', 'field_access_rule_id', 'Fields Access Rules', readonly=1),
+    }
+res_groups()

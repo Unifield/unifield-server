@@ -637,12 +637,18 @@
                         <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
                         <separator orientation="vertical"/>
                         <filter name="open_fy" icon="terp-go-year" string="Open FY" domain="[('open_fy', '=', True)]"/>
+                        <separator orientation="vertical"/>
+                        <filter name="draft_cp" icon="terp-document-new" string="Draft Counterparts" domain="[('counterpart_inv_status','=','draft')]" help="Draft Counterparts Invoices"/>
+                        <filter name="open_cp" icon="terp-dolar_ok!" string="Open Counterparts" domain="[('counterpart_inv_status','=','open')]" help="Open Counterparts Invoices"/>
+                        <filter name="paid_cp" icon="terp-dolar" string="Paid Counterparts" domain="[('counterpart_inv_status', '=', 'paid')]"/>
+                        <filter name="closed_cp" icon="terp-dialog-close" string="Closed Counterparts" domain="[('counterpart_inv_status', '=', 'inv_close')]" />
 
                         <separator orientation="vertical"/>
                         <field name="number"/>
                         <field name="partner_id"/>
                         <field name="origin"/>
                     </group>
+
                     <newline/>
                     <group col="10" colspan="4">
                         <field name="journal_id" select='1' context="{'search_default_filter_is_active': 1}"/>

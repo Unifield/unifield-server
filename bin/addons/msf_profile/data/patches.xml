@@ -812,6 +812,39 @@
             <field name="method">us_9229_fix_rt</field>
         </record>
 
+        <!-- UF27 -->
+        <record id="us_9842_remove_space" model="patch.scripts">
+            <field name="method">us_9842_remove_space</field>
+        </record>
+
+        <record id="us_9999_custom_accrual_order" model="patch.scripts">
+            <field name="method">us_9999_custom_accrual_order</field>
+        </record>
+
+        <record id="set_creator_on_employee" model="patch.scripts">
+            <field name="method">set_creator_on_employee</field>
+        </record>
+
+        <record id="us_9588_set_real_period_on_aji_from_cv" model="patch.scripts">
+            <field name="method">us_9588_set_real_period_on_aji_from_cv</field>
+        </record>
+
+        <record id="us_7852_set_journal_code" model="patch.scripts">
+            <field name="method">us_7852_set_journal_code</field>
+        </record>
+
+        <record id="us_10105_custom_order" model="patch.scripts">
+            <field name="method">us_10105_custom_order</field>
+        </record>
+
+        <record id="us_10105_custom_order_cv" model="patch.scripts">
+            <field name="method">us_10105_custom_order_cv</field>
+        </record>
+
+        <record id="us_10475_create_user_sup_config_hq" model="patch.scripts">
+            <field name="method">us_10475_create_user_sup_config_hq</field>
+        </record>
+
         <record id="us_9406_empty_sign" model="patch.scripts">
             <field name="method">us_9406_empty_sign</field>
         </record>
@@ -821,9 +854,7 @@
         </record>
 
         <record id="us_9406_create_bar" model="patch.scripts">
-           <!-- TODO : to be removed at integration ? -->
             <field name="method">us_9406_create_bar</field>
         </record>
-
     </data>
 </openerp>

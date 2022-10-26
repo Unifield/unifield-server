@@ -476,7 +476,10 @@ class ir_model_fields(osv.osv):
         sel = {}
 
         if field in pool_obj._columns and hasattr(pool_obj._columns[field], 'selection'):
-            sel = dict(pool_obj._columns[field].selection)
+            if callable(pool_obj._columns[field].selection):
+                sel = dict(pool_obj._columns[field].selection(pool_obj, cr, uid, context))
+            else:
+                sel = dict(pool_obj._columns[field].selection)
         elif field in pool_obj._inherit_fields and hasattr(pool_obj._inherit_fields[field][2], 'selection'):
             sel = dict(pool_obj._inherit_fields[field][2].selection)
         if callable(sel):

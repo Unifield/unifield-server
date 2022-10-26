@@ -436,7 +436,7 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_('Line %s: Posting date \'%s\' is not in the same period as given register.') % (current_line_num, r_date))
                         continue
                     # Check G/L account
-                    account_code = str(line[cols['account']]).split(' ') and str(line[cols['account']]).split(' ')[0] or str(line[cols['account']])
+                    account_code = tools.ustr(line[cols['account']]).split(' ') and tools.ustr(line[cols['account']]).split(' ')[0] or tools.ustr(line[cols['account']])
                     account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)])
                     if not account_ids:
                         errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
