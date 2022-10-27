@@ -106,5 +106,17 @@ action = self.open_my_signature(cr, uid, context=context)
         </record>
 
         <menuitem id="my_signature_menu" name="My Signature" action="my_signature_server_action" type="server" parent="base.menu_users" sequence="17"/>
+
+
+        <function model="ir.ui.view" name="generate_button_access_rules">
+            <function model="ir.ui.view" name="search" eval="[[('id', '=', ref('base.view_users_form'))]]"/>
+        </function>
+
+        <function model="ir.ui.view" name="generate_button_access_rules">
+            <function model="ir.ui.view" name="search" eval="[[('id', '=', ref('base.signature_change_date_form'))]]"/>
+        </function>
+
+
+
     </data>
 </openerp>

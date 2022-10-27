@@ -181,6 +181,12 @@ class patch_scripts(osv.osv):
                 bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
                 bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
 
+        user_manager = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'User_Manager')])
+        if user_manager:
+            bar_ids = bar_obj.search(cr, uid, [('name', '=', 'reset_signature'), ('model_id', '=', 'res.users')])
+            bar_ids += bar_obj.search(cr, uid, [('name', '=', 'save'), ('model_id', '=', 'signature.change_date')])
+            if bar_ids:
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [user_manager[0]])]})
         for group_name, menus in [
             ('Sign_user', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'useability_dashboard_and_menu.my_signature_menu']),
             ('User_Manager', ['base.signature_image_menu']),
@@ -215,6 +221,8 @@ class patch_scripts(osv.osv):
         return True
 
     def us_9406_empty_sign(self, cr, uid, *a, **b):
+        # this script must always be run : i.e on past and new instances to hide menu
+
         for model, table in [
                 ('purchase.order', 'purchase_order'), ('sale.order', 'sale_order'),
                 ('account.bank.statement', 'account_bank_statement'),
