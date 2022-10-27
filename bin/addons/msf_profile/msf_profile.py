@@ -163,12 +163,13 @@ class patch_scripts(osv.osv):
         if _get_instance_level(self, cr, uid) != 'hq':
             return True
 
-        b_names = ['add_user_signatures', 'action_close_signature', 'activate_role', 'disable_role', 'activate_offline', 'disable_offline', 'activate_offline_reset']
+        creator_b_names = ['add_user_signatures', 'action_close_signature', 'activate_role', 'disable_role', 'activate_offline', 'disable_offline', 'activate_offline_reset']
+        sign_b_names = ['open_sign_wizard']
         bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
-        for group_name, model in [
-            ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement']),
-            ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order']),
-            ('Sign_user', [])
+        for group_name, model, b_names in [
+            ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement'], creator_b_names),
+            ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order'], creator_b_names),
+            ('Sign_user', ['account.invoice', 'account.bank.statement', 'purchase.order', 'stock.picking', 'sale.order'], sign_b_names)
         ]:
             group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
             if not group_ids:
@@ -176,7 +177,7 @@ class patch_scripts(osv.osv):
             else:
                 group_id = group_ids[0]
 
-            if model:
+            if model and b_names:
                 bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
                 bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
 
