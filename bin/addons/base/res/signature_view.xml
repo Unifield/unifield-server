@@ -124,6 +124,7 @@
                 <form string="Sign Document">
                     <field name="name" invisible="1"/>
                     <field name="role" colspan="4" />
+                    <field name="user_name" colspan="4" />
                     <newline />
                     <field name="image" widget="image" />
                     <newline />
@@ -183,7 +184,7 @@
                 string="Signatures PDF"
                 model="signature.export.wizard"
                 name="signature.export.report"
-                rml="base/res/report/signature.rml"
+                rml="base/res/report_module/signature.rml"
                 auto="False"
                 />
 

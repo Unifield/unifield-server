@@ -771,7 +771,8 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="List of Signatures" colors="red:inactivation_date or to_date and to_date&lt;current_date" hide_new_button="1" hide_delete_button="1" hide_edit_button="1">
-                    <field name="user_id"/>
+                    <field name="login"/>
+                    <field name="user_name"/>
                     <field name="legal_name"/>
                     <field name="image" widget="image" height="50"/>
                     <field name="from_date"/>

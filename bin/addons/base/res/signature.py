@@ -429,6 +429,7 @@ class signature_line(osv.osv):
         'signature_id': fields.many2one('signature', 'Parent', required=1),
         'user_id': fields.many2one('res.users', 'Signee User'),
         'legal_name': fields.char('Legal name', size=64),
+        'user_name': fields.char('User name', size=64),
         'is_active': fields.boolean('Active'),
         'name': fields.char('Role/Function', size=128),
         'name_key': fields.char('key', size=10),
@@ -518,7 +519,7 @@ class signature_line(osv.osv):
         user = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['name'], context=context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature.id, 'value': value, 'unit': unit, 'legal_name': esignature.legal_name, 'doc_state': doc_state}, context=context)
+        self.write(cr, root_uid, ids, {'signed': True, 'date': fields.datetime.now(), 'user_id': real_uid, 'image_id': esignature.id, 'value': value, 'unit': unit, 'legal_name': esignature.legal_name, 'user_name': user.name, 'doc_state': doc_state}, context=context)
 
         if value is False:
             value = ''
@@ -529,7 +530,8 @@ class signature_line(osv.osv):
         return True
 
     def action_unsign(self, cr, uid, ids, context=None, check_ur=True):
-        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name', 'legal_name', 'value', 'unit'], context=context)
+        # check_ur: used when sign off line by sign creator
+        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name', 'user_name', 'value', 'unit'], context=context)
         if check_ur:
             sign_line._check_sign_unsign(context=context)
 
@@ -537,12 +539,12 @@ class signature_line(osv.osv):
         value = sign_line.value
         if value is False:
             value = ''
-        old = "signed by %s, %s %s" % (sign_line.user_id.name, value, sign_line.unit)
+        old = "signed by %s, %s %s" % (sign_line.user_name, value, sign_line.unit)
         desc = 'Delete signature on role %s' % (sign_line.name, )
         _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False, 'doc_state': False}, context=context)
+        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False, 'user_name': False, 'doc_state': False}, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
@@ -591,8 +593,8 @@ class signature_image(osv.osv):
 
     def name_get(self, cr, uid, ids, context=None):
         ret = []
-        for img in self.browse(cr, uid, ids, fields_to_fetch=['legal_name'], context=context):
-            ret.append((img.id, '%s (id:%s)' % (img.legal_name, img.id)))
+        for img in self.browse(cr, uid, ids, fields_to_fetch=['user_name'], context=context):
+            ret.append((img.id, '%s (id:%s)' % (img.user_name, img.id)))
 
         return ret
 
@@ -611,7 +613,9 @@ class signature_image(osv.osv):
 
     _columns = {
         'user_id': fields.many2one('res.users', required=1, string='User'),
+        'login': fields.related('user_id', 'login', type='char', size=64, string='Login', readonly=1),
         'legal_name': fields.char('Legal name', size=64),
+        'user_name': fields.char('User name', size=64),
         'image': fields.text('Signature'),
         'pngb64': fields.function(_get_image, method=1, type='text', string='Image'),
         'from_date': fields.date('Start Date', readonly=True),
@@ -628,7 +632,8 @@ class signature_document_wizard(osv.osv_memory):
     _description = 'Wizard used to sign a document'
     _columns = {
         'name': fields.char('Document', size=256, readonly=1),
-        'user_id': fields.many2one('Users', readonly=1),
+        'user_id': fields.many2one('res.users', 'Users', readonly=1),
+        'user_name': fields.related('user_id', 'name', type='char', size=64, string='User Name', readonly=1),
         'role': fields.char('Role/Function', size=256, readonly=1),
         'line_id': fields.many2one('signature.line', 'Line', readonly=1),
         'image': fields.text('Signature', readonly=1),
@@ -840,6 +845,7 @@ class signature_set_user(osv.osv_memory):
                 'user_id': real_uid,
                 'image': wiz.new_signature,
                 'legal_name': wiz.legal_name,
+                'user_name': wiz.user_id.name,
                 'from_date': wiz.user_id.signature_from,
                 'to_date': wiz.user_id.signature_to,
             }, context=context)

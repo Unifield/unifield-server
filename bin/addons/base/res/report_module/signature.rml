@@ -96,7 +96,7 @@
           </tr>
           <tr>
           [[ repeatIn(getSign(objects), 'sign') ]]
-            <td><para style="line">[[sign.user_id.login]]</para></td>
+            <td><para style="line">[[sign.user_name]]</para></td>
             <td><para style="line">[[sign.legal_name]]</para></td>
             <td><image width="100" height="25" mask="auto">[[ sign.pngb64 or removeParentNode('image')]]</image></td>
             <td><para style="line">[[ formatLang(sign.from_date, date=True) ]]</para></td>

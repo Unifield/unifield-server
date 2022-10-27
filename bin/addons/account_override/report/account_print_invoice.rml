@@ -491,16 +491,16 @@
                     <para style="terp_default_9">Name :</para>
                 </td>
                 <td>
-                    <para style="terp_default_9">[[ getSign(o, 'sr', 'user_id') ]]</para>
+                    <para style="terp_default_9">[[ getSign(o, 'sr', 'user_name') ]]</para>
                 </td>
                 <td>
-                    <para style="terp_default_9">[[ getSign(o, 'tr', 'user_id') ]]</para>
+                    <para style="terp_default_9">[[ getSign(o, 'tr', 'user_name') ]]</para>
                 </td>
                 <td>
-                    <para style="terp_default_9">[[ getSign(o, 'fr', 'user_id') ]]</para>
+                    <para style="terp_default_9">[[ getSign(o, 'fr', 'user_name') ]]</para>
                 </td>
                 <td>
-                    <para style="terp_default_9">[[ getSign(o, 'mr', 'user_id') ]]</para>
+                    <para style="terp_default_9">[[ getSign(o, 'mr', 'user_name') ]]</para>
                 </td>
             </tr>
             <tr>

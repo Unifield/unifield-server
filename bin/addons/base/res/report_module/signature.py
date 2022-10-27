@@ -17,5 +17,5 @@ class signature_export_report(report_sxw.rml_parse):
         ids = img_obj.search(self.cr, self.uid, [('from_date', '<=', o.end_date), '|', ('to_date', '=', False), ('to_date', '>=', o.start_date)], context=self.localcontext)
         return sorted(img_obj.browse(self.cr, self.uid, ids, context=self.localcontext), cmp=lambda x,y: cmp(x.user_id.login, y.user_id.login) or cmp(x.to_date, y.to_date))
 
-report_sxw.report_sxw('report.signature.export.report', 'signature.export.wizard', 'addons/base/res/report/signature.rml', header=False, parser=signature_export_report)
+report_sxw.report_sxw('report.signature.export.report', 'signature.export.wizard', 'addons/base/res/report_module/signature.rml', header=False, parser=signature_export_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
