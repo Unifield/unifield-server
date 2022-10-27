@@ -164,7 +164,7 @@ class patch_scripts(osv.osv):
             return True
 
         creator_b_names = ['add_user_signatures', 'action_close_signature', 'activate_role', 'disable_role', 'activate_offline', 'disable_offline', 'activate_offline_reset']
-        sign_b_names = ['open_sign_wizard']
+        sign_b_names = ['open_sign_wizard', 'action_unsign']
         bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
         for group_name, model, b_names in [
             ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement'], creator_b_names),
