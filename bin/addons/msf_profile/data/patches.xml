@@ -852,5 +852,9 @@
         <record id="us_fix_segment_version" model="patch.scripts">
             <field name="method">us_fix_segment_version</field>
         </record>
+
+        <record id="us_9394_fix_pi_and_reason_type" model="patch.scripts">
+            <field name="method">us_9394_fix_pi_and_reason_type</field>
+        </record>
     </data>
 </openerp>

@@ -925,14 +925,21 @@ class PhysicalInventory(osv.osv):
         product_obj = self.pool.get('product.product')
         reason_type_obj = self.pool.get('stock.reason.type')
         discrepancy_obj = self.pool.get('physical.inventory.discrepancy')
+        data_obj = self.pool.get('ir.model.data')
+        other_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        discr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
         ids_seen = {}
+
+        sub_rt_dict_by_name = {}
+        for x in self.pool.get('physical.inventory.discrepancy').fields_get(cr, uid, ['sub_reason_type'], context=context):
+            sub_rt_dict_by_name[x[1]] = x[0]
 
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
             if row_index < 10:
                 continue
-            if len(row) != 20:
+            if len(row) != 21:
                 add_error(_("""The number of columns is incorrect, you should have exactly 20 columns in this order:
-Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theorical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Comments / actions (in case of discrepancy)"""),
+Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theoretical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Sub Reason Type, Comments / actions (in case of discrepancy)"""),
                           row_index, len(row))
                 break
 
@@ -963,7 +970,11 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                     int(code)
                     reason_ids = reason_type_obj.search(cr, uid, [('code', '=', code), ('name', '=', adjustement_split[-1].strip())], context=context)
                     if reason_ids:
-                        adjustment_type = reason_ids[0]
+                        if reason_ids[0] in [discr_rt_id, other_rt_id]:
+                            adjustment_type = reason_ids[0]
+                        else:
+                            add_error(_('The adjustment type %s is not allowed') % adjustment_type, row_index, 18)
+                            adjustment_type = False
                 except ValueError:
                     reason_ids = []
 
@@ -971,7 +982,17 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                     add_error(_('Unknown adjustment type %s') % adjustment_type, row_index, 18)
                     adjustment_type = False
 
-            comment = row.cells[19].data
+            sub_rt = row.cells[19].data
+            sub_rt_index = False
+            if sub_rt:
+                if adjustment_type == discr_rt_id:
+                    sub_rt_index = sub_rt_dict_by_name.get(sub_rt)
+                    if not sub_rt_index:
+                        add_error(_('Unknown Sub Reason Type %s') % sub_rt, row_index, 19)
+                else:
+                    add_error(_('It is not possible to add a Sub Reason Type for this Adjustment Type'), row_index, 19)
+
+            comment = row.cells[20].data
 
             line_id = False
             line_ids = discrepancy_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
@@ -997,9 +1018,16 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                 add_error(_('Unknown line no %s') % line_no, row_index, 0)
             else:
                 if inventory_rec.state == 'confirmed':
-                    disc_line = (1, line_id, {'comment': comment})
+                    # In case the imported line has Discr adj type + sub RT when og line has Other adj type
+                    current_line_rt = discrepancy_obj.read(cr, uid, line_id, ['reason_type_id'], context=context)['reason_type_id']
+                    if current_line_rt and current_line_rt[0] != discr_rt_id and sub_rt_index:
+                        add_error(_('It is not possible to add a Sub Reason Type for this Adjustment Type on the Confirmed line')
+                                  , row_index, 19)
+                        sub_rt_index = False
+
+                    disc_line = (1, line_id, {'sub_reason_type': sub_rt_index, 'comment': comment})
                 else:
-                    disc_line = (1, line_id, {'reason_type_id': adjustment_type, 'comment': comment})
+                    disc_line = (1, line_id, {'reason_type_id': adjustment_type, 'sub_reason_type': sub_rt_index, 'comment': comment})
                 discrepancy_report_lines.append(disc_line)
         # endfor
 
@@ -1470,6 +1498,16 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         return discrepancies
 
+    def _is_discrepancy_rt(self, cr, uid, ids, name, args,  context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        discr_rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+        for discr_line in self.browse(cr, uid, ids, fields_to_fetch=['reason_type_id'], context=context):
+            res[discr_line.id] = discr_line.reason_type_id and discr_line.reason_type_id.id == discr_rt_id or False
+        return res
 
     def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
         def search(model, domain):
@@ -1495,7 +1533,6 @@ class PhysicalInventoryDiscrepancy(osv.osv):
             }
 
         return total_product_qty_and_values
-
 
     _columns = {
         # Link to inventory
@@ -1529,7 +1566,10 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Discrepancy analysis
         'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', select=True),
+        'sub_reason_type': fields.selection([('encoding_err', 'Encoding Error'), ('process_err', 'Process Error'),  ('pick_err', 'Picking Error'), ('recep_err', 'Reception Error'),
+                                             ('bn_err', 'Batch Number related Error'), ('unexpl_err', 'Unjustified/Unexplained Error')], string='Sub Reason type'),
         'comment': fields.char(size=128, string='Comment'),
+        'discrepancy_rt': fields.function(_is_discrepancy_rt, type='boolean', string='The Adjustment type is Discrepancy', method=True, store=False),
 
         # Total for product
         'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),
@@ -1566,28 +1606,49 @@ class PhysicalInventoryDiscrepancy(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         context = context is None and {} or context
 
-        r = super(PhysicalInventoryDiscrepancy, self).write(cr, uid, ids, vals, context=context)
         move_obj = self.pool.get("stock.move")
+        rt_disc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
 
-        lines = self.read(cr, uid, ids, ["move_id"], context=context)
+        reason_type_id = vals.get("reason_type_id", False)
+        if 'reason_type_id' in vals and vals['reason_type_id'] != rt_disc:
+            vals['sub_reason_type'] = False
 
-        for line in lines:
-            if not line["move_id"]:
-                continue
-            reason_type_id = vals.get("reason_type_id", False)
-            to_update = {}
-            if reason_type_id:
-                to_update["reason_type_id"] = reason_type_id
-            if 'comment' in vals:
-                to_update["comment"] = vals['comment']
+        r = super(PhysicalInventoryDiscrepancy, self).write(cr, uid, ids, vals, context=context)
 
-            if to_update:
-                if '__last_update' in context:
-                    context['__last_update'] = {}
-                move_obj.write(cr, uid, [line["move_id"]], to_update, context=context)
+        if vals.get('sub_reason_type'):
+            # remove any sub_reason_type written
+            lines_with_sub_ids = self.search(cr, uid, [('id', 'in', ids), ('reason_type_id', '!=', rt_disc), ('sub_reason_type', '!=', False)], context=context)
+            if lines_with_sub_ids:
+                super(PhysicalInventoryDiscrepancy, self).write(cr, uid, lines_with_sub_ids, {'sub_reason_type': False}, context=context)
+
+        if reason_type_id or 'comment' in vals:
+            lines = self.read(cr, uid, ids, ['move_id'], context=context)
+            for line in lines:
+                if not line['move_id']:
+                    continue
+                to_update = {}
+                if reason_type_id:
+                    to_update["reason_type_id"] = reason_type_id
+                if 'comment' in vals:
+                    to_update["comment"] = vals['comment']
+
+                if to_update:
+                    if '__last_update' in context:
+                        context['__last_update'] = {}
+                    move_obj.write(cr, uid, [line['move_id']], to_update, context=context)
 
         return r
 
+    def onchange_reason_type(self, cr, uid, ids, reason_type_id, context=None):
+        if context is None:
+            context = {}
+        res = {'value': {'reason_type_id': reason_type_id}}
+        discr_rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+        if reason_type_id != discr_rt_id:
+            res['value'].update({'sub_reason_type': False, 'discrepancy_rt': False})
+        else:
+            res['value'].update({'discrepancy_rt': True})
+        return res
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass

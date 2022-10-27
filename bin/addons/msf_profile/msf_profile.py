@@ -162,6 +162,7 @@ class patch_scripts(osv.osv):
                 j.id = l.transfer_journal_id and
                 a.partner_txt != j.code
         """)
+
         self.log_info(cr, uid, "US-7852: set journal code on %d AJIs" % (cr.rowcount,))
 
     def us_fix_segment_version(self, cr, uid, *a, **b):
@@ -183,6 +184,25 @@ class patch_scripts(osv.osv):
                 fmc_version = hashlib.md5(''.join(all_data)).hexdigest()
                 cr.execute("update replenishment_segment_line set fmc_version=%s where id=%s", (fmc_version, line['id']))
             offset += 200
+        return True
+
+    def us_9394_fix_pi_and_reason_type(self, cr, uid, *a, **b):
+        '''
+        Set the new Reason Type column pi_discrepancy_type to True for 'Discrepancy' and 'Other', False otherwise
+        Remove the Adjustment Type of discrepancy lines in PIs that are Counted or Validated
+        '''
+        # Fix the RT
+        data_obj = self.pool.get('ir.model.data')
+        other_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        discr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+
+        cr.execute("""UPDATE stock_reason_type SET pi_discrepancy_type = 't' WHERE id IN %s""", (tuple([other_rt_id, discr_rt_id]),))
+        cr.execute("""UPDATE stock_reason_type SET pi_discrepancy_type = 'f' WHERE id NOT IN %s""", (tuple([other_rt_id, discr_rt_id]),))
+
+        # Fix the discrepancy lines
+        cr.execute("""UPDATE physical_inventory_discrepancy SET reason_type_id = NULL WHERE inventory_id IN (
+            SELECT id FROM physical_inventory WHERE state NOT IN ('confirmed', 'closed', 'cancel'))
+        """)
         return True
 
 
