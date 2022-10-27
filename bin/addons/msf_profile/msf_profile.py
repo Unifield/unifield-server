@@ -205,6 +205,110 @@ class patch_scripts(osv.osv):
         """)
         return True
 
+    def us_10587_fix_rt_donation_loan(self, cr, uid, *a, **b):
+        '''
+        Do the same updates as us_9229_fix_rt but on PPLs and Packs, and avoid Loan, Donation (standard) and Donation
+        before expiry flows
+        Fix the Reason Type of all Picks, OUTs, PPLs and Packs coming from a Loan, Donation (standard) or Donation
+        before expiry FO
+        Set the Reason Type of those documents and their moves to the one corresponding to the FO's Type
+        Set the Reason Type of PICK/01410-return and PICK/01410-return-01 in NG_COOR_OCA to Goods Return
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        deli_unit_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_unit')[1]
+        deli_partner_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        loan_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        don_st_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
+        don_exp_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+        goods_ret_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+
+        # To Deliver Unit
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN sale_order s ON p.sale_id = s.id LEFT JOIN stock_location l ON s.location_requestor_id = l.id
+                WHERE p.type = 'out' AND p.subtype IN ('packing', 'ppl') AND s.procurement_request = 't' 
+                    AND l.location_category = 'consumption_unit' AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (deli_unit_rt_id, '%-return%', '%-surplus%'))
+        self.log_info(cr, uid, "US-10587: %d PPLs/Packs and their lines had their Reason Type set to 'Deliver Unit'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN sale_order s ON p.sale_id = s.id LEFT JOIN stock_location l ON s.location_requestor_id = l.id
+                WHERE p.type = 'out' AND p.subtype IN ('packing', 'ppl') AND s.procurement_request = 't' 
+                    AND l.location_category = 'consumption_unit' AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (deli_unit_rt_id, '%-return%', '%-surplus%'))
+
+        # To Deliver Partner
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('packing', 'ppl') AND s.procurement_request = 'f'
+                    AND s.order_type NOT IN ('loan', 'donation_st', 'donation_exp') AND p.name NOT LIKE %s 
+                    AND p.name NOT LIKE %s)
+        ''', (deli_partner_rt_id, '%-return%', '%-surplus%'))
+        self.log_info(cr, uid, "US-10587: %d PPLs/Packs and their lines had their Reason Type set to 'Deliver Partner'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('packing', 'ppl') AND s.procurement_request = 'f'
+                    AND s.order_type NOT IN ('loan', 'donation_st', 'donation_exp') AND p.name NOT LIKE %s 
+                    AND p.name NOT LIKE %s)
+        ''', (deli_partner_rt_id, '%-return%', '%-surplus%'))
+
+        # Loan
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'loan' AND p.name NOT LIKE %s 
+                    AND p.name NOT LIKE %s)
+        ''', (loan_rt, '%-return%', '%-surplus%'))
+        self.log_info(cr, uid, "US-10587: %d OUTs/Picks/PPLs/Packs and their lines had their Reason Type set to 'Loan'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'loan' AND p.name NOT LIKE %s 
+                    AND p.name NOT LIKE %s)
+        ''', (loan_rt, '%-return%', '%-surplus%'))
+
+        # Donation (standard)
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'donation_st' 
+                    AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_st_rt, '%-return%', '%-surplus%'))
+        self.log_info(cr, uid, "US-10587: %d OUTs/Picks/PPLs/Packs and their lines had their Reason Type set to 'Donation (standard)'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'donation_st' 
+                    AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_st_rt, '%-return%', '%-surplus%'))
+
+        # Donation before expiry
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'donation_exp' 
+                    AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_exp_rt, '%-return%', '%-surplus%'))
+        self.log_info(cr, uid, "US-10587: %d OUTs/Picks/PPLs/Packs and their lines had their Reason Type set to 'Donation before expiry'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'donation_exp' 
+                    AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_exp_rt, '%-return%', '%-surplus%'))
+
+        # Fix the RT of a claim PICKs in NG_COOR_OCA
+        msf_instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+        if msf_instance and msf_instance.instance == 'NG_COOR_OCA':
+            cr.execute('''UPDATE stock_picking SET reason_type_id = %s WHERE id IN (11193, 13420)''', (goods_ret_rt,))
+            cr.execute('''UPDATE stock_move SET reason_type_id = %s WHERE picking_id IN (11193, 13420)''', (goods_ret_rt,))
+            self.log_info(cr, uid, "US-10587: PICK/01410-return, PICK/01410-return-01 and their lines had their Reason Type set to 'Goods Return'")
+
+        return True
 
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):

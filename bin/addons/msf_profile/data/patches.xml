@@ -856,5 +856,9 @@
         <record id="us_9394_fix_pi_and_reason_type" model="patch.scripts">
             <field name="method">us_9394_fix_pi_and_reason_type</field>
         </record>
+
+        <record id="us_10587_fix_rt_donation_loan" model="patch.scripts">
+            <field name="method">us_10587_fix_rt_donation_loan</field>
+        </record>
     </data>
 </openerp>
