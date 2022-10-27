@@ -468,7 +468,7 @@
 
     <section>
         <blockTable colWidths="64.0,116.0,116.0,116.0,116.0" style="StatusTable">
-        [[ o.signature_available or removeParentNode('section') ]]
+        [[ o.doc_type in ('donation', 'si') or removeParentNode('section') ]]
             <tr>
                 <td>
                     <para style="terp_default_9"> </para>

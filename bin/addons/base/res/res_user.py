@@ -785,10 +785,10 @@ class users(osv.osv):
             sign_follow_up = self.pool.get('signature.follow_up')
             open_sign_ids = sign_follow_up.search(cr, uid, [('user_id', 'in', ids), ('signed', '=', 0), ('signature_is_closed', '=', False)], context=context)
             if open_sign_ids:
-                list_of_doc = [x.doc_name for x in sign_follow_up.browse(cr, uid, open_sign_ids[0:5], fields_to_fetch=['doc_name'], context=context)]
+                list_of_doc = [x.doc_name or '' for x in sign_follow_up.browse(cr, uid, open_sign_ids[0:5], fields_to_fetch=['doc_name'], context=context)]
                 if len(open_sign_ids) > 5:
                     list_of_doc.append('...')
-                raise osv.except_osv(_('Warning'), _('You can not deactivate this user, %d documents have to be signed\n%s') % (len(open_sign_ids), ','.join(list_of_doc)))
+                raise osv.except_osv(_('Warning'), _('You can not deactivate this user, %d documents have to be signed\n%s') % (len(open_sign_ids), ', '.join(list_of_doc)))
 
 
 

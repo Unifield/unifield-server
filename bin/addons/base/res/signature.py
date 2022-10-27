@@ -144,7 +144,7 @@ class signature(osv.osv):
 
 
     def _get_signature_available(self, cr, uid, ids, *a, **b):
-        ret = []
+        ret = {}
         available = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature')
         for _id in ids:
             ret[_id] = available
@@ -253,15 +253,15 @@ class signature_object(osv.osv):
             'res_users_full': [(6, 0, [])],
         }
         if doc.signature_res_model == 'account.bank.statement' and doc.journal_id.type != 'cheque':
+            wiz_data['num_col'] = 2
             for user in doc.signature_id.signature_user_ids:
                 if user.subtype == 'rec':
                     wiz_data['res_users_rec'][0][2].append(user.user_id.id)
-                    wiz_data['num_col'] = 2
                 else:
                     wiz_data['res_users_full'][0][2].append(user.user_id.id)
-                    wiz_data['num_col'] = 1
             view_id = [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_add_user_register_wizard_form')[1]]
         else:
+            wiz_data['num_col'] = 1
             wiz_data['res_users'] = [(6, 0, [x.user_id.id for x in doc.signature_id.signature_user_ids])]
             wiz_id = self.pool.get('signature.add_user.wizard').create(cr, uid, {
                 'name': doc_name,
