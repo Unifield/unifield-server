@@ -603,7 +603,7 @@ class users(osv.osv):
         """, (tuple(ids), ))
         wrong = [x[0] for x in cr.fetchall()]
         if wrong:
-            raise osv.except_osv(_('Warning'), _('Please add the group Sign_user in order to Enable signatures on user(s) %s') % (','.join(wrong),))
+            raise osv.except_osv(_('Warning'), _('Please add the group Sign_user in order to Enable signatures on user(s) %s') % (', '.join(wrong),))
         return True
 
     _constraints = [
