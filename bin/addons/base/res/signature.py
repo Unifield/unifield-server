@@ -537,7 +537,7 @@ class signature_line(osv.osv):
         value = sign_line.value
         if value is False:
             value = ''
-        old = "signed by %s, %s %s" % (sign_line.legal_name, value, sign_line.unit)
+        old = "signed by %s, %s %s" % (sign_line.user_id.name, value, sign_line.unit)
         desc = 'Delete signature on role %s' % (sign_line.name, )
         _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
 
