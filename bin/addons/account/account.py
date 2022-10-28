@@ -874,7 +874,8 @@ class account_journal(osv.osv):
                 move_lines = self.pool.get('account.move.line').search(cr, uid, [('journal_id', 'in', ids)])
                 if move_lines:
                     raise osv.except_osv(_('Warning !'), _('You cannot modify company of this journal as its related record exist in Entry Lines'))
-            if not journal.is_current_instance and not context.get('sync_update_execution'):
+            if not journal.is_current_instance and not journal.is_coordo_editable \
+                    and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
             self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
         self._check_journal_inactivation(cr, uid, ids, vals, context=context)
