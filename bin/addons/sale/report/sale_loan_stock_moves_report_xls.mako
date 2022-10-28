@@ -208,17 +208,9 @@
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getUserCompany()['instance_id'].name|x}</Data></Cell>
                 % if isQtyOut(o):
                 <Cell ss:StyleID="line_right${i}"><Data ss:Type="String"></Data></Cell>
-                  % if o.state == 'cancel':
-                  <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">0</Data></Cell>
-                  % else:
-                  <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
-                  % endif
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
                 % else:
-                  % if o.state == 'cancel':
-                  <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">0</Data></Cell>
-                  % else:
-                  <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
-                  % endif
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_right${i}"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if o.balance:
