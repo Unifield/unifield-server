@@ -156,8 +156,8 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 pol_found = False
                 if sol.loan_line_id:
                     pol_found = sol.loan_line_id
-                    if so_found.id not in get_so_from_po_id:
-                        get_so_from_po_id[so_found.id] = pol_found.order_id
+                    if so_found.id not in get_po_from_so_id:
+                        get_po_from_so_id[so_found.id] = pol_found.order_id
                 else:
                     pol_found_ids = pol_obj.search(self.cr, self.uid, [('loan_line_id', '=', sol.id)])
                     if pol_found_ids:
@@ -215,8 +215,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 if key not in move_by_fo_po_prod:
                     keys_order.append(key)
                     move_by_fo_po_prod[key] = {'balance': 0, 'moves': []}
-                if status != _('Cancelled'):
-                    move_by_fo_po_prod[key]['balance'] += qty
+                move_by_fo_po_prod[key]['balance'] += qty
                 move_by_fo_po_prod[key]['moves'].append(move)
 
         result = []
