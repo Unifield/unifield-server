@@ -148,7 +148,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 elif so_found:
                     if so_found.state == po_found.state == 'done':
                         status = _('Closed')
-                    elif sol_found.state == 'cancel':
+                    elif so_found.state == 'cancel':
                         status = _('Cancelled')
             elif move.sale_line_id:
                 sol = move.sale_line_id
