@@ -10,7 +10,7 @@
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.picking'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
-                'domain_filter': "[('type', '=', 'in')]",
+                'domain_filter': "[('type', 'in', ['in', 'out']), ('subtype', 'in', ['standard', 'picking'])]",
                 'log_write': False,
                 'log_unlink': False,
                 'log_create': True,
@@ -34,7 +34,7 @@
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.picking'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
-                'domain_filter': "[('type', '=', 'in')]",
+                'domain_filter': "[('type', 'in', ['in', 'out']), ('subtype', 'in', ['standard', 'picking'])]",
                 'log_write': False,
                 'log_unlink': True,
                 'log_create': False,
@@ -58,7 +58,7 @@
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.picking'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
-                'domain_filter': "[('type', '=', 'in')]",
+                'domain_filter': "[('type', 'in', ['in', 'out']), ('subtype', 'in', ['standard', 'picking'])]",
                 'log_write': True,
                 'log_unlink': False,
                 'log_create': False,
@@ -90,7 +90,7 @@
             name_id = field_name[0]
         vals = {'name': name,
                 'object_id': object_ids[0],
-                'domain_filter': "[('picking_id', '!=', False), ('type', '=', 'in')]",
+                'domain_filter': "[('picking_id', '!=', False), ('type', 'in', ['in', 'out']), ('picking_subtype', 'in', ['standard', 'picking'])]",
                 'log_write': False,
                 'log_unlink': False,
                 'log_create': True,
@@ -124,7 +124,7 @@
             name_id = field_name[0]
         vals = {'name': name,
                 'object_id': object_ids[0],
-                'domain_filter': "[('picking_id', '!=', False), ('type', '=', 'in')]",
+                'domain_filter': "[('picking_id', '!=', False), ('type', 'in', ['in', 'out']), ('picking_subtype', 'in', ['standard', 'picking'])]",
                 'log_write': False,
                 'log_unlink': True,
                 'log_create': False,
@@ -158,7 +158,7 @@
             name_id = field_name[0]
         vals = {'name': name,
                 'object_id': object_ids[0],
-                'domain_filter': "[('picking_id', '!=', False), ('type', '=', 'in')]",
+                'domain_filter': "[('picking_id', '!=', False), ('type', 'in', ['in', 'out']), ('picking_subtype', 'in', ['standard', 'picking'])]",
                 'log_write': True,
                 'log_unlink': False,
                 'log_create': False,
