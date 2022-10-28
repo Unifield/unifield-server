@@ -844,5 +844,9 @@
         <record id="us_10475_create_user_sup_config_hq" model="patch.scripts">
             <field name="method">us_10475_create_user_sup_config_hq</field>
         </record>
+
+        <record id="store_picking_subtype" model="patch.scripts">
+            <field name="method">store_picking_subtype</field>
+        </record>
     </data>
 </openerp>
