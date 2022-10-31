@@ -4,7 +4,7 @@
         type="button"
         href="javascript: void(0)"
         title="${help}"
-        onclick="buttonClicked('${name}', '${btype}', '${model}', '${id}', getNodeAttribute(this, 'confirm'), '${target}', getNodeAttribute(this, 'context'), '${set_ids}');"
+        onclick="buttonClicked('${name}', '${btype}', '${model}', '${id}', getNodeAttribute(this, 'confirm'), '${target}', getNodeAttribute(this, 'context'), '${set_ids}', '${ignore_access_error}');"
         oncontextmenu="showBtnSdref(event, '${name}', '${model}', '${id}');"
         style="height: 20px;"
         ${py.attrs(attrs, confirm=confirm, context=ctx)}

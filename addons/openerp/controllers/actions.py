@@ -410,6 +410,10 @@ def act_url(action, data):
                               type=action['type']
                               ))
 
+@tools.expose(template="/openerp/controllers/templates/closepref.mako")
+def closepref(action, data):
+    return {}
+
 ACTIONS_BY_TYPE = {
     'ir.actions.refresh_popupo2m': refresh_popupo2m,
     'ir.actions.refresh_o2m': refresh_o2m,
@@ -420,7 +424,8 @@ ACTIONS_BY_TYPE = {
     'ir.actions.wizard': wizard,
     'ir.actions.report.custom': custom_report,
     'ir.actions.report.xml': xml_report,
-    'ir.actions.act_url': act_url
+    'ir.actions.act_url': act_url,
+    'closepref': closepref,
 }
 
 def act_window_opener(action, data):

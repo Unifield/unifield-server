@@ -408,6 +408,11 @@ class Text(TinyInputWidget):
 register_widget(Text, ["text", "text_tag"])
 
 
+class Signature(Text):
+    template = "/openerp/widgets/form/templates/signature.mako"
+
+register_widget(Signature, ['signature'])
+
 class Integer(TinyInputWidget):
     template = "/openerp/widgets/form/templates/integer.mako"
 
@@ -704,7 +709,7 @@ class Hidden(TinyInputWidget):
 class Button(TinyInputWidget):
 
     template = "/openerp/widgets/form/templates/button.mako"
-    params = ["btype", "id", "confirm", "icon", "target", "context", "default_focus", "set_ids"]
+    params = ["btype", "id", "confirm", "icon", "target", "context", "default_focus", "set_ids", "ignore_access_error"]
 
     visible = True
     def __init__(self, **attrs):
@@ -717,6 +722,7 @@ class Button(TinyInputWidget):
         self.nolabel = True
         self.target = ''
         self.set_ids = attrs.get('set_ids')
+        self.ignore_access_error = attrs.get('ignore_access_error', '')
         if self.icon:
             self.icon = icons.get_icon(self.icon)
         self.default_focus = attrs.get('default_focus', 0)

@@ -997,7 +997,7 @@ MochiKit.Base.update(ListView.prototype, {
     reload_from_wizard: function() {
         return this.reload(undefined, undefined, undefined, undefined, undefined, true);
     },
-    reload: function(edit_inline, concurrency_info, default_get_ctx, clear, ids_to_show, from_close_wizard) {
+    reload: function(edit_inline, concurrency_info, default_get_ctx, clear, ids_to_show, from_close_wizard, triggerchange) {
         if (openobject.http.AJAX_COUNT > 0) {
             return callLater(1, bind(this.reload, this), edit_inline, concurrency_info);
         }
@@ -1135,7 +1135,12 @@ MochiKit.Base.update(ListView.prototype, {
                     $list.parent().parent().replaceWith(obj.view);
 
                     form_hookAttrChange($(idSelector(self.name)).find("[attrs]"));
-
+                    if (triggerchange) {
+                        var o2mlist = openobject.dom.get('_o2m_'+ self.name)
+                        if (o2mlist) {
+                            onChange(o2mlist);
+                        }
+                    }
                     if (previous_not_editable) {
                         //console.log('Set readonly');
                         new One2Many(self.name).setReadonly(true);

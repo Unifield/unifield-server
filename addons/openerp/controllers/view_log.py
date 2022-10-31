@@ -124,5 +124,5 @@ class Show_Fields(SecuredController):
         model_fields = rpc.session.execute('object', 'execute', model, 'fields_get', False, rpc.session.context)
         res = {'model': model}
         if model_fields:
-            res.update({'model_fields': sorted(model_fields.items(), key=lambda x: x[0])})
+            res.update({'model_fields': model_fields.items()})
         return res

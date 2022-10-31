@@ -267,6 +267,30 @@
                 }
             }
         </script>
+    % elif signature_required:
+        <div id="survey">
+                <div id="survey_title">${_('New signature required')}</div>
+                 <div class="row">
+                  <div class="column"><div class="survey_button" onclick="click_answer('goto')">${_('Create my signature')}</div></div>
+                  <div class="column"><div class="survey_button" onclick="click_answer('later')">${_('Ask Later')}</div></div>
+                </div>
+        </div>
+        <script type="text/javascript">
+            jQuery('#survey').fancybox({'modal': true, 'height': 250, 'width': 700, 'scrolling': 'no', 'autoDimensions': false, 'autoScale': false});
+
+            jQuery(document).ready(function() {
+                jQuery('#survey').trigger('click');
+                jQuery('#survey').show();
+                jQuery('#survey').unbind('click.fb');
+            });
+            function click_answer(answer) {
+                if (answer=='goto') {
+                    openAction('/openerp/pref/create_signature', 'new', false, false, '400px', '720px');
+                }
+                jQuery('#survey').hide();
+                jQuery.fancybox.close();
+            }
+        </script>
     % endif
 </%def>
 
