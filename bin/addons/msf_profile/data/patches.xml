@@ -860,5 +860,17 @@
         <record id="us_10587_fix_rt_donation_loan" model="patch.scripts">
             <field name="method">us_10587_fix_rt_donation_loan</field>
         </record>
+
+        <record id="us_9406_empty_sign" model="patch.scripts">
+            <field name="method">us_9406_empty_sign</field>
+        </record>
+
+        <record id="us_9406_create_common_acl" model="patch.scripts">
+            <field name="method">us_9406_create_common_acl</field>
+        </record>
+
+        <record id="us_9406_create_bar" model="patch.scripts">
+            <field name="method">us_9406_create_bar</field>
+        </record>
     </data>
 </openerp>

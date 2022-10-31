@@ -319,10 +319,10 @@
                     <para style="Line">Name</para>
                 </td>
                 <td>
-                    <para style="Line"> </para>
+                    <para style="Line">[[ getSign(objects[0], 'tr', 'user_name') ]]</para>
                 </td>
                 <td>
-                    <para style="Line"> </para>
+                    <para style="Line">[[ getSign(objects[0], 'sr', 'user_name') ]]</para>
                 </td>
             </tr>
             <tr>
@@ -330,10 +330,21 @@
                     <para style="Line">Date</para>
                 </td>
                 <td>
-                    <para style="Line"> </para>
+                    <para style="Line">[[ getSign(objects[0], 'tr', 'date') ]]</para>
                 </td>
                 <td>
-                    <para style="Line"> </para>
+                    <para style="Line">[[ getSign(objects[0], 'sr', 'date') ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="Line">Indicative Total</para>
+                </td>
+                <td>
+                    <para style="Line">[[ getSign(objects[0], 'tr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="Line">[[ getSign(objects[0], 'sr', 'format_value') ]]</para>
                 </td>
             </tr>
             <tr>
@@ -341,10 +352,10 @@
                     <para style="LFooterEnd">Signature</para>
                 </td>
                 <td>
-                    <para style="LFooterEnd"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <para style="LFooterEnd"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image') ]]</image>
                 </td>
             </tr>
         </blockTable>

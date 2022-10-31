@@ -32,6 +32,10 @@ from tools.safe_eval import safe_eval
 
 
 class account_invoice(osv.osv):
+    _name = "account.invoice"
+    _description = 'Invoice'
+    _order = 'is_draft desc, internal_number desc, id desc'
+#    _inherit = 'signature.object'
 
     def _auto_init(self, cr, context=None):
         d = super(account_invoice, self)._auto_init(cr, context=context)
@@ -250,10 +254,6 @@ class account_invoice(osv.osv):
 
     def _get_journal_type(self, cr, uid, context=None):
         return self.pool.get('account.journal').get_journal_type(cr, uid, context)
-
-    _name = "account.invoice"
-    _description = 'Invoice'
-    _order = 'is_draft desc, internal_number desc, id desc'
 
     _columns = {
         'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),

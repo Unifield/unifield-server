@@ -2,6 +2,7 @@
 
 <!DOCTYPE INVOICE [
     <!ENTITY payment_tab SYSTEM "account_invoice_payment_tab.xml">
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
 ]>
 
 <openerp>
@@ -399,7 +400,7 @@
                             <field name="counterpart_inv_number"/>
                             <field name="counterpart_inv_status"/>
                         </page>
-
+                        &signature_template;
                     </notebook>
                 </form>
             </field>

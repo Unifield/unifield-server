@@ -685,16 +685,18 @@ class audittrail_rule(osv.osv):
             model_name_tolog = rule.object_id.model
             model_id_tolog = rule.object_id.id
             parent_field = False
+            inherits = False
             if rule.parent_field_id:
                 parent_field_display = rule.name_get_field_id.name
                 parent_field = rule.parent_field_id.name
                 model_name_tolog = rule.parent_field_id.relation
                 model_parent_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
 
-            inherits = self.pool.get(model_name_tolog)._inherits
-            if inherits:
-                model_name_tolog = inherits.keys()[-1]
-                model_id_tolog = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
+            if model_name_tolog in ('product.product', 'hr.employee'):
+                inherits = self.pool.get(model_name_tolog)._inherits
+                if inherits:
+                    model_name_tolog = inherits.keys()[-1]
+                    model_id_tolog = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name_tolog)])[0]
 
             if method in ('write', 'create'):
                 original_fields = current.values()[0].keys()
@@ -721,7 +723,9 @@ class audittrail_rule(osv.osv):
                 inherit_field_id = False
                 if inherits:
                     inherits_field = inherits.values()[-1]
-                    inherit_field_id = self.pool.get(rule.object_id.model).read(cr, uid, res_id, [inherits_field])[inherits_field][0]
+                    inherit_field_ids = self.pool.get(rule.object_id.model).read(cr, uid, res_id, [inherits_field])[inherits_field]
+                    if inherit_field_ids:
+                        inherits_field = inherit_field_ids[0]
 
                 vals = {
                     'name': rule.object_id.name,
@@ -1037,28 +1041,28 @@ class audittrail_log_line(osv.osv):
         return super(audittrail_log_line, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
     _columns = {
-        'name': fields.char(size=256, string='Description', required=True),
-        'object_id': fields.many2one('ir.model', string='Object'),
-        'user_id': fields.many2one('res.users', string='User'),
-        'method': fields.selection([('create', 'Creation'), ('write', 'Modification'), ('unlink', 'Deletion')], string='Method'),
-        'timestamp': fields.datetime(string='Date'),
-        'res_id': fields.integer(string='Resource Id'),
-        'field_id': fields.many2one('ir.model.fields', 'Fields'),
-        'log': fields.integer("Log ID"),
+        'name': fields.char(size=256, string='Description', required=True, readonly=1),
+        'object_id': fields.many2one('ir.model', string='Object', readonly=1),
+        'user_id': fields.many2one('res.users', string='User', readonly=1),
+        'method': fields.selection([('create', 'Creation'), ('write', 'Modification'), ('unlink', 'Deletion')], string='Method', readonly=1),
+        'timestamp': fields.datetime(string='Date', readonly=1),
+        'res_id': fields.integer(string='Resource Id', readonly=1),
+        'field_id': fields.many2one('ir.model.fields', 'Fields', readonly=1),
+        'log': fields.integer("Log ID", readonly=1),
         'old_value_fct': fields.function(_get_values, method=True, string='Old Value Fct', type='char', store=False, multi='values'),
         'new_value_fct': fields.function(_get_values, method=True, string='New Value Fct', type='char', store=False, multi='values'),
-        'old_value_text': fields.char(size=1024, string='Old Value'),
-        'new_value_text': fields.char(size=1024, string='New Value'),
-        'old_value': fields.text("Old Value"),
-        'new_value': fields.text("New Value"),
-        'field_description': fields.char('Field Description', size=64),
+        'old_value_text': fields.char(size=1024, string='Old Value', readonly=1),
+        'new_value_text': fields.char(size=1024, string='New Value', readonly=1),
+        'old_value': fields.text("Old Value", readonly=1),
+        'new_value': fields.text("New Value", readonly=1),
+        'field_description': fields.char('Field Description', size=64, readonly=1),
         'trans_field_description': fields.function(_get_field_name, fnct_search=_src_field_name, method=True, type='char', size=64, string='Field Description', store=False),
-        'other_column': fields.char(size=64, string='Sequence', select=1),
-        'sub_obj_name': fields.char(size=64, string='Order line'),
+        'other_column': fields.char(size=64, string='Sequence', select=1, readonly=1),
+        'sub_obj_name': fields.char(size=64, string='Order line', readonly=1),
         # These 3 fields allows the computation of the name of the subobject (sub_obj_name)
-        'rule_id': fields.many2one('audittrail.rule', string='Rule'),
-        'fct_res_id': fields.integer(string='Res. Id'),
-        'fct_object_id': fields.many2one('ir.model', string='Fct. Object'),
+        'rule_id': fields.many2one('audittrail.rule', string='Rule', readonly=1),
+        'fct_res_id': fields.integer(string='Res. Id', readonly=1),
+        'fct_object_id': fields.many2one('ir.model', string='Fct. Object', readonly=1),
     }
 
     _defaults = {

@@ -34,6 +34,8 @@ class order(report_sxw.rml_parse):
             'filter_lines': self.filter_lines,
         })
 
+
+
     def filter_lines(self, o):
         if not o.order_line:
             return []

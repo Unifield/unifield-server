@@ -197,10 +197,10 @@ class PhysicalInventory(osv.osv):
             raise osv.except_osv(_('Warning'), _("Location is inactive"))
         return new_id
 
-    def write_web(self, cr, uid, ids, values, context=None):
+    def write_web(self, cr, uid, ids, values, context=None, ignore_access_error=False):
         if values and 'type' not in values and values.get('hidden_type'):
             values['type'] = values['hidden_type']
-        return super(PhysicalInventory, self).write_web(cr, uid, ids, values, context=context)
+        return super(PhysicalInventory, self).write_web(cr, uid, ids, values, context=context, ignore_access_error=ignore_access_error)
 
     def change_inventory_type(self, cr, uid, ids, inv_type, context=None):
         return {'value': {'hidden_type': inv_type}}

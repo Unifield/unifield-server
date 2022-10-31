@@ -310,6 +310,89 @@ class patch_scripts(osv.osv):
 
         return True
 
+
+    def us_9406_create_bar(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+
+        creator_b_names = ['add_user_signatures', 'action_close_signature', 'activate_role', 'disable_role', 'activate_offline', 'disable_offline', 'activate_offline_reset']
+        sign_b_names = ['open_sign_wizard', 'action_unsign']
+        bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+        for group_name, model, b_names in [
+            ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement'], creator_b_names),
+            ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order'], creator_b_names),
+            ('Sign_user', ['account.invoice', 'account.bank.statement', 'purchase.order', 'stock.picking', 'sale.order'], sign_b_names)
+        ]:
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
+            if not group_ids:
+                group_id = self.pool.get('res.groups').create(cr, uid, {'name': group_name})
+            else:
+                group_id = group_ids[0]
+
+            if model and b_names:
+                bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
+
+        user_manager = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'User_Manager')])
+        if user_manager:
+            bar_ids = bar_obj.search(cr, uid, [('name', '=', 'reset_signature'), ('model_id', '=', 'res.users')])
+            bar_ids += bar_obj.search(cr, uid, [('name', '=', 'save'), ('model_id', '=', 'signature.change_date')])
+            if bar_ids:
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [user_manager[0]])]})
+        for group_name, menus in [
+            ('Sign_user', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'useability_dashboard_and_menu.my_signature_menu']),
+            ('User_Manager', ['base.signature_image_menu']),
+            ('Sign_document_creator_finance', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'base.signature_image_menu']),
+            ('Sign_document_creator_supply', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'base.signature_image_menu']),
+        ]:
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
+            if not group_ids:
+                continue
+            for menu in menus:
+                module, xmlid = menu.split('.')
+                try:
+                    menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
+                except:
+                    continue
+                self.pool.get('ir.ui.menu').write(cr, uid, [menu_id], {'groups_id': [(4, group_ids[0])]})
+        return True
+
+    def us_9406_create_common_acl(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+        model_obj = self.pool.get('ir.model')
+        acl_obj = self.pool.get('ir.model.access')
+        for model in ['signature', 'signature.object', 'signature.line', 'signature.image', 'signature.follow_up', 'signature.users.allowed']:
+            model_id = model_obj.search(cr, uid, [('model', '=', model)])
+            acl_obj.create(cr, uid, {
+                'name': 'common',
+                'model_id': model_id[0],
+                'perm_read': True,
+                'perm_create': model == 'signature',
+            })
+        return True
+
+    def us_9406_empty_sign(self, cr, uid, *a, **b):
+        # this script must always be run : i.e on past and new instances to hide menu
+
+        for model, table in [
+                ('purchase.order', 'purchase_order'), ('sale.order', 'sale_order'),
+                ('account.bank.statement', 'account_bank_statement'),
+                ('account.invoice', 'account_invoice'),
+                ('stock.picking', 'stock_picking'),
+        ]:
+            cr.execute('select id from %s where signature_id is null' % (table, )) # not_a_user_entry
+            for x in cr.fetchall():
+                cr.execute("insert into signature (signature_res_model, signature_res_id) values (%s, %s) returning id", (model, x[0]))
+                a = cr.fetchone()
+                cr.execute("update %s set signature_id=%%s where id=%%s" % (table,) , (a[0], x[0])) # not_a_user_entry
+        # hide menuitems
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+
+        return True
+
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):
         ''' OCBHQ: fix amounts on EOY-2021-14020-OCBVE101-VES'''
@@ -317,6 +400,7 @@ class patch_scripts(osv.osv):
         if instance and instance.name == 'OCBHQ':
             cr.execute('''update account_move_line set credit_currency='636077529292.81' where id = (select res_id from ir_model_data where name='8e980ca1-dee3-11e5-a9b9-94659c5434c6/account_move_line/226517')''')
             cr.execute('''update account_move_line set debit_currency='636077529292.81' where id = (select res_id from ir_model_data where name='8e980ca1-dee3-11e5-a9b9-94659c5434c6/account_move_line/226518')''')
+
         return True
 
     def us_8259_remove_currency_table_wkf(self, cr, uid, *a, **b):
