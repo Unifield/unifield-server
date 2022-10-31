@@ -70,7 +70,9 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         Return the moves for the report and set their qty balance
         '''
         so_obj = self.pool.get('sale.order')
+        sol_obj = self.pool.get('sale.order.line')
         po_obj = self.pool.get('purchase.order')
+        pol_obj = self.pool.get('purchase.order.line')
         sm_list = []
         # TODO: we must search on counterpart if filter is used on wizard
         for move in report.sm_ids:
@@ -89,56 +91,114 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             else:
                 qty = self._get_qty(move)
 
-            dom = []
             status = _('Open')
             if move.purchase_line_id:
-                po_found = move.purchase_line_id.order_id
+                pol = move.purchase_line_id
+                po_found = pol.order_id
+                sol_found = False
                 ids = []
-                if po_found.id not in get_so_from_po_id:
-                    if po_found.loan_id:
-                        ids = [po_found.loan_id.id]
-                    elif po_found.origin:
-                        if po_found.origin[-2:] in ['-1', '-2', '-3']:
-                            ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
-                            if not ids:
-                                ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin[0:-2])])
-                        else:
-                            ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
-                            if not ids:
-                                dom = ['%s-%s' % (po_found.origin, i) for i in [1, 2, 3]]
-                                ids = so_obj.search(self.cr, self.uid, [('name', 'in', dom)])
-                    if ids:
-                        so = so_obj.browse(self.cr, self.uid, ids[0])
-                        if so.split_type_sale_order:
-                            ids = so_obj.search(self.cr, self.uid, [('name', '=', '%s-2' % so.name)])
-                            if ids:
-                                so = so_obj.browse(self.cr, self.uid, ids[0])
-                        get_so_from_po_id[po_found.id] = so
+                if pol.loan_line_id:
+                    sol_found = pol.loan_line_id
+                    if po_found.id not in get_so_from_po_id:
+                        get_so_from_po_id[po_found.id] = sol_found.order_id
+                else:
+                    sol_found_ids = sol_obj.search(self.cr, self.uid, [('loan_line_id', '=', pol.id)])
+                    if sol_found_ids:
+                        sol_found = sol_obj.browse(self.cr, self.uid, sol_found_ids[0], fields_to_fetch=['state', 'order_id'])
+                        if po_found.id not in get_so_from_po_id:
+                            get_so_from_po_id[po_found.id] = sol_found.order_id
+                    elif po_found.id not in get_so_from_po_id:
+                        if po_found.loan_id:
+                            ids = [po_found.loan_id.id]
+                        elif po_found.origin:
+                            if po_found.origin[-2:] in ['-1', '-2', '-3']:
+                                ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+                                if not ids:
+                                    ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin[0:-2])])
+                            else:
+                                ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+                                if not ids:
+                                    dom = ['%s-%s' % (po_found.origin, i) for i in [1, 2, 3]]
+                                    ids = so_obj.search(self.cr, self.uid, [('name', 'in', dom)])
+                        if po_found.state == 'done' and not ids:
+                            ids = so_obj.search(self.cr, self.uid, [('loan_id', '=', po_found.id)])
+                        if ids:
+                            so = so_obj.browse(self.cr, self.uid, ids[0])
+                            if so.split_type_sale_order:
+                                ids = so_obj.search(self.cr, self.uid, [('name', '=', '%s-2' % so.name)])
+                                if ids:
+                                    so = so_obj.browse(self.cr, self.uid, ids[0])
+                            get_so_from_po_id[po_found.id] = so
+                            pol_domain = [('order_id', '=', so.id), ('line_number', '=', pol.line_number), ('product_id', '=', pol.product_id.id)]
+                            sol_found_ids = sol_obj.search(self.cr, self.uid, pol_domain)
+                            if sol_found_ids:
+                                sol_found = sol_obj.browse(self.cr, self.uid, sol_found_ids[0], fields_to_fetch=['state'])
 
+                # Skip the line if reception and linked FO line are both cancelled
+                if sol_found and sol_found.state == pol.state == 'cancel':
+                    continue
                 so_found = get_so_from_po_id.get(po_found.id)
-                if so_found and so_found.state == po_found.state == 'done':
-                    status = _('Closed')
+                if move.state == 'cancel' or pol.state == 'cancel':
+                    status = _('Cancelled')
+                elif sol_found:
+                    if sol_found.state == pol.state == 'done':
+                        status = _('Closed')
+                    elif sol_found.state == 'cancel':
+                        status = _('Cancelled')
+                elif so_found:
+                    if so_found.state == po_found.state == 'done':
+                        status = _('Closed')
+                    elif so_found.state == 'cancel':
+                        status = _('Cancelled')
             elif move.sale_line_id:
-                so_found = move.sale_line_id.order_id
-                if so_found.id not in get_po_from_so_id:
-                    if so_found.loan_id:
-                        ids = [so_found.loan_id.id]
-                    elif so_found.name[-2:] in ['-1', '-2', '-3']:
-                        ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
-                        if not ids:
-                            ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name[0:-2])])
-                    else:
-                        ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
-                    if ids:
-                        po_found = po_obj.browse(self.cr, self.uid, ids[0])
-                        if po_found.state == 'split':
-                            ids = po_obj.search(self.cr, self.uid, [('name', '=', '%s-2' % po_found.name)])
+                sol = move.sale_line_id
+                so_found = sol.order_id
+                pol_found = False
+                if sol.loan_line_id:
+                    pol_found = sol.loan_line_id
+                    if so_found.id not in get_po_from_so_id:
+                        get_po_from_so_id[so_found.id] = pol_found.order_id
+                else:
+                    pol_found_ids = pol_obj.search(self.cr, self.uid, [('loan_line_id', '=', sol.id)])
+                    if pol_found_ids:
+                        pol_found = pol_obj.browse(self.cr, self.uid, pol_found_ids[0], fields_to_fetch=['state', 'order_id'])
+                        get_po_from_so_id[so_found.id] = pol_found.order_id
+                    elif not pol_found_ids and so_found.id not in get_po_from_so_id:
+                        if so_found.loan_id:
+                            ids = [so_found.loan_id.id]
+                        elif so_found.name[-2:] in ['-1', '-2', '-3']:
+                            ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
+                            if not ids:
+                                ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name[0:-2])])
+                        else:
+                            ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
+                        if ids:
                             po_found = po_obj.browse(self.cr, self.uid, ids[0])
-                        get_po_from_so_id[so_found.id] = po_found
+                            if po_found.state == 'split':
+                                ids = po_obj.search(self.cr, self.uid, [('name', '=', '%s-2' % po_found.name)])
+                                po_found = po_obj.browse(self.cr, self.uid, ids[0])
+                            get_po_from_so_id[so_found.id] = po_found
+                            sol_domain = [('order_id', '=', po_found.id), ('line_number', '=', sol.line_number), ('product_id', '=', sol.product_id.id)]
+                            pol_found_ids = sol_obj.search(self.cr, self.uid, sol_domain)
+                            if pol_found_ids:
+                                pol_found = sol_obj.browse(self.cr, self.uid, pol_found_ids[0], fields_to_fetch=['state'])
 
+                # Skip the line if delivery line and linked PO line are both cancelled
+                if pol_found and pol_found.state == sol.state == 'cancel':
+                    continue
                 po_found = get_po_from_so_id.get(so_found.id)
-                if po_found and so_found.state == po_found.state == 'done':
-                    status = _('Closed')
+                if move.state == 'cancel' or sol.state == 'cancel':
+                    status = _('Cancelled')
+                elif pol_found:
+                    if sol.state == pol_found.state == 'done':
+                        status = _('Closed')
+                    elif pol_found.state == 'cancel':
+                        status = _('Cancelled')
+                elif po_found:
+                    if po_found.state == so_found.state == 'done':
+                        status = _('Closed')
+                    elif po_found.state == 'cancel':
+                        status = _('Cancelled')
             else:
                 so_found = False
                 po_found = False

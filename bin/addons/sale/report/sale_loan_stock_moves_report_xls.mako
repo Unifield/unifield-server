@@ -161,7 +161,7 @@
         ## Total Value
         <Column ss:AutoFitWidth="1" ss:Width="62.25"  />
         ## Status
-        <Column ss:AutoFitWidth="1" ss:Width="42.25"  />
+        <Column ss:AutoFitWidth="1" ss:Width="52.25"  />
 
         <Row>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Code')|x}</Data></Cell>

@@ -507,6 +507,7 @@ class purchase_order_line(osv.osv):
                 'product_uom': x.product_uom.id,
                 'product_uom_qty': x.product_qty,
                 'type': 'make_to_stock',
+                'loan_line_id': x.id,
             }) for x in self.browse(cr, uid, pol_ids, fields_to_fetch=ftf, context=context)],
         }
 

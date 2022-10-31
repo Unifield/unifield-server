@@ -2291,6 +2291,7 @@ class sale_order_line(osv.osv):
         'pol_external_ref': fields.function(_get_pol_external_ref, method=True, type='char', size=256, string="Linked PO line's External Ref.", store=False),
         'instance_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance'),
         'cv_line_ids': fields.one2many('account.commitment.line', 'so_line_id', string="Commitment Voucher Lines"),
+        'loan_line_id': fields.many2one('purchase.order.line', string='Linked loan line', readonly=True),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2454,7 +2455,6 @@ class sale_order_line(osv.osv):
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
-
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         reset link to purchase order from update of on order purchase order
@@ -2491,6 +2491,7 @@ class sale_order_line(osv.osv):
             'sync_pushed_from_po': False,
             'cv_line_ids': False,
             'extra_qty': False,
+            'loan_line_id': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
