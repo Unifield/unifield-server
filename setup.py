@@ -62,7 +62,7 @@ if os.name == 'nt':
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
                 "psutil", "formencode", "cryptography", "requests",
                 "office365", "certifi", "chardet", "ipaddress", "urllib3", "fileinput", "pysftp",
-                "openpyxl"
+                "openpyxl", "weasyprint"
             ],
             'dist_dir': 'dist',
             'excludes': ["Tkconstants", "Tkinter", "tcl"],
