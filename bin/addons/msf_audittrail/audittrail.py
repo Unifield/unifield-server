@@ -760,7 +760,7 @@ class audittrail_rule(osv.osv):
                     log_line_obj.create(cr, uid, vals)
 
                 elif method in ('write', 'create'):
-                    if method == 'create':
+                    if method == 'create' and rule.object_id.model != 'stock.picking':
                         vals.update({
                             'log': self.get_sequence(cr, uid, model_name_tolog, vals['res_id'], context=context),
                             'field_description': get_field_description(rule.object_id),

@@ -78,7 +78,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'stock.move')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['name']
+        fields = ['name', 'product_qty', 'prodlot_id', 'expired_date']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.move'), ('name', 'in', fields)], context=context)
         field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'stock.move'), ('name', '=', 'line_number')], context=context)
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'stock.move'), ('name', '=', 'picking_id')], context=context)
