@@ -63,7 +63,7 @@ if os.name == 'nt':
                 "psutil", "formencode", "cryptography", "requests",
                 "office365", "certifi", "chardet", "ipaddress", "urllib3", "fileinput", "pysftp",
                 "openpyxl", "weasyprint", "cssselect2", "tinycss2", "html5lib",
-                "cairocffi", "pdfrw", "pyphen", 'CairoSVG'
+                "cairocffi", "pdfrw", "pyphen", 'cairosvg'
             ],
             'dist_dir': 'dist',
             'excludes': ["Tkconstants", "Tkinter", "tcl"],
