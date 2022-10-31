@@ -872,5 +872,9 @@
         <record id="us_9406_create_bar" model="patch.scripts">
             <field name="method">us_9406_create_bar</field>
         </record>
+
+        <record id="store_picking_subtype" model="patch.scripts">
+            <field name="method">store_picking_subtype</field>
+        </record>
     </data>
 </openerp>

@@ -519,7 +519,8 @@ class stock_move(osv.osv):
                                                        ('unallocated', 'Unallocated'),
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
         'purchase_line_id': fields.many2one('purchase.order.line', 'Purchase Order Line', ondelete='set null', select=True, readonly=True),
-        'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], write_relate=False),
+        # picking.subtype is known later in msf_ourgoing module: so do not migrate
+        'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='char', size=64, write_relate=False, store=True, _fnct_migrate=lambda *a: True),
         'parent_doc_id': fields.function(_get_parent_doc, method=True, type='char', string='Picking', readonly=True),
 
         'order_priority': fields.function(_get_order_information, method=True, string='Priority', type='selection',

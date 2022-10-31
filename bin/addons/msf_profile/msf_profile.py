@@ -58,6 +58,19 @@ class patch_scripts(osv.osv):
     }
 
     # UF27.0
+    def store_picking_subtype(self, cr, uid, *a, **b):
+        cr.execute("""
+            update
+                stock_move m
+            set
+                picking_subtype = p.subtype
+            from
+                stock_picking p
+            where
+                p.id = m.picking_id
+            """)
+        return True
+
     def us_10105_custom_order_cv(self, cr, uid, *a, **b):
         # CV is_draft field for custom ordering
         cr.execute("update account_commitment set is_draft=state='draft'")
