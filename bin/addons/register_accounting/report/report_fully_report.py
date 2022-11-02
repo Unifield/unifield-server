@@ -28,9 +28,13 @@ from mako.template import Template
 from mako import exceptions
 import netsvc
 from osv.osv import except_osv
-import weasyprint
 import tools
 import os
+
+if os.name == 'nt':
+    os.envrion['PATH'] = '%s;%s' % (os.envrion['PATH'], os.path.join(tools.config['root_path'], 'dll'))
+
+import weasyprint
 
 
 class report_fully_report(report_sxw.rml_parse):
