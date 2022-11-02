@@ -85,7 +85,7 @@
                     <notebook colspan="4">
                         <page string="Invoice">
                             <field domain="[('company_id', '=', company_id), ('restricted_area', '=', 'out_invoice'), ('is_intersection_counterpart', '=', False)]" name="account_id" />
-                            <field name="name"/>
+                            <field name="name" string="Description"/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
                                 <tree editable="top" string="Invoice Line" noteditable="1" hide_new_button="1">
                                     <field name="name"/>
@@ -373,7 +373,7 @@
                     <notebook colspan="4">
                         <page string="Invoice">
                             <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'intermission_header')]"/>
-                            <field name="name" string="Reference"
+                            <field name="name" string="Description"
                                    attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_supply', '=', True)]}"/>
                             <newline/>
                             <group name="import" string=" Import Lines " colspan="4" col="4">
