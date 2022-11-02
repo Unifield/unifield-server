@@ -62,7 +62,8 @@ if os.name == 'nt':
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
                 "psutil", "formencode", "cryptography", "requests",
                 "office365", "certifi", "chardet", "ipaddress", "urllib3", "fileinput", "pysftp",
-                "openpyxl"
+                "openpyxl", "weasyprint", "cssselect2", "tinycss2", "html5lib",
+                "cairocffi", "pdfrw", "pyphen", 'cairosvg'
             ],
             'dist_dir': 'dist',
             'excludes': ["Tkconstants", "Tkinter", "tcl"],
@@ -130,6 +131,8 @@ def data_files():
         files.append(('tools', [join('bin', 'tools', 'webdav.py')]))
         files.append(('fonts', filter(isfile, glob.glob('bin/fonts/*'))))
         files.append(('rsync', filter(isfile, glob.glob('bin/rsync/*'))))
+        files.append(('dll', filter(isfile, glob.glob('bin/dll/*'))))
+        files.append(('css', filter(isfile, glob.glob('bin/css/*'))))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
             files.append((dp, map(lambda x: join('bin', dp, x), names)))
