@@ -63,8 +63,11 @@ def extra_files():
 
     import pyphen
     main_path = os.path.relpath(os.path.dirname(pyphen.__file__))
+    dic_files = []
     for root, _, filenames in os.walk(os.path.join(main_path, 'dictionaries')):
-        r.append(('libs/pyphen/dictionaries',filenames))
+        for filename in filenames:
+            dic_files.append(os.path.join(main_path, 'dictionaries', filename))
+    r.append(('libs/pyphen/dictionaries',dic_files))
     return r
 
 def fixup_data_pytz_zoneinfo():
