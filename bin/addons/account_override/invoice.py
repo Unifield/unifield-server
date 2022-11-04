@@ -1741,6 +1741,23 @@ class account_invoice_line(osv.osv):
                         raise osv.except_osv(_('Error'), _('This document has been generated via a Supply workflow or via synchronization. '
                                                            'You can\'t add lines manually.'))
 
+    def _not_only_spaces_in_invline_description(self, cr, uid, invoice_id, line_num, vals, context=None):
+        """
+        Blocks the generation via creation or edition of description of invoice lines with only spaces
+        """
+        if context is None:
+            context = {}
+        if self._name != 'account.invoice.line':
+            # check only on invoice lines
+            return True
+        if vals.get('name') and not vals.get('name').strip() and self._name in ['account.invoice.line']:
+            inv_obj = self.pool.get('account.invoice')
+            inv_fields = ['from_supply', 'synced', 'real_doc_type']
+            inv = inv_obj.browse(cr, uid, invoice_id, fields_to_fetch=inv_fields, context=context)
+            if not ((inv.real_doc_type in ('si', 'ivi') and inv.synced) or inv.from_supply):
+                raise osv.except_osv(_('Error'), _('Invoice line #%s: The description contains only spaces.') % line_num)
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Give a line_number to invoice line.
@@ -1759,6 +1776,7 @@ class account_invoice_line(osv.osv):
                 sequence = invoice.sequence_id
                 line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
+        self._not_only_spaces_in_invline_description(cr, uid, vals.get('invoice_id'), vals.get('line_number'), vals, context)
         inv_line_id = super(account_invoice_line, self).create(cr, uid, vals, context)
         self._check_on_invoice_line_big_amounts(cr, uid, inv_line_id, context=context)
         return inv_line_id
@@ -1784,6 +1802,8 @@ class account_invoice_line(osv.osv):
                     sequence = il.invoice_id.sequence_id
                     il_number = sequence.get_id(code_or_id='id', context=context)
                     vals.update({'line_number': il_number})
+        inv_line = self.browse(cr, uid, ids)[0]
+        self._not_only_spaces_in_invline_description(cr, uid, inv_line.invoice_id.id, inv_line.line_number, vals, context)
         res = super(account_invoice_line, self).write(cr, uid, ids, vals, context)
         for invl in self.browse(cr, uid, ids):
             if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
