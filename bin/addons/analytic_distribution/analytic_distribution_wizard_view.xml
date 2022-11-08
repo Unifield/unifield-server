@@ -240,9 +240,12 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                    <group col="6" colspan="4">
+                    <group col="4" colspan="4">
                         <field name="nb_process" colspan="2"/>
                         <field name="nb_error" colspan="2"/>
+                    </group>
+                    <group col="4" colspan="4">
+                        <field name="nb_reallocated" colspan="2"/>
                         <field name="nb_other" colspan="2"/>
                     </group>
                     <field name="display_fp" invisible="1"/>
@@ -262,10 +265,30 @@
                     <newline/>
                     <field name="other_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
                     <newline/>
-                    <group col="6" colspan="4"/>
-                        <label string="" colspan="2"/>
-                        <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
-                        <button name="button_validate" type="object" string="Process" icon="gtk-ok" colspan="1"/>
+                    <separator string="Reallocated items"/>
+                    <newline/>
+                    <field name="reallocated_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
+                    <newline/>
+                    <field name="message" nolabel="1" widget="text" colspan="4" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    <field name="state" invisible="1" readonly="1" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    <field name="percent" widget="progressbar" nolabel="1" colspan="4" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    <html colspan="4">
+                    <script language="javascript">
+                        $(document).ready(function() {
+                            if ($('#state').val() == 'inprogress') {
+                                setTimeout(function(){
+                                    $('#button_update').click();
+                                },1000)
+                            }
+                        });
+                    </script>
+                    </html>
+                    <group col="6" colspan="4">
+                        <button name="button_validate" type="object" string="Process" icon="gtk-ok" attrs="{'invisible': [('state', '!=', 'draft')]}" colspan="2"/>
+                        <button name="button_cancel" type="object" string="Cancel" icon="gtk-cancel" attrs="{'invisible': [('state', '!=', 'inprogress')]}" colspan="2"/>
+                        <button name="button_update" string="Update" icon="gtk-refresh" invisible="1"/>
+                        <button name="button_ok" type="object" string="OK" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'done')]}" colspan="2"/>
+                    </group>
                 </form>
             </field>
         </record>
