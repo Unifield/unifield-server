@@ -473,12 +473,13 @@ class hr_payroll_employee_import(osv.osv_memory):
                     current_contract = True
                     if contract.date_end and contract.date_end < strftime('%Y-%m-%d'):
                         vals.update({'active': False})
-                # Check job
-                if contract.job_id:
-                    vals.update({'job_id': contract.job_id.id})
+                    # Check job
+                    if contract.job_id:
+                        vals.update({'job_id': contract.job_id.id})
                 # Check the contract dates
-                vals.update({'contract_start_date': contract.date_start or False})
-                vals.update({'contract_end_date': contract.date_end or False})
+                if vals.get('contract_start_date', contract.date_start) <= contract.date_start:
+                    vals.update({'contract_start_date': contract.date_start or False})
+                    vals.update({'contract_end_date': contract.date_end or False})
             # Desactivate employee if no current contract
             if not current_contract:
                 vals.update({'active': False})
