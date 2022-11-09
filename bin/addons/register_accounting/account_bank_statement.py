@@ -1206,6 +1206,12 @@ class account_bank_statement_line(osv.osv):
             res[regline['id']] = len(regline['imported_account_invoice_ids'])
         return res
 
+    def replace_non_ascii_chars(self, string_to_format):
+        """
+        Replaces all non ascii chars in the string by space and trim leading and trailing spaces
+        """
+        return ''.join([i if ord(i) < 128 else ' ' for i in string_to_format]).strip()
+
     _columns = {
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
@@ -2118,6 +2124,8 @@ class account_bank_statement_line(osv.osv):
                                                                 values=values)
         self._check_cheque_number_uniticy(cr, uid, values.get('statement_id'),
                                           values.get('cheque_number'), context=context)
+        if values.get('name'):
+            values['name'] = self.replace_non_ascii_chars(values.get('name'))
         # remove useless spaces and line breaks in the description and ref
         self.pool.get('data.tools').replace_line_breaks_from_vals(values, ['name', 'ref'], replace=['name'])
 
@@ -2153,6 +2161,8 @@ class account_bank_statement_line(osv.osv):
                     self._check_cheque_number_uniticy(cr, uid,
                                                       line['statement_id'][0], values.get('cheque_number'),
                                                       context=context)
+        if values.get('name'):
+            values['name'] = self.replace_non_ascii_chars(values.get('name'))
         self.pool.get('data.tools').replace_line_breaks_from_vals(values, ['name', 'ref'], replace=['name'])
         if (one_field and field_match) or skip_check:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
