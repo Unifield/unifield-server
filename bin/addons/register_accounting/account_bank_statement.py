@@ -515,8 +515,9 @@ class account_bank_statement(osv.osv):
         name = _('Open Advances')
         if register.journal_id and register.journal_id.currency:
             # prepare some values
-            name += ' - ' + register.journal_id.currency.name
-            domain.append(('statement_id.journal_id.currency', '=', register.journal_id.currency.id))
+            name += ' - ' + register.journal_id.code + ' - '+ register.journal_id.currency.name
+            domain.extend((('statement_id.journal_id.currency', '=', register.journal_id.currency.id),
+                           ('statement_id.journal_id.code', '=', register.journal_id.code)))
         # Prepare view
         view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
         view_id = view and view[1] or False
