@@ -876,5 +876,9 @@
         <record id="store_picking_subtype" model="patch.scripts">
             <field name="method">store_picking_subtype</field>
         </record>
+
+        <record id="us_10586_running_one_time_accrual" model="patch.scripts">
+            <field name="method">us_10586_running_one_time_accrual</field>
+        </record>
     </data>
 </openerp>

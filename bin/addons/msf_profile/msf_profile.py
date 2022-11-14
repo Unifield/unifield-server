@@ -56,6 +56,20 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+    def us_10586_running_one_time_accrual(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:
+            cr.execute('''
+                UPDATE msf_accrual_line a SET state='done'
+                FROM account_move_line m
+                WHERE
+                    a.accrual_type='one_time_accrual' AND
+                    a.state='running' AND
+                    a.move_line_id=m.id AND
+                    m.reconcile_id IS NOT NULL
+            ''')
+        return True
 
     # UF27.0
     def store_picking_subtype(self, cr, uid, *a, **b):
