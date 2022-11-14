@@ -839,7 +839,7 @@ class signature_set_user(osv.osv_memory):
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         if wiz.new_signature:
             if wiz.user_id.esignature_id:
-                self.pool.get('res.users')._archive_signature(cr, root_uid, [real_uid], force=False, context=context)
+                self.pool.get('res.users')._archive_signature(cr, root_uid, [real_uid], context=context)
 
             new_image = self.pool.get('signature.image').create(cr, root_uid, {
                 'user_id': real_uid,

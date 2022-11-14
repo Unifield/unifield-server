@@ -1054,37 +1054,37 @@ class users(osv.osv):
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1
 
-    def _archive_signature(self, cr, uid, ids, new_from=None, force=True, context=None):
+    def _archive_signature(self, cr, uid, ids, new_from=None, new_to=None, context=None):
         sign_line_obj = self.pool.get('signature.line')
         for user in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to', 'name'] , context=context):
             if user.esignature_id:
-                if force or sign_line_obj.search_exists(cr, uid, [('image_id','=', user.esignature_id.id)], context=context):
-                    data = {
-                        'from_date': user.signature_from,
-                        'to_date': user.signature_to or fields.date.today(),
-                        'inactivation_date': fields.datetime.now(),
-                    }
-                    if user.esignature_id.user_name != user.name:
-                        used_sign_id = sign_line_obj.search(cr, uid, [('image_id','=', user.esignature_id.id)], order='id desc', limit=1, context=context)
-                        if used_sign_id:
-                            last_sign = sign_line_obj.read(cr, uid, used_sign_id[0], ['user_name'], context=context)
-                            data['user_name'] = last_sign['user_name']
+                data = {
+                    'from_date': user.signature_from,
+                    'to_date': user.signature_to or fields.date.today(),
+                    'inactivation_date': fields.datetime.now(),
+                }
+                if user.esignature_id.user_name != user.name:
+                    used_sign_id = sign_line_obj.search(cr, uid, [('image_id','=', user.esignature_id.id)], order='id desc', limit=1, context=context)
+                    if used_sign_id:
+                        last_sign = sign_line_obj.read(cr, uid, used_sign_id[0], ['user_name'], context=context)
+                        data['user_name'] = last_sign['user_name']
 
-                    self.pool.get('signature.image').write(cr, uid, user.esignature_id.id, data, context=context)
-        new_data = {
-            'esignature_id': False,
-            'signature_to': False
-        }
-        if new_from is not None:
-            new_data['signature_from'] = new_from
-        self.write(cr, uid, ids, new_data, context=context)
+                self.pool.get('signature.image').write(cr, uid, user.esignature_id.id, data, context=context)
+            new_data = {
+                'esignature_id': False,
+            }
+            if new_from is not None:
+                new_data['signature_from'] = new_from
+                if user.signature_to and new_from >= user.signature_to:
+                    new_data['signature_to'] = False
+            self.write(cr, uid, [user.id], new_data, context=context)
         return True
 
     def delete_signature(self, cr, uid, ids, context=None):
-        return self._archive_signature(cr, uid, ids, force=False, context=context)
+        return self._archive_signature(cr, uid, ids, context=context)
 
     def reset_signature(self, cr, uid, ids, context=None):
-        return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), force=True, context=context)
+        return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), context=context)
 
     def add_signature(self, cr, uid, ids, context=None):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
