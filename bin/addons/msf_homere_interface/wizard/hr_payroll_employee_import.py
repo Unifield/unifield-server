@@ -463,11 +463,12 @@ class hr_payroll_employee_import(osv.osv_memory):
             # - no contract line found
             # - end of current contract exists and is inferior to current date
             # - no contract line found with current = True
-            contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff)])
+            contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff)], order='current,contract_start_date desc')
             if not contract_ids:
                 vals.update({'active': False})
             current_contract = False
-            for contract in self.pool.get('hr.contract.msf').browse(cr, uid, contract_ids):
+            if contract_ids:
+                contract = self.pool.get('hr.contract.msf').browse(cr, uid, contract_ids[0])
                 # Check current contract
                 if contract.current:
                     current_contract = True
@@ -477,9 +478,8 @@ class hr_payroll_employee_import(osv.osv_memory):
                     if contract.job_id:
                         vals.update({'job_id': contract.job_id.id})
                 # Check the contract dates
-                if vals.get('contract_start_date', contract.date_start) <= contract.date_start:
-                    vals.update({'contract_start_date': contract.date_start or False})
-                    vals.update({'contract_end_date': contract.date_end or False})
+                vals.update({'contract_start_date': contract.date_start or False})
+                vals.update({'contract_end_date': contract.date_end or False})
             # Desactivate employee if no current contract
             if not current_contract:
                 vals.update({'active': False})
