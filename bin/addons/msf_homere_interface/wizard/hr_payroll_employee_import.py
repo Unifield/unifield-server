@@ -463,7 +463,9 @@ class hr_payroll_employee_import(osv.osv_memory):
             # - no contract line found
             # - end of current contract exists and is inferior to current date
             # - no contract line found with current = True
-            contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff)], order='current,contract_start_date desc')
+
+            # sort contract: get current one, then by start date
+            contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff)], order='current desc,contract_start_date desc')
             if not contract_ids:
                 vals.update({'active': False})
             current_contract = False
