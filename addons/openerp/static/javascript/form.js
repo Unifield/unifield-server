@@ -435,7 +435,7 @@ function pager_action(src){
     return relation ? new ListView(relation).go(action) : submit_form(action ? action : 'find');
 }
 
-function buttonClicked(name, btype, model, id, sure, target, context, set_ids){
+function buttonClicked(name, btype, model, id, sure, target, context, set_ids, ignore_access_error){
 
     // to be able to get selected lines ids
     s_ids = [];
@@ -475,6 +475,7 @@ function buttonClicked(name, btype, model, id, sure, target, context, set_ids){
         '_terp_button/id': id,
         '_terp_button/selected_ids': s_ids,
         '_terp_button/selected_domain': s_dom,
+        '_terp_button/ignore_access_error': ignore_access_error,
     };
 
     // if works as expected can be extended to other buttons

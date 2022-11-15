@@ -16,12 +16,19 @@
 }
 
 .grid-row-odd {
-	background: white;
+    background: white;
     cursor: pointer;
 }
 .grid-row-even {
-	background: #F3F3F3;
+    background: #F3F3F3;
     cursor: pointer;
+}
+
+.grid-row-odd-nosel {
+    background: white;
+}
+.grid-row-even-nosel {
+    background: #F3F3F3;
 }
 
 .grid-row:hover, .grid-row-group:hover {

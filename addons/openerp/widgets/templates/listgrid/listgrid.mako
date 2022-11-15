@@ -78,7 +78,11 @@ if (auto_field && auto_field.val()){
             row_class = 'grid-row-even'
         else:
             row_class = 'grid-row-odd'
+
+        if 'form' not in view_mode:
+            row_class = '%s-nosel' % row_class
     %>
+
     % if editors:
         <tr class="grid-row inline_editors ${row_class} ${data['id'] and data['id'] in noteditable and 'noteditable' or ''}" record="${data['id']}"
         % if data['id'] in notselectable:

@@ -559,8 +559,10 @@ class Form(SecuredController):
             else:
                 ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
                 ctx['from_web_interface'] = True
+                ignore_access_error = False
                 if params.button and params.button.name:
                     ctx.update({'button': params.button.name})
+                    ignore_access_error = params.button.ignore_access_error
 
                 #original_data = Model.read(params.id, data.keys())
                 #modified = {}
@@ -575,7 +577,7 @@ class Form(SecuredController):
                 #    Model.write([params.id], modified, ctx)
                 #else:
                 #    Model.write([params.id], data, ctx)
-                Model.write_web([params.id], data, ctx)
+                Model.write_web([params.id], data, ctx, ignore_access_error)
 
             tw.ConcurrencyInfo.update(
                 params.model, Model.read([params.id], ['__last_update'], ctx)

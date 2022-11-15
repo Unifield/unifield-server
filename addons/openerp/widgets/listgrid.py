@@ -561,6 +561,7 @@ class List(TinyWidget):
 
         return headers, hiddens, data, field_total, field_real_total, buttons
 
+
 class Char(TinyWidget):
     template = "/openerp/widgets/templates/listgrid/char.mako"
 
@@ -607,6 +608,20 @@ class Char(TinyWidget):
 
     def __str__(self):
         return ustr(self.text)
+
+class Image(TinyWidget):
+    template = "/openerp/widgets/templates/listgrid/image.mako"
+    params = ['height', 'width', 'img']
+
+    def __init__(self, **attrs):
+        super(Image, self).__init__(**attrs)
+        self.img = self.value
+        self.color = None
+        self.height = attrs.get('height')
+        self.width = attrs.get('width')
+
+    def get_sortable_text(self):
+        return False
 
 class HtmlText(Char):
     template = "/openerp/widgets/templates/listgrid/html.mako"
@@ -678,11 +693,12 @@ class Selection(Char):
         if self.value:
             if isinstance(self.value, (tuple, list)):
                 self.value = self.value[0]
-
             selection = self.attrs['selection']
-            for k, v in selection:
+            hidden_selection = self.attrs.get('hidden_selection', [])
+            for k, v in selection + hidden_selection:
                 if k == self.value:
                     return v
+
         return ''
 
 class Float(Char):
@@ -932,4 +948,5 @@ CELLTYPES = {
     'human_size': HumanSize,
     'html_text': HtmlText,
     'url': URL,
+    'image': Image,
 }

@@ -160,7 +160,8 @@ if add_style:
         jQuery.frame_dialog({
             src:this.href
         }, null, {
-            height: 350
+            height: 350,
+            width: 900
         }).focus();
     });
 </script>
