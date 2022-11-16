@@ -2019,6 +2019,14 @@ class product_attributes(osv.osv):
                                                             ('invoice_id', '!=', False),
                                                             ('invoice_id.state', 'not in', ['paid', 'inv_close', 'proforma', 'proforma2', 'cancel'])], context=context)
 
+            # Check if the invoices where the product is are open and if the header account is reconcilable
+            has_open_inv_reconcilable_acc = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                                         ('invoice_id', '!=', False),
+                                                                         ('invoice_id.state', 'in', ['open']),
+                                                                         ('invoice_id.account_id.reconcile', '=', False)], context=context)
+            # Allow deactivation of products in open invoices but with non-reconcilable header account
+            has_invoice_line = list(set(has_invoice_line) - set(has_open_inv_reconcilable_acc))
+
             # Check if the product has stock in internal locations
             for loc_id in internal_loc:
                 c = context.copy()
