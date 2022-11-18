@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 <document filename="ir_follow_up_location_report.pdf">
 
-    <template pageSize="(842.0,595.0)" title="IR Follow Up per Location" author="Medecins Sans Frontieres" allowSplitting="20">
+    <template pageSize="(842.0,595.0)" title="IR Follow Up" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
             <frame id="first" x1="30.0" y1="15.0" width="772" height="520" />
 
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="15"/>
-                <drawString x="250.0" y="560.0">INTERNAL REQUEST FOLLOW-UP PER LOCATION</drawString>
+                <drawString x="305.0" y="560.0">INTERNAL REQUEST FOLLOW-UP</drawString>
                 <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8"/>
                 <fill color="grey" />
