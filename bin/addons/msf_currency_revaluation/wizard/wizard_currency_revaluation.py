@@ -747,12 +747,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                                    context=None):
                 period_name = period_obj.browse(cr, uid, period_id, context=context).name
                 if form.revaluation_method == 'liquidity_month':
-                    msg = _(u"%s has already been revaluated") % (period_name, )
+                    msg = _("%s has already been revaluated") % (period_name, )
                 elif form.revaluation_method == 'liquidity_year':
-                    msg = _(u"EoY Revaluation Liquidity already performed in %s") % (period_name, )
+                    msg = _("EoY Revaluation Liquidity already performed in %s") % (period_name, )
                 elif form.revaluation_method == 'other_bs':
-                    msg = _(u"EoY Revaluation B/S already performed in %s") % (period_name, )
-                raise osv.except_osv(_(u"Error"), msg)
+                    msg = _("EoY Revaluation B/S already performed in %s") % (period_name, )
+                raise osv.except_osv(_("Error"), msg)
 
         # Get balance sums and entries included in the reval
         account_sums, entries_included = account_obj.compute_revaluations(
