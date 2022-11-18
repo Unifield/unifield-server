@@ -789,6 +789,9 @@ class users(osv.osv):
                 if len(open_sign_ids) > 5:
                     list_of_doc.append('...')
                 raise osv.except_osv(_('Warning'), _('You can not deactivate this user, %d documents have to be signed\n%s') % (len(open_sign_ids), ', '.join(list_of_doc)))
+            for xuser in self.browse(cr, uid, ids, fields_to_fetch=['name', 'has_valid_signature'], context=context):
+                if xuser.has_valid_signature:
+                    raise osv.except_osv(_('Warning'), _('You can not deactivate %s: the signature is active') % (xuser['name'], ))
 
 
 
