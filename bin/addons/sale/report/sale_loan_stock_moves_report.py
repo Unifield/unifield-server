@@ -134,8 +134,10 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                             if sol_found_ids:
                                 sol_found = sol_obj.browse(self.cr, self.uid, sol_found_ids[0], fields_to_fetch=['state'])
 
-                # Skip the line if reception and linked FO line are both cancelled
-                if sol_found and sol_found.state == pol.state == 'cancel':
+                # Skip the line if reception and linked FO line are both cancelled or no FO line is found and the
+                # PO line is cancelled
+                if (sol_found and sol_found.state == pol.state == 'cancel') or \
+                        (not sol_found and pol.state == 'cancel'):
                     continue
                 so_found = get_so_from_po_id.get(po_found.id)
                 if move.state == 'cancel' or pol.state == 'cancel':
@@ -183,8 +185,10 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                             if pol_found_ids:
                                 pol_found = sol_obj.browse(self.cr, self.uid, pol_found_ids[0], fields_to_fetch=['state'])
 
-                # Skip the line if delivery line and linked PO line are both cancelled
-                if pol_found and pol_found.state == sol.state == 'cancel':
+                # Skip the line if delivery line and linked PO line are both cancelled or no PO line is found and the
+                # FO line is cancelled
+                if (pol_found and pol_found.state == sol.state == 'cancel') or \
+                        (not pol_found and sol.state == 'cancel'):
                     continue
                 po_found = get_po_from_so_id.get(so_found.id)
                 if move.state == 'cancel' or sol.state == 'cancel':
