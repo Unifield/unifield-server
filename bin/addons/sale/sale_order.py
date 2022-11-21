@@ -2491,10 +2491,12 @@ class sale_order_line(osv.osv):
             'sync_pushed_from_po': False,
             'cv_line_ids': False,
             'extra_qty': False,
-            'loan_line_id': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
+
+        if not default.get('is_line_split', False):
+            default['loan_line_id'] = False
 
         for x in [
             'modification_comment', 'original_product', 'original_qty', 'original_price',
