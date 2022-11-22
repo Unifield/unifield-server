@@ -385,8 +385,8 @@ class patch_scripts(osv.osv):
         return True
 
     def us_9406_create_record_rules(self, cr, uid, *a, **b):
-        #if _get_instance_level(self, cr, uid) != 'hq':
-        #    return True
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
         sign_user_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')])
         supply_creator_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_document_creator_supply')])
         finance_creator_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_document_creator_finance')])
