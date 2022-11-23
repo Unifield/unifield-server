@@ -129,13 +129,17 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                                 if ids:
                                     so = so_obj.browse(self.cr, self.uid, ids[0])
                             get_so_from_po_id[po_found.id] = so
-                            pol_domain = [('order_id', '=', so.id), ('line_number', '=', pol.line_number), ('product_id', '=', pol.product_id.id)]
-                            sol_found_ids = sol_obj.search(self.cr, self.uid, pol_domain)
-                            if sol_found_ids:
-                                sol_found = sol_obj.browse(self.cr, self.uid, sol_found_ids[0], fields_to_fetch=['state'])
+                    if not sol_found and get_so_from_po_id.get(po_found.id, False):
+                        pol_domain = [('order_id', '=', get_so_from_po_id[po_found.id].id),
+                                      ('line_number', '=', pol.line_number), ('product_id', '=', pol.product_id.id)]
+                        sol_found_ids = sol_obj.search(self.cr, self.uid, pol_domain)
+                        if sol_found_ids:
+                            sol_found = sol_obj.browse(self.cr, self.uid, sol_found_ids[0], fields_to_fetch=['state'])
 
-                # Skip the line if reception and linked FO line are both cancelled
-                if sol_found and sol_found.state == pol.state == 'cancel':
+                # Skip the line if reception and linked FO line are both cancelled or no FO line is found and the
+                # PO line is cancelled
+                if (sol_found and sol_found.state == pol.state == 'cancel') or \
+                        (not sol_found and pol.state == 'cancel'):
                     continue
                 so_found = get_so_from_po_id.get(po_found.id)
                 if move.state == 'cancel' or pol.state == 'cancel':
@@ -178,13 +182,17 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                                 ids = po_obj.search(self.cr, self.uid, [('name', '=', '%s-2' % po_found.name)])
                                 po_found = po_obj.browse(self.cr, self.uid, ids[0])
                             get_po_from_so_id[so_found.id] = po_found
-                            sol_domain = [('order_id', '=', po_found.id), ('line_number', '=', sol.line_number), ('product_id', '=', sol.product_id.id)]
-                            pol_found_ids = sol_obj.search(self.cr, self.uid, sol_domain)
-                            if pol_found_ids:
-                                pol_found = sol_obj.browse(self.cr, self.uid, pol_found_ids[0], fields_to_fetch=['state'])
+                    if not pol_found and get_po_from_so_id.get(so_found.id, False):
+                        sol_domain = [('order_id', '=', get_po_from_so_id[so_found.id].id),
+                                      ('line_number', '=', sol.line_number), ('product_id', '=', sol.product_id.id)]
+                        pol_found_ids = sol_obj.search(self.cr, self.uid, sol_domain)
+                        if pol_found_ids:
+                            pol_found = sol_obj.browse(self.cr, self.uid, pol_found_ids[0], fields_to_fetch=['state'])
 
-                # Skip the line if delivery line and linked PO line are both cancelled
-                if pol_found and pol_found.state == sol.state == 'cancel':
+                # Skip the line if delivery line and linked PO line are both cancelled or no PO line is found and the
+                # FO line is cancelled
+                if (pol_found and pol_found.state == sol.state == 'cancel') or \
+                        (not pol_found and sol.state == 'cancel'):
                     continue
                 po_found = get_po_from_so_id.get(so_found.id)
                 if move.state == 'cancel' or sol.state == 'cancel':
