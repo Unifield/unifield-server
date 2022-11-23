@@ -274,8 +274,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     cr, uid, fiscalyear_id)
                 if last_reval_period:
                     period_number = last_reval_period.number
-                    value['msg'] = _('One of the year-end revaluations has already been processed in the period "%s". '
-                                     'The next one will be processed in the selected period.') % (last_reval_period.name,)
 
                 # check period opened
                 check_period_res = self._check_period_opened(cr, uid,
@@ -743,14 +741,18 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             revalcheck_period_ids = period_obj.search(cr, uid, domain,
                                                       context=context)
         for period_id in revalcheck_period_ids:
-            if self._is_revaluated(cr, uid, period_id, form.revaluation_method,
-                                   context=None):
-                period_name = period_obj.browse(cr, uid, period_id, context=context).name
+            if self._is_revaluated(cr, uid, period_id, form.revaluation_method, context=None):
+                period = period_obj.browse(cr, uid, period_id, context=context)
                 if form.revaluation_method == 'liquidity_month':
-                    msg = _(u"%s has already been revaluated") % (period_name, )
-                else:
-                    msg = _(u"End year revaluation already performed in %s") % (period_name, )
-                raise osv.except_osv(_(u"Error"), msg)
+                    msg = _("%s has already been revaluated") % (period.name, )
+                elif form.revaluation_method in ('liquidity_year', 'other_bs') and \
+                        period.is_eoy_liquidity_revaluated and period.is_eoy_regular_bs_revaluated:
+                    msg = _("Both EoY Revaluation have been done in %s") % (period.name, )
+                elif form.revaluation_method == 'liquidity_year':
+                    msg = _("EoY Revaluation Liquidity already performed in %s") % (period.name, )
+                elif form.revaluation_method == 'other_bs':
+                    msg = _("EoY Revaluation B/S already performed in %s") % (period.name, )
+                raise osv.except_osv(_("Error"), msg)
 
         # Get balance sums and entries included in the reval
         account_sums, entries_included = account_obj.compute_revaluations(
