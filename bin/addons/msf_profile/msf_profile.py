@@ -112,7 +112,7 @@ class patch_scripts(osv.osv):
             menu_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'menu_action_res_users_whitelist')[1])
             menu_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'menu_users')[1])
             gp_id = group_obj.create(cr, uid, {
-                'name': ' Sup_Config_HQ',
+                'name': 'Sup_Config_HQ',
                 'level': 'hq',
                 'visible_res_groups': True,
                 'menu_access': [(6, 0, menu_ids)],
