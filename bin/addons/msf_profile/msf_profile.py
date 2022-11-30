@@ -420,6 +420,8 @@ class patch_scripts(osv.osv):
         return True
 
     def us_9406_create_common_acl(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where name='account_hq_entries_action_hq_entries_import_wizard')")
+        cr.execute("delete from ir_model_data where name='account_hq_entries_action_hq_entries_import_wizard'")
         if _get_instance_level(self, cr, uid) != 'hq':
             return True
         model_obj = self.pool.get('ir.model')
