@@ -253,14 +253,11 @@ class res_partner(osv.osv):
         'in_product': fields.function(_set_in_product, fnct_search=search_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
-        'property_product_pricelist_purchase': fields.property(
+        'property_product_pricelist_purchase': fields.many2one(
             'product.pricelist',
-            type='many2one',
-            relation='product.pricelist',
-            domain=[('type','=','purchase')],
+            domain=[('type', '=', 'purchase')],
             string="Purchase default currency",
-            method=True,
-            view_load=True,
+            select=True,
             required=True,
             help="This currency will be used, instead of the default one, for purchases from the current partner"),
         'property_product_pricelist': fields.property(

@@ -18,6 +18,9 @@
                         <field name="locally_created" invisible="1" />
                         <field name="instance_creator" invisible="1" />
                         <field name="in_product" invisible="1" />
+                        <field name="property_product_pricelist_purchase" invisible="1" />
+                        <field name="property_account_receivable" invisible="1" />
+                        <field name="property_account_payable" invisible="1" />
                         <field name="min_qty" invisible="not context.get('choose_supplier')" />
                         <field name="delay" invisible="not context.get('choose_supplier')" />
                         <field name="price_unit" invisible="not context.get('choose_supplier')" />
@@ -92,6 +95,9 @@
                             <group expand="0" string="Group By...">
                                 <filter string="Partner type" icon="terp-personal" domain="[]" context="{'group_by' : 'partner_type'}" />
                                 <filter string="Zone" icon="terp-personal" domain="[]" context="{'group_by' : 'zone'}" />
+                                <filter string="Purch Default Cur" icon="terp-purchase" domain="[]" context="{'group_by' : 'property_product_pricelist_purchase'}" />
+                                <filter string="Acc Rec" icon="terp-sale" domain="[]" context="{'group_by' : 'property_account_receivable'}" />
+                                <filter string="Acc Pay" icon="terp-purchase" domain="[]" context="{'group_by' : 'property_account_payable'}" />
                             </group>
                         </search>
                     </xpath>
