@@ -260,14 +260,11 @@ class res_partner(osv.osv):
             select=True,
             required=True,
             help="This currency will be used, instead of the default one, for purchases from the current partner"),
-        'property_product_pricelist': fields.property(
+        'property_product_pricelist': fields.many2one(
             'product.pricelist',
-            type='many2one',
-            relation='product.pricelist',
-            domain=[('type','=','sale')],
+            domain=[('type', '=', 'sale')],
             string="Field orders default currency",
-            method=True,
-            view_load=True,
+            select=True,
             required=True,
             help="This currency will be used, instead of the default one, for field orders to the current partner"),
         'property_stock_customer': fields.property(
@@ -315,6 +312,8 @@ class res_partner(osv.osv):
         'split_po': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'instance_creator': lambda obj, cr, uid, c: obj._get_instance_creator(cr, uid, c),
+        'property_product_pricelist_purchase': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
+        'property_product_pricelist': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
     }
 
     def _get_instance_creator(self, cr, uid, context=None):
@@ -368,8 +367,7 @@ class res_partner(osv.osv):
         """
         property_obj = self.pool.get('ir.property')
 
-
-        #US-1344: treat deletion of partner
+        # US-1344: treat deletion of partner
         address_obj = self.pool.get('res.partner.address')
         address_ids = address_obj.search(cr, uid, [('partner_id', 'in', ids)])
 
@@ -379,9 +377,8 @@ class res_partner(osv.osv):
         address_obj.unlink(cr, uid, address_ids, context)
 
         # delete the related fields.properties
-        property_fields = ['property_account_receivable', 'property_account_payable', 'property_product_pricelist',
-                           'property_product_pricelist_purchase', 'property_stock_supplier',
-                           'property_stock_customer', 'property_account_position', 'property_payment_term']
+        property_fields = ['property_stock_supplier', 'property_stock_customer', 'property_account_position',
+                           'property_payment_term']
         res_ids = []
         for partner_id in ids:
             res_id = 'res.partner,%s' % partner_id

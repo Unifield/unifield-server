@@ -153,14 +153,12 @@ class res_partner(osv.osv):
             string="Account Payable",
             domain=ACCOUNT_RESTRICTED_AREA['partner_payable'],
             help="This account will be used instead of the default one as the payable account for the current partner",
-            required=True
         ),
         'property_account_receivable': fields.many2one(
             'account.account',
             string="Account Receivable",
             domain=ACCOUNT_RESTRICTED_AREA['partner_receivable'],
             help="This account will be used instead of the default one as the receivable account for the current partner",
-            required=True
         ),
         'property_account_position': fields.property(
             'account.fiscal.position',

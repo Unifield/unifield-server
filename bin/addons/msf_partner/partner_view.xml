@@ -24,7 +24,6 @@
                         <field name="min_qty" invisible="not context.get('choose_supplier')" />
                         <field name="delay" invisible="not context.get('choose_supplier')" />
                         <field name="price_unit" invisible="not context.get('choose_supplier')" />
-                        <!-- <field name="property_product_pricelist_purchase" invisible="not context.get('choose_supplier')" string="Currency"/> -->
                         <field name="price_currency" invisible="not context.get('choose_supplier')" string="Currency" />
                         <field name="valide_until_date" string="Valid until date"/>
                     </xpath>

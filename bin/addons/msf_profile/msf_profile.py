@@ -60,23 +60,26 @@ class patch_scripts(osv.osv):
     # UF28.0
     def us_10652_chg_partn_property_fields(self, cr, uid, *a, **b):
         '''
-        Update the data of the res_partner's fields property_product_pricelist_purchase, property_account_receivable and
-        property_account_payable as they have been changed from fields.property to fields.many2one
+        Update the data of the res_partner's fields property_product_pricelist_purchase, property_product_pricelist
+        property_account_receivable and property_account_payable as they have been changed from fields.property to fields.many2one
         '''
-        cr.execute('''
-            SELECT p.id, pr.value_reference, pr2.value_reference, pr3.value_reference FROM res_partner p
+        cr.execute("""
+            SELECT p.id, pr.value_reference, pr2.value_reference, pr3.value_reference, pr4.value_reference 
+            FROM res_partner p
               LEFT JOIN ir_property pr ON pr.res_id = 'res.partner,' || p.id AND pr.name = 'property_product_pricelist_purchase' 
-              LEFT JOIN ir_property pr2 ON pr2.res_id = 'res.partner,' || p.id AND pr2.name = 'property_account_receivable' 
-              LEFT JOIN ir_property pr3 ON pr3.res_id = 'res.partner,' || p.id AND pr3.name = 'property_account_payable'
-        ''')
+              LEFT JOIN ir_property pr2 ON pr2.res_id = 'res.partner,' || p.id AND pr2.name = 'property_product_pricelist' 
+              LEFT JOIN ir_property pr3 ON pr3.res_id = 'res.partner,' || p.id AND pr3.name = 'property_account_receivable' 
+              LEFT JOIN ir_property pr4 ON pr4.res_id = 'res.partner,' || p.id AND pr4.name = 'property_account_payable'
+        """)
         nb_partners = cr.rowcount
+        company_curr_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.currency_id.id
         for res in cr.fetchall():
             cr.execute("""
-                UPDATE res_partner SET property_product_pricelist_purchase = %s, property_account_receivable = %s,
-                property_account_payable = %s WHERE id = %s""", (res[1] and int(res[1].split(',')[-1]) or None,
-                                                                 res[2] and int(res[2].split(',')[-1]) or None,
-                                                                 res[3] and int(res[3].split(',')[-1]) or None, res[0]))
-        self.log_info(cr, uid, "US-10652: The Purchase Default Currency, Account Receivable and Account Payable have been updated on %d partners" % (nb_partners,))
+                UPDATE res_partner SET property_product_pricelist_purchase = %s, property_product_pricelist = %s, 
+                property_account_receivable = %s, property_account_payable = %s WHERE id = %s
+            """, (res[1] and int(res[1].split(',')[-1]) or company_curr_id, res[2] and int(res[2].split(',')[-1]) or company_curr_id,
+                  res[3] and int(res[3].split(',')[-1]) or None, res[4] and int(res[4].split(',')[-1]) or None, res[0]))
+        self.log_info(cr, uid, "US-10652: The Purchase Default Currency, Field Orders Default Currency, Account Receivable and Account Payable have been updated on %d partners" % (nb_partners,))
 
         return True
 

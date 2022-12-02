@@ -514,8 +514,6 @@ class account_installer(osv.osv_memory):
 
         #create the properties
         todo_list = [
-            ('property_account_receivable', 'res.partner', 'account.account'),
-            ('property_account_payable', 'res.partner', 'account.account'),
             ('property_account_expense_categ', 'product.category', 'account.account'),
             ('property_account_income_categ', 'product.category', 'account.account'),
             ('property_account_expense', 'product.template', 'account.account'),

@@ -2390,8 +2390,8 @@
                     <field name="tax_template_ids" colspan="4" readonly="1" nolabel="1"/>
                     <separator string="Properties" colspan="4"/>
                     <group>
-                    <field name="property_account_receivable" domain="[('id', 'child_of', [account_root_id])]"/>
-                    <field name="property_account_payable" domain="[('id', 'child_of', [account_root_id])]"/>
+                    <field name="property_account_receivable" domain="[('id', 'child_of', [account_root_id])]" required="1"/>
+                    <field name="property_account_payable" domain="[('id', 'child_of', [account_root_id])]" required="1"/>
                     <field name="property_account_expense_categ" domain="[('id', 'child_of', [account_root_id])]"/>
                     <field name="property_account_income_categ" domain="[('id', 'child_of', [account_root_id])]" />
                     <field name="property_account_expense" domain="[('id', 'child_of', [account_root_id])]"/>
