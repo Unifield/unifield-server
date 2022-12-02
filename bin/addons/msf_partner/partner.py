@@ -258,14 +258,12 @@ class res_partner(osv.osv):
             domain=[('type', '=', 'purchase')],
             string="Purchase default currency",
             select=True,
-            required=True,
             help="This currency will be used, instead of the default one, for purchases from the current partner"),
         'property_product_pricelist': fields.many2one(
             'product.pricelist',
             domain=[('type', '=', 'sale')],
             string="Field orders default currency",
             select=True,
-            required=True,
             help="This currency will be used, instead of the default one, for field orders to the current partner"),
         'property_stock_customer': fields.property(
             'stock.location',
@@ -851,7 +849,9 @@ class res_partner(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['ref_companies', 'instance_creator'] # reset this value, otherwise the content of the field triggers the creation of a new company
+        # reset the second value, otherwise the content of the field triggers the creation of a new company
+        fields_to_reset = ['ref_companies', 'instance_creator', 'property_product_pricelist_purchase',
+                           'property_product_pricelist', 'property_account_payable', 'property_account_receivable']
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:

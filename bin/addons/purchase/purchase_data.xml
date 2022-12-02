@@ -25,12 +25,6 @@
             <field name="name">Default Purchase Pricelist Line</field>
         </record>
         
-        <record forcecreate="True" id="property_product_pricelist_purchase" model="ir.property">
-            <field name="name">property_product_pricelist_purchase</field>
-            <field name="fields_id" search="[('model','=','res.partner'),('name','=','property_product_pricelist_purchase')]"/>
-            <field eval="'product.pricelist,'+str(list0)" name="value"/>
-        </record>
-        
     </data>
 
     <data noupdate="0">
