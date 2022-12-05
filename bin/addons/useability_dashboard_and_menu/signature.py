@@ -56,7 +56,7 @@ class signature_follow_up(osv.osv):
         st = {}
         for obj in ['purchase.order', 'sale.order', 'stock.picking', 'account.bank.statement', 'account.invoice']:
             st.update(dict(self.pool.get(obj)._columns['state'].selection))
-        return st.items()
+        return list(st.items())
 
     _columns = {
         'user_id': fields.many2one('res.users', 'User', readonly=1),

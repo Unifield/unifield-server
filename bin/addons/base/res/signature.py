@@ -233,7 +233,7 @@ class signature_object(osv.osv):
 
     def sig_line_change(self, cr, uid, ids, context=None):
         states = dict(self._inherit_fields['signature_state'][2].selection)
-        translated_states = dict([(k, _(v)) for k, v in states.items()])
+        translated_states = dict([(k, _(v)) for k, v in list(states.items())])
 
         doc = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_state'], context=context)
         return {'value': {'signature_state': doc.signature_state}, 'display_strings': {'signature_state': translated_states}}
@@ -890,7 +890,7 @@ class signature_change_date(osv.osv_memory):
                 return {
                     'warning': {
                         'title': _('Warning'),
-                        'message': _(u'Last document signed on %s, Date To can not be before.') % (ustr(last_date.strftime(date_lang_format)),)
+                        'message': _('Last document signed on %s, Date To can not be before.') % (ustr(last_date.strftime(date_lang_format)),)
                     },
                     'value': {
                         'new_to': (last_date + timedelta(days=1)).strftime('%Y-%m-%d')
