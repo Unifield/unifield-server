@@ -96,7 +96,7 @@
             <field name="product_qty">2.0</field>
             <field name="confirmed_delivery_date" eval="False" />
             <field name="name">BALLOON, ANAESTHESIA, &#216; 22 mm, 1 l</field>
-            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'EANEBALA1--'), ('name', '=', u'BALLOON, ANAESTHESIA, \xd8 22 mm, 1 l')]"/>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'EANEBALA1--'), ('name', '=', 'BALLOON, ANAESTHESIA, \xd8 22 mm, 1 l')]"/>
             <field name="product_uom" ref="product.product_uom_unit"/>
             <field name="order_id" ref="purchase_order_po00002_1"/>
         </record>

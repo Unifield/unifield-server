@@ -536,7 +536,7 @@
                                     <para style="TextInformation5" alignment="CENTER">Total volume</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation5" alignment="CENTER">[[ pack[0].real_total_volume and u'%s dm³'%pack[0].real_total_volume or '' ]]</para>
+                                    <para style="TextInformation5" alignment="CENTER">[[ pack[0].real_total_volume and '%s dm³'%pack[0].real_total_volume or '' ]]</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation5" alignment="CENTER">Total weight</para>

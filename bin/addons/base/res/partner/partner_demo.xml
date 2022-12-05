@@ -208,7 +208,7 @@
 
         <record id="res_partner_duboissprl0" model="res.partner">
             <field eval="'Sprl Dubois would like to sell our bookshelves but they have no storage location, so it would be exclusively on order'" name="comment"/>
-            <field model="res.users" name="user_id" search="[('name', '=', u'Thomas Lebrun')]"/>
+            <field model="res.users" name="user_id" search="[('name', '=', 'Thomas Lebrun')]"/>
             <field name="name">Dubois sprl</field>
         </record>
 

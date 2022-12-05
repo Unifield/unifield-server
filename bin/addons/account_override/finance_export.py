@@ -136,7 +136,7 @@ class finance_archive():
         name = cr.dbname
         if not is_list:
             ids = sorted(ids.split(','))
-            # We have this: [u'2', u'4', u'6', u'8']
+            # We have this: ['2', '4', '6', '8']
             # And we want this: [2, 4, 6, 8]
             # So we do some process on this list
             res_ids = [int(x) for x in ids]

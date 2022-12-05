@@ -21,15 +21,15 @@ class wizard_import_ad_line(osv.osv_memory):
             states={'draft': [('readonly', False)]}),
         'message': fields.text(string='Message', readonly=True),
         'purchase_id': fields.many2one(
-            'purchase.order', required=True, string=u"Purchase Order"),
+            'purchase.order', required=True, string="Purchase Order"),
         'sale_id': fields.many2one(
-            'sale.order', required=True, string=u"Field Order"),
+            'sale.order', required=True, string="Field Order"),
         'state': fields.selection([
             ('draft', 'Draft'),
             ('in_progress', 'In Progress'),
             ('done', 'Done'),
             ('error', 'Error'),
-        ], string=u"State", required=True, readonly=True),
+        ], string="State", required=True, readonly=True),
     }
 
     def import_file(self, cr, uid, ids, context=None):

@@ -1151,8 +1151,8 @@ class account_mcdb(osv.osv):
         Depending on the field type, returns the value to take into account,
         and the new operator to use if the selection has been reversed: for ex. 'not in' or '!=' becomes ':'
         (NOT done for "simple" fields as fields.char because we can't "reversed" the selection in that case)
-        Ex. for the value: for the domain ('ref', 'ilike', u'%RefTest%'): RefTest,
-        for ('move_id.state', '=', u'draft'): 'Unposted',
+        Ex. for the value: for the domain ('ref', 'ilike', '%RefTest%'): RefTest,
+        for ('move_id.state', '=', 'draft'): 'Unposted',
         for ('is_reallocated', '=', '0): "False"
         for ('period_id', 'in', (2, 1)): Feb 2017, Jan 2017
         :param field: dict with all the data of the field
@@ -1356,7 +1356,7 @@ class account_mcdb(osv.osv):
         Formats the dictionary in parameter containing the data to use to create/write a selector:
         - removes the id, the values related to the template itself, and the user that shouldn't be modified
         - many2many fields: formats the values to make them look like [(6, 0, [1, 2])]
-        - many2one fields: replaces the tuple looking like (1, u'FY 2018') by the related id
+        - many2one fields: replaces the tuple looking like (1, 'FY 2018') by the related id
         """
 
         fields_to_del = [

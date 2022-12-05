@@ -1212,7 +1212,7 @@ CREATE OR REPLACE view report_stock_inventory AS (
         this filter must be applied in total and not in stock move line
         so we do not inject it in read_group but post use it in res
         (we remove it from domain even if not supported operators 'in', 'not in')
-        [('state', '=', 'done'), ('location_type', '=', 'internal'), (u'product_qty', u'<', 100)]
+        [('state', '=', 'done'), ('location_type', '=', 'internal'), ('product_qty', '<', 100)]
         """
         product_qty_tuple = False
         if domain:

@@ -7718,7 +7718,7 @@ msgid ""
 "[('blue','Blue'),('yellow','Yellow')]"
 msgstr ""
 "选择字段的选项列表，请指定一个 Python 形如 (key, label) 的列表表达式，比如： "
-"[('blue',u'蓝色'),('yellow',u'黄色')]"
+"[('blue','蓝色'),('yellow','黄色')]"
 
 #. module: base
 #: selection:base.language.export,state:0

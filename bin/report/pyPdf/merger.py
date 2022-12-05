@@ -251,7 +251,7 @@ class PdfFileMerger(object):
 
         :param dict infos: a Python dictionary where each key is a field
             and each value is your new metadata.
-            Example: ``{u'/Title': u'My title'}``
+            Example: ``{'/Title': 'My title'}``
         """
         self.output.addMetadata(infos)
 
