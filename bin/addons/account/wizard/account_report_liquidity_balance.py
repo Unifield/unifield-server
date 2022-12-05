@@ -97,8 +97,6 @@ class liquidity_balance_wizard(osv.osv_memory):
         elif wiz.instance_id.level == 'coordo':
             data['form'].update({'instance_ids': wiz.instance_id and
                                                  ([wiz.instance_id.id] + [x.id for x in wiz.instance_id.child_ids]) or False})
-        elif wiz.instance_id.level == 'project':
-            data['form'].update({'instance_ids': wiz.instance_id and [wiz.instance_id.id] or False})
         data['context'] = context
         instance = wiz.instance_id and wiz.instance_id.code or ''
         """
