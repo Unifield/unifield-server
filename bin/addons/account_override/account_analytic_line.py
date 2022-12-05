@@ -72,6 +72,8 @@ class account_analytic_line(osv.osv):
                                             string='Purchase Order', readonly=True, store=False),
         'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
                                  store=False, help='DB ID used for Vertical Integration'),
+        'product_code': fields.related('move_id', 'product_code', type='char', string='Product Code', readonly=True),
+        'entry_quantity': fields.related('move_id', 'quantity', type='float', string='Quantity', readonly=True),
     }
 
 account_analytic_line()

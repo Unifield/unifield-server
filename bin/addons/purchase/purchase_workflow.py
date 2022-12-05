@@ -5,7 +5,7 @@ import netsvc
 from tools.translate import _
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from msf_button_access_rights.osv_override import fakeUid
+from tools.misc import fakeUid
 
 
 class purchase_order_line(osv.osv):
@@ -47,7 +47,7 @@ class purchase_order_line(osv.osv):
             self.check_analytic_distribution(cr, uid, ids_to_check, context=context)
             self.check_if_stock_take_date_with_esc_partner(cr, uid, ids_to_check, context=context)
             self.check_unit_price(cr, uid, ids_to_check, context=context)
-            self.check_po_tax(cr, uid, ids_to_check, context=context)
+            self.check_pol_tax(cr, uid, ids_to_check, context=context)
             wiz_id = self.pool.get('purchase.order.line.nsl.validation.wizard').create(cr, uid, {'pol_ids': [(6, 0, ids)], 'message': ', '.join(nsl)}, context=context)
             return {
                 'type': 'ir.actions.act_window',
@@ -507,6 +507,7 @@ class purchase_order_line(osv.osv):
                 'product_uom': x.product_uom.id,
                 'product_uom_qty': x.product_qty,
                 'type': 'make_to_stock',
+                'loan_line_id': x.id,
             }) for x in self.browse(cr, uid, pol_ids, fields_to_fetch=ftf, context=context)],
         }
 
@@ -591,17 +592,20 @@ class purchase_order_line(osv.osv):
 
         return True
 
-    def check_po_tax(self, cr, uid, ids, context=None):
+    def check_pol_tax(self, cr, uid, ids, context=None):
         """
-        Prevents from validating a PO with taxes when using an Intermission or Intersection partner
+        Prevents from validating a PO line with taxes when using an Internal, Intermission or Intersection partner; and
+        with an In Kind Donation Order Type
         """
         if context is None:
             context = {}
         if isinstance(ids, int):
             ids = [ids]
         for po_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'taxes_id'], context=context):
-            if po_line.taxes_id and po_line.order_id.partner_type in ('intermission', 'section'):
-                raise osv.except_osv(_('Error'), _("Taxes are forbidden with Intermission and Intersection partners."))
+            if po_line.taxes_id and po_line.order_id.partner_type in ('internal', 'intermission', 'section'):
+                raise osv.except_osv(_('Error'), _("Taxes are forbidden with Internal, Intermission and Intersection partners."))
+            if po_line.taxes_id and po_line.order_id.order_type == 'in_kind':
+                raise osv.except_osv(_('Error'), _("Taxes are forbidden with the In Kind Donation Order Type."))
 
     def check_origin_for_validation(self, cr, uid, ids, context=None):
         if not context:
@@ -636,7 +640,7 @@ class purchase_order_line(osv.osv):
         self.check_analytic_distribution(cr, uid, ids, context=context)
         self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
         self.check_unit_price(cr, uid, ids, context=context)
-        self.check_po_tax(cr, uid, ids, context=context)
+        self.check_pol_tax(cr, uid, ids, context=context)
 
         # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
@@ -956,7 +960,7 @@ class purchase_order(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        po = self.browse(cr, uid, ids[0], context=context)
+        po = self.browse(cr, uid, ids[0], fields_to_fetch=['order_line'], context=context)
         return self.pool.get('purchase.order.line').validated(cr, uid, [pol.id for pol in po.order_line], context=context)
 
 

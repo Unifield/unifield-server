@@ -159,7 +159,7 @@ class analytic_distribution1(osv.osv):
 
     def create_account_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, document_date=False, ref=False,
                                       source_date=False, general_account_id=False, move_id=False, invoice_line_id=False,
-                                      commitment_line_id=False, context=None):
+                                      commitment_line_id=False, period_id=False, context=None):
         """
         Create analytic lines from given elements:
          - date
@@ -201,6 +201,9 @@ class analytic_distribution1(osv.osv):
             'source_date': source_date or False,
             'commitment_line_id': commitment_line_id or False,
         }
+        if period_id:
+            vals['real_period_id'] = period_id
+
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         # Browse distribution(s)
         for distrib in self.browse(cr, uid, ids, context=context):

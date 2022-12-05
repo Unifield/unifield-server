@@ -5,3 +5,4 @@ from . import account_installer
 from . import user_access_configurator
 from . import unifield_version
 from . import deleted_object
+from . import signature

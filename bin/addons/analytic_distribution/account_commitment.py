@@ -34,8 +34,35 @@ import netsvc
 class account_commitment(osv.osv):
     _name = 'account.commitment'
     _description = "Account Commitment Voucher"
-    _order = "id desc"
+    _order = 'is_draft desc, id desc'
     _trace = True
+
+    def import_cv(self, cr, uid, ids, data, context=None):
+        """
+        Opens the Import CV wizard
+        """
+        if isinstance(ids, int):
+            ids = [ids]
+        wiz_id = self.pool.get('account.cv.import').create(cr, uid, {'commit_id': ids[0]}, context=context)
+        return {
+            'name': _('Import CV'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.cv.import',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [wiz_id],
+        }
+
+    def export_cv(self, cr, uid, ids, data, context=None):
+        """
+        Opens the Export CV report
+        """
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.export_cv',
+            'datas': data,
+        }
 
     def _get_total(self, cr, uid, ids, name, args, context=None):
         """
@@ -83,11 +110,11 @@ class account_commitment(osv.osv):
         """
         Returns the list of possible types for the Commitment Vouchers
         """
-        return [('manual', 'Manual'),
-                ('external', 'Automatic - External supplier'),
-                ('esc', 'Manual - ESC supplier'),
-                ('intermission', 'Automatic - Intermission'),
-                ('intersection', 'Automatic - Intersection'),
+        return [('manual', _('Manual')),
+                ('external', _('Automatic - External supplier')),
+                ('esc', _('Manual - ESC supplier')),
+                ('intermission', _('Automatic - Intermission')),
+                ('intersection', _('Automatic - Intersection')),
                 ]
 
     def get_current_cv_version(self, cr, uid, context=None):
@@ -133,6 +160,7 @@ class account_commitment(osv.osv):
         'partner_id': fields.many2one('res.partner', string="Partner", required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),
+        'is_draft': fields.boolean('Is draft', help='used to sort CVs (draft on top)', readonly=1, select=1),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total",
@@ -155,6 +183,7 @@ class account_commitment(osv.osv):
 
     _defaults = {
         'state': lambda *a: 'draft',
+        'is_draft': True,
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
         'version': get_current_cv_version,
@@ -176,6 +205,7 @@ class account_commitment(osv.osv):
         if 'state' not in vals:
             # state by default at creation time = Draft: add it in vals to make it appear in the Track Changes
             vals['state'] = 'draft'
+        vals['is_draft'] = vals.get('state', 'draft') == 'draft'
         # UTP-317 # Check that no inactive partner have been used to create this commitment
         if 'partner_id' in vals:
             partner_id = vals.get('partner_id')
@@ -241,6 +271,8 @@ class account_commitment(osv.osv):
         curr_obj = self.pool.get('res.currency')
         user_obj = self.pool.get('res.users')
         dest_cc_link_obj = self.pool.get('dest.cc.link')
+        if 'state' in vals:
+            vals['is_draft'] = vals['state'] == 'draft'
         # Browse elements if 'date' in vals
         if vals.get('date', False):
             date = vals.get('date')
@@ -496,7 +528,7 @@ class account_commitment(osv.osv):
                                                       c.journal_id and c.journal_id.id,
                                                       c.currency_id and c.currency_id.id, c.date or False,
                                                       (c.purchase_id and c.purchase_id.name or c.sale_id and c.sale_id.name) or c.name or False, c.date,
-                                                      cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
+                                                      cl.account_id and cl.account_id.id or False, False, False, cl.id, period_id=c.period_id.id, context=context)
         return True
 
     def action_commitment_open(self, cr, uid, ids, context=None):
@@ -706,7 +738,7 @@ class account_commitment_line(osv.osv):
                                                   cl.commit_id.date, sign * amount, cl.commit_id.journal_id.id, cl.commit_id.currency_id.id,
                                                   cl.commit_id and cl.commit_id.date or False, ref, cl.commit_id.date,
                                                   account_id or cl.account_id.id, move_id=False, invoice_line_id=False,
-                                                  commitment_line_id=cl.id, context=context)
+                                                  commitment_line_id=cl.id, period_id=cl.commit_id.period_id.id, context=context)
         return True
 
     def create(self, cr, uid, vals, context=None):

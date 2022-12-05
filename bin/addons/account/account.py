@@ -743,6 +743,8 @@ class account_journal(osv.osv):
                     if not currency_id:
                         raise osv.except_osv(_('Warning'),
                                              _('The currency is mandatory for the journal %s.') % journal_code)
+                if context.get('curr_check', False) and not journal.currency.active:  # The chosen currency must be active
+                    raise osv.except_osv(_('Warning'), _('Currency is inactive.'))
                 # check on corresponding bank journal for a cheque journal
                 if journal_type == 'cheque':
                     if not journal.bank_journal_id:
@@ -856,16 +858,25 @@ class account_journal(osv.osv):
             return True
         if context is None:
             context = {}
+        if 'code' in vals and vals['code']:
+            code = vals['code'].strip()
+            vals.update({'code': code})
+        if 'name' in vals and vals['name']:
+            name = vals['name'].strip()
+            vals.update({'name': name})
         for journal in self.browse(cr, uid, ids, context=context):
             if 'company_id' in vals and journal.company_id.id != vals['company_id']:
                 move_lines = self.pool.get('account.move.line').search(cr, uid, [('journal_id', 'in', ids)])
                 if move_lines:
                     raise osv.except_osv(_('Warning !'), _('You cannot modify company of this journal as its related record exist in Entry Lines'))
-            if not journal.is_current_instance and not context.get('sync_update_execution'):
+            if not journal.is_current_instance and not journal.is_coordo_editable \
+                    and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
             self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
         self._check_journal_inactivation(cr, uid, ids, vals, context=context)
         ret = super(account_journal, self).write(cr, uid, ids, vals, context=context)
+        if vals.get('currency', False):
+            context.update({'curr_check': True})
         self._check_journal_constraints(cr, uid, ids, context=context)
         return ret
 
@@ -895,8 +906,16 @@ class account_journal(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if not 'sequence_id' in vals or not vals['sequence_id']:
             vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
+        if 'code' in vals and vals['code']:
+            code = vals['code'].strip()
+            vals.update({'code': code})
+        if 'name' in vals and vals['name']:
+            name = vals['name'].strip()
+            vals.update({'name': name})
         self._remove_unnecessary_links(cr, uid, vals, context=context)
         journal_id = super(account_journal, self).create(cr, uid, vals, context)
+        if vals.get('currency', False):
+            context.update({'curr_check': True})
         self._check_journal_constraints(cr, uid, [journal_id], context=context)
         return journal_id
 

@@ -44,6 +44,7 @@ from . import free_allocation_report
 from . import invoice_excel_export
 from . import export_invoice
 from . import account_employee_ledger
+from . import export_cv
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

@@ -146,8 +146,8 @@
 
         <menuitem id="menuitem_purchase_order_followup_from_menu"
                   action="action_purchase_order_followup_from_menu"
-                  sequence="1"
-                  parent="base.next_id_73" />
+                  parent="base.next_id_73"
+                  sequence="6" />
 		
 	</data>
 </openerp>

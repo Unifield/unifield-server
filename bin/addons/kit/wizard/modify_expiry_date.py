@@ -59,14 +59,18 @@ class modify_expiry_date(osv.osv_memory):
             ids = [ids]
         # objects
         kit_obj = self.pool.get('composition.kit')
+        data_obj = self.pool.get('ir.model.data')
         kit_ids = context['active_ids']
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.new_date:
                 raise osv.except_osv(_('Warning !'), _('You need to specify a new date.'))
             kit_obj.write(cr, uid, kit_ids, {'composition_exp': obj.new_date}, context=context)
 
+        view_id = data_obj.get_object_reference(cr, uid, 'kit', 'view_composition_kit_real_form')[1]
+        tree_view_id = data_obj.get_object_reference(cr, uid, 'kit', 'view_composition_kit_real_tree')[1]
         return {'type': 'ir.actions.act_window',
                 'res_model': 'composition.kit',
+                'view_id': [view_id, tree_view_id],
                 'view_type': 'form',
                 'view_mode': 'form,tree',
                 'res_id': kit_ids[0],

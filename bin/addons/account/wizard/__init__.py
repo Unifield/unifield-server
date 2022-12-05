@@ -56,4 +56,5 @@ from . import account_invoice_import
 from . import account_report_common_employee
 from . import account_report_employee_balance
 from . import account_report_employee_ledger
+from . import account_cv_import
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

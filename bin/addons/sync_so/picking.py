@@ -27,6 +27,7 @@ import time
 
 from sync_common import xmlid_to_sdref
 from sync_client import get_sale_purchase_logger
+from sync_client.log_sale_purchase import RunWithoutException
 from sync_client.message import dict_to_obj
 
 from tools.translate import _
@@ -529,8 +530,7 @@ class stock_picking(osv.osv):
                                 message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
                                     in_name, po_name,
                                 )
-                                self._logger.info(message)
-                                raise Exception(message)
+                                raise RunWithoutException(message)
 
                     move_id = False
                     if move_ids and len(move_ids) == 1:  # if there is only one move, take it for process
@@ -641,9 +641,10 @@ class stock_picking(osv.osv):
                     processed_in = self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context)
                     if processed_in:
                         in_name = self.browse(cr, uid, in_id, context=context)['name']
-                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
+                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (-%s-) already fully/partially cancelled/Closed" % (
                             in_name, po_name,
                         )
+                        raise RunWithoutException(message)
                 if not same_in and not processed_in:
                     message = "Sorry, this seems to be an extra ship. This feature is not available now!"
             else:

@@ -107,6 +107,8 @@
                     <separator colspan="4" string="States"/>
                     <field name="state"/>
                     <field name="is_revaluated" invisible="1"/>  <!-- exportable field -->
+                    <field name="is_eoy_liquidity_revaluated" invisible="1"/>  <!-- exportable field -->
+                    <field name="is_eoy_regular_bs_revaluated" invisible="1"/>  <!-- exportable field -->
                     <button name="action_draft" states="done" string="Set to Draft" type="object" icon="gtk-convert" groups="account.group_account_manager"/>
                 </form>
             </field>

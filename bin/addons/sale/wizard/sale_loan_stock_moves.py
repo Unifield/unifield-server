@@ -129,10 +129,8 @@ class sale_loan_stock_moves(osv.osv_memory):
             if wizard.origin:
                 sm_domain.append(('origin', 'like', wizard.origin))
 
-            if wizard.display_bn_ed:
-                sm_domain.append(('state', '!=', 'cancel'))
-            else:
-                sm_domain.append(('state', '=', 'done'))
+            if not wizard.display_bn_ed:
+                sm_domain.append(('state', 'in', ['done', 'cancel']))
 
             remove_completed = False
             if wizard.remove_completed:

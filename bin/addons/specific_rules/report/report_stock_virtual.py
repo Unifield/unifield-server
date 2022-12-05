@@ -89,6 +89,7 @@ stock_report_prodlots_virtual()
 class stock_report_prodlots(osv.osv):
     _inherit = 'stock.report.prodlots'
     _rec_name = 'prodlot_id'
+    _auto = False
 
     def init(self, cr):
         drop_view_if_exists(cr, 'stock_report_prodlots')

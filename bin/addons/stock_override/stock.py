@@ -418,7 +418,7 @@ class stock_picking(osv.osv):
 
         return res
 
-    def write_web(self, cr, uid, ids, vals, context=None):
+    def write_web(self, cr, uid, ids, vals, context=None, ignore_access_error=False):
         if ids:
             doc_type = self.browse(cr, uid, ids[0], fields_to_fetch=['type'], context=context).type
             if vals and 'reason_type_id' in vals:
@@ -436,7 +436,7 @@ class stock_picking(osv.osv):
                 if vals.get('ext_cu'):
                     vals.update({'partner_id': False, 'partner_id2': False, 'address_id': False})
 
-        return super(stock_picking, self).write_web(cr, uid, ids, vals, context=context)
+        return super(stock_picking, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
 
     def go_to_simulation_screen(self, cr, uid, ids, context=None):
         '''

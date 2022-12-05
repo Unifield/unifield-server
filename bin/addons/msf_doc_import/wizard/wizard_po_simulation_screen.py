@@ -1567,6 +1567,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 if p_error:
                     write_vals['type_change'] = 'error'
                     errors.append(p_msg)
+                else:
+                    if line.po_line_id and line.po_line_id.linked_sol_id and not line.po_line_id.linked_sol_id.procurement_request \
+                            and line.po_line_id.po_order_type == 'regular' \
+                            and prod_obj.browse(cr, uid, write_vals['imp_product_id'], fields_to_fetch=['type'], context=context).type == 'service_recep':
+                        write_vals['type_change'] = 'error'
+                        errors.append(_('You can not select the Service Product %s on a Regular PO if the line has been sourced from a FO') % values[2])
             else:
                 write_vals['type_change'] = 'error'
 
@@ -1671,7 +1677,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
                                              limit=1, context=context)
                     if so_ids:
-                        so = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state', 'order_type'], context=context)
+                        so = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state', 'order_type', 'procurement_request'], context=context)
                         if so.state not in ('done', 'cancel'):
                             if so.order_type == 'regular':
                                 write_vals['imp_origin'] = origin
@@ -1684,17 +1690,22 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             errors.append(err_msg)
                             write_vals['type_change'] = 'error'
                         # To link the other instance's IR to the PO line
-                        if line.type_change in ['new', 'split'] and instance_sync_order_ref:
-                            sync_order_label_ids = sync_order_obj.\
-                                search(cr, uid, [('name', '=', instance_sync_order_ref),
-                                                 ('order_id.state', 'not in', ['done', 'cancel']),
-                                                 ('order_id', '=', so.id)], context=context)
-                            if sync_order_label_ids:
-                                write_vals['imp_sync_order_ref'] = sync_order_label_ids[0]
-                            else:
-                                err_msg = _('No Order in sync. instance with an open FO was found with the data in \'Origin\'')
-                                errors.append(err_msg)
+                        if line.type_change in ['new', 'split']:
+                            if instance_sync_order_ref:
+                                sync_order_label_ids = sync_order_obj.\
+                                    search(cr, uid, [('name', '=', instance_sync_order_ref),
+                                                     ('order_id.state', 'not in', ['done', 'cancel']),
+                                                     ('order_id', '=', so.id)], context=context)
+                                if sync_order_label_ids:
+                                    write_vals['imp_sync_order_ref'] = sync_order_label_ids[0]
+                                else:
+                                    err_msg = _('No Order in sync. instance with an open FO was found with the data in \'Origin\'')
+                                    errors.append(err_msg)
+                                    write_vals['type_change'] = 'error'
+                            if write_vals['imp_product_id'] and not so.procurement_request and line.simu_id.order_id.order_type == 'regular' \
+                                    and prod_obj.browse(cr, uid, write_vals['imp_product_id'], fields_to_fetch=['type'], context=context).type == 'service_recep':
                                 write_vals['type_change'] = 'error'
+                                errors.append(_('The Service Product %s can not be linked to a FO (%s) on a Regular PO') % (values[2], origin))
                     else:
                         err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
                         errors.append(err_msg)

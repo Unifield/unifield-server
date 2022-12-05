@@ -24,6 +24,7 @@
 from osv import osv, orm
 import pooler
 import logging
+from tools.misc import fakeUid
 
 super_view_look_dom_arch = orm.orm_template._orm_template__view_look_dom_arch
 
@@ -108,21 +109,6 @@ method_whitelist = [
     'name_get',
 ]
 
-class fakeUid(int):
-    """
-    Emulates the behaviour of an INT while having the ability to store the users real uid in a property called realUid
-    @param fakeuid The int that will be outputted when this class is used like a normal integer
-    @param realUid The value that will be stored in parameter realUid of this object
-    """
-    def __new__(self, fakeUid, realUid):
-        return int.__new__(self, fakeUid)
-
-    def __init__(self, fakeUid, realUid):
-        self.realUid = realUid
-
-    def __reduce__(self):
-        res = super(fakeUid, self).__reduce__()
-        return (res[0], (res[1][1], res[1][1], self.realUid))
 
 super_execute_cr = osv.object_proxy.execute_cr
 
@@ -149,6 +135,11 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
             search_obj = ['sale.order.line', 'sale.order']
         elif obj == 'purchase.order.line':
             search_obj = ['purchase.order.line', 'purchase.order']
+        elif obj == 'signature.line' and args and args[0] and method in ('activate_role', 'disable_role'):
+            # to set fakeUid: bar displaying is checked on main object (PO/IR...), but on click bar is checked on line
+            assert len(args[0]) == 1, 'Toggle active can be called on one record only'
+            search_obj = [pool.get('signature.line').browse(cr, adminUid, args[0][0], fields_to_fetch=['signature_id']).signature_id.signature_res_model]
+
 
         model_id = pool.get('ir.model').search(cr, adminUid, [('model', 'in', search_obj)])
         rules_pool = pool.get('msf_button_access_rights.button_access_rule')

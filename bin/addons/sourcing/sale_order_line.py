@@ -1592,6 +1592,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             'product_qty': sourcing_line.product_uom_qty,
                             'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
                             'partner_id': sourcing_line.order_partner_id.id,
+                            'loan_line_id': sourcing_line.id,
                         }
                         cp_po_line_id = self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
                         so_line_data['counterpart_po_line_id'] = cp_po_line_id

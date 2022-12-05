@@ -2,6 +2,7 @@
 
 <!DOCTYPE INVOICE [
     <!ENTITY payment_tab SYSTEM "../account/account_invoice_payment_tab.xml">
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
 ]>
 
 <openerp>
@@ -164,7 +165,7 @@
             <field name="arch" type="xml">
                 <form string="In-kind Donation" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('inv_doc_type', '=', True), ('is_active', '=', True)]"/>
+                        <field name="journal_id" domain="[('inv_doc_type', '=', True), ('is_active', '=', True), ('code', '=', 'IKD')]"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="is_inkind_donation" invisible="1"/>
@@ -287,6 +288,7 @@
                                 </group>
                             </group>
                         </page>
+                        &signature_template;
                     </notebook>
                 </form>
             </field>
@@ -618,7 +620,7 @@
                     </group>
                     <newline/>
                     <group col="8" colspan="4">
-                        <field name="journal_id" select='1' context="{'search_default_filter_is_active': 1}"/>
+                        <field name="fiscalyear_id" select='1'/>
                         <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="name"/>
                         <field name="amount_total"/>
@@ -646,7 +648,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'donation')]</field>
-            <field name="context">{'doc_type': 'donation', 'type': 'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': '1', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_open': 1}</field>
+            <field name="context">{'doc_type': 'donation', 'type': 'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': '1', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_open': 0}</field>
             <field name="search_view_id" ref="view_account_invoice_filter_donation"/>
         </record>
 

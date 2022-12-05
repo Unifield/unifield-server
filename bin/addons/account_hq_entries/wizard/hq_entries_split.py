@@ -256,6 +256,7 @@ class hq_entries_split(osv.osv_memory):
         'line_ids': fields.one2many('hq.entries.split.lines', 'wizard_id', "Split lines"),
         'running': fields.boolean('Is running'),
         'date': fields.date('Posting Date'),
+        'document_date': fields.date('Document Date'),
     }
 
     _defaults = {

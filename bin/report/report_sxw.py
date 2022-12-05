@@ -230,6 +230,7 @@ class rml_parse(object):
             'sheet_name': self.sheet_name,
             'formatFloatDigitsToUom': self.formatFloatDigitsToUom,
             'getPoCustomTxt': self.get_po_custom_txt,
+            'getSign': self.getSign,
             # more context members are setup in setCompany() below:
             #  - company_id
             #  - logo
@@ -248,6 +249,39 @@ class rml_parse(object):
         self.log_export = False
         self.sheet_name_used = []
         self.total_sheet_number = 0
+
+    def getSign(self, obj, key, field, d_format=None):
+        if not hasattr(obj, 'signature_id'):
+            return ''
+        sign_id = obj.signature_id
+        if not sign_id:
+            return ''
+
+        sign_line_obj = self.pool.get('signature.line')
+        sign_ids = sign_line_obj.search(self.cr, self.uid, [('signature_id', '=', sign_id.id), ('name_key', '=', key), ('is_active', '=', True), ('signed', '=', True)])
+        if not sign_ids:
+            return ''
+
+        fields_to_fetch = [field]
+        if field == 'date':
+            fields_to_fetch.append('format_state')
+
+        data = sign_line_obj.browse(self.cr, self.uid, sign_ids[0], fields_to_fetch=fields_to_fetch, context={'lang': self.localcontext.get('lang')})
+
+        if field == 'date':
+            formatted_date = ''
+            if data.date:
+                if d_format is None:
+                    formatted_date = self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, d_type='datetime', datetime=data.date)
+                else:
+                    formatted_date = time.strftime(d_format, time.strptime(data.date, '%Y-%m-%d %H:%M:%S'))
+            return '%s %s' % (formatted_date, data.format_state)
+
+        elif field == 'user_id':
+            return data.user_id and data.user_id.name or ''
+        elif data[field]:
+            return data[field]
+        return ''
 
     def sheet_name(self, default_name=False, context=None):
         sheet_max_size = 31

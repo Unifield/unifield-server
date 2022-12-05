@@ -59,6 +59,10 @@ OBJ_TO_RECREATE = [
     'wizard.template',
     'account.analytic.account',
     'dest.cc.link',
+    'replenishment.segment.line.amc',
+    'replenishment.segment.line',
+    'replenishment.segment.line.amc.month_exp',
+    'replenishment.segment.date.generation',
 ]
 
 

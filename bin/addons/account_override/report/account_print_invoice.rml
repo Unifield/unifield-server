@@ -131,6 +131,11 @@
       <lineStyle kind="BOX" colorName="black" start="1,0" stop="1,0"/>
       <blockValign value="MIDDLE"/>
     </blockTableStyle>
+        <blockTableStyle id="StatusTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="GRID" colorName="black" thickness="0.5" />
+        </blockTableStyle>
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
@@ -466,6 +471,98 @@
       </tr>
     </blockTable>
 
+    <section>
+        <blockTable colWidths="64.0,116.0,116.0,116.0,116.0" style="StatusTable">
+        [[ o.doc_type in ('donation', 'si') or removeParentNode('section') ]]
+            <tr>
+                <td>
+                    <para style="terp_default_9"> </para>
+                </td>
+                <td>
+                    <para style="terp_default_9" alignment="CENTER">Supply Responsible</para>
+                </td>
+                <td>
+                    <para style="terp_default_9" alignment="CENTER">Technical Responsible</para>
+                </td>
+                <td>
+                    <para style="terp_default_9" alignment="CENTER">Financial Responsible</para>
+                </td>
+                <td>
+                    <para style="terp_default_9" alignment="CENTER">Mission Responsible</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="terp_default_9">Name :</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'sr', 'user_name') ]]</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'tr', 'user_name') ]]</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'fr', 'user_name') ]]</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'mr', 'user_name') ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="terp_default_9">Date :</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'sr', 'date') ]]</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'tr', 'date') ]]</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'fr', 'date') ]]</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'mr', 'date') ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="terp_default_9">Total :</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'sr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'tr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'fr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="terp_default_9">[[ getSign(o, 'mr', 'format_value') ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="terp_default_9">Signature :</para>
+                    <para style="terp_default_9"> </para>
+                </td>
+                <td>
+                    <image width="100" height="25" mask="auto">[[ getSign(o, 'sr', 'image') or removeParentNode('image') ]]</image>
+                </td>
+                <td>
+                    <image width="100" height="25" mask="auto">[[ getSign(o, 'tr', 'image') or removeParentNode('image')]]</image>
+                </td>
+                <td>
+                    <image width="100" height="25" mask="auto">[[ getSign(o, 'fr', 'image') or removeParentNode('image')]]</image>
+                </td>
+                <td>
+                    <image width="100" height="25" mask="auto">[[ getSign(o, 'mr', 'image') or removeParentNode('image')]]</image>
+                </td>
+            </tr>
+        </blockTable>
+
+    </section>
     <!-- Section displayed only for STV -->
     <section>
       [[ (o.type == 'out_invoice' and not o.is_debit_note and not o.is_inkind_donation and not o.is_intermission) or removeParentNode('section') ]]

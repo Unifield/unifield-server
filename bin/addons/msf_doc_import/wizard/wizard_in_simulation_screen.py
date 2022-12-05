@@ -1679,8 +1679,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'imp_exp_date': False,
                 })
 
-            # Check stock in Cross Docking
-            if with_pack and write_vals.get('imp_product_qty'):
+            # Check stock in Cross Docking and if flow comes from a FO
+            sol = line.move_id and line.move_id.purchase_line_id and line.move_id.purchase_line_id.linked_sol_id or False
+            if sol and not sol.procurement_request and with_pack and write_vals.get('imp_product_qty'):
                 cd_ctx = context.copy()
                 cd_ctx['location'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
                                                                                          'stock_location_cross_docking')[1],

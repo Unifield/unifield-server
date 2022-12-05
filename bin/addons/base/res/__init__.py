@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -30,8 +30,10 @@ from . import res_currency
 from . import res_company
 from . import res_user
 from . import res_request
-from . import res_lang 
-from . import res_log 
+from . import res_lang
+from . import res_log
 from . import ir_property
 from . import res_widget
+from . import signature
+from . import report_module
 

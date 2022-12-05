@@ -197,10 +197,10 @@ class PhysicalInventory(osv.osv):
             raise osv.except_osv(_('Warning'), _("Location is inactive"))
         return new_id
 
-    def write_web(self, cr, uid, ids, values, context=None):
+    def write_web(self, cr, uid, ids, values, context=None, ignore_access_error=False):
         if values and 'type' not in values and values.get('hidden_type'):
             values['type'] = values['hidden_type']
-        return super(PhysicalInventory, self).write_web(cr, uid, ids, values, context=context)
+        return super(PhysicalInventory, self).write_web(cr, uid, ids, values, context=context, ignore_access_error=ignore_access_error)
 
     def change_inventory_type(self, cr, uid, ids, inv_type, context=None):
         return {'value': {'hidden_type': inv_type}}
@@ -775,11 +775,14 @@ class PhysicalInventory(osv.osv):
 
                 # Check UoM
                 product_uom_id = False
-                product_uom = row.cells[3].data.lower()
-                if product_uom not in all_uom:
-                    add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
+                if row.cells[3].data:
+                    product_uom = row.cells[3].data.lower()
+                    if product_uom not in all_uom:
+                        add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
+                    else:
+                        product_uom_id = all_uom[product_uom]
                 else:
-                    product_uom_id = all_uom[product_uom]
+                    add_error(_("""UoM is mandatory"""), row_index, 3)
 
                 # Check quantity
                 quantity = row.cells[4].data
@@ -795,84 +798,82 @@ class PhysicalInventory(osv.osv):
                         quantity = 0.0
                         add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
 
-                if product_id:
+                if product_id and product_uom_id:
                     product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
-                else:
-                    product_info = {'batch_management': False, 'perishable': False, 'default_code': product_code, 'uom_id': False}
 
-                if product_info['uom_id'] and product_uom_id and product_info['uom_id'][0] != product_uom_id:
-                    add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
+                    if product_info['uom_id'] and product_info['uom_id'][0] != product_uom_id:
+                        add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
 
-                # Check batch number
-                batch_name = row.cells[5].data
-                if not batch_name and product_info['batch_management'] and quantity is not None:
-                    add_error(_('Batch number is required'), row_index, 5)
+                    # Check batch number
+                    batch_name = row.cells[5].data
+                    if not batch_name and product_info['batch_management'] and quantity is not None:
+                        add_error(_('Batch number is required'), row_index, 5)
 
-                if batch_name and not product_info['batch_management']:
-                    add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
-                    batch_name = False
+                    if batch_name and not product_info['batch_management']:
+                        add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
+                        batch_name = False
 
-                # Check expiry date
-                expiry_date = row.cells[6].data
-                if expiry_date and not product_info['perishable']:
-                    add_error(_("Product %s is not ED managed, ED ignored") % (product_info['default_code'], ), row_index, 6, is_warning=True)
-                    expiry_date = False
-                elif expiry_date:
-                    expiry_date_type = row.cells[6].type
-                    year = False
-                    try:
-                        if expiry_date_type == 'datetime':
-                            expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                            year = row.cells[6].data.year
-                        elif expiry_date_type == 'str':
-                            expiry_date_dt = parse(expiry_date)
-                            year = expiry_date_dt.year
-                            expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
-                        else:
-                            raise ValueError()
-                    except ValueError:
-                        if not year or year >= 1900:
-                            add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
+                    # Check expiry date
+                    expiry_date = row.cells[6].data
+                    if expiry_date and not product_info['perishable']:
+                        add_error(_("Product %s is not ED managed, ED ignored") % (product_info['default_code'], ), row_index, 6, is_warning=True)
+                        expiry_date = False
+                    elif expiry_date:
+                        expiry_date_type = row.cells[6].type
+                        year = False
+                        try:
+                            if expiry_date_type == 'datetime':
+                                expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                                year = row.cells[6].data.year
+                            elif expiry_date_type == 'str':
+                                expiry_date_dt = parse(expiry_date)
+                                year = expiry_date_dt.year
+                                expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                            else:
+                                raise ValueError()
+                        except ValueError:
+                            if not year or year >= 1900:
+                                add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
 
-                    if year and year < 1900:
-                        add_error(_('Expiry date: year must be after 1899'), row_index, 6)
+                        if year and year < 1900:
+                            add_error(_('Expiry date: year must be after 1899'), row_index, 6)
 
-                if not expiry_date and product_info['perishable'] and quantity is not None:
-                    add_error(_('Expiry date is required'), row_index, 6)
+                    if not expiry_date and product_info['perishable'] and quantity is not None:
+                        add_error(_('Expiry date is required'), row_index, 6)
 
-                # Check duplicate line (Same product_id, batch_number, expirty_date)
-                item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
-                if item in line_items:
-                    add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
-                elif quantity is not None:
-                    line_items.append(item)
+                    # Check duplicate line (Same product_id, batch_number, expirty_date)
+                    item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
+                    if item in line_items:
+                        add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
+                    elif quantity is not None:
+                        line_items.append(item)
 
-                data = {
-                    'product_id': product_id,
-                    'batch_number': batch_name,
-                    'expiry_date': expiry_date,
-                    'quantity': False,
-                    'product_uom_id': product_uom_id,
-                }
+                    data = {
+                        'product_id': product_id,
+                        'batch_number': batch_name,
+                        'expiry_date': expiry_date,
+                        'quantity': False,
+                        'product_uom_id': product_uom_id,
+                    }
 
-                if quantity is not None:
-                    data['quantity'] = quantity
-                # Check if line exist
-                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
-                                                         ('product_id', '=', product_id),
-                                                         ('batch_number', '=', batch_name),
-                                                         ('expiry_date', '=', expiry_date)], context=context)
-                if not line_ids and (batch_name or expiry_date):  # Search for empty BN/ED lines
+                    if quantity is not None:
+                        data['quantity'] = quantity
+                    # Check if line exist
                     line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
                                                              ('product_id', '=', product_id),
-                                                             ('batch_number', '=', False),
-                                                             ('expiry_date', '=', False)], context=context)
+                                                             ('batch_number', '=', batch_name),
+                                                             ('expiry_date', '=', expiry_date)], context=context)
+                    if not line_ids and (batch_name or expiry_date):  # Search for empty BN/ED lines
+                        line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
+                                                                 ('product_id', '=', product_id),
+                                                                 ('batch_number', '=', False),
+                                                                 ('expiry_date', '=', False)], context=context)
 
-                if line_ids:
-                    counting_obj.write(cr, uid, line_ids[0], data, context=context)
-                else:
-                    data['inventory_id'] = inventory_rec.id
-                    counting_obj.create(cr, uid, data, context=context)
+                    if line_ids:
+                        counting_obj.write(cr, uid, line_ids[0], data, context=context)
+                    else:
+                        data['inventory_id'] = inventory_rec.id
+                        counting_obj.create(cr, uid, data, context=context)
 
             # endfor
 
@@ -924,14 +925,21 @@ class PhysicalInventory(osv.osv):
         product_obj = self.pool.get('product.product')
         reason_type_obj = self.pool.get('stock.reason.type')
         discrepancy_obj = self.pool.get('physical.inventory.discrepancy')
+        data_obj = self.pool.get('ir.model.data')
+        other_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        discr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
         ids_seen = {}
+
+        sub_rt_dict_by_name = {}
+        for x in self.pool.get('physical.inventory.discrepancy').fields_get(cr, uid, ['sub_reason_type'], context=context)['sub_reason_type']['selection']:
+            sub_rt_dict_by_name[x[1]] = x[0]
 
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
             if row_index < 10:
                 continue
-            if len(row) != 20:
+            if len(row) != 21:
                 add_error(_("""The number of columns is incorrect, you should have exactly 20 columns in this order:
-Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theorical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Comments / actions (in case of discrepancy)"""),
+Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theoretical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Sub Reason Type, Comments / actions (in case of discrepancy)"""),
                           row_index, len(row))
                 break
 
@@ -962,7 +970,11 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                     int(code)
                     reason_ids = reason_type_obj.search(cr, uid, [('code', '=', code), ('name', '=', adjustement_split[-1].strip())], context=context)
                     if reason_ids:
-                        adjustment_type = reason_ids[0]
+                        if reason_ids[0] in [discr_rt_id, other_rt_id]:
+                            adjustment_type = reason_ids[0]
+                        else:
+                            add_error(_('The adjustment type %s is not allowed') % adjustment_type, row_index, 18)
+                            adjustment_type = False
                 except ValueError:
                     reason_ids = []
 
@@ -970,7 +982,17 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                     add_error(_('Unknown adjustment type %s') % adjustment_type, row_index, 18)
                     adjustment_type = False
 
-            comment = row.cells[19].data
+            sub_rt = row.cells[19].data
+            sub_rt_index = False
+            if sub_rt:
+                if adjustment_type == discr_rt_id:
+                    sub_rt_index = sub_rt_dict_by_name.get(sub_rt)
+                    if not sub_rt_index:
+                        add_error(_('Unknown Sub Reason Type %s') % sub_rt, row_index, 19)
+                else:
+                    add_error(_('It is not possible to add a Sub Reason Type for this Adjustment Type'), row_index, 19)
+
+            comment = row.cells[20].data
 
             line_id = False
             line_ids = discrepancy_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
@@ -996,9 +1018,16 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                 add_error(_('Unknown line no %s') % line_no, row_index, 0)
             else:
                 if inventory_rec.state == 'confirmed':
-                    disc_line = (1, line_id, {'comment': comment})
+                    # In case the imported line has Discr adj type + sub RT when og line has Other adj type
+                    current_line_rt = discrepancy_obj.read(cr, uid, line_id, ['reason_type_id'], context=context)['reason_type_id']
+                    if current_line_rt and current_line_rt[0] != discr_rt_id and sub_rt_index:
+                        add_error(_('It is not possible to add a Sub Reason Type for this Adjustment Type on the Confirmed line')
+                                  , row_index, 19)
+                        sub_rt_index = False
+
+                    disc_line = (1, line_id, {'sub_reason_type': sub_rt_index, 'comment': comment})
                 else:
-                    disc_line = (1, line_id, {'reason_type_id': adjustment_type, 'comment': comment})
+                    disc_line = (1, line_id, {'reason_type_id': adjustment_type, 'sub_reason_type': sub_rt_index, 'comment': comment})
                 discrepancy_report_lines.append(disc_line)
         # endfor
 
@@ -1469,6 +1498,16 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         return discrepancies
 
+    def _is_discrepancy_rt(self, cr, uid, ids, name, args,  context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, int):
+            ids = [ids]
+        discr_rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+        for discr_line in self.browse(cr, uid, ids, fields_to_fetch=['reason_type_id'], context=context):
+            res[discr_line.id] = discr_line.reason_type_id and discr_line.reason_type_id.id == discr_rt_id or False
+        return res
 
     def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
         def search(model, domain):
@@ -1494,7 +1533,6 @@ class PhysicalInventoryDiscrepancy(osv.osv):
             }
 
         return total_product_qty_and_values
-
 
     _columns = {
         # Link to inventory
@@ -1528,7 +1566,10 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Discrepancy analysis
         'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', select=True),
+        'sub_reason_type': fields.selection([('encoding_err', 'Encoding Error'), ('process_err', 'Process Error'),  ('pick_err', 'Picking Error'), ('recep_err', 'Reception Error'),
+                                             ('bn_err', 'Batch Number related Error'), ('unexpl_err', 'Unjustified/Unexplained Error')], string='Sub Reason type'),
         'comment': fields.char(size=128, string='Comment'),
+        'discrepancy_rt': fields.function(_is_discrepancy_rt, type='boolean', string='The Adjustment type is Discrepancy', method=True, store=False),
 
         # Total for product
         'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),
@@ -1565,28 +1606,49 @@ class PhysicalInventoryDiscrepancy(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         context = context is None and {} or context
 
-        r = super(PhysicalInventoryDiscrepancy, self).write(cr, uid, ids, vals, context=context)
         move_obj = self.pool.get("stock.move")
+        rt_disc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
 
-        lines = self.read(cr, uid, ids, ["move_id"], context=context)
+        reason_type_id = vals.get("reason_type_id", False)
+        if 'reason_type_id' in vals and vals['reason_type_id'] != rt_disc:
+            vals['sub_reason_type'] = False
 
-        for line in lines:
-            if not line["move_id"]:
-                continue
-            reason_type_id = vals.get("reason_type_id", False)
-            to_update = {}
-            if reason_type_id:
-                to_update["reason_type_id"] = reason_type_id
-            if 'comment' in vals:
-                to_update["comment"] = vals['comment']
+        r = super(PhysicalInventoryDiscrepancy, self).write(cr, uid, ids, vals, context=context)
 
-            if to_update:
-                if '__last_update' in context:
-                    context['__last_update'] = {}
-                move_obj.write(cr, uid, [line["move_id"]], to_update, context=context)
+        if vals.get('sub_reason_type'):
+            # remove any sub_reason_type written
+            lines_with_sub_ids = self.search(cr, uid, [('id', 'in', ids), ('reason_type_id', '!=', rt_disc), ('sub_reason_type', '!=', False)], context=context)
+            if lines_with_sub_ids:
+                super(PhysicalInventoryDiscrepancy, self).write(cr, uid, lines_with_sub_ids, {'sub_reason_type': False}, context=context)
+
+        if reason_type_id or 'comment' in vals:
+            lines = self.read(cr, uid, ids, ['move_id'], context=context)
+            for line in lines:
+                if not line['move_id']:
+                    continue
+                to_update = {}
+                if reason_type_id:
+                    to_update["reason_type_id"] = reason_type_id
+                if 'comment' in vals:
+                    to_update["comment"] = vals['comment']
+
+                if to_update:
+                    if '__last_update' in context:
+                        context['__last_update'] = {}
+                    move_obj.write(cr, uid, [line['move_id']], to_update, context=context)
 
         return r
 
+    def onchange_reason_type(self, cr, uid, ids, reason_type_id, context=None):
+        if context is None:
+            context = {}
+        res = {'value': {'reason_type_id': reason_type_id}}
+        discr_rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+        if reason_type_id != discr_rt_id:
+            res['value'].update({'sub_reason_type': False, 'discrepancy_rt': False})
+        else:
+            res['value'].update({'discrepancy_rt': True})
+        return res
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass

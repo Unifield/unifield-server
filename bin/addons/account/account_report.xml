@@ -182,5 +182,18 @@
                  header="False"
                  auto="False"
                  menu="False"/>
+
+        <!-- Export CV report -->
+         <report id="export_cv"
+                 string="Export - CV"
+                 target_filename="Export - CV"
+                 model="account.commitment"
+                 name="account.export_cv"
+                 file="account/report/export_cv.mako"
+                 report_type="webkit"
+                 header="False"
+                 auto="False"
+                 menu="False"/>
+
     </data>
 </openerp>

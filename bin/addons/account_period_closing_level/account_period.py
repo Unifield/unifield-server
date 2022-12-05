@@ -197,7 +197,14 @@ class account_period(osv.osv):
                     if level == 'coordo' and not period.special and company.revaluation_default_account:
                         if not period.is_revaluated:
                             raise osv.except_osv(_('Warning'), _('You should run the month-end revaluation before closing the period.'))
-
+                    # US-9770: check that the EoY revals have been processed in coordo before closing period P15
+                    if level == 'coordo' and period.number == 15 and company.revaluation_default_account:
+                        if not period.is_eoy_liquidity_revaluated and not period.is_eoy_regular_bs_revaluated:
+                            raise osv.except_osv(_('Warning'), _('You should run the year-end revaluation liquidity and regular balance before closing P15.'))
+                        if not period.is_eoy_liquidity_revaluated:
+                            raise osv.except_osv(_('Warning'), _('You should run the year-end revaluation liquidity before closing P15.'))
+                        if not period.is_eoy_regular_bs_revaluated:
+                            raise osv.except_osv(_('Warning'), _('You should run the year-end revaluation regular balance before closing P15.'))
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
                 journal_ok = []
@@ -341,6 +348,8 @@ class account_period(osv.osv):
         'payroll_ok': fields.function(_get_payroll_ok, method=True, type='boolean', store=False, string="Permit to know if payrolls are active", readonly=True),
         'is_system': fields.function(_get_is_system, fnct_search=_get_search_is_system, method=True, type='boolean', string="System period ?", readonly=True),
         'is_revaluated': fields.boolean('Revaluation run for the period', readonly=True),  # field used at coordo level
+        'is_eoy_liquidity_revaluated': fields.boolean('Revaluation EoY liquidity', readonly=True),  # US-9770 For Year End revaluation checks before P15 closing
+        'is_eoy_regular_bs_revaluated': fields.boolean('Revaluation EoY regular B/S', readonly=True),  # US-9770 For Year End revaluation checks before P15 closing
     }
 
     _order = 'date_start DESC, number DESC'
@@ -412,6 +421,8 @@ class account_period(osv.osv):
         'state_sync_flag': lambda *a: 'none',
         'is_system': False,
         'is_revaluated': False,
+        'is_eoy_liquidity_revaluated': False,
+        'is_eoy_regular_bs_revaluated': False,
     }
 
     def action_reopen_field(self, cr, uid, ids, context=None):

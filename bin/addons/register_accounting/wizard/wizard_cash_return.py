@@ -287,6 +287,7 @@ class wizard_advance_line(osv.osv_memory):
             'target': 'new',
             'res_id': [wiz_id],
             'context': context,
+            'keep_open': 1,
         }
 
 wizard_advance_line()
@@ -1136,6 +1137,7 @@ class wizard_cash_return(osv.osv_memory):
             'target': 'new',
             'res_id': [wiz_id],
             'context': context,
+            'keep_open': 1,
         }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

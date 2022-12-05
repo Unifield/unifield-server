@@ -25,6 +25,7 @@ import tools
 import traceback
 import logging
 from .log_sale_purchase import SyncException
+from .log_sale_purchase import RunWithoutException
 
 from tools.safe_eval import safe_eval as eval
 
@@ -385,7 +386,7 @@ class message_received(osv.osv):
         'arguments':fields.text('Arguments of the method', required = True),
         'source':fields.char('Source Name', size=256, required = True, readonly=True),
         'run' : fields.boolean("Run", readonly=True),
-        'partial_run': fields.boolean("Partial Run", readonly=True),
+        'partial_run': fields.boolean("Partial Run", readonly=True, select=1),
         'manually_set_total_run_date': fields.datetime('Manually to total-run Date', readonly=True),
         'log' : fields.text("Execution Messages",readonly=True),
         'execution_date' :fields.datetime('Execution Date', readonly=True),
@@ -393,7 +394,7 @@ class message_received(osv.osv):
         'editable' : fields.boolean("Set editable"),
         'rule_sequence': fields.integer('Sequence of the linked rule', required=True),
         'manually_ran': fields.boolean('Has been manually tried', readonly=True),
-        'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
+        'manually_set_run_date': fields.datetime('Run without execution Date', readonly=True, select=1),
         'sync_id': fields.integer('Sync server seq. id', required=True, select=1),
         'target_object': fields.char('Target Object', size=254, readonly=1, select=1),
         'target_id': fields.integer('Target Id', size=254, readonly=1, select=1),
@@ -493,6 +494,14 @@ class message_received(osv.osv):
                     new_ctx = context.copy()
                     new_ctx.update({'identifier': message.identifier})
                     res = fn(cr, uid, message.source, *arg, context=new_ctx)
+                except RunWithoutException as e:
+                    self.write(cr, uid, message.id, {
+                        'execution_date' : execution_date,
+                        'run' : True,
+                        'log' : "%s\nSet as run without exec by system" % e.message,
+                        'manually_set_run_date': fields.datetime.now(),
+                        'editable': False
+                    }, context=context)
                 except BaseException as e:
                     error = e # Keep this message for the exception below
                     self._logger.exception("Message execution %d failed!" % message.id)

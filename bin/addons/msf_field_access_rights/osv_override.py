@@ -176,11 +176,15 @@ def _get_family(obj, family):
                     _get_family(obj.pool.get(key), family)
 
     if hasattr(obj, '_inherit'):
-        if obj._inherit:
-            if obj._inherit not in family:
-                family_append(obj._inherit)
-            if obj._inherit != obj._name:
-                _get_family(obj.pool.get(obj._inherit), family)
+        inh = obj._inherit
+        if inh:
+            if not isinstance(inh, (list, tuple)):
+                inh = [inh]
+            for key in inh:
+                if key not in family:
+                    family_append(key)
+                if key != obj._name:
+                    _get_family(obj.pool.get(key), family)
 
 
 def _get_rules_for_family(self, cr, rules_pool, instance_level, groups):

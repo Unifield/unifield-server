@@ -40,6 +40,9 @@ def check(fn):
 
     return wrapper
 
+class RunWithoutException(Exception):
+    pass
+
 class SyncException(Exception):
     def __init__(self, value, target_object, target_id):
         super(Exception, self).__init__(value)

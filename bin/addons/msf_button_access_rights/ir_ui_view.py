@@ -27,22 +27,26 @@ class ir_ui_view(osv.osv):
         'button_access_rules_ref': fields.function(_get_button_access_rules, type='one2many', obj='msf_button_access_rights.button_access_rule', method=True, string='Button Access Rules'),
     }
 
-    def generate_button_access_rules(self, cr, uid, view_id, context=None):
+    def generate_button_access_rules(self, cr, uid, view_ids, context=None):
         """
         Called by create method of ir.model.data after xml id is created for a view.
         This method generates the first set of button access rules for a new view.
         """
-        view = self.browse(cr, 1, view_id)
-        model_id = self.pool.get('ir.model').search(cr, 1, [('model','=',view.model)])
-        buttons = None
+        if isinstance(view_ids, int):
+            view_ids = [view_ids]
 
-        if model_id:
-            try:
-                buttons = self.parse_view(view.arch, model_id[0], view_id)
-            except (ValueError, etree.XMLSyntaxError) as e:
-                logging.getLogger(self._name).warn('Error when parsing view %s' % view_id)
-                print(e)
-            self._write_button_objects(cr, 1, buttons)
+        buttons = []
+        for view in self.browse(cr, 1, view_ids, fields_to_fetch=['model', 'arch']):
+            model_id = self.pool.get('ir.model').search(cr, 1, [('model','=',view.model)])
+
+            if model_id:
+                try:
+                    new_buttons = self.parse_view(view.arch, model_id[0], view.id)
+                except (ValueError, etree.XMLSyntaxError) as e:
+                    logging.getLogger(self._name).warn('Error when parsing view %s' % view.id)
+                    print(e)
+                self._write_button_objects(cr, 1, new_buttons)
+                buttons += new_buttons
         return buttons
 
     def write(self, cr, uid, ids, vals, context=None):

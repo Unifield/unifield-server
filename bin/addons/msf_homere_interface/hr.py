@@ -150,6 +150,7 @@ class hr_employee(osv.osv):
         'payment_method_id': fields.many2one('hr.payment.method', string='Payment Method', required=False, ondelete='restrict'),
         'bank_name': fields.char('Bank Name', size=256, required=False),
         'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
+        'instance_creator': fields.char('Instance creator of the employee', size=64, readonly=1),
     }
 
     _defaults = {
@@ -166,14 +167,15 @@ class hr_employee(osv.osv):
             return False
 
         employee_name = data['name'].strip()
+        employee_id = data['identification_id']
         existing_id = self.find_sd_ref(cr, uid, sdref)
         if not existing_id:
             # never run, but exists with the same id and name => ignore
-            if self.search_exist(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', employee_name)]):
+            if self.search_exist(cr, uid, [('identification_id', '=', employee_id), ('name', '=', employee_name)]):
                 return True
 
         else:
-            same_ids = self.search(cr, uid, [('identification_id', '=', data['identification_id']), ('name', '=', employee_name)])
+            same_ids = self.search(cr, uid, [('identification_id', '=', employee_id), ('name', '=', employee_name)])
             if same_ids and existing_id not in same_ids:
                 # Run on the instance but has a different Employee ID (identification_id) than on the one run on the instance
                 return True
@@ -238,8 +240,17 @@ class hr_employee(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        if not context.get('sync_update_execution') and not vals.get('instance_creator'):
+            c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+            instance_code = c and c.instance_id and c.instance_id.code
+
+            if instance_code:
+                vals['instance_creator'] = instance_code
+
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
+        if vals.get('identification_id', False) and vals.get('employee_type', False) == 'ex':
+            vals['identification_id'] = vals['identification_id'].strip()
         allow_edition = False
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
             # Search Payroll functionnality preference (activated or not)
@@ -267,6 +278,10 @@ class hr_employee(osv.osv):
         # Some verifications
         if not context:
             context = {}
+
+        if 'instance_creator' in vals:
+            del(vals['instance_creator'])
+
         # Prepare some values
         local = False
         ex = False
@@ -278,6 +293,8 @@ class hr_employee(osv.osv):
         # Prepare some variable for process
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
+        if vals.get('identification_id', False) and vals.get('employee_type', False) == 'ex':
+            vals['identification_id'] = vals['identification_id'].strip()
         if vals.get('employee_type', False):
             if vals.get('employee_type') == 'local':
                 local = True
@@ -415,6 +432,15 @@ class hr_employee(osv.osv):
         })
         processed, rejected, headers = import_obj.button_validate(cr, uid, [import_id], auto_import=True)
         return processed, rejected, headers
+
+    def update_exported_fields(self, cr, uid, fields):
+        res = super(hr_employee, self).update_exported_fields(cr, uid, fields)
+        if res:
+            res += [
+                ['company_id', _('Company')],
+                ['instance_creator', _('Instance creator of the employee')]
+            ]
+        return res
 
 hr_employee()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

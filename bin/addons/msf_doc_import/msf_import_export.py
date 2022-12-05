@@ -1434,4 +1434,21 @@ class msf_import_export(osv.osv_memory):
 
 msf_import_export()
 
+class account_analytic_account(osv.osv):
+    _inherit = 'account.analytic.account'
+
+    def auto_import_destination(self, cr, uid, file_to_import, context=None):
+        processed = []
+        rejected = []
+        headers = []
+
+        import_obj = self.pool.get('msf.import.export')
+        import_id = import_obj.create(cr, uid, {
+            'model_list_selection': 'destinations',
+            'import_file':  base64.b64encode(open(file_to_import, 'rb').read(), 'utf8'),
+        }, context=context)
+        processed, rejected, headers = import_obj.import_xml(cr, uid, [import_id], context=context)
+        return processed, rejected, headers
+
+account_analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

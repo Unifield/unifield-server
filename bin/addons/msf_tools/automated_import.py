@@ -24,12 +24,409 @@ import time
 import pysftp
 
 from osv import osv
+from msf_field_access_rights import osv_override
 from osv import fields
 
 from tools.translate import _
 from tools import config
 from ftplib import FTP
 
+import logging
+import shutil
+import re
+import posixpath
+from io import StringIO
+import tempfile
+
+from tools import webdav
+from urllib.parse import urlparse
+
+class RemoteInterface(object):
+    port = 0
+    url = False
+    username = False
+    password = False
+    localcontext = None
+
+    def __init__(self, **data):
+        if data.get('ftp_port'):
+            self.port = int(data['ftp_port'])
+        self.url = data.get('ftp_url')
+        self.username = data.get('ftp_login')
+        self.password = data.get('ftp_password')
+        self.connection_type = data.get('ftp_ok') and data.get('ftp_protocol')
+        if data.get('lang'):
+            self.localcontext = {'lang': data['lang']}
+
+    def remove_special_chars(self, filename):
+        if os.name == 'nt' and filename:
+            return re.sub(r'[\\/:*?"<>|]', '_', filename)
+        return filename
+
+    def disconnect(self):
+        return True
+
+class RemoteOneDrive(RemoteInterface):
+    dav = False
+
+    host = False
+    protocol = False
+    path = False
+
+    def __init__(self, **data):
+        super(RemoteOneDrive, self).__init__(**data)
+        if self.url:
+            parsed_url = urlparse(self.url)
+            self.host = parsed_url.netloc
+            self.protocol = parsed_url.scheme
+            self.path = parsed_url.path
+
+    def connect(self):
+        try:
+            self.dav = webdav.Client(host=self.host ,port=self.port, protocol=self.protocol, username=self.username, password=self.password, path=self.path)
+        except webdav.ConnectionFailed as e:
+            raise Exception(_('Unable to connect: %s') % (e.message))
+
+    def list_files(self, path, startswith, already=None):
+        if already is None:
+            already = []
+
+        res = []
+        for filename in self.dav.list(path):
+            fn = filename['Name']
+            if startswith and not fn.startswith(startswith):
+                continue
+            posix_name = posixpath.join(path, fn)
+            if posix_name not in already:
+                res.append((filename['TimeLastModified'], posixpath.join(path, fn)))
+        return res
+
+    def get_file_content(self, path):
+        tmp_file_path = os.path.join(tempfile.gettempdir(), self.remove_special_chars(os.path.basename(path)))
+        self.dav.download(path, tmp_file_path)
+        with open(tmp_file_path, 'r') as fich:
+            return fich.read()
+
+    def rename(self, src_file_name, dest_file_name):
+        self.dav.move(src_file_name, dest_file_name)
+        return True
+
+    def push(self, local_name, remote_name):
+        f = open(local_name, 'r')
+        self.dav.upload(f, remote_name)
+        f.close()
+
+    def get(self, remote_name, dest_name, delete=False):
+        self.dav.download(remote_name, dest_name)
+        if delete:
+            self.dav.delete(remote_name)
+
+    def disconnect(self):
+        pass
+
+
+class RemoteSFTP(RemoteInterface):
+    sftp = False
+
+    def connect(self):
+        try:
+            cnopts = pysftp.CnOpts()
+            cnopts.hostkeys = None
+            self.sftp = pysftp.Connection(self.url, username=self.username, password=self.password, cnopts=cnopts)
+            self.sftp._transport.set_keepalive(15)
+        except:
+            raise Exception(_('Not able to connect to SFTP server at location %s') % (self.url, ))
+
+    def list_files(self, path, startswith, already=None):
+        if already is None:
+            already = []
+        res = []
+        with self.sftp.cd(path):
+            for fileattr in self.sftp.listdir_attr():
+                if self.sftp.isfile(fileattr.filename):
+                    if startswith and not fileattr.filename.startswith(startswith):
+                        continue
+                    posix_name = posixpath.join(path, fileattr.filename)
+                    if posix_name not in already:
+                        res.append((fileattr.st_mtime, posix_name))
+        return res
+
+    def get_file_content(self, path):
+        tmp_file_path = os.path.join(tempfile.gettempdir(), self.remove_special_chars(os.path.basename(path)))
+        self.sftp.get(path, tmp_file_path)
+        with open(tmp_file_path, 'r') as fich:
+            return fich.read()
+
+    def rename(self, src_file_name, dest_file_name):
+        self.sftp.rename(src_file_name, dest_file_name)
+        return True
+
+    def push(self, local_name, remote_name):
+        self.sftp.put(local_name, remote_name)
+
+    def get(self, remote_name, dest_name, delete=False):
+        self.sftp.get(remote_name, dest_name, preserve_mtime=True)
+        if delete:
+            self.sftp.remove(remote_name)
+
+    def disconnect(self):
+        try:
+            self.sftp.close()
+        except:
+            pass
+
+class RemoteFTP(RemoteInterface):
+    ftp = False
+
+    def connect(self):
+        self.ftp = FTP()
+        try:
+            self.ftp.connect(host=self.url, port=self.port)
+        except:
+            raise Exception(_('Not able to connect to FTP server at location %s') % (self.url, ))
+
+        try:
+            self.ftp.login(user=self.username, passwd=self.password)
+        except:
+            raise Exception(_('Unable to connect with given login and password'))
+
+        return True
+
+    def list_files(self, path, startswith, already=None):
+        if already is None:
+            already = []
+        res = []
+        files = []
+        self.ftp.dir(path, files.append)
+        file_names = []
+        for file in files:
+            if file.startswith('d'): # directory
+                continue
+            if startswith and not file.split(' ')[-1].startswith(startswith):
+                continue
+            file_names.append( posixpath.join(path, file.split(' ')[-1]) )
+        for file in file_names:
+            if file not in already:
+                dt = self.ftp.sendcmd('MDTM %s' % file).split(' ')[-1]
+                dt = time.strptime(dt, '%Y%m%d%H%M%S') # '20180228170748'
+                res.append((dt, file))
+        return res
+
+
+    def get_file_content(self, path):
+        def add_line(line):
+            ch.write('%s\n' % line)
+
+        ch = StringIO()
+        self.ftp.retrlines('RETR %s' % path, add_line)
+        return ch.getvalue()
+
+    def rename(self, src_file_name, dest_file_name):
+        rep = self.ftp.rename(src_file_name, dest_file_name)
+        if not rep.startswith('2'):
+            raise osv.except_osv(_('Error'), _('Unable to move file to destination location on FTP server'))
+        return True
+
+    def push(self, local_name, remote_name):
+        rep = self.ftp.storbinary('STOR %s' % remote_name, open(local_name, 'rb'))
+        if not rep.startswith('2'):
+            raise osv.except_osv(_('Error'), _('Unable to move local file to destination location on FTP server'))
+        return True
+
+    def get(self, remote_name, dest_name, delete=False):
+        with open(dest_name, 'wb') as f:
+            def write_callback(data):
+                f.write(data)
+            rep = self.ftp.retrbinary('RETR %s' % remote_name, write_callback)
+        if not rep.startswith('2'):
+            raise osv.except_osv(_('Error'), _('Unable to move remote file to local destination location on FTP server'))
+
+        if delete:
+            rep = self.ftp.delete(remote_name)
+            if not rep.startswith('2'):
+                raise osv.except_osv(_('Error'), _('Unable to remove remote file on FTP server'))
+        return True
+
+    def disconnect(self):
+        try:
+            self.ftp.quit()
+        except:
+            pass
+
+class Local(RemoteInterface):
+
+    def list_files(self, path, startswith, already=None):
+        """
+        Iterates through all files that are under the given path.
+        :param path: Path on which we want to iterate
+        """
+        if already is None:
+            already = []
+
+        for cur_path, dirnames, filenames in os.walk(path):
+            if startswith:
+                filenames = [fn for fn in filenames if fn.startswith(startswith)]
+            res = []
+            for fn in filenames:
+                full_name = os.path.join(cur_path, fn)
+                if full_name not in already:
+                    res.append((os.stat(full_name).st_ctime, full_name))
+            return res
+        return []
+
+    def get_file_content(self, path):
+        return open(path).read()
+
+class Remote(object):
+    connection_type = False
+    connection = False
+    local_connection = False
+    uid = False
+    cr = False
+    source = False
+    source_is_remote = False
+    path_success = False
+    path_succes_is_remote = False
+    path_failure = False
+    path_failure_is_remote = False
+    path_report = False
+    path_report_is_remote = False
+
+    def __init__(self, cr, uid, **data):
+        protocol = data.get('ftp_protocol')
+        self.cr = cr
+        self.uid = uid
+        if data.get('ftp_ok') and protocol == 'ftp':
+            self.connection = RemoteFTP(**data)
+            self._name = 'FTP Connection'
+            self.connection_type = protocol
+        elif data.get('ftp_ok') and protocol == 'sftp':
+            self.connection = RemoteSFTP(**data)
+            self._name = 'SFTP Connection'
+            self.connection_type = protocol
+        elif data.get('ftp_ok') and protocol == 'onedrive':
+            self.connection = RemoteOneDrive(**data)
+            self._name = 'OneDrive Connection'
+            self.connection_type = protocol
+        else:
+            self.connection = Local(**{})
+            self.local_connection = self.connection
+            self._name = 'Local Connection'
+
+        self.source = data.get('src_path')
+        self.source_is_remote = data.get('ftp_source_ok')
+        self.path_success = data.get('dest_path')
+        self.path_succes_is_remote = data.get('ftp_dest_ok')
+        self.path_failure = data.get('dest_path_failure')
+        self.path_failure_is_remote = data.get('ftp_dest_fail_ok')
+        self.path_report = data.get('report_path')
+        self.path_report_is_remote = data.get('ftp_report_ok')
+
+    def infolog(self, message):
+        osv_override.infolog(self, self.cr, self.uid, message)
+
+    def test_connection(self):
+        if not self.connection_type:
+            return True
+        try:
+            self.connection.connect()
+        except Exception as e:
+            self.infolog(e.message)
+            raise osv.except_osv(_('Error'), e.message)
+
+        self.infolog(_('Connection succeeded'))
+        return True
+
+    def list_files(self, startwith, already=None):
+        if already is None:
+            already = []
+        if not self.source_is_remote:
+            if not self.local_connection:
+                self.local_connection = Local(**{})
+            res = self.local_connection.list_files(self.source, startwith, already)
+        else:
+            res = self.connection.list_files(self.source, startwith, already)
+
+        return res
+
+    def get_oldest_filename(self, startwith, already=None, is_processing_filename=False):
+        '''
+        Get the oldest file in local or on FTP server
+        '''
+        if already is None:
+            already = []
+        logging.getLogger('automated.import').info(_('Getting the oldest file at location %s') % self.source)
+
+        res = self.list_files(startwith, already)
+
+        for x in sorted(res, key=lambda x:x[0]):
+            if not is_processing_filename or not is_processing_filename(x[1]):
+                return x[1]
+        return False
+
+    def get_file_content(self, path):
+        logging.getLogger('automated.import').info(_('Reading %s content') % path)
+        if not self.source_is_remote:
+            if not self.local_connection:
+                self.local_connection = Local(**{})
+            return self.local_connection.get_file_content(path)
+        return self.connection.get_file_content(path)
+
+    def move_to_process_path(self, filename, success):
+        """
+        Move the file `file` from `src_path` to `dest_path`
+        :return: return True
+        """
+
+
+        if success:
+            dest_path = self.path_success
+            dest_is_remote = self.path_succes_is_remote
+        else:
+            dest_path = self.path_failure
+            dest_is_remote = self.path_failure_is_remote
+
+        logging.getLogger('automated.import').info(_('Moving %s to %s') % (filename, dest_path))
+
+        if self.source_is_remote and dest_is_remote:
+            # from remote to remote (rename)
+            src_file_name = posixpath.join(self.source, filename)
+            dest_file_name = posixpath.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), filename))
+            self.connection.rename(src_file_name, dest_file_name)
+        elif not self.source_is_remote and dest_is_remote:
+            # from local to remote
+            local_file = os.path.join(self.source, filename)
+            remote_file = posixpath.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), filename))
+            self.connection.push(local_file, remote_file)
+            os.remove(local_file)
+        elif self.source_is_remote and not dest_is_remote:
+            # from remote to local
+            src_file_name = posixpath.join(self.source, filename)
+            destfile = os.path.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), self.connection.remove_special_chars(filename)))
+            self.connection.get(src_file_name, destfile, delete=True)
+        else:
+            # from local to local
+            src_file_name = os.path.join(self.source, filename)
+            destfile = os.path.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), self.connection.remove_special_chars(filename)))
+            shutil.move(src_file_name, destfile)
+
+        return True
+
+    def get_report_file_name(self, filename):
+        if self.path_report_is_remote:
+            tmp = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+            tmp.close()
+            return tmp.name
+
+        return os.path.join(self.path_report, filename)
+
+    def push_report(self, localname, filename):
+        if self.path_report_is_remote:
+            self.connection.push(localname, posixpath.join(self.path_report, filename))
+        return True
+
+    def disconnect(self):
+        self.connection.disconnect()
 
 class automated_import(osv.osv):
     _name = 'automated.import'
@@ -150,7 +547,7 @@ class automated_import(osv.osv):
             string='Report Path',
         ),
         'start_time': fields.datetime(
-            string='Date and time of first planned execution',
+            string='Force Date and time of next execution',
         ),
         'interval': fields.integer(
             string='Interval number',
@@ -181,28 +578,29 @@ class automated_import(osv.osv):
             string='Associated cron job',
             readonly=True,
         ),
+        'next_scheduled_task': fields.related('cron_id', 'nextcall', type='datetime', readonly=1, string="Next Execution Date"),
         'priority': fields.integer(
             string='Priority',
             required=True,
             help="""Defines the priority of the automated import processing because some of them needs other data
 to import well some data (e.g: Product Categories needs Product nomenclatures)."""
         ),
-        'ftp_ok': fields.boolean(string='Enable FTP server', help='Enable FTP server if you want to read or write from a remote FTP server'),
-        'ftp_protocol': fields.selection([('ftp', 'FTP'), ('sftp','SFTP')], string='Protocol', required=True),
-        'ftp_url': fields.char(string='FTP server address', size=256),
-        'ftp_port': fields.char(string='FTP server port', size=56),
-        'ftp_login': fields.char(string='FTP login', size=256),
-        'ftp_password': fields.char(string='FTP password', size=256),
-        'ftp_source_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
-        'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
-        'ftp_dest_fail_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
-        'ftp_report_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+        'ftp_ok': fields.boolean(string='Enable remote server', help='Enable remote server if you want to read or write from a remote server'),
+        'ftp_protocol': fields.selection([('ftp', 'FTP'), ('sftp','SFTP'), ('onedrive', 'OneDrive')], string='Protocol', required=True),
+        'ftp_url': fields.char(string='Remote server address', size=256),
+        'ftp_port': fields.char(string='Remote server port', size=56),
+        'ftp_login': fields.char(string='Remote login', size=256),
+        'ftp_password': fields.char(string='Remote password', size=256),
+        'ftp_source_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),
+        'ftp_dest_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),
+        'ftp_dest_fail_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),
+        'ftp_report_ok': fields.boolean(string='on remote server', help='Is given path is located on remote server ?'),
         'is_admin': fields.function(_get_isadmin, method=True, type='boolean', string='Is Admin'),
         'partner_id': fields.many2one('res.partner', 'Partner', domain=[('partner_type', '=', 'esc')]),
     }
 
     _defaults = {
-        'interval': lambda *a: 1,
+        'interval': lambda *a: 12,
         'interval_unit': lambda *a: 'hours',
         'active': lambda *a: False,
         'priority': lambda *a: 10,
@@ -259,59 +657,25 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             return {'value': {'ftp_source_ok': False, 'ftp_dest_ok': False, 'ftp_dest_fail_ok': False, 'ftp_report_ok': False}}
         return {}
 
+
+
+    def _connect(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        data = self.read(cr, uid, ids[0], context=context)
+        if context.get('lang'):
+            data['lang'] = context['lang']
+        remote = Remote(cr, uid, **data)
+        remote.test_connection()
+        return remote
+
+
     def ftp_test_connection(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, int):
-            ids = [ids]
-
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.ftp_protocol == 'sftp':
-                return self.sftp_test_connection(cr, uid, ids, context=context)
-            ftp = FTP()
-            try:
-                port = int(obj.ftp_port or 0)
-                ftp.connect(host=obj.ftp_url, port=port) # '220 (vsFTPd 3.0.2)'
-            except:
-                self.infolog(cr, uid, _('%s :: FTP connection failed') % obj.name)
-                raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)
-            try:
-                ftp.login(user=obj.ftp_login, passwd=obj.ftp_password) # '230 Login successful.'
-            except:
-                self.infolog(cr, uid, _('%s :: FTP connection failed') % obj.name)
-                raise osv.except_osv(_('Error'), _('Unable to connect with given login and password'))
-
-        if not context.get('no_raise_if_ok'):
-            raise osv.except_osv(_('Info'), _('Connection succeeded'))
-        else:
-            self.infolog(cr, uid, _('FTP connection succeeded'))
-
-        return ftp
-
-    def sftp_test_connection(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, int):
-            ids = [ids]
-
-        for obj in self.browse(cr, uid, ids, context=context):
-            sftp = None
-            try:
-                cnopts = pysftp.CnOpts()
-                cnopts.hostkeys = None
-                sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password, cnopts=cnopts)
-                sftp._transport.set_keepalive(15)
-            except:
-                self.infolog(cr, uid, _('%s :: SFTP connection failed') % obj.name)
-                raise osv.except_osv(_('Error'), _('Not able to connect to SFTP server at location %s') % obj.ftp_url)
-
-        if not context.get('no_raise_if_ok'):
-            raise osv.except_osv(_('Info'), _('Connection succeeded'))
-        else:
-            self.infolog(cr, uid, _('SFTP connection succeeded'))
-
-        return sftp
-
+        self._connect(cr, uid, ids, context=context).disconnect()
+        raise osv.except_osv(_('Info'), _('Connection succeeded'))
 
     def job_in_progress(self, cr, uid, ids, context=None):
         """
@@ -452,8 +816,14 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
                 'state': 'in_progress',
             }
             job_id = job_obj.create(cr, uid, params, context=context)
-            self.infolog(cr, uid, _('%s :: New import job created') % self.read(cr, uid, import_id, ['name'])['name'])
+
+            auto_data = self.browse(cr, uid, import_id, fields_to_fetch=['name', 'function_id'], context=context)
+            self.infolog(cr, uid, _('%s :: New import job created') % auto_data.name)
             cr.commit()
+            if not context.get('lang') and auto_data.function_id.method_to_call == 'auto_import_destination':
+                # translatable name field is set, use the correct lang
+                context['lang'] = 'en_MF'
+
             res = job_obj.process_import(cr, uid, import_id, job_id, context=context)
             cr.commit()
 
@@ -507,7 +877,10 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         # Generate new ir.cron
         import_brw = self.browse(cr, uid, new_id, context=context)
         cron_id = cron_obj.create(cr, uid, self._generate_ir_cron(import_brw), context=context)
-        self.write(cr, uid, [new_id], {'cron_id': cron_id}, context=context)
+        to_write = {'cron_id': cron_id}
+        if import_brw.active:
+            to_write['start_time'] = False
+        self.write(cr, uid, [new_id], to_write, context=context)
 
         return new_id
 
@@ -547,10 +920,15 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         for import_brw in self.browse(cr, uid, ids, context=context):
             cron_vals = self._generate_ir_cron(import_brw)
             if import_brw.cron_id:
+                if not import_brw.start_time and 'nextcall' in cron_vals:
+                    del(cron_vals['nextcall'])
                 cron_obj.write(cr, uid, [import_brw.cron_id.id], cron_vals, context=context)
             elif not vals.get('cron_id', False):
                 cron_id = cron_obj.create(cr, uid, cron_vals, context=context)
                 self.write(cr, uid, [import_brw.id], {'cron_id': cron_id}, context=context)
+
+        if import_brw.active and import_brw.start_time:
+            super(automated_import, self).write(cr, uid, ids, {'start_time': False}, context=context)
 
         return res
 

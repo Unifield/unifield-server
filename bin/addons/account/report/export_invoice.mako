@@ -49,6 +49,17 @@
     </Borders>
     <Protection/>
   </Style>
+  <Style ss:ID="editable_red_bold">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+    <Font ss:Bold="1" ss:Color="#FF0000"/>
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Protection ss:Protected="0"/>
+  </Style>
   <Style ss:ID="non_editable_number">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
     <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
@@ -132,6 +143,10 @@
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Description')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Notes')}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Analytic Distribution')}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Destination')}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Funding Pool')}</Data></Cell>
   </Row>
 
   <% is_ro = is_readonly(o) %>
@@ -158,8 +173,27 @@
 
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.name or ''|x}</Data></Cell>
 
+
         <!-- export Notes including line breaks (|xn) -->
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.note or ''|xn}</Data></Cell>
+
+        <% ad_obj = inv_line.account_id.is_analytic_addicted and (inv_line.analytic_distribution_id or inv_line.invoice_id.analytic_distribution_id) or False %>
+        % if ad_obj and len(ad_obj.funding_pool_lines) == 1 :
+            <Cell ss:StyleID="non_editable"><Data ss:Type="String">${'100%'|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].cost_center_id.code or ''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].destination_id.code or ''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].analytic_id.code or ''|x}</Data></Cell>
+        % elif ad_obj and len(ad_obj.funding_pool_lines) > 1:
+            <Cell ss:StyleID="editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+        % else:
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+        % endif
     </Row>
   % endfor
 

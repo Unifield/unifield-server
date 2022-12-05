@@ -237,8 +237,8 @@ class account_move_line(osv.osv):
         return list(r_move.keys())
 
     _columns = {
-        'transfer_journal_id': fields.many2one('account.journal', 'Journal', ondelete="restrict"),
-        'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
+        'transfer_journal_id': fields.many2one('account.journal', 'Journal', ondelete="restrict", select=1),
+        'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict", select=1),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True,
                                         string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')],
                                         multi="third_parties_key", hide_default_menu=True),

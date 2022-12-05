@@ -131,6 +131,7 @@
                                <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True"
                                      colors="grey:ignored==True">
                                     <field name="inv_state" invisible="True" />
+                                    <field name="discrepancy_rt" invisible="True" />
                                     <field name="line_no" readonly="1"/>
                                     <field name="nomen_manda_2" readonly="1"/>
                                     <field name="product_id" readonly="1"/>
@@ -148,8 +149,11 @@
                                     <field name="total_product_counted_value" readonly="1"/>
                                     <field name="total_product_discrepancy_qty" readonly="1"/>
                                     <field name="total_product_discrepancy_value" readonly="1"/>
-                                    <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" attrs="{ 'readonly': [('inv_state', 'not in', ['counted', 'validated'])]}"/>
-                                    <field name="comment" attrs="{ 'readonly': [('inv_state', 'not in', ['counted', 'validated', 'confirmed'])]}"/>
+                                    <field name="reason_type_id" widget="selection" domain="[('pi_discrepancy_type', '=', True)]" former_domain="[('is_inventory', '=', True)]"
+                                           on_change="onchange_reason_type(reason_type_id)"
+                                           attrs="{'readonly': [('inv_state', 'not in', ['counted', 'validated'])]}"/>
+                                    <field name="sub_reason_type" attrs="{'readonly': ['|', ('inv_state', 'not in', ['counted', 'validated', 'confirmed']), ('discrepancy_rt', '!=', True)]}"/>
+                                    <field name="comment" attrs="{'readonly': [('inv_state', 'not in', ['counted', 'validated', 'confirmed'])]}"/>
                                     <field name="ignored" invisible="True"/>
                                 </tree>
                                 <form string="Discrepancy line">
@@ -170,7 +174,8 @@
                                     <field name="total_product_counted_value" />
                                     <field name="total_product_discrepancy_qty" />
                                     <field name="total_product_discrepancy_value" />
-                                    <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
+                                    <field name="reason_type_id" widget="selection" domain="[('pi_discrepancy_type', '=', True)]" former_domain="[('is_inventory', '=', True)]" />
+                                    <field name="sub_reason_type" />
                                     <field name="comment" />
                                     <field name="ignored" invisible="True"/>
                                 </form>
@@ -185,8 +190,7 @@
                                            on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="prodlot_id"/>
-                                    <field name="reason_type_id" widget="selection"
-                                           domain="[('is_inventory', '=', True)]"/>
+                                    <field name="reason_type_id" widget="selection" domain="[('pi_discrepancy_type', '=', True)]"/>
                                     <field name="tracking_id"/>
                                     <field name="location_id"/>
                                     <field name="location_dest_id"/>

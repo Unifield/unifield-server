@@ -252,7 +252,15 @@ class replenishment_location_config(osv.osv):
         review_obj = self.pool.get('replenishment.inventory.review')
         now = datetime.now()
 
+        instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+
         for config in self.browse(cr, uid, ids, context=context):
+            all_instance = {0: True}
+            if config.local_location_ids:
+                all_instance[instance_id] = True
+            for x in config.remote_location_ids:
+                all_instance[x.instance_id.id] = True
+
             logger.info('Try to gen inv. review on %s' % config.name)
             seg_dom = [('location_config_id', '=', config.id), ('state', '=', 'complete')]
             if not forced:
@@ -261,6 +269,20 @@ class replenishment_location_config(osv.osv):
             if not segment_ids:
                 self.write(cr, uid, config.id, {'last_review_error': _('No Segment found')}, context=context)
                 continue
+
+            # locations removed: delete data
+            cr.execute('delete from replenishment_segment_date_generation where segment_id in %s and instance_id not in %s', (tuple(segment_ids), tuple(all_instance.keys())))
+
+            cr.execute('''
+                delete from replenishment_segment_line_amc where
+                instance_id not in %s and
+                segment_line_id in (select seg_line.id from replenishment_segment_line seg_line where seg_line.segment_id in %s) ''', (tuple(all_instance.keys()), tuple(segment_ids))
+                       )
+
+            if not config.local_location_ids:
+                self.write(cr, uid, config.id, {'last_review_error': 'Local location is empty, please complete location config %s.' % config.name}, context=context)
+                return True
+
 
             if config.include_product:
                 self.generate_hidden_segment(cr, uid, config.id, context)
@@ -342,26 +364,31 @@ class replenishment_location_config(osv.osv):
         all_config_ids = loc_config_obj.search(cr, uid, [('include_product', '=', True), ('id', 'in', ids)], context=context)
         for loc_config in loc_config_obj.browse(cr, uid, all_config_ids, context=context):
             amc_location_ids = [x.id for x in loc_config.local_location_ids]
-            if not amc_location_ids:
-                continue
             hidden_seg_ids = segment_obj.search(cr, uid, [('location_config_id', '=', loc_config.id), ('hidden', '=', True)], context=context)
             if not hidden_seg_ids:
-                hidden_seg = segment_obj.create(cr, uid, {
+                parent_id = self.pool.get('replenishment.parent.segment').create(cr, uid, {
                     'location_config_id': loc_config.id,
-                    'hidden': True,
-                    'description_seg': 'HIDDEN',
                     'description_parent_seg': 'HIDDEN',
-                    'name_seg': 'Stock/Pipe products not segmented',
+                    'hidden': True,
                     'order_preparation_lt': 1,
                     'order_creation_lt': 1,
                     'order_validation_lt': 1,
                     'supplier_lt': 1,
                     'handling_lt': 1,
+                }, context=context)
+                hidden_seg = segment_obj.create(cr, uid, {
+                    'parent_id': parent_id,
+                    'description_seg': 'HIDDEN',
+                    'name_seg': 'Stock/Pipe products not segmented',
                     'rule': 'auto',
                     'state': 'complete',
                 }, context=context)
             else:
                 hidden_seg = hidden_seg_ids[0]
+
+            if not amc_location_ids:
+                cr.execute('delete from replenishment_segment_line where segment_id = %s', (hidden_seg, ))
+                continue
 
             cr.execute("select product_id, id from replenishment_segment_line where segment_id = %s", (hidden_seg, ))
             existing_prod = dict((x[0], x[1]) for x in cr.fetchall())
@@ -743,6 +770,11 @@ class replenishment_parent_segment(osv.osv):
             calc_id = False
             seg_to_gen = []
             missing = False
+
+            if not pseg.location_config_id.local_location_ids:
+                missing = True
+                self.log(cr, uid, pseg.id, _('Local location is empty, please complete location config %s. ') % (pseg.location_config_id.name))
+
             for seg in pseg.child_ids:
                 if seg.state == 'complete':
                     if seg.missing_order_calc:
@@ -1075,6 +1107,9 @@ class replenishment_segment(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Data from instance(s) is missing, please wait for the next scheduled task or the next sync, or if relates to this instance, please use button "Compute Data". Instances missing data are:\n%s') % (missing_instances, ))
 
             loc_ids = [x.id for x in seg.local_location_ids]
+            if not loc_ids:
+                # no more location reset data
+                loc_ids = [0]
             cr.execute('''
               select prod_id, min(date) from (
                   select pol.product_id as prod_id, min(coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned)) as date
@@ -2179,39 +2214,27 @@ class replenishment_segment(osv.osv):
 
     def save_past_fmc(self, cr, uid, ids, rule, max_date, context=None):
         for _id in ids:
-            cr.execute('select * from replenishment_segment_line line where segment_id = %s', (_id, ))
+            cr.execute('select period.* from replenishment_segment_line_period period, replenishment_segment_line line where period.line_id = line.id and line.segment_id = %s and from_date < %s order by period.line_id, from_date', (_id, max_date))
             for x in cr.dictfetchall():
                 to_update = {}
-                for fmc_d in range(1, 19):
-                    from_fmc = x['rr_fmc_from_%d'%fmc_d]
-                    to_fmc = x['rr_fmc_to_%d'%fmc_d]
-                    num_fmc = x['rr_fmc_%d'%fmc_d]
+                from_fmc = x['from_date']
+                to_fmc = x['to_date']
+                num_fmc = x['value']
+                if rule == 'minmax':
+                    max_fmc = x['max_value']
+                if (not from_fmc or from_fmc == '2020-01-01') and (not to_fmc or to_fmc == '2222-02-28') and num_fmc is not False:
+                    upper = max_date.strftime('%Y-%m-%d')
+                    key = datetime.now() + relativedelta(day=1)
+                else:
+                    upper = min(to_fmc, max_date.strftime('%Y-%m-%d'))
+                    key = datetime.strptime(from_fmc, '%Y-%m-%d')
+
+                while key.strftime('%Y-%m-%d') <= upper:
                     if rule == 'minmax':
-                        max_fmc = x['rr_max_%d'%fmc_d]
-
-                    to_break = False
-                    if fmc_d == 1 and not from_fmc and not to_fmc and num_fmc is not False:
-                        to_break = True
-                        upper = max_date.strftime('%Y-%m-%d')
-                        key = datetime.now() + relativedelta(day=1)
-                    elif not from_fmc or not to_fmc or num_fmc is False:
-                        break
+                        to_update[key.strftime('%Y-%m-%d')] = '%g / %g' % (num_fmc or 0, max_fmc or 0)
                     else:
-                        upper = min(to_fmc, max_date.strftime('%Y-%m-%d'))
-                        key = datetime.strptime(from_fmc, '%Y-%m-%d')
-
-                    while key.strftime('%Y-%m-%d') <= upper:
-                        if rule == 'minmax':
-                            if num_fmc is False or max_fmc is False:
-                                to_break = True
-                                break
-                            to_update[key.strftime('%Y-%m-%d')] = '%g / %g' % (num_fmc or 0, max_fmc or 0)
-                        else:
-                            to_update[key.strftime('%Y-%m-%d')] = num_fmc
-                        key+=relativedelta(months=1)
-
-                    if to_break:
-                        break
+                        to_update[key.strftime('%Y-%m-%d')] = num_fmc
+                    key+=relativedelta(months=1)
 
                 if to_update:
                     for month in to_update:
@@ -2219,13 +2242,13 @@ class replenishment_segment(osv.osv):
                             cr.execute("""insert into replenishment_segment_line_amc_past_fmc
                                 (segment_line_id, month, minmax) values (%s, %s, %s)
                                 ON CONFLICT ON CONSTRAINT replenishment_segment_line_amc_past_fmc_unique_seg_month DO UPDATE SET minmax=EXCLUDED.minmax
-                            """, (x['id'], month, to_update[month]))
+                            """, (x['line_id'], month, to_update[month]))
 
                         else:
                             cr.execute("""insert into replenishment_segment_line_amc_past_fmc
                                 (segment_line_id, month, fmc) values (%s, %s, %s)
                                 ON CONFLICT ON CONSTRAINT replenishment_segment_line_amc_past_fmc_unique_seg_month DO UPDATE SET fmc=EXCLUDED.fmc
-                            """, (x['id'], month, to_update[month]))
+                            """, (x['line_id'], month, to_update[month]))
 
         return True
 
@@ -2918,8 +2941,10 @@ class replenishment_segment_line(osv.osv):
                 rr_to = datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d')
                 if rr_to + relativedelta(months=1, day=1, days=-1) != rr_to:
                     self._raise_error(cr, uid, vals,  _('TO %d must be the last day of the month') % (x,), context)
+
                 try:
-                    vals['rr_fmc_from_%d'%(x+1)] = (datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+                    if vals.get('rr_fmc_to_%d' % (x+1)):
+                        vals['rr_fmc_from_%d'%(x+1)] = (datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
                 except:
                     pass
                 if x > 1 and vals.get('rr_fmc_to_%d' % x) <= vals.get('rr_fmc_to_%d' % (x-1)):
@@ -2937,8 +2962,8 @@ class replenishment_segment_line(osv.osv):
         cr.execute("select line.id, seg.state from replenishment_segment seg, replenishment_segment_line line where line.segment_id = seg.id and seg.rule = 'cycle'")
         for x in cr.fetchall():
             cycle_line_state[x[0]] = x[1]
-            for x in range(1, 19):
-                all_fields+=['rr_fmc_%d' % x, 'rr_fmc_from_%d' % x, 'rr_fmc_to_%d' % x]
+        for x in range(1, 19):
+            all_fields+=['rr_fmc_%d' % x, 'rr_fmc_from_%d' % x, 'rr_fmc_to_%d' % x]
 
         for _id in ids:
             p_ids = []
@@ -2962,7 +2987,8 @@ class replenishment_segment_line(osv.osv):
                         if 'rr_fmc_to_%d' % x in vals:
                             data['to_date'] = vals.get('rr_fmc_to_%d' % x) or None
                             try:
-                                vals['rr_fmc_from_%d'%(x+1)] = (datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+                                if vals.get('rr_fmc_to_%d' % (x+1)):
+                                    vals['rr_fmc_from_%d'%(x+1)] = (datetime.strptime(vals['rr_fmc_to_%d'%x], '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
                             except:
                                 pass
                         if 'rr_max_%d' % x in vals:
@@ -3145,6 +3171,16 @@ class replenishment_segment_line_amc(osv.osv):
             seg_ids = [seg_ids]
 
         for segment in segment_obj.browse(cr, uid, seg_ids, context=context):
+            if not segment.local_location_ids:
+                cr.execute('''
+                    delete from replenishment_segment_line_amc_detailed_amc where segment_line_id in
+                    (select seg_line.id from replenishment_segment_line seg_line where seg_line.segment_id = %s) ''', (segment.id, )
+                           )
+                cr.execute('''
+                    delete from replenishment_segment_line_amc_month_exp where line_amc_id in
+                    (select amc.id from replenishment_segment_line_amc amc, replenishment_segment_line seg_line where seg_line.id = amc.segment_line_id and seg_line.segment_id = %s) ''', (segment.id,)
+                           )
+                continue
             last_gen_id = last_gen_obj.search(cr, uid, [('segment_id', '=', segment.id), ('instance_id', '=', instance_id)], context=context)
             last_gen_data = {
                 'segment_id': segment.id,

@@ -185,7 +185,7 @@ class account_invoice(osv.osv):
                 dp_info = self.pool.get('account.move.line').browse(cr, uid, el[0])
                 # first create the move
                 vals = {
-                    'journal_id': dp_info.statement_id and dp_info.statement_id.journal_id and dp_info.statement_id.journal_id.id or False,
+                    'journal_id': inv.journal_id and inv.journal_id.id or False,
                     'period_id': inv.period_id.id,
                     'date': inv.date_invoice,
                     'partner_id': inv.partner_id.id,

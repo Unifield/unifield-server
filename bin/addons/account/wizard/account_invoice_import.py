@@ -43,7 +43,7 @@ class account_invoice_import(osv.osv_memory):
         'filename': fields.char(string="Imported filename", size=256),
         'progression': fields.float(string="Progression", readonly=True),
         'message': fields.char(string="Message", size=256, readonly=True),
-        'state': fields.selection([('draft', 'Created'), ('inprogress', 'In Progress'), ('error', 'Error'), ('done', 'Done')],
+        'state': fields.selection([('draft', 'Created'), ('inprogress', 'In Progress'), ('error', 'Error'), ('ad_error', 'AD Error'), ('done', 'Done')],
                                   string="State", readonly=True, required=True),
         'error_ids': fields.one2many('account.invoice.import.errors', 'wizard_id', "Errors", readonly=True),
         'invoice_id': fields.many2one('account.invoice', 'Invoice', required=True, readonly=True),
@@ -69,6 +69,7 @@ class account_invoice_import(osv.osv_memory):
             context = {}
         cr = pooler.get_db(dbname).cursor()
         errors = []
+        ad_errors = []
         invoice_obj = self.pool.get('account.invoice')
         invoice_line_obj = self.pool.get('account.invoice.line')
         currency_obj = self.pool.get('res.currency')
@@ -77,6 +78,8 @@ class account_invoice_import(osv.osv_memory):
         product_obj = self.pool.get('product.product')
         import_cell_data_obj = self.pool.get('import.cell.data')
         errors_obj = self.pool.get('account.invoice.import.errors')
+        ana_obj = self.pool.get('analytic.distribution')
+        aac_obj = self.pool.get('account.analytic.account')
 
         try:
             for wiz in self.browse(cr, uid, ids, context):
@@ -104,6 +107,10 @@ class account_invoice_import(osv.osv_memory):
                     'unit_price': 4,
                     'description': 5,
                     'notes': 6,
+                    'analytic_distribution': 7,
+                    'cost_center': 8,
+                    'destination': 9,
+                    'funding_pool': 10,
                 }
                 # number of the first line in the file containing data (not header)
                 base_num = 10
@@ -168,6 +175,11 @@ class account_invoice_import(osv.osv_memory):
                     unit_price = line[cols['unit_price']] or 0.0
                     description = line[cols['description']] and tools.ustr(line[cols['description']])
                     notes = line[cols['notes']] and tools.ustr(line[cols['notes']])
+                    analytic_distribution_type = line[cols['analytic_distribution']] and tools.ustr(line[cols['analytic_distribution']])
+                    cost_center_code = line[cols['cost_center']] and tools.ustr(line[cols['cost_center']])
+                    destination_code = line[cols['destination']] and tools.ustr(line[cols['destination']])
+                    funding_pool_code = line[cols['funding_pool']] and tools.ustr(line[cols['funding_pool']])
+
                     if not line_number:
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
                         continue
@@ -188,8 +200,7 @@ class account_invoice_import(osv.osv_memory):
                     if not account_ids:
                         errors.append(_("Line %s: the account %s doesn't exist.") % (current_line_num, account_code))
                         continue
-                    account = account_obj.browse(cr, uid, account_ids[0], fields_to_fetch=['activation_date', 'inactivation_date'],
-                                                 context=context)
+                    account = account_obj.browse(cr, uid, account_ids[0], context=context)
                     checking_date = posting_date or datetime.now().strftime('%Y-%m-%d')
                     if checking_date < account.activation_date or (account.inactivation_date and checking_date >= account.inactivation_date):
                         errors.append(_("Line %s: the account %s is inactive.") % (current_line_num, account_code))
@@ -235,6 +246,56 @@ class account_invoice_import(osv.osv_memory):
                         continue
                     vals['name'] = description
                     vals['note'] = notes
+                    if account.is_analytic_addicted and analytic_distribution_type and analytic_distribution_type.strip() in ('100%', '100', '1'):
+                        if not cost_center_code or not destination_code or not funding_pool_code:
+                            errors.append(_("Line %s: An expense account is set while the analytic distribution values (mandatory) are missing.") % (current_line_num,))
+                            continue
+                        # If AD is filled - write on each line the AD on the import file. Remove from header.
+
+                        cc_ids = aac_obj.search(cr, uid,[('code', '=', cost_center_code),('category', '=', 'OC'), ('type', '!=', 'view')],
+                                                limit=1, context=context)
+                        if not cc_ids:
+                            errors.append(_("Line %s: the cost center %s doesn't exist.") % (current_line_num, cost_center_code))
+                            continue
+
+                        fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING'), ('type', '!=', 'view')], limit=1, context=context)
+                        if not fp_ids:
+                            errors.append(_("Line %s: the funding pool %s doesn't exist.") % (current_line_num, funding_pool_code))
+                            continue
+
+                        dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST'), ('type', '!=', 'view')], limit=1, context=context)
+                        if not dest_ids:
+                            errors.append(_("Line %s: the destination %s doesn't exist.") % (current_line_num, destination_code))
+                            continue
+
+                        current_ad =  invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+
+                        # create a new AD if diff from current AD on line
+                        if not current_ad or \
+                                len(current_ad.funding_pool_lines) != 1 or \
+                                current_ad.funding_pool_lines[0].analytic_id.id != fp_ids[0] or \
+                                current_ad.funding_pool_lines[0].cost_center_id.id != cc_ids[0] or \
+                                current_ad.funding_pool_lines[0].destination_id.id != dest_ids[0]:
+
+                            ad_state, ad_error = ana_obj.analytic_state_from_info(cr, uid, account.id, dest_ids[0], cc_ids[0], fp_ids[0],
+                                                                                  posting_date=checking_date, document_date=invoice.document_date, check_analytic_active=True, context=context)
+                            if ad_state != 'valid':
+                                ad_errors.append(_("Line %s: %s/%s/%s %s" ) % (current_line_num, cost_center_code, destination_code, funding_pool_code, ad_error))
+
+                            distrib_id = ana_obj.create(cr, uid, {'name': 'Line Distribution Import'}, context=context)
+                            ad_vals = {'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': currency_ids[0],
+                                       'destination_id': dest_ids[0]}
+
+                            ad_vals['analytic_id'] = cc_ids[0]
+                            self.pool.get('cost.center.distribution.line').create(cr, uid, ad_vals, context=context)
+
+                            ad_vals.update({'analytic_id': fp_ids[0], 'cost_center_id': cc_ids[0]})
+                            self.pool.get('funding.pool.distribution.line').create(cr, uid, ad_vals, context=context)
+
+                            vals['analytic_distribution_id'] = distrib_id
+
+                            if current_ad:
+                                ana_obj.unlink(cr, uid, [current_ad.id], context=context)
 
                     # update the line
                     invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals, context=context)
@@ -257,6 +318,16 @@ class account_invoice_import(osv.osv_memory):
                 for e in errors:
                     errors_obj.create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context)
                 wiz_state = 'error'
+            # if it's AD error, handle it separately to allow import invalid AD combination
+            elif ad_errors:
+                message = _('Import successful but with analytic distribution invalid combination.')
+                # delete old errors and create new ones
+                error_ids = errors_obj.search(cr, uid, [], context)
+                if error_ids:
+                    errors_obj.unlink(cr, uid, error_ids, context)
+                for e in ad_errors:
+                    errors_obj.create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context)
+                wiz_state = 'ad_error'
             else:
                 message = _('Import successful.')
             # 100% progression
