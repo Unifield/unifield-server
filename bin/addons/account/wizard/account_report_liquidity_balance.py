@@ -90,8 +90,15 @@ class liquidity_balance_wizard(osv.osv_memory):
                              })
 
         # get the selected instance AND its children
-        data['form'].update({'instance_ids': wiz.instance_id and
-                             ([wiz.instance_id.id] + [x.id for x in wiz.instance_id.child_ids]) or False})
+        if wiz.instance_id.level == 'section':
+            data['form'].update({'instance_ids': wiz.instance_id and
+                                                 ([wiz.instance_id.id] + [y.id for x in
+                                                                          wiz.instance_id.child_ids for y in x.child_ids]) or False})
+        elif wiz.instance_id.level == 'coordo':
+            data['form'].update({'instance_ids': wiz.instance_id and
+                                                 ([wiz.instance_id.id] + [x.id for x in wiz.instance_id.child_ids]) or False})
+        elif wiz.instance_id.level == 'project':
+            data['form'].update({'instance_ids': wiz.instance_id and [wiz.instance_id.id] or False})
         data['context'] = context
         instance = wiz.instance_id and wiz.instance_id.code or ''
         """
