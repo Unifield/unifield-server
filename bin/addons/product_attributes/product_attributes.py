@@ -961,6 +961,7 @@ class product_attributes(osv.osv):
                 ('N1', 'N1 - Narcotic 1'),
                 ('N2', 'N2 - Narcotic 2'),
                 ('P1', 'P1 - Psychotrop 1'),
+                ('P2', 'P2 - Psychotrop 2'),
                 ('P3', 'P3 - Psychotrop 3'),
                 ('P4', 'P4 - Psychotrop 4'),
                 ('DP', 'DP - Drug Precursor'),

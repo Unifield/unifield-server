@@ -217,7 +217,7 @@ class sale_followup_multi_wizard(osv.osv_memory):
         self.get_values(cr, uid, ids, context=context)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
-            'file_name': 'FO followup per client',
+            'file_name': 'FO followup',
             'report_name': 'sales.follow.up.multi.report_xls',
         }, context=context)
         context['background_id'] = background_id
@@ -245,7 +245,7 @@ class sale_followup_multi_wizard(osv.osv_memory):
         self.get_values(cr, uid, ids, context=context)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
-            'file_name': 'FO followup per client',
+            'file_name': 'FO followup',
             'report_name': 'sales.follow.up.multi.report_pdf',
         }, context=context)
         context['background_id'] = background_id

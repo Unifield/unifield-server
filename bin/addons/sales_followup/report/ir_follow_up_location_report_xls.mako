@@ -185,7 +185,7 @@
 
 
 % for r in objects:
-<ss:Worksheet ss:Name="${_('IR Follow Up per Location')|x}">
+<ss:Worksheet ss:Name="${_('IR Follow Up')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Order ref
         <Column ss:AutoFitWidth="1" ss:Width="130.0" />
@@ -233,7 +233,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="50.0" />
 
         <Row ss:Height="18">
-            <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('INTERNAL REQUEST FOLLOW-UP per LOCATION')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+            <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('INTERNAL REQUEST FOLLOW-UP')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
         </Row>
 
         <Row ss:Height="10"></Row>
