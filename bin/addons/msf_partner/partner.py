@@ -310,8 +310,8 @@ class res_partner(osv.osv):
         'split_po': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'instance_creator': lambda obj, cr, uid, c: obj._get_instance_creator(cr, uid, c),
-        'property_product_pricelist_purchase': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
-        'property_product_pricelist': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
+        'property_product_pricelist_purchase': lambda self, cr, uid, c: self.pool.get('product.pricelist').get_company_default_pricelist(cr, uid, 'purchase', c),
+        'property_product_pricelist': lambda self, cr, uid, c: self.pool.get('product.pricelist').get_company_default_pricelist(cr, uid, 'sale', c),
     }
 
     def _get_instance_creator(self, cr, uid, context=None):

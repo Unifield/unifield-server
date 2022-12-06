@@ -148,13 +148,13 @@
                         <page string="Sales &amp; Purchases">
                             <group colspan="2" col="2">
                                 <separator string="Purchase Properties" colspan="2"/>
-                               <field name="property_product_pricelist_purchase" string="Purchase Default Currency"
-                                      domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" required="1" />
+                                <field name="property_product_pricelist_purchase" string="Purchase Default Currency"
+                                    domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" required="1" />
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Field Orders Properties" colspan="2"/>
                                 <field name="property_product_pricelist" string="Field Orders Default Currency"
-                                       domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" required="1" />
+                                    domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" required="1" />
                             </group>
                             <newline />
                             <group colspan="2" col="4">
