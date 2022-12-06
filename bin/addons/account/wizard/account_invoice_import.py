@@ -254,18 +254,18 @@ class account_invoice_import(osv.osv_memory):
 
                         cc_ids = aac_obj.search(cr, uid,[('code', '=', cost_center_code),('category', '=', 'OC'), ('type', '!=', 'view')],
                                                 limit=1, context=context)
-                        if not cc_ids:
-                            errors.append(_("Line %s: the cost center %s doesn't exist.") % (current_line_num, cost_center_code))
-                            continue
-
-                        fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING'), ('type', '!=', 'view')], limit=1, context=context)
-                        if not fp_ids:
-                            errors.append(_("Line %s: the funding pool %s doesn't exist.") % (current_line_num, funding_pool_code))
-                            continue
-
-                        dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST'), ('type', '!=', 'view')], limit=1, context=context)
-                        if not dest_ids:
-                            errors.append(_("Line %s: the destination %s doesn't exist.") % (current_line_num, destination_code))
+                        fp_ids = aac_obj.search(cr, uid,
+                                                [('code', '=', funding_pool_code), ('category', '=', 'FUNDING'),
+                                                 ('type', '!=', 'view')], limit=1, context=context)
+                        dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST'),
+                                                            ('type', '!=', 'view')], limit=1, context=context)
+                        if not (cc_ids and fp_ids and dest_ids):
+                            if not cc_ids:
+                                errors.append(_("Line %s: the cost center %s doesn't exist.") % (current_line_num, cost_center_code))
+                            if not fp_ids:
+                                errors.append(_("Line %s: the funding pool %s doesn't exist.") % (current_line_num, funding_pool_code))
+                            if not dest_ids:
+                                errors.append(_("Line %s: the destination %s doesn't exist.") % (current_line_num, destination_code))
                             continue
 
                         current_ad =  invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
