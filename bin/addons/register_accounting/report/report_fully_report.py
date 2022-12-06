@@ -33,6 +33,7 @@ import os
 
 if os.name == 'nt':
     os.environ['PATH'] = '%s;%s' % (os.environ['PATH'], os.path.join(tools.config['root_path'], 'dll'))
+    os.environ['WEASYPRINT_DLL_DIRECTORIES'] = os.path.join(tools.config['root_path'], 'dll')
 
 import weasyprint
 
