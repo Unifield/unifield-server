@@ -248,7 +248,12 @@ class account_invoice_import(osv.osv_memory):
                     vals['note'] = notes
                     if account.is_analytic_addicted and analytic_distribution_type and analytic_distribution_type.strip() in ('100%', '100', '1'):
                         if not cost_center_code or not destination_code or not funding_pool_code:
-                            errors.append(_("Line %s: An expense account is set while the analytic distribution values (mandatory) are missing.") % (current_line_num,))
+                            if not cost_center_code:
+                                errors.append(_("Line %s: An expense account is set while the cost center code (mandatory) is missing.") % (current_line_num,))
+                            if not destination_code:
+                                errors.append(_("Line %s: An expense account is set while the destination code (mandatory) is missing.") % (current_line_num,))
+                            if not funding_pool_code:
+                                errors.append(_("Line %s: An expense account is set while the funding pool code (mandatory) is missing.") % (current_line_num,))
                             continue
                         # If AD is filled - write on each line the AD on the import file. Remove from header.
 
