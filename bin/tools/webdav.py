@@ -192,8 +192,8 @@ class Client(object):
         options.method = HttpMethod.Get
         options.set_header("X-HTTP-Method", "GET")
         options.set_header('accept', 'application/json;odata=verbose')
-        self.request.context.authenticate_request(options)
-        self.request.context.ensure_form_digest(options)
+        self.request.authenticate_request(options)
+        self.request.ensure_form_digest(options)
         result = requests.get(url=request_url, headers=options.headers, auth=options.auth)
 
         result = result.json()
@@ -216,8 +216,8 @@ class Client(object):
         retry = 5
         while retry:
             try:
-                self.request.context.authenticate_request(options)
-                self.request.context.ensure_form_digest(options)
+                self.request.authenticate_request(options)
+                self.request.ensure_form_digest(options)
                 with requests.get(url=request_url, headers=options.headers, auth=options.auth, stream=True, timeout=120) as r:
                     if r.status_code not in (200, 201):
                         error = self.parse_error(r)
