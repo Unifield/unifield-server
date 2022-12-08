@@ -317,9 +317,8 @@ class product_pricelist(osv.osv):
         pricelist_types = [x[0] for x in self._pricelist_type_get(cr, uid, context=context)]
         if not type or type not in pricelist_types:
             return False
-        company = self.pool.get('res.users').browse(cr, uid, uid, context).company_id
-        pricelist_ids = self.search(cr, uid, [('company_id', '=', company.id), ('currency_id', '=', company.currency_id.id),
-                                              ('type', '=', type)], context=context)
+        company_curr_id = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.currency_id.id
+        pricelist_ids = self.search(cr, uid, [('currency_id', '=', company_curr_id), ('type', '=', type)], context=context)
 
         if pricelist_ids:
             return pricelist_ids[0]
