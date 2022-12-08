@@ -9,7 +9,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="13"/>
             <field name="arch" type="xml">
-                <tree string="Account Entries" min_rows="100" hide_new_button="1" hide_delete_button="1"  noteditable="1" >
+                <tree string="Account Entries" hide_new_button="1" hide_delete_button="1"  noteditable="1" >
                     <field name="instance_id"/>
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>
@@ -38,8 +38,8 @@
                     <field name="debit" sum="Total Functional Debit"/>
                     <field name="credit" sum="Total Functional Credit"/>
                     <field name="functional_currency_id"/>
-                    <field name="output_amount_debit"/>
-                    <field name="output_amount_credit"/>
+                    <field name="output_amount_debit" sum="Total Output Debit"/>
+                    <field name="output_amount_credit" sum="Total Output Credit"/>
                     <field name="output_currency"/>
                     <field name="reconcile_txt" />
                     <field name="state"/>
@@ -54,7 +54,7 @@
             <field name="model">account.analytic.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Analytic Journal Items" min_rows="100" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
+                <tree string="Analytic Journal Items" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
                     <field name="is_reallocated" invisible="1"/>
                     <field name="instance_id"/>
                     <field name="is_reversal" invisible="1"/>
@@ -79,7 +79,7 @@
                     <field name="currency_id"/>
                     <field name="amount" sum="Total Functional Amount"/>
                     <field name="functional_currency_id"/>
-                    <field name="output_amount"/>
+                    <field name="output_amount" sum="Total Output Amount"/>
                     <field name="output_currency"/>
                     <field name="reversal_origin_txt"/>
                     <field name="user_id" invisible="1"/>
@@ -162,7 +162,7 @@
                         </group>
                         <newline/>
                         <group>
-                            <field name="partner_id" select='1' string="3RD Party Partner"/>
+                            <field name="partner_id" select='1' string="3RD Party Partner" context="{'show_button_show_inactive': True}"/>
                             <field name="employee_id" select='1' string="3RD Party Employee"/>
                             <field name="transfer_journal_id" select='1' string="3RD Party Journal"
                                    context="{'exclude_journals': ['IB'], 'search_default_filter_is_active': 1}"/>
@@ -189,7 +189,7 @@
                         </group>
                         <newline/>
                         <group expand="0" string="Group By..." colspan="4" col="20">
-                            <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                            <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id', 'show_button_show_inactive': True}"/>
                             <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
                             <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id', 'exclude_journals': ['IB']}"/>
                             <separator orientation="vertical"/>
@@ -354,7 +354,7 @@
                             </group>
                             <newline/>
                             <group col='8' colspan='4'>
-                                <field name="partner_id" select="1" string="3RD Party Partner"/>
+                                <field name="partner_id" select="1" string="3RD Party Partner" context="{'show_button_show_inactive': True}"/>
                                 <field name="employee_id" select="1" string="3RD Party Employee"/>
                                 <field name="transfer_journal_id" select="1" string="3RD Party Journal"
                                        context="{'exclude_journals': ['IB'], 'search_default_filter_is_active': 1}"/>
@@ -367,7 +367,7 @@
                             </group>
                             <newline/>
                             <group expand="0" string="Group By..." colspan="12" col="10">
-                                <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                                <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id', 'show_button_show_inactive': True}"/>
                                 <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
                                 <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
                                 <separator orientation="vertical"/>

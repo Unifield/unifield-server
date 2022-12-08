@@ -808,7 +808,7 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                 '''
                 # Line 1: Order reference
                 order_ref = values.get(1, [])[1]
-                if order_ref != wiz.order_id.name:
+                if (order_ref or '').lower() != wiz.order_id.name.lower():
                     message = '''## IMPORT STOPPED ##
 
     LINE 1 OF THE IMPORTED FILE: THE ORDER REFERENCE \
@@ -1552,7 +1552,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             else:
                 if values[2]:
                     if not PRODUCT_CODE_ID.get(values[2]):
-                        prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[2])], context=context)
+                        prod_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', values[2])], context=context)
                         if prod_ids:
                             PRODUCT_CODE_ID[values[2]] = prod_ids[0]
                         else:
@@ -1567,6 +1567,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 if p_error:
                     write_vals['type_change'] = 'error'
                     errors.append(p_msg)
+                else:
+                    if line.po_line_id and line.po_line_id.linked_sol_id and not line.po_line_id.linked_sol_id.procurement_request \
+                            and line.po_line_id.po_order_type == 'regular' \
+                            and prod_obj.browse(cr, uid, write_vals['imp_product_id'], fields_to_fetch=['type'], context=context).type == 'service_recep':
+                        write_vals['type_change'] = 'error'
+                        errors.append(_('You can not select the Service Product %s on a Regular PO if the line has been sourced from a FO') % values[2])
             else:
                 write_vals['type_change'] = 'error'
 
@@ -1605,9 +1611,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             else:
                 uom_id = UOM_NAME_ID.get(tools.ustr(uom_value))
                 if not uom_id:
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', tools.ustr(uom_value))], context=context)
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', tools.ustr(uom_value))], context=context)
                     if uom_ids:
-                        UOM_NAME_ID[tools.ustr(uom_value)] =  uom_ids[0]
+                        UOM_NAME_ID[tools.ustr(uom_value)] = uom_ids[0]
                         write_vals['imp_uom'] = uom_ids[0]
                     else:
                         errors.append(_('UoM not found in database.'))
@@ -1646,8 +1652,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals.update({'imp_qty': 0.00, 'imp_price': 0.00, 'type_change': 'error'})
 
             # Currency
-            currency_value = values[7]
-            if tools.ustr(currency_value) == line.in_currency.name:
+            currency_value = values[7].lower()
+            if line.in_currency and tools.ustr(currency_value.lower()) == line.in_currency.name.lower():
                 write_vals['imp_currency'] = line.in_currency.id
             elif line.in_currency.name:
                 err_msg = _('The currency on the file is not the same as the currency of the PO line - You must have the same currency on both side - Currency of the initial line kept.')
@@ -1671,7 +1677,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
                                              limit=1, context=context)
                     if so_ids:
-                        so = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state', 'order_type'], context=context)
+                        so = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state', 'order_type', 'procurement_request'], context=context)
                         if so.state not in ('done', 'cancel'):
                             if so.order_type == 'regular':
                                 write_vals['imp_origin'] = origin
@@ -1684,17 +1690,22 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             errors.append(err_msg)
                             write_vals['type_change'] = 'error'
                         # To link the other instance's IR to the PO line
-                        if line.type_change in ['new', 'split'] and instance_sync_order_ref:
-                            sync_order_label_ids = sync_order_obj.\
-                                search(cr, uid, [('name', '=', instance_sync_order_ref),
-                                                 ('order_id.state', 'not in', ['done', 'cancel']),
-                                                 ('order_id', '=', so.id)], context=context)
-                            if sync_order_label_ids:
-                                write_vals['imp_sync_order_ref'] = sync_order_label_ids[0]
-                            else:
-                                err_msg = _('No Order in sync. instance with an open FO was found with the data in \'Origin\'')
-                                errors.append(err_msg)
+                        if line.type_change in ['new', 'split']:
+                            if instance_sync_order_ref:
+                                sync_order_label_ids = sync_order_obj.\
+                                    search(cr, uid, [('name', '=', instance_sync_order_ref),
+                                                     ('order_id.state', 'not in', ['done', 'cancel']),
+                                                     ('order_id', '=', so.id)], context=context)
+                                if sync_order_label_ids:
+                                    write_vals['imp_sync_order_ref'] = sync_order_label_ids[0]
+                                else:
+                                    err_msg = _('No Order in sync. instance with an open FO was found with the data in \'Origin\'')
+                                    errors.append(err_msg)
+                                    write_vals['type_change'] = 'error'
+                            if write_vals['imp_product_id'] and not so.procurement_request and line.simu_id.order_id.order_type == 'regular' \
+                                    and prod_obj.browse(cr, uid, write_vals['imp_product_id'], fields_to_fetch=['type'], context=context).type == 'service_recep':
                                 write_vals['type_change'] = 'error'
+                                errors.append(_('The Service Product %s can not be linked to a FO (%s) on a Regular PO') % (values[2], origin))
                     else:
                         err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
                         errors.append(err_msg)

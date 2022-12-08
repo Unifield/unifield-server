@@ -77,6 +77,8 @@
         'security/ir.model.access.csv',
         'res/res_widget_view.xml',
         'res/res_widget_data.xml',
+        'res/signature_view.xml',
+        'res/installer_signature_view.xml',
     ],
     'demo_xml': [
         'base_demo.xml',

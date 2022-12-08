@@ -303,10 +303,11 @@ class account_move_line(osv.osv):
             ret[i] = finance_export.finance_archive._get_hash(cr, uid, [i], 'account.move.line')
         return ret
 
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')],
-                                     help="This indicates the state of the Journal Entry."),
+                                     help="This indicates the state of the Journal Entry.", write_relate=False),
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
                                            help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
         'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True, join=True),
@@ -361,6 +362,7 @@ class account_move_line(osv.osv):
                                                     help="Register line to which this partner automated entry is linked"),
         'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
                                  store=False, help='DB ID used for Vertical Integration'),
+        'product_code': fields.related('product_id', 'default_code', type='char', size=64, string='Product Code', readonly=True),
     }
 
     _defaults = {

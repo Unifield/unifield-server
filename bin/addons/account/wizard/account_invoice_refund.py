@@ -237,7 +237,7 @@ class account_invoice_refund(osv.osv_memory):
                                                      )
                     if mode == 'modify':
                         invoice = inv_obj.read(cr, uid, inv.id, self._hook_fields_for_modify_refund(cr, uid), context=context)
-                        invoice.update({'refunded_invoice_id': invoice['id']})
+                        invoice.update({'refunded_invoice_id': invoice['id'], 'signature_id': False})
                         del invoice['id']
                         invoice_lines = inv_line_obj.read(cr, uid, invoice['invoice_line'], context=context)
                         invoice_lines = inv_obj._refund_cleanup_lines(cr, uid, invoice_lines, is_account_inv_line=True, context=context)

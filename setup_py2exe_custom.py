@@ -60,6 +60,14 @@ def extra_files():
     main_path = os.path.relpath(os.path.dirname(office365.__file__))
     xml_file = os.path.join(main_path, 'runtime/auth/SAML.xml')
     r.append(('libs/office365/runtime/auth', [xml_file]))
+
+    import pyphen
+    main_path = os.path.relpath(os.path.dirname(pyphen.__file__))
+    dic_files = []
+    for root, _, filenames in os.walk(os.path.join(main_path, 'dictionaries')):
+        for filename in filenames:
+            dic_files.append(os.path.join(main_path, 'dictionaries', filename))
+    r.append(('libs/pyphen/dictionaries',dic_files))
     return r
 
 def fixup_data_pytz_zoneinfo():

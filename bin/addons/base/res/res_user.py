@@ -34,6 +34,8 @@ from passlib.hash import bcrypt
 from service import http_server
 from msf_field_access_rights.osv_override import _get_instance_level
 import time
+from lxml import etree
+
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -45,13 +47,20 @@ class groups(osv.osv):
         'model_access': fields.one2many('ir.model.access', 'group_id', 'Access Controls'),
         'rule_groups': fields.many2many('ir.rule', 'rule_group_rel',
                                         'group_id', 'rule_group_id', 'Rules', domain=[('global', '=', False)]),
-        'menu_access': fields.many2many('ir.ui.menu', 'ir_ui_menu_group_rel', 'gid', 'menu_id', 'Access Menu'),
+        'menu_access': fields.many2many('ir.ui.menu', 'ir_ui_menu_group_rel', 'gid', 'menu_id', 'Access Menu', display_inactive=True),
         'comment': fields.text('Comment',size=250),
         'level': fields.selection([('hq', 'HQ'),
                                    ('coordo', 'Coordination'),
                                    ('project', 'Project')],
                                   'Level',
                                   help="Level selected and all higher ones will be able to use this group.",),
+
+        # field defined in module msf_button_access_rights
+        #'bar_ids': fields.many2many('msf_button_access_rights.button_access_rule', 'button_access_rule_groups_rel', 'group_id', 'button_access_rule_id', 'Buttons Access Rules', readonly=1),
+
+        # field defined in module msf_field_access_rights
+        #'far_ids': fields.many2many('msf_field_access_rights.field_access_rule', 'field_access_rule_groups_rel', 'group_id', 'field_access_rule_id', 'Fields Access Rules', readonly=1),
+        'act_window_ids': fields.many2many('ir.actions.act_window', 'ir_act_window_group_rel', 'gid', 'act_id', 'Window Actions', readonly=1),
     }
 
     _defaults = {
@@ -141,7 +150,6 @@ class groups(osv.osv):
             old_level_dict = dict((x['id'], x['level']) for x in read_old_level)
 
         res = super(groups, self).write(cr, uid, ids, vals, context=context)
-
 
         if 'level' in vals:
             # if the new level is lower level, touch the related users
@@ -444,6 +452,23 @@ class users(osv.osv):
                         res.append(('id', '=', '0'))
         return res
 
+    def _get_has_signature(self, cr, uid, ids, name=None, arg=None, context=None):
+        res = {}
+        for u in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to', 'signature_enabled'], context=context):
+            res[u.id] = {'has_signature': False, 'has_valid_signature': False, 'new_signature_required': False}
+            if u.esignature_id:
+                res[u.id]['has_signature'] = True
+                res[u.id]['has_valid_signature'] = True
+                if not u.signature_enabled:
+                    res[u.id]['has_valid_signature'] = False
+                elif u['signature_from'] and fields.date.today() < u['signature_from']:
+                    res[u.id]['has_valid_signature'] = False
+                elif u['signature_to'] and fields.date.today() > u['signature_to']:
+                    res[u.id]['has_valid_signature'] = False
+            elif u.signature_enabled and u['signature_from'] and fields.date.today() >= u['signature_from'] and (u['signature_to'] and fields.date.today() <= u['signature_to'] or not u['signature_to']):
+                res[u.id]['new_signature_required'] = True
+        return res
+
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
                             help="The new user's real name, used for searching"
@@ -462,6 +487,17 @@ class users(osv.osv):
                              "users."),
         'signature': fields.text('Signature', size=64),
         'address_id': fields.many2one('res.partner.address', 'Address'),
+
+        'signature_enabled': fields.boolean('Enable Signature'),
+        'esignature_id': fields.many2one('signature.image', 'Current Signature'),
+        'current_signature': fields.related('esignature_id', 'pngb64', string='Signature', type='text', readonly=1),
+        'signature_from': fields.date('Signature Start Date'),
+        'signature_to': fields.date('Signature End Date'),
+        'has_signature': fields.function(_get_has_signature, type='boolean', string='Has Signature', method=1, multi='sign_state'),
+        'has_valid_signature': fields.function(_get_has_signature, type='boolean', string='Is Signature Valid', method=1, multi='sign_state'),
+        'new_signature_required': fields.function(_get_has_signature, type='boolean', string='Is Signature required', method=1, multi='sign_state'),
+        'signature_history_ids': fields.one2many('signature.image', 'user_id', string='De-activated Signatures', readonly=1, domain=[('inactivation_date', '!=', False)]),
+
         'force_password_change':fields.boolean('Change password on next login',
                                                help="Check out this box to force this user to change his "\
                                                "password on next login."),
@@ -508,6 +544,19 @@ class users(osv.osv):
 
         return fg
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        fvg = super(users, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'form':
+            signature_enable = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature')
+            if not signature_enable:
+                arch = etree.fromstring(fvg['arch'])
+                fields = arch.xpath('//group[@name="signature_tab"]')
+                if fields:
+                    parent_node = fields[0].getparent()
+                    parent_node.remove(fields[0])
+                    fvg['arch'] = etree.tostring(arch)
+        return fvg
+
     def on_change_company_id(self, cr, uid, ids, company_id):
         return {
             'warning' : {
@@ -536,12 +585,34 @@ class users(osv.osv):
     def _check_company(self, cr, uid, ids, context=None):
         return all(((this.company_id in this.company_ids) or not this.company_ids) for this in self.browse(cr, uid, ids, context))
 
+    def _check_signature_group(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        cr.execute("""
+            select u.login from res_users u
+                left join res_groups_users_rel rel on rel.uid = u.id
+                left join res_groups g on g.id = rel.gid and g.name = 'Sign_user'
+            where
+                u.id in %s and
+                u.signature_enabled = 't'
+            group by u.login
+            having count(g.name='Sign_user' or null) = 0
+        """, (tuple(ids), ))
+        wrong = [x[0] for x in cr.fetchall()]
+        if wrong:
+            raise osv.except_osv(_('Warning'), _('Please add the group Sign_user in order to Enable signatures on user(s) %s') % (', '.join(wrong),))
+        return True
+
     _constraints = [
         (_check_company, 'The chosen company is not in the allowed companies for this user', ['company_id', 'company_ids']),
     ]
 
     _sql_constraints = [
-        ('login_key', 'UNIQUE (login)',  'You can not have two users with the same login !')
+        ('login_key', 'UNIQUE (login)',  'You can not have two users with the same login !'),
+        ('dates_ok', 'CHECK (signature_from<=signature_to)',  'Signature: Start Date must be before End Date !')
     ]
 
     def _get_email_from(self, cr, uid, ids, context=None):
@@ -667,7 +738,11 @@ class users(osv.osv):
 
         if 'name' not in values:
             values['name'] = values['login']
+
         user_id = super(users, self).create(cr, uid, values, context)
+        if values.get('signature_enabled') or values.get('groups_id'):
+            self._check_signature_group(cr, uid, user_id, context=context)
+
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log
             xmlrpc_uid_cache = http_server.XMLRPCRequestHandler.xmlrpc_uid_cache
@@ -692,6 +767,7 @@ class users(osv.osv):
                     if not (values['company_id'] in self.read(cr, 1, uid, ['company_ids'], context=context)['company_ids']):
                         del values['company_id']
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
+
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
@@ -705,7 +781,23 @@ class users(osv.osv):
             if cr.dbname in xmlrpc_uid_cache:
                 xmlrpc_uid_cache[cr.dbname] = None
 
+        if values.get('active') is False:
+            sign_follow_up = self.pool.get('signature.follow_up')
+            open_sign_ids = sign_follow_up.search(cr, uid, [('user_id', 'in', ids), ('signed', '=', 0), ('signature_is_closed', '=', False)], context=context)
+            if open_sign_ids:
+                list_of_doc = [x.doc_name or '' for x in sign_follow_up.browse(cr, uid, open_sign_ids[0:5], fields_to_fetch=['doc_name'], context=context)]
+                if len(open_sign_ids) > 5:
+                    list_of_doc.append('...')
+                raise osv.except_osv(_('Warning'), _('You can not deactivate this user, %d documents have to be signed\n%s') % (len(open_sign_ids), ', '.join(list_of_doc)))
+            for xuser in self.browse(cr, uid, ids, fields_to_fetch=['name', 'has_valid_signature'], context=context):
+                if xuser.has_valid_signature:
+                    raise osv.except_osv(_('Warning'), _('You can not deactivate %s: the signature is active') % (xuser['name'], ))
+
+
+
         res = super(users, self).write(cr, uid, ids, values, context=context)
+        if values.get('signature_enabled') or values.get('groups_id'):
+            self._check_signature_group(cr, uid, ids, context=context)
 
         if values.get('groups_id'):
             self.remove_higer_level_groups(cr, uid, ids, context=context)
@@ -769,6 +861,11 @@ class users(osv.osv):
                        address_id=False, # avoid sharing the address of the copied user!
                        synchronize=False,
                        is_synchronizable=False,
+                       signature_enabled=False,
+                       esignature_id=False,
+                       signature_from=False,
+                       signature_to=False,
+                       signature_history_ids=False,
                        )
         copydef.update(default)
         return super(users, self).copy(cr, uid, id, copydef, context)
@@ -960,6 +1057,93 @@ class users(osv.osv):
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1
 
+    def _archive_signature(self, cr, uid, ids, new_from=None, new_to=None, context=None):
+        sign_line_obj = self.pool.get('signature.line')
+        for user in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to', 'name'] , context=context):
+            if user.esignature_id:
+                data = {
+                    'from_date': user.signature_from,
+                    'to_date': user.signature_to or fields.date.today(),
+                    'inactivation_date': fields.datetime.now(),
+                }
+                if user.esignature_id.user_name != user.name:
+                    used_sign_id = sign_line_obj.search(cr, uid, [('image_id','=', user.esignature_id.id)], order='id desc', limit=1, context=context)
+                    if used_sign_id:
+                        last_sign = sign_line_obj.read(cr, uid, used_sign_id[0], ['user_name'], context=context)
+                        data['user_name'] = last_sign['user_name']
+
+                self.pool.get('signature.image').write(cr, uid, user.esignature_id.id, data, context=context)
+            new_data = {
+                'esignature_id': False,
+            }
+            if new_from is not None:
+                new_data['signature_from'] = new_from
+                if user.signature_to and new_from >= user.signature_to:
+                    new_data['signature_to'] = False
+            self.write(cr, uid, [user.id], new_data, context=context)
+        return True
+
+    def delete_signature(self, cr, uid, ids, context=None):
+        return self._archive_signature(cr, uid, ids, context=context)
+
+    def reset_signature(self, cr, uid, ids, context=None):
+        return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), context=context)
+
+    def add_signature(self, cr, uid, ids, context=None):
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        if real_uid != ids[0]:
+            raise osv.except_osv(_('Warning!'), _("You can only change your own signature."))
+        wiz_id = self.pool.get('signature.set_user').create(cr, uid, {'user_id': real_uid}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'signature.set_user',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'height': '400px',
+            'width': '720px',
+        }
+
+    def replace_signature(self, cr, uid, ids, context=None):
+        return self.add_signature(cr, uid, ids, context=context)
+
+    def change_date(self, cr, uid, ids, context=None):
+        user = self.pool.get('res.users').browse(cr, uid, ids[0], context=context)
+        wiz_id = self.pool.get('signature.change_date').create(cr, uid, {'user_id': ids[0], 'current_from': user.signature_from, 'current_to': user.signature_to}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'signature.change_date',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'height': '250px',
+            'width': '720px',
+        }
+
+    def change_signature_enabled(self, cr, uid, ids, sign, groups, context=None):
+        ret = {}
+        if sign:
+            ret['value'] = {'signature_from': fields.date.today()}
+        return ret
+
+    def open_my_signature(self, cr, uid, context=None):
+        user_data =  self.browse(cr, uid, uid, fields_to_fetch=['new_signature_required', 'has_valid_signature'], context=context)
+        if not user_data.new_signature_required and not user_data.has_valid_signature:
+            raise osv.except_osv(_('Warning'), _('Signature is not enabled on your profile'))
+
+        return {
+            'res_id': uid,
+            'res_model': 'res.users',
+            'type': 'ir.actions.act_window',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'useability_dashboard_and_menu', 'res_users_my_signature_form')[1]],
+            'domain': [('id', '=', uid)],
+        }
 users()
 
 class wizard_add_users_synchronized(osv.osv_memory):
@@ -1104,7 +1288,9 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         '''
         all_user_ids = [] # previous user ids + current
         previous_values = []
-        user_ids = []
+        previous_user_ids = []
+        removed_user_ids = []
+        is_sign_group = False
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1113,17 +1299,23 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
             new_user_ids = []
             if vals['users'] and len(vals['users'][0]) > 2:
                 new_user_ids = vals['users'][0][2]
-            for record in self.read(cr, uid, ids, ['users'], context=context):
+            for record in self.read(cr, uid, ids, ['users', 'name'], context=context):
+                if record['name'] == 'Sign_user':
+                    is_sign_group = True
                 if record['users']:
-                    user_ids.extend(record['users'])
-            all_user_ids = set(new_user_ids).union(user_ids)
+                    previous_user_ids.extend(record['users'])
+            all_user_ids = set(new_user_ids).union(previous_user_ids)
+            removed_user_ids = set(previous_user_ids) - set(new_user_ids)
             user_obj = self.pool.get('res.users')
             previous_values = user_obj.read(cr, uid, all_user_ids, ['groups_id'], context=context)
 
         res = super(groups2, self).write(cr, uid, ids, vals, context=context)
         if 'users' in vals:
-            self._track_change_of_users(cr, uid, previous_values, user_ids,
+            self._track_change_of_users(cr, uid, previous_values, previous_user_ids,
                                         vals, context=context)
+        if is_sign_group and removed_user_ids:
+            self.pool.get('res.users')._check_signature_group(cr, uid, list(removed_user_ids), context=context)
+
         return res
 
     def unlink(self, cr, uid, ids, context=None):

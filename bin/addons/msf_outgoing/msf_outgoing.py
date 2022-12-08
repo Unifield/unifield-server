@@ -2393,7 +2393,7 @@ class stock_picking(osv.osv):
         'in_ref': fields.char(string='IN Reference', size=1024),
         'from_manage_expired': fields.boolean(string='The Picking was created with Manage Expired Stock'),
         'requestor': fields.char(size=128, string='Requestor'),
-        'from_ir': fields.related('sale_id', 'procurement_request', type='boolean', relation='sale.order', string='Is the linked Sale Order IR'),
+        'from_ir': fields.related('sale_id', 'procurement_request', type='boolean', relation='sale.order', string='Is the linked Sale Order IR', write_relate=False),
     }
 
     _defaults = {
@@ -3149,6 +3149,8 @@ class stock_picking(osv.osv):
                     'original_qty_partial': orig_qty,
                     'location_id': line.location_id and line.location_id.id,
                 }
+                if picking.type == 'out':
+                    values['reason_type_id'] = picking.reason_type_id.id
 
                 # If claim expects replacement
                 # or claim is from INT created by processing an IN to Stock instead of Cross Docking
@@ -3508,7 +3510,7 @@ class stock_picking(osv.osv):
         for x in cr.fetchall():
             needed_qty.setdefault(x[1], {})
             needed_qty[x[1]].setdefault(x[2], 0)
-            lot = lot_obj.browse(cr, uid, x[2], fields_to_fetch=['stock_available', 'product_id'], context={'location_id': x[1]})
+            lot = lot_obj.browse(cr, uid, x[2], fields_to_fetch=['stock_available', 'product_id', 'name'], context={'location_id': x[1]})
             if lot.product_id.uom_id.id != x[3]:
                 qty = uom_obj._compute_qty(cr, uid, x[3], x[0], lot.product_id.uom_id.id)
             else:

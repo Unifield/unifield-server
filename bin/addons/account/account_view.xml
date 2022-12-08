@@ -107,6 +107,8 @@
                     <separator colspan="4" string="States"/>
                     <field name="state"/>
                     <field name="is_revaluated" invisible="1"/>  <!-- exportable field -->
+                    <field name="is_eoy_liquidity_revaluated" invisible="1"/>  <!-- exportable field -->
+                    <field name="is_eoy_regular_bs_revaluated" invisible="1"/>  <!-- exportable field -->
                     <button name="action_draft" states="done" string="Set to Draft" type="object" icon="gtk-convert" groups="account.group_account_manager"/>
                 </form>
             </field>
@@ -1193,18 +1195,6 @@
                                  </field>
                           </group>
                         </page>
-                        <page groups="base.group_extended" string="Special Computation">
-                            <separator colspan="4" string="Applicability Options"/>
-                            <field name="applicable_type"/>
-                            <field name="domain"/>
-                            <separator colspan="4" string="Applicable Code (if type=code)"/>
-                            <field colspan="4" name="python_applicable" nolabel="1" attrs="{'readonly':[('applicable_type','=','true')], 'required':[('applicable_type','=','code')]}"/>
-                            <separator colspan="2" string="Compute Code"/>
-                            <separator colspan="2" string="Reverse Compute Code"/>
-                            <field colspan="2" name="python_compute" nolabel="1" attrs="{'readonly':[('type','!=','code')],'required':[('type','=','code')]}"/>
-                            <field colspan="2" name="python_compute_inv" nolabel="1" attrs="{'readonly':[('type','!=','code')],'required':[('type','=','code')]}"/>
-
-                        </page>
                     </notebook>
                 </form>
               </field>
@@ -1909,7 +1899,7 @@
                       <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state', '=', 'done')]" />
                       <field name="name"/>
                       <field name="journal_id"
-                             domain="[('type', '=', 'purchase'), ('code', '!=', 'ISI'), ('is_current_instance', '=', True)]"
+                             domain="[('type', 'in', ('purchase', 'depreciation')), ('code', '!=', 'ISI'), ('is_current_instance', '=', True)]"
                              context="{'search_default_filter_is_active': 1}"
                       />
                     </group>

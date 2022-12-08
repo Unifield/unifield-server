@@ -36,6 +36,25 @@
             attachment="(object.state in ('open','paid', 'inv_close')) and ('INV'+(object.number or '').replace('/',''))"
             attachment_use="1"
             multi="True"/>
+
+        <report auto="False" id="account_employee_ledger" menu="False" model="hr.employee" name="account.employee_ledger" rml="account/report/account_employee_ledger.rml" string="Employee Ledger" target_filename="Employee Ledger_%(instance_code)s_%(year)s%(month)s%(day)s" />
+        <report auto="False" id="account_employee_ledger_other" menu="False" model="hr.employee" name="account.employee_ledger_other" rml="account/report/account_employee_ledger_other.rml" string="Employee Ledger" target_filename="Employee Ledger_%(instance_code)s_%(year)s%(month)s%(day)s"/>
+
+        <report id="account_employee_ledger_xls"
+            auto="False"
+            menu="False"
+            header="False"
+            model="account.account"
+            name="account.employee_ledger_xls"
+            file="account/report/account_employee_ledger.mako"
+            report_type="webkit"
+            target_filename="Employee Ledger_%(instance_code)s_%(year)s%(month)s%(day)s"
+            string="Employee Ledger xls"/>
+
+        <report auto="False" id="account_employee_account_balance" menu="False" model="account.employee.balance.tree"
+                name="account.employee.balance" rml="account/report/account_employee_balance.rml"
+                string="Employee Balance" target_filename="Employee Balance_%(instance_code)s_%(year)s%(month)s%(day)s" />
+
         <report id="account_transfers" model="account.transfer" name="account.transfer" string="Transfers" xml="account/report/transfer.xml" xsl="account/report/transfer.xsl"/>
         <report auto="False" id="account_intracom" menu="False" model="account.move.line" name="account.intracom" string="IntraCom"/>
 
@@ -177,5 +196,18 @@
                  header="False"
                  auto="False"
                  menu="False"/>
+
+        <!-- Export CV report -->
+         <report id="export_cv"
+                 string="Export - CV"
+                 target_filename="Export - CV"
+                 model="account.commitment"
+                 name="account.export_cv"
+                 file="account/report/export_cv.mako"
+                 report_type="webkit"
+                 header="False"
+                 auto="False"
+                 menu="False"/>
+
     </data>
 </openerp>

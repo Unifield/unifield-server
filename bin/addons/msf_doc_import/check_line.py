@@ -290,8 +290,8 @@ def product_value(cr, uid, **kwargs):
         if row.cells[cell_nb] and row.cells[cell_nb].data:
             product_code = row.cells[cell_nb].data
             if product_code and row.cells[cell_nb].type == 'str':
-                product_code = product_code.strip()
-                p_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
+                product_code = product_code.strip().upper()
+                p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)], context=context)
                 if not p_ids:
                     comment += _(' Code: %s') % (product_code)
                     msg = _('Product code %s doesn\'t exist in the DB.') % product_code

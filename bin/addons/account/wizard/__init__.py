@@ -67,6 +67,8 @@ import account_report_liquidity_balance
 
 import free_allocation_wizard
 import account_invoice_import
+import account_report_common_employee
+import account_report_employee_balance
+import account_report_employee_ledger
+import account_cv_import
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
-

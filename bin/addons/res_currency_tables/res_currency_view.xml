@@ -57,8 +57,8 @@
                     </field>
                     <field name="state" readonly="1"/>
                     <group col="4" colspan="2">
-                        <button string="Validate" name="valid" states="draft" type="workflow" icon="gtk-ok"/>
-                        <button string="Close" name="closed" states="valid" type="workflow" icon="gtk-jump-to" />
+                        <button string="Validate" name="validate" states="draft" type="object" icon="gtk-ok"/>
+                        <button string="Close" name="closed" states="valid" type="object" icon="gtk-jump-to" />
                     </group>
                 </form>
             </field>

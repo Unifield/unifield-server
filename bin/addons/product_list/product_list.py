@@ -486,6 +486,50 @@ product and can't be deleted"""),
 
         return [('id', 'in', ids)]
 
+    def _get_sdref(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        """
+        Retrieve SDref (name) from ir_model_data
+        """
+        if not context:
+            context = {}
+
+        if not ids:
+            return []
+
+        data_obj = self.pool.get('ir.model.data')
+        res = {}
+
+        for prod_id in ids:
+            res[prod_id] = False
+
+        sdref_ids = data_obj.search(cr, uid, [('res_id', 'in', ids), ('model', '=', 'product.product'), ('module', '=', 'sd')], context=context)
+        for data in data_obj.browse(cr, uid, sdref_ids, fields_to_fetch=['name', 'res_id'], context=context):
+            res[data.res_id] = 'sd.%s' % (data.name, )
+
+        return res
+
+    def _search_sdref(self, cr, uid, obj, name, args, context=None):
+        """
+        Search all products with the exact given sdref
+        """
+        if not context:
+            context = {}
+
+        if not args:
+            return []
+        data_obj = self.pool.get('ir.model.data')
+
+        if args[0] and args[0][2]:
+            sdref = args[0][2]
+            if sdref.startswith('sd.'):
+                sdref = sdref[3:]
+            data_domain = [('model', '=', 'product.product'), ('module', '=', 'sd'), ('name', '=', sdref)]
+            data_ids = data_obj.search(cr, uid, data_domain, context=context)
+            if data_ids:
+                return [('id', '=', data_obj.browse(cr, uid, data_ids[0], fields_to_fetch=['res_id'], context=context).res_id)]
+            return [('id', '=', 0)]
+        return []
+
     _columns = {
         'list_ids': fields.function(
             _get_list_sublist,
@@ -504,13 +548,15 @@ product and can't be deleted"""),
             select=True,
         ),
         'msfid': fields.integer(
-            string='Hidden field for UniData',
+            string='MSFID',
+            help='Hidden field for UniData',
             select=1
         ),  # US-45: Added this field but hidden, for UniData to be able to import the Id
         'xmlid_code': fields.char(
             'Xmlid Code',
             size=18,
         ),  # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
+        'sdref': fields.function(_get_sdref, fnct_search=_search_sdref, method=True, store=False, string='SDref', type='char', size=256)
     }
 
     _sql_constraints = [

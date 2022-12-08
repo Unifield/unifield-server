@@ -61,6 +61,27 @@ class sale_order(osv.osv):
     _name = "sale.order"
     _description = "Sales Order"
 
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        '''
+        overwrite to allow search on customer and self instance
+        '''
+        new_dom = []
+        product_id = False
+        for x in domain:
+            if x[0] == 'product_id':
+                product_id = x[2]
+            else:
+                new_dom.append(x)
+
+        ret = super(sale_order, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if product_id and isinstance(product_id, int):
+            ret.tables.append('"sale_order_line"')
+            ret.joins.setdefault('"sale_order"', [])
+            ret.joins['"sale_order"'] += [('"sale_order_line"', 'id', 'order_id', 'LEFT JOIN')]
+            ret.where_clause.append(''' "sale_order_line"."product_id" = %s  ''')
+            ret.where_clause_params.append(product_id)
+        return ret
+
     def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy the sale.order. When copy the sale.order:
@@ -598,6 +619,19 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return ret
 
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        '''
+        Fake method for 'product_id' field
+        '''
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}, select=True, sort_column='id'),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
@@ -694,7 +728,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True, internal=1),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
         'active': fields.boolean('Active', readonly=True),
-        'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
+        'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
@@ -1540,7 +1574,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         'type': 'out',
                         'subtype': 'standard',
                         'already_replicated': False,
-                        'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1],
+                        'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_unit')[1],
                         'requestor': order.requestor,
                     })
                     seq_name = 'stock.picking.out'
@@ -1636,12 +1670,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if order.procurement_request and order.location_requestor_id:
             move_data.update({
                 'type': 'internal',
-                'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1],
                 'location_dest_id': order.location_requestor_id.id,
             })
-
+            rt = 'reason_type_internal_move'
             if order.location_requestor_id.usage in ('supplier', 'customer'):
                 move_data['type'] = 'out'
+                rt = 'reason_type_deliver_unit'
+            move_data['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', rt)[1]
         else:
             # first go to packing location (PICK/PACK/SHIP) or output location (Simple OUT)
             # according to the configuration
@@ -2211,8 +2246,8 @@ class sale_order_line(osv.osv):
         'display_resourced_orig_line': fields.function(_get_display_resourced_orig_line, method=True, type='char', readonly=True, string='Original FO/IR line', help='Original line from which the current one has been cancel and ressourced'),
         'resourced_at_state': fields.char('Resourced at state', size=128, help='The state of the original line when the resourced line has been created'),
         'stock_take_date': fields.date('Date of Stock Take', required=False),
-        'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer'),
-        'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman'),
+        'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer', write_relate=False),
+        'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman', write_relate=False),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'is_line_split': fields.boolean(string='This line is a split line?'),  # UTP-972: Use boolean to indicate if the line is a split line
         'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
@@ -2256,6 +2291,7 @@ class sale_order_line(osv.osv):
         'pol_external_ref': fields.function(_get_pol_external_ref, method=True, type='char', size=256, string="Linked PO line's External Ref.", store=False),
         'instance_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance'),
         'cv_line_ids': fields.one2many('account.commitment.line', 'so_line_id', string="Commitment Voucher Lines"),
+        'loan_line_id': fields.many2one('purchase.order.line', string='Linked loan line', readonly=True),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2419,7 +2455,6 @@ class sale_order_line(osv.osv):
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
-
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         reset link to purchase order from update of on order purchase order
@@ -2459,6 +2494,9 @@ class sale_order_line(osv.osv):
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
+
+        if not default.get('is_line_split', False):
+            default['loan_line_id'] = False
 
         for x in [
             'modification_comment', 'original_product', 'original_qty', 'original_price',
@@ -3845,12 +3883,7 @@ class expected_sale_order_line(osv.osv):
             string='Purchase order line',
             ondelete='cascade',
         ),
-        'po_id': fields.related(
-            'po_line_id',
-            'order_id',
-            type='many2one',
-            relation='purchase.order',
-        ),
+        'po_id': fields.related('po_line_id', 'order_id', type='many2one', relation='purchase.order', write_relate=False),
     }
 
 expected_sale_order_line()
@@ -4036,6 +4069,7 @@ class sale_order_leave_close(osv.osv_memory):
             type='selection',
             string='Order state',
             selection=SALE_ORDER_STATE_SELECTION,
+            write_relate=False,
         ),
         'action': fields.selection(
             selection=[

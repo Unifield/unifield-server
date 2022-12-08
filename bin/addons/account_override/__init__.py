@@ -128,8 +128,11 @@ ACCOUNT_RESTRICTED_AREA = {
     'recurring_lines': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
-        '|', '&', ('user_type_code', '=', 'receivables'), ('type', '=', 'receivable'), '&', ('user_type_code', '=', 'expense'), ('user_type.report_type', '!=', 'none'), # Receivable/Receivable allowed + expense accounts (without extra-accounting) allowed
+        '|',
+        '|', '&', ('user_type_code', '=', 'receivables'), ('type', '=', 'receivable'), '&', ('user_type_code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),  # Receivable/Receivable allowed + expense accounts (without extra-accounting) allowed
+        '&', ('user_type_code', '=', 'asset'), ('type', '=', 'other'),  # US-10090 Allow Type "Asset" and Internal Type "Regular"
     ],
+
     # ACCRUALS - expense lines
     # WARNING: keep in mind that the AD button is always displayed in the Accrual Expense Lines, so if the following
     # domain is modified, this may have to be adapted.

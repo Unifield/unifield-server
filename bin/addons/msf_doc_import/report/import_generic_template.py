@@ -147,7 +147,7 @@ class report_generic_export_parser(report_sxw.rml_parse):
         new_ctx = context.copy()
         if 'lang' in MODEL_DICT.get(data['selection'], {}):
             new_ctx['lang'] = MODEL_DICT[data['selection']]['lang']
-        if data['selection'] == 'destinations':
+        if data['selection'] in ['destinations', 'funding_pools']:
             new_ctx['account_only_code'] = True
         for i in range(0, len(ids), chunk_size):
             ids_chunk = ids[i:i + chunk_size]

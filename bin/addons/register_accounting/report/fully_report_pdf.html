@@ -1,0 +1,534 @@
+<html>
+<head>
+ <meta charset="utf-8"/>
+</head>
+<body>
+% for o in objects:
+<%
+if o.journal_id.type == 'cash':
+  closing_bal_title = _('CashBox balance:')
+  closing_bal = o.balance_end_cash or 0.0
+  calculated_bal = o.msf_calculated_balance or 0.0
+else:
+  if o.journal_id.type == 'bank':
+      closing_bal_title = _('Bank Statement balance:')
+  else:
+      closing_bal_title = _('Closing balance:')
+  closing_bal = o.balance_end_real or 0.0
+  calculated_bal = o.balance_end or 0.0
+%>
+
+<h1>${o.journal_id.type == 'cash' and _('CASH REGISTER FULL REPORT') or o.journal_id.type == 'bank' and _('BANK REGISTER FULL REPORT') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER FULL REPORT') or ''|x}</h1>
+<h4>${o.journal_id.code|x} - ${o.period_id and o.period_id.name or ''|x}</h4>
+<table id="header">
+<tr>
+    <td>${_('Report Date:')|x}</td>
+    <td>${formatLang(time.strftime('%Y-%m-%d'), date=True)|x}</td>
+    <td>${_('Starting balance:')|x}</td>
+    <td>${formatLang(o.balance_start or 0.0, monetary=True)|x}</td>
+</tr>
+<tr>
+    <td>${_('Prop. Instance:')|x}</td>
+    <td>${( company.instance_id and company.instance_id.code or '')|x}</td>
+    <td>${closing_bal_title|x}</td>
+    <td>${formatLang(closing_bal, monetary=True)|x}</td>
+</tr>
+<tr>
+    <td>${_('Code:')}</td>
+    <td>${o.journal_id.code|x}</td>
+    <td>${_('Calculated balance:')|x}</td>
+    <td>${formatLang(calculated_bal,  monetary=True)|x}</td>
+</tr>
+<tr>
+    <td>${_('Period:')|x}</td>
+    <td>${o.period_id and o.period_id.name or ''|x}</td>
+    <td>${_('State:')|x}</td>
+    <td>${o.state and getSel(o, 'state') or ''|x}</td>
+</tr>
+<tr>
+    <td>${_('Currency:')|x}</td>
+    <td>${o.currency and o.currency.name or ''|x}</td>
+    <td>${_('Number of entries:')|x}</td>
+    <td>${getNumberOfEntries(o)|x}</td>
+</tr>
+</table>
+
+<table id="data">
+ <thead>
+    <tr>
+        <th>${_('Entry type')|x}</th>
+        <th>${_('Doc Date')|x}</th>
+        <th>${_('Post Date')|x}</th>
+        <th>${_('Sequence')|x}</th>
+        <th>${_('Desc')|x}</th>
+        <th>${_('Ref')|x}</th>
+        <th>${_('Free Ref')|x}</th>
+        % if o.journal_id.type == 'cheque':
+            <th>${_('Chk num')|x}</th>
+        % endif
+        <th>${_('Account')|x}</th>
+        <th>${_('Third Parties')|x}</th>
+        <th>${_('IN')|x}</th>
+        <th>${_('OUT')|x}</th>
+        <th>${_('Dest')|x}</th>
+        <th>${_('CC')|x}</th>
+        <th>${_('FP')|x}</th>
+        <th>${_('Free 1')|x}</th>
+        <th>${_('Free 2')|x}</th>
+        <th>${_('Rec?')|x}</th>
+        <th>${_('Status')|x}</th>
+    </tr>
+  </thead>
+  <tbody>
+<% tot_line = len(o.line_ids) %>
+<% nbloop = 0 %>
+% for line in sorted(o.line_ids, key=lambda x: x.sequence_for_reference):
+      <% nbloop += 1 %>
+      <% update_percent(nbloop, tot_line) %>
+      <tr class="loop${nbloop%2} mainline">
+          <td>${ getEntryType(line) |x}</td>
+          <td>${formatLang(line.document_date, date=True)|x}</td>
+          <td>${formatLang(line.date,  date=True)|x}</td>
+          <td>${line.sequence_for_reference or ''|x}</td>
+          <td>${line.name or ''|x}</td>
+          <td>${getRegRef(line) or ''|x}</td>
+          <td></td>
+        % if o.journal_id.type == 'cheque':
+            <td>${line.cheque_number}</td>
+        % endif
+          <td>${line.account_id.code + ' ' + line.account_id.name|x}</td>
+        <%
+        third_party = ''
+        if line.partner_id:
+            third_party = line.partner_id.name
+        elif line.employee_id:
+            third_party = line.employee_id.name
+        elif line.transfer_journal_id:
+            third_party = line.transfer_journal_id.code
+        %>
+          <td>${third_party|x}</td>
+          <td>${line.amount_in and formatLang(line.amount_in, monetary=True) or ''}</td>
+          <td>${line.amount_out and formatLang(line.amount_out, monetary=True) or ''}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>${line.reconciled and 'X' or ''|x}</td>
+          <td>${line.state and getSel(line, 'state') or ''|x}</td>
+      </tr>
+
+<!-- if it is a Down Payment that has been partially or totally reversed -->
+<% dp_reversals_ml = getDownPaymentReversals(line) %>
+% for dp_reversal_ml in sorted(dp_reversals_ml, key=lambda x: x.move_id.name):
+    <tr class="loop${nbloop%2}">
+          <td>${_('REV - Down Payment')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <!-- SEQUENCE -->
+          <td>${dp_reversal_ml.move_id.name or ''|x}</td>
+          <!-- DESC -->
+          <td>${dp_reversal_ml.name or ''|x}</td>
+          <!-- REF -->
+          <td>${dp_reversal_ml.ref or ''|x}</td>
+          <td></td>
+        % if o.journal_id.type == 'cheque':
+            <td></td>
+        % endif
+          <td>${_('FALSE')|x}</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+    </tr>
+% endfor
+
+<!-- if there are Trade Payable Entries (automatically generated) - until US-3874 -->
+<% partner_move_ids = line.partner_move_ids or False %>
+% if partner_move_ids:
+% for partner_move_id in sorted(partner_move_ids, key=lambda x: x.name):
+    <tr class="loop${nbloop%2}">
+          <td>${_('Payable Entry')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <!-- SEQUENCE -->
+          <td>${partner_move_id.name or ''|x}</td>
+          <!-- DESC -->
+          <td>${_('FALSE')|x}</td>
+          <!-- REF -->
+          <td>${_('FALSE')|x}</td>
+          <td></td>
+        % if o.journal_id.type == 'cheque':
+            <td></td>
+        % endif
+          <td>${_('FALSE')|x}</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+    </tr>
+% endfor
+% endif
+
+<!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
+<% move_lines = [] %>
+<% invoice_move = line.invoice_id and line.invoice_id.move_id or line.advance_invoice_move_id %>
+% if invoice_move:
+<% move_lines = getMoveLines([invoice_move], line) %>
+% elif line.imported_invoice_line_ids:
+<% move_lines = getImportedMoveLines([ml for ml in line.imported_invoice_line_ids], line) %>
+% elif line.direct_invoice_move_id:
+<% move_lines = getMoveLines([line.direct_invoice_move_id], line) %>
+% endif
+
+<%
+if o.journal_id.type == 'cheque':
+    colspan = '8'
+else:
+    colspan = '7'
+%>
+
+% for inv_line in move_lines:
+      <tr class="loop${nbloop%2}">
+          <td colspan="3"/>
+          <td>${hasattr(inv_line, 'line_number') and inv_line.line_number or ''|x}</td>
+          <td>${inv_line.name or ''|x}</td>
+          <td>${inv_line.move_id and inv_line.move_id.name or hasattr(inv_line, 'reference') and inv_line.reference or ''|x}</td>
+          <td>${getFreeRef(inv_line) or ''|x}</td>
+        % if o.journal_id.type == 'cheque':
+          <td></td>
+        % endif
+          <td>${inv_line.account_id and inv_line.account_id.code + ' ' + inv_line.account_id.name or ''|x}</td>
+          <td></td>
+          <td></td>
+          <td>${hasattr(inv_line, 'amount_currency') and formatLang(inv_line.amount_currency, monetary=True) or 0.0}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+      </tr>
+
+% if hasattr(inv_line, 'analytic_lines'):
+% for ana_line in getAnalyticLines([x.id for x in inv_line.analytic_lines]):
+<%
+line_color = 'blue'
+if ana_line.is_reallocated:
+    line_color = 'purple'
+elif ana_line.is_reversal:
+    line_color = 'green'
+elif ana_line.last_corrected_id:
+    line_color = 'red'
+endif
+%>
+      <tr class="loop${nbloop%2} ${line_color}">
+          <td colspan="${colspan}" />
+          <td>${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</td>
+          <td>${ana_line.partner_txt or ''|x}</td>
+          <td></td>
+          <td>${formatLang(ana_line.amount_currency, monetary=True)}</td>
+          <td>${ana_line.destination_id and ana_line.destination_id.code or ''|x}</td>
+          <td>${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</td>
+          <td>${not ana_line.free_account and ana_line.account_id and ana_line.account_id.code or ''|x}</td>
+          <td>${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.1.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</td>
+          <td>${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.2.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</td>
+          <td>${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</td>
+          <td />
+      </tr>
+% endfor
+% endif
+% endfor
+
+<!-- Display analytic lines linked to this register line -->
+<!-- since US-6527: each return line has its own JE: US-3612 and BKLG-60 no more needed here -->
+<%
+a_lines = False
+if not line.invoice_id and not line.imported_invoice_line_ids and line.fp_analytic_lines:
+    a_lines = line.fp_analytic_lines
+%>
+% if a_lines:
+% for ana_line in [x for x in sorted(a_lines, key=lambda x: x.id) if not x.free_account]:
+<%
+line_color = 'blue'
+if ana_line.is_reallocated:
+    line_color = 'purple'
+elif ana_line.is_reversal:
+    line_color = 'green'
+elif ana_line.last_corrected_id:
+    line_color = 'red'
+endif
+%>
+      <tr class="loop${nbloop%2} ${line_color}">
+          <td colspan="${colspan}" />
+          <td>${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</td>
+          <td>${ana_line.partner_txt or ''|x}</td>
+          <td></td>
+          <td>${formatLang(ana_line.amount_currency, monetary=True)}</td>
+          <td>${ana_line.destination_id and ana_line.destination_id.code or ''|x}</td>
+          <td>${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</td>
+          <td>${ana_line.account_id and ana_line.account_id.code or ''|x}</td>
+          <td></td>
+          <td></td>
+          <td>${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</td>
+          <td />
+      </tr>
+% endfor
+% endif
+
+<!-- Display analytic lines Free 1 and Free 2 linked to this register line -->
+<%
+a_lines = False
+if not line.invoice_id and not line.imported_invoice_line_ids and line.free_analytic_lines:
+    a_lines = line.free_analytic_lines
+%>
+% if a_lines:
+% for ana_line in [ x for x in sorted(a_lines, key=lambda x: x.id) if x.free_account]:
+<%
+line_color = 'blue'
+if ana_line.is_reallocated:
+    line_color = 'purple'
+elif ana_line.is_reversal:
+    line_color = 'green'
+elif ana_line.last_corrected_id:
+    line_color = 'red'
+endif
+%>
+      <tr class="loop${nbloop%2} ${line_color}">
+          <td colspan="${colspan}" />
+          <td>${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</td>
+          <td>${ana_line.partner_txt or ''|x}</td>
+          <td></td>
+          <td>${formatLang(ana_line.amount_currency, monetary=True)}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.1.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</td>
+          <td>${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.2.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</td>
+          <td>${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</td>
+      </tr>
+% endfor
+% endif
+
+<!-- AUTOMATED ENTRIES linked to the register line -->
+<!-- Note: they are booked on accounts without AD -->
+<% partner_move_line_ids = line.partner_move_line_ids or [] %>
+% if partner_move_line_ids:
+    % for partner_aml in sorted(partner_move_line_ids, key=lambda x: x.partner_txt):
+        <tr class="loop${nbloop%2}">
+              <td>${_('Automated Entry')|x}</td>
+            % if isDate(partner_aml.document_date):
+                <td>${partner_aml.document_date|n}</td>
+            % else:
+                <td></td>
+            % endif
+            % if isDate(partner_aml.date):
+                <td>${partner_aml.date|n}</td>
+            % else:
+                <td></td>
+            % endif
+              <!-- SEQUENCE -->
+              <td>${partner_aml.move_id.name|x}</td>
+              <td>${partner_aml.name|x}</td>
+              <td>${partner_aml.ref or ''|x}</td>
+              <td></td>
+            % if o.journal_id.type == 'cheque':
+                <td></td>
+            % endif
+              <td>${"%s %s" % (partner_aml.account_id.code, partner_aml.account_id.name)|x}</td>
+              <td>${partner_aml.partner_txt or ''|x}</td>
+              <td>${partner_aml.credit_currency or 0.0}</td>
+              <td>${partner_aml.debit_currency or 0.0}</td>
+              <td>${_('FALSE')|x}</td>
+              <td>${_('FALSE')|x}</td>
+              <td>${_('FALSE')|x}</td>
+              <td></td>
+              <td></td>
+              <td>${partner_aml.reconcile_id and 'X' or ''|x}</td>
+              <td>${partner_aml.move_id.state and getSel(partner_aml.move_id, 'state') or ''|x}</td>
+        </tr>
+    % endfor
+% endif
+
+% endfor
+
+<!-- MANUAL ENTRIES -->
+<% manual_amls = getManualAmls(o) %>
+% for aml in sorted(manual_amls, key=lambda x: x.move_id.name):
+    <tr class="loop${nbloop%2}">
+          <td>${_('Manual Journal Entry')|x}</td>
+        % if isDate(aml.document_date):
+            <td>${aml.document_date|n}</td>
+        % else:
+            <td></td>
+        % endif
+        % if isDate(aml.date):
+            <td>${aml.date|n}</td>
+        % else:
+            <td></td>
+        % endif
+          <!-- SEQUENCE -->
+          <td>${aml.move_id.name|x}</td>
+          <td>${aml.name|x}</td>
+          <td>${aml.ref or ''|x}</td>
+          <td></td>
+        % if o.journal_id.type == 'cheque':
+            <td></td>
+        % endif
+          <td>${"%s %s" % (aml.account_id.code, aml.account_id.name)|x}</td>
+          <td>${aml.partner_txt or ''|x}</td>
+          <td>${aml.credit_currency or 0.0}</td>
+          <td>${aml.debit_currency or 0.0}</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td></td>
+          <td></td>
+          <td>${aml.reconcile_id and 'X' or ''|x}</td>
+          <td>${aml.move_id.state and getSel(aml.move_id, 'state') or ''|x}</td>
+    </tr>
+
+    <!-- ANALYTIC LINES linked to this manual Journal Item -->
+    <%
+    manual_aal_lines = getManualAjis(aml)
+    %>
+    % for manual_aal in sorted(manual_aal_lines, key=lambda x: x.id):
+        <%
+        aal_color = getManualAalColor(manual_aal)
+        %>
+        <tr class="loop${nbloop%2}">
+            <td colspan="${colspan}" />
+            <td>${"%s %s" % (manual_aal.general_account_id.code, manual_aal.general_account_id.name)|x}</td>
+            <td>${manual_aal.partner_txt or ''|x}</td>
+            <td></td>
+            <td>${formatLang(manual_aal.amount_currency, monetary=True)}</td>
+            <td>${manual_aal.destination_id and manual_aal.destination_id.code or ''|x}</td>
+            <td>${manual_aal.cost_center_id and manual_aal.cost_center_id.code or ''|x}</td>
+            <td>${manual_aal.account_id and manual_aal.account_id.code or ''|x}</td>
+            <td></td>
+            <td></td>
+            <td>${(manual_aal.is_reallocated and _('Corrected')) or (manual_aal.is_reversal and _('Reversal')) or ''|x}</td>
+        </tr>
+    % endfor
+
+    <!-- FREE1/FREE2 LINES linked to this manual Journal Item -->
+    <%
+    manual_free_lines = getManualFreeLines(aml)
+    %>
+    % for free_line in sorted(manual_free_lines, key=lambda x: x.id):
+      <%
+      aal_color = getManualAalColor(free_line)
+      %>
+      <tr class="loop${nbloop%2}">
+          <td colspan="${colspan}" />
+          <td>${"%s %s" % (free_line.general_account_id.code, free_line.general_account_id.name)|x}</td>
+          <td>${free_line.partner_txt or ''|x}</td>
+          <td></td>
+          <td>${formatLang(free_line.amount_currency, monetary=True)}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>${free_line.distrib_line_id and free_line.distrib_line_id._name == 'free.1.distribution.line' and \
+                                   free_line.account_id and free_line.account_id.code or ''|x}</td>
+          <td>${free_line.distrib_line_id and free_line.distrib_line_id._name == 'free.2.distribution.line' and \
+                                   free_line.account_id and free_line.account_id.code or ''|x}</td>
+          <td>${(free_line.is_reallocated and _('Corrected')) or (free_line.is_reversal and _('Reversal')) or ''|x}</td>
+      </tr>
+    % endfor
+% endfor
+
+<!-- DELETED ENTRIES -->
+% for deleted_line in sorted(o.deleted_line_ids, key=lambda x: x.sequence):
+    <tr class="loop${nbloop%2}">
+          <td>${_('Deleted Entry')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <!-- SEQUENCE -->
+          <td>${deleted_line.sequence or ''|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td></td>
+        % if o.journal_id.type == 'cheque':
+            <td></td>
+        % endif
+          <td>${_('FALSE')|x}</td>
+          <td></td>
+          <td>0.0</td>
+          <td>0.0</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td>${_('FALSE')|x}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+    </tr>
+% endfor
+</tdoby>
+</table>
+
+<table id="signature">
+ <colgroup>
+       <col span="1" style="width: 20%;">
+       <col span="1" style="width: 40%;">
+       <col span="1" style="width: 40%;">
+ </colgroup>
+<tr>
+    <td></td>
+    <th>${_('Finance Responsible')}</th>
+    <th>${_('Mission Responsible')}</th>
+</tr>
+<tr>
+    <th>${_('Name')}</th>
+    <td>${getSign(o, 'fr_report', 'user_name')}</td>
+    <td>${getSign(o, 'mr_report', 'user_name')}</td>
+</tr>
+<tr>
+    <th>${_('Date')}</th>
+    <td>${getSign(o, 'fr_report', 'date')}</td>
+    <td>${getSign(o, 'mr_report', 'date')}</td>
+</tr>
+<tr>
+    <th>${_('Value')}</th>
+    <td>${getSign(o, 'fr_report', 'format_value')}</td>
+    <td>${getSign(o, 'mr_report', 'format_value')}</td>
+</tr>
+<tr>
+    <th>Signature</th>
+<%
+img1 = getSign(o, 'fr_report', 'image')
+img2 = getSign(o, 'mr_report', 'image')
+%>
+    <td>
+    % if img1:
+        <img src="data:image/png;base64,${img1}" class="img"/>
+    % endif
+    </td>
+    <td>
+    % if img2:
+        <img src="data:image/png;base64,${img2}" class="img"/>
+    % endif
+    </td>
+</tr>
+</table>
+% endfor
+</body>
+</html>
+

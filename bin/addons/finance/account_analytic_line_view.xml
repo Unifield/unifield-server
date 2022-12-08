@@ -40,6 +40,8 @@
                     <field name="output_currency"/>
                     <field name="reversal_origin_txt"/>
                     <field name="user_id" invisible="1"/>
+                    <field name="product_code" invisible="1"/>
+                    <field name="entry_quantity" invisible="1"/>
                 </tree>
             </field>
         </record>

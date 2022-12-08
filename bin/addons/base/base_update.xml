@@ -59,7 +59,17 @@
                                     <field name="global"/>
                                 </tree>
                             </field>
-                        </page><page string="Notes">
+                        </page>
+                        <page string="BARs">
+                            <field colspan="4" name="bar_ids" nolabel="1" />
+                        </page>
+                        <page string="FARs">
+                            <field colspan="4" name="far_ids" nolabel="1" />
+                        </page>
+                        <page string="Window Actions">
+                            <field colspan="4" name="act_window_ids" nolabel="1" />
+                        </page>
+                        <page string="Notes">
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                     </notebook>
@@ -80,25 +90,8 @@
             <field eval="18" name="priority"/>
             <field name="arch" type="xml">
                 <form string="Users">
-                    <notebook colspan="4">
-                        <page string="Current Activity">
-                            <field name="company_id" widget="selection" readonly="0"
-                                    groups="base.group_multi_company"
-                                    on_change="on_change_company_id(company_id)" />
-                            <field name="view" readonly="0"/>
-                            <label string="" colspan="2"/>
-                            <separator string="Default Filters" colspan="4"/>
-                            <newline/>
-                        </page>
-                         <page string="Preferences">
-                            <field name="context_lang" completion="1" readonly="0"/>
-                            <field name="context_tz" completion="1" readonly="0"/>
-                            <field name="menu_tips" colspan="2" readonly="0"/>
-                            <separator string="Email &amp; Signature" colspan="4"/>
-                            <group colspan="4"><field name="user_email" widget="email" readonly="0"/></group>
-                            <field colspan="4" name="signature" readonly="0" nolabel="1"/>
-                          </page>
-                    </notebook>
+                    <field name="context_lang" completion="1" readonly="0"/>
+                    <field name="menu_tips" colspan="2" readonly="0"/>
                 </form>
             </field>
         </record>
@@ -144,15 +137,35 @@
                             <group colspan="1" col="2">
                                 <separator string="Preferences" colspan="2"/>
                                 <field name="context_lang"/>
-                                <field name="context_tz"/>
                                 <group colspan="2" col="4">
                                      <field name="menu_tips" colspan="2"/>
                                 </group>
                             </group>
                             <newline/>
-                            <group colspan="2" col="2">
-                                <separator string="Signature" colspan="2"/>
-                                <field colspan="2" name="signature" nolabel="1"/>
+                            <group colspan="2" col="4" name="signature_tab">
+                                <field name="signature_enabled" attrs="{'readonly': [('has_signature', '=', True)]}" on_change="change_signature_enabled(signature_enabled,groups_id)"/>
+                                <group colspan="4" col="4" attrs="{'invisible': [('signature_enabled', '=', False)]}">
+                                    <separator string="Signature" colspan="4"/>
+                                    <group colspan="4" col="6">
+                                        <field name="signature_from" string="Start Date" attrs="{'readonly': [('has_signature', '=', True)], 'required': [('has_signature', '=', False), ('signature_enabled', '=', True)]}" />
+                                        <field name="signature_to" string="End Date" depends="signature_from" attrs="{'readonly': [('has_signature', '=', True)]}" />
+                                        <button type="object" string="Change End Date" name="change_date" attrs="{'invisible': [('has_signature', '=', False)]}" icon="terp-go-month" />
+                                    </group>
+                                    <field name="current_signature" widget="image" height="100" nolabel="1" colspan="4"/>
+                                    <field name="has_signature" invisible="1" />
+                                    <field name="has_valid_signature" invisible="1" />
+                                    <button type="object" string="De-activate Signature" name="reset_signature" icon="gtk-stop" colspan="4" confirm="Do you want to disable this signature, this operation cannot be undone ?" attrs="{'invisible': [('has_signature', '=', False)]}"/>
+                                <!-- <field name="signature" colspan="4" nolabel="1" /> -->
+                                </group>
+                                <field name="signature_history_ids" colspan="4" mode="tree" readonly="1" nolabel="1">
+                                    <tree string="De-activated Signatures">
+                                        <field name="legal_name" />
+                                        <field name="user_name" />
+                                        <field name="create_date" />
+                                        <field name="inactivation_date" />
+                                        <field name="image" widget="image" height="50"/>
+                                    </tree>
+                                </field>
                             </group>
                             <group colspan="2" col="2" expand="1">
                                 <separator string="Groups" colspan="2"/>
@@ -276,7 +289,6 @@
                   <field name="login"/>
                   <field name="password" password="True"/>
                   <field name="context_lang"/>
-                  <field name="context_tz"/>
 
                   <separator string="Group" colspan="4"/>
                   <label  align="0.0" colspan="4" string="Groups are used to define access rights on objects and the visibility of screens and menus"/>

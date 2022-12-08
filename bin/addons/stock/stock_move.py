@@ -483,9 +483,9 @@ class stock_move(osv.osv):
         'price_unit': fields.float('Unit Price', digits_compute= dp.get_precision('Account'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
         'price_currency_id': fields.many2one('res.currency', 'Currency for average price', help="Technical field used to record the currency chosen by the user during a picking confirmation (when average price costing method is used)"),
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True),
-        'partner_id': fields.related('picking_id','address_id','partner_id',type='many2one', relation="res.partner", string="Partner", store=True, select=True),
-        'backorder_id': fields.related('picking_id','backorder_id',type='many2one', relation="stock.picking", string="Back Order", select=True),
-        'origin': fields.related('picking_id','origin',type='char', size=512, relation="stock.picking", string="Origin", store=True),
+        'partner_id': fields.related('picking_id','address_id','partner_id',type='many2one', relation="res.partner", string="Partner", store=True, select=True, write_relate=False),
+        'backorder_id': fields.related('picking_id','backorder_id',type='many2one', relation="stock.picking", string="Back Order", select=True, write_relate=False),
+        'origin': fields.related('picking_id','origin',type='char', size=512, relation="stock.picking", string="Origin", store=True, write_relate=False),
 
         # used for colors in tree views:
         'scrapped': fields.related('location_dest_id','scrap_location',type='boolean',relation='stock.location',string='Scrapped', readonly=True),
@@ -519,7 +519,8 @@ class stock_move(osv.osv):
                                                        ('unallocated', 'Unallocated'),
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
         'purchase_line_id': fields.many2one('purchase.order.line', 'Purchase Order Line', ondelete='set null', select=True, readonly=True),
-        'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')],),
+        # picking.subtype is known later in msf_ourgoing module: so do not migrate
+        'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='char', size=64, write_relate=False, store=True, _fnct_migrate=lambda *a: True),
         'parent_doc_id': fields.function(_get_parent_doc, method=True, type='char', string='Picking', readonly=True),
 
         'order_priority': fields.function(_get_order_information, method=True, string='Priority', type='selection',
@@ -701,23 +702,29 @@ class stock_move(osv.osv):
 
     def _check_reason_type(self, cr, uid, ids, context=None):
         """
-        Do not permit user to create/write a OUT from scratch with some reason types:
+        Do not permit user to create/write an OUT from scratch with some reason types:
          - GOODS RETURN UNIT
          - GOODS REPLACEMENT
+         - OTHER
         """
+        data_obj = self.pool.get('ir.model.data')
         res = True
         try:
-            rt_replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+            rt_replacement_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
         except ValueError:
             rt_replacement_id = 0
         try:
-            rt_return_unit_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
         except ValueError:
             rt_return_unit_id = 0
+        try:
+            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        except ValueError:
+            rt_other_id = 0
 
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
-                if sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id]:
+                if sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id]:
                     pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
                     if not pick['purchase_id'] and not pick['sale_id'] and pick['type'] == 'out':
                         return False
@@ -1881,6 +1888,8 @@ class stock_move(osv.osv):
             vals = {}
             if move.picking_id:
                 picking_ids.append(move.picking_id.id)
+                if move.type == 'out':
+                    vals.update({'reason_type_id': move.picking_id.reason_type_id.id})
             if self._hook_action_done_update_out_move_check(cr, uid, ids, context=context, move=move,):
                 vals.update({'move_history_ids': [(4, move.move_dest_id.id)]})
                 #cr.execute('insert into stock_move_history_ids (parent_id,child_id) values (%s,%s)', (move.id, move.move_dest_id.id))

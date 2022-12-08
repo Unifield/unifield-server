@@ -313,10 +313,12 @@
             <field name="target">new</field>
         </record>
         
-        <menuitem id="menuitem_sale_order_followup_from_menu"
-              action="action_sale_order_followup_from_menu"
-              parent="base.menu_sales"
-              sequence="1" />
+        <menuitem
+            id="menuitem_sale_order_followup_from_menu"
+            action="action_sale_order_followup_from_menu"
+            parent="base.next_id_64"
+            sequence="7"
+        />
 
     
     </data>

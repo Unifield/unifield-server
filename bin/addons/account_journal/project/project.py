@@ -53,6 +53,7 @@ class account_analytic_journal(osv.osv):
             ('revaluation', 'Revaluation'),
             ('sale','Sale'),
             ('situation','Situation'),
+            ('depreciation', 'Depreciation'),
         ]
 
     def _get_has_ajis(self, cr, uid, ids, field_name, arg, context=None):

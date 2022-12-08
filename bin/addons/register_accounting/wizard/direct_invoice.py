@@ -40,10 +40,10 @@ class wizard_account_invoice(osv.osv):
     _columns  = {
         'invoice_line': fields.one2many('wizard.account.invoice.line', 'invoice_id', 'Invoice Lines', readonly=True, states={'draft':[('readonly',False)]}),
         'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=False,
-            states={'draft':[('readonly',False)]}, domain=[('supplier','=',True)]),
+                                      states={'draft':[('readonly',False)]}, domain=[('supplier','=',True)]),
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, states={'draft':[('readonly',False)]}),
         'account_id': fields.many2one('account.account', 'Account', required=False, readonly=True, states={'draft':[('readonly',False)]},
-            help="The partner account used for this invoice."),
+                                      help="The partner account used for this invoice."),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True),
         'register_id': fields.many2one('account.bank.statement', 'Register', readonly=True),
         'reconciled' : fields.boolean('Reconciled'),
@@ -117,8 +117,8 @@ class wizard_account_invoice(osv.osv):
         Reset the invoice by reseting some fields
         """
         self.write(cr, uid, ids, {'invoice_line': [(5,)], 'register_posting_date': time.strftime('%Y-%m-%d'), 'date_invoice': time.strftime('%Y-%m-%d'),
-            'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft', 'analytic_distribution_id': False,
-            'document_date': time.strftime('%Y-%m-%d'),})
+                                  'partner_id': False, 'address_invoice_id': False, 'account_id': False, 'state': 'draft', 'analytic_distribution_id': False,
+                                  'document_date': time.strftime('%Y-%m-%d'),})
         return True
 
     def invoice_cancel_wizard(self, cr, uid, ids, context=None):
@@ -134,7 +134,7 @@ class wizard_account_invoice(osv.osv):
         """
         self.check_analytic_distribution(cr, uid, ids)
         self.pool.get('account.invoice').check_accounts_for_partner(cr, uid,
-            ids, context=context, header_obj=self)
+                                                                    ids, context=context, header_obj=self)
 
         vals = {}
         inv = self.read(cr, uid, ids[0], [])
@@ -152,7 +152,7 @@ class wizard_account_invoice(osv.osv):
         amount = 0
         if inv['invoice_line']:
             for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'],
-                ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id','analytic_distribution_id','reference']):
+                                                                          ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id','analytic_distribution_id','reference']):
                 # line level reference overrides header level reference
                 line_reference = False
                 if line['reference']:
@@ -160,19 +160,19 @@ class wizard_account_invoice(osv.osv):
                 elif inv['reference']:
                     line_reference = inv['reference']
                 vals['invoice_line'].append( (0, 0,
-                    {
-                        'product_id': line['product_id'] and line['product_id'][0] or False,
-                        'account_id': line['account_id'] and line['account_id'][0] or False,
-                        'account_analytic_id': line['account_analytic_id'] and line['account_analytic_id'][0] or False,
-                        'analytic_distribution_id': line['analytic_distribution_id'] and line['analytic_distribution_id'][0] or False,
-                        'quantity': line['quantity'] ,
-                        'price_unit': line['price_unit'] ,
-                        'price_subtotal': line['price_subtotal'],
-                        'name': line['name'],
-                        'uos_id': line['uos_id'] and line['uos_id'][0] or False,
-                        'reference': line_reference,
-                    }
-                ))
+                                              {
+                                                  'product_id': line['product_id'] and line['product_id'][0] or False,
+                                                  'account_id': line['account_id'] and line['account_id'][0] or False,
+                                                  'account_analytic_id': line['account_analytic_id'] and line['account_analytic_id'][0] or False,
+                                                  'analytic_distribution_id': line['analytic_distribution_id'] and line['analytic_distribution_id'][0] or False,
+                                                  'quantity': line['quantity'] ,
+                                                  'price_unit': line['price_unit'] ,
+                                                  'price_subtotal': line['price_subtotal'],
+                                                  'name': line['name'],
+                                                  'uos_id': line['uos_id'] and line['uos_id'][0] or False,
+                                                  'reference': line_reference,
+                                              }
+                                              ))
                 amount += line['price_subtotal']
         # Give the total of invoice in the "check_total" field. This permit not to encount problems when validating invoice.
         vals.update({'check_total': amount})
@@ -189,7 +189,7 @@ class wizard_account_invoice(osv.osv):
                vals['date_invoice'] > register.period_id.date_stop:
                 raise osv.except_osv(_('Warning'), _('Direct Invoice posting date is outside of the register period!'))
             elif vals['register_posting_date'] < register.period_id.date_start or \
-                 vals['register_posting_date'] > register.period_id.date_stop:
+                    vals['register_posting_date'] > register.period_id.date_stop:
                 raise osv.except_osv(_('Warning'), _('Register Line posting date is outside of the register period!'))
             elif vals['date_invoice'] > vals['register_posting_date']:
                 raise osv.except_osv(_('Warning'), _('Direct Invoice posting date must be sooner or equal to the register line posting date!'))
@@ -225,10 +225,10 @@ class wizard_account_invoice(osv.osv):
 
         # Do reconciliation
         # Moved since UF-1471. This is now down when you hard post the linked register line.
-        
+
         # fix the reference UFTP-167
         inv_obj.fix_aal_aml_reference(cr, uid, inv_id, context=context)
-     
+
         # UTP-1041 : additional reference field functionality
         if inv['reference'] is False:
             inv_number = inv_obj.browse(cr, uid, inv_id, context=context).number
@@ -259,7 +259,7 @@ class wizard_account_invoice(osv.osv):
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
-        Launch analytic distribution wizard on a direct invoice
+        Launch header analytic distribution wizard on a direct invoice
         """
         # Some verifications
         if not context:
@@ -276,35 +276,36 @@ class wizard_account_invoice(osv.osv):
             amount += line.price_subtotal
         # Get analytic_distribution_id
         distrib_id = invoice.analytic_distribution_id and invoice.analytic_distribution_id.id
-        account_id = invoice.account_id and invoice.account_id.id
+        # Get posting date
+        posting_date = invoice.date_invoice
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'direct_invoice_id': invoice.id,
             'currency_id': currency or False,
             'state': 'dispatch',
-            'account_id': account_id or False,
+            'posting_date': posting_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
-        # Create the wizard
-        wiz_obj = self.pool.get('analytic.distribution.wizard')
-        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Update some context values
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
         })
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Open it!
         return {
-                'name': _('Global analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
 wizard_account_invoice()
@@ -374,8 +375,8 @@ class wizard_account_invoice_line(osv.osv):
         invoice_line = self.browse(cr, uid, ids[0], context=context)
 
         fields_to_write = ['journal_id', 'partner_id', 'address_invoice_id', 'date_invoice', 'register_posting_date',
-            'account_id', 'partner_bank_id', 'payment_term', 'name', 'document_date',
-            'origin', 'address_contact_id', 'user_id', 'comment', 'reference']
+                           'account_id', 'partner_bank_id', 'payment_term', 'name', 'document_date',
+                           'origin', 'address_contact_id', 'user_id', 'comment', 'reference']
         to_write = {}
         for f in fields_to_write:
             if 'd_%s'%(f,) in context:
@@ -395,6 +396,8 @@ class wizard_account_invoice_line(osv.osv):
             amount = -1 * amount
         # Get analytic distribution id from this line
         distrib_id = invoice_line and invoice_line.analytic_distribution_id and invoice_line.analytic_distribution_id.id or False
+        # Get posting date
+        posting_date = invoice_line.invoice_id.date_invoice
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -402,27 +405,28 @@ class wizard_account_invoice_line(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': invoice_line.account_id and invoice_line.account_id.id or False,
+            'posting_date': posting_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
-        # Create the wizard
-        wiz_obj = self.pool.get('analytic.distribution.wizard')
-        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Update some context values
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
         })
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
         # Open it!
         return {
-                'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
 wizard_account_invoice_line()

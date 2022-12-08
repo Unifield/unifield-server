@@ -134,6 +134,8 @@ class account_journal(osv.osv):
 
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
+        'filter_for_third_party_in_advance_return': fields.function(_get_fake, type='char', string="Internal Field",
+                                                                    fnct_search=_search_filter_third, method=True),
     }
 account_journal()
 
@@ -167,8 +169,13 @@ class account_bank_statement(osv.osv):
         Get current register id
         """
         res = {}
-        for st in self.browse(cr, uid, ids, context=context):
-            res[st.id] = st.id
+        local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+
+        for st in self.browse(cr, uid, ids, fields_to_fetch=['journal_id'], context=context):
+            res[st.id] = {
+                'virtual_id': st.id,
+                'local_register': st.journal_id.instance_id.id == local_instance_id,
+            }
         return res
 
     def _balance_gap_compute(self, cr, uid, ids, name, attr, context=None):
@@ -182,7 +189,8 @@ class account_bank_statement(osv.osv):
 
     _columns = {
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
-                                      help='Virtual Field that take back the id of the Register'),
+                                      help='Virtual Field that take back the id of the Register',  multi="id_local"),
+        'local_register': fields.function(_get_register_id, method=True, store=False, type='boolean', string="Is local register", multi="id_local"),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'closing_balance_frozen_date': fields.date("Closing balance frozen date"),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
@@ -717,6 +725,7 @@ The starting balance will be proposed automatically and the closing balance is t
         cr.execute('''select l1.id from account_move_line l1
                  left join account_move_line l2 on l2.date > %s and (l2.reconcile_id = l1.reconcile_id or l2.reconcile_partial_id = l1.reconcile_partial_id)
                  where l1.id in %s
+                 and coalesce(l2.is_addendum_line, 'f') = 'f'
                  group by l1.id
                  having (l1.reconcile_id is null and l1.reconcile_partial_id is null) or count(l2) > 0
                 ''', (min_posting_date, tuple(aml_ids)))
@@ -1780,7 +1789,7 @@ class account_bank_statement_line(osv.osv):
                 try:
                     # Optimization: Do not check line because of account_move.write() method at the end of this method
                     acc_move_line_obj.write(cr, uid, [other_line.get('id')], move_line_values, context=context, check=False, update_check=False)
-                except osv.except_osv, e:
+                except osv.except_osv as e:
                     msg = e.value
                     if 'account_id' in values and st_line.state == 'temp' and other_line.get('analytic_distribution_state') == 'invalid':
                         msg = _('The account modification required makes the analytic distribution previously defined invalid; please perform the account modification through the analytic distribution wizard')
@@ -2209,7 +2218,8 @@ class account_bank_statement_line(osv.osv):
                     old_distrib = line.get('analytic_distribution_id')[0]
 
                 # US-427: Do not update the AD from Employee/Third party if it comes from sync, only use the one provided by sync
-                if not context.get('sync_update_execution'):
+                # US-9752: Keep AD that is applied on the entry when we correct info on the entry in temp state
+                if not context.get('sync_update_execution') and state != 'temp':
                     values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance
 
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
@@ -2745,7 +2755,8 @@ class account_bank_statement_line(osv.osv):
         if stl.cash_register_op_advance_po_id:
             context['cash_register_op_advance_po_id'] = stl.cash_register_op_advance_po_id.id
         wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
-                                          'currency_id': stl.statement_id.currency.id, 'reference': stl.ref or ''}, context=context)
+                                          'currency_id': stl.statement_id.currency.id,
+                                          'reference': stl.ref or '', 'journal_id':stl.statement_id.journal_id.id}, context=context)
         if statement_id:
             return {
                 'name' : "Advance Return",

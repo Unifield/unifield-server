@@ -429,7 +429,7 @@
 % for o in objects:
   <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
     <Names>
-      <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R11"/>
+      <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R9"/>
     </Names>
     <Table>
       <Column ss:Width="93.75"/>
@@ -933,21 +933,14 @@ endif
 % endfor
 
 <!-- Display analytic lines linked to this register line -->
+<!-- since US-6527: each return line has its own JE: US-3612 and BKLG-60 no more needed here -->
 <%
 a_lines = False
-adv_return_aal = line.cash_return_move_line_id and line.cash_return_move_line_id.analytic_lines or []
-adv_return_fp_lines = []
-adv_return_free_lines = []
-for adv_return_l in adv_return_aal:
-    if adv_return_l.free_account:
-        adv_return_free_lines.append(adv_return_l)
-    else:
-        adv_return_fp_lines.append(adv_return_l)
 if not line.invoice_id and not line.imported_invoice_line_ids and line.fp_analytic_lines:
-    a_lines = adv_return_fp_lines or line.fp_analytic_lines
+    a_lines = line.fp_analytic_lines
 %>
 % if a_lines:
-% for ana_line in sorted(a_lines, key=lambda x: x.id):
+% for ana_line in [x for x in sorted(a_lines, key=lambda x: x.id) if not x.free_account]:
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:
@@ -958,7 +951,6 @@ elif ana_line.last_corrected_id:
     line_color = 'red'
 endif
 %>
-% if not ana_line.free_account:
       <Row>
         % if o.journal_id.type == 'cheque':
           <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
@@ -995,7 +987,6 @@ endif
           <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
         </Cell>
       </Row>
-% endif
 % endfor
 % endif
 
@@ -1003,10 +994,10 @@ endif
 <%
 a_lines = False
 if not line.invoice_id and not line.imported_invoice_line_ids and line.free_analytic_lines:
-    a_lines = adv_return_free_lines or line.free_analytic_lines
+    a_lines = line.free_analytic_lines
 %>
 % if a_lines:
-% for ana_line in sorted(a_lines, key=lambda x: x.id):
+% for ana_line in [ x for x in sorted(a_lines, key=lambda x: x.id) if x.free_account]:
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:

@@ -41,7 +41,6 @@
     ''',
     'init_xml': [],
     'update_xml': [
-        'view/base.xml',
         'view/stock_view.xml',
         'view/delivery_mecanism_view.xml',
         'view/batch_view.xml',

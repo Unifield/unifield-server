@@ -109,7 +109,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                             continue  # inserting an invalid date format in the DB would fail
                         else:
                             contract_end_date_str = contract_end_date and contract_end_date.strftime('%Y-%m-%d') or ''
-                code = get_xml_spreadheet_cell_value(1)
+                code = get_xml_spreadheet_cell_value(1).strip()
                 if not code:
                     msg = _('Line %s: ') % line_index + _('THE EMPLOYEE DOES NOT HAVE AN ID NUMBER.')
                     manage_error(line_index, msg, name, contract_end_date=contract_end_date_str)

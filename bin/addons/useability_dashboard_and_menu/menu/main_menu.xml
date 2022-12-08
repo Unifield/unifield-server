@@ -75,6 +75,6 @@
                   web_icon_hover="images/hr-hover.png"
                   action="hr.open_view_employee_list_my"
                   sequence="10"/>
-                  
+
     </data>
 </openerp>

@@ -114,6 +114,7 @@
             <field name="code">13</field>
             <field name="inventory_ok" eval="1" />
             <field name="internal_ok">True</field>
+            <field name="pi_discrepancy_type">True</field>
         </record>
         
         <record id="reason_type_other" model="stock.reason.type">
@@ -123,6 +124,7 @@
             <field name="incoming_ok">True</field>
             <field name="outgoing_ok">True</field>
             <field name="internal_ok">True</field>
+            <field name="pi_discrepancy_type">True</field>
         </record>
         
         <record id="reason_type_kit" model="stock.reason.type">
@@ -162,6 +164,11 @@
             <field name="incoming_ok" eval="False" />
             <field name="outgoing_ok" eval="False" />
         </record>
-    
+
+        <record id="reason_type_deliver_unit" model="stock.reason.type">
+            <field name="name">Deliver Unit</field>
+            <field name="code">20</field>
+            <field name="outgoing_ok">True</field>
+        </record>
     </data>
 </openerp>
