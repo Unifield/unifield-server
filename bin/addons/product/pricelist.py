@@ -314,6 +314,9 @@ class product_pricelist(osv.osv):
         '''
         Return the pricelist with a specific type linked to the default currency of the company
         '''
+        if context is None:
+            context = {}
+
         pricelist_types = [x[0] for x in self._pricelist_type_get(cr, uid, context=context)]
         if not type or type not in pricelist_types:
             return False
