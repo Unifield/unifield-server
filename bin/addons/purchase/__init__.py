@@ -83,6 +83,7 @@ ORDER_TYPES_SELECTION = [
 import purchase_order
 import purchase_order_line
 import purchase_workflow
+import partner
 import stock
 import wizard
 import report
