@@ -112,7 +112,7 @@ class patch_scripts(osv.osv):
             menu_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'menu_action_res_users_whitelist')[1])
             menu_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'menu_users')[1])
             gp_id = group_obj.create(cr, uid, {
-                'name': ' Sup_Config_HQ',
+                'name': 'Sup_Config_HQ',
                 'level': 'hq',
                 'visible_res_groups': True,
                 'menu_access': [(6, 0, menu_ids)],
@@ -384,7 +384,44 @@ class patch_scripts(osv.osv):
                 self.pool.get('ir.ui.menu').write(cr, uid, [menu_id], {'groups_id': [(4, group_ids[0])]})
         return True
 
+    def us_9406_create_record_rules(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+        sign_user_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')])
+        supply_creator_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_document_creator_supply')])
+        finance_creator_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_document_creator_finance')])
+        model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'signature.follow_up')])
+        data = {
+            'model_id': model_id[0],
+            'perm_read': True,
+            'perm_write': False,
+            'perm_create': False,
+            'perm_unlink': False,
+        }
+        rr_obj = self.pool.get('ir.rule')
+        data.update({
+            'name': 'Signatures Follow-up Supply Creator',
+            'domain_force': "[('doc_type', 'in', ['purchase.order', 'sale.order', 'stock.picking'])]",
+            'groups': [(6, 0, supply_creator_id)],
+        })
+        rr_obj.create(cr, uid, data)
+        data.update({
+            'name': 'Signatures Follow-up Finance Creator',
+            'domain_force': "[('doc_type', 'in', ['account.bank.statement.cash', 'account.bank.statement.bank', 'account.invoice.si', 'account.invoice.donation'])]",
+            'groups': [(6, 0, finance_creator_id)],
+        })
+        rr_obj.create(cr, uid, data)
+        data.update({
+            'name': 'Signatures Follow-up Sign_User',
+            'domain_force': "[('user_id', '=', user.id)]",
+            'groups': [(6, 0, sign_user_id)],
+        })
+        rr_obj.create(cr, uid, data)
+        return True
+
     def us_9406_create_common_acl(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where name='account_hq_entries_action_hq_entries_import_wizard')")
+        cr.execute("delete from ir_model_data where name='account_hq_entries_action_hq_entries_import_wizard'")
         if _get_instance_level(self, cr, uid) != 'hq':
             return True
         model_obj = self.pool.get('ir.model')

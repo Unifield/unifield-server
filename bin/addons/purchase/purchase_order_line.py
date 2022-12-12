@@ -1358,10 +1358,10 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False, 'loan_line_id': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False})
 
         if not context.get('split_line'):
-            default.update({'stock_take_date': False})
+            default.update({'stock_take_date': False, 'loan_line_id': False})
             if 'location_dest_id' not in default:
                 default['location_dest_id'] = False
 
