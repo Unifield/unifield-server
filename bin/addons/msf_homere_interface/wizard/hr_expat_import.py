@@ -113,7 +113,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                             contract_end_date_str = contract_end_date and contract_end_date.strftime('%Y-%m-%d') or ''
                 code = get_xml_spreadheet_cell_value(1) and get_xml_spreadheet_cell_value(1).strip()
                 if not code:
-                    msg = _('Line %s: ') % line_index + _('THE EMPLOYEE DOES NOT HAVE AN ID NUMBER.')
+                    msg = _('THE EMPLOYEE DOES NOT HAVE AN ID NUMBER AT LINE %d.') % line_index
                     manage_error(line_index, msg, name, contract_end_date=contract_end_date_str)
                 active_str = get_xml_spreadheet_cell_value(2)
                 if not active_str:
