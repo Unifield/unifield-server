@@ -72,6 +72,8 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
             created = 0
             updated = 0
             processed = 0
+            to_update_vals = []
+            to_create_vals = []
             # Check that a file is given
             if not wiz.file:
                 raise osv.except_osv(_('Error'), _('No file given'))
@@ -137,8 +139,6 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                     'name': name,
                     'active': active,
                 }
-                to_update_vals = []
-                to_create_vals = []
                 if handle_contract_end_date:
                     vals.update({'contract_end_date': contract_end_date})
                 if ids:
