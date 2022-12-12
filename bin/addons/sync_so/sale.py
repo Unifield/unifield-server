@@ -202,7 +202,7 @@ class sale_order_sync(osv.osv):
         so_id = self.create(cr, uid, default , context=context)
         name = self.browse(cr, uid, so_id, context).name
         if 'order_type' in header_result:
-            if header_result['order_type'] == 'loan':
+            if header_result['order_type'] in ['loan', 'loan_return']:
                 # UTP-392: Look for the PO of this loan, and update the reference of source document of that PO to this new FO
                 # First, search the original PO via the client_order_ref stored in the FO
                 ref = po_info.origin

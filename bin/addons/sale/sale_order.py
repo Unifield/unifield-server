@@ -82,6 +82,14 @@ class sale_order(osv.osv):
             ret.where_clause_params.append(product_id)
         return ret
 
+    def copy_web(self, cr, uid, id, defaults=None, context=None):
+        if defaults is None:
+            defaults = {}
+        if self.search_exists(cr, uid, [('id', '=', id), ('order_type', '=', 'loan_return')], context=context):
+            defaults['order_type'] = 'loan'
+        new_id = super(sale_order, self).copy_web(cr, uid, id, defaults, context=context)
+        return new_id
+
     def copy(self, cr, uid, id, default=None, context=None):
         """
         Copy the sale.order. When copy the sale.order:
@@ -693,7 +701,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
-                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'), ],
+                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'), ('loan_return', 'Loan Return'), ],
                                        string='Order Type', required=True, readonly=True),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
@@ -1442,6 +1450,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         r_types = {
             'regular': 'reason_type_deliver_partner',
             'loan': 'reason_type_loan',
+            'loan_return': 'reason_type_loan_return',
             'donation_st': 'reason_type_donation',
             'donation_exp': 'reason_type_donation_expiry',
         }

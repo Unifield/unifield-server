@@ -489,7 +489,7 @@ class purchase_order_line(osv.osv):
                                             context=context)[0]
         ftf = ['product_id', 'price_unit', 'product_uom', 'product_qty']
         counterpart_data = {
-            'order_type': 'loan',
+            'order_type': 'loan_return',
             'categ': p_order.categ,
             'origin': p_order.name,
             'loan_id': p_order.id,
@@ -556,7 +556,7 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, context=context):
             p_order = pol.order_id
             break
-        if p_order and p_order.order_type == 'loan' and not p_order.is_a_counterpart\
+        if p_order and p_order.order_type in ['loan', 'loan_return'] and not p_order.is_a_counterpart\
                 and p_order.partner_type == 'external' and p_order.state == 'confirmed':
             self.create_counterpart_fo_for_external_partner_po(cr, uid, p_order, context=context)
 

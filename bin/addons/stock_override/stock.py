@@ -1265,7 +1265,7 @@ class stock_move(osv.osv):
                     if move.purchase_line_id:
                         vals['cancel_only'] = True
 
-                if move.sale_line_id and (move.sale_line_id.type == 'make_to_order' or move.sale_line_id.order_id.order_type == 'loan'):
+                if move.sale_line_id and (move.sale_line_id.type == 'make_to_order' or move.sale_line_id.order_id.order_type in ['loan', 'loan_return']):
                     vals['cancel_only'] = True
 
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
@@ -2292,7 +2292,7 @@ class stock_picking_cancel_wizard(osv.osv_memory):
 
         picking_id = context.get('active_id')
         for move in self.pool.get('stock.picking').browse(cr, uid, picking_id, context=context).move_lines:
-            if move.sale_line_id and (move.sale_line_id.type == 'make_to_order' or move.sale_line_id.order_id.order_type == 'loan'):
+            if move.sale_line_id and (move.sale_line_id.type == 'make_to_order' or move.sale_line_id.order_id.order_type in ['loan', 'loan_return']):
                 return False
 
         return True

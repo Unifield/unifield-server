@@ -31,6 +31,7 @@ ORDER_TYPES_SELECTION = [
     ('donation_exp', _('Donation before expiry')),
     ('donation_st', _('Standard donation')),
     ('loan', _('Loan')),
+    ('loan_return', _('Loan Return')),
     ('in_kind', _('In Kind Donation')),
     ('purchase_list', _('Purchase List')),
     ('direct', _('Direct Purchase Order')),

@@ -328,7 +328,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
                     lines_to_confirm.append(sol.id)
 
-                if wiz.type == 'make_to_order' and sol.order_id.order_type == 'loan':
+                if wiz.type == 'make_to_order' and sol.order_id.order_type in ['loan', 'loan_return']:
                     raise osv.except_osv(_('Error'), _('Line #%s of %s You cannot cannot source a loan on order') % (sol.line_number, sol.order_id.name))
 
         line_obj.confirmLine(cr, uid, lines_to_confirm, context=context)

@@ -171,7 +171,7 @@ class purchase_order(osv.osv):
         inv_obj = self.pool.get('account.invoice')
         for purchase in self.browse(cursor, user, ids, context=context):
             if ((purchase.order_type == 'regular' and purchase.partner_id.partner_type in ('internal', 'esc')) or \
-                    purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']):
+                    purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'loan_return', 'in_kind']):
                 res[purchase.id] = purchase.shipped_rate
             else:
                 # if all PO lines have been invoiced and the SI aren't in Draft anymore: invoiced rate must be 100%
@@ -645,6 +645,8 @@ class purchase_order(osv.osv):
                                 src_type.add('direct')
                             elif sale['order_type'] == 'loan':
                                 src_type.add('loan')
+                            elif sale['order_type'] == 'loan_return':
+                                src_type.add('loan_return')
                             elif sale['order_type'] == 'donation_exp':
                                 src_type.add('donation_exp')
                             elif sale['order_type'] == 'donation_st':
@@ -1052,7 +1054,7 @@ class purchase_order(osv.osv):
         order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
 
         for order in self.read(cr, uid, ids, ['name', 'fixed_order_type', 'order_type', 'is_a_counterpart'], context=context):
-            if order['is_a_counterpart'] and order['order_type'] != 'loan':
+            if order['is_a_counterpart'] and order['order_type'] not in ['loan', 'loan_return']:
                 err.append(_('%s: This purchase order is a loan counterpart. You cannot change its order type') % order['name'])
             else:
                 json_info = json.loads(order['fixed_order_type'])
@@ -1141,7 +1143,7 @@ class purchase_order(osv.osv):
         if vals.get('order_type'):
             if vals.get('order_type') in ['donation_exp', 'donation_st']:
                 vals.update({'invoice_method': vals.get('partner_type', '') == 'section' and 'picking' or 'manual'})
-            elif vals.get('order_type') == 'loan':
+            elif vals.get('order_type') in ['loan', 'loan_return']:
                 vals.update({'invoice_method': 'manual'})
             elif vals.get('order_type') in ['direct']:
                 vals.update({'invoice_method': 'picking'})
@@ -1270,7 +1272,7 @@ class purchase_order(osv.osv):
             if vals.get('order_type'):
                 if vals.get('order_type') in ['donation_exp', 'donation_st']:
                     vals.update({'invoice_method': partner_type == 'section' and 'picking' or 'manual'})
-                elif vals.get('order_type') == 'loan':
+                elif vals.get('order_type') in ['loan', 'loan_return']:
                     vals.update({'invoice_method': 'manual'})
                 elif vals.get('order_type') in ['direct'] and partner_type != 'esc':
                     dest_partner_type = res_partner_obj.read(cr, uid, int(vals.get('dest_partner_id', order['partner_id'][0])), ['partner_type'], context=context)['partner_type']
@@ -1292,7 +1294,7 @@ class purchase_order(osv.osv):
             vals['valid_till'] = False
 
         # Check if there's source documents on lines
-        if vals.get('order_type') and vals['order_type'] in ['loan', 'donation_exp', 'donation_st', 'in_kind']:
+        if vals.get('order_type') and vals['order_type'] in ['loan', 'loan_return', 'donation_exp', 'donation_st', 'in_kind']:
                 # do not raise on existing non draft PO
             draft_po_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft'), ('is_a_counterpart', '=', False)], context=context)
             if draft_po_ids and pol_obj.search_exist(cr, uid, [('order_id', 'in', draft_po_ids), ('origin', '!=', False), ('state', '!=', 'cancel')], context=context):
@@ -1447,6 +1449,8 @@ class purchase_order(osv.osv):
             defaults['dest_partner_id'] = cp_address_id
             defaults['customer_id'] = False
             is_direct = True
+        if self.search_exists(cr, uid, [('id', '=', id), ('order_type', '=', 'loan_return')], context=context):
+            defaults['order_type'] = 'loan'
         new_id = super(purchase_order, self).copy_web(cr, uid, id, defaults, context=context)
         if is_direct:
             name = self.read(cr, uid, new_id, ['name'], context=context)['name']
@@ -2053,8 +2057,10 @@ class purchase_order(osv.osv):
             order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
             err = []
             for order in self.browse(cr, uid, ids, fields_to_fetch=['name', 'fixed_order_type', 'order_type', 'is_a_counterpart', 'order_line']):
-                if order.is_a_counterpart and order_type != 'loan':
+                if order.is_a_counterpart and order_type not in ['loan', 'loan_return']:
                     err.append(_('%s: This purchase order is a loan counterpart. You cannot change its order type') % order['name'])
+                elif order_type == 'loan_return':
+                    err.append(_('%s: You can not select this Order Type manually') % order['name'])
                 else:
                     json_info = json.loads(order.fixed_order_type)
                     if json_info and order_type not in json_info:
@@ -2097,6 +2103,8 @@ class purchase_order(osv.osv):
                         'message': _('You cannot create a direct purchase order from scratch')
                     },
                 }
+        if order_type == 'loan_return':
+            return {'value': {'order_type': False}, 'warning': {'title': _('Error'), 'message': _('You can not select this Order Type manually')}}
 
         # Search the local market partner id
         data_obj = self.pool.get('ir.model.data')
@@ -2118,7 +2126,7 @@ class purchase_order(osv.osv):
 
         if order_type in ['donation_exp', 'donation_st']:
             v['invoice_method'] = partner and partner['partner_type'] == 'section' and 'picking' or 'manual'
-        elif order_type == 'loan':
+        elif order_type in ['loan', 'loan_return']:
             v['invoice_method'] = 'manual'
         elif order_type in ['direct']:
             v['invoice_method'] = 'order'
@@ -2180,7 +2188,7 @@ class purchase_order(osv.osv):
             v.update({'order_type': 'regular'})
 
         # Check if there's source documents on lines
-        if order_type in ['loan', 'donation_exp', 'donation_st', 'in_kind'] and \
+        if order_type in ['loan', 'loan_return', 'donation_exp', 'donation_st', 'in_kind'] and \
                 pol_obj.search(cr, uid, [('order_id', 'in', ids), ('origin', '!=', False), ('state', '!=', 'cancel')]):
             return {
                 'value': {'order_type': 'regular'},
@@ -2443,6 +2451,8 @@ class purchase_order(osv.osv):
             reason_type_id = get_reference('reason_type_external_supply')
         elif order.order_type == 'loan':
             reason_type_id = get_reference('reason_type_loan')
+        elif order.order_type == 'loan_return':
+            reason_type_id = get_reference('reason_type_loan_return')
         elif order.order_type == 'donation_st':
             reason_type_id = get_reference('reason_type_donation')
         elif order.order_type == 'donation_exp':

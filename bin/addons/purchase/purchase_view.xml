@@ -191,7 +191,7 @@
                     </group>
                     <field name="parent_order_name" readonly="True" attrs="{'invisible': [('parent_order_name', '=', False)]}"/>
                     <newline/>
-                    <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}"/>
+                    <field name="loan_duration" attrs="{'invisible': [('order_type', 'not in', ['loan', 'loan_return'])], 'required': [('order_type', 'in', ['loan', 'loan_return'])]}"/>
                     <newline/>
                     <field name="not_beyond_validated" invisible="1"/>
                     <field name="show_default_msg" attrs="{'readonly': [('not_beyond_validated', '=', False)]}"/>
@@ -373,7 +373,7 @@
                         <page string="Invoices">
                             <group colspan="2" col="2">
                                 <separator string="Invoice Control" colspan="2"/>
-                                <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}"/>
+                                <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan', 'loan_return'])]}"/>
                                 <field name="unallocation_ok" attrs="{'readonly': ['|', ('cross_docking_ok', '=', True), ('allocation_setup', '!=', 'mixed')]}"/>
                                 <field name="fiscal_position" widget="selection" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="invoice_address_id" domain="[('inv_address', 'in', [company_id])]" context="contact_display='partner_address'" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'in', ['confirmed', 'confirmed_p', 'done', 'cancel'])]}"/>
@@ -509,7 +509,7 @@
                         <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]"/>
                         <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]"/>
                         <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]"/>
-                        <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]"/>
+                        <filter icon="terp-partner" string="Loan" domain="[('order_type','in',['loan','loan_return'])]"/>
                         <filter icon="terp-gtk-jump-to-rtl" string="In-Kind donation" domain="[('order_type','=','in_kind')]"/>
                         <filter icon="terp-purchase" string="Purchase List" domain="[('order_type','=','purchase_list')]"/>
                         <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]"/>
@@ -682,8 +682,8 @@
                             <separator string="Linked Information" colspan="4" />
                                 <group colspan="2" col="3">
                                 <field name="po_order_type" invisible="1"/>
-                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type, product_id, po_order_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', '|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('link_so_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}" string="Source Document"/>
-                                <field name="select_fo" on_change="on_change_select_fo(select_fo, product_id, po_order_type)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f']), ('order_type', '=', 'regular')]" attrs="{'invisible': ['|', '|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}"/>
+                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type, product_id, po_order_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', '|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('link_so_id', '!=', False), ('po_order_type', 'in', ['loan', 'loan_return', 'donation_exp', 'donation_st', 'in_kind'])]}" string="Source Document"/>
+                                <field name="select_fo" on_change="on_change_select_fo(select_fo, product_id, po_order_type)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f']), ('order_type', '=', 'regular')]" attrs="{'invisible': ['|', '|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('po_order_type', 'in', ['loan', 'loan_return', 'donation_exp', 'donation_st', 'in_kind'])]}"/>
                                 </group>
                                 <field name="customer_ref" string="Customer ref" widget="char"/>
                                 <field name="external_ref" readonly="1"/>
