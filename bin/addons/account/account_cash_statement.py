@@ -61,7 +61,7 @@ class account_cashbox_line(osv.osv):
 
     _columns = {
         'pieces': fields.float('Values', digits_compute=dp.get_precision('Account')),
-        'number': fields.integer('Number'),
+        'number': fields.float('Number', digits=(10, 0)),
         'subtotal': fields.function(_sub_total, method=True, string='Sub Total', type='float', digits_compute=dp.get_precision('Account')),
         'starting_id': fields.many2one('account.bank.statement', ondelete='cascade'),
         'ending_id': fields.many2one('account.bank.statement', ondelete='cascade'),
@@ -83,7 +83,7 @@ class account_cashbox_line(osv.osv):
         Blocks the creation/edition of Cashbox line if the integer part of (value * number) is more than 10 digits.
         """
         for line in self.browse(cr, uid, ids, fields_to_fetch=['number', 'pieces']):
-            if line.pieces >= self._max_amount or (line.pieces * line.number) >= self._max_amount:
+            if line.pieces >= self._max_amount or line.number >= self._max_amount or (line.pieces * line.number) >= self._max_amount:
                 return False
         return True
 
