@@ -117,12 +117,11 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                     manage_error(line_index, msg, name, contract_end_date=contract_end_date_str)
                 active_str = get_xml_spreadheet_cell_value(2)
                 if not active_str:
-                    msg = "Active column is missing or empty at line %d" % line_index
+                    msg = _("Active column is missing or empty at line %d") % line_index
                     manage_error(line_index, msg, name, code, contract_end_date=contract_end_date_str)
                 active_str = active_str and active_str.lower() or ''
                 if active_str not in ('active', 'inactive'):
-                    msg = "Active column invalid value line %d" \
-                        " (should be Active/Inactive)" % line_index
+                    msg = _("Active column invalid value line %d  (should be Active/Inactive)") % line_index
                     manage_error(line_index, msg, name, code, active_str, contract_end_date=contract_end_date_str)
                 active = active_str == 'active' or False
 
