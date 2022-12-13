@@ -21,9 +21,7 @@
 
 from osv import fields, osv
 from tools.translate import _
-import decimal_precision as dp
 
-import netsvc
 
 class modify_expiry_date(osv.osv_memory):
     '''
@@ -34,10 +32,10 @@ class modify_expiry_date(osv.osv_memory):
                 'date': fields.date(string='Date', readonly=True),
                 'new_date': fields.date(string='New Date', help="When using automatic computation, if no date are found in the kit components, the default value is 01/Jan/9999."),
                 }
-    
+
     _defaults = {'kit_id': lambda s, cr, uid, c: c.get('kit_id', False),
                  'date': lambda s, cr, uid, c: c.get('date', False)}
-    
+
     def compute_date(self, cr, uid, ids, context=None):
         '''
         compute the date from items and write it to the wizard
@@ -61,18 +59,23 @@ class modify_expiry_date(osv.osv_memory):
             ids = [ids]
         # objects
         kit_obj = self.pool.get('composition.kit')
+        data_obj = self.pool.get('ir.model.data')
         kit_ids = context['active_ids']
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.new_date:
                 raise osv.except_osv(_('Warning !'), _('You need to specify a new date.'))
             kit_obj.write(cr, uid, kit_ids, {'composition_exp': obj.new_date}, context=context)
-        
+
+        view_id = data_obj.get_object_reference(cr, uid, 'kit', 'view_composition_kit_real_form')[1]
+        tree_view_id = data_obj.get_object_reference(cr, uid, 'kit', 'view_composition_kit_real_tree')[1]
         return {'type': 'ir.actions.act_window',
                 'res_model': 'composition.kit',
+                'view_id': [view_id, tree_view_id],
                 'view_type': 'form',
                 'view_mode': 'form,tree',
                 'res_id': kit_ids[0],
                 'target': 'crunch',
                 'context': context}
-    
+
+
 modify_expiry_date()

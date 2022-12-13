@@ -41,7 +41,6 @@ from msf_order_date import TRANSPORT_TYPE
 from msf_order_date import ZONE_SELECTION
 from sourcing.purchase_order import COMPATS
 
-
 class purchase_order(osv.osv):
     _name = "purchase.order"
     _description = "Purchase Order"
@@ -1164,7 +1163,7 @@ class purchase_order(osv.osv):
 
         return res
 
-    def write_web(self, cr, uid, ids, vals, context=None):
+    def write_web(self, cr, uid, ids, vals, context=None, ignore_access_error=False):
         """
         Overridden method called by the Web on write
         """
@@ -1217,7 +1216,7 @@ class purchase_order(osv.osv):
                             tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=context)
 
 
-        return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context)
+        return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -1495,7 +1494,12 @@ class purchase_order(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['delivery_requested_date', 'delivery_requested_date_modified', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date', 'show_default_msg']
+        fields_to_reset = [
+            'delivery_requested_date', 'delivery_requested_date_modified', 'ready_to_ship_date',
+            'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date',
+            'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date',
+            'show_default_msg'
+        ]
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:

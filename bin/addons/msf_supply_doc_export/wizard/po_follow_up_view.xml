@@ -7,7 +7,7 @@
 		<field name="model">po.follow.up</field>
 		<field name="type">form</field>
 		<field name="arch" type="xml">
-			<form string="PO Follow Up per Supplier" hide_edit_button="1" hide_save_button="1" hide_cancel_button="1">
+			<form string="Export PO Follow-up" hide_edit_button="1" hide_save_button="1" hide_cancel_button="1">
 				<group colspan="2">
 					<field name="po_id" domain="[('rfq_ok', '=', False)]" />
 					<field name="po_date_from" />  <!-- need to do from / though on dates  -->

@@ -8,7 +8,7 @@
             <field name="model">hq.entries</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="HQ Entries List" editable="top" noteditable="user_validated==True or is_original==True" hide_new_button="1" colors="black: analytic_state=='valid' and is_split==True;blue:analytic_state in ('valid') and is_original==False and is_split==False;gray:is_original==True;red:analytic_state in ('invalid')" limit="50">
+                <tree string="HQ Entries List" editable="top" noteditable="user_validated==True or is_original==True" hide_new_button="1" colors="black:user_validated==True;green:is_split==True and user_validated==False and analytic_state!='invalid';blue:user_validated==False and analytic_state!='invalid' and is_original==False and is_split==False;gray:is_original==True and user_validated==False and analytic_state!='invalid';red:analytic_state=='invalid' and user_validated==False" limit="50">
                     <field name="current_instance_level" invisible="1"/>
                     <field name="account_user_type_code" invisible="1"/>
                     <field name="name"/>
@@ -23,14 +23,18 @@
                     <field name="partner_txt"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
+                    <field name="cost_center_id"
+                           on_change="onchange_cost_center(cost_center_id, analytic_id)"
+                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
+                           domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"
+                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="destination_id"
                            on_change="onchange_destination(destination_id, analytic_id, account_id)"
-                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
-                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
-                    <field name="cost_center_id"
+                           domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id), ('dest_compatible_with_cc_ids', '=', cost_center_id)]"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
                            attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="analytic_id"
+                           domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('fp_compatible_with_cc_ids', '=', cost_center_id), ('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id))]"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"
                            attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="free_1_id"
@@ -66,8 +70,8 @@
                         <field name="account_id" select='1'/>
                         <field name="partner_txt" select='1'/>
                         <newline/>
-                        <field name="destination_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"/>
                         <field name="cost_center_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
+                        <field name="destination_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"/>
                         <field name="analytic_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
                         <newline/>
                         <field name="name" />
@@ -112,14 +116,14 @@
                   </group>
                   <group colspan="2" col="2">
                       <separator string="Analytic Allocation (At import)"/>
-                      <field name="destination_id_first_value" readonly="1"/>
                       <field name="cost_center_id_first_value" readonly="1"/>
+                      <field name="destination_id_first_value" readonly="1"/>
                       <field name="analytic_id_first_value" readonly="1"/>
                   </group>
                   <group colspan="2" col="2">
                       <separator string="Analytic Allocation (Current)"/>
-                      <field name="destination_id" readonly="1"/>
                       <field name="cost_center_id" readonly="1"/>
+                      <field name="destination_id" readonly="1"/>
                       <field name="analytic_id" readonly="1"/>
                       <field name="free_1_id" readonly="1"/>
                       <field name="free_2_id" readonly="1"/>
@@ -153,6 +157,46 @@
                 </form>
             </field>
         </record>
+        <record id="hq_entries_import_progress_wizard" model="ir.ui.view">
+            <field name="name">hq.entries.import.wizard</field>
+            <field name="model">hq.entries.import</field>
+            <field name="priority" eval="100" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import HQ Entries">
+                    <field name="progress" widget="progressbar" colspan="4"/>
+                    <newline />
+                    <field name="filename" readonly="1" />
+                    <newline />
+                    <field name="state" />
+                    <group colspan="2" col="4">
+                        <field name="start_date" />
+                        <field name="end_date" />
+                    </group>
+                    <html colspan="4">
+                    <script language="javascript">
+                        $(document).ready(function() {
+                            if ($('#state').val() == 'inprogress') {
+                                setTimeout(function(){
+                                    $('#dummy').click();
+                                },2400)
+                            }
+                        });
+                    </script>
+                    </html>
+
+                    <newline />
+                    <field name="created" />
+                    <field name="nberrors" />
+                    <field name="error" colspan="4" nolabel="1" />
+                    <group colspan="4" col="2">
+                        <button name="dummy" string="Update" icon="gtk-refresh" invisible="1"/>
+                        <button string="Ok" name="done" type="object" icon="gtk-ok" states="done" />
+                        <button string="Cancel" name="ack" type="object" icon="gtk-cancel" states="error"/>
+                    </group>
+                </form>
+            </field>
+        </record>
 
         <record id="analytic_hq_reallocation_wizard" model="ir.ui.view">
             <field name="name">analytic.hq.reallocation.wizard</field>
@@ -161,9 +205,9 @@
             <field name="arch" type="xml">
                 <form string="Analytic Reallocation">
                     <group  colspan="6" col="6">
-                        <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
-                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
-                        <field name="analytic_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)" context="{'search_default_active': 1, 'hide_inactive': 1}" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
+                        <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}" domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('dest_compatible_with_cc_ids', '=', cost_center_id)]" />
+                        <field name="analytic_id" context="{'search_default_active': 1, 'hide_inactive': 1}" domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('fp_compatible_with_cc_ids', '=', cost_center_id)]" />
                     </group>
                     <newline/>
                     <field name="free_1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
@@ -193,13 +237,11 @@
         </record>
 
     <!-- Actions: Menu actions -->
-        <record id="action_hq_entries_import_wizard" model="ir.actions.act_window">
+        <record id="action_hq_entries_import_wizard" model="ir.actions.server">
             <field name="name">Import HQ Entries</field>
-            <field name="res_model">hq.entries.import</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="hq_entries_import_wizard"/>
-            <field name="target">new</field>
+            <field name="model_id" ref="model_hq_entries_import" />
+            <field name="state">code</field>
+            <field name="code">action = obj.open_wizard(context=context)</field>
         </record>
 
         <record model="ir.actions.act_window" id="action_hq_entries_tree">
@@ -285,7 +327,7 @@
 
     <!-- Menu -->
         <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="6"/>
-        <menuitem name="HQ Import" action="action_hq_entries_import_wizard" id="menu_hq_entries_import" parent="menu_hq" sequence="1"/>
+        <menuitem name="HQ Import" action="action_hq_entries_import_wizard" type="server" id="menu_hq_entries_import" parent="menu_hq" sequence="1"/>
         <menuitem name="HQ Entries" action="action_hq_entries_tree" id="menu_hq_entries" parent="menu_hq" sequence="2"/>
         
 

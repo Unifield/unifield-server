@@ -30,8 +30,8 @@
         <menuitem
             id="menu_ir_track_changes"
             action="action_ir_track_changes_wizard"
-            parent="base.menu_sales"
-            sequence="3"
+            parent="base.next_id_64"
+            sequence="6"
             />
 
     </data>

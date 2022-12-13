@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="signature_add_user_wizard_form" model="ir.ui.view">
+            <field name="name">signature_add_user_wizard_form</field>
+            <field name="model">signature.add_user.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Add Users">
+                    <field name="res_users" nolabel="1">
+                        <tree hide_edit_button="1">
+                            <field name="login" />
+                            <field name="name" />
+                        </tree>
+                    </field>
+                    <group colspan="4">
+                      <button string="Cancel" name="cancel" type="object" icon="gtk-cancel" />
+                      <button string="Confirm" icon="terp-check" name="save" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="signature_add_user_register_wizard_form" model="ir.ui.view">
+            <field name="name">signature_add_user_register_wizard_form</field>
+            <field name="model">signature.add_user.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">40</field>
+            <field name="arch" type="xml">
+                <form string="Add Users">
+                    <group colspan="2" col="2">
+                        <separator string="Reconciliation" colspan="2" />
+                        <field name="res_users_rec" nolabel="1" colspan="2">
+                            <tree hide_edit_button="1">
+                                <field name="login" />
+                                <field name="name" />
+                            </tree>
+                        </field>
+                    </group>
+
+                    <group colspan="2" col="2">
+                        <separator string="Full Report" colspan="2" />
+                        <field name="res_users_full" nolabel="1" colspan="2">
+                            <tree hide_edit_button="1">
+                                <field name="login" />
+                                <field name="name" />
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="4">
+                      <button string="Cancel" name="cancel" type="object" icon="gtk-cancel" />
+                      <button string="Confirm" icon="terp-check" name="save" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="signature_set_user_form" model="ir.ui.view">
+            <field name="name">signature_set_user_form</field>
+            <field name="model">signature.set_user</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Create Signature">
+                   <html colspan="4">
+                    <script language="javascript">
+                        function set_preview() {
+                            var preview = $('#json_signature').val();
+                            if (preview) {
+                                $('#sig_new_signature').signature('draw', preview);
+                            }
+                        }
+
+                        $(document).ready(function() {
+                            $('#view_form').submit(function(e){
+                                if ($('#sig_new_signature').signature('isEmpty')) {
+                                    return confirm('New signature is empty ! It will not be saved.');
+                                }
+                            $('#json_signature').val($('#sig_new_signature').signature('toJSON'));
+
+                        });
+                    });
+
+                    </script>
+                    </html>
+
+                    <field name="user_name"/>
+                    <field name="json_signature" invisible="1" />
+                    <newline />
+                    <field name="legal_name" />
+                    <field name="new_signature" widget="signature" colspan="4"/>
+                    <group colspan="4">
+                      <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
+                      <button string="Preview" icon="terp-check" name="preview" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="signature_set_user_form_preview" model="ir.ui.view">
+            <field name="name">signature_set_user_form_preview</field>
+            <field name="model">signature.set_user</field>
+            <field name="type">form</field>
+            <field name="priority">50</field>
+            <field name="arch" type="xml">
+                <form string="Create Signature">
+                    <field name="user_name"/>
+                    <newline />
+                    <field name="b64_image" widget="image" colspan="4" readonly="1"/>
+                    <group colspan="4">
+                      <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
+                      <button string="Go back" icon="terp-gtk-go-back-ltr" name="previous" type="object" />
+                      <button string="Save" icon="terp-check" name="save" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="signature_document_wizard_form" model="ir.ui.view">
+            <field name="name">signature_document_wizard_form</field>
+            <field name="model">signature.document.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Sign Document">
+                    <field name="name" invisible="1"/>
+                    <field name="role" colspan="4" />
+                    <field name="user_name" colspan="4" />
+                    <newline />
+                    <field name="image" widget="image" />
+                    <newline />
+                    <group colspan="4">
+                      <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                      <button string="Sign" icon="terp-check" name="save" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="signature_change_date_form" model="ir.ui.view">
+            <field name="name">signature_change_date_form</field>
+            <field name="model">signature.change_date</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Change End Date">
+                    <field name="current_from" />
+                    <field name="current_to" />
+                    <label colspan="2" />
+                    <field name="new_to" on_change="change_new_to(current_from, new_to)" />
+                    <group colspan="4">
+                      <button string="Cancel"  icon="gtk-cancel" name="closepref" type="object" />
+                      <button string="Confirm" icon="terp-check" name="save" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <act_window id="export_list_signatures"
+            name="List of Signatures"
+            res_model="signature.export.wizard"
+            src_model="signature.image"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            />
+
+        <record id="signature_export_wizard_form" model="ir.ui.view">
+            <field name="name">signature_export_wizard_form</field>
+            <field name="model">signature.export.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export Signatures">
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <group colspan="4">
+                      <button string="Cancel"  icon="gtk-cancel" special="cancel" />
+                      <button string="Export" icon="gtk-justify-fill" name="export" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <report id="signature_export_report"
+                string="Signatures PDF"
+                model="signature.export.wizard"
+                name="signature.export.report"
+                rml="base/res/report_module/signature.rml"
+                auto="False"
+                />
+
+
+
+
+    </data>
+</openerp>

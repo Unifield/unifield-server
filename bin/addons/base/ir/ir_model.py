@@ -26,7 +26,7 @@ from operator import itemgetter
 from osv import fields,osv
 import ir
 import netsvc
-from osv.orm import except_orm, browse_record
+from osv.orm import except_orm, browse_record, AccessError
 import tools
 from tools.safe_eval import safe_eval as eval
 from tools import config
@@ -476,7 +476,10 @@ class ir_model_fields(osv.osv):
         sel = {}
 
         if field in pool_obj._columns and hasattr(pool_obj._columns[field], 'selection'):
-            sel = dict(pool_obj._columns[field].selection)
+            if callable(pool_obj._columns[field].selection):
+                sel = dict(pool_obj._columns[field].selection(pool_obj, cr, uid, context))
+            else:
+                sel = dict(pool_obj._columns[field].selection)
         elif field in pool_obj._inherit_fields and hasattr(pool_obj._inherit_fields[field][2], 'selection'):
             sel = dict(pool_obj._inherit_fields[field][2].selection)
         if callable(sel):
@@ -640,7 +643,7 @@ class ir_model_access(osv.osv):
                 'create': _("You can not create this document (%s) ! Be sure your user belongs to one of these groups: %s."),
                 'unlink': _("You can not delete this document (%s) ! Be sure your user belongs to one of these groups: %s."),
             }
-            raise except_orm(_('AccessError'), msgs[mode] % (model_name, groups) )
+            raise AccessError(mode, model_name, msgs[mode] % (model_name, groups))
         return r
 
     check = tools.cache()(check)

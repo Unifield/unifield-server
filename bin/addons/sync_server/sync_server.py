@@ -129,13 +129,13 @@ class entity_group(osv.osv):
 
         return True
 
-    def write_web(self, cr, uid, ids, values, context=None):
+    def write_web(self, cr, uid, ids, values, context=None, ignore_access_error=False):
         check_entity = False
         if 'entity_ids' in values:
             instance_ids = self.pool.get('sync.server.entity').search(cr, uid, [('state', '=', 'validated'), ('group_ids', 'in', ids)], context=context)
             if len(instance_ids) > 1:
                 check_entity = True
-        ret = super(entity_group, self).write_web(cr, uid, ids, values, context=context)
+        ret = super(entity_group, self).write_web(cr, uid, ids, values, context=context, ignore_access_error=ignore_access_error)
 
         if check_entity:
             new_instance_ids = self.pool.get('sync.server.entity').search(cr, uid, [('state', '=', 'validated'), ('group_ids', 'in', ids)], context=context)

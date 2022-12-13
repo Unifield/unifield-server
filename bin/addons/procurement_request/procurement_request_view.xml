@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE SIGNATURE_TEMPLATE [
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
+]>
+
 <openerp>
     <data>
     
@@ -139,6 +143,7 @@
                         <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
                             <field name="sourcing_trace" colspan="4" nolabel="1" />
                         </page>
+                        &signature_template;
                     </notebook>
                 </form>
             </field>

@@ -408,6 +408,11 @@ class osv(osv_base, orm.orm):
             if not name:
                 raise TypeError('_name is mandatory in case of multiple inheritance')
 
+            # if current class has no _auto attribute then set _auto = True on current class
+            #  otherwise if parent class has _auto = False this value is set on current class
+            if not hasattr(cls, '_auto'):
+                cls._auto = True
+
             for parent_name in ((type(parent_names)==list) and parent_names or [parent_names]):
                 parent_class = pool.get(parent_name).__class__
                 assert pool.get(parent_name), "parent class %s does not exist in module %s !" % (parent_name, module)
