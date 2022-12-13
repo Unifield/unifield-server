@@ -100,6 +100,7 @@ class stock_reception_wizard(osv.osv_memory):
         model_obj = self.pool.get('ir.model.data')
         cross_docking_id = model_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         loan_rt_id = model_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        loan_ret_rt_id = model_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
 
         sql = False
         wizard = self.browse(cr, uid, _id, context=context)
@@ -268,13 +269,13 @@ class stock_reception_wizard(osv.osv_memory):
                 where
                     m.state = 'done' and
                     p.type = 'in' and
-                    (so.id is null or so.procurement_request or m.reason_type_id = %(loan_rt_id)s)
+                    (so.id is null or so.procurement_request or m.reason_type_id in %(loan_rt_ids)s)
                 '''
                 if sql_append:
                     sql = '%s and %s' % (sql, ' and '.join(sql_append))
 
                 # loan added due to the bug fixed by US-6630 (previous data not fixed)
-                sql_cond.update({'customer_name': wizard.final_partner_id.name, 'loan_rt_id': loan_rt_id})
+                sql_cond.update({'customer_name': wizard.final_partner_id.name, 'loan_rt_ids': tuple([loan_rt_id, loan_ret_rt_id])})
             else:
                 # check fo / exclude loan ? exclude cancel pol
                 sql = '''select m.id
@@ -290,11 +291,11 @@ class stock_reception_wizard(osv.osv_memory):
                     so.partner_id = %(customer_id)s and
                     m.state = 'done' and
                     p.type = 'in' and
-                    m.reason_type_id !=  %(loan_rt_id)s
+                    m.reason_type_id not in %(loan_rt_ids)s
                 '''
                 if sql_append:
                     sql = '%s and %s' % (sql, ' and '.join(sql_append))
-                sql_cond.update({'customer_id': wizard.final_partner_id.id, 'loan_rt_id': loan_rt_id})
+                sql_cond.update({'customer_id': wizard.final_partner_id.id, 'loan_rt_ids': tuple([loan_rt_id, loan_ret_rt_id])})
 
 
         if sql:

@@ -1575,7 +1575,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if sourcing_line.type == 'make_to_stock':
                     self.check_location_integrity(cr, uid, [sourcing_line.id], context=context)
                     so_line_data = {'confirmed_delivery_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}
-                    if sourcing_line.order_id.order_type in ['loan', 'loan_return'] and not sourcing_line.order_id.is_a_counterpart:
+                    if sourcing_line.order_id.order_type == 'loan' and not sourcing_line.order_id.is_a_counterpart:
                         # In case of loan, create the PO for later goods return:
                         po_loan = self.get_existing_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
                         if not po_loan:
