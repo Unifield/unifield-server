@@ -47,8 +47,6 @@ class account_cashbox_line(osv.osv):
         """
         res = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.pieces >= self._max_amount or (obj.pieces * obj.number) >= self._max_amount:
-                raise osv.except_osv(_('Error !'), _(self._max_msg))
             res[obj.id] = obj.pieces * obj.number
         return res
 
@@ -58,8 +56,6 @@ class account_cashbox_line(osv.osv):
         @param pieces: Names of fields.
         @param number:
         """
-        if pieces >= self._max_amount or (pieces * number) >= self._max_amount:
-            raise osv.except_osv(_('Error !'), _(self._max_msg))
         sub = pieces * number
         return {'value': {'subtotal': sub or 0.0}}
 
@@ -82,9 +78,19 @@ class account_cashbox_line(osv.osv):
                 if self.search_exist(cr, uid, dom):
                     return False
         return True
+    def _check_subtotal(self, cr, uid, ids):
+        """
+        Blocks the creation/edition of Cashbox line if the integer part of (value * number) is more than 10 digits.
+        """
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['number', 'pieces']):
+            if line.pieces >= self._max_amount or (line.pieces * line.number) >= self._max_amount:
+                return False
+        return True
 
     _constraints = [
         (_check_cashbox_closing_duplicates, 'The values of the Closing Balance lines must be unique per register.', ['ending_id', 'pieces']),
+        (_check_subtotal, 'The Values or the Total amount of the line is more than 10 digits. '
+                          'Please check that the Values and Number are correct to avoid loss of exact information', ['number', 'pieces']),
     ]
 
 
