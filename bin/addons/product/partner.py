@@ -26,18 +26,15 @@ class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = 'res.partner'
     _columns = {
-        'property_product_pricelist': fields.property(
+        'property_product_pricelist': fields.many2one(
             'product.pricelist',
-            type='many2one', 
-            relation='product.pricelist', 
-            domain=[('type','=','sale')],
-            string="Sale Pricelist", 
-            method=True,
-            view_load=True,
+            domain=[('type', '=', 'sale')],
+            string="Sale Pricelist",
+            select=True,
             help="This pricelist will be used, instead of the default one, for sales to the current partner"),
     }
+
 
 res_partner()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
