@@ -599,18 +599,6 @@ class account_invoice(osv.osv):
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
             partner_type = p.partner_type  # update the partner type immediately as it is used in a domain in attrs
 
-            if company_id:
-                if p.property_account_receivable.company_id.id != company_id and p.property_account_payable.company_id.id != company_id:
-                    account_obj = self.pool.get('account.account')
-                    rec_acc_ids = account_obj.search(cr, uid, [('code','=',p.property_account_receivable.code),('company_id','=',company_id)])
-                    pay_acc_ids = account_obj.search(cr, uid, [('code','=',p.property_account_payable.code),('company_id','=',company_id)])
-                    rec_res_id = rec_acc_ids and rec_acc_ids[0] or False
-                    pay_res_id = pay_acc_ids and pay_acc_ids[0] or False
-                    if not rec_res_id and not pay_res_id:
-                        raise osv.except_osv(_('Configuration Error !'),
-                                             _('Can not find account chart for this company, Please Create account.'))
-                    p.property_account_receivable = account_obj.browse(cr, uid, rec_res_id)
-                    p.property_account_payable = account_obj.browse(cr, uid, pay_res_id)
 
             if type in ('out_invoice', 'out_refund'):
                 acc_id = p.property_account_receivable.id
@@ -688,22 +676,6 @@ class account_invoice(osv.osv):
         account_obj = self.pool.get('account.account')
         inv_line_obj = self.pool.get('account.invoice.line')
         if company_id and part_id and type:
-            acc_id = False
-            partner_obj = self.pool.get('res.partner').browse(cr,uid,part_id)
-            if partner_obj.property_account_payable and partner_obj.property_account_receivable:
-                if partner_obj.property_account_payable.company_id.id != company_id and partner_obj.property_account_receivable.company_id.id != company_id:
-                    rec_acc_ids = account_obj.search(cr, uid, [('code','=',partner_obj.property_account_receivable.code),('company_id','=',company_id)])
-                    pay_acc_ids = account_obj.search(cr, uid, [('code','=',partner_obj.property_account_payable.code),('company_id','=',company_id)])
-                    rec_res_id = rec_acc_ids and rec_acc_ids[0] or False
-                    pay_res_id = pay_acc_ids and pay_acc_ids[0] or False
-                    if not rec_res_id and not pay_res_id:
-                        raise osv.except_osv(_('Configuration Error !'),
-                                             _('Can not find account chart for this company, Please Create account.'))
-                    if type in ('out_invoice', 'out_refund'):
-                        acc_id = rec_res_id
-                    else:
-                        acc_id = pay_res_id
-                    val= {'account_id': acc_id}
             if ids:
                 if company_id:
                     inv_obj = self.browse(cr,uid,ids)
