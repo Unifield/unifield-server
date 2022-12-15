@@ -1387,6 +1387,14 @@ class stock_move(osv.osv):
                 val_type = picking['type']
             sync_dpo_in = picking['sync_dpo_in']
 
+            # Remove the Loan Return Reason Type
+            loan_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
+            if picking and context.get('web_copy') and vals.get('reason_type_id', False) == loan_ret_rt_id:
+                if picking['type'] == 'out':
+                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+                else:
+                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+
         if vals.get('product_id', False):
             product = prod_obj.read(cr, uid, vals['product_id'],
                                     ['subtype',

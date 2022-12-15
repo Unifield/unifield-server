@@ -383,10 +383,14 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves',
-                                                                                    'reason_type_return_from_unit')[1]
+        data_obj = self.pool.get('ir.model.data')
+        return_reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        loan_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
 
-        if reason_type_id == return_reason_type_id:
+        if reason_type_id == loan_ret_rt_id:
+            return {'value': {'reason_type_id': False, 'ret_from_unit_rt': False},
+                    'warning': {'title': _('Error'), 'message': _('You can not select this Reason Type manually')}}
+        elif reason_type_id == return_reason_type_id:
             return {'value': {'ret_from_unit_rt': True, 'partner_id': False, 'partner_id2': False, 'address_id': False}}
         else:
             return {'value': {'ret_from_unit_rt': False}}
