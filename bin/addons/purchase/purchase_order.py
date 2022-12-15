@@ -1885,6 +1885,7 @@ class purchase_order(osv.osv):
         old_po_name = {}
         first_order_type = False
         first_dest_partner = None
+        dest_partner_ids = []
 
         for porder in [order for order in self.browse(cr, uid, ids, context=context) if order.state == 'draft']:
             # group PO to be merged together
@@ -1903,6 +1904,8 @@ class purchase_order(osv.osv):
                 elif first_dest_partner is not None and first_dest_partner != porder.dest_address_id.id:
                     raise osv.except_osv(_('Error'), _('The Address of the Destination Partner must be the same in all POs/DPOs to be merged.'))
 
+            if porder.dest_partner_ids:
+                dest_partner_ids = list(set(dest_partner_ids + [p.id for p in porder.dest_partner_ids]))
             old_po_name[porder.id] = porder.name
             if not order_infos:
                 order_infos.update({
@@ -1943,6 +1946,10 @@ class purchase_order(osv.osv):
                     'dest_partner_id': tmpl_data.get('dest_partner_id', False),
                     'related_sourcing_id': tmpl_data.get('related_sourcing_id', False),
                 })
+
+            # Put all the customers
+            if dest_partner_ids:
+                order_data.update({'dest_partner_ids': [(6, 0, dest_partner_ids)]})
 
             # create the new order
             neworder_id = self.create(cr, uid, order_data)
