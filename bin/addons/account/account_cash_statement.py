@@ -21,6 +21,7 @@
 ##############################################################################
 
 import time
+from math import trunc
 
 from osv import osv, fields
 from tools.translate import _
@@ -56,8 +57,20 @@ class account_cashbox_line(osv.osv):
         @param pieces: Names of fields.
         @param number:
         """
-        sub = pieces * number
+        sub = pieces * trunc(number)
         return {'value': {'subtotal': sub or 0.0}}
+
+    def create(self, cr, uid, vals, context=None):
+        if 'number' in vals:
+            vals['number'] = trunc(vals['number'])
+        return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        if 'number' in vals:
+            vals['number'] = trunc(vals['number'])
+        return super(account_cashbox_line, self).write(cr, uid, ids, vals, context=context)
 
     _columns = {
         'pieces': fields.float('Values', digits_compute=dp.get_precision('Account')),
