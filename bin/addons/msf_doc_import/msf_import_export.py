@@ -888,13 +888,16 @@ class msf_import_export(osv.osv_memory):
         rejected = []
         lines_already_updated = [] # ids of the lines already updated
         forbid_creation_of = [] # list of product ids that will not be created
+        last_empty_lines = []
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
             if all(not x for x in line_data):
                 save_warnings(
                     _('Line seemed empty, so this line was ignored')
                 )
+                last_empty_lines.append(row_index+2)
                 continue
+            last_empty_lines = []
             if res < 0:
                 if raise_on_error:
                     raise Exception('Line %s: %s' % (row_index+1, '\n'.join(errors)))
@@ -1364,6 +1367,10 @@ class msf_import_export(osv.osv_memory):
                 nb_imported_lines += 1
 
             self.write(cr, uid, [import_brw.id], {'total_lines_imported': nb_imported_lines}, context=context)
+
+        for last in last_empty_lines:
+            # do not display warning for the last empty lines
+            del(import_warnings[last])
 
         warn_msg = ''
         for line_number in sorted(import_warnings.keys()):

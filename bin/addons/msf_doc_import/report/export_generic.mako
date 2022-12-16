@@ -32,6 +32,7 @@
         </Style>
         <Style ss:ID="String">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+            <NumberFormat ss:Format="@"/>
             <Protection ss:Protected="0" />
         </Style>
         <Style ss:ID="Boolean">
@@ -86,19 +87,30 @@
             </Row>
 
             % if not data.get('template_only', False):
-            % for row in rows:
-            <Row>
-                % for index, cell in enumerate(row):
-                <Cell ss:StyleID="${headers[index][1]|x}">
-                    % if headers[index][1] == 'String' and not cell:
-                        <Data ss:Type="String"></Data>
-                    % else:
-                        <Data ss:Type="String">${cell|x}</Data>
-                    % endif
-                </Cell>
+                % for row in rows:
+                <Row>
+                    % for index, cell in enumerate(row):
+                    <Cell ss:StyleID="${headers[index][1]|x}">
+                        % if headers[index][1] == 'String' and not cell:
+                            <Data ss:Type="String"></Data>
+                        % else:
+                            <Data ss:Type="String">${cell|x}</Data>
+                        % endif
+                    </Cell>
+                    % endfor
+                </Row>
                 % endfor
-            </Row>
-            % endfor
+            % else:
+                <!-- template export: generate 10 empty lines with the correct cell type -->
+                % for x in range(0, 10):
+                    <Row>
+                        % for h in headers:
+                           <Cell ss:StyleID="${h[1]|x}">
+                                <Data ss:Type="String"></Data>
+                            </Cell>
+                        % endfor
+                    </Row>
+                % endfor
             % endif
         </Table>
 
