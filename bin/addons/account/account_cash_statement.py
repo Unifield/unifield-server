@@ -21,7 +21,6 @@
 ##############################################################################
 
 import time
-from math import trunc
 
 from osv import osv, fields
 from tools.translate import _
@@ -36,8 +35,8 @@ class account_cashbox_line(osv.osv):
     _rec_name = 'number'
 
     _max_amount = 10 ** 10
-    _max_msg = ("The Values or the Total amount of the line is more than 10 digits."
-                "Please check that the Values and Number are correct to avoid loss of exact information")
+    _max_msg = _("The Values or the Total amount of the line is more than 10 digits."
+                 "Please check that the Values and Number are correct to avoid loss of exact information")
 
     def _sub_total(self, cr, uid, ids, name, arg, context=None):
 
@@ -57,24 +56,25 @@ class account_cashbox_line(osv.osv):
         @param pieces: Names of fields.
         @param number:
         """
-        sub = pieces * trunc(number)
-        return {'value': {'subtotal': sub or 0.0}}
+        return {'value': {'subtotal': pieces * number or 0.0}}
+
+    def _check_number_size(self, cr, uid, vals, context=None):
+        if vals.get('number') and abs(vals['number']) > self._max_amount:
+            raise osv.except_osv(_('Warning'), _(self._max_msg))
 
     def create(self, cr, uid, vals, context=None):
-        if 'number' in vals:
-            vals['number'] = trunc(vals['number'])
+        self._check_number_size(cr, uid, vals, context=context)
         return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        if 'number' in vals:
-            vals['number'] = trunc(vals['number'])
+        self._check_number_size(cr, uid, vals, context=context)
         return super(account_cashbox_line, self).write(cr, uid, ids, vals, context=context)
 
     _columns = {
         'pieces': fields.float('Values', digits_compute=dp.get_precision('Account')),
-        'number': fields.float('Number', digits=(10, 0)),
+        'number': fields.integer('Number'),
         'subtotal': fields.function(_sub_total, method=True, string='Sub Total', type='float', digits_compute=dp.get_precision('Account')),
         'starting_id': fields.many2one('account.bank.statement', ondelete='cascade'),
         'ending_id': fields.many2one('account.bank.statement', ondelete='cascade'),
@@ -96,7 +96,7 @@ class account_cashbox_line(osv.osv):
         Blocks the creation/edition of Cashbox line if the integer part of (value * number) is more than 10 digits.
         """
         for line in self.browse(cr, uid, ids, fields_to_fetch=['number', 'pieces']):
-            if line.pieces >= self._max_amount or line.number >= self._max_amount or (line.pieces * line.number) >= self._max_amount:
+            if line.pieces and abs(line.pieces) >= self._max_amount or line.number and abs(line.number) >= self._max_amount or abs(line.pieces * line.number) >= self._max_amount:
                 return False
         return True
 
