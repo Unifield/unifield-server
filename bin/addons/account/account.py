@@ -879,28 +879,7 @@ class account_journal(osv.osv):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
             self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
             if 'is_active' in vals and not vals['is_active']:
-                newest_entry_sql = "SELECT date(max(coalesce(write_date, create_date))) FROM account_move WHERE journal_id=%s"
-                last_inactiv_sql = """
-                    SELECT date(write_date)
-                    FROM audittrail_log_line
-                    WHERE
-                        object_id in (SELECT id FROM ir_model WHERE model='account.journal') AND
-                        res_id=%s AND
-                        name='is_active' AND
-                        new_value_text='False'
-                    order by write_date desc limit 1
-                """
-                cr.execute(newest_entry_sql, (journal.id,))
-                last_entry = cr.fetchone()
-                newest_entry_date = last_entry[0] if last_entry else False
-                cr.execute(last_inactiv_sql, (journal.id,))
-                last_inactivation = cr.fetchone()
-                last_inactivation_date = last_inactivation[0] if last_inactivation else False
-                if (not newest_entry_date and last_inactivation_date) or \
-                        (newest_entry_date and last_inactivation_date and (newest_entry_date < last_inactivation_date)):
-                    vals.update({'inactivation_date': last_inactivation_date})
-                else:
-                    vals.update({'inactivation_date': datetime.today().date()})
+                vals.update({'inactivation_date': datetime.today().date()})
         self._check_journal_inactivation(cr, uid, ids, vals, context=context)
         ret = super(account_journal, self).write(cr, uid, ids, vals, context=context)
         if vals.get('currency', False):
