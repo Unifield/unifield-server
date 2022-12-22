@@ -143,6 +143,10 @@ class wizard_advance_line(osv.osv_memory):
         """
         Update Third Party type regarding account type_for_register field.
         """
+        if account_id:
+            a = self.pool.get('account.account').read(cr, uid, account_id, ['type_for_register'])
+            if a['type_for_register'] in ['transfer', 'transfer_same']:
+                self.write(cr, uid, ids, {'partner_type_mandatory': True}, context=context)
         return self.pool.get('account.bank.statement.line').onchange_account(cr, uid, ids, account_id=account_id, context=context)
 
     _columns = {
@@ -151,6 +155,7 @@ class wizard_advance_line(osv.osv_memory):
         'account_id': fields.many2one('account.account', string='Account', required=True, domain=[('type', '!=', 'view')]),
         'partner_id': fields.many2one('res.partner', string='Partner', required=False),
         'employee_id': fields.many2one('hr.employee', string="Employee", required=False),
+        'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'partner_type': fields.reference("3RD party", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee')], size=128),
         'amount': fields.float(string="Amount", size=(16,2), required=True),
         'wizard_id': fields.many2one('wizard.cash.return', string='wizard'),
@@ -175,6 +180,7 @@ class wizard_advance_line(osv.osv_memory):
         'display_analytic_button': lambda *a: True,
         'analytic_distribution_state_recap': lambda *a: '',
         'have_analytic_distribution_from_header': lambda *a: True,
+        'partner_type_mandatory': lambda *a: False
     }
 
     def check_employee_distribution(self, cr, uid, vals, context=None):
@@ -211,6 +217,10 @@ class wizard_advance_line(osv.osv_memory):
             context = {}
         new_vals = vals.copy()
         new_vals = self.check_employee_distribution(cr, uid, new_vals)
+        if 'account_id' in new_vals and new_vals['account_id']:
+            a = self.pool.get('account.account').read(cr, uid, new_vals['account_id'], ['type_for_register'])
+            if a['type_for_register'] in ['transfer', 'transfer_same']:
+                new_vals['partner_type_mandatory'] = True
         return super(wizard_advance_line, self).create(cr, uid, new_vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -229,6 +239,10 @@ class wizard_advance_line(osv.osv_memory):
             new_vals = vals.copy()
             new_vals.update({'wizard_id': line.get('wizard_id', False)}) # Add wizard_id so that we can check statement_id
             new_vals = self.check_employee_distribution(cr, uid, new_vals)
+            if 'account_id' in new_vals and new_vals['account_id']:
+                a = self.pool.get('account.account').read(cr, uid, new_vals['account_id'], ['type_for_register'])
+                if a['type_for_register'] in ['transfer', 'transfer_same']:
+                    new_vals['partner_type_mandatory'] = True
             tmp_res = super(wizard_advance_line, self).write(cr, uid, [line.get('id', False)], new_vals, context=context)
             res.append(tmp_res)
         return res
