@@ -22,5 +22,27 @@
                 </form>
             </field>
         </record>
+
+        <record id="hq_product_merged_wizard_form_view" model="ir.ui.view">
+            <field name="name">hq.product.merged.wizard.form.view</field>
+            <field name="model">product.merged.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">50</field>
+            <field name="arch" type="xml">
+                <form string="HQ Merge Product">
+                    <field name="old_product_id" colspan="4" />
+                    <field name="new_product_id" colspan="4" required="1" on_change="change_warning(new_product_id)" domain="[('active', '=', 't'), ('international_status', '=', 'UniData'), ('kept_product_id', '=', False), ('id', '!=', old_product_id)]" context="{'display_active_filter': 0}"/>
+                    <field name="ud_old_code" />
+                    <field name="warning_checked" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': [('warning_msg', '=', False)]}">
+                        <separator colspan="4" string="Warning" />
+                        <field name="warning_msg" colspan="4" nolabel="1" />
+                    </group>
+                    <button name="do_hq_merge_product" string="Merge Product" type="object"  icon="gtk-ok" colspan="2" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>
