@@ -143,10 +143,6 @@ class wizard_advance_line(osv.osv_memory):
         """
         Update Third Party type regarding account type_for_register field.
         """
-        if account_id:
-            a = self.pool.get('account.account').read(cr, uid, account_id, ['type_for_register'])
-            if a['type_for_register'] in ['transfer', 'transfer_same']:
-                self.write(cr, uid, ids, {'partner_type_mandatory': True}, context=context)
         return self.pool.get('account.bank.statement.line').onchange_account(cr, uid, ids, account_id=account_id, context=context)
 
     _columns = {
