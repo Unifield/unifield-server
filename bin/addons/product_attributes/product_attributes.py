@@ -1066,6 +1066,7 @@ class product_attributes(osv.osv):
         'currency_fixed': fields.boolean('Currency Changed by US-8196'),
         'can_be_hq_merged': fields.function(_get_can_be_hq_merged, method=True, string='Can this product be merged to a kept product ?', type='boolean'),
         'kept_product_id': fields.many2one('product.product', string='Kept Product', select=1, readonly=1),
+        'kept_initial_product_id': fields.many2one('product.product', string='1st Kept Product in case of chaining', select=1, readonly=1),
         'unidata_merged': fields.boolean('UniData Merged', readonly=1),
     }
 
@@ -2290,7 +2291,14 @@ class product_attributes(osv.osv):
         if not ids:
             return True
 
-        product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management', 'perishable'], context=context)
+        product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management', 'perishable', 'default_code'], context=context)
+
+        product_merged_obj = self.pool.get('product.merged')
+        merged_ids = product_merged_obj.search(cr, 1, ['|', ('new_product_id', '=', ids[0]), ('old_product_id', '=', ids[0])], context=context)
+        if merged_ids and \
+                product_merged_obj.need_to_push(cr, 1, merged_ids, context=context):
+            raise osv.except_osv(_('Error'), _('There is a UD merge products in the pipe, BN/ED attributes cannot be changed. Please try again after the following synchronization.'))
+
 
         change_target = context.get('change_target')
         if not change_target:
@@ -2372,7 +2380,7 @@ class product_attributes(osv.osv):
         if default is None:
             default = {}
 
-        for to_reset in ['replace_product_id', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id', 'unidata_merged']:
+        for to_reset in ['replace_product_id', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id', 'kept_initial_product_id', 'unidata_merged']:
             if to_reset not in default:
                 default[to_reset] = False
 
@@ -2790,7 +2798,10 @@ class product_attributes(osv.osv):
             fields_data = self.fields_get(cr, uid, failed, context=context)
             values = {'attr': ', '.join([fields_data[x].get('string') for x in failed])}
             if blocker:
-                return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update your local product %(attr)s and then proceed with the merge.') % values
+                if level == 'coordo':
+                    return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update your local product %(attr)s and then proceed with the merge.') % values
+                return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update (one of) your UniData product\'s %(attr)s and then proceed with the merge.') % values
+
             return _('There is an inconsistency between the selected products’  %(attr)s . Do you still want to proceed with the merge?') % values
 
         return ''
@@ -2962,6 +2973,7 @@ class product_attributes(osv.osv):
                 ('product_merged', 'new_product_id'),
                 ('product_merged', 'old_product_id'),
                 ('standard_price_track_changes', 'product_id'),
+                ('product_product', 'kept_initial_product_id'),
             ]
         }
 
@@ -3013,7 +3025,7 @@ class product_attributes(osv.osv):
         write_context['keep_standard_price'] = True # to allow to write standard_price field
 
         self.write(cr, uid, kept_id, new_write_data, context=write_context)
-        self.write(cr, uid, old_prod_id, {'active': False, 'unidata_merged': True, 'kept_product_id': kept_id, 'new_code': kept_data['default_code']}, context=context)
+        self.write(cr, uid, old_prod_id, {'active': False, 'unidata_merged': True, 'kept_product_id': kept_id, 'kept_initial_product_id': kept_id, 'new_code': kept_data['default_code']}, context=context)
 
         _register_log(self, cr, uid, kept_id, self._name, 'Merge Product non-kept product', '', old_prod_data['default_code'], 'write', context)
         _register_log(self, cr, uid, old_prod_id, self._name, 'Merge Product kept product', '', kept_data['default_code'], 'write', context)
