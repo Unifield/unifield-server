@@ -943,6 +943,7 @@ class wizard_cash_return(osv.osv_memory):
             adv_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
             partner_id = False
             line_employee_id = False
+            line_journal_id = False
             partner = advance.partner_type
             if partner:
                 if partner._name == 'res.partner':
@@ -951,12 +952,14 @@ class wizard_cash_return(osv.osv_memory):
                         advances_with_supplier.setdefault(adv_move, []).append(advance)
                 elif partner._name == 'hr.employee':
                     line_employee_id = partner.id
+                elif partner._name == 'account.journal':
+                    line_journal_id = partner.id
             debit = abs(advance.amount)
             credit = 0.0
             account_id = advance.account_id.id
 
             # check the compatibility between Third Party and Account "Type for specific treatment"
-            account_obj.check_type_for_specific_treatment(cr, uid, [account_id], partner_id=partner_id, journal_id=journal.id,
+            account_obj.check_type_for_specific_treatment(cr, uid, [account_id], partner_id=partner_id, journal_id=line_journal_id,
                                                           employee_id=line_employee_id, context=context)
 
             # Analytic distribution for this line
