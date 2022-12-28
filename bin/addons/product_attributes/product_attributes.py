@@ -1068,6 +1068,7 @@ class product_attributes(osv.osv):
         'kept_product_id': fields.many2one('product.product', string='Kept Product', select=1, readonly=1),
         'kept_initial_product_id': fields.many2one('product.product', string='1st Kept Product in case of chaining', select=1, readonly=1),
         'unidata_merged': fields.boolean('UniData Merged', readonly=1),
+        'unidata_merge_date': fields.datetime('Date of UniData Merge', readonly=1, select=1),
     }
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
@@ -2380,7 +2381,7 @@ class product_attributes(osv.osv):
         if default is None:
             default = {}
 
-        for to_reset in ['replace_product_id', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id', 'kept_initial_product_id', 'unidata_merged']:
+        for to_reset in ['replace_product_id', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id', 'kept_initial_product_id', 'unidata_merged', 'unidata_merge_date']:
             if to_reset not in default:
                 default[to_reset] = False
 
@@ -3025,7 +3026,7 @@ class product_attributes(osv.osv):
         write_context['keep_standard_price'] = True # to allow to write standard_price field
 
         self.write(cr, uid, kept_id, new_write_data, context=write_context)
-        self.write(cr, uid, old_prod_id, {'active': False, 'unidata_merged': True, 'kept_product_id': kept_id, 'kept_initial_product_id': kept_id, 'new_code': kept_data['default_code']}, context=context)
+        self.write(cr, uid, old_prod_id, {'active': False, 'unidata_merged': True, 'unidata_merge_date': fields.datetime.now(), 'kept_product_id': kept_id, 'kept_initial_product_id': kept_id, 'new_code': kept_data['default_code']}, context=context)
 
         _register_log(self, cr, uid, kept_id, self._name, 'Merge Product non-kept product', '', old_prod_data['default_code'], 'write', context)
         _register_log(self, cr, uid, old_prod_id, self._name, 'Merge Product kept product', '', kept_data['default_code'], 'write', context)
