@@ -2755,8 +2755,7 @@ class account_bank_statement_line(osv.osv):
         if stl.cash_register_op_advance_po_id:
             context['cash_register_op_advance_po_id'] = stl.cash_register_op_advance_po_id.id
         wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
-                                          'currency_id': stl.statement_id.currency.id,
-                                          'reference': stl.ref or '', 'journal_id':stl.statement_id.journal_id.id}, context=context)
+                                          'currency_id': stl.statement_id.currency.id, 'reference': stl.ref or ''}, context=context)
         if statement_id:
             return {
                 'name' : "Advance Return",

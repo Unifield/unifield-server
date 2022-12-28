@@ -351,7 +351,6 @@ class wizard_cash_return(osv.osv_memory):
         'invoice_ids': fields.many2many('account.invoice', 'wizard_cash_return_invoice_rel', 'wizard_id', 'invoice_id', "Invoices"),
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency'),
-        'journal_id': fields.many2one('account.journal', string="Journal", readonly=True),
         'date': fields.date(string='Date for advance return', required=True),
         'reference': fields.char(string='Advance Return Reference', size=50),
         'advance_linked_po_auto_invoice': fields.boolean(string="Operational advance linked po invoices"),
@@ -383,8 +382,7 @@ class wizard_cash_return(osv.osv_memory):
             else:
                 st_line = self.pool.get('account.bank.statement.line').browse(cr, uid, context.get('statement_line_id'), context=context)
                 currency_id = st_line.statement_id.currency.id # currency is a mandatory field on statement/register
-                journal_id = st_line.statement_id.journal_id.id
-                res.update({'initial_amount': abs(amount), 'advance_st_line_id': context.get('statement_line_id'), 'currency_id': currency_id, 'journal_id': journal_id})
+                res.update({'initial_amount': abs(amount), 'advance_st_line_id': context.get('statement_line_id'), 'currency_id': currency_id})
         return res
 
     def create(self, cr, uid, values, context=None):
