@@ -2292,6 +2292,8 @@ class sale_order_line(osv.osv):
         'instance_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance'),
         'cv_line_ids': fields.one2many('account.commitment.line', 'so_line_id', string="Commitment Voucher Lines"),
         'loan_line_id': fields.many2one('purchase.order.line', string='Linked loan line', readonly=True),
+
+        'original_instance': fields.char('Original Instance', size=128, readonly=1),
     }
     _order = 'sequence, id desc'
     _defaults = {
