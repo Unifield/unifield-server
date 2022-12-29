@@ -55,6 +55,7 @@
                             attrs="{'invisible': [('ok_with_confirm', '=', False)]}" />
                     </group>
                     <field name='currency_id' invisible="1" />
+                    <field name='journal_id' invisible="1" />
                     <field name="advance_linked_po_auto_invoice" invisible="1" />
                     <field name="ok_with_confirm" invisible="1" />
                     <field name="comment" colspan="4" nolabel="1" readonly="1" attrs="{'invisible':[('advance_linked_po_auto_invoice', '=', False)]}" />
