@@ -2929,10 +2929,11 @@ class product_attributes(osv.osv):
             errors.append(_('Products %s, %s must be UniData.') % (old_prod_data['default_code'], kept_data['default_code']))
 
 
-        block_msg = self.check_same_value( cr, uid,  kept_id, old_prod_id, level='section', blocker=True, context=context)
-        if block_msg:
-            prod_data = self.read(cr, uid, [kept_id, old_prod_id], ['default_code'], context=context)
-            errors.append(_('%s\nProducts: %s and %s') % (block_msg, prod_data[0]['default_code'], prod_data[1]['default_code']))
+        if instance_level != 'project':
+            block_msg = self.check_same_value( cr, uid,  kept_id, old_prod_id, level='section', blocker=True, context=context)
+            if block_msg:
+                prod_data = self.read(cr, uid, [kept_id, old_prod_id], ['default_code'], context=context)
+                errors.append(_('%s\nProducts: %s and %s') % (block_msg, prod_data[0]['default_code'], prod_data[1]['default_code']))
 
         if errors:
             raise osv.except_osv(_('Error'), "\n".join(errors))
