@@ -186,7 +186,7 @@ class account_mcdb(osv.osv):
         return super(account_mcdb, self).search(cr, uid, new_dom, *a, **b)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        if  context is None:
+        if context is None:
             context = {}
         view = super(account_mcdb, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if context.get('from_query') and view_type == 'form':
@@ -199,9 +199,9 @@ class account_mcdb(osv.osv):
                 field.set('invisible', "0")
             view['arch'] = etree.tostring(form)
 
-        if context.get('from', '') != 'combined.line' and 'document_code' in view['fields']:
+        if 'document_code' in view['fields']:
             view['fields']['document_code']['string'] = _('Sequence numbers')
-            view['fields']['document_code']['help'] = _('You can set several sequences separated by a comma.')
+            view['fields']['document_code']['help'] = _('You can set several sequences separated by a comma or semicolon.')
         return view
 
 
@@ -492,24 +492,17 @@ class account_mcdb(osv.osv):
             if wiz.document_code and wiz.document_code != '':
                 document_code = wiz.document_code
                 document_code_field = 'move_id.name'
-                # For G/L and Analytic Selectors: allow searching several (exact) Entry Sequences separated by a comma
-                # For Combined Journals Report: allow only one Entry Seq. but partial search possible (ex: "FXA-1804")
+                # For G/L and Analytic Selectors and Combined Journals Report: allow searching several (exact) Entry Sequences
+                # separated by a comma or semicolon
                 document_codes = []
                 if res_model == 'account.analytic.line':
                     domain.append('|')
-                    if context.get('from', '') == 'combined.line':
-                        domain.append(('commitment_line_id.commit_id.name', 'ilike', document_code))
-                        domain.append(('entry_sequence', 'ilike', document_code))
-                    else:
-                        document_codes = [i.strip() for i in document_code.split(',')]
-                        domain.append(('commitment_line_id.commit_id.name', 'in', document_codes))
-                        domain.append(('entry_sequence', 'in', document_codes))
+                    document_codes = [i.strip() for i in document_code.replace(';', ',').split(',')]
+                    domain.append(('commitment_line_id.commit_id.name', 'in', document_codes))
+                    domain.append(('entry_sequence', 'in', document_codes))
                 else:
-                    if context.get('from', '') == 'combined.line':
-                        domain.append((document_code_field, 'ilike', document_code))
-                    else:
-                        document_codes = [i.strip() for i in document_code.split(',')]
-                        domain.append((document_code_field, 'in', document_codes))
+                    document_codes = [i.strip() for i in document_code.replace(';', ',').split(',')]
+                    domain.append((document_code_field, 'in', document_codes))
                 if document_codes and wiz.include_related_entries:
                     # note: the domain has no impact on the related entries to be displayed
                     context.update({'related_entries': document_codes})
