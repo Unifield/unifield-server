@@ -53,10 +53,10 @@ class account_installer(osv.osv_memory):
     _columns = {
         # Accounting
         'charts': fields.selection(_get_charts, 'Chart of Accounts',
-            required=True,
-            help="Installs localized accounting charts to match as closely as "
-                 "possible the accounting needs of your company based on your "
-                 "country."),
+                                   required=True,
+                                   help="Installs localized accounting charts to match as closely as "
+                                   "possible the accounting needs of your company based on your "
+                                   "country."),
         'date_start': fields.date('Start Date', required=True),
         'date_stop': fields.date('End Date', required=True),
         'period': fields.selection([('month', 'Monthly'), ('3months','3 Monthly')], 'Periods', required=True),
@@ -107,12 +107,12 @@ class account_installer(osv.osv_memory):
         configured_cmp = [r[0] for r in cr.fetchall()]
         unconfigured_cmp = list(set(company_ids)-set(configured_cmp))
         for field in res['fields']:
-           if field == 'company_id':
-               res['fields'][field]['domain'] = [('id','in',unconfigured_cmp)]
-               res['fields'][field]['selection'] = [('', '')]
-               if unconfigured_cmp:
-                   cmp_select = [(line.id, line.name) for line in self.pool.get('res.company').browse(cr, uid, unconfigured_cmp)]
-                   res['fields'][field]['selection'] = cmp_select
+            if field == 'company_id':
+                res['fields'][field]['domain'] = [('id','in',unconfigured_cmp)]
+                res['fields'][field]['selection'] = [('', '')]
+                if unconfigured_cmp:
+                    cmp_select = [(line.id, line.name) for line in self.pool.get('res.company').browse(cr, uid, unconfigured_cmp)]
+                    res['fields'][field]['selection'] = cmp_select
         return res
 
     def on_change_tax(self, cr, uid, id, tax):
@@ -353,8 +353,8 @@ class account_installer(osv.osv_memory):
                     }
                     if vals.get('currency_id', False):
                         vals_journal.update({
-                                'view_id': view_id_cur,
-                                'currency': vals_bnk.get('currency_id', False),
+                            'view_id': view_id_cur,
+                            'currency': vals_bnk.get('currency_id', False),
                         })
                     else:
                         vals_journal.update({'view_id': view_id_cash})
@@ -439,8 +439,8 @@ class account_installer(osv.osv_memory):
 
         if obj_multi.property_account_receivable:
             vals_journal.update({
-                    'default_credit_account_id': acc_template_ref[obj_multi.property_account_income_categ.id],
-                    'default_debit_account_id': acc_template_ref[obj_multi.property_account_income_categ.id],
+                'default_credit_account_id': acc_template_ref[obj_multi.property_account_income_categ.id],
+                'default_debit_account_id': acc_template_ref[obj_multi.property_account_income_categ.id],
             })
         obj_journal.create(cr, uid, vals_journal, context=context)
 
@@ -514,8 +514,6 @@ class account_installer(osv.osv_memory):
 
         #create the properties
         todo_list = [
-            ('property_account_receivable', 'res.partner', 'account.account'),
-            ('property_account_payable', 'res.partner', 'account.account'),
             ('property_account_expense_categ', 'product.category', 'account.account'),
             ('property_account_income_categ', 'product.category', 'account.account'),
             ('property_account_expense', 'product.template', 'account.account'),
@@ -579,11 +577,11 @@ class account_installer(osv.osv_memory):
         ir_values = self.pool.get('ir.values')
         record = self.browse(cr, uid, ids, context=context)[0]
         company_id = record.company_id
-        
+
         if not company_id:
             user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
             raise osv.except_osv(_('Warning'), _('It seems that there is no company selected or %s already has an accounting configuration. If you want to set the accounting configuration for any company other than the main one, please make sure that you belong to the group Usability/Extended View') % (user.company_id.name))
-        
+
         for res in self.read(cr, uid, ids, context=context):
             if record.charts == 'configurable':
                 fp = tools.file_open(opj('account', 'configurable_account_chart.xml'))
@@ -653,18 +651,18 @@ class account_installer(osv.osv_memory):
                         'company_id': company_id.id,
                         'sign': 1,
                         'parent_id': sale_taxcode_paid_parent_id
-                        }
+                    }
                     new_paid_tax_code = obj_tax_code.create(cr, uid, vals_paid_tax_code, context=context)
 
                     sales_tax = obj_tax.create(cr, uid,
-                                           {'name': 'TAX %s%%'%(s_tax*100),
-                                            'amount': s_tax,
-                                            'base_code_id': new_tax_code,
-                                            'tax_code_id': new_paid_tax_code,
-                                            'type_tax_use': 'sale',
-                                            'account_collected_id': sales_tax_account_id,
-                                            'account_paid_id': sales_tax_account_id
-                                            }, context=context)
+                                               {'name': 'TAX %s%%'%(s_tax*100),
+                                                'amount': s_tax,
+                                                'base_code_id': new_tax_code,
+                                                'tax_code_id': new_paid_tax_code,
+                                                'type_tax_use': 'sale',
+                                                'account_collected_id': sales_tax_account_id,
+                                                'account_paid_id': sales_tax_account_id
+                                                }, context=context)
                     default_account_ids = obj_acc.search(cr, uid, [('name', '=', 'Product Sales')], context=context)
                     if default_account_ids:
                         obj_acc.write(cr, uid, default_account_ids, {'tax_ids': [(6, 0, [sales_tax])]}, context=context)
@@ -691,15 +689,15 @@ class account_installer(osv.osv_memory):
                     new_paid_tax_code = obj_tax_code.create(cr, uid, vals_paid_tax_code, context=context)
 
                     purchase_tax = obj_tax.create(cr, uid,
-                                            {'name': 'TAX%s%%'%(p_tax*100),
-                                             'description': 'TAX%s%%'%(p_tax*100),
-                                             'amount': p_tax,
-                                             'base_code_id': new_tax_code,
-                                            'tax_code_id': new_paid_tax_code,
-                                            'type_tax_use': 'purchase',
-                                            'account_collected_id': purchase_tax_account_id,
-                                            'account_paid_id': purchase_tax_account_id
-                                             }, context=context)
+                                                  {'name': 'TAX%s%%'%(p_tax*100),
+                                                   'description': 'TAX%s%%'%(p_tax*100),
+                                                   'amount': p_tax,
+                                                   'base_code_id': new_tax_code,
+                                                   'tax_code_id': new_paid_tax_code,
+                                                   'type_tax_use': 'purchase',
+                                                   'account_collected_id': purchase_tax_account_id,
+                                                   'account_paid_id': purchase_tax_account_id
+                                                   }, context=context)
                     default_account_ids = obj_acc.search(cr, uid, [('name', '=', 'Expenses')], context=context)
                     if default_account_ids:
                         obj_acc.write(cr, uid, default_account_ids, {'tax_ids': [(6, 0, [purchase_tax])]}, context=context)
@@ -762,21 +760,21 @@ class account_installer_modules(osv.osv_memory):
     _inherit = 'res.config.installer'
     _columns = {
         'account_analytic_plans': fields.boolean('Multiple Analytic Plans',
-            help="Allows invoice lines to impact multiple analytic accounts "
-                 "simultaneously."),
+                                                 help="Allows invoice lines to impact multiple analytic accounts "
+                                                 "simultaneously."),
         'account_payment': fields.boolean('Suppliers Payment Management',
-            help="Streamlines invoice payment and creates hooks to plug "
-                 "automated payment systems in."),
+                                          help="Streamlines invoice payment and creates hooks to plug "
+                                          "automated payment systems in."),
         'account_followup': fields.boolean('Followups Management',
-            help="Helps you generate reminder letters for unpaid invoices, "
-                 "including multiple levels of reminding and customized "
-                 "per-partner policies."),
+                                           help="Helps you generate reminder letters for unpaid invoices, "
+                                           "including multiple levels of reminding and customized "
+                                           "per-partner policies."),
         'account_voucher': fields.boolean('Voucher Management',
-            help="Account Voucher module includes all the basic requirements of "
-                 "Voucher Entries for Bank, Cash, Sales, Purchase, Expenses, Contra, etc... "),
+                                          help="Account Voucher module includes all the basic requirements of "
+                                          "Voucher Entries for Bank, Cash, Sales, Purchase, Expenses, Contra, etc... "),
         'account_anglo_saxon': fields.boolean('Anglo-Saxon Accounting',
-            help="This module will support the Anglo-Saxons accounting methodology by "
-                "changing the accounting logic with stock transactions."),
+                                              help="This module will support the Anglo-Saxons accounting methodology by "
+                                              "changing the accounting logic with stock transactions."),
     }
 
     _defaults = {

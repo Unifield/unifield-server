@@ -18,10 +18,12 @@
                         <field name="locally_created" invisible="1" />
                         <field name="instance_creator" invisible="1" />
                         <field name="in_product" invisible="1" />
+                        <field name="property_product_pricelist_purchase" invisible="1" />
+                        <field name="property_account_receivable" invisible="1" />
+                        <field name="property_account_payable" invisible="1" />
                         <field name="min_qty" invisible="not context.get('choose_supplier')" />
                         <field name="delay" invisible="not context.get('choose_supplier')" />
                         <field name="price_unit" invisible="not context.get('choose_supplier')" />
-                        <!-- <field name="property_product_pricelist_purchase" invisible="not context.get('choose_supplier')" string="Currency"/> -->
                         <field name="price_currency" invisible="not context.get('choose_supplier')" string="Currency" />
                         <field name="valide_until_date" string="Valid until date"/>
                     </xpath>
@@ -92,6 +94,9 @@
                             <group expand="0" string="Group By...">
                                 <filter string="Partner type" icon="terp-personal" domain="[]" context="{'group_by' : 'partner_type'}" />
                                 <filter string="Zone" icon="terp-personal" domain="[]" context="{'group_by' : 'zone'}" />
+                                <filter string="Purch Default Cur" icon="terp-purchase" domain="[]" context="{'group_by' : 'property_product_pricelist_purchase'}" />
+                                <filter string="Acc Rec" icon="terp-sale" domain="[]" context="{'group_by' : 'property_account_receivable'}" />
+                                <filter string="Acc Pay" icon="terp-purchase" domain="[]" context="{'group_by' : 'property_account_payable'}" />
                             </group>
                         </search>
                     </xpath>
@@ -143,11 +148,13 @@
                         <page string="Sales &amp; Purchases">
                             <group colspan="2" col="2">
                                 <separator string="Purchase Properties" colspan="2"/>
-                               <field name="property_product_pricelist_purchase" string="Purchase Default Currency" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" />
+                                <field name="property_product_pricelist_purchase" string="Purchase Default Currency"
+                                    domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" required="1" />
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Field Orders Properties" colspan="2"/>
-                                <field name="property_product_pricelist" string="Field Orders Default Currency" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" />
+                                <field name="property_product_pricelist" string="Field Orders Default Currency"
+                                    domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" required="1" />
                             </group>
                             <newline />
                             <group colspan="2" col="4">
