@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <form>
                     <field name="instance_id"
-                           domain="['&amp;', ('level', 'in', ['coordo', 'section']), ('instance_to_display_ids','=',True)]"/>
+                           domain="['&amp;',  ('level', 'in', ['coordo', 'section']), ('instance_to_display_ids','=',True)]"/>
                     <field name="fiscalyear_id"/>
                     <field name="date_from" on_change="onchange_date(date_from, date_to)"
                                             attrs="{'required': [('period_id', '=', False)]}"/>
