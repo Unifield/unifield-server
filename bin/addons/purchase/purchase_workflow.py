@@ -240,6 +240,7 @@ class purchase_order_line(osv.osv):
                 'is_line_split': pol.is_line_split,
                 'original_line_id': pol.original_line_id.linked_sol_id.id if pol.original_line_id else False,
                 'procurement_request': sale_order.procurement_request,
+                'original_instance': pol.original_line_id.linked_sol_id and pol.original_line_id.linked_sol_id.original_instance or False
             }
             if pol.state not in ['confirmed', 'done', 'cancel', 'cancel_r']:
                 sol_values['confirmed_delivery_date'] = line_confirmed

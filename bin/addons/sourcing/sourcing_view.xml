@@ -68,8 +68,10 @@
                     <field name="virtual_stock" />
                     <field name="stock_uom_id" readonly="1" string="UoM Stock" />
 					<field name="company_id" invisible="1" />
+                    <!-- TODO: DEBUG TO REMOVE -->
+                    <field name="original_instance" />
 					<field name="supplier" colspan="2"
-						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft),('check_partner', '=', order_id), '|', '|', ('supplier', '=', 't'), ('manufacturer', '=', 't'), ('transporter', '=', 't')]"
+						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft),('check_partner', '=', active_id), '|', '|', ('supplier', '=', 't'), ('manufacturer', '=', 't'), ('transporter', '=', 't')]"
                         context="{'product_id': product_id, 'choose_supplier': True, 'uom': product_uom, 'product_qty': product_uom_qty}"
 						attrs="{'readonly': ['|', '|', ('po_cft', '=', 'cft'), ('state', '!=', 'validated'), ('type', '=', 'make_to_stock')]}"
 						on_change="onChangeSupplier(supplier, type)" />

@@ -1217,17 +1217,27 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 _('You cannot confirm the sourcing of a line with unit price as zero.'),
             )
 
-        int_int_supplier = self.search(cr, uid, [
-            ('id', 'in', ids),
-            ('supplier.partner_type', '=', 'internal'),
-            ('order_id.partner_type', '=', 'internal'),
-            ('order_id.procurement_request', '=', False),
-        ], count=True, context=context)
-        if int_int_supplier:
-            raise osv.except_osv(
-                _('Warning'),
-                _('You cannot confirm the sourcing of a line to an internal customer with an internal supplier.'),
-            )
+        if ids:
+            cr.execute('''
+                select
+                    count(*)
+                from
+                    sale_order_line sol, sale_order so, res_partner p, res_partner supplier
+                where
+                    sol.order_id = so.id and
+                    p.id = so.partner_id and
+                    supplier.id = sol.supplier and
+                    p.partner_type in ('section', 'internal', 'intermission') and
+                    supplier.partner_type in ('section', 'internal', 'intermission') and
+                    coalesce(sol.original_instance, p.name) != p.name and
+                    sol.id in %s
+                ''',  (tuple(ids), ))
+
+            if cr.fetchone()[0]:
+                raise osv.except_osv(
+                    _('Warning'),
+                    _('You cannot re-sync a line more than 2 times')
+                )
 
         self.source_line(cr, uid, ids, context=context)
 

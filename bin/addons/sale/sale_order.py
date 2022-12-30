@@ -2504,7 +2504,7 @@ class sale_order_line(osv.osv):
             'modification_comment', 'original_product', 'original_qty', 'original_price',
             'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync',
             'in_name_goods_return', 'counterpart_po_line_id', 'from_cancel_out',
-            'instance_sync_order_ref', 'sync_sourced_origin'
+            'instance_sync_order_ref', 'sync_sourced_origin', 'original_instance',
         ]:
             if x not in default:
                 default[x] = False

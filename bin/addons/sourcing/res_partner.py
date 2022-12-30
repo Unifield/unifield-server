@@ -72,6 +72,24 @@ class res_partner(osv.osv):
             result[l_id] = True
         return result
 
+    def _get_source_domain(self, cr, uid, sol_ids, context=None):
+        if isinstance(sol_ids, (int, long)):
+            sol_ids = [sol_ids]
+
+        remove_ids = set()
+        allowed_types_set = set(['external', 'esc', 'internal', 'section', 'intermission'])
+
+        for sol in self.pool.get('sale.order.line').browse(cr, uid, sol_ids, fields_to_fetch=['order_id', 'original_instance']):
+            remove_ids.add(sol.order_id.partner_id.id)
+            if not sol.order_id.procurement_request:
+                types_allowed = ['external', 'esc']
+                if sol.order_id.partner_type in ['esc', 'external']:
+                    types_allowed.extend(['internal', 'section', 'intermission'])
+                elif not sol.original_instance or sol.original_instance == sol.order_id.partner_id.name:
+                    types_allowed.extend(['internal', 'section', 'intermission'])
+                allowed_types_set.intersection_update(set(types_allowed))
+        return [('id', 'not in', list(remove_ids)), ('partner_type', 'in', list(allowed_types_set))]
+
     def _check_partner_type(self, cr, uid, obj, name, args, context=None):
         if context is None:
             context = {}
@@ -86,15 +104,7 @@ class res_partner(osv.osv):
                 if arg[1] != '=' or not isinstance(arg[2], (int, long)):
                     raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
                 if arg[2]:
-                    so = self.pool.get('sale.order').browse(cr, uid, arg[2], fields_to_fetch=['partner_id', 'procurement_request', 'partner_type'])
-                    newargs.append(('id', '!=', so.partner_id.id))
-                    if not so.procurement_request:
-                        types_allowed = ['external', 'esc']
-                        if so.partner_type not in ['internal', 'section', 'intermission']:
-                            types_allowed.extend(['internal', 'section', 'intermission'])
-                        elif so.partner_type == 'internal':
-                            types_allowed.extend(['section', 'intermission'])
-                        newargs.append(('partner_type', 'in', types_allowed))
+                    newargs += self._get_source_domain(cr, uid, arg[2], context=context)
             else:
                 newargs.append(args)
         return newargs
@@ -182,17 +192,7 @@ class res_partner(osv.osv):
         for arg in args:
             if arg[0] == 'line_contains_fo':
                 if type(arg[2]) == type(list()):
-                    for line in self.pool.get('sale.order.line').browse(cr, uid, arg[2][0][2], fields_to_fetch=['partner_id', 'order_id'], context=context):
-                        res.append(('id', '!=', line.partner_id.id))
-                        if not line.order_id.procurement_request:
-                            types_allowed = ['external', 'esc']
-                            if line.partner_id.partner_type not in ['internal', 'section', 'intermission']:
-                                types_allowed.extend(['internal', 'section', 'intermission'])
-                            elif line.partner_id.partner_type == 'internal':
-                                types_allowed.extend(['section', 'intermission'])
-
-                            res.append(('partner_type', 'in', types_allowed))
-
+                    res += self._get_source_domain(cr, uid, arg[2][0][2], context=context)
         return res
 
     _columns = {

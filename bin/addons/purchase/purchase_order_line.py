@@ -170,8 +170,10 @@ class purchase_order_line(osv.osv):
             elif pol.linked_sol_id.original_instance:
                 original_instance = pol.linked_sol_id.original_instance
             elif pol.linked_sol_id.order_id.partner_type in ('esc', 'external'):
+                # FO FS to Ext
                 original_instance = self.pool.get('res.company')._get_instance_record(cr, uid).instance
             else:
+                # IR or FO from scratch to instance
                 original_instance = pol.linked_sol_id.order_id.partner_id.name
 
 
