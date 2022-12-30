@@ -2118,7 +2118,7 @@ class account_bank_statement_line(osv.osv):
                                                                 values=values)
         self._check_cheque_number_uniticy(cr, uid, values.get('statement_id'),
                                           values.get('cheque_number'), context=context)
-        # remove useless spaces and line breaks in the description and ref
+        # remove useless spaces, line breaks and non-breaking spaces in the description and ref
         self.pool.get('data.tools').replace_line_breaks_from_vals(values, ['name', 'ref'], replace=['name'])
 
         # Then create a new bank statement line
