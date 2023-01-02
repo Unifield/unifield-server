@@ -1227,17 +1227,18 @@ class msf_import_export(osv.osv_memory):
                         if parent_type != 'view' or parent_category != 'OC':
                             raise Exception(_('The Parent Analytic Account must be a View type Cost Center.'))
 
+                    # convert instance code to browse record using a cache
                     for inst_key in ['top_prop_instance', 'top_cc_instance_ids', 'is_target_cc_instance_ids', 'po_fo_cc_instance_ids']:
                         if data.get(inst_key):
                             data[inst_key] = data[inst_key].strip()
-                            if inst_key not in instances_cache:
+                            if data[inst_key] not in instances_cache:
                                 instance_id = inst_obj.search(cr, uid, [('code', '=ilike', data[inst_key]), ('state', '!=', 'inactive')])
                                 if not instance_id:
                                     if ',' in data[inst_key]:
                                         raise Exception(_('Value %s : list of instances is not allowed') % data[inst_key])
                                     raise Exception(_('Instance %s not found') % data[inst_key])
-                                instances_cache[inst_key] = inst_obj.browse(cr, uid, instance_id[0], fields_to_fetch=['code', 'state', 'level', 'parent_id'], context=context)
-                            data[inst_key] = instances_cache[inst_key]
+                                instances_cache[data[inst_key]] = inst_obj.browse(cr, uid, instance_id[0], fields_to_fetch=['code', 'state', 'level', 'parent_id'], context=context)
+                            data[inst_key] = instances_cache[data[inst_key]]
 
                     if data.get('top_prop_instance'):
                         if data['top_prop_instance'].level != 'coordo':
@@ -1267,6 +1268,7 @@ class msf_import_export(osv.osv_memory):
                     if data.get('po_fo_cc_instance_ids'):
                         if cc_target_obj.search_exists(cr, uid, [('instance_id', '=', data['po_fo_cc_instance_ids'].id),
                                                                  ('is_po_fo_cost_center', '=', True)]):
+                            print data
                             raise Exception(_('%s: The instance %s already has a cost center picked for '
                                               'PO/FO reference.') % (data.get('code'), data['po_fo_cc_instance_ids'].code))
 
