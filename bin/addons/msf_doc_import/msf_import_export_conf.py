@@ -536,10 +536,10 @@ MODEL_DATA_DICT = {
             'type',
             'date_start',
             'date',  # "inactive from"
-            'top_prop_instance.code',
-            'top_cc_instance_ids.code',
-            'is_target_cc_instance_ids.code',
-            'po_fo_cc_instance_ids.code',
+            'top_prop_instance',
+            'top_cc_instance_ids',
+            'is_target_cc_instance_ids',
+            'po_fo_cc_instance_ids',
         ],
         'required_field_list': [
             'name',
