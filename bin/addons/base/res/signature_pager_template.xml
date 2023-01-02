@@ -1,0 +1,49 @@
+<page string="Signature" name="signature_tab">
+    <group colspan="2" />
+
+    <group colspan="4" col="4">
+        <button name="add_user_signatures"
+            string="Manage Users allowed to sign"
+            type="object"
+            colspan="2"
+            icon="terp-personal"
+            attrs="{'readonly': ['|', '|', ('signature_is_closed', '=', True), ('signature_state', '=', 'signed'), ('signed_off_line', '=', True)]}"
+            ignore_access_error="1"
+        />
+        <group colspan="2" col="14">
+            <field name="signed_off_line" readonly="1" />
+            <button name="activate_offline" type="object" string="Sign Off-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('signature_state', '!=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="6"/>
+            <button name="activate_offline_reset" type="object" string="Sign Off-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('signature_state', '=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="6" confirm="Warning, by setting this document as 'signed off-line' all online signatures will be removed from this document and all signatures must be handled outside of system."/>
+            <button name="disable_offline" type="object" string="Sign On-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', False), ('signature_state', '!=', False)]}" icon="gtk-connect" ignore_access_error="1" colspan="6" />
+        </group>
+        <newline />
+        <!-- <group colspan="2" /> -->
+        <field name="signature_user_ids" readonly="1" nolabel="1" colspan="2" attrs="{'readonly': [('signature_is_closed', '=', True)]}">
+            <tree string="Users allowed to sign">
+                <field name="user_id" />
+                <field name="subtype" />
+            </tree>
+        </field>
+        <field name="signature_line_ids" readonly="1" nolabel="1" colspan="2" on_change="sig_line_change()" mode="tree">
+            <tree string="Signatures">
+                <field name="name" />
+                <field name="is_active" />
+                <button name="disable_role" string="De-active Role" attrs="{'invisible': ['|', '|', ('is_active', '=', False), ('signature_is_closed', '=', True), ('signed', '=', True)]}" type="object" icon="gtk-del"/>
+                <button name="activate_role" string="Activate Role" attrs="{'invisible': ['|', '|', ('is_active', '=', True), ('signature_is_closed', '=', True), ('signed', '=', True)]}" type="object" icon="terp-camera_test"/>
+                <field name="user_name" string="Signee User" />
+                <field name="data_image" widget="image" height="50" />
+                <field name="date" />
+                <field name="format_value" />
+                <button name="open_sign_wizard" string="Sign" icon="gtk-paste-v" attrs="{'invisible': ['|', '|',('signature_is_closed', '=', True), ('signed', '=', True), ('is_active', '=', False)]}" type="object" />
+                <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|',('signature_is_closed', '=', True), ('signed', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
+                <field name="signed" />
+            </tree>
+        </field>
+        <field name="signature_state" />
+        <group colspan="2" col="4">
+            <button name="action_close_signature" string="Close Signature" type="object" icon="terp-locked" attrs="{'readonly': [('signature_is_closed', '=', True)]}" ignore_access_error="1" />
+            <field name="signature_is_closed" />
+        </group>
+    </group>
+</page>
+

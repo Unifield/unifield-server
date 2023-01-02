@@ -137,6 +137,9 @@ class account_mcdb(osv.osv):
         'copied_id': fields.many2one('account.mcdb', help='Id of the template loaded'),
         'template_name': fields.char('Template name', size=255),  # same size as the "Query name"
         'display_mcdb_load_button': fields.boolean('Display the Load button'),
+        'create_date': fields.date('Creation Date', readonly=True),
+        'write_date': fields.date('Last Edit Date', readonly=True),
+        'write_uid': fields.many2one('res.users', "Last Editor", readonly=True),
     }
 
     _defaults = {
@@ -1355,20 +1358,16 @@ class account_mcdb(osv.osv):
         - many2many fields: formats the values to make them look like [(6, 0, [1, 2])]
         - many2one fields: replaces the tuple looking like (1, u'FY 2018') by the related id
         """
-        if 'id' in data:
-            del data['id']
-        if 'copied_id' in data:
-            del data['copied_id']
-        if 'template' in data:
-            del data['template']
-        if 'description' in data:  # Query name
-            del data['description']
-        if 'template_name' in data:
-            del data['template_name']
-        if 'user' in data:
-            del data['user']
-        if 'display_mcdb_load_button' in data:
-            del data['display_mcdb_load_button']
+
+        fields_to_del = [
+            'id', 'copied_id', 'template', 'description',
+            'template_name', 'user', 'display_mcdb_load_button',
+            'write_uid', 'create_date', 'write_date'
+        ]
+
+        for f in fields_to_del:
+            if f in data:
+                del data[f]
         for i in data:
             if type(data[i]) == list:
                 data[i] = [(6, 0, data[i])]

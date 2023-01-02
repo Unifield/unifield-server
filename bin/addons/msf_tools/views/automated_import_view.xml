@@ -76,7 +76,7 @@
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
                     <button name="local_autoconfig" string="Local Auto Configuration" colspan="2" type="object" icon="terp-dialog-close" confirm="This action should only be executed on a Sandbox, it will override the current configuration. Do you confirm ?" attrs="{'invisible': [('is_admin', '=', False)]}"/>
 
-                    <separator colspan="4" string="FTP server" />
+                    <separator colspan="4" string="Remote server" />
                     <group col="4" colspan="4">
                         <field name="ftp_ok" on_change="onchange_ftp_ok(ftp_ok)" />
                         <field name="ftp_protocol" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
@@ -104,6 +104,7 @@
                         <field name="interval" attrs="{'required': [('interval_unit', '&gt;', 0)]}" />
                         <field name="interval_unit" />
                         <field name="start_time" />
+                        <field name="next_scheduled_task" />
                     </group>
                     <separator colspan="4" string="Activation" />
                     <group colspan="4" col="1">

@@ -185,7 +185,7 @@
 
 
 % for r in objects:
-<ss:Worksheet ss:Name="${_('IR Follow Up per Location')|x}">
+<ss:Worksheet ss:Name="${_('IR Follow Up')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Order ref
         <Column ss:AutoFitWidth="1" ss:Width="130.0" />
@@ -233,7 +233,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="50.0" />
 
         <Row ss:Height="18">
-            <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('INTERNAL REQUEST FOLLOW-UP per LOCATION')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+            <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('INTERNAL REQUEST FOLLOW-UP')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
         </Row>
 
         <Row ss:Height="10"></Row>
@@ -378,14 +378,18 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
-                    % if line.get('delivered_qty'):
-                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
+                    % if line.get('delivered_qty') or not line.get('cancelled_move'):
+                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('delivered_qty', 0)}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivery_order', '')|x}</Data></Cell>
+                    % if line.get('cancelled_move'):
+                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">0.00</Data></Cell>
+                    % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">-</Data></Cell>
+                    % endif
                     % if line.get('edd'):
                         % if isDate(line['edd']):
                             % if getLang() == 'fr_MF':
@@ -457,30 +461,21 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
-                    % if line.get('delivered_qty'):
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
+                    % if line.get('delivered_qty') or not line.get('cancelled_move'):
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty', 0)}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivery_order', '')|x}</Data></Cell>
-                    % if line.get('extra_qty', False):
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
-                    % else:
-                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
-                    % endif
-                    % if line.get('cdd'):
-                        % if isDate(line['cdd']):
-                            % if getLang() == 'fr_MF':
-                            <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
-                            % else:
-                            <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
-                            % endif
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(line.get('delivery_order', '-') != '-' and line.get('delivery_order') or line.get('shipment', '-') != '-' and line.get('shipment')  or line.get('packing') or '-')|x}</Data></Cell>
+                    % if not line.get('cancelled_move'):
+                        % if line.get('extra_qty', False):
+                        <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
                         % else:
-                            <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['cdd']|x}</Data></Cell>
+                        <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
                         % endif
                     % else:
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
                     % endif
                     % if line.get('edd'):
                         % if isDate(line['edd']):
@@ -491,6 +486,19 @@
                             % endif
                         % else:
                             <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['edd']|x}</Data></Cell>
+                        % endif
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                    % endif
+                    % if line.get('cdd'):
+                        % if isDate(line['cdd']):
+                            % if getLang() == 'fr_MF':
+                            <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            % else:
+                            <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            % endif
+                        % else:
+                            <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['cdd']|x}</Data></Cell>
                         % endif
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>

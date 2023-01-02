@@ -16,7 +16,7 @@ action = {
         </record>
 
        <record id="po_follow_up_menu2" model="ir.ui.menu">
-          <field name="name">PO Follow Up per Supplier</field>
+          <field name="name">Export PO Follow-up</field>
           <field name="sequence" eval="4"/>
           <field name="parent_id" ref="base.next_id_73"/>
           <field name="icon">STOCK_EXECUTE</field>

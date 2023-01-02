@@ -742,6 +742,7 @@ stock_tracking()
 #----------------------------------------------------------
 # Stock Picking
 #----------------------------------------------------------
+
 class stock_picking(osv.osv):
     _name = "stock.picking"
     _description = "Picking List"
@@ -914,6 +915,33 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_total_qty_str(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        if not ids:
+            return {}
+
+        ret = {}
+
+        cr.execute('''
+            select
+                m.picking_id, sum(m.product_qty), u.name
+            from
+                stock_move m, product_uom u
+            where
+                u.id = m.product_uom and
+                m.state != 'cancel' and
+                m.picking_id in %s
+            group by
+                m.picking_id, u.name
+        ''', (tuple(ids), ))
+        temp = {}
+        for x in cr.fetchall():
+            temp.setdefault(x[0], []).append('%s %s' % (x[1], x[2]))
+        for _id in ids:
+            ret[_id] = ', '.join(temp.get(_id, []))
+        return ret
+
     def _get_fake(self, cr, uid, ids, name, args, context=None):
         '''
         Fake method for 'product_id' field
@@ -923,6 +951,7 @@ class stock_picking(osv.osv):
             return res
         if isinstance(ids, (int, long)):
             ids = [ids]
+
         for id in ids:
             res[id] = False
         return res
@@ -986,6 +1015,7 @@ class stock_picking(osv.osv):
         'customers': fields.char('Customers', size=1026),
         'customer_ref': fields.char('Customer Ref.', size=1026),
         'sync_dpo_in': fields.boolean('Synced IN for DPO reception', internal=1, help='Used to flag a IN linked to a DPO'),
+        'total_qty_str': fields.function(_get_total_qty_str, method=1, string='Qties', type='char'),
         'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
     }
 
@@ -1289,8 +1319,7 @@ class stock_picking(osv.osv):
                 if move.state == 'assigned':
                     todo.append(move.id)
             if len(todo):
-                move_obj.action_done(cr, uid, todo,
-                                     return_goods=return_goods, context=context)
+                move_obj.action_done(cr, uid, todo, return_goods=return_goods, context=context)
         return True
 
     def get_currency_id(self, cr, uid, picking):
@@ -1469,7 +1498,6 @@ class stock_picking(osv.osv):
         To call after the creation of the invoice
         """
         sale_obj = self.pool.get('sale.order')
-        purchase_obj = self.pool.get('purchase.order')
         if invoice_id and picking:
             po_id = picking.purchase_id and picking.purchase_id.id or False
             so_id = picking.sale_id and picking.sale_id.id or False
@@ -1483,8 +1511,6 @@ class stock_picking(osv.osv):
             sale_obj.write(cr, uid, [picking.sale_id.id], {
                 'invoice_ids': [(4, invoice_id)],
             })
-        if picking.purchase_id:
-            purchase_obj.write(cr, uid, [picking.purchase_id.id], {'invoice_id': invoice_id, })
         return
 
     # action_invoice_create method has been removed because of the impossibility to retrieve DESTINATION from SO.

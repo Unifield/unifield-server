@@ -24,7 +24,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from lxml import etree
 import netsvc
 
 class hq_entries(osv.osv):
@@ -229,23 +228,23 @@ class hq_entries(osv.osv):
         return levels
 
     _columns = {
-        'account_id': fields.many2one('account.account', "Account", required=True),
+        'account_id': fields.many2one('account.account', "Account", required=True, select=1),
         'account_user_type_code': fields.related('account_id', 'user_type_code', string="Account Type",
                                                  type='char', size=32, readonly=True, store=False),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]", select=1),
         'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_1_id': fields.many2one('account.analytic.account', "Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_2_id': fields.many2one('account.analytic.account', "Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'user_validated': fields.boolean("Validated", help="Is this line validated by a user in a OpenERP field instance?", readonly=True),
-        'date': fields.date("Posting Date", readonly=True),
+        'user_validated': fields.boolean("Validated", help="Is this line validated by a user in a OpenERP field instance?", readonly=True, select=1),
+        'date': fields.date("Posting Date", readonly=True, select=1),
         'partner_txt': fields.char("Third Party", size=255, readonly=True),
         'period_id': fields.many2one("account.period", "Period", readonly=True),
-        'name': fields.char('Description', size=255, required=True, readonly=True),
-        'ref': fields.char('Reference', size=255),
-        'document_date': fields.date("Document Date", readonly=True),
+        'name': fields.char('Description', size=255, required=True, readonly=True, select=1),
+        'ref': fields.char('Reference', size=255, select=1),
+        'document_date': fields.date("Document Date", readonly=True, select=1),
         'currency_id': fields.many2one('res.currency', "Book. Currency", required=True, readonly=True),
-        'amount': fields.float('Amount', readonly=True),
+        'amount': fields.float('Amount', readonly=True, select=1),
         'account_id_first_value': fields.many2one('account.account', "Account @import", required=True, readonly=True),
         'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=False, readonly=False),
         'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", readonly=True),
@@ -376,7 +375,7 @@ class hq_entries(osv.osv):
         if original.analytic_state != 'valid':
             raise osv.except_osv(_('Error'), _('You cannot split a HQ Entry which analytic distribution state is not valid!'))
         original_amount = original.amount
-        vals.update({'original_id': original_id, 'original_amount': original_amount, 'date': original.date})
+        vals.update({'original_id': original_id, 'original_amount': original_amount, 'date': original.date, 'document_date': original.document_date})
         wiz_id = self.pool.get('hq.entries.split').create(cr, uid, vals, context=context)
         # Return view with register_line id
         context.update({
@@ -466,29 +465,17 @@ class hq_entries(osv.osv):
             'context': context,
         }
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+    def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):
         """
-        Adapts domain for AD fields
+        Resets the FP and Dest if not compatible with CC and update DEST domain
         """
-        if context is None:
-            context = {}
-        view = super(hq_entries, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        arch = etree.fromstring(view['arch'])
-        fields = arch.xpath('field[@name="analytic_id"]')
-        if fields:
-            fields[0].set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
-                                    "('fp_compatible_with_cc_ids', '=', cost_center_id), "
-                                    "('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id))]")
-        # Change Destination field
-        dest_fields = arch.xpath('field[@name="destination_id"]')
-        for field in dest_fields:
-            field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id)]")
-            view['arch'] = etree.tostring(arch)
-        return view
+        return self.pool.get('analytic.distribution').\
+            onchange_ad_cost_center(cr, uid, ids, cost_center_id=cost_center_id, funding_pool_id=funding_pool_id, fp_field_name='analytic_id')
 
     def onchange_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False):
         return self.pool.get('analytic.distribution').\
             onchange_ad_destination(cr, uid, ids, destination_id=destination_id, funding_pool_id=funding_pool_id, account_id=account_id)
+
 
     def _check_cc(self, cr, uid, ids, context=None):
         """

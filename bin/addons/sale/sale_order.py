@@ -1574,7 +1574,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         'type': 'out',
                         'subtype': 'standard',
                         'already_replicated': False,
-                        'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1],
+                        'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_unit')[1],
                         'requestor': order.requestor,
                     })
                     seq_name = 'stock.picking.out'
@@ -1670,12 +1670,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if order.procurement_request and order.location_requestor_id:
             move_data.update({
                 'type': 'internal',
-                'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1],
                 'location_dest_id': order.location_requestor_id.id,
             })
-
+            rt = 'reason_type_internal_move'
             if order.location_requestor_id.usage in ('supplier', 'customer'):
                 move_data['type'] = 'out'
+                rt = 'reason_type_deliver_unit'
+            move_data['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', rt)[1]
         else:
             # first go to packing location (PICK/PACK/SHIP) or output location (Simple OUT)
             # according to the configuration
@@ -2290,6 +2291,7 @@ class sale_order_line(osv.osv):
         'pol_external_ref': fields.function(_get_pol_external_ref, method=True, type='char', size=256, string="Linked PO line's External Ref.", store=False),
         'instance_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance'),
         'cv_line_ids': fields.one2many('account.commitment.line', 'so_line_id', string="Commitment Voucher Lines"),
+        'loan_line_id': fields.many2one('purchase.order.line', string='Linked loan line', readonly=True),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2453,7 +2455,6 @@ class sale_order_line(osv.osv):
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
-
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         reset link to purchase order from update of on order purchase order
@@ -2493,6 +2494,9 @@ class sale_order_line(osv.osv):
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
+
+        if not default.get('is_line_split', False):
+            default['loan_line_id'] = False
 
         for x in [
             'modification_comment', 'original_product', 'original_qty', 'original_price',

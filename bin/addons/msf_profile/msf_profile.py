@@ -41,6 +41,7 @@ import zlib
 import random
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import hashlib
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
@@ -55,6 +56,406 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+    def us_10586_running_one_time_accrual(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:
+            cr.execute('''
+                UPDATE msf_accrual_line a SET state='done'
+                FROM account_move_line m
+                WHERE
+                    a.accrual_type='one_time_accrual' AND
+                    a.state='running' AND
+                    a.move_line_id=m.id AND
+                    m.reconcile_id IS NOT NULL
+            ''')
+        return True
+
+    # UF27.0
+    def store_picking_subtype(self, cr, uid, *a, **b):
+        cr.execute("""
+            update
+                stock_move m
+            set
+                picking_subtype = p.subtype
+            from
+                stock_picking p
+            where
+                p.id = m.picking_id
+            """)
+        return True
+
+    def us_10105_custom_order_cv(self, cr, uid, *a, **b):
+        # CV is_draft field for custom ordering
+        cr.execute("update account_commitment set is_draft=state='draft'")
+        return True
+
+    def us_10105_custom_order(self, cr, uid, *a, **b):
+        cr.execute("update account_invoice set is_draft=state='draft'")
+        # fix wrong DF on OCBHT101 / OCBHT143
+        cr.execute("update account_invoice set internal_number=number where number is not null and internal_number!=number")
+        # emulate: order by internal_number desc null lasts
+        cr.execute("update account_invoice set internal_number='' where internal_number is null")
+        return True
+
+    def us_10475_create_user_sup_config_hq(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            context = {}
+
+            group_obj = self.pool.get('res.groups')
+            to_copy_ids = group_obj.search(cr, uid, [('name', '=', 'Sup_Supply_System_Administrator')], context=context)
+            if not to_copy_ids:
+                return True
+
+            menu_ids = self.pool.get('ir.ui.menu').search(cr, uid, [('groups_id', '=', to_copy_ids[0]), ('active', 'in', ['t', 'f'])], context={'ir.ui.menu.full_list': True})
+            menu_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'menu_action_res_users_whitelist')[1])
+            menu_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'menu_users')[1])
+            gp_id = group_obj.create(cr, uid, {
+                'name': 'Sup_Config_HQ',
+                'level': 'hq',
+                'visible_res_groups': True,
+                'menu_access': [(6, 0, menu_ids)],
+            }, context={})
+
+            far_obj = self.pool.get('msf_field_access_rights.field_access_rule')
+            far_ids = far_obj.search(cr, uid, [('group_ids', 'in', to_copy_ids), ('instance_level', '=', 'hq'), ('active', 'in', ['t', 'f'])], context=context)
+            if far_ids:
+                far_obj.write(cr, uid, far_ids, {'group_ids': [(4, gp_id)]}, context=context)
+            self.log_info(cr, uid, "US-10475: %d far updated" % len(far_ids))
+
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            bar_ids = bar_obj.search(cr, uid, [('group_ids', 'in', to_copy_ids), ('active', 'in', ['t', 'f'])], context=context)
+            if bar_ids:
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(4, gp_id)]}, context=context)
+            self.log_info(cr, uid, "US-10475: %d bar updated" % len(bar_ids))
+
+
+            acl_obj = self.pool.get('ir.model.access')
+            acl_ids = acl_obj.search(cr, uid, [('group_id', '=', to_copy_ids[0])], context=context)
+            acl_nb = 0
+            for acl in acl_obj.read(cr, uid, acl_ids, ['perm_unlink', 'perm_write', 'perm_read', 'perm_create', 'model_id'], context=context):
+                del(acl['id'])
+                acl['group_id'] = gp_id
+                acl['name'] = 'Sup_Config_HQ'
+                acl['model_id'] = acl['model_id'] and acl['model_id'][0] or False
+                acl_obj.create(cr, uid, acl, context=context)
+                acl_nb += 1
+            self.log_info(cr, uid, "US-10475: %d acl created on Sup_Config_HQ" % acl_nb)
+
+            # Window Actions not applicable
+
+            return True
+
+    def us_10662_remove_user_tz(self, cr, uid, *a, **b):
+        cr.execute("update res_users set context_tz=NULL where context_tz IS NOT NULL")
+        self.log_info(cr, uid, "US-10662: Timezone removed on %d user(s)" % (cr.rowcount,))
+        return True
+
+    def us_9999_custom_accrual_order(self, cr, uid, *a, **b):
+        cr.execute("update msf_accrual_line set order_accrual='1901-01-01' where state != 'draft'")
+        cr.execute("update msf_accrual_line set order_accrual=document_date where state = 'draft'")
+        return True
+
+    def us_9842_remove_space(self, cr, uid, *a, **b):
+        cr.execute("UPDATE hr_employee SET identification_id = TRIM(identification_id) WHERE employee_type='ex' and identification_id is not null and identification_id!=TRIM(identification_id)")
+        self.log_info(cr, uid, "US-9843: extra space removed on %d expat" % (cr.rowcount,))
+        return True
+
+    def set_creator_on_employee(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            self.pool.get('sync.trigger.something.bidir_mission').create(cr, uid, {'name': 'instance_creator_employee', 'args': current_instance.code})
+        return True
+
+    def us_9588_set_real_period_on_aji_from_cv(self, cr, uid, *a, **b):
+        cr.execute('update account_analytic_line  aji set real_period_id = cv.period_id from account_commitment cv, account_commitment_line cvline where cvline.commit_id=cv.id and aji.commitment_line_id=cvline.id')
+        self.log_info(cr, uid, '%d AJIs from CV: period updates.' % (cr.rowcount,))
+        return True
+
+    def us_7852_set_journal_code(self, cr, uid, *a, **b):
+        self.set_journal_code_on_aji(cr, uid)
+        self.pool.get('ir.config_parameter').set_param(cr, 1, 'exec_set_journal_code_on_aji', True)
+        return True
+
+    def set_journal_code_on_aji(self, cr, uid, *a, **b):
+        cr.execute("""
+            update account_analytic_line a set
+                partner_txt=j.code
+            from
+                account_move_line l, account_journal j
+            where
+                l.id = a.move_id and
+                j.id = l.transfer_journal_id and
+                a.partner_txt != j.code
+        """)
+
+        self.log_info(cr, uid, "US-7852: set journal code on %d AJIs" % (cr.rowcount,))
+
+    def us_fix_segment_version(self, cr, uid, *a, **b):
+        cr.execute('delete from replenishment_segment_line_period where from_date is not null and to_date is null and value=0')
+        all_fields = []
+        for x in range(1, 19):
+            all_fields+=['rr_fmc_%d' % x, 'rr_fmc_from_%d' % x, 'rr_fmc_to_%d' % x]
+        line_obj = self.pool.get('replenishment.segment.line')
+
+        offset = 0
+        while True:
+            seg_line_ids = line_obj.search(cr, uid, [], limit=200, offset=offset, order='id')
+            if not seg_line_ids:
+                break
+            for line in line_obj.read(cr, uid, seg_line_ids, all_fields):
+                all_data = ''
+                for x in all_fields:
+                    all_data +='%s'%line[x]
+                fmc_version = hashlib.md5(''.join(all_data)).hexdigest()
+                cr.execute("update replenishment_segment_line set fmc_version=%s where id=%s", (fmc_version, line['id']))
+            offset += 200
+        return True
+
+    def us_9394_fix_pi_and_reason_type(self, cr, uid, *a, **b):
+        '''
+        Set the new Reason Type column pi_discrepancy_type to True for 'Discrepancy' and 'Other', False otherwise
+        Remove the Adjustment Type of discrepancy lines in PIs that are Counted or Validated
+        '''
+        # Fix the RT
+        data_obj = self.pool.get('ir.model.data')
+        other_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        discr_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+
+        cr.execute("""UPDATE stock_reason_type SET pi_discrepancy_type = 't' WHERE id IN %s""", (tuple([other_rt_id, discr_rt_id]),))
+        cr.execute("""UPDATE stock_reason_type SET pi_discrepancy_type = 'f' WHERE id NOT IN %s""", (tuple([other_rt_id, discr_rt_id]),))
+
+        # Fix the discrepancy lines
+        cr.execute("""UPDATE physical_inventory_discrepancy SET reason_type_id = NULL WHERE inventory_id IN (
+            SELECT id FROM physical_inventory WHERE state NOT IN ('confirmed', 'closed', 'cancel'))
+        """)
+        return True
+
+    def us_10587_fix_rt_donation_loan(self, cr, uid, *a, **b):
+        '''
+        Do the same updates as us_9229_fix_rt but on PPLs and Packs, and avoid Loan, Donation (standard) and Donation
+        before expiry flows
+        Fix the Reason Type of all Picks, OUTs, PPLs and Packs coming from a Loan, Donation (standard) or Donation
+        before expiry FO
+        Set the Reason Type of those documents and their moves to the one corresponding to the FO's Type
+        Set the Reason Type of PICK/01410-return and PICK/01410-return-01 in NG_COOR_OCA to Goods Return
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        deli_unit_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_unit')[1]
+        deli_partner_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        loan_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        don_st_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
+        don_exp_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+        goods_ret_rt = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+
+        # To Deliver Unit
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN sale_order s ON p.sale_id = s.id LEFT JOIN stock_location l ON s.location_requestor_id = l.id
+                WHERE p.type = 'out' AND p.subtype IN ('packing', 'ppl') AND s.procurement_request = 't' 
+                    AND l.location_category = 'consumption_unit' AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (deli_unit_rt_id, '%-return%', '%-surplus%'))
+        self.log_info(cr, uid, "US-10587: %d PPLs/Packs and their lines had their Reason Type set to 'Deliver Unit'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN sale_order s ON p.sale_id = s.id LEFT JOIN stock_location l ON s.location_requestor_id = l.id
+                WHERE p.type = 'out' AND p.subtype IN ('packing', 'ppl') AND s.procurement_request = 't' 
+                    AND l.location_category = 'consumption_unit' AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (deli_unit_rt_id, '%-return%', '%-surplus%'))
+
+        # To Deliver Partner
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('packing', 'ppl') AND s.procurement_request = 'f'
+                    AND s.order_type NOT IN ('loan', 'donation_st', 'donation_exp') AND p.name NOT LIKE %s 
+                    AND p.name NOT LIKE %s)
+        ''', (deli_partner_rt_id, '%-return%', '%-surplus%'))
+        self.log_info(cr, uid, "US-10587: %d PPLs/Packs and their lines had their Reason Type set to 'Deliver Partner'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('packing', 'ppl') AND s.procurement_request = 'f'
+                    AND s.order_type NOT IN ('loan', 'donation_st', 'donation_exp') AND p.name NOT LIKE %s 
+                    AND p.name NOT LIKE %s)
+        ''', (deli_partner_rt_id, '%-return%', '%-surplus%'))
+
+        # Loan
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'loan' AND p.name NOT LIKE %s 
+                    AND p.name NOT LIKE %s)
+        ''', (loan_rt, '%-return%', '%-surplus%'))
+        self.log_info(cr, uid, "US-10587: %d OUTs/Picks/PPLs/Packs and their lines had their Reason Type set to 'Loan'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'loan' AND p.name NOT LIKE %s 
+                    AND p.name NOT LIKE %s)
+        ''', (loan_rt, '%-return%', '%-surplus%'))
+
+        # Donation (standard)
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'donation_st' 
+                    AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_st_rt, '%-return%', '%-surplus%'))
+        self.log_info(cr, uid, "US-10587: %d OUTs/Picks/PPLs/Packs and their lines had their Reason Type set to 'Donation (standard)'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'donation_st' 
+                    AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_st_rt, '%-return%', '%-surplus%'))
+
+        # Donation before expiry
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'donation_exp' 
+                    AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_exp_rt, '%-return%', '%-surplus%'))
+        self.log_info(cr, uid, "US-10587: %d OUTs/Picks/PPLs/Packs and their lines had their Reason Type set to 'Donation before expiry'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'donation_exp' 
+                    AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
+        ''', (don_exp_rt, '%-return%', '%-surplus%'))
+
+        # Fix the RT of a claim PICKs in NG_COOR_OCA
+        msf_instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+        if msf_instance and msf_instance.instance == 'NG_COOR_OCA':
+            cr.execute('''UPDATE stock_picking SET reason_type_id = %s WHERE id IN (11193, 13420)''', (goods_ret_rt,))
+            cr.execute('''UPDATE stock_move SET reason_type_id = %s WHERE picking_id IN (11193, 13420)''', (goods_ret_rt,))
+            self.log_info(cr, uid, "US-10587: PICK/01410-return, PICK/01410-return-01 and their lines had their Reason Type set to 'Goods Return'")
+
+        return True
+
+
+    def us_9406_create_bar(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+
+        creator_b_names = ['add_user_signatures', 'action_close_signature', 'activate_role', 'disable_role', 'activate_offline', 'disable_offline', 'activate_offline_reset']
+        sign_b_names = ['open_sign_wizard', 'action_unsign']
+        bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+        for group_name, model, b_names in [
+            ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement'], creator_b_names),
+            ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order'], creator_b_names),
+            ('Sign_user', ['account.invoice', 'account.bank.statement', 'purchase.order', 'stock.picking', 'sale.order'], sign_b_names)
+        ]:
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
+            if not group_ids:
+                group_id = self.pool.get('res.groups').create(cr, uid, {'name': group_name})
+            else:
+                group_id = group_ids[0]
+
+            if model and b_names:
+                bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', 'in', model)])
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
+
+        user_manager = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'User_Manager')])
+        if user_manager:
+            bar_ids = bar_obj.search(cr, uid, [('name', '=', 'reset_signature'), ('model_id', '=', 'res.users')])
+            bar_ids += bar_obj.search(cr, uid, [('name', '=', 'save'), ('model_id', '=', 'signature.change_date')])
+            if bar_ids:
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [user_manager[0]])]})
+        for group_name, menus in [
+            ('Sign_user', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'useability_dashboard_and_menu.my_signature_menu']),
+            ('User_Manager', ['base.signature_image_menu']),
+            ('Sign_document_creator_finance', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'base.signature_image_menu']),
+            ('Sign_document_creator_supply', ['base.menu_administration', 'base.menu_users', 'useability_dashboard_and_menu.signature_follow_up_menu', 'base.signature_image_menu']),
+        ]:
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
+            if not group_ids:
+                continue
+            for menu in menus:
+                module, xmlid = menu.split('.')
+                try:
+                    menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
+                except:
+                    continue
+                self.pool.get('ir.ui.menu').write(cr, uid, [menu_id], {'groups_id': [(4, group_ids[0])]})
+        return True
+
+    def us_9406_create_record_rules(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+        sign_user_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')])
+        supply_creator_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_document_creator_supply')])
+        finance_creator_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_document_creator_finance')])
+        model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'signature.follow_up')])
+        data = {
+            'model_id': model_id[0],
+            'perm_read': True,
+            'perm_write': False,
+            'perm_create': False,
+            'perm_unlink': False,
+        }
+        rr_obj = self.pool.get('ir.rule')
+        data.update({
+            'name': 'Signatures Follow-up Supply Creator',
+            'domain_force': "[('doc_type', 'in', ['purchase.order', 'sale.order', 'stock.picking'])]",
+            'groups': [(6, 0, supply_creator_id)],
+        })
+        rr_obj.create(cr, uid, data)
+        data.update({
+            'name': 'Signatures Follow-up Finance Creator',
+            'domain_force': "[('doc_type', 'in', ['account.bank.statement.cash', 'account.bank.statement.bank', 'account.invoice.si', 'account.invoice.donation'])]",
+            'groups': [(6, 0, finance_creator_id)],
+        })
+        rr_obj.create(cr, uid, data)
+        data.update({
+            'name': 'Signatures Follow-up Sign_User',
+            'domain_force': "[('user_id', '=', user.id)]",
+            'groups': [(6, 0, sign_user_id)],
+        })
+        rr_obj.create(cr, uid, data)
+        return True
+
+    def us_9406_create_common_acl(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where name='account_hq_entries_action_hq_entries_import_wizard')")
+        cr.execute("delete from ir_model_data where name='account_hq_entries_action_hq_entries_import_wizard'")
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+        model_obj = self.pool.get('ir.model')
+        acl_obj = self.pool.get('ir.model.access')
+        for model in ['signature', 'signature.object', 'signature.line', 'signature.image', 'signature.follow_up', 'signature.users.allowed']:
+            model_id = model_obj.search(cr, uid, [('model', '=', model)])
+            acl_obj.create(cr, uid, {
+                'name': 'common',
+                'model_id': model_id[0],
+                'perm_read': True,
+                'perm_create': model == 'signature',
+            })
+        return True
+
+    def us_9406_empty_sign(self, cr, uid, *a, **b):
+        # this script must always be run : i.e on past and new instances to hide menu
+
+        for model, table in [
+                ('purchase.order', 'purchase_order'), ('sale.order', 'sale_order'),
+                ('account.bank.statement', 'account_bank_statement'),
+                ('account.invoice', 'account_invoice'),
+                ('stock.picking', 'stock_picking'),
+        ]:
+            cr.execute('select id from %s where signature_id is null' % (table, )) # not_a_user_entry
+            for x in cr.fetchall():
+                cr.execute("insert into signature (signature_res_model, signature_res_id) values (%s, %s) returning id", (model, x[0]))
+                a = cr.fetchone()
+                cr.execute("update %s set signature_id=%%s where id=%%s" % (table,) , (a[0], x[0])) # not_a_user_entry
+        # hide menuitems
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+
+        return True
 
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):
@@ -121,6 +522,69 @@ class patch_scripts(osv.osv):
         import_prod_menu_id = data_obj.get_object_reference(cr, uid, 'import_data', 'menu_action_import_products')[1]
         update_prod_menu_id = data_obj.get_object_reference(cr, uid, 'import_data', 'menu_action_update_products')[1]
         self.pool.get('ir.ui.menu').write(cr, uid, [import_prod_menu_id, update_prod_menu_id], {'active': instance.level != 'project'}, context={})
+        return True
+
+    def us_8428_pi_type_migration(self, cr, uid, *a, **b):
+        '''
+        In PIs, if full_inventory == True, set the type to 'full'
+        '''
+        cr.execute("""UPDATE physical_inventory SET type = 'full' WHERE full_inventory = 't'""")
+        cr.execute("""UPDATE physical_inventory SET type = 'partial' WHERE type is null""")
+
+    def us_9229_fix_rt(self, cr, uid, *a, **b):
+        '''
+        Updates to do:
+            - All OUTs and Picks plus their lines created from IR with Ext CU to have RT Deliver Unit
+            - All OUTs and Picks plus their lines created from FO to have RT Deliver Partner
+            - All OUT-CONSOs plus their lines to have RT Consumption Report
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        deli_unit_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_unit')[1]
+        deli_partner_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        consu_rep_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_consumption_report')[1]
+
+        # To Deliver Unit
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN sale_order s ON p.sale_id = s.id LEFT JOIN stock_location l ON s.location_requestor_id = l.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 't' 
+                    AND l.location_category = 'consumption_unit')
+        ''', (deli_unit_rt_id,))
+        self.log_info(cr, uid, "US-9229: %d OUTs/Picks and their lines had their Reason Type set to 'Deliver Unit'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN sale_order s ON p.sale_id = s.id LEFT JOIN stock_location l ON s.location_requestor_id = l.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 't' 
+                    AND l.location_category = 'consumption_unit')
+        ''', (deli_unit_rt_id,))
+
+        # To Deliver Partner
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f')
+        ''', (deli_partner_rt_id,))
+        self.log_info(cr, uid, "US-9229: %d OUTs/Picks and their lines had their Reason Type set to 'Deliver Partner'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
+                WHERE p.type = 'out' AND p.subtype IN ('standard', 'picking') AND s.procurement_request = 'f')
+        ''', (deli_partner_rt_id,))
+
+        # To Consumption Report
+        cr.execute('''
+            UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT id FROM stock_picking WHERE type = 'out' AND subtype IN ('standard', 'picking') 
+                AND rac_id IS NOT NULL)
+        ''', (consu_rep_rt_id,))
+        self.log_info(cr, uid, "US-9229: %d OUT-CONSOs and their lines had their Reason Type set to 'Consumption Report'" % (cr.rowcount,))
+        cr.execute('''
+            UPDATE stock_move SET reason_type_id = %s 
+            WHERE picking_id IN (SELECT id FROM stock_picking WHERE type = 'out' AND subtype IN ('standard', 'picking') 
+                AND rac_id IS NOT NULL)
+        ''', (consu_rep_rt_id,))
 
         return True
 
@@ -5606,3 +6070,50 @@ class sync_tigger_something_up(osv.osv):
         return super(sync_tigger_something_up, self).create(cr, uid, vals, context)
 
 sync_tigger_something_up()
+
+class sync_tigger_something_bidir_mission(osv.osv):
+    _name = 'sync.trigger.something.bidir_mission'
+
+    _columns = {
+        'name': fields.char('Name', size=256),
+        'args': fields.text('Args'),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if vals.get('name') == 'instance_creator_employee' and vals.get('args'):
+            # populate instance_creator on hr.employee
+            # triggered from sync to process sync in-pipe employee or after init sync
+            entity = self.pool.get('sync.client.entity')
+            if entity:
+                b = time.time()
+                cr.execute("""
+                    update hr_employee hr
+                        set instance_creator=instance.code
+                        from
+                            ir_model_data d,
+                            msf_instance instance
+                        where
+                            d.module = 'sd' and
+                            d.model = 'hr.employee' and
+                            d.res_id = hr.id and
+                            instance.instance_identifier = split_part(d.name, '/', 1) and
+                            coalesce(hr.instance_creator, '') = '' and
+                            hr.employee_type='local'
+                """)
+                self.pool.get('patch.scripts').log_info(cr, uid, 'Instance creator set on %d local employees in %d sec' % (cr.rowcount, time.time() - b))
+
+                c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+                instance = c and c.instance_id and c.instance_id
+                main_parent = instance.code
+                if instance.parent_id:
+                    main_parent = instance.parent_id.code
+                    if instance.parent_id.parent_id:
+                        main_parent = instance.parent_id.parent_id.code
+                cr.execute("update hr_employee set instance_creator=%s where employee_type='ex' and coalesce(instance_creator, '') = ''", (main_parent, ))
+                self.pool.get('patch.scripts').log_info(cr, uid, 'Instance creator set on %d expat employees' % (cr.rowcount, ))
+
+        return super(sync_tigger_something_bidir_mission, self).create(cr, uid, vals, context)
+
+sync_tigger_something_bidir_mission()

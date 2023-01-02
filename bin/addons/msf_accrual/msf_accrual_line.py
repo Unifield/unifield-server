@@ -164,6 +164,7 @@ class msf_accrual_line(osv.osv):
         'entry_sequence': fields.char("Number", size=64, readonly=True),
         'expense_line_ids': fields.one2many('msf.accrual.line.expense', 'accrual_line_id', string="Accrual Expense Lines"),
         'sequence_id': fields.many2one('ir.sequence', string='Sequence of the lines', ondelete='cascade'),
+        'order_accrual': fields.date("Custom sort field"),  # US-9999
     }
 
     _defaults = {
@@ -175,7 +176,7 @@ class msf_accrual_line(osv.osv):
         'entry_sequence': lambda *a: '',
     }
 
-    _order = 'id desc'
+    _order = 'order_accrual desc, entry_sequence desc, id desc'
 
     def _create_write_set_vals(self, cr, uid, vals, context=None):
         if context is None:
@@ -284,7 +285,8 @@ class msf_accrual_line(osv.osv):
                                                                 context=context)['date_stop']
             self.pool.get('finance.tools').check_document_date(cr, uid,
                                                                vals['document_date'], posting_date, context=context)
-
+            # US-9999: create order_accrual column for custom sort of accruals lines
+            vals.update({'order_accrual': vals['document_date']})
         # create a sequence for this new accrual
         seq_id = self.create_sequence(cr, uid)
         vals.update({'sequence_id': seq_id, })
@@ -306,10 +308,17 @@ class msf_accrual_line(osv.osv):
         for accrual_id in ids:
             self._clean_third_party_fields(cr, uid, vals, accrual_id=accrual_id, context=context)
         # US-192 check doc date regarding post date
-        current_values = self.read(cr, uid, ids, ['document_date', 'date'], context=context)[0]
+        current_values = self.read(cr, uid, ids, ['document_date', 'date', 'state'], context=context)[0]
         document_date = 'document_date' in vals and vals['document_date'] or current_values['document_date']
         posting_date = 'date' in vals and vals['date'] or current_values['date']
+        changing_state = 'state' in vals and vals['state'] != 'draft' or False
         self.pool.get('finance.tools').check_document_date(cr, uid, document_date, posting_date, context=context)
+        # US-9999: create order_accrual column for custom sort of accruals lines
+        if document_date:
+            if not changing_state and current_values['state'] == 'draft':
+                vals.update({'order_accrual': document_date})
+            else:
+                vals.update({'order_accrual': '1901-01-01'})
         res = super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
         self._check_account_compat(cr, uid, ids, context=context)
         return res

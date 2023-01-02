@@ -448,7 +448,8 @@ class wizard_import_in_simulation_screen(osv.osv):
         for row in rows:
             index += 1
             values.setdefault(index, [])
-            if len(row) > 2 and row[1] and row[1].data == PACK_HEADER[1][0]:
+            if len(row) > 2 and row[1] and row[1].data and (row[1].data == PACK_HEADER[1][0] or
+                                                            (row[1].type == 'str' and row[1].data.lower() == PACK_HEADER[1][0].lower())):
                 # this line is for pack header
                 nb_pack += 1
                 for nb, x in enumerate(PACK_HEADER):
@@ -705,7 +706,7 @@ Nothing has been imported because of %s. See below:
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
-                if origin and wiz.purchase_id.name not in origin:
+                if origin and wiz.purchase_id.name.lower() not in origin.lower():
                     message = _("Import aborted, the Origin (%s) is not the same as in the Incoming Shipment %s (%s).") \
                         % (origin, wiz.picking_id.name, wiz.origin)
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
@@ -990,7 +991,7 @@ Nothing has been imported because of %s. See below:
                                                        'percent_completed': percent_completed}, context=context)
                         vals = values.get(file_line[0], [])
                         if file_line[1] == 'match':
-                            err_msg = wl_obj.import_line(cr, uid, in_line, vals, prodlot_cache, context=context)
+                            err_msg = wl_obj.import_line(cr, uid, in_line, vals, prodlot_cache, wiz.with_pack, context=context)
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [in_line], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         elif file_line[1] == 'split':
@@ -1007,7 +1008,7 @@ Nothing has been imported because of %s. See below:
                                                      'error_msg': '',
                                                      'parent_line_id': in_line,
                                                      'move_id': False}, context=context)
-                            err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, context=context)
+                            err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, wiz.with_pack, context=context)
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         # Commit modifications
@@ -1054,7 +1055,7 @@ Nothing has been imported because of %s. See below:
                     new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
                                                         'line_number': vals.get('line_number') and int(vals.get('line_number', 0)) or False,
                                                         'simu_id': wiz.id}, context=context)
-                    err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, context=context)
+                    err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, wiz.with_pack, context=context)
                     if in_line in not_ok_file_lines:
                         wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[in_line]}, context=context)
 
@@ -1467,7 +1468,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'integrity_status': 'empty',
     }
 
-
     def check_exp_date(self, cr, uid, exp_value, context=None):
         if context is None:
             context = {}
@@ -1486,8 +1486,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         return res
 
-
-    def import_line(self, cr, uid, ids, values, prodlot_cache=None, context=None):
+    def import_line(self, cr, uid, ids, values, prodlot_cache=None, with_pack=None, context=None):
         '''
         Write the line with the values
         '''
@@ -1533,13 +1532,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             else:
                 prod_id = False
                 if values.get('product_code'):
+                    values['product_code'] = values['product_code'].upper()
                     prod_id = PRODUCT_CODE_ID.get(values['product_code'])
 
                 if not prod_id and values['product_code']:
                     stripped_product_code = values['product_code'].strip()
-                    prod_ids = prod_obj.search(cr, uid,
-                                               [('default_code', '=', stripped_product_code)],
-                                               context=context)
+                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', stripped_product_code)], context=context)
                     if not prod_ids:
                         # if we didn't manage to link our product code with existing product in DB, we cannot continue checks
                         # because it needs the product id:
@@ -1586,12 +1584,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             # UoM
             uom_value = values.get('product_uom')
-            if tools.ustr(uom_value) == line.move_uom_id.name:
+            if uom_value and line.move_uom_id and tools.ustr(uom_value.lower()) == line.move_uom_id.name.lower():
                 write_vals['imp_uom_id'] = line.move_uom_id.id
             else:
                 uom_id = UOM_NAME_ID.get(tools.ustr(uom_value))
                 if not uom_id:
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', tools.ustr(uom_value))], context=context)
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', tools.ustr(uom_value))], context=context)
                     if uom_ids:
                         write_vals['imp_uom_id'] = uom_ids[0]
                     else:
@@ -1631,7 +1629,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if line_currency:
                 write_vals['imp_currency_id'] = line_currency.id
-                if tools.ustr(currency_value) != line_currency.name:
+                if tools.ustr(currency_value.upper()) != line_currency.name.upper():
                     err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
                     errors.append(err_msg)
 
@@ -1681,6 +1679,32 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'imp_batch_name': False,
                     'imp_exp_date': False,
                 })
+
+            # Check stock in Cross Docking and if flow comes from a FO
+            sol = line.move_id and line.move_id.purchase_line_id and line.move_id.purchase_line_id.linked_sol_id or False
+            if sol and not sol.procurement_request and with_pack and write_vals.get('imp_product_qty'):
+                cd_ctx = context.copy()
+                cd_ctx['location'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
+                                                                                         'stock_location_cross_docking')[1],
+                new_bn = False
+                if lot_check or exp_check:
+                    bn_domain = [('product_id', '=', prod_id)]
+                    if write_vals.get('imp_batch_name', False):
+                        bn_domain.append(('name', '=', write_vals['imp_batch_name']))
+                    if write_vals.get('imp_exp_date', False):
+                        bn_domain.append(('life_date', '=', write_vals['imp_exp_date']))
+                    bn_ids = self.pool.get('stock.production.lot').search(cr, uid, bn_domain, context=context)
+                    if bn_ids:
+                        cd_ctx['prodlot_id'] = bn_ids and bn_ids[0]
+                    else:
+                        new_bn = True
+
+                if not new_bn and prod_obj.browse(cr, uid, prod_id, fields_to_fetch=['qty_allocable'],
+                                                  context=cd_ctx).qty_allocable < 0:
+                    err_msg = _('There is not enough stock in Cross Docking which can be allocated to process the product %s with a quantity of %s. Please check if there is some other (forced) availability of this product.') \
+                        % (product.default_code, write_vals['imp_product_qty'])
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
 
             # Message ESC 1
             write_vals['message_esc1'] = values.get('message_esc1')

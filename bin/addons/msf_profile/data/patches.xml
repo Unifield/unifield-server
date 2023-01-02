@@ -803,5 +803,86 @@
         <record id="fix_us_10163_ocbhq_funct_amount" model="patch.scripts">
             <field name="method">fix_us_10163_ocbhq_funct_amount</field>
         </record>
+
+        <record id="us_8428_pi_type_migration" model="patch.scripts">
+            <field name="method">us_8428_pi_type_migration</field>
+        </record>
+
+        <record id="us_9229_fix_rt" model="patch.scripts">
+            <field name="method">us_9229_fix_rt</field>
+        </record>
+
+        <!-- UF27 -->
+        <record id="us_9842_remove_space" model="patch.scripts">
+            <field name="method">us_9842_remove_space</field>
+        </record>
+
+        <record id="us_9999_custom_accrual_order" model="patch.scripts">
+            <field name="method">us_9999_custom_accrual_order</field>
+        </record>
+
+        <record id="set_creator_on_employee" model="patch.scripts">
+            <field name="method">set_creator_on_employee</field>
+        </record>
+
+        <record id="us_9588_set_real_period_on_aji_from_cv" model="patch.scripts">
+            <field name="method">us_9588_set_real_period_on_aji_from_cv</field>
+        </record>
+
+        <record id="us_7852_set_journal_code" model="patch.scripts">
+            <field name="method">us_7852_set_journal_code</field>
+        </record>
+
+        <record id="us_10105_custom_order" model="patch.scripts">
+            <field name="method">us_10105_custom_order</field>
+        </record>
+
+        <record id="us_10105_custom_order_cv" model="patch.scripts">
+            <field name="method">us_10105_custom_order_cv</field>
+        </record>
+
+        <record id="us_10475_create_user_sup_config_hq" model="patch.scripts">
+            <field name="method">us_10475_create_user_sup_config_hq</field>
+        </record>
+
+        <record id="us_10662_remove_user_tz" model="patch.scripts">
+            <field name="method">us_10662_remove_user_tz</field>
+        </record>
+
+        <record id="us_fix_segment_version" model="patch.scripts">
+            <field name="method">us_fix_segment_version</field>
+        </record>
+
+        <record id="us_9394_fix_pi_and_reason_type" model="patch.scripts">
+            <field name="method">us_9394_fix_pi_and_reason_type</field>
+        </record>
+
+        <record id="us_10587_fix_rt_donation_loan" model="patch.scripts">
+            <field name="method">us_10587_fix_rt_donation_loan</field>
+        </record>
+
+        <record id="us_9406_empty_sign" model="patch.scripts">
+            <field name="method">us_9406_empty_sign</field>
+        </record>
+
+        <record id="us_9406_create_common_acl" model="patch.scripts">
+            <field name="method">us_9406_create_common_acl</field>
+        </record>
+
+        <record id="us_9406_create_bar" model="patch.scripts">
+            <field name="method">us_9406_create_bar</field>
+        </record>
+
+        <record id="us_9406_create_record_rules" model="patch.scripts">
+            <field name="method">us_9406_create_record_rules</field>
+        </record>
+
+        <record id="store_picking_subtype" model="patch.scripts">
+            <field name="method">store_picking_subtype</field>
+        </record>
+
+        <record id="us_10586_running_one_time_accrual" model="patch.scripts">
+            <field name="method">us_10586_running_one_time_accrual</field>
+        </record>
     </data>
 </openerp>

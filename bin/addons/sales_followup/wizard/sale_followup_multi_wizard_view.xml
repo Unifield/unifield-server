@@ -8,12 +8,12 @@
             <field name="model">sale.followup.multi.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="FO Follow-up per client">
+                <form string="Export FO Follow-up">
                     <separator colspan="4" string="Request parameters" />
                     <field name="start_date" />
                     <field name="end_date" />
                     <field name="partner_id" domain="[('customer', '=', True)]" on_change="partner_onchange(partner_id, order_id)" />
-                    <field name="order_id" domain="[('to_partner_id', '=', partner_id)]" />
+                    <field name="order_id" domain="[('to_partner_id', '=', partner_id), ('procurement_request', '=', False)]" />
                     <separator colspan="4" string="Order statuses" />
                     <group colspan="4" col="8">
                         <field name="draft_ok" />
@@ -34,7 +34,7 @@
         </record>
 
         <record id="action_sale_followup_multi_wizard" model="ir.actions.act_window">
-            <field name="name">FO Follow-up per client</field>
+            <field name="name">Export FO Follow-up</field>
             <field name="res_model">sale.followup.multi.wizard</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
@@ -44,8 +44,8 @@
         <menuitem
             id="menu_sale_followup_multi"
             action="action_sale_followup_multi_wizard"
-            parent="base.menu_sales"
-            sequence="2"
+            parent="base.next_id_64"
+            sequence="5"
             />
 
     </data>

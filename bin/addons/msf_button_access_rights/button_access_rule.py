@@ -115,3 +115,10 @@ class button_access_rule(osv.osv):
         return family_ids
 
 button_access_rule()
+
+class res_groups(osv.osv):
+    _inherit = 'res.groups'
+    _columns = {
+        'bar_ids': fields.many2many('msf_button_access_rights.button_access_rule', 'button_access_rule_groups_rel', 'group_id', 'button_access_rule_id', 'Buttons Access Rules', readonly=1),
+    }
+res_groups()

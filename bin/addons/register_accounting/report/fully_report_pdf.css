@@ -1,0 +1,95 @@
+@page {
+    size: A4 landscape;
+    margin: 7mm 7mm  7mm 7mm;
+    @bottom-left{
+        font-size: 7px;
+        content: counter(page) "/" counter(pages);
+        margin-left: 50px;
+        margin-bottom: 5px;
+    }
+    @bottom-right {
+        content: string(heading);
+        font-size: 7px;
+        margin-right: 50px;
+        margin-bottom: 5px;
+    }
+}
+
+h1 {
+    text-align: center;
+    font-size: 12px;
+    page-break-before: always;
+}
+
+h4 {
+  visibility: hidden;
+  string-set: heading content();
+}
+
+html {
+    font-size: 8px;
+}
+
+table#data {
+  border: 1px solid black;
+  border-collapse: collapse;
+  width: 100%;
+}
+#data tr {
+  border: 1px solid black;
+}
+
+#data th {
+    background-color: #ffff66;
+}
+
+.mainline {
+    font-weight: bold;
+}
+tr.loop1 {
+    background-color: gainsboro;
+}
+
+table#header {
+    width: 40%;
+}
+
+table#signature {
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid black;
+  border-collapse: collapse;
+  margin-top: 10px;
+  page-break-inside: avoid;
+}
+#signature tr {
+  border: 1px solid black;
+}
+#signature td {
+  border: 1px solid black;
+  height: 20px;
+  text-align: center;
+}
+#signature th {
+  border: 1px solid black;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.blue {
+    color: blue;
+}
+.purple {
+    color: purple;
+}
+.green {
+    color: green;
+}
+.red {
+    color: red;
+}
+
+.img {
+    height: 50px;
+}

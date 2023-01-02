@@ -31,9 +31,10 @@ class DiscrepanciesReportParser(report_sxw.rml_parse):
 
     def get_adjustement(self):
         reason_obj = self.pool.get('stock.reason.type')
-        reason_ids = reason_obj.search(self.cr, self.uid, [('is_inventory', '=', True)])
+
+        pi_rt_ids = reason_obj.search(self.cr, self.uid, [('pi_discrepancy_type', '=', True)])
         all_reason = []
-        for x in reason_obj.read(self.cr, self.uid, reason_ids, ['complete_name'], context={'lang': self.localcontext.get('lang')}):
+        for x in reason_obj.read(self.cr, self.uid, pi_rt_ids, ['complete_name'], context={'lang': self.localcontext.get('lang')}):
             all_reason.append(x['complete_name'])
 
         return ','.join(all_reason)
@@ -48,5 +49,6 @@ class DiscrepanciesReportParser(report_sxw.rml_parse):
             # ['Name', 'string', lambda r, *a: r.name or ''],
             # ['Stock Valuation', 'float', self.compute_stock_value],
         ]
+
 
 SpreadsheetReport('report.physical_inventory_discrepancies_report_xls', 'physical.inventory', 'addons/stock/report/physical_inventory_discrepancies_report_xls.mako', parser=DiscrepanciesReportParser)

@@ -259,7 +259,7 @@ class wizard_account_invoice(osv.osv):
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
-        Launch analytic distribution wizard on a direct invoice
+        Launch header analytic distribution wizard on a direct invoice
         """
         # Some verifications
         if not context:
@@ -276,7 +276,6 @@ class wizard_account_invoice(osv.osv):
             amount += line.price_subtotal
         # Get analytic_distribution_id
         distrib_id = invoice.analytic_distribution_id and invoice.analytic_distribution_id.id
-        account_id = invoice.account_id and invoice.account_id.id
         # Get posting date
         posting_date = invoice.date_invoice
         # Prepare values for wizard
@@ -285,7 +284,6 @@ class wizard_account_invoice(osv.osv):
             'direct_invoice_id': invoice.id,
             'currency_id': currency or False,
             'state': 'dispatch',
-            'account_id': account_id or False,
             'posting_date': posting_date,
         }
         if distrib_id:

@@ -92,6 +92,13 @@ class except_orm(Exception):
 class BrowseRecordError(Exception):
     pass
 
+class AccessError(except_orm):
+    def __init__(self, mode, model, message):
+        super(AccessError, self).__init__(_('AccessError'), message)
+        self.model = model
+        self.mode = mode
+
+
 # Readonly python database object browser
 class browse_null(object):
 
@@ -1350,11 +1357,16 @@ class orm_template(object):
     def write(self, cr, user, ids, vals, context=None):
         raise NotImplementedError(_('The write method is not implemented on this object !'))
 
-    def write_web(self, cr, user, ids, vals, context=None):
+    def write_web(self, cr, user, ids, vals, context=None, ignore_access_error=False):
         """
         Method called by the Web on write
         """
-        return self.write(cr, user, ids, vals, context=context)
+        try:
+            return self.write(cr, user, ids, vals, context=context)
+        except AccessError as e:
+            if ignore_access_error and e.mode == 'write' and e.model == self._name:
+                return ids
+            raise
 
 
     def create(self, cr, user, vals, context=None):
@@ -1571,6 +1583,13 @@ class orm_template(object):
                         attrs['selection'] = relation._name_search(cr, user, '', dom, context=search_context, limit=None, name_get_uid=1)
                         if (node.get('required') and not int(node.get('required'))) or not column.required:
                             attrs['selection'].append((False, ''))
+                    if node.get('widget') and node.get('widget') == 'selection' and node.get('former_domain'):
+                        hidden_dom = eval(node.get('former_domain', '[]'), {'uid': user, 'time': time})
+                        search_context = dict(context)
+                        if column._context and not isinstance(column._context, basestring):
+                            search_context.update(column._context)
+                        attrs['hidden_selection'] = relation._name_search(cr, user, '', hidden_dom, context=search_context, limit=None, name_get_uid=1)
+
                 fields[node.get('name')] = attrs
 
         elif node.tag in ('form', 'tree'):
@@ -2420,6 +2439,9 @@ class orm_memory(orm_template):
         self.next_id = 0
         self.check_id = 0
         cr.execute('delete from wkf_instance where res_type=%s', (self._name,))
+        for x in self._columns:
+            if self._columns[x]._type == 'many2many':
+                self._columns[x].setup_m2m(self)
 
     def _check_access(self, cr, uid, object_id, mode):
         user_obj = self.pool.get('res.users')
@@ -3111,6 +3133,8 @@ class orm(orm_template):
                 cr.commit()
 
     def _create_m2m_table(self, cr, f):
+        f.setup_m2m(self)
+
         cr.execute("SELECT relname, relhasoids FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
         x = cr.dictfetchall()
         if not x:
@@ -4294,7 +4318,7 @@ class orm(orm_template):
 
             v = {}
             for val in updend:
-                if self._inherit_fields[val][0] == table:
+                if val in self._inherit_fields and self._inherit_fields[val][0] == table:
                     v[val] = vals[val]
             if v:
                 self.pool.get(table).write(cr, user, nids, v, context)
@@ -4458,10 +4482,14 @@ class orm(orm_template):
 
             record_id = tocreate[table].pop('id', None)
 
+            inherit_obj = self.pool.get(table)
             if record_id is None or not record_id:
-                record_id = self.pool.get(table).create(cr, user, tocreate[table], context=context)
+                if hasattr(inherit_obj, '_record_source') and inherit_obj._record_source:
+                    tocreate[table]['signature_res_model'] = self._name
+                    tocreate[table]['signature_res_id'] = id_new
+                record_id = inherit_obj.create(cr, user, tocreate[table], context=context)
             elif tocreate[table]:
-                self.pool.get(table).write(cr, user, [record_id], tocreate[table], context=context)
+                inherit_obj.write(cr, user, [record_id], tocreate[table], context=context)
 
             upd0 += ',' + self._inherits[table]
             upd1 += ',%s'

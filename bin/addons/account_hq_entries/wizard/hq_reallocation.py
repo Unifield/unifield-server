@@ -23,7 +23,6 @@
 
 from osv import osv
 from osv import fields
-from lxml import etree
 from tools.translate import _
 
 
@@ -48,33 +47,6 @@ class hq_analytic_reallocation(osv.osv_memory):
                                                                line_ids, self._name, context=context)
         return super(hq_analytic_reallocation, self).default_get(cr, uid, fields,
                                                                  context=context, from_web=from_web)
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        """
-        Adapts domain for AD fields
-        """
-        if not context:
-            context = {}
-        view = super(hq_analytic_reallocation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        if view_type == 'form':
-            form = etree.fromstring(view['arch'])
-            data_obj = self.pool.get('ir.model.data')
-            try:
-                oc_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
-            except ValueError:
-                oc_id = 0
-            # Change OC field
-            fields = form.xpath('//field[@name="cost_center_id"]')
-            for field in fields:
-                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
-            # Change FP field
-            fp_fields = form.xpath('//field[@name="analytic_id"]')
-            # no restrictions are related to the G/L accounts because the wizard isn't linked to one single line with a specific account_id
-            for field in fp_fields:
-                field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
-                                    "('fp_compatible_with_cc_ids', '=', cost_center_id)]")
-            view['arch'] = etree.tostring(form)
-        return view
 
     def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, analytic_id=False):
         return self.pool.get('analytic.distribution').\

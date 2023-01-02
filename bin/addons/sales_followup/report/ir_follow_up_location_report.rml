@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 <document filename="ir_follow_up_location_report.pdf">
 
-    <template pageSize="(842.0,595.0)" title="IR Follow Up per Location" author="Medecins Sans Frontieres" allowSplitting="20">
+    <template pageSize="(842.0,595.0)" title="IR Follow Up" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
             <frame id="first" x1="30.0" y1="15.0" width="772" height="520" />
 
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="15"/>
-                <drawString x="250.0" y="560.0">INTERNAL REQUEST FOLLOW-UP PER LOCATION</drawString>
+                <drawString x="305.0" y="560.0">INTERNAL REQUEST FOLLOW-UP</drawString>
                 <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8"/>
                 <fill color="grey" />
@@ -295,29 +295,28 @@
 	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('uom_id', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
-                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and formatLang(line.get('delivered_qty', 0.00)) or removeParentNode('para') ]]</para>
-                    <para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and formatLang(line.get('delivered_qty', 0.00)) or removeParentNode('para') ]]</para>
+                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('cancelled_move') and 'N/A' or formatLang(line.get('delivered_qty', 0.00))) or removeParentNode('para') ]]</para>
+                    <para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('cancelled_move') and 'N/A' or formatLang(line.get('delivered_qty', 0.00))) or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and line.get('delivered_uom', '-') or removeParentNode('para') ]]</para>
 	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('delivered_uom', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
-                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('extra_qty', 0) == 0 and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para')) or removeParentNode('para') ]]</para>
-                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('extra_qty', 0) and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para')) or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('extra_qty', 0.00))) ]])</para>
-                    <para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and '-' or removeParentNode('para') ]]</para>
+                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('extra_qty', 0) == 0 and (line.get('cancelled_move') and '0.00' or formatLang(line.get('backordered_qty', 0.00))) or removeParentNode('para')) or removeParentNode('para') ]]</para>
+                    <para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('extra_qty', 0) and (line.get('cancelled_move') and '0.00' or formatLang(line.get('backordered_qty', 0.00))) or removeParentNode('para')) or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('extra_qty', 0.00))) ]])</para>
+                    <para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('cancelled_move') and '0.00' or '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and line.get('delivery_order', '-') or removeParentNode('para') ]]</para>
-	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('delivery_order', '-') or removeParentNode('para') ]]</para>
+	    			<para style="LinesBlue">[[ line.get('delivery_order', '-') != '-' and line.get('delivery_order') or line.get('shipment', '-') != '-' and line.get('shipment') or line.get('packing', '-')  ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and line.get('state_display', '-') or removeParentNode('para') ]]</para>
 	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('state_display', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
-	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('edd', '') and (isDate(line['cdd']) and formatLang(line['cdd'], date=True) or line['cdd']) or 'N/A') or removeParentNode('para') ]]</para>
-	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('edd', '') and (isDate(line['cdd']) and formatLang(line['cdd'], date=True) or line['cdd']) or 'N/A') or removeParentNode('para') ]]</para>
+	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('edd', '') and (isDate(line['edd']) and formatLang(line['edd'], date=True) or line['edd']) or 'N/A') or removeParentNode('para') ]]</para>
+	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('edd', '') and (isDate(line['edd']) and formatLang(line['edd'], date=True) or line['edd']) or 'N/A') or removeParentNode('para') ]]</para>
                 </td>
                 <td>
 	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('cdd', '') and (isDate(line['cdd']) and formatLang(line['cdd'], date=True) or line['cdd']) or 'N/A') or removeParentNode('para') ]]</para>

@@ -9,7 +9,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="13"/>
             <field name="arch" type="xml">
-                <tree string="Account Entries" min_rows="100" hide_new_button="1" hide_delete_button="1"  noteditable="1" >
+                <tree string="Account Entries" hide_new_button="1" hide_delete_button="1"  noteditable="1" >
                     <field name="instance_id"/>
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>
@@ -38,8 +38,8 @@
                     <field name="debit" sum="Total Functional Debit"/>
                     <field name="credit" sum="Total Functional Credit"/>
                     <field name="functional_currency_id"/>
-                    <field name="output_amount_debit"/>
-                    <field name="output_amount_credit"/>
+                    <field name="output_amount_debit" sum="Total Output Debit"/>
+                    <field name="output_amount_credit" sum="Total Output Credit"/>
                     <field name="output_currency"/>
                     <field name="reconcile_txt" />
                     <field name="state"/>
@@ -54,7 +54,7 @@
             <field name="model">account.analytic.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Analytic Journal Items" min_rows="100" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
+                <tree string="Analytic Journal Items" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
                     <field name="is_reallocated" invisible="1"/>
                     <field name="instance_id"/>
                     <field name="is_reversal" invisible="1"/>
@@ -79,7 +79,7 @@
                     <field name="currency_id"/>
                     <field name="amount" sum="Total Functional Amount"/>
                     <field name="functional_currency_id"/>
-                    <field name="output_amount"/>
+                    <field name="output_amount" sum="Total Output Amount"/>
                     <field name="output_currency"/>
                     <field name="reversal_origin_txt"/>
                     <field name="user_id" invisible="1"/>

@@ -68,7 +68,7 @@ class wizard_return_from_unit_import(osv.osv_memory):
         from_loc_id = False
         if sheet['C9'].value:
             ext_cu = sheet['C9'].value
-            loc_ids = loc_obj.search(cr, uid, [('name', '=ilike', ext_cu), ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], context=context)
+            loc_ids = loc_obj.search(cr, uid, [('name', '=', ext_cu), ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], context=context)
             if loc_ids:
                 if loc_ids[0] == pick.ext_cu.id:
                     from_loc_id = loc_ids[0]
@@ -83,7 +83,7 @@ class wizard_return_from_unit_import(osv.osv_memory):
         to_loc_id = False
         if sheet['F9'].value:
             to_loc = sheet['F9'].value
-            loc_ids = loc_obj.search(cr, uid, [('name', '=ilike', to_loc), ('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])], context=context)
+            loc_ids = loc_obj.search(cr, uid, [('name', '=', to_loc), ('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])], context=context)
             if loc_ids:
                 to_loc_id = loc_ids[0]
             else:
