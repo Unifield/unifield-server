@@ -537,8 +537,8 @@ MODEL_DATA_DICT = {
             'date_start',
             'date',  # "inactive from"
             'top_prop_instance',
-            'top_cc_instance_ids',
             'is_target_cc_instance_ids',
+            'top_cc_instance_ids',
             'po_fo_cc_instance_ids',
         ],
         'required_field_list': [
