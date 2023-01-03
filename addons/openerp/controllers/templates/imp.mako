@@ -16,14 +16,19 @@
             if($error.children().length) {
                 jQuery('#error')
                         .html($error.html());
+                jQuery('#do_import').hide();
                 return;
             }
+
             var $success = $detection.find('#imported_success');
             if($success.children().length) {
                 jQuery('#imported_success')
                         .html($success.html());
+                jQuery('#do_import').hide();
+                jQuery('#table_format').hide();
                 return;
             }
+            jQuery('#do_import').show();
             jQuery('#records_data')
                     .html($detection.find('#records_data').html());
         }
@@ -37,6 +42,13 @@
             });
         }
 
+        function apply_changes() {
+            ['csv_separator', 'csv_delimiter', 'csv_encoding'].forEach(function(e) {
+                jQuery('#'+e).val(jQuery('#c_'+e).val())
+            })
+
+            autodetect_data()
+        }
         function autodetect_data() {
             if(!jQuery('#csvfile').val()) { return; }
             jQuery('#import_data').attr({
@@ -54,11 +66,8 @@
             window.frameElement.set_title(
                 $header.text());
             $header.closest('.side_spacing').parent().remove();
+            jQuery('#csvfile').change(autodetect_data);
 
-            jQuery('fieldset legend').click(function () {
-                jQuery(this).next().toggle();
-            });
-            jQuery('#csvfile, fieldset').change(autodetect_data);
         });
     </script>
 
@@ -87,26 +96,44 @@
             <td class="side_spacing">
                 <table width="100%">
                     <tr>
-                        <td width="100%" valign="middle" for="" class=" item-separator" colspan="4">
+                        <td width="50%" valign="middle" for="" class=" item-separator">
                             <h2 class="separator horizontal">${_("1. Import a .CSV file")}</h2>
+                        </td>
+                        <td width="50%" valign="middle" for="" class=" item-separator">
+                            <h2 class="separator horizontal">${_("2. CSV Options")}</h2>
                         </td>
                     </tr>
                     <tr>
                         <td>
                             Select a .CSV file to import. If you need a sample of file to import,
                             you should use the export tool with the "Import Compatible" option.
+                            <div>
+                                <label for="csvfile">${_("CSV File:")}</label>
+                                <input type="file" id="csvfile" size="50" name="csvfile"/>
+                            </div>
                         </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-        <tr>
-            <td class="side_spacing">
-                <table align="center">
-                    <tr>
-                        <td class="label"><label for="csvfile">${_("CSV File:")}</label></td>
                         <td>
-                            <input type="file" id="csvfile" size="50" name="csvfile"/>
+                            <table>
+                            <tr>
+                                    <td class="label"><label for="c_csv_separator">${_("Separator:")}</label></td>
+                                    <td><input type="text" size="1" name="c_csvsep" id="c_csv_separator" value=","/></td>
+                                    <td class="label"><label for="c_csv_delimiter">${_("Delimiter:")}</label></td>
+                                    <td><input type="text" size="1" name="c_csvdel" id="c_csv_delimiter" value='"'/></td>
+                                    <td class="label"><label for="c_csv_encoding">${_("Encoding:")}</label></td>
+                                    <td>
+                                        <select name="csvcode" id="c_csv_encoding">
+                                            <option value="utf-8">UTF-8</option>
+                                            <option value="latin1">Latin 1</option>
+                                        </select>
+                                    </td>
+                                <td class="label">
+                                    <input type="hidden" type="text" name="csvsep" id="csv_separator" value=","/>
+                                    <input type="hidden" type="text"  name="csvdel" id="csv_delimiter" value='"'/>
+                                    <input type="hidden" type="text"  name="csv_encoding" id="csv_encoding" value="UTF-8" />
+                                    <a class="button-a" href="javascript: void(0)" onclick="apply_changes();">${_("Apply changes")}</a>
+                                </td>
+                            </tr>
+                            </table>
                         </td>
                     </tr>
                 </table>
@@ -119,17 +146,17 @@
         <tr>
             <td class="side_spacing" width="100%">
                 <div id="record">
-                    <table width="100%">
+                    <table width="100%" id="table_format">
                         <tr>
                             <td width="100%" valign="middle" for="" class=" item-separator">
-                                <h2 class="separator horizontal">${_("2. Check your file format")}</h2>
+                                <h2 class="separator horizontal">${_("3. Check your file format")}</h2>
                             </td>
                         </tr>
                     </table>
                     <div id="error">
                         % if error:
                             <p style="white-space:pre-line;"
-                                >${_("The import failed due to: %(message)s", message=error['message'])}</p>
+                                >${_("The import failed due to:\n %(message)s", message=error['message'])}</p>
                             % if 'preview' in error:
                                 <p>${_("Here is a preview of the file we could not import:")}</p>
                                 <pre>${error['preview']}</pre>
@@ -155,28 +182,6 @@
                         % endfor
                     % endif
                     </table>
-                    <fieldset>
-                        <legend style="cursor:pointer;">${_("CSV Options")}</legend>
-                        <table style="display:none">
-                            <tr>
-                                <td class="label"><label for="csv_separator">${_("Separator:")}</label></td>
-                                <td><input type="text" name="csvsep" id="csv_separator" value=","/></td>
-                                <td class="label"><label for="csv_delimiter">${_("Delimiter:")}</label></td>
-                                <td><input type="text" name="csvdel" id="csv_delimiter" value='"'/></td>
-                            </tr>
-                            <tr>
-                                <td class="label"><label for="csv_encoding">${_("Encoding:")}</label></td>
-                                <td>
-                                    <select name="csvcode" id="csv_encoding">
-                                        <option value="utf-8">UTF-8</option>
-                                        <option value="latin1">Latin 1</option>
-                                    </select>
-                                </td>
-                                <td class="label"><label for="csv_skip">${_("Lines to skip:")}</label></td>
-                                <td><input type="text" name="csvskip" id="csv_skip" value="1"/></td>
-                            </tr>
-                        </table>
-                    </fieldset>
                 </div>
             </td>
         </tr>
@@ -190,7 +195,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>
+                        <td class="success">
                             ${success['message']}
                         </td>
                     </tr>
@@ -204,7 +209,7 @@
                     <tr>
                         <td class="imp-header" align="left">
                             <a class="button-a oe_form_button_cancel" href="javascript: void(0)" onclick="window.frameElement.close()">${_("Close")}</a>
-                            <a class="button-a" href="javascript: void(0)" onclick="do_import();">${_("Import File")}</a>
+                            <a class="button-a" id="do_import" href="javascript: void(0)" onclick="do_import();" style="display: none;">${_("Import File")}</a>
                         </td>
                         <td width="5%"></td>
                 </table>
