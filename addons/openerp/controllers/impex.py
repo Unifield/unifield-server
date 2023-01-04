@@ -32,6 +32,7 @@ from openobject.tools import expose, redirect, ast
 import simplejson
 import time
 import os
+import codecs
 
 product_remove_fields = ['qty_available', 'virtual_available', 'product_amc', 'reviewed_consumption', 'monthly_consumption']
 def _fields_get_all(model, views, context=None):
@@ -463,7 +464,7 @@ class ImpEx(SecuredController):
                     tree=tree, fields=kw.get('fields', {}), ctx=ctx)
 
     @expose()
-    def detect_data(self, csvfile, csvsep, csvdel, csvcode, csvskip, **kw):
+    def detect_data(self, csvfile, csvsep, csvdel, csvcode, **kw):
         params, data = TinyDict.split(kw)
 
         _fields = {}
@@ -519,14 +520,21 @@ class ImpEx(SecuredController):
                     break
 
             for line in records:
+                col = 0
                 for word in line:
                     word = ustr(word.decode(csvcode))
+                    if col == 0 and word and csvcode == 'utf-8':
+                        # remove BOM if any
+                        word = word.lstrip(unicode(codecs.BOM_UTF8, "utf8"))
+                    col += 1
                     if word in _fields:
                         fields.append((word, _fields[word]))
                     elif word in _fields_invert.keys():
                         fields.append((_fields_invert[word], word))
                     else:
                         error = {'message':_("You cannot import the field '%s', because we cannot auto-detect it" % (word,))}
+                if error and len(line) == 1:
+                    error = {'message':_("We cannot auto-detect the fields from the first line. A single column was found in the file, this often means the file separator is incorrect.")}
                 break
         except:
             error = {'message':_('Error processing the first line of the file. Field "%s" is unknown') % (word,), 'title':_('Import Error.')}
@@ -538,8 +546,10 @@ class ImpEx(SecuredController):
         return self.imp(records=records, **kw)
 
     @expose()
-    def import_data(self, csvfile, csvsep, csvdel, csvcode, csvskip, fields=[], **kw):
+    def import_data(self, csvfile, csvsep, csvdel, csvcode, fields=None, **kw):
 
+        if fields is None:
+            fields = []
         params, data = TinyDict.split(kw)
         res = None
 
@@ -558,6 +568,8 @@ class ImpEx(SecuredController):
                     continue
                 if j == limit:
                     fields = line
+                    if csvcode == 'utf-8':
+                        fields[0] = ustr(fields[0].decode('utf-8')).lstrip(unicode(codecs.BOM_UTF8, "utf8"))
                 else:
                     data.append(line)
         except csv.Error, e:
@@ -597,7 +609,10 @@ class ImpEx(SecuredController):
         if res[0]>=0:
             return self.imp(success={'message':_('Imported %d objects') % (res[0],)}, **kw)
 
-        msg = _('Error trying to import this record: %r.\nErrorMessage:\n%s %s') % (res[1], res[2], res[3])
+        if res[1]:
+            msg = _('Error trying to import this record: %r.\nErrorMessage:\n%s %s') % (res[1], res[2], res[3])
+        else:
+            msg = _('Error Message:\n%s %s') % (res[2], res[3])
         error = {'message':ustr(msg), 'title':_('ImportationError')}
 
         return self.imp(error=error, **kw)
