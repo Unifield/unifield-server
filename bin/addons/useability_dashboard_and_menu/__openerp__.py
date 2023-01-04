@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -23,8 +23,8 @@
     "name": "Transport management",
     "version": "1.0",
     "depends": [
-        "sale", 
-        "purchase", 
+        "sale",
+        "purchase",
         "stock",
         "product_attributes",
         "product_asset",
@@ -62,6 +62,7 @@
         "dashboard/board_purchase_view.xml",
         "dashboard/board_sale_view.xml",
         "dashboard/board_warehouse_view.xml",
+        "view/signature_view.xml",
     ],
     'demo_xml': [
     ],

@@ -66,6 +66,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 
+
 _logger = logging.getLogger('tools')
 
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
@@ -1968,3 +1969,18 @@ def get_stack():
     import traceback
     return ustr("".join(traceback.format_list(traceback.extract_stack())))
 
+class fakeUid(int):
+    """
+    Emulates the behaviour of an INT while having the ability to store the users real uid in a property called realUid
+    @param fakeuid The int that will be outputted when this class is used like a normal integer
+    @param realUid The value that will be stored in parameter realUid of this object
+    """
+    def __new__(self, fakeUid, realUid):
+        return int.__new__(self, fakeUid)
+
+    def __init__(self, fakeUid, realUid):
+        self.realUid = realUid
+
+    def __reduce__(self):
+        res = super(fakeUid, self).__reduce__()
+        return (res[0], (res[1][1], res[1][1], self.realUid))

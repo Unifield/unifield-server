@@ -169,8 +169,13 @@ class account_bank_statement(osv.osv):
         Get current register id
         """
         res = {}
-        for st in self.browse(cr, uid, ids, context=context):
-            res[st.id] = st.id
+        local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+
+        for st in self.browse(cr, uid, ids, fields_to_fetch=['journal_id'], context=context):
+            res[st.id] = {
+                'virtual_id': st.id,
+                'local_register': st.journal_id.instance_id.id == local_instance_id,
+            }
         return res
 
     def _balance_gap_compute(self, cr, uid, ids, name, attr, context=None):
@@ -184,7 +189,8 @@ class account_bank_statement(osv.osv):
 
     _columns = {
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
-                                      help='Virtual Field that take back the id of the Register'),
+                                      help='Virtual Field that take back the id of the Register',  multi="id_local"),
+        'local_register': fields.function(_get_register_id, method=True, store=False, type='boolean', string="Is local register", multi="id_local"),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'closing_balance_frozen_date': fields.date("Closing balance frozen date"),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),

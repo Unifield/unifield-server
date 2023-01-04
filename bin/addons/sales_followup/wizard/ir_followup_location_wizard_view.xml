@@ -8,7 +8,7 @@
             <field name="model">ir.followup.location.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="IR Follow-up per location">
+                <form string="Export IR Follow-up">
                     <separator colspan="4" string="Request parameters" />
                     <field name="start_date" />
                     <field name="end_date" />
@@ -34,7 +34,7 @@
         </record>
 
         <record id="action_ir_followup_location_wizard" model="ir.actions.act_window">
-            <field name="name">IR Follow-up per location</field>
+            <field name="name">Export IR Follow-up</field>
             <field name="res_model">ir.followup.location.wizard</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
@@ -44,8 +44,8 @@
         <menuitem
             id="menu_ir_followup_location"
             action="action_ir_followup_location_wizard"
-            parent="base.menu_sales"
-            sequence="3"
+            parent="base.next_id_64"
+            sequence="4"
             />
 
     </data>

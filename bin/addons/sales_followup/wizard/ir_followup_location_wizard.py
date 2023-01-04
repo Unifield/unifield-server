@@ -190,7 +190,7 @@ class ir_followup_location_wizard(osv.osv_memory):
         self.get_values(cr, uid, ids, context=context)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
-            'file_name': 'IR followup per location',
+            'file_name': 'IR followup',
             'report_name': 'ir.follow.up.location.report_xls',
         }, context=context)
         context['background_id'] = background_id
@@ -218,7 +218,7 @@ class ir_followup_location_wizard(osv.osv_memory):
         self.get_values(cr, uid, ids, context=context)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
-            'file_name': 'IR followup per location',
+            'file_name': 'IR followup',
             'report_name': 'ir.follow.up.location.report_pdf',
         }, context=context)
         context['background_id'] = background_id

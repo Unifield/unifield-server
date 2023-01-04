@@ -5,8 +5,8 @@
      <menuitem 
           name="Field Order Follow-Up"
           id="sales_followup.menuitem_sale_order_followup_from_menu"
-          parent="base.menu_sales"
-          sequence="2"/>
+          parent="base.next_id_64"
+          sequence="7"/>
           
      <menuitem 
           action="procurement_request.action_procurement_request"

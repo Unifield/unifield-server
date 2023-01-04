@@ -30,7 +30,21 @@ from msf_partner import PARTNER_TYPE
 from base import currency_date
 from tools.safe_eval import safe_eval
 
+
 class account_invoice(osv.osv):
+    _name = "account.invoice"
+    _description = 'Invoice'
+    _order = 'is_draft desc, internal_number desc, id desc'
+#    _inherit = 'signature.object'
+
+    def _auto_init(self, cr, context=None):
+        d = super(account_invoice, self)._auto_init(cr, context=context)
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'account_invoice_sort_idx'")
+        if not cr.fetchone():
+            cr.execute('create index account_invoice_sort_idx on account_invoice (is_draft desc, internal_number desc, id desc)')
+            cr.commit()
+        return d
+
     def _amount_all(self, cr, uid, ids, name, args, context=None):
         res = {}
         for invoice in self.browse(cr, uid, ids, context=context):
@@ -241,10 +255,6 @@ class account_invoice(osv.osv):
     def _get_journal_type(self, cr, uid, context=None):
         return self.pool.get('account.journal').get_journal_type(cr, uid, context)
 
-    _name = "account.invoice"
-    _description = 'Invoice'
-    _order = "id desc"
-
     _columns = {
         'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that produced this invoice.", readonly=True, states={'draft':[('readonly',False)]}),
@@ -255,7 +265,7 @@ class account_invoice(osv.osv):
             ('in_refund','Supplier Refund'),
         ],'Type', readonly=True, select=True, change_default=True),
 
-        'number': fields.related('move_id','name', type='char', readonly=True, size=64, relation='account.move', store=True, string='Number'),
+        'number': fields.related('move_id','name', type='char', readonly=True, size=64, relation='account.move', store=True, string='Number', select=1),
         'internal_number': fields.char('Invoice Number', size=32, readonly=True, help="Unique number of the invoice, computed automatically when the invoice is created."),
         'reference': fields.char('Invoice Reference', size=64, help="The partner reference of this invoice."),
         'reference_type': fields.selection(_get_reference_type, 'Reference Type',
@@ -343,15 +353,17 @@ class account_invoice(osv.osv):
                                                   type='many2many', string='Payments', store=False),
         'move_name': fields.char('Journal Entry', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'user_id': fields.many2one('res.users', 'Salesman', readonly=True, states={'draft':[('readonly',False)]}),
-        'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position', readonly=True, states={'draft':[('readonly',False)]})
+        'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position', readonly=True, states={'draft':[('readonly',False)]}),
+        'is_draft': fields.boolean('Is draft', help='used to sort invoices (draft on top)', readonly=1),
     }
     _defaults = {
         'type': _get_type,
         'state': 'draft',
+        'is_draft': True,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.invoice', context=c),
         'reference_type': 'none',
         'check_total': 0.0,
-        'internal_number': False,
+        'internal_number': '',
         'user_id': lambda s, cr, u, c: u,
     }
 
@@ -481,6 +493,7 @@ class account_invoice(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
+        vals['is_draft'] = vals.get('state', 'draft') == 'draft'
         try:
             res = super(account_invoice, self).create(cr, uid, vals, context)
             for inv_id, name in self.name_get(cr, uid, [res], context=context):
@@ -504,6 +517,20 @@ class account_invoice(osv.osv):
                                      _('There is no Accounting Journal of type Sale/Purchase defined!'))
             else:
                 raise orm.except_orm(_('Unknown Error'), str(e))
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check document_date
+        """
+        if not ids:
+            return True
+        if context is None:
+            context = {}
+
+        if 'state' in vals:
+            vals['is_draft'] = vals['state'] == 'draft'
+
+        return super(account_invoice, self).write(cr, uid, ids, vals, context=context)
 
     def confirm_paid(self, cr, uid, ids, context=None):
         if context is None:
@@ -776,20 +803,25 @@ class account_invoice(osv.osv):
             res[r[0]].append(r[1])
         return res
 
-    def copy(self, cr, uid, id, default={}, context=None):
+    def copy(self, cr, uid, id, default=None, context=None):
         if context is None:
             context = {}
+
+        if default is None:
+            default = {}
+
         default.update({
             'state':'draft',
-            'number':False,
+            'number': False,
             'move_id':False,
             'move_name':False,
-            'internal_number': False,
+            'internal_number': '',
             'main_purchase_id': False,
             'counterpart_inv_number': False,
             'counterpart_inv_status': False,
             'refunded_invoice_id': False,
         })
+
         inv = self.browse(cr, uid, [id], fields_to_fetch=['analytic_distribution_id', 'doc_type'], context=context)[0]
         if not context.get('from_split'):  # some values are kept in case of inv. generated via the "Split" feature
             default.update({

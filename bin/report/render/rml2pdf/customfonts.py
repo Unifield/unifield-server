@@ -39,43 +39,43 @@ and Ubuntu distros, we have to override the search path, too.
 """
 
 CustomTTFonts = [ ('Helvetica',"DejaVu Sans", "DejaVuSans.ttf", 'normal'),
-        ('Helvetica',"DejaVu Sans Bold", "DejaVuSans-Bold.ttf", 'bold'),
-        ('Helvetica',"DejaVu Sans Oblique", "DejaVuSans-Oblique.ttf", 'italic'),
-        ('Helvetica',"DejaVu Sans BoldOblique", "DejaVuSans-BoldOblique.ttf", 'bolditalic'),
-        ('Times',"Liberation Serif", "LiberationSerif-Regular.ttf", 'normal'),
-        ('Times',"Liberation Serif Bold", "LiberationSerif-Bold.ttf", 'bold'),
-        ('Times',"Liberation Serif Italic", "LiberationSerif-Italic.ttf", 'italic'),
-        ('Times',"Liberation Serif BoldItalic", "LiberationSerif-BoldItalic.ttf", 'bolditalic'),
-        ('Times-Roman',"Liberation Serif", "LiberationSerif-Regular.ttf", 'normal'),
-        ('Times-Roman',"Liberation Serif Bold", "LiberationSerif-Bold.ttf", 'bold'),
-        ('Times-Roman',"Liberation Serif Italic", "LiberationSerif-Italic.ttf", 'italic'),
-        ('Times-Roman',"Liberation Serif BoldItalic", "LiberationSerif-BoldItalic.ttf", 'bolditalic'),
-        ('Courier',"FreeMono", "FreeMono.ttf", 'normal'),
-        ('Courier',"FreeMono Bold", "FreeMonoBold.ttf", 'bold'),
-        ('Courier',"FreeMono Oblique", "FreeMonoOblique.ttf", 'italic'),
-        ('Courier',"FreeMono BoldOblique", "FreeMonoBoldOblique.ttf", 'bolditalic'),]
+                  ('Helvetica',"DejaVu Sans Bold", "DejaVuSans-Bold.ttf", 'bold'),
+                  ('Helvetica',"DejaVu Sans Oblique", "DejaVuSans-Oblique.ttf", 'italic'),
+                  ('Helvetica',"DejaVu Sans BoldOblique", "DejaVuSans-BoldOblique.ttf", 'bolditalic'),
+                  ('Times',"Liberation Serif", "LiberationSerif-Regular.ttf", 'normal'),
+                  ('Times',"Liberation Serif Bold", "LiberationSerif-Bold.ttf", 'bold'),
+                  ('Times',"Liberation Serif Italic", "LiberationSerif-Italic.ttf", 'italic'),
+                  ('Times',"Liberation Serif BoldItalic", "LiberationSerif-BoldItalic.ttf", 'bolditalic'),
+                  ('Times-Roman',"Liberation Serif", "LiberationSerif-Regular.ttf", 'normal'),
+                  ('Times-Roman',"Liberation Serif Bold", "LiberationSerif-Bold.ttf", 'bold'),
+                  ('Times-Roman',"Liberation Serif Italic", "LiberationSerif-Italic.ttf", 'italic'),
+                  ('Times-Roman',"Liberation Serif BoldItalic", "LiberationSerif-BoldItalic.ttf", 'bolditalic'),
+                  ('Courier',"FreeMono", "FreeMono.ttf", 'normal'),
+                  ('Courier',"FreeMono Bold", "FreeMonoBold.ttf", 'bold'),
+                  ('Courier',"FreeMono Oblique", "FreeMonoOblique.ttf", 'italic'),
+                  ('Courier',"FreeMono BoldOblique", "FreeMonoBoldOblique.ttf", 'bolditalic'),]
 
 
 TTFSearchPath_Linux = [
-            '/usr/share/fonts/truetype', # SuSE
-            '/usr/share/fonts/dejavu', '/usr/share/fonts/liberation', # Fedora, RHEL
-            '/usr/share/fonts/truetype/*', # Ubuntu,
-            '/usr/share/fonts/TTF/*', # at Mandriva/Mageia
-            ]
+    '/usr/share/fonts/truetype', # SuSE
+    '/usr/share/fonts/dejavu', '/usr/share/fonts/liberation', # Fedora, RHEL
+    '/usr/share/fonts/truetype/*', # Ubuntu,
+    '/usr/share/fonts/TTF/*', # at Mandriva/Mageia
+]
 
 TTFSearchPath_Windows = [
-            'c:/winnt/fonts',
-            'c:/windows/fonts'
-            ]
+    'c:/winnt/fonts',
+    'c:/windows/fonts'
+]
 
 TTFSearchPath_Darwin = [
-            #mac os X - from
-            #http://developer.apple.com/technotes/tn/tn2024.html
-            '~/Library/Fonts',
-            '/Library/Fonts',
-            '/Network/Library/Fonts',
-            '/System/Library/Fonts',
-            ]
+    #mac os X - from
+    #http://developer.apple.com/technotes/tn/tn2024.html
+    '~/Library/Fonts',
+    '/Library/Fonts',
+    '/Network/Library/Fonts',
+    '/System/Library/Fonts',
+]
 
 TTFSearchPathMap = {
     'Darwin': TTFSearchPath_Darwin,
@@ -130,6 +130,12 @@ def FindCustomFonts():
                 log.debug("Found font %s at %s", filename, abs_filename)
                 __foundFonts[filename] = abs_filename
                 break
+
+def GetFontPath(font):
+    global __foundFonts
+    if __foundFonts is None:
+        FindCustomFonts()
+    return __foundFonts.get(font, font)
 
 def SetCustomFonts(rmldoc):
     """ Map some font names to the corresponding TTF fonts
