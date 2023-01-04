@@ -515,7 +515,11 @@ class ImpEx(SecuredController):
 
         try:
             for i, row in enumerate(data):
-                records.append(row)
+                try:
+                    datas = [x.decode(csvcode).encode('utf-8') for x in row]
+                except:
+                    datas = [x.decode('latin').encode('utf-8') for x in row]
+                records.append(datas)
                 if i == limit:
                     break
 

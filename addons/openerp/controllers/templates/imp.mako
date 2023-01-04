@@ -105,8 +105,8 @@
                     </tr>
                     <tr>
                         <td>
-                            Select a .CSV file to import. If you need a sample of file to import,
-                            you should use the export tool with the "Import Compatible" option.
+                            ${_("Select a .CSV file to import. If you need a sample of file to import,")}
+                            ${_('you should use the export tool with the "Import Compatible" option.')}
                             <div>
                                 <label for="csvfile">${_("CSV File:")}</label>
                                 <input type="file" id="csvfile" size="50" name="csvfile"/>
@@ -123,13 +123,15 @@
                                     <td>
                                         <select name="csvcode" id="c_csv_encoding">
                                             <option value="utf-8">UTF-8</option>
-                                            <option value="latin1">Latin 1</option>
+                                            <option value="iso-8859-15">Latin 1</option>
+                                            <option value="windows-1252">windows-1252</option>
+                                            <option value="windows-1251">windows-1251</option>
                                         </select>
                                     </td>
                                 <td class="label">
-                                    <input type="hidden" type="text" name="csvsep" id="csv_separator" value=","/>
-                                    <input type="hidden" type="text"  name="csvdel" id="csv_delimiter" value='"'/>
-                                    <input type="hidden" type="text"  name="csv_encoding" id="csv_encoding" value="UTF-8" />
+                                    <input type="hidden" name="csvsep" id="csv_separator" value=","/>
+                                    <input type="hidden" name="csvdel" id="csv_delimiter" value='"'/>
+                                    <input type="hidden" name="csv_encoding" id="csv_encoding" value="UTF-8" />
                                     <a class="button-a" href="javascript: void(0)" onclick="apply_changes();">${_("Apply changes")}</a>
                                 </td>
                             </tr>
