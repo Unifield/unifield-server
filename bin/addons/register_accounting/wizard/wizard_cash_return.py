@@ -151,8 +151,9 @@ class wizard_advance_line(osv.osv_memory):
         'account_id': fields.many2one('account.account', string='Account', required=True, domain=[('type', '!=', 'view')]),
         'partner_id': fields.many2one('res.partner', string='Partner', required=False),
         'employee_id': fields.many2one('hr.employee', string="Employee", required=False),
+        'transfer_journal_id': fields.many2one('account.journal', "Journal", required=False),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
-        'partner_type': fields.reference("3RD party", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee')], size=128),
+        'partner_type': fields.reference("3RD party", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.journal', 'Journal')], size=128),
         'amount': fields.float(string="Amount", size=(16,2), required=True),
         'wizard_id': fields.many2one('wizard.cash.return', string='wizard'),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -463,7 +464,7 @@ class wizard_cash_return(osv.osv_memory):
         return {'value': values}
 
     def create_move_line(self, cr, uid, ids, date=None, document_date=None, description='/', journal=False, register=False, partner_id=False, employee_id=False, account_id=None, \
-                         debit=0.0, credit=0.0, reference=None, move_id=None, analytic_distribution_id=None, partner_mandatory=False, context=None):
+                         debit=0.0, credit=0.0, reference=None, move_id=None, analytic_distribution_id=None, partner_mandatory=False, transfer_journal_id= False, context=None):
         """
         Create a move line with some params:
         - description: description of our move line
@@ -475,6 +476,7 @@ class wizard_cash_return(osv.osv_memory):
         - debit
         - credit
         - move_id: id of the move that contain the move lines
+        - transfer_journal_id: third party journal of the move line
         """
 
         if context is None:
@@ -533,6 +535,7 @@ class wizard_cash_return(osv.osv_memory):
             'move_id': move_id,
             'partner_id': partner_id or False,
             'employee_id': employee_id or False,
+            'transfer_journal_id': transfer_journal_id or False,
             'account_id': account_id,
             'credit': new_credit,
             'debit': new_debit,
@@ -570,6 +573,7 @@ class wizard_cash_return(osv.osv_memory):
         account_id = move_line.account_id.id
         partner_id = move_line.partner_id.id or False
         employee_id = move_line.employee_id.id or False
+        transfer_journal_id = move_line.transfer_journal_id.id or False
         seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
         reference = move_line.ref or False
         # BKLG-44: we keep the link with AD of the move line
@@ -596,6 +600,7 @@ class wizard_cash_return(osv.osv_memory):
             'account_id': account_id,
             'partner_id': partner_id,
             'employee_id': employee_id,
+            'transfer_journal_id': transfer_journal_id,
             'statement_id': register_id,
             'from_cash_return': True, # this permits to disable the return function on the statement line
             'sequence_for_reference': seq,
@@ -967,7 +972,7 @@ class wizard_cash_return(osv.osv_memory):
                 (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
             # other infos
             adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, line_employee_id,
-                                           account_id, debit, credit, adv_return_ref, adv_move, distrib_id, context=context)
+                                           account_id, debit, credit, adv_return_ref, adv_move, distrib_id, transfer_journal_id=line_journal_id, context=context)
             adv_move_data.append((adv_move, adv_id))
 
         # if advance lines have a Partner Third Party being neither Intermission nor Intersection:
