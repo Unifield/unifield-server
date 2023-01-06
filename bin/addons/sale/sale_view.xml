@@ -169,7 +169,7 @@
                         <field name="picked_rate" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
                         <field name="fo_created_by_po_sync" invisible="1"/>
-                        <field name="order_type" attrs="{'readonly': ['|', ('fo_created_by_po_sync', '=', True), ('state', '!=', 'draft')]}" on_change="onchange_order_type(order_type, partner_id)"/>
+                        <field name="order_type" attrs="{'readonly': ['|', '|', ('fo_created_by_po_sync', '=', True), ('state', '!=', 'draft'), ('order_type', '=', 'loan_return')]}" on_change="onchange_order_type(order_type, partner_id)"/>
                         <field name="sourcing_trace_ok" invisible="1"/>
                         <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <field name="categ" on_change="onchange_categ(categ)"/> <!-- RO state!=draft set on _column, same on IR -->
