@@ -294,7 +294,9 @@ class hq_report_ocg(report_sxw.report_sxw):
                 if cost_center_code == 'cc-intermission':
                     cost_center = 'MI998'
                     field_activity = 'SUPZZZ'
-
+                # US-10850
+                if cost_center.encode('ascii', 'ignore'):
+                    department_info = cost_center[:3]
                 if (journal.code, journal.id, currency.id) not in main_lines:
                     main_lines[(journal.code, journal.id, currency.id)] = []
                 main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] +
