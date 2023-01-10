@@ -185,7 +185,13 @@ class account_move_line(osv.osv):
                     acc_ana_line_obj.unlink(cr, uid, ana_line_ids)
                     continue
                 elif invalid_state:
-                    raise osv.except_osv(_('Warning'), _('Invalid analytic distribution.'))
+                    move_line_br = self.browse(cr, uid, obj_line['id'], fields_to_fetch=['move_id', 'name'], context=context)
+                    add = ''
+                    if move_line_br.move_id and move_line_br.move_id.journal_id and move_line_br.move_id.journal_id.type == 'cur_adj':
+                        add = _('FXA entry: ')
+                    elif move_line_br.move_id:
+                        add = ('%s (description %s): ') % (move_line_br.move_id.name or '', move_line_br.name or '')
+                    raise osv.except_osv(_('Warning'), '%s %s' % (add, _('Invalid analytic distribution.')))
                 if not journal.get('analytic_journal_id', False):
                     raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (journal.get('name', ''), ))
                 distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, line_distrib_id, context=context)
