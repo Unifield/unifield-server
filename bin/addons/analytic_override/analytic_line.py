@@ -201,7 +201,7 @@ class account_analytic_line(osv.osv):
         """
         acc_move_obj = self.pool.get('account.move.line')
         if vals.get('move_id'):
-            move_line = acc_move_obj.browse(cr, uid, vals['move_id'], fields_to_fetch=['move_id'], context=context)
+            move_line = acc_move_obj.browse(cr, uid, vals['move_id'], fields_to_fetch=['move_id', 'name'], context=context)
             if move_line.move_id:
                 if move_line.move_id.journal_id and move_line.move_id.journal_id.type == 'cur_adj':
                     return _(' selected for FXA ')
