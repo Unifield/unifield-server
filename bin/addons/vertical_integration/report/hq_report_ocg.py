@@ -118,7 +118,6 @@ class hq_report_ocg(report_sxw.report_sxw):
                         'G/L Account',
                         'Unifield Account',
                         'Destination',
-                        'Department',
                         'Cost Centre',
                         'Funding Pool',
                         'Third Parties',
@@ -160,7 +159,7 @@ class hq_report_ocg(report_sxw.report_sxw):
         if len(data['form']['instance_ids']) > 0:
             parent_instance = pool.get('msf.instance').browse(cr, uid, data['form']['instance_ids'][0], context=context)
             if parent_instance:
-                department = parent_instance.code[:3].encode('ascii', 'ignore')
+                department = parent_instance.code[:3]
                 department_info = department == 'CD1' and 'CD5' or department  # set "CD5" for "CD1" mission
 
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
@@ -186,7 +185,6 @@ class hq_report_ocg(report_sxw.report_sxw):
             journal = move_line.journal_id
             account = move_line.account_id
             currency = move_line.currency_id
-            department_info = department_info or move_line.instance_id and move_line.instance_id.code[:3] or ""
             # For first report: as if
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
@@ -199,7 +197,6 @@ class hq_report_ocg(report_sxw.report_sxw):
                               self.translate_account(cr, uid, pool, account),
                               account and account.code + " " + account.name,
                               "",
-                              department_info,
                               "",
                               "",
                               move_line.partner_txt,
@@ -218,7 +215,7 @@ class hq_report_ocg(report_sxw.report_sxw):
                 if not account.shrink_entries_for_hq:
                     if (journal.code, journal.id, currency.id) not in main_lines:
                         main_lines[(journal.code, journal.id, currency.id)] = []
-                    main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[12:13] + formatted_data[14:18])
+                    main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
                 else:
                     translated_account_code = self.translate_account(cr, uid, pool, account)
                     if (translated_account_code, currency.id) not in account_lines_debit:
@@ -260,11 +257,6 @@ class hq_report_ocg(report_sxw.report_sxw):
             account = analytic_line.general_account_id
             currency = analytic_line.currency_id
             cost_center_code = analytic_line.cost_center_id and analytic_line.cost_center_id.code or ""
-            # US-10850
-            if cost_center_code.encode('ascii', 'ignore'):
-                department_info = department_info or cost_center_code[:3]
-            elif analytic_line.instance_id:
-                department_info = department_info or analytic_line.instance_id.code
 
             # US-1375: cancel US-817
             aji_period_id = analytic_line and analytic_line.period_id or False
@@ -282,7 +274,6 @@ class hq_report_ocg(report_sxw.report_sxw):
                               #account and account.code,
                               account and account.code + " " + account.name or "",
                               self._get_destination_code(analytic_line, context),
-                              department_info,
                               cost_center_code,
                               analytic_line.account_id and analytic_line.account_id.code or "",
                               analytic_line.partner_txt or "",
@@ -297,16 +288,19 @@ class hq_report_ocg(report_sxw.report_sxw):
             # exclude lines with zero amount from the "formatted data" file
             zero_analytic_line = not analytic_line.amount and not analytic_line.amount_currency
             if not zero_analytic_line:
-                cost_center = formatted_data[12][:5] or " "
-                field_activity = formatted_data[12][6:] or " "
+                cost_center = formatted_data[11][:5] or " "
+                field_activity = formatted_data[11][6:] or " "
                 # UTP-1104: Hard code the fact that cc-intermission should appear as MI998 + SUPZZZ
                 if cost_center_code == 'cc-intermission':
                     cost_center = 'MI998'
                     field_activity = 'SUPZZZ'
+                if cost_center:
+                    department_info = cost_center[:3]
+
                 if (journal.code, journal.id, currency.id) not in main_lines:
                     main_lines[(journal.code, journal.id, currency.id)] = []
                 main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] +
-                                                                           [department_info] + [cost_center] + formatted_data[14:18] +
+                                                                           [department_info] + [cost_center] + formatted_data[13:17] +
                                                                            [field_activity])
 
             analytic_line_count += 1
