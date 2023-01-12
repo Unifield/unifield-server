@@ -178,7 +178,6 @@ class hq_report_ocg(report_sxw.report_sxw):
         move_share = 0.4
 
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
-            formatted_data = []
             # UFTP-194: Just take posted move lines
             if move_line.move_id.state != 'posted':
                 move_line_count += 1
@@ -250,7 +249,6 @@ class hq_report_ocg(report_sxw.report_sxw):
         analytic_share = 0.5
 
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
-            formatted_data = []
             # Just take analytic lines that comes from posted move lines
             if analytic_line.move_state != 'posted':
                 analytic_line_count += 1
