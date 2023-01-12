@@ -333,7 +333,7 @@
                                         icon="terp-go-week" />
                                     <field name="product_qty" string="Qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment, context)"/>
                                     <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
-                                    <field name="price_unit" readonly="1"/>
+                                    <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)"/>
                                     <field name="price_subtotal" readonly="1"/>
                                     <field name="currency_id" readonly="1"/>
                                     <field name="date_planned" attrs="{'readonly': [('fake_state', 'not in', ('', 'draft', 'validated_n', 'validated'))]}"/>
@@ -344,6 +344,10 @@
                                     <field name="inactive_product" invisible="1" />
                                     <field name="red_color" invisible="1" />
                                     <field name="soq_updated" invisible="1" readonly="1" />
+                                    <field name="fake_id" invisible="1"/>
+                                    <field name="change_price_ok" invisible="1"/>
+                                    <field name="old_price_unit" invisible="1"/>
+                                    <field name="nomen_manda_0" invisible="1"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="rfq_line_state_to_display"/>
                                     <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': ['|', ('fake_state', 'in', ['cancel', 'cancel_r', 'done']), ('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" />
