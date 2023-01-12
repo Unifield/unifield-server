@@ -327,6 +327,8 @@ class hq_report_ocg(report_sxw.report_sxw):
         for key in sorted(main_lines.iterkeys(), key=lambda tuple: tuple[0]):
             second_result_lines += sorted(main_lines[key], key=lambda line: line[2])
 
+        # get main instance code for department of subtotal lines and set "CD5" for "CD1" mission
+        department_info = department == 'CD1' and 'CD5' or department
         for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
             subtotal_lines = self.create_subtotal(cr, uid, key,
                                                   account_lines_debit[key],
