@@ -25,8 +25,10 @@ class finance_sync_query(osv.osv):
             name as name,
             wizard_name as model,
             id as template_id,
+            create_date as creation_date,
             coalesce(last_modification, write_date, create_date) as last_modification,
             coalesce(hq_template,'f') as synced,
+            write_uid as last_editor,
             user_id as user_id
         FROM wizard_template
         WHERE coalesce(name, '') != ''
@@ -37,8 +39,10 @@ class finance_sync_query(osv.osv):
             description as name,
             CASE %s END as model,
             id as template_id,
+            create_date as creation_date,
             coalesce(write_date, create_date) as last_modification,
             coalesce(hq_template, 'f') as synced,
+            write_uid as last_editor,
             "user" as user_id
         FROM account_mcdb
         WHERE coalesce(description,'') != ''
@@ -61,8 +65,10 @@ class finance_sync_query(osv.osv):
         ], string='Type', size=128, readonly=1, required=1),
         'template_id': fields.integer('Template id', readonly=1),
         'last_modification': fields.datetime('Last Modification', readonly=1),
+        'creation_date': fields.datetime('Creation Date', readonly=1),
         'synced': fields.boolean('Synced query', readonly=1),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
+        'last_editor': fields.many2one('res.users', 'Last Editor', readonly=1),
     }
 
     def create(self, cr, uid, values, context=None):
