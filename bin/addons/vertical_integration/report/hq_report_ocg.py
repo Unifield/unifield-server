@@ -297,7 +297,7 @@ class hq_report_ocg(report_sxw.report_sxw):
                     cost_center = 'MI998'
                     field_activity = 'SUPZZZ'
                 if cost_center:
-                    department_info = cost_center[:3]
+                    department_info = cost_center[:3] == 'CD1' and 'CD5' or cost_center[:3]  # set "CD5" for "CD1" CCs
 
                 if (journal.code, journal.id, currency.id) not in main_lines:
                     main_lines[(journal.code, journal.id, currency.id)] = []
