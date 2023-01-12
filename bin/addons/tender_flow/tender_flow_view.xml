@@ -318,7 +318,7 @@
                             <newline/>
                             <button name="wizard_import_po_line" string="Import RfQ lines" colspan="4" icon="gtk-dnd" type="object" attrs="{'invisible':[('rfq_state', 'not in', ['sent', 'done'])]}"/>
                             <field colspan="4" name="order_line" nolabel="1" mode="tree,form" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" context="{'rfq_ok': 1}">
-                                <tree string="Lines" hide_delete_button="True" colors="red:not default_code and not nomenclature_description" editable="both">
+                                <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
                                     <field name="default_name" displayon="noteditable"/>
@@ -340,6 +340,10 @@
                                     <field name="confirmed_delivery_date" readonly="1"/>
                                     <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
                                     <field name="tender_line_id" invisible="1" />
+                                    <field name="to_correct_ok" invisible="1"/>
+                                    <field name="inactive_product" invisible="1" />
+                                    <field name="red_color" invisible="1" />
+                                    <field name="soq_updated" invisible="1" readonly="1" />
                                     <field name="fake_state" invisible="1"/>
                                     <field name="rfq_line_state_to_display"/>
                                     <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': ['|', ('fake_state', 'in', ['cancel', 'cancel_r', 'done']), ('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" />
