@@ -31,19 +31,21 @@
                         <page string="Tender Lines">
                             <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
                                 <tree string="Tender Lines" editable="top" hide_delete_button="1" noteditable="line_state in ['cancel', 'done']" colors="blue: line_state=='cancel'">
-                                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty, parent.categ)" attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" />
+                                    <field name="product_default_code" displayon="noteditable"/>
+                                    <field name="product_name" displayon="noteditable"/>
+                                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty, parent.categ)" attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" displayon="editable" />
                                     <field name="comment" />
                                     <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" 
                                         on_change="onchange_uom_qty(product_uom, qty)" />
                                     <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('uom_by_product', '=', product_id)]"/>
-                                    <field name="supplier_id" />
-                                    <field name="delivery_confirmed_date" />
                                     <field name="price_unit" />
                                     <field name="total_price" />
                                     <field name="currency_id" />
+                                    <field name="supplier_id" />
                                     <field name="purchase_order_id" />
                                     <field name="purchase_order_line_number" />
                                     <field name="created_by_rfq" invisible="0" readonly="1" />
+                                    <field name="delivery_confirmed_date" />
                                     <field name="state" invisible="1" />
                                     <field name="line_state" invisible="1" />
                                     <button name="ask_unlink" type="object" string="Cancel" icon="gtk-del" attrs="{'invisible': ['|', ('state', '=', 'done'), ('line_state', 'in', ['done', 'cancel'])]}" />
@@ -316,21 +318,27 @@
                             <newline/>
                             <button name="wizard_import_po_line" string="Import RfQ lines" colspan="4" icon="gtk-dnd" type="object" attrs="{'invisible':[('rfq_state', 'not in', ['sent', 'done'])]}"/>
                             <field colspan="4" name="order_line" nolabel="1" mode="tree,form" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" context="{'rfq_ok': 1}">
-                                <tree string="Lines" hide_delete_button="True">
-                                    <field name="line_number"/>
-                                    <field name="default_code"/>
-                                    <field name="default_name"/>
-                                    <field name="comment"/>
-                                    <field name="nomenclature_description"/>
-                                    <field name="supplier_code"/>
-                                    <field name="product_qty"/>
-                                    <field name="product_uom"/>
-                                    <field name="date_planned"/>
-                                    <field name="confirmed_delivery_date"/>
-                                    <field name="kc_dg"/>
-                                    <field name="price_unit" invisible="1"/>
-                                    <field name="price_subtotal"/>
-                                    <field name="currency_id"/>
+                                <tree string="Lines" hide_delete_button="True" colors="red:not default_code and not nomenclature_description" editable="both">
+                                    <field name="line_number" readonly="1"/>
+                                    <field name="default_code" displayon="noteditable"/>
+                                    <field name="default_name" displayon="noteditable"/>
+                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context,False,False,linked_sol_id,po_order_type)" attrs="{'readonly': [('tender_line_id', '!=', False)], 'required': [('comment', '=', False)]}" default_focus="1" displayon="editable"/>
+                                    <field name="comment" attrs="{'required':[('product_id', '=', False)]}"/>
+                                    <field name="nomenclature_description" readonly="1"/>
+                                    <button name="openform"
+                                        special="openform"
+                                        string="Configurator"
+                                        attrs="{'invisible': ['|', '|', ('default_code', '!=', False), ('fake_state', 'not in', ['draft', 'draft_p', 'validated_n', 'validated']), ('rfq_state', 'in', ['updated', 'done', 'cancel'])]}"
+                                        context="{'nom_configurator': True}"
+                                        icon="terp-go-week" />
+                                    <field name="product_qty" string="Qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment, context)"/>
+                                    <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
+                                    <field name="price_unit" readonly="1"/>
+                                    <field name="price_subtotal" readonly="1"/>
+                                    <field name="currency_id" readonly="1"/>
+                                    <field name="date_planned" attrs="{'readonly': [('fake_state', 'not in', ('', 'draft', 'validated_n', 'validated'))]}"/>
+                                    <field name="confirmed_delivery_date" readonly="1"/>
+                                    <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
                                     <field name="tender_line_id" invisible="1" />
                                     <field name="fake_state" invisible="1"/>
                                     <field name="rfq_line_state_to_display"/>
