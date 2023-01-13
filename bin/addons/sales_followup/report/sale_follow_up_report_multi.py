@@ -243,9 +243,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'delivered_uom': '-',
                         })
                         if not grouped:
-                            key = (False, False, move.product_uom.name)
+                            key = (move.picking_id.name, False, move.product_uom.name)
                         else:
-                            key = (False, False, move.product_uom.name, line.line_number)
+                            key = (move.picking_id.name, False, move.product_uom.name, line.line_number)
                     else:
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                             packing = move.picking_id.previous_step_id.name
