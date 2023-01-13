@@ -185,6 +185,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 if m_type and (ppl or s_out or ppl_not_shipped or cancelled_pick):
                     # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
                     bo_qty -= uom_obj._compute_qty(self.cr, self.uid, move.product_uom.id, move.product_qty, line.product_uom.id)
+                    key = False
                     data.update({
                         'po_name': po_name,
                         'supplier_name': supplier_name,
@@ -242,10 +243,6 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'delivered_qty': 0.00,
                             'delivered_uom': '-',
                         })
-                        if not grouped:
-                            key = (move.picking_id.name, False, move.product_uom.name)
-                        else:
-                            key = (move.picking_id.name, False, move.product_uom.name, line.line_number)
                     else:
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                             packing = move.picking_id.previous_step_id.name
@@ -269,7 +266,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                                 'shipment': shipment,
                             })
 
-                    if key in keys and lines:
+                    if not cancelled_pick and key in keys and lines:
                         for rline in lines:
                             if rline['packing'] == key[0] and rline['shipment'] == key[1] and rline['delivered_uom'] == key[2]:
                                 if not grouped or (grouped and line.line_number == key[3]):
@@ -283,7 +280,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                                         'backordered_qty': rline['backordered_qty'] + data['backordered_qty'],
                                     })
                     else:
-                        keys.append(key)
+                        if not cancelled_pick:
+                            keys.append(key)
                         lines.append(data)
                         if data.get('first_line'):
                             fl_index = m_index
