@@ -180,7 +180,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
                 ppl_not_shipped = move.picking_id.subtype == 'ppl' and move.picking_id.state not in ('cancel', 'done')
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
-                if m_type and (ppl or s_out or ppl_not_shipped):
+                cancelled_pick = line.state not in ('cancel', 'cancel_r') and move.picking_id.type == 'out' and\
+                                 move.picking_id.subtype in ('standard', 'picking') and move.state == 'cancel'
+                if m_type and (ppl or s_out or ppl_not_shipped or cancelled_pick):
                     # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
                     bo_qty -= uom_obj._compute_qty(self.cr, self.uid, move.product_uom.id, move.product_qty, line.product_uom.id)
                     data.update({
@@ -233,6 +235,17 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'eta': not only_bo and eta and eta.strftime('%Y-%m-%d'),
                             'transport': not only_bo and move.picking_id.shipment_id and transport_dict.get(move.picking_id.shipment_id.transport_type, ''),
                         })
+                    elif cancelled_pick:
+                        data.update({
+                            'ordered_qty': line.product_uom_qty,
+                            'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
+                            'delivered_qty': 0.00,
+                            'delivered_uom': '-',
+                        })
+                        if not grouped:
+                            key = (False, False, move.product_uom.name)
+                        else:
+                            key = (False, False, move.product_uom.name, line.line_number)
                     else:
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                             packing = move.picking_id.previous_step_id.name
