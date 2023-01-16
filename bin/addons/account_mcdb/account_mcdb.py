@@ -574,10 +574,9 @@ class account_mcdb(osv.osv):
                     domain.append(('is_reversal', '=', False))
             # exclude inactive journals
             if wiz.excl_inactive_journal_ids:
-                operator = 'not in'
                 inactiv_date = wiz.inactive_at or datetime.today().date()
-                inactive_journal_ids = journal_obj.search(cr, uid, [('is_active', '=', False), ('inactivation_date', '<', inactiv_date)], context=context)
-                domain.append(('journal_id', operator, inactive_journal_ids))
+                inactive_journal_ids = journal_obj.search(cr, uid, [('is_active', '=', False), ('inactivation_date', '<=', inactiv_date)], context=context)
+                domain.append(('journal_id', 'not in', inactive_journal_ids))
             # ANALYTIC AXIS FIELD
             if res_model == 'account.analytic.line':
                 if wiz.analytic_axis == 'fp':
@@ -1218,7 +1217,7 @@ class account_mcdb(osv.osv):
                     value = ', '.join(values_list)
         return value, operator
 
-    def get_selection_from_domain(self, cr, uid, domain, model, context=None):
+    def get_selection_from_domain(self, cr, uid, orig_domain, model, context=None):
         """
         Returns a String corresponding to the domain in parameter:
         criteria separated with ";" and followed by ":" for the value.
@@ -1246,6 +1245,19 @@ class account_mcdb(osv.osv):
                  'period_id.number',  # the check on period number != 0 is not part of the user selection in the interface
                  'account_id.reconcile',  # only reconcile_id is kept (filter 'Unreconciled' in JI view)
                  ]
+            journal_domain = []
+            domain = []
+            for dom in orig_domain:
+                if model == 'account.move.line' and dom[0] == 'journal_id':
+                    journal_domain.append(('id', dom[1], dom[2]))
+                else:
+                    domain.append(dom)
+
+            if journal_domain:
+                journal_obj = self.pool.get('account.journal')
+                journal_ids = journal_obj.search(cr, uid, journal_domain, context=context)
+                dom_selections.append("%s: %s" % (_('Journal Code'),  ', '.join([x['code'] for x in journal_obj.read(cr, uid, journal_ids, ['code'], context=context)])))
+
             if context.get('from', False) == 'account.move.line':
                 to_ignore.remove('move_id')  # 'move_id' (Entry Sequence) should not be ignored if we come from the JI view
             for dom in domain:
