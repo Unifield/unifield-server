@@ -792,7 +792,11 @@ class analytic_account(osv.osv):
             context = {}
         if 'category' in vals and vals['category'] == 'OC' and 'parent_id' in vals and vals['parent_id']:
             msg = ''
-            parent = self.browse(cr, uid, vals['parent_id'], fields_to_fetch=['date_start', 'date'], context=context)
+            parent = self.browse(cr, uid, vals['parent_id'], fields_to_fetch=['date_start', 'date', 'code'], context=context)
+            if parent.code == 'OC':  # If parent CC is OC, no need to check
+                return True
+            if parent.date and parent.date < datetime.today().strftime('%Y-%m-%d'):
+                raise osv.except_osv(_('Warning !'), _('The parent CC %s is not active, you can not create a child to this parent') % parent.code)
             if 'date' in vals and vals['date'] and parent.date and vals['date'] > parent.date:
                 msg += _('The sub-costcenter validity date is greater than the parent cost center validity date!') + "\n"
             if 'date_start' in vals and vals['date_start'] and parent.date_start and vals['date_start'] < parent.date_start:
