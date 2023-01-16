@@ -879,7 +879,7 @@ class account_journal(osv.osv):
                     and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
             self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
-            if 'is_active' in vals and not vals['is_active']:
+            if 'is_active' in vals and not vals['is_active'] and (not context.get('sync_update_execution') or not vals.get('inactivation_date')):
                 if not journal.inactivation_date:
                     vals.update({'inactivation_date': datetime.today().date()})
                 else:
