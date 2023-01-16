@@ -26,6 +26,7 @@ from osv import osv
 from osv import fields
 from time import strftime
 from tools.translate import _
+from tools.misc import ustr
 from datetime import datetime
 from msf_partner import PARTNER_TYPE
 import re
@@ -1741,6 +1742,37 @@ class account_invoice_line(osv.osv):
                         raise osv.except_osv(_('Error'), _('This document has been generated via a Supply workflow or via synchronization. '
                                                            'You can\'t add lines manually.'))
 
+    def _remove_spaces_name(self, cr, uid, vals, context=None):
+        """
+            remove spaces in name, except if the result is an empty string
+        """
+        if vals.get('name'):
+            orig = vals['name']
+            # ustr: all kind of spaces are remove in unicode
+            vals['name'] = ustr(vals['name']).strip()
+            if not vals['name']:
+                vals['name'] = orig
+                return True
+        return False
+
+    def raise_if_not_workflow(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cr.execute('''
+            select l.line_number
+            from
+                account_invoice_line l, account_invoice i
+            where
+                l.invoice_id = i.id and
+                i.from_supply = 'f' and
+                (i.type not in ('in_invoice', 'in_refund') or i.synced = 'f') and
+                l.id in %s
+            ''', (tuple(ids), ))
+        line_error = ['%s'%x[0] for x in cr.fetchall()]
+        if line_error:
+            raise osv.except_osv(_('Error'), _('Invoice line #%s: The description contains only spaces.') % ', '.join(line_error))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Give a line_number to invoice line.
@@ -1754,12 +1786,16 @@ class account_invoice_line(osv.osv):
         self._check_automated_invoice(cr, uid, vals.get('invoice_id'), context=context)
         # Create new number with invoice sequence
         if vals.get('invoice_id') and self._name in ['account.invoice.line']:
-            invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'])
+            invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'], fields_to_fetch=['sequence_id'])
             if invoice and invoice.sequence_id:
                 sequence = invoice.sequence_id
                 line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
+        empty_name = self._remove_spaces_name(cr, uid, vals, context=context)
         inv_line_id = super(account_invoice_line, self).create(cr, uid, vals, context)
+        if empty_name:
+            self.raise_if_not_workflow(cr, uid, [inv_line_id], context=context)
+
         self._check_on_invoice_line_big_amounts(cr, uid, inv_line_id, context=context)
         return inv_line_id
 
@@ -1784,7 +1820,10 @@ class account_invoice_line(osv.osv):
                     sequence = il.invoice_id.sequence_id
                     il_number = sequence.get_id(code_or_id='id', context=context)
                     vals.update({'line_number': il_number})
+        empty_name = self._remove_spaces_name(cr, uid, vals, context=context)
         res = super(account_invoice_line, self).write(cr, uid, ids, vals, context)
+        if empty_name:
+            self.raise_if_not_workflow(cr, uid, ids, context=context)
         for invl in self.browse(cr, uid, ids):
             if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
                 amount = 0.0
