@@ -1767,6 +1767,7 @@ class account_move(osv.osv):
         valid_moves = [] #Maintains a list of moves which can be responsible to create analytic entries
         obj_analytic_line = self.pool.get('account.analytic.line')
         obj_move_line = self.pool.get('account.move.line')
+        cr.execute('select id from account_move_line where move_id in %s for update', (tuple(ids),))
         for move in self.browse(cr, uid, ids, context):
             # Unlink old analytic lines on move_lines
             # UTP-803: condition on context added, if this context is set analytic lines won't be created,
@@ -1782,7 +1783,11 @@ class account_move(osv.osv):
                 for obj_line in move.line_id:
                     for obj in obj_line.analytic_lines:
                         obj_analytic_line.unlink(cr,uid,obj.id)
-
+            # TO DO REMOVE ME
+            #import time
+            #print 'sleep...'
+            #time.sleep(10)
+            #print 'ok'
             journal = move.journal_id
             amount = 0
             amount_currency = 0
