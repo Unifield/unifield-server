@@ -58,6 +58,15 @@ class patch_scripts(osv.osv):
     }
 
     # UF28.0
+    def us_8417_upd_srv_loc(self, cr, uid, *a, **b):
+        '''
+        Set 'virtual_location' to True on the existing 'Service' location
+        '''
+        cr.execute('''UPDATE stock_location SET virtual_location = 't' WHERE id = %s''',
+                   (self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1],))
+
+        return True
+
     def us_10652_chg_partn_property_fields(self, cr, uid, *a, **b):
         '''
         Update the data of the res_partner's fields property_product_pricelist_purchase, property_product_pricelist,
