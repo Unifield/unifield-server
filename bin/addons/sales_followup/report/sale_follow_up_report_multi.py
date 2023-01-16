@@ -175,17 +175,16 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 'state_display': line_state_display_dict.get(line.state_to_display),
             }
 
+            cancelled_move = False
             for move in line.move_ids:
+                cancelled_move = False
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
                 ppl_not_shipped = move.picking_id.subtype == 'ppl' and move.picking_id.state not in ('cancel', 'done')
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
-                cancelled_pick = line.state not in ('cancel', 'cancel_r') and move.picking_id.type == 'out' and\
-                                 move.picking_id.subtype in ('standard', 'picking') and move.state == 'cancel'
-                if m_type and (ppl or s_out or ppl_not_shipped or cancelled_pick):
+                if m_type and (ppl or s_out or ppl_not_shipped):
                     # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
                     bo_qty -= uom_obj._compute_qty(self.cr, self.uid, move.product_uom.id, move.product_qty, line.product_uom.id)
-                    key = False
                     data.update({
                         'po_name': po_name,
                         'supplier_name': supplier_name,
@@ -236,13 +235,6 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'eta': not only_bo and eta and eta.strftime('%Y-%m-%d'),
                             'transport': not only_bo and move.picking_id.shipment_id and transport_dict.get(move.picking_id.shipment_id.transport_type, ''),
                         })
-                    elif cancelled_pick:
-                        data.update({
-                            'ordered_qty': line.product_uom_qty,
-                            'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
-                            'delivered_qty': 0.00,
-                            'delivered_uom': '-',
-                        })
                     else:
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                             packing = move.picking_id.previous_step_id.name
@@ -266,7 +258,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                                 'shipment': shipment,
                             })
 
-                    if not cancelled_pick and key in keys and lines:
+                    if key in keys and lines:
                         for rline in lines:
                             if rline['packing'] == key[0] and rline['shipment'] == key[1] and rline['delivered_uom'] == key[2]:
                                 if not grouped or (grouped and line.line_number == key[3]):
@@ -280,8 +272,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                                         'backordered_qty': rline['backordered_qty'] + data['backordered_qty'],
                                     })
                     else:
-                        if not cancelled_pick:
-                            keys.append(key)
+                        keys.append(key)
                         lines.append(data)
                         if data.get('first_line'):
                             fl_index = m_index
@@ -289,6 +280,11 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
                     # reset the data to prevent delivered_qty problem when line is split in PICK
                     data = {}
+                # If the move is from a cancelled Pick/OUT but not a cancelled FO line
+                cancelled_pick = line.state not in ('cancel', 'cancel_r') and move.picking_id.type == 'out' and \
+                                 move.picking_id.subtype in ('standard', 'picking') and move.state == 'cancel'
+                if first_line and m_type and cancelled_pick and not (ppl or s_out or ppl_not_shipped):
+                    cancelled_move = True
 
             if first_line:
                 if linked_pol and linked_pol.order_type == 'direct' and linked_pol.state == 'done':
@@ -324,7 +320,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
                         'delivered_qty': 0.00,
                         'delivered_uom': '-',
-                        'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
+                        'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' and not cancelled_move else 0.00,
                         'edd': edd,
                         'cdd': cdd,
                     })
