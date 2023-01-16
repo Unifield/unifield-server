@@ -1758,17 +1758,23 @@ class account_invoice_line(osv.osv):
     def raise_if_not_workflow(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        invoice_line_table = self._table
+        if self._name == 'wizard.account.invoice.line':
+            invoice_table = 'wizard_account_invoice'
+        else:
+            invoice_table = 'account_invoice'
         cr.execute('''
             select l.line_number
             from
-                account_invoice_line l, account_invoice i
+                ''' + invoice_line_table + ''' l, ''' + invoice_table + ''' i
             where
                 l.invoice_id = i.id and
                 i.from_supply = 'f' and
                 (i.type not in ('in_invoice', 'in_refund') or i.synced = 'f') and
                 l.id in %s
-            ''', (tuple(ids), ))
-        line_error = ['%s'%x[0] for x in cr.fetchall()]
+            ''', (tuple(ids), ))  # not_a_user_entry
+        line_error = ['%s'%(x[0] or '') for x in cr.fetchall()]
         if line_error:
             raise osv.except_osv(_('Error'), _('Invoice line #%s: The description contains only spaces.') % ', '.join(line_error))
         return True
