@@ -28,7 +28,7 @@ class finance_sync_query(osv.osv):
             create_date as creation_date,
             coalesce(last_modification, write_date, create_date) as last_modification,
             coalesce(hq_template,'f') as synced,
-            write_uid as last_editor,
+            coalesce(write_uid, create_uid) as last_editor,
             user_id as user_id
         FROM wizard_template
         WHERE coalesce(name, '') != ''
@@ -42,7 +42,7 @@ class finance_sync_query(osv.osv):
             create_date as creation_date,
             coalesce(write_date, create_date) as last_modification,
             coalesce(hq_template, 'f') as synced,
-            write_uid as last_editor,
+            coalesce(write_uid, create_uid) as last_editor,
             "user" as user_id
         FROM account_mcdb
         WHERE coalesce(description,'') != ''
