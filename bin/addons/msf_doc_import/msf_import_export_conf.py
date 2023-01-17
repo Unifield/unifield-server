@@ -369,6 +369,7 @@ MODEL_DATA_DICT = {
             'address.name',
             'address.street',
             'address.zip',
+            'address.phone',
             'address.country_id.name',
             'address.email',
             'property_account_payable.code',
