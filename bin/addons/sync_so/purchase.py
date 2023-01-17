@@ -717,7 +717,7 @@ class purchase_order_sync(osv.osv):
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
         if partner_type == 'section':
             #US-620: If the FO type is donation or loan, then remove the analytic distribution
-            if so_info.order_type in ('loan', 'donation_st', 'donation_exp'):
+            if so_info.order_type in ('loan', 'loan_return', 'donation_st', 'donation_exp'):
                 if 'analytic_distribution_id' in header_result:
                     del header_result['analytic_distribution_id']
             else:

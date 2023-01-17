@@ -489,7 +489,7 @@ class purchase_order_line(osv.osv):
                                             context=context)[0]
         ftf = ['product_id', 'price_unit', 'product_uom', 'product_qty']
         counterpart_data = {
-            'order_type': 'loan',
+            'order_type': 'loan_return',
             'categ': p_order.categ,
             'origin': p_order.name,
             'loan_id': p_order.id,

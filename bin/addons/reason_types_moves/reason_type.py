@@ -351,27 +351,27 @@ class stock_picking(osv.osv):
 
         return [('reason_type_id', 'in', don_ids)]
 
-
     def _get_is_loan(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for rid in ids:
             res[rid] = False
         data_obj = self.pool.get('ir.model.data')
         loan_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
-        res = self.search(cr, uid, [('id', 'in', ids), ('reason_type_id', 'in', loan_id)], context=context)
+        loan_return_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
+        res = self.search(cr, uid, [('id', 'in', ids), ('reason_type_id', 'in', [loan_id, loan_return_id])], context=context)
 
         return res
 
     def _search_is_loan(self, cr, uid, obj, name, args, context=None):
         data_obj = self.pool.get('ir.model.data')
         loan_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        loan_return_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
         if not args:
             return []
         if args[0][1] != '=' or not args[0][2]:
-
             raise osv.except_osv(_('Error'), _('Filter not implemented on field %') % (name,))
 
-        return [('reason_type_id', '=', loan_id)]
+        return [('reason_type_id', 'in', [loan_id, loan_return_id])]
 
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
@@ -383,10 +383,14 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        return_reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves',
-                                                                                    'reason_type_return_from_unit')[1]
+        data_obj = self.pool.get('ir.model.data')
+        return_reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        loan_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
 
-        if reason_type_id == return_reason_type_id:
+        if reason_type_id == loan_ret_rt_id:
+            return {'value': {'reason_type_id': False, 'ret_from_unit_rt': False},
+                    'warning': {'title': _('Error'), 'message': _('You can not select this Reason Type manually')}}
+        elif reason_type_id == return_reason_type_id:
             return {'value': {'ret_from_unit_rt': True, 'partner_id': False, 'partner_id2': False, 'address_id': False}}
         else:
             return {'value': {'ret_from_unit_rt': False}}

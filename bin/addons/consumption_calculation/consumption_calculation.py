@@ -1808,13 +1808,14 @@ class product_product(osv.osv):
         # Get all reason types
         get_object_reference = self.pool.get('ir.model.data').get_object_reference
         loan_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        loan_return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
         donation_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
         donation_exp_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
         loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
         discrepancy_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
 
         # Update the domain
-        domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id))]
+        domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, loan_return_id, donation_id, donation_exp_id, loss_id, discrepancy_id))]
         int_return_qery = False
 
         return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1] # code 4
@@ -1925,7 +1926,7 @@ class product_product(osv.osv):
     def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False, remove_negative_amc=False, rounding=True):
         '''
         Compute the Average Monthly Consumption with this formula :
-            AMC = (sum(OUTGOING (except reason types Loan, Donation, Loss, Discrepancy))
+            AMC = (sum(OUTGOING (except reason types Loan, Loan Return, Donation, Loss, Discrepancy))
                   -
                   sum(INCOMING with reason type Return from unit)) / Number of period's months
             The AMC is the addition of all done stock moves for a product within a period.
