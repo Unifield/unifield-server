@@ -101,10 +101,12 @@ class finance_sync_query(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for x in self.read(cr, uid, ids, ['template_id', 'model'], context=context):
-            if x['template_id']:
+        for x in self.read(cr, uid, ids, ['template_id', 'model', 'synced'], context=context):
+            if x['template_id'] and not x['synced']:
                 model = self._get_target_obj(cr, uid, x)
                 model.unlink(cr, uid, x['template_id'])
+            if x['synced']:
+                raise osv.except_osv(_('Warning'), _('You cannot delete at instance level the synchronized queries!'))
         return True
 
     def _set_sync_status(self, cr, uid, ids, status, context=None):
