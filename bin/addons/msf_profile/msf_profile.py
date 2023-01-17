@@ -99,6 +99,20 @@ class patch_scripts(osv.osv):
             ''')
         return True
 
+    def us_10353_inactivation_date(self, cr, uid, *a,**b):
+        for journal_id in self.pool.get('account.journal').search(cr, uid, [('is_active', '=', False)]):
+            cr.execute("""
+                UPDATE account_journal
+                SET inactivation_date = (SELECT date(create_date)
+                        FROM audittrail_log_line
+                        WHERE
+                            object_id in (SELECT id FROM ir_model WHERE model='account.journal') AND
+                            res_id=%s AND
+                            name='is_active' AND
+                            coalesce(new_value,'')=''
+                        order by create_date desc limit 1)
+                WHERE id=%s
+            """, (journal_id, journal_id))
     # UF27.0
     def store_picking_subtype(self, cr, uid, *a, **b):
         cr.execute("""
