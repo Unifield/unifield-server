@@ -170,7 +170,8 @@ class account_analytic_line(osv.osv):
             # FIXME: refactoring of next code
             if document_date < account.date_start or (account.date != False and document_date >= account.date):
                 if 'from' not in context or context.get('from') != 'mass_reallocation':
-                    raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (account.name or '',))
+                    entry_name = self.get_entry_name(cr, uid, vals, context=context)
+                    raise osv.except_osv(_('Error'), _("The analytic account '%s' %s is not active.") % (account.name or '', entry_name))
         if 'date' in vals and vals['date'] is not False:
             date = vals['date']
             dest = False
@@ -179,16 +180,34 @@ class account_analytic_line(osv.osv):
                 cc = account_obj.browse(cr, uid, vals['cost_center_id'], context=context)
                 if date < cc.date_start or (cc.date != False and date >= cc.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
-                        raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (cc.name or '',))
+                        # US-9724
+                        entry_name = self.get_entry_name(cr, uid, vals, context=context)
+                        raise osv.except_osv(_('Error'),_("The analytic account '%s' %s is inactive.") % (cc.name or '', entry_name))
             if vals.get('destination_id', False):
                 dest = account_obj.browse(cr, uid, vals['destination_id'], context=context)
                 if date < dest.date_start or (dest.date != False and date >= dest.date):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
-                        raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (dest.name or '',))
+                        entry_name = self.get_entry_name(cr, uid, vals, context=context)
+                        raise osv.except_osv(_('Error'), _("The analytic account '%s' %s is not active.") % (dest.name or '', entry_name))
             if context.get('from') != 'mass_reallocation' and dest and cc and \
                     dest_cc_link_obj.is_inactive_dcl(cr, uid, dest.id, cc.id, date, context=context):
-                raise osv.except_osv(_('Error'), _("The combination \"%s - %s\" is not active.") % (dest.code or '', cc.code or ''))
+                entry_name = self.get_entry_name(cr, uid, vals, context=context)
+                raise osv.except_osv(_('Error'), _("The combination \"%s - %s\"  %s is not active.") % (dest.code or '', cc.code or '', entry_name))
         return True
+
+    def get_entry_name(self, cr, uid, vals, context):
+        """
+        Return the sequence entry name
+        """
+        acc_move_obj = self.pool.get('account.move.line')
+        if vals.get('move_id'):
+            move_line = acc_move_obj.browse(cr, uid, vals['move_id'], fields_to_fetch=['move_id', 'name'], context=context)
+            if move_line.move_id:
+                if move_line.move_id.journal_id and move_line.move_id.journal_id.type == 'cur_adj':
+                    return _(' selected for FXA ')
+                if move_line.move_id.name:
+                    return _(' selected in %s (description: %s)') % (move_line.move_id.name, move_line.name or '')
+        return ''
 
     def _check_document_date(self, cr, uid, ids):
         """
