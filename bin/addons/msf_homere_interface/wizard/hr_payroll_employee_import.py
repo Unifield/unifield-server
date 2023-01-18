@@ -239,17 +239,14 @@ class hr_payroll_employee_import(osv.osv_memory):
             homere_fields = {}
 
         def changed(mission1, mission2, staff1, staff2, unique1, unique2):
-            res = None
             if mission1 != mission2:
-                res = 'mission'
-            elif staff1 != staff2:
-                res = 'staff'
-            elif unique1 != unique2:
-                res = 'unique'
-            return res
+                return 'mission'
+            if staff1 != staff2:
+                return 'staff'
+            if unique1 != unique2:
+                return 'unique'
+            return None
 
-        res = False
-        what_changed = None
 
         # Checks
         if not staffcode or not missioncode or not staff_id or not uniq_id:
@@ -264,7 +261,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             elif not uniq_id:
                 message = _('No "id_unique" found for employee %s!') % (name,)
             self.store_error(errors, wizard_id, message)
-            return (res, what_changed)
+            return (False, None)
 
         # Check employees
 
@@ -286,7 +283,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                                  _('Several employees have the same combination key codeterrain/id_staff/(id_unique) "%s / %s / (%s)": %s') %
                                   (missioncode, staff_id, uniq_id, ' ; '.join(list_duplicates))
                                  )
-            return (res, what_changed)
+            return (False, None)
 
         # check duplicates already in db
         search_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', missioncode), ('homere_id_staff', '=', staff_id), ('homere_id_unique', '=', uniq_id)])
@@ -300,8 +297,9 @@ class hr_payroll_employee_import(osv.osv_memory):
                              _('Several employees have the same combination key codeterrain/id_staff/(id_unique) "%s / %s / (%s)": %s') %
                               (missioncode, staff_id, uniq_id, ' ; '.join(name_duplicates))
                              )
-            return (res, what_changed)
+            return (False, None)
 
+        what_changed = None
         # Check staffcode
         staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode)])
         if staffcode_ids:
@@ -319,10 +317,9 @@ class hr_payroll_employee_import(osv.osv_memory):
                 message = _('Several employees have the same Identification No "%s": %s') % \
                     (staffcode, ' ; '.join(["%s (%s)" % (employee_name, _('Import File'))] + employee_error_list))
                 self.store_error(errors, wizard_id, message)
-                return (res, what_changed)
+                return (False, what_changed)
 
-        res = True
-        return (res, what_changed)
+        return (True, what_changed)
 
     def _check_identification_id_duplication(self, cr, uid, vals, employee_check, what_changed, current_id=None, context=None):
         """
@@ -374,7 +371,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         if not employee_data or not wizard_id:
             message = _('No data found for this line: %s.') % line_number
             self.store_error(errors, wizard_id, message)
-            return False, created, updated
+            return False, 0, 0
         # Prepare some values
         vals = {}
         # Extract information
@@ -400,108 +397,110 @@ class hr_payroll_employee_import(osv.osv_memory):
             if len(uuid_key) > uuid_field_size:
                 message = _('Line %s. The UUID_key has more than %d characters.') % (line_number, uuid_field_size)
                 self.store_error(errors, wizard_id, message)
-                return False, created, updated
+                return False, 0, 0
         # Due to UF-1742, if no id_unique, we fill it with "empty"
         uniq_id = id_unique or False
         if not id_unique:
             uniq_id = 'empty'
-        if codeterrain and id_staff and code_staff:
-            # Employee name
-            nom = nom and nom.strip() or ''
-            prenom = prenom and prenom.strip() or ''
-            employee_name = (nom and prenom and ustr(nom) + ', ' + ustr(prenom)) or (nom and ustr(nom)) or (prenom and ustr(prenom)) or False
 
-            # Do some check
-            employee_check, what_changed = self.update_employee_check(cr, uid,
-                                                                      staffcode=ustr(code_staff), missioncode=ustr(codeterrain),
-                                                                      staff_id=id_staff, uniq_id=ustr(uniq_id),
-                                                                      wizard_id=wizard_id, employee_name=employee_name,
-                                                                      registered_keys=registered_keys, homere_fields=homere_fields,
-                                                                      errors=errors)
-            if not employee_check and not what_changed:
-                return False, created, updated
-
-            # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
-            e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)])
-            # UTP-1098: If what_changed is not None, we should search the employee only on code_staff
-            if what_changed:
-                e_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', ustr(code_staff)), ('name', '=', employee_name)])
-            # Prepare vals
-            res = False
-            vals = {
-                'active': True,
-                'employee_type': 'local',
-                'homere_codeterrain': codeterrain,
-                'homere_id_staff': id_staff,
-                'homere_id_unique': uniq_id,
-                'homere_uuid_key': uuid_key,
-                'photo': False,
-                'identification_id': code_staff or False,
-                'name': employee_name,
-                'bank_name': bqnom,
-                'bank_account_number': bqnumerocompte,
-            }
-
-
-            # Update the payment method
-            payment_method_id = False
-            if bqmodereglement:
-                payment_method_ids = payment_method_obj.search(cr, uid, [('name', '=', bqmodereglement)], limit=1, context=context)
-                if payment_method_ids:
-                    payment_method_id = payment_method_ids[0]
-                else:
-                    message = _('Payment Method %s not found for line: %s. Please fix Homere configuration or request a new Payment Method to the HQ.') % (ustr(bqmodereglement), line_number)
-                    self.store_error(errors, wizard_id, message)
-                    return False, created, updated
-
-            vals.update({'payment_method_id': payment_method_id})
-
-            # In case of death, desactivate employee
-            if decede and decede == 'Y':
-                vals.update({'active': False})
-            # Desactivate employee if:
-            # - no contract line found
-            # - end of current contract exists and is inferior to current date
-            # - no contract line found with current = True
-
-            # sort contract: get current one, then by start date
-            contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff)], order='current desc,date_start desc')
-            if not contract_ids:
-                vals.update({'active': False})
-            current_contract = False
-            if contract_ids:
-                contract = self.pool.get('hr.contract.msf').browse(cr, uid, contract_ids[0])
-                # Check current contract
-                if contract.current:
-                    current_contract = True
-                    if contract.date_end and contract.date_end < strftime('%Y-%m-%d'):
-                        vals.update({'active': False})
-                    # Check job
-                    if contract.job_id:
-                        vals.update({'job_id': contract.job_id.id})
-                # Check the contract dates
-                vals.update({'contract_start_date': contract.date_start or False})
-                vals.update({'contract_end_date': contract.date_end or False})
-            # Desactivate employee if no current contract
-            if not current_contract:
-                vals.update({'active': False})
-            if not e_ids:
-                if not self._check_identification_id_duplication(cr, uid, vals, employee_check, what_changed, context=context):
-                    return False, created, updated
-                res = self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
-                if res:
-                    created += 1
-            else:
-                if not self._check_identification_id_duplication(cr, uid, vals, employee_check, what_changed, current_id=e_ids[0], context=context):
-                    return False, created, updated
-                res = self.pool.get('hr.employee').write(cr, uid, e_ids, vals, {'from': 'import'})
-                if res:
-                    updated += 1
-            registered_keys[codeterrain + id_staff + uniq_id] = True
-        else:
+        if not codeterrain or not id_staff or not code_staff:
             message = _('Line %s. One of this column is missing: code_terrain, id_unique or id_staff. This often happens when the line is empty.') % (line_number)
             self.store_error(errors, wizard_id, message)
-            return False, created, updated
+            return False, 0, 0
+
+        # Employee name
+        nom = nom and nom.strip() or ''
+        prenom = prenom and prenom.strip() or ''
+        employee_name = (nom and prenom and ustr(nom) + ', ' + ustr(prenom)) or (nom and ustr(nom)) or (prenom and ustr(prenom)) or False
+
+        # Do some check
+        employee_check, what_changed = self.update_employee_check(cr, uid,
+                                                                  staffcode=ustr(code_staff), missioncode=ustr(codeterrain),
+                                                                  staff_id=id_staff, uniq_id=ustr(uniq_id),
+                                                                  wizard_id=wizard_id, employee_name=employee_name,
+                                                                  registered_keys=registered_keys, homere_fields=homere_fields,
+                                                                  errors=errors)
+        if not employee_check and not what_changed:
+            return False, 0, 0
+
+        # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
+        e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)])
+        # UTP-1098: If what_changed is not None, we should search the employee only on code_staff
+        if what_changed:
+            e_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', ustr(code_staff)), ('name', '=', employee_name)])
+        # Prepare vals
+        vals = {
+            'active': True,
+            'employee_type': 'local',
+            'homere_codeterrain': codeterrain,
+            'homere_id_staff': id_staff,
+            'homere_id_unique': uniq_id,
+            'homere_uuid_key': uuid_key,
+            'photo': False,
+            'identification_id': code_staff or False,
+            'name': employee_name,
+            'bank_name': bqnom,
+            'bank_account_number': bqnumerocompte,
+        }
+
+
+        # Update the payment method
+        payment_method_id = False
+        if bqmodereglement:
+            payment_method_ids = payment_method_obj.search(cr, uid, [('name', '=', bqmodereglement)], limit=1, context=context)
+            if payment_method_ids:
+                payment_method_id = payment_method_ids[0]
+            else:
+                message = _('Payment Method %s not found for line: %s. Please fix Homere configuration or request a new Payment Method to the HQ.') % (ustr(bqmodereglement), line_number)
+                self.store_error(errors, wizard_id, message)
+                return False, 0, 0
+
+        vals.update({'payment_method_id': payment_method_id})
+
+        # In case of death, desactivate employee
+        if decede and decede == 'Y':
+            vals.update({'active': False})
+        # Desactivate employee if:
+        # - no contract line found
+        # - end of current contract exists and is inferior to current date
+        # - no contract line found with current = True
+
+        # sort contract: get current one, then by start date
+        contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff)], order='current desc,date_start desc')
+        if not contract_ids:
+            vals.update({'active': False})
+        current_contract = False
+        if contract_ids:
+            contract = self.pool.get('hr.contract.msf').browse(cr, uid, contract_ids[0])
+            # Check current contract
+            if contract.current:
+                current_contract = True
+                if contract.date_end and contract.date_end < strftime('%Y-%m-%d'):
+                    vals.update({'active': False})
+                # Check job
+                if contract.job_id:
+                    vals.update({'job_id': contract.job_id.id})
+            # Check the contract dates
+            vals.update({'contract_start_date': contract.date_start or False})
+            vals.update({'contract_end_date': contract.date_end or False})
+        # Desactivate employee if no current contract
+        if not current_contract:
+            vals.update({'active': False})
+
+        created = 0
+        updated = 0
+        if not e_ids:
+            if not self._check_identification_id_duplication(cr, uid, vals, employee_check, what_changed, context=context):
+                return False, 0, 0
+            self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
+            created = 1
+        else:
+            if not self._check_identification_id_duplication(cr, uid, vals, employee_check, what_changed, current_id=e_ids[0], context=context):
+                return False, 0, 0
+            self.pool.get('hr.employee').write(cr, uid, e_ids, vals, {'from': 'import'})
+            updated = 1
+
+        registered_keys[codeterrain + id_staff + uniq_id] = True
 
         return True, created, updated
 
