@@ -182,7 +182,7 @@ class account_analytic_line(osv.osv):
                     if 'from' not in context or context.get('from') != 'mass_reallocation':
                         # US-9724
                         entry_name = self.get_entry_name(cr, uid, vals, context=context)
-                        raise osv.except_osv(_('Error'),_("The analytic account '%s' %s is inactive.") % (cc.name or '', entry_name))
+                        raise osv.except_osv(_('Error'),_("The analytic account '%s' %s is not active.") % (cc.name or '', entry_name))
             if vals.get('destination_id', False):
                 dest = account_obj.browse(cr, uid, vals['destination_id'], context=context)
                 if date < dest.date_start or (dest.date != False and date >= dest.date):
