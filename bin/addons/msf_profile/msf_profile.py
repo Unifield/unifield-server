@@ -58,6 +58,21 @@ class patch_scripts(osv.osv):
     }
 
     # UF28.0
+    def us_9119_employee_uuid(self, cr, uid, *a, **b):
+        cr.execute("update hr_employee set homere_uuid_key=NULL where homere_uuid_key=''")
+        cr.execute("select homere_uuid_key from hr_employee where homere_uuid_key is not null group by homere_uuid_key having count(*)>1")
+        for uuid in cr.fetchall():
+            cr.execute("select id, resource_id from hr_employee where homere_uuid_key=%s order by coalesce(write_date, create_date) desc offset 1", (uuid[0], ))
+            res = cr.fetchall()
+            cr.execute("update hr_employee set homere_uuid_key=NULL, identification_id=identification_id||'_DONOTUSE' where id in %s", (tuple([z[0] for z in res]), ))
+            cr.execute("update resource_resource set active='f' where id in %s", (tuple([z[1] for z in res]), ))
+            self.log_info(cr, uid, "US-9119 - local staff: %s deactive %d duplicates" % (uuid[0], len(res)))
+        if not cr.constraint_exists('hr_employee', 'hr_employee_homere_uuid_key_unique'):
+            cr.execute("alter table hr_employee add constraint hr_employee_homere_uuid_key_unique unique(homere_uuid_key)")
+        if not cr.constraint_exists('hr_employee', 'hr_employee_homere_uuid_not_empty'):
+            cr.execute("alter table hr_employee add constraint hr_employee_homere_uuid_not_empty check(employee_type!='local' or homere_uuid_key!='')")
+
+
     def us_10652_chg_partn_property_fields(self, cr, uid, *a, **b):
         '''
         Update the data of the res_partner's fields property_product_pricelist_purchase, property_product_pricelist,

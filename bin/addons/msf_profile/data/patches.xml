@@ -889,5 +889,9 @@
         <record id="us_10652_chg_partn_property_fields" model="patch.scripts">
             <field name="method">us_10652_chg_partn_property_fields</field>
         </record>
+
+        <record id="us_9119_employee_uuid" model="patch.scripts">
+            <field name="method">us_9119_employee_uuid</field>
+        </record>
     </data>
 </openerp>

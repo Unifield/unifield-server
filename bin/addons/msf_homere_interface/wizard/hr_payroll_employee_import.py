@@ -226,7 +226,7 @@ class hr_payroll_employee_import(osv.osv_memory):
 
     def update_employee_check(self, cr, uid,
                               staffcode=False, missioncode=False, staff_id=False, uniq_id=False,
-                              wizard_id=None, employee_name=False, registered_keys=None, homere_fields=None, errors=None):
+                              wizard_id=None, employee_name=False, registered_keys=None, homere_fields=None, uuid_key=None, errors=None):
         """
         Check that:
         - no more than 1 employee exist for "missioncode + staff_id + uniq_id"
@@ -267,6 +267,11 @@ class hr_payroll_employee_import(osv.osv_memory):
 
         # US-1404: check duplicates on the import files itself
         # => as not already in db
+        if uuid_key in registered_keys:
+            self.store_error(errors, wizard_id, _('Homere uuid %s is duplicated in the file: %s / %s') % (uuid_key, registered_keys[uuid_key], employee_name))
+
+        registered_keys[uuid_key] = employee_name
+
         check_key = missioncode + staff_id + uniq_id
         if check_key in registered_keys:
             # if check_key is in homere_fields BUT its value is empty, the related msg has already been created => skip the msg creation part
@@ -285,37 +290,44 @@ class hr_payroll_employee_import(osv.osv_memory):
                                  )
             return (False, None)
 
+        uuid_key_employee_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_uuid_key', '=', uuid_key)])
+        uuid_key_employee_id = uuid_key_employee_ids and uuid_key_employee_ids[0] or 0
+
         # check duplicates already in db
-        search_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', missioncode), ('homere_id_staff', '=', staff_id), ('homere_id_unique', '=', uniq_id)])
-        if search_ids and len(search_ids) > 1:
-            emp_duplicates = self.pool.get('hr.employee').browse(cr, uid, search_ids, fields_to_fetch=['name'])
-            # create a list with the employee from the file...
-            name_duplicates = ['%s (%s)' % (employee_name, _('Import File'))]
-            # ... and the duplicates already in UniField
-            name_duplicates.extend(['%s (UniField)' % emp.name for emp in emp_duplicates if emp.name])
-            self.store_error(errors, wizard_id,
-                             _('Several employees have the same combination key codeterrain/id_staff/(id_unique) "%s / %s / (%s)": %s') %
-                              (missioncode, staff_id, uniq_id, ' ; '.join(name_duplicates))
-                             )
-            return (False, None)
+        if not uuid_key_employee_id:
+            search_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', missioncode), ('homere_id_staff', '=', staff_id), ('homere_id_unique', '=', uniq_id), ('homere_uuid_key', '=', False)])
+            if search_ids and len(search_ids) > 1:
+                emp_duplicates = self.pool.get('hr.employee').browse(cr, uid, search_ids, fields_to_fetch=['name'])
+                # create a list with the employee from the file...
+                name_duplicates = ['%s (%s)' % (employee_name, _('Import File'))]
+                # ... and the duplicates already in UniField
+                name_duplicates.extend(['%s (UniField)' % emp.name for emp in emp_duplicates if emp.name])
+                self.store_error(errors, wizard_id,
+                                 _('Several employees have the same combination key codeterrain/id_staff/(id_unique) "%s / %s / (%s)": %s') %
+                                  (missioncode, staff_id, uniq_id, ' ; '.join(name_duplicates))
+                                 )
+                return (False, None)
 
         what_changed = None
         # Check staffcode
-        staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode)])
+        staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode), ('id', '!=', uuid_key_employee_id)])
         if staffcode_ids:
             employee_error_list = []
             # UTP-1098: Do not make an error if the employee have the same code staff and the same name
             for employee in self.pool.get('hr.employee').browse(cr, uid, staffcode_ids):
-                what_changed = changed(employee.homere_codeterrain, missioncode, str(employee.homere_id_staff), staff_id, employee.homere_id_unique, uniq_id)
-                if employee.name == employee_name:
-                    continue
-                if what_changed != None:
-                    # duplicated employees in UniField
-                    employee_error_list.append("%s (UniField)" % (employee.name,))
+                if not uuid_key_employee_id:
+                    what_changed = changed(employee.homere_codeterrain, missioncode, str(employee.homere_id_staff), staff_id, employee.homere_id_unique, uniq_id)
+                    if employee.name == employee_name:
+                        continue
+                    if what_changed != None:
+                        # duplicated employees in UniField
+                        employee_error_list.append("%s %s (UniField)" % (employee.name, employee.homere_uuid_key or ''))
+                else:
+                    employee_error_list.append("%s %s (UniField)" % (employee.name, employee.homere_uuid_key or ''))
             if employee_error_list:
                 # add the duplicated employee from Import File
                 message = _('Several employees have the same Identification No "%s": %s') % \
-                    (staffcode, ' ; '.join(["%s (%s)" % (employee_name, _('Import File'))] + employee_error_list))
+                    (staffcode, ' ; '.join(["%s %s (%s)" % (employee_name,  uuid_key or '', _('Import File'))] + employee_error_list))
                 self.store_error(errors, wizard_id, message)
                 return (False, what_changed)
 
@@ -407,6 +419,9 @@ class hr_payroll_employee_import(osv.osv_memory):
             message = _('Line %s. One of this column is missing: code_terrain, id_unique or id_staff. This often happens when the line is empty.') % (line_number)
             self.store_error(errors, wizard_id, message)
             return False, 0, 0
+        if not uuid_key:
+            self.store_error(errors, wizard_id, _('Line %s. The required Homere uuid field is missing in the file.') % (line_number))
+            return False, 0, 0
 
         # Employee name
         nom = nom and nom.strip() or ''
@@ -419,15 +434,19 @@ class hr_payroll_employee_import(osv.osv_memory):
                                                                   staff_id=id_staff, uniq_id=ustr(uniq_id),
                                                                   wizard_id=wizard_id, employee_name=employee_name,
                                                                   registered_keys=registered_keys, homere_fields=homere_fields,
+                                                                  uuid_key=uuid_key,
                                                                   errors=errors)
         if not employee_check and not what_changed:
             return False, 0, 0
 
-        # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
-        e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)])
+        # employee by uuid_key
+        e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_uuid_key', '=', uuid_key)])
+        if not e_ids:
+            # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
+            e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id), ('homere_uuid_key', '=', False)])
         # UTP-1098: If what_changed is not None, we should search the employee only on code_staff
         if what_changed:
-            e_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', ustr(code_staff)), ('name', '=', employee_name)])
+            e_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', ustr(code_staff)), ('name', '=', employee_name), ('homere_uuid_key', '=', False)])
         # Prepare vals
         vals = {
             'active': True,
