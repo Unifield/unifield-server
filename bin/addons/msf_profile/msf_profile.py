@@ -62,7 +62,7 @@ class patch_scripts(osv.osv):
         cr.execute("update hr_employee set homere_uuid_key=NULL where homere_uuid_key=''")
         cr.execute("select homere_uuid_key from hr_employee where homere_uuid_key is not null group by homere_uuid_key having count(*)>1")
         for uuid in cr.fetchall():
-            cr.execute("select id, resource_id from hr_employee where homere_uuid_key=%s order by coalesce(write_date, create_date) desc offset 1", (uuid[0], ))
+            cr.execute("select id, resource_id from hr_employee where homere_uuid_key=%s order by create_date desc ,name_resource,id desc offset 1", (uuid[0], ))
             res = cr.fetchall()
             cr.execute("update hr_employee set homere_uuid_key=NULL, identification_id=identification_id||'_DONOTUSE' where id in %s", (tuple([z[0] for z in res]), ))
             cr.execute("update resource_resource set active='f' where id in %s", (tuple([z[1] for z in res]), ))
