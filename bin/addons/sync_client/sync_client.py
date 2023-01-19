@@ -1050,6 +1050,11 @@ class Entity(osv.osv):
             self.pool.get('patch.scripts').set_journal_code_on_aji(cr, uid)
             param.set_param(cr, uid, 'exec_set_journal_code_on_aji', '')
 
+        if param.get_param(cr, uid, 'deduplicate_uuid'):
+            # homere deduplicate uuid after the 1st sync
+            self.pool.get('patch.scripts')._us_9119_employee_uuid(cr, uid)
+            param.set_param(cr, uid, 'deduplicate_uuid', '')
+
         return update_count
 
     @sync_process('msg_push')

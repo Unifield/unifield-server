@@ -59,6 +59,15 @@ class patch_scripts(osv.osv):
 
     # UF28.0
     def us_9119_employee_uuid(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:
+            # only on updated instances
+            self._us_9119_employee_uuid(cr, uid, *a, **b)
+        else:
+            # trigger deduplication after the init sync
+            self.pool.get('ir.config_parameter').set_param(cr, uid, 'deduplicate_uuid', 1)
+
+    def _us_9119_employee_uuid(self, cr, uid, *a, **b):
         cr.execute("update hr_employee set homere_uuid_key=NULL where homere_uuid_key=''")
         cr.execute("select homere_uuid_key from hr_employee where homere_uuid_key is not null group by homere_uuid_key having count(*)>1")
         for uuid in cr.fetchall():

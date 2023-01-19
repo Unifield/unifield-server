@@ -212,10 +212,12 @@ class hr_employee(osv.osv):
         (_check_unicity, "Another employee has the same Identification No.", ['identification_id']),
     ]
 
-    _sql_constraints = [
-        ('homere_uuid_key_unique', 'unique(homere_uuid_key)', 'Homere uuid key must be unique'),
-        ('homere_uuid_not_empty', "CHECK(employee_type!='local' or homere_uuid_key!='')", 'Homere uuid key cannot be an empty string'),
-    ]
+    # due to duplications in sync updates on the sync server, these 2 constraints are set after the initial sync
+    #_sql_constraints = [
+    #    ('homere_uuid_key_unique', 'unique(homere_uuid_key)', 'Homere uuid key must be unique'),
+    #    ('homere_uuid_not_empty', "CHECK(employee_type!='local' or homere_uuid_key!='')", 'Homere uuid key cannot be an empty string'),
+    #]
+
     def _check_employee_cc_compatibility(self, cr, uid, employee_id, context=None):
         """
         Raises an error in case the employee "Destination and Cost Center" or "Funding Pool and Cost Center" are not compatible.
