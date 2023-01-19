@@ -787,18 +787,12 @@ class analytic_account(osv.osv):
                 # validate that activation date
             raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
 
-    def _check_sub_cc(self, cr, uid, vals, modif_cc_id=None, context=None):
+    def _check_sub_cc(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
         if 'category' in vals and vals['category'] == 'OC' and 'parent_id' in vals and vals['parent_id']:
             msg = ''
             parent = self.browse(cr, uid, vals['parent_id'], fields_to_fetch=['date_start', 'date', 'code'], context=context)
-            if modif_cc_id:
-                curr_cc = self.browse(cr, uid, modif_cc_id, fields_to_fetch=['child_ids', 'code'], context=context)
-                if curr_cc.code != 'OC':
-                    for child in curr_cc.child_ids:
-                        if 'date' in vals and vals['date'] and not (child.date and vals['date'] >= child.date):
-                            raise osv.except_osv(_('Warning !'), _('You can not inactivate this cost center at %s, at least one of his sub-cost center is still active after that date.') % vals['date'])
             if parent.code == 'OC':  # If parent CC is OC, no need to check
                 return True
             if parent.date and parent.date < datetime.today().strftime('%Y-%m-%d'):
@@ -998,7 +992,6 @@ class analytic_account(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         self._check_date(vals)
-        self._check_sub_cc(cr, uid, modif_cc_id=ids[0], vals=vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
         self._update_synched_dest_cc_ids(cr, uid, ids, vals, context)
