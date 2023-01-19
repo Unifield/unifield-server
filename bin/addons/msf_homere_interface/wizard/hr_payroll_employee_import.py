@@ -268,7 +268,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         # US-1404: check duplicates on the import files itself
         # => as not already in db
         if uuid_key in registered_keys:
-            self.store_error(errors, wizard_id, _('Homere uuid %s is duplicated in the file: %s / %s') % (uuid_key, registered_keys[uuid_key], employee_name))
+            self.store_error(errors, wizard_id, _('Homere uuid_key %s is duplicated in the file: %s / %s') % (uuid_key, registered_keys[uuid_key], employee_name))
 
         registered_keys[uuid_key] = employee_name
 
@@ -420,7 +420,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             self.store_error(errors, wizard_id, message)
             return False, 0, 0
         if not uuid_key:
-            self.store_error(errors, wizard_id, _('Line %s. The required Homere uuid field is missing in the file.') % (line_number))
+            self.store_error(errors, wizard_id, _('Line %s. Required Homere uuid_key field is missing in the file.') % (line_number))
             return False, 0, 0
 
         # Employee name
