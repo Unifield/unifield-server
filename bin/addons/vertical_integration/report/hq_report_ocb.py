@@ -641,7 +641,23 @@ class hq_report_ocb(report_sxw.report_sxw):
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
         instance_name = 'OCB'  # since US-949
-        partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive', 'Notes']
+        if context.get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
+            partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive', 'Notes', 'PARTNER_ID']
+            employee_header = ['Name', 'Identification No', 'Active', 'Employee type', 'PARTNER_ID']
+            monthly_header = ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference',
+                              'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination',
+                              'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency',
+                              'Functional debit', 'Functional credit', 'Functional CCY', 'Emplid', 'Partner DB ID',
+                              'PARTNER_ID']
+
+        else:
+            partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive', 'Notes']
+            employee_header = ['Name', 'Identification No', 'Active', 'Employee type']
+            monthly_header = ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference',
+                              'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination',
+                              'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency',
+                              'Functional debit', 'Functional credit', 'Functional CCY', 'Emplid', 'Partner DB ID']
+
         processrequests = [
             {
                 'headers': partner_header,
@@ -650,7 +666,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'function': 'postprocess_partners',
             },
             {
-                'headers': ['Name', 'Identification No', 'Active', 'Employee type'],
+                'headers': employee_header,
                 'filename': instance_name + '_' + year + month + '_Employees.csv',
                 'key': 'employee',
                 'function': 'postprocess_selection_columns',
@@ -665,7 +681,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'fnct_params': ([('account.journal', 'type', 3)], context),
             },
             {
-                'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit',  'Functional CCY', 'Emplid', 'Partner DB ID'],
+                'headers': monthly_header,
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'rawdata',
                 'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with

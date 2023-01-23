@@ -124,6 +124,22 @@
             action="action_hq_export_ocb"
             id="menu_action_hq_export_ocb"  sequence="30"/>
 
+    <!-- OCB-New export -->
+
+        <record id="action_hq_export_ocb_new" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCB-New)</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ocb.export.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="ocb_export_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem parent="account.menu_finance_generic_reporting"
+            action="action_hq_export_ocb_new"
+            id="menu_action_hq_export_ocb_new"  sequence="31"/>
+
     <!-- OCBA export -->
 
         <record id="ocba_export_wizard" model="ir.ui.view">
