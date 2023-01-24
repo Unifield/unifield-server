@@ -143,7 +143,7 @@ class finance_archive():
         md5sum.update(','.join([name, model, str(res_ids)]))
         return md5sum.hexdigest()
 
-    def postprocess_selection_columns(self, cr, uid, data, changes, column_deletion=False):
+    def postprocess_selection_columns(self, cr, uid, data, changes, column_deletion=False, context=None):
         """
         This method takes each line from data and change some columns regarding "changes" variable.
         'changes' should be a list containing some tuples. A tuple is composed of:
@@ -176,10 +176,12 @@ class finance_archive():
             new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
-    def archive(self, cr, uid):
+    def archive(self, cr, uid, context=None):
         """
         Create an archive with sqlrequests params and processrequests params.
         """
+        if context is None:
+            context = {}
         # open buffer for result zipfile
         zip_buffer = StringIO()
         # Prepare some values
@@ -249,9 +251,9 @@ class finance_archive():
                 delete_columns = fileparams.get('delete_columns', False)
                 # If the function has some params, use them.
                 if fnct and fileparams.get('fnct_params', False):
-                    without_headers = fnct(cr, uid, sqlres, fileparams['fnct_params'], column_deletion=delete_columns)
+                    without_headers = fnct(cr, uid, sqlres, fileparams['fnct_params'], column_deletion=delete_columns, context=context)
                 elif fnct:
-                    without_headers = fnct(cr, uid, sqlres, column_deletion=delete_columns)
+                    without_headers = fnct(cr, uid, sqlres, column_deletion=delete_columns, context=context)
             else:
                 # Change to UTF-8 all unicode elements
                 for line in sqlres:

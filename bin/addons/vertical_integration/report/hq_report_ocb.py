@@ -35,7 +35,7 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
-    def postprocess_partners(self, cr, uid, data, column_deletion=False):
+    def postprocess_partners(self, cr, uid, data, column_deletion=False, context=None):
         """
         Add XML_ID of each element.
         """
@@ -44,12 +44,14 @@ class finance_archive(finance_export.finance_archive):
         for line in data:
             tmp_line = list(line)
             p_id = line[0]
+            if context.get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
+                tmp_line.append(p_id)
             tmp_line[0] = self.get_hash(cr, uid, [p_id], 'res.partner')
             new_data.append(self.line_to_utf8(tmp_line))
 
         return self.postprocess_selection_columns(cr, uid, new_data, [('res.partner', 'partner_type', 3)], column_deletion=column_deletion)
 
-    def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False):
+    def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False, context=None):
         """
         ##### WARNING #####
         ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
@@ -144,7 +146,7 @@ class finance_archive(finance_export.finance_archive):
             new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
-    def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False, display_journal_type=False):
+    def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False, display_journal_type=False, context=None):
         """
         ##### WARNING #####
         ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
@@ -252,7 +254,7 @@ class finance_archive(finance_export.finance_archive):
         """
         return postprocess_liquidity_balances(self, cr, uid, data, context=context)
 
-    def postprocess_journals(self, cr, uid, data, tuple_params, column_deletion=False):
+    def postprocess_journals(self, cr, uid, data, tuple_params, column_deletion=False, context=None):
         """
         Formats data:
         - replaces the Journal ID by the Journal Name in the current language
@@ -441,6 +443,18 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE partner_type != 'internal'
                   and name != 'To be defined';
                 """
+        if context.get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
+            employee_sql = """
+                SELECT r.name, e.identification_id, r.active, e.employee_type, e.id
+                FROM hr_employee AS e, resource_resource AS r
+                WHERE e.resource_id = r.id;
+                """
+        else:
+            employee_sql = """
+                SELECT r.name, e.identification_id, r.active, e.employee_type
+                FROM hr_employee AS e, resource_resource AS r
+                WHERE e.resource_id = r.id;
+                """
         if not previous_period_id or instance_lvl == 'section':
             # empty report in case there is no previous period or an HQ instance is selected
             balance_previous_month_sql = "SELECT '' AS no_line;"
@@ -462,11 +476,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                         """
         sqlrequests = {
             'partner': partner_sql,
-            'employee': """
-                SELECT r.name, e.identification_id, r.active, e.employee_type
-                FROM hr_employee AS e, resource_resource AS r
-                WHERE e.resource_id = r.id;
-                """,
+            'employee': employee_sql,
             'journal': """
                 SELECT i.code, j.code, j.id, j.type, c.name
                 FROM account_journal AS j LEFT JOIN res_currency c ON j.currency = c.id, msf_instance AS i
@@ -722,7 +732,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # Launch finance archive object
         fe = finance_archive(sqlrequests, processrequests, context=context)
         # Use archive method to create the archive
-        return fe.archive(cr, uid)
+        return fe.archive(cr, uid, context=context)
 
 hq_report_ocb('report.hq.ocb', 'account.move.line', False, parser=False)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
