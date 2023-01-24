@@ -280,12 +280,11 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
                     # reset the data to prevent delivered_qty problem when line is split in PICK
                     data = {}
-                # If the move is from a cancelled Pick/OUT but not a cancelled FO line
-                cancelled_pick = line.state not in ('cancel', 'cancel_r') and move.type == 'out' and \
-                                 move.picking_subtype in ('standard', 'picking') and move.state == 'cancel'
-                ret_ppl_cancelled = line.state not in ('cancel', 'cancel_r') and move.type == 'out' and move.picking_subtype == 'ppl' \
-                                    and move.ppl_returned_ok and move.backmove_id and move.backmove_id.state == 'cancel'
-                if first_line and m_type and (cancelled_pick or ret_ppl_cancelled) and not (ppl or s_out or ppl_not_shipped):
+                # If the move is from a cancelled OUT/Pick plus sometimes returned PPL/Ship but not a cancelled FO line
+                cancelled_pps = line.state not in ('cancel', 'cancel_r') and move.type == 'out' and \
+                                move.picking_subtype in ('standard', 'picking', 'ppl', 'packing') and \
+                                (move.state == 'cancel' or (move.backmove_id and move.backmove_id.state == 'cancel'))
+                if first_line and cancelled_pps:
                     cancelled_move = True
 
             if first_line:
