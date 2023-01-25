@@ -117,6 +117,8 @@ class finance_archive(finance_export.finance_archive):
 
                 # If we get some ids, fetch the partner hash
                 if partner_id:
+                    if context.get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
+                        tmp_line.append(partner_id)
                     if partner_id in partner_hash_dict:
                         partner_hash = partner_hash_dict[partner_id]
                     else:
@@ -131,6 +133,8 @@ class finance_archive(finance_export.finance_archive):
                         employee_search_dict[partner_name] = employee_search
                     emp_id = employee_search_dict[partner_name]
                     if emp_id:
+                        if context.get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
+                            tmp_line.append(emp_id)
                         if emp_id not in employee_code_dict:
                             employee_code_dict[emp_id] = employee_obj.read(cr, uid, emp_id, ['identification_id'])['identification_id']
                         empl_code = employee_code_dict[emp_id]
