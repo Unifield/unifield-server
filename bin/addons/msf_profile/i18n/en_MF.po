@@ -149,6 +149,7 @@ msgstr "Field Order in Exception"
 #: model:ir.model,name:sourcing.model_sale_order_line
 #: model:ir.model,name:specific_rules.model_sale_order_line
 #: model:ir.model,name:tender_flow.model_sale_order_line
+#: view:sale.order.line:0
 msgid "Sales Order Line"
 msgstr "Field Order Line"
 
@@ -195,7 +196,6 @@ msgstr "Field Order Followup"
 
 #. module: sale
 #: view:sale.order:0
-#: view:sale.order.line:0
 msgid "Sales Order Lines"
 msgstr "Field Order Lines"
 
