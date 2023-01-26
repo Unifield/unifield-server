@@ -35,7 +35,7 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
-    def postprocess_partners(self, cr, uid, data, column_deletion=False, context=None):
+    def postprocess_partners(self, cr, uid, data, column_deletion=False):
         """
         Add XML_ID of each element.
         """
@@ -44,14 +44,12 @@ class finance_archive(finance_export.finance_archive):
         for line in data:
             tmp_line = list(line)
             p_id = line[0]
-            if context.get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
-                tmp_line.append(p_id)
             tmp_line[0] = self.get_hash(cr, uid, [p_id], 'res.partner')
             new_data.append(self.line_to_utf8(tmp_line))
 
         return self.postprocess_selection_columns(cr, uid, new_data, [('res.partner', 'partner_type', 3)], column_deletion=column_deletion)
 
-    def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False, context=None):
+    def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False):
         """
         ##### WARNING #####
         ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
@@ -117,7 +115,8 @@ class finance_archive(finance_export.finance_archive):
 
                 # If we get some ids, fetch the partner hash
                 if partner_id:
-                    if context.get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
+                    if 'OCP' not in dbname and data.get('context', False) and \
+                            data.get('context').get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
                         tmp_line.append(partner_id)
                     if partner_id in partner_hash_dict:
                         partner_hash = partner_hash_dict[partner_id]
@@ -133,7 +132,7 @@ class finance_archive(finance_export.finance_archive):
                         employee_search_dict[partner_name] = employee_search
                     emp_id = employee_search_dict[partner_name]
                     if emp_id:
-                        if context.get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
+                        if data.get('context', False) and data.get('context').get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
                             tmp_line.append(emp_id)
                         if emp_id not in employee_code_dict:
                             employee_code_dict[emp_id] = employee_obj.read(cr, uid, emp_id, ['identification_id'])['identification_id']
@@ -150,7 +149,7 @@ class finance_archive(finance_export.finance_archive):
             new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
-    def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False, display_journal_type=False, context=None):
+    def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False, display_journal_type=False):
         """
         ##### WARNING #####
         ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
@@ -258,7 +257,7 @@ class finance_archive(finance_export.finance_archive):
         """
         return postprocess_liquidity_balances(self, cr, uid, data, context=context)
 
-    def postprocess_journals(self, cr, uid, data, tuple_params, column_deletion=False, context=None):
+    def postprocess_journals(self, cr, uid, data, tuple_params, column_deletion=False):
         """
         Formats data:
         - replaces the Journal ID by the Journal Name in the current language
@@ -441,19 +440,25 @@ class hq_report_ocb(report_sxw.report_sxw):
         # SQLREQUESTS DICTIONNARY
         # - key: name of the SQL request
         # - value: the SQL request to use
-        partner_sql = """
-                SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active, comment
-                FROM res_partner 
-                WHERE partner_type != 'internal'
-                  and name != 'To be defined';
-                """
-        if context.get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
+        if data.get('context', False) and data.get('context').get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
+            partner_sql = """
+                            SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active, comment, id
+                            FROM res_partner 
+                            WHERE partner_type != 'internal'
+                              and name != 'To be defined';
+                            """
             employee_sql = """
                 SELECT r.name, e.identification_id, r.active, e.employee_type, e.id
                 FROM hr_employee AS e, resource_resource AS r
                 WHERE e.resource_id = r.id;
                 """
         else:
+            partner_sql = """
+                            SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active, comment
+                            FROM res_partner 
+                            WHERE partner_type != 'internal'
+                              and name != 'To be defined';
+                            """
             employee_sql = """
                 SELECT r.name, e.identification_id, r.active, e.employee_type
                 FROM hr_employee AS e, resource_resource AS r
@@ -655,7 +660,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
         instance_name = 'OCB'  # since US-949
-        if context.get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
+        if data.get('context', False) and data.get('context').get('_terp_view_name', False) == 'Export to HQ system (OCB-New)':
             partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive', 'Notes', 'PARTNER_ID']
             employee_header = ['Name', 'Identification No', 'Active', 'Employee type', 'PARTNER_ID']
             monthly_header = ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference',
@@ -736,7 +741,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # Launch finance archive object
         fe = finance_archive(sqlrequests, processrequests, context=context)
         # Use archive method to create the archive
-        return fe.archive(cr, uid, context=context)
+        return fe.archive(cr, uid)
 
 hq_report_ocb('report.hq.ocb', 'account.move.line', False, parser=False)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
