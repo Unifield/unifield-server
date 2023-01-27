@@ -37,7 +37,7 @@ KIT_STATE = [('draft', 'Draft'),
              ('in_production', 'In Production'),
              ('completed', 'Completed'),
              ('done', 'Closed'),
-             ('cancel', 'Canceled'),
+             ('cancel', 'Cancelled'),
              ]
 
 class composition_kit(osv.osv):
@@ -168,7 +168,7 @@ class composition_kit(osv.osv):
         self.write(cr, uid, ids, {'active': True}, context=context)
         return True
 
-    def close_kit(self, cr, uid, ids, context=None):
+    def close_kit(self, cr, uid, ids, flow_origin='', context=None):
         '''
         button function
         set the state to 'done'
@@ -178,6 +178,20 @@ class composition_kit(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        for kcl_id in ids:
+            ftf = ['composition_product_id', 'composition_combined_ref_lot', 'composition_item_ids', 'kcl_used_by']
+            kcl = self.browse(cr, uid, kcl_id, fields_to_fetch=ftf, context=context)
+            if kcl.kcl_used_by and not context.get('recurcive_kcl_action') and \
+                    flow_origin not in ['kit.creation.to.consume', 'stock.move', 'real.average.consumption']:
+                raise osv.except_osv(_('Warning !'), _('The KCL %s - %s is being used by %s, please close the other one first to close this one automatically.') %
+                                     (kcl.composition_product_id.default_code, kcl.composition_combined_ref_lot, kcl.kcl_used_by))
+            else:
+                for item in kcl.composition_item_ids:
+                    if item.item_product_id and item.item_product_id.subtype == 'kit' and item.kcl_id:
+                        context['recurcive_kcl_action'] = True
+                        self.close_kit(cr, uid, [item.kcl_id.id], self._name, context=context)
+                        context.pop('recurcive_kcl_action')
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
@@ -192,9 +206,13 @@ class composition_kit(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for kit in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context):
+        ftf = ['state', 'composition_product_id', 'composition_combined_ref_lot', 'kcl_used_by']
+        for kit in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             if kit.state != 'done':
                 raise osv.except_osv(_('Error'), _('You can only re-activate a Closed Kit Composition.'))
+            if kit.kcl_used_by:
+                raise osv.except_osv(_('Warning !'), _('The KCL %s - %s has been used by %s and can not be re-activated.') %
+                                     (kit.composition_product_id.default_code, kit.composition_combined_ref_lot, kit.kcl_used_by))
 
         self.write(cr, uid, ids, {'state': 'completed'}, context=context)
         return True
@@ -378,6 +396,12 @@ class composition_kit(osv.osv):
         if context is None:
             context = {}
 
+        ftf = ['composition_product_id', 'composition_combined_ref_lot', 'kcl_used_by']
+        for kit in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            if kit.kcl_used_by:
+                raise osv.except_osv(_('Warning !'),  _('The KCL %s - %s is being used by %s and can not be de-kitted.') %
+                                     (kit.composition_product_id.default_code, kit.composition_combined_ref_lot, kit.kcl_used_by))
+
         self.assert_available_stock(cr, uid, ids, context=context)
 
         # data
@@ -444,6 +468,77 @@ class composition_kit(osv.osv):
             result[obj.id].update({'nomen_sub_4': obj.composition_product_id.nomen_sub_4.id})
             result[obj.id].update({'nomen_sub_5': obj.composition_product_id.nomen_sub_5.id})
         return result
+
+    def _check_kcl_used(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        Check if there is a KCL, Kitting Order, Pick, OUT or Real Consumption using a KCL Reference
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        kcli_obj = self.pool.get('composition.item')
+        kol_obj = self.pool.get('kit.creation.to.consume')
+        move_obj = self.pool.get('stock.move')
+        out_m_proc_obj = self.pool.get('outgoing.delivery.move.processor')
+        racl_obj = self.pool.get('real.average.consumption.line')
+        res = {}
+        for kcl_id in ids:
+            kcli_ids = kcli_obj.search(cr, uid, [('kcl_id', '=', kcl_id), ('item_kit_id.composition_type', '=', 'real'),
+                                                 ('kit_state', '!=', 'cancel')], limit=1, context=context)
+            kol_ids = kol_obj.search(cr, uid, [('kcl_id', '=', kcl_id), ('state', '!=', 'cancel')], limit=1, context=context)
+            # Picks/OUTs + Consumed components of Kitting Orders
+            move_ids = move_obj.search(cr, uid, [('composition_list_id', '=', kcl_id), ('state', '!=', 'cancel'), '|', '&', ('type', '=', 'out'),
+                                                 ('picking_subtype', 'in', ['picking', 'standard']), ('kit_creation_id_stock_move', '!=', False)],
+                                       limit=1, context=context)
+            out_m_proc_ids = out_m_proc_obj.search(cr, uid, [('composition_list_id', '=', kcl_id),
+                                                             ('wizard_id.draft', '=', True)], limit=1, context=context)
+            racl_ids = racl_obj.search(cr, uid, [('kcl_id', '=', kcl_id), ('rac_state', '!=', 'cancel')], limit=1, context=context)
+            if kcli_ids:
+                kcli = kcli_obj.browse(cr, uid, kcli_ids, fields_to_fetch=['item_kit_id'], context=context)[0]
+                res[kcl_id] = kcli.item_kit_id.composition_product_id.default_code + ' - ' + kcli.item_kit_id.composition_combined_ref_lot
+            elif kol_ids:
+                kol = kol_obj.browse(cr, uid, kol_ids, fields_to_fetch=['kit_creation_id_to_consume'], context=context)[0]
+                res[kcl_id] = kol.kit_creation_id_to_consume.name
+            elif move_ids:
+                move = move_obj.browse(cr, uid, move_ids, fields_to_fetch=['picking_id', 'kit_creation_id_stock_move'], context=context)[0]
+                res[kcl_id] = move.kit_creation_id_stock_move and move.kit_creation_id_stock_move.name or move.picking_id.name
+            elif out_m_proc_ids:
+                out_m_proc = out_m_proc_obj.browse(cr, uid, move_ids, fields_to_fetch=['wizard_id'], context=context)[0]
+                res[kcl_id] = out_m_proc.wizard_id.picking_id.name
+            elif racl_ids:
+                res[kcl_id] = racl_obj.browse(cr, uid, racl_ids, fields_to_fetch=['rac_id'], context=context)[0].rac_id.name
+            else:
+                res[kcl_id] = False
+        return res
+
+    def _search_kcl_used(self, cr, uid, obj, name, args, context=None):
+        '''
+        ONLY GIVES IDS OF KCLS NOT USED IN A LINE OF A KCL, KITTING ORDER, PICK, OUT AND REAL CONSUMPTION
+        '''
+        ids = []
+
+        for arg in args:
+            if arg[2] != False:
+                osv.except_osv(_('Error !'), _("Please only use 'False' as last argument for domains on 'kcl_used_by'"))
+            else:
+                # Get the ids of the kcls used in documents' non-cancelled lines
+                cr.execute("""SELECT DISTINCT(k.id) FROM composition_kit k 
+                    LEFT JOIN composition_item ki ON ki.kcl_id = k.id AND ki.item_kit_type = 'real'
+                        LEFT JOIN composition_kit kit ON kit.id = ki.item_kit_id AND kit.state != 'cancel'
+                    LEFT JOIN kit_creation_to_consume kcc ON kcc.kcl_id = k.id AND kcc.state != 'cancel'
+                    LEFT JOIN stock_move m ON m.composition_list_id = k.id AND m.type = 'out' AND m.state != 'cancel'
+                        AND m.picking_subtype IN ('standard', 'picking') 
+                    LEFT JOIN outgoing_delivery_move_processor mp ON mp.composition_list_id = k.id
+                        LEFT JOIN outgoing_delivery_processor op ON op.id = mp.wizard_id AND op.draft = 't'
+                    LEFT JOIN real_average_consumption_line cl ON cl.kcl_id = k.id
+                        LEFT JOIN real_average_consumption c ON cl.rac_id = c.id AND c.state != 'cancel'
+                    WHERE ki.kcl_id IS NOT NULL OR m.composition_list_id IS NOT NULL OR 
+                        mp.composition_list_id IS NOT NULL OR cl.kcl_id IS NOT NULL OR kcc.kcl_id IS NOT NULL""")
+                ids = [res[0] for res in cr.fetchall()]
+
+        return [('id', 'not in', ids)]
 
     def copy(self, cr, uid, id, default=None, context=None):
         '''
@@ -737,6 +832,7 @@ class composition_kit(osv.osv):
                                                            'stock.production.lot': (_get_composition_kit_from_lot_ids, ['life_date'], 10)}),
                 'composition_combined_ref_lot': fields.function(_vals_get, method=True, type='char', size=1024, string='Ref/Batch Nb', multi='get_vals',
                                                                 store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_lot_id', 'composition_reference'], 10),}),
+                'kcl_used_by': fields.function(_check_kcl_used, method=True, fnct_search=_search_kcl_used, type='char', size=64, string='KCL used by', store=False),
                 # nomenclature
                 'nomen_manda_0': fields.function(_vals_get, method=True, type='many2one', relation='product.nomenclature', string='Main Type', multi='get_vals', readonly=True, select=True,
                                                  store= {'composition.kit': (lambda self, cr, uid, ids, c=None: ids, ['composition_product_id'], 10),
@@ -1009,6 +1105,7 @@ class composition_item(osv.osv):
                             'hidden_asset_mandatory': False,
                             'item_exp': False,
                             'item_lot': False,
+                            'kcl_id': False,
                             }}
         if product_id:
             product = prod_obj.browse(cr, uid, product_id, context=context)
@@ -1171,6 +1268,7 @@ class composition_item(osv.osv):
                 'item_product_id': fields.many2one('product.product', string='Product', required=True),
                 'item_qty': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='item_uom_id'),
                 'item_uom_id': fields.many2one('product.uom', string='UoM', required=True),
+                'item_uom_rounding': fields.related('item_uom_id', 'rounding', type='float', string="UoM Rounding", digits_compute=dp.get_precision('Product UoM'), store=False, write_relate=False),
                 'item_asset_id': fields.many2one('product.asset', string='Asset'),
                 'item_lot': fields.char(string='Batch Nb', size=1024),
                 'item_exp': fields.date(string='Expiry Date'),
@@ -1179,6 +1277,11 @@ class composition_item(osv.osv):
                 'item_stock_move_id': fields.many2one('stock.move', string='Kitting Order Stock Move', readonly=True, help='This field represents the stock move corresponding to this item for Kit production.'),
                 'item_kit_name': fields.related('item_kit_id', 'composition_product_id', type='many2one', relation='product.product', string="Kit Product Code", store=True, readonly=True),
                 'item_kit_batch': fields.related('item_kit_id', 'composition_lot_id', type='many2one', relation='stock.production.lot', string="Kit/BN", store=True, readonly=True),
+                'comment': fields.char(size=256, string='Comment'),
+                'kit_state': fields.related('item_kit_id', 'state', type='char', size=64, string='Kit State', readonly=True),
+                'to_consume_id': fields.many2one('kit.creation.to.consume', 'KO Components to Consume'),
+                'kcl_id': fields.many2one('composition.kit', 'Kit', domain="[('id', '!=', item_kit_id), ('composition_product_id', '=', item_product_id), ('composition_type', '=', 'real'), ('state', '=', 'completed'), ('kcl_used_by', '=', False)]"),
+                'product_subtype': fields.related('item_product_id', 'subtype', type='selection', string='Product Subtype', selection=[('single','Single Item'),('kit', 'Kit/Module'),('asset','Asset')], store=False, write_relate=False, readonly=True),
                 # functions
                 'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
@@ -1196,9 +1299,6 @@ class composition_item(osv.osv):
                 'hidden_asset_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Asset', multi='get_vals', store=False, readonly=True),
                 'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
                 'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
-                'comment': fields.char(size=256, string='Comment'),
-                'kit_state': fields.related('item_kit_id', 'state', type='char', size=64, string='Kit State', readonly=True),
-                'to_consume_id': fields.many2one('kit.creation.to.consume', 'KO Components to Consume'),
                 }
 
     _defaults = {'hidden_batch_management_mandatory': False,
@@ -1432,7 +1532,8 @@ class stock_move(osv.osv):
 
         return defaults
 
-    _columns = {'composition_list_id': fields.many2one('composition.kit', string='Kit', readonly=True)}
+    _columns = {'composition_list_id': fields.many2one('composition.kit', string='Kit')}
+
 
 stock_move()
 

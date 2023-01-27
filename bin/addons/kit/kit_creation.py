@@ -426,6 +426,7 @@ class kit_creation(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
             for line in obj.consumed_ids_kit_creation:
                 move_obj.validate_assign(cr, uid, [line.id], context=context)
+
         return True
 
     def cancel_all_lines(self, cr, uid, ids, context=None):
@@ -635,10 +636,32 @@ class kit_creation(osv.osv):
         if context is None:
             context = {}
 
+        ko_more_qty, no_kcl, kcl_more_qty = False, False, False
         for line in kit.to_consume_ids_kit_creation:
             if line.qty_available_to_consume < line.total_qty_to_consume:
                 raise osv.except_osv(_('Warning !'),
                                      _('The Kitting Order cannot be processed unless all product lines are available.'))
+            # Prepare to display the wizard to set the KCL on the lines if necessary
+            if kit.uom_id_kit_creation.rounding == 1 and not line.consumed_to_consume and line.product_subtype == 'kit':
+                if kit.qty_kit_creation > 1:
+                    ko_more_qty = True
+                if not line.kcl_id:
+                    no_kcl = True
+                if line.qty_to_consume > 1:
+                    kcl_more_qty = True
+
+        # Propose to automatically fill kcl_id/composition_list_id with existing completed KCLs
+        if ko_more_qty or no_kcl or kcl_more_qty:
+            wiz_data = {'ko_id': kit.id, 'ko_more_qty': ko_more_qty, 'no_kcl': no_kcl, 'kcl_more_qty': kcl_more_qty}
+            wiz_id = self.pool.get('wizard.kitting.order.kcl.status').create(cr, uid, wiz_data, context=context)
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'kit', 'wizard_kitting_order_kcl_status_form_view')[1]
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'wizard.kitting.order.kcl.status',
+                    'res_id': wiz_id,
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': context}
 
         return True
 
@@ -695,6 +718,7 @@ class kit_creation(osv.osv):
                                    'company_id': context['common']['company_id'],
                                    'reason_type_id': context['common']['reason_type_id'],
                                    'prodlot_id': False,
+                                   'composition_list_id': to_consume.kcl_id and to_consume.kcl_id.id or False
                                    }
                     move_obj.create(cr, uid, move_values, context=context)
 
@@ -1032,11 +1056,14 @@ class kit_creation_to_consume(osv.osv):
                 'product_id_to_consume': fields.many2one('product.product', string='Product', readonly=True),
                 'qty_to_consume': fields.float(string='Qty per Kit', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='uom_id_to_consume'),
                 'uom_id_to_consume': fields.many2one('product.uom', string='UoM', readonly=True),
+                'uom_rounding': fields.related('uom_id_to_consume', 'rounding', type='float', string="UoM Rounding", digits_compute=dp.get_precision('Product UoM'), store=False, write_relate=False),
                 'location_src_id_to_consume': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'line_number_to_consume': fields.integer(string='Line', required=True, readonly=True),
                 'availability_to_consume': fields.selection(KIT_TO_CONSUME_AVAILABILITY, string='Availability', readonly=True, required=True),
                 'consumed_to_consume': fields.boolean(string='Consumed', readonly=True),
                 'qty_consumed_to_consume': fields.float(string='Consumed Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='uom_id_to_consume'),
+                'kcl_id': fields.many2one('composition.kit', 'Kit', domain="[('composition_product_id', '=', product_id_to_consume), ('composition_type', '=', 'real'), ('state', '=', 'completed'), ('kcl_used_by', '=', False)]"),
+                'product_subtype': fields.related('product_id_to_consume', 'subtype', type='selection', string='Product Subtype', selection=[('single', 'Single Item'), ('kit', 'Kit/Module'), ('asset', 'Asset')], store=False, write_relate=False, readonly=True),
                 # functions
                 # state is defined in children classes as the dynamic store does not seem to work properly with _name + _inherit
                 'total_qty_to_consume': fields.function(_vals_get, method=True, type='float', string='Qty', multi='get_vals', store=False, related_uom='uom_id_to_consume'),
@@ -1077,6 +1104,36 @@ class kit_creation_to_consume(osv.osv):
 
     _constraints = [(_kit_creation_to_consume_constraint, 'Constraint error on Kit Creation to Consume.', []),]
 
+
 kit_creation_to_consume()
 
 
+class wizard_kitting_order_kcl_status(osv.osv_memory):
+    _name = 'wizard.kitting.order.kcl.status'
+
+    _columns = {
+        'ko_id': fields.many2one('kit.creation', string='Kitting Order', required=True),
+        'ko_more_qty': fields.boolean(string='The Kitting Order has a Qty > 1', required=True),
+        'no_kcl': fields.boolean(string='The Kitting Order has at least a line with a Kit but no KCL Reference on it', required=True),
+        'kcl_more_qty': fields.boolean(string='The Kitting Order has at least a line with a Kit and KCL Reference on it but a Qty > 1 on it', required=True),
+        'use_existing_kcl': fields.boolean(string='Use the existing KCLs on the Kit Components to Consume'),
+    }
+
+    _defaults = {
+        'ko_more_qty': False,
+        'no_kcl': False,
+        'kcl_more_qty': False,
+    }
+
+    def close_wizard(self, cr, uid, ids, context=None):
+        '''
+        Just close the wizard
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {'type': 'ir.actions.act_window_close'}
+
+
+wizard_kitting_order_kcl_status()

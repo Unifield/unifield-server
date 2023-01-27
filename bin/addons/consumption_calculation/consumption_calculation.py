@@ -27,6 +27,7 @@ from tools.translate import _
 
 import time
 import netsvc
+import decimal_precision as dp
 
 from order_types import ORDER_CATEGORY
 
@@ -108,7 +109,7 @@ class real_average_consumption(osv.osv):
             for line in report.line_ids:
                 lines.append(line.id)
             if lines:
-                self.pool.get('real.average.consumption.line').write(cr, uid, lines, {'move_id': False}, context=context)
+                self.pool.get('real.average.consumption.line').write(cr, uid, lines, {'move_id': False, 'kcl_id': False}, context=context)
 
         # update created_ok at this end to disable _check qty on line
         self.write(cr, uid, res, {'created_ok': False})
@@ -443,9 +444,12 @@ class real_average_consumption(osv.osv):
                                                         'location_id': rac.cons_location_id.id,
                                                         'location_dest_id': rac.activity_id.id,
                                                         'state': 'done',
-                                                        'reason_type_id': reason_type_id})
+                                                        'reason_type_id': reason_type_id,
+                                                        'composition_list_id': line.kcl_id and line.kcl_id.id})
                     move_ids.append(move_id)
                     line_obj.write(cr, uid, [line.id], {'move_id': move_id})
+                    if line.product_subtype == 'kit' and line.kcl_id:
+                        self.pool.get('composition.kit').close_kit(cr, uid, [line.kcl_id.id], self._name, context=context)
 
             self.write(cr, uid, [rac.id], {'picking_id': picking_id, 'state': 'done'}, context=context)
 
@@ -741,6 +745,12 @@ class real_average_consumption_line(osv.osv):
                 elif context.get('import_in_progress'):
                     error_message.append(_('The consumed qty. must be positive or 0.00'))
                     context.update({'error_message': error_message})
+            if obj.consumed_qty > 1 and obj.kcl_id:
+                if not noraise:
+                    raise osv.except_osv(_('Error'), _('If the Kit Reference is filled, the consumed qty can not be greater than 1'))
+                elif context.get('import_in_progress'):
+                    error_message.append(_('If the Kit Reference is filled, the consumed qty can not be greater than 1'))
+                    context.update({'error_message': error_message})
 
             location = obj.rac_id.cons_location_id.id
             prodlot_id = None
@@ -831,6 +841,7 @@ class real_average_consumption_line(osv.osv):
                               store={'product.product': (_get_product, ['default_code'], 10),
                                      'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
+        'uom_rounding': fields.related('uom_id', 'rounding', type='float', string="UoM Rounding", digits_compute=dp.get_precision('Product UoM'), store=False, write_relate=False),
         'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True, related_uom='uom_id'),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True, related_uom='uom_id'),
         'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
@@ -845,11 +856,14 @@ class real_average_consumption_line(osv.osv):
         'remark': fields.char(size=256, string='Comment'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade', select=1),
+        'rac_state': fields.related('rac_id', 'state', type='char', size=64, string='Real Consumption State', readonly=True),
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
         'just_info_ok': fields.boolean(string='Just for info'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
+        'kcl_id': fields.many2one('composition.kit', 'Kit', domain="[('composition_product_id', '=', product_id), ('composition_type', '=', 'real'), ('state', '=', 'completed'), ('kcl_used_by', '=', False)]"),
+        'product_subtype': fields.related('product_id', 'subtype', type='selection', string='Product Subtype', selection=[('single', 'Single Item'), ('kit', 'Kit/Module'), ('asset', 'Asset')], store=False, write_relate=False, readonly=True),
     }
 
     _defaults = {
@@ -1047,7 +1061,7 @@ class real_average_consumption_line(osv.osv):
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
 
-        res = {'value': {'product_qty': qty_available}, 'domain': d}
+        res = {'value': {'product_qty': qty_available, 'kcl_id': False}, 'domain': d}
 
         if product_qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, product_qty, 'consumed_qty', result=res)
@@ -1061,7 +1075,7 @@ class real_average_consumption_line(osv.osv):
         if context is None:
             context = {}
         product_obj = self.pool.get('product.product')
-        v = {'batch_mandatory': False, 'date_mandatory': False, 'asset_mandatory': False}
+        v = {'batch_mandatory': False, 'date_mandatory': False, 'asset_mandatory': False, 'kcl_id': False}
         d = {'uom_id': []}
         warning = False
         if product_id:
@@ -1109,12 +1123,13 @@ class real_average_consumption_line(osv.osv):
         if not default:
             default = {}
 
-        default.update({'prodlot_id': False, 'expiry_date': False, 'asset_id': False})
+        default.update({'prodlot_id': False, 'expiry_date': False, 'asset_id': False, 'kcl_id': False})
 
         if 'consumed_qty' in default and default['consumed_qty'] < 0.00:
             default['consumed_qty'] = 0.00
 
         return super(real_average_consumption_line, self).copy(cr, uid, line_id[0], default=default, context={'noraise': True})
+
 
 real_average_consumption_line()
 

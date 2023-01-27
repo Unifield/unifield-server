@@ -440,7 +440,7 @@ class substitute(osv.osv_memory):
                 if item.item_id_mirror:
                     comp_item_obj.write(cr, uid, item.item_id_mirror, {'item_lot': item.lot_mirror, 'item_exp': item.exp_substitute_item}, context=context)
             # the corresponding kit is set to done
-            kit_obj.close_kit(cr, uid, kit_ids, context=context)
+            kit_obj.close_kit(cr, uid, kit_ids, self._name, context=context)
             # a move with a kit from kitting location is created
             move_values =  {'name': obj.kit_id.composition_product_id.name[:64],
                             'picking_id': pick_id,

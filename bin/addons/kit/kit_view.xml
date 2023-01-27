@@ -147,12 +147,16 @@
 				            	</form>
                     			<tree string="Kit Composition Item" editable="top" noteditable="kit_state in ['done', 'cancel']" colors="red: inactive_product==True">
 				            		<field name="kit_state" invisible="1" />
+				            		<field name="item_kit_id" invisible="1" />
+				            		<field name="product_subtype" invisible="1" />
+				            		<field name="item_uom_rounding" invisible="1" />
 									<field name="item_module" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_qty" on_change="onchange_uom_qty(item_uom_id, item_qty)" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_uom_id" on_change="onchange_uom_qty(item_uom_id, item_qty)" domain="[('uom_by_product', '=', item_product_id)]" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
 				            			attrs="{'readonly': ['|', ('hidden_asset_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
+				            		<field name="kcl_id" attrs="{'readonly': ['|', '|', '|', ('item_product_id', '=', False), ('product_subtype', '!=', 'kit'), ('kit_state', '!=', 'completed'), ('item_uom_rounding', '!=', 1)]}" />
 				            		<field name="comment" />
 									<field name="item_lot"
 				            			on_change="on_lot_change(item_product_id, item_lot, context)"

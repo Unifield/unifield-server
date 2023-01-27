@@ -229,7 +229,7 @@
                                     <field name="line_number"/>
                                     <field name="product_id" />
                                     <field name="comment" />
-                                    <field name="composition_list_id"/>
+                                    <field name="composition_list_id" readonly="1"/>
                                     <field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="product_uos" invisible="1"/>
@@ -807,7 +807,7 @@
                                     <field name="line_number"/>
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"/>
                                     <field name="comment" />
-                                    <field name="composition_list_id"/>
+                                    <field name="composition_list_id" readonly="1"/>
                                     <field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="asset_id"/>
@@ -866,6 +866,7 @@
                                         <field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" invisible="1"/>
                                         <field name="product_packaging" domain="[('product_id','=',product_id)]" colspan="4"  invisible="1"/>
                                         <field name="purchase_line_id" invisible="1"/>
+                                        <field name="composition_list_id" readonly="1"/>
                                     </group>
 
                                     <group colspan="2" col="2">

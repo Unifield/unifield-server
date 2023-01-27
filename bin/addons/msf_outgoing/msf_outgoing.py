@@ -3124,6 +3124,13 @@ class stock_picking(osv.osv):
                 if line.quantity <= 0.00:
                     continue
 
+                # Handle the Kit in the OUT
+                if proc_model == 'outgoing.delivery.processor' and line.composition_list_id:
+                    if line.quantity > 1:
+                        raise osv.except_osv(_('Warning'), _('A line qty is greater than 1. If the Kit Reference is filled, then the line must be split'))
+                    else:
+                        self.pool.get('composition.kit').close_kit(cr, uid, [line.composition_list_id.id], self._name, context=context)
+
                 orig_qty = move.product_qty
                 if move.original_qty_partial and move.original_qty_partial != -1:
                     orig_qty = move.original_qty_partial
@@ -3435,6 +3442,9 @@ class stock_picking(osv.osv):
                     wr_vals['qty_to_process'] = qty_processed
                 else:
                     wr_vals['qty_to_process'] = initial_qty
+                # Remove The KCL Ref from the original line if the whole line is not processed
+                if line.composition_list_id and line.qty_to_process < line.product_qty:
+                    wr_vals['composition_list_id'] = False
 
                 context['keepLineNumber'] = True
                 move_obj.write(cr, uid, [line.id], wr_vals, context=context)
@@ -3458,19 +3468,18 @@ class stock_picking(osv.osv):
         res['res_id'] = new_picking_id
         return res
 
-
     def check_integrity(self, cr, uid, pid, context=None):
         move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
         uom_obj = self.pool.get('product.uom')
 
         if not move_obj.search_exist(cr, uid, [('picking_id', '=', pid), ('state', '=', 'assigned'), ('qty_to_process', '!=', 0), ('product_qty', '!=', 0)], context=context):
-            raise osv.except_osv( _('Warning'), _('No line to process, please set Qty to process'))
+            raise osv.except_osv(_('Warning'), _('No line to process, please set Qty to process'))
 
         neg_ids = move_obj.search(cr, uid, [('picking_id', '=', pid), ('state', '=', 'assigned'), ('qty_to_process', '<', 0)], context=context)
         if neg_ids:
             neg = move_obj.browse(cr, uid, neg_ids, fields_to_fetch=['line_number'], context=context)
-            raise osv.except_osv( _('Warning'), _('Qty to process must be positive, line(s): %s') % ', '.join(['#%s' % x.line_number for x in neg]))
+            raise osv.except_osv(_('Warning'), _('Qty to process must be positive, line(s): %s') % ', '.join(['#%s' % x.line_number for x in neg]))
 
         # Do not process more that requested
         cr.execute('''
@@ -3523,7 +3532,6 @@ class stock_picking(osv.osv):
                     (needed_qty[x[1]][x[2]], lot.product_id.uom_id.name, lot.product_id.default_code, lot.name, lot.stock_available)
                 )
 
-
         # BN/ED: check lot is set
         cr.execute("""
             select line_number
@@ -3545,6 +3553,9 @@ class stock_picking(osv.osv):
                 _('Batch number is needed on lines %s !') % ','.join(l)
             )
 
+        # Check if there is a KCL line with a qty > 1
+        if move_obj.search_exist(cr, uid, [('picking_id', '=', pid), ('state', '=', 'assigned'), ('qty_to_process', '>', 1), ('composition_list_id', '!=', False)], context=context):
+            raise osv.except_osv(_('Warning'), _('A line qty is greater than 1. If the Kit Reference is filled, then the line must be split'))
 
         return True
 

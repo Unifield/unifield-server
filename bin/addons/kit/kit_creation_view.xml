@@ -44,7 +44,8 @@
 				            		<field name="total_qty_to_consume" />
 				            		<field name="uom_id_to_consume"
 				            			on_change="on_change_uom_id(product_id_to_consume, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, uom_id_to_consume, location_src_id_to_consume, context)" />
-				            		<field name="location_src_id_to_consume"
+				            		<field name="kcl_id" attrs="{'readonly': ['|', '|', '|', '|', ('product_id_to_consume', '=', False), ('product_subtype', '!=', 'kit'), ('fake_state', '!=', 'in_production'), ('uom_rounding', '!=', 1), ('consumed_to_consume', '=', True)]}" />
+									<field name="location_src_id_to_consume"
 				            			attrs="{'readonly': ['|', ('consumed_to_consume', '=', True), ('fake_state', '!=', 'in_production')]}"
 				            			context="{'product_id':product_id_to_consume, 'specific_rules_tree_view':True, 'compute_child':parent.consider_child_locations_kit_creation}" />
 				            		<field name="qty_available_to_consume" />
@@ -54,6 +55,8 @@
 				            		<field name="expiry_check_kit_creation_to_consume" />
 				            		<button name="do_process_to_consume" type="object" string="Process Line" icon="gtk-go-forward" attrs="{'invisible': ['|', ('consumed_to_consume', '=', True), ('fake_state', '!=', 'in_production')]}" />
 				            		<field name="consumed_to_consume" invisible="True" />
+				            		<field name="product_subtype" invisible="True" />
+				            		<field name="uom_rounding" invisible="True" />
 				            	</tree>
                     		</field>
                     		<group col="4" colspan="4">
@@ -72,6 +75,7 @@
                     				<field name="product_qty" readonly="True" string="Qty" />
                     				<field name="assigned_qty_stock_move" invisible="True" />
                     				<field name="product_uom" readonly="True" string="UoM" />
+                    				<field name="composition_list_id" readonly="True" />
                     				<field name="hidden_asset_check" invisible="True" />
                     				<field name="asset_id" domain="[('product_id', '=', product_id)]"
                     					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_asset_check', '=', False)]}" />
@@ -230,6 +234,40 @@
 	                    <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'creation_date_kit_creation'}"/>
                 	</group>
               	</search>
+            </field>
+        </record>
+
+		<record id="wizard_kitting_order_kcl_status_form_view" model="ir.ui.view">
+            <field name="name">wizard.kitting.order.kcl.status.form.view</field>
+            <field name="model">wizard.kitting.order.kcl.status</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="An additional action is required for this Kitting Order">
+                    <separator colspan="4" string="File format" />
+                    <field name="ko_more_qty" invisible="1" />
+                    <field name="no_kcl" invisible="1" />
+                    <field name="kcl_more_qty" invisible="1" />
+					<group colspan="4" attrs="{'invisible': [('ko_more_qty', '=', True)]}">
+                        <html colspan="4">
+                            <translate>ko_more_qty</translate>
+                        </html>
+                    </group>
+					<group colspan="4" attrs="{'invisible': [('no_kcl', '=', True)]}">
+                        <html colspan="4">
+                            <translate>no_kcl</translate>
+                        </html>
+                    </group>
+					<group colspan="4" attrs="{'invisible': [('kcl_more_qty', '=', True)]}">
+                        <html colspan="4">
+                            <translate>kcl_more_qty</translate>
+                        </html>
+                    </group>
+                    <separator colspan="4" string="Actions" />
+					<field name="use_existing_kcl" />
+                    <group colspan="4" col="4">
+                        <button name="close_wizard" string="Return to previous screen" icon="gtk-cancel" colspan="1" />
+                    </group>
+                </form>
             </field>
         </record>
 		

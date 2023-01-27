@@ -246,7 +246,8 @@
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('fake_state', '=', 'assigned')]}"
                                             />
                                     <field name="comment" readonly="1"/>
-                                    <field name="composition_list_id" readonly="1"/>
+                                    <field name="composition_list_id" attrs="{'readonly': ['|', '|', ('subtype', '!=', 'kit'), ('fake_state', 'not in', ['confirmed', 'assigned']), ('product_uom_rounding', '!=', 1)]}"
+                                            domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real'), ('kcl_used_by', '=', False)]"/>
                                     <field name="product_qty"
                                             string="Qty"
                                             on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"
@@ -300,6 +301,8 @@
                                     <field name="fake_state" invisible="1"/>
                                     <field name="location_dest_id" invisible="1" />
                                     <field name="from_wkf_line" invisible="1" />
+                                    <field name="subtype" invisible="1" />
+                                    <field name="product_uom_rounding" invisible="1" />
                                     <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  attrs="{'invisible': [('pt_created', '=', True)]}" context="{'from_button': True}"  />
                                 </tree>
                                 <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
@@ -310,7 +313,6 @@
                                                on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type,purchase_line_id,True)"
                                                attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
                                                colspan="4" />
-                                        <field name="composition_list_id" invisible="True" />
                                         <field name="product_qty"
                                             on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
@@ -326,6 +328,8 @@
                                             attrs="{'readonly': [('state', 'not in', ['confirmed', 'assigned'])]}"
                                             on_change="onchange_qty_to_process(qty_to_process, product_qty, product_uom)"
                                             />
+                                        <field name="composition_list_id" attrs="{'readonly': ['|', '|', ('subtype', '!=', 'kit'), ('state', 'not in', ['confirmed', 'assigned']), ('product_uom_rounding', '!=', 1)]}"
+                                               domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real'), ('kcl_used_by', '=', False)]"/>
                                         <field name="comment" colspan="4" attrs="{'readonly': [('state', '!=', 'confirmed')]}"/>
                                     </group>
                                     <group colspan="2" col="2">
@@ -339,7 +343,7 @@
                                     </group>
                                     <group colspan="2" col="4">
                                         <separator string="Traceability" colspan="4" />
-                                        <field name="asset_id" colspan="4" attrs="{'readonly': [('state', '!=', 'confirmed')]}"/>
+                                        <field name="asset_id" attrs="{'readonly': [('state', '!=', 'confirmed')]}"/>
                                         <field name="hidden_batch_management_mandatory" invisible="True" />
                                         <field name="hidden_perishable_mandatory" invisible="True" />
                                         <field name="prodlot_id"
@@ -370,6 +374,8 @@
                                     <field name="picking_id"  invisible="1"/>
                                     <field name="name" invisible="1" />
                                     <field name="from_wkf_line" invisible="1" />
+                                    <field name="subtype" invisible="1" />
+                                    <field name="product_uom_rounding" invisible="1" />
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">
@@ -722,6 +728,7 @@
                                         <field name="from_pack" attrs="{'readonly': [('state', 'not in', ['assigned', 'confirmed'])]}" required="1" />
                                         <field name="to_pack" attrs="{'readonly': [('state', 'not in', ['assigned', 'confirmed'])]}" required="1" />
                                         <field name="product_uom" readonly="1" />
+                                        <field name="composition_list_id" readonly="1" />
                                         <field name="comment" colspan="4" readonly="1" />
                                     </group>
                                     <group colspan="2" col="2">
@@ -895,7 +902,7 @@
 								<tree string="Stock Moves" colors="red: inactive_product==True">
 									<field name="product_id"/>
 									<field name="asset_id" />
-									<field name="composition_list_id" />
+									<field name="composition_list_id" readonly="1" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
 									<field name="product_uos" />
@@ -1063,7 +1070,7 @@
 							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}">
 								<tree string="Stock Moves" colors="red: inactive_product==True">
 									<field name="product_id"/>
-									<field name="composition_list_id" />
+									<field name="composition_list_id" readonly="1" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
 									<field name="product_uos" />
@@ -1360,6 +1367,7 @@
                                             <field name="product_id" />
                                             <field name="origin" />
                                             <field name="comment" />
+                                            <field name="composition_list_id" />
                                             <field name="prodlot_id" />
                                             <field name="expired_date" />
                                             <field name="product_qty" />

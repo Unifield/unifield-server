@@ -601,6 +601,15 @@ class stock_move_processor(osv.osv):
             help="Category of the expected UoM to receive",
             multi='move_info'
         ),
+        'uom_rounding': fields.related(
+            'uom_id',
+            'rounding',
+            type='float',
+            string="UoM Rounding",
+            digits_compute=dp.get_precision('Product UoM'),
+            store=False,
+            write_relate=False
+        ),
         'location_id': fields.function(
             _get_move_info,
             method=True,
@@ -793,6 +802,18 @@ class stock_move_processor(osv.osv):
         'quantity': 0.00,
         'integrity_status': 'empty',
     }
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        set the name corresponding to object subtype
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+
+        default['composition_list_id'] = False
+        return super(stock_move_processor, self).copy(cr, uid, id, default=default, context=context)
 
     def _fill_expiry_date(self, cr, uid, prodlot_id=False, expiry_date=False, vals=None, context=None):
         """
