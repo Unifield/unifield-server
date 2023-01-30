@@ -376,35 +376,53 @@ class so_po_common(osv.osv_memory):
             prod_id = local_merged[0]
 
         if prod_id:
-            kept = self.pool.get('product.product').browse(cr, uid, prod_id, ['kept_product_id'])
+            kept = self.pool.get('product.product').browse(cr, uid, prod_id, fields_to_fetch=['kept_product_id'])
             if kept.kept_product_id:
                 return kept.kept_product_id.id
 
         return prod_id
+
+    def _get_prod_by_msfid(self, cr, uid, msfid, context=None):
+        prod_obj = self.pool.get('product.product')
+        # msfid has no uniq constraint if only 1 active product: ok, elif more than 1 product found raise
+        prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', 'in', ['t', 'f'])], limit=2, order='NO_ORDER', context=context)
+        if len(prod_ids) == 1:
+            return self.check_merge(cr, uid, prod_ids[0])
+        elif len(prod_ids) > 1:
+            prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', '=', 't')], limit=2, order='NO_ORDER', context=context)
+            if len(prod_ids) == 1:
+                return self.check_merge(cr, uid, prod_ids[0])
+            raise Exception("Duplicate product for msfid %s" % msfid)
+        return False
 
     def get_product_id(self, cr, uid, data, default_code=False, context=None):
         # us-1586: use msfid to search product in intersection flow, else use sdref
         # US-3282: intermission / intersection: last try on default_code
         prod_obj = self.pool.get('product.product')
         msfid = False
+        merged_msfid = []
         pid = False
 
         # ouch data could be an object or a dict
         # if msfid is in data this is an intersection message, 1st use msfid
         if hasattr(data, 'msfid') and data.msfid:
             msfid = data.msfid
+            if hasattr(data, 'merged_msfid') and data.merged_msfid:
+                merged_msfid = data.merged_msfid.split(';')
+
         elif isinstance(data, dict) and data.get('msfid'):
             msfid = data['msfid']
+            if data.get('merged_msfid'):
+                merged_msfid = data['merged_msfid'].split(';')
         if msfid:
-            # msfid has no uniq constraint if only 1 active product: ok, elif more than 1 product found raise
-            prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', 'in', ['t', 'f'])], limit=2, order='NO_ORDER', context=context)
-            if len(prod_ids) == 1:
-                return self.check_merge(cr, uid, prod_ids[0])
-            elif len(prod_ids) > 1:
-                prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', '=', 't')], limit=2, order='NO_ORDER', context=context)
-                if len(prod_ids) == 1:
-                    return self.check_merge(cr, uid, prod_ids[0])
-                raise Exception("Duplicate product for msfid %s" % msfid)
+            prod_id = self._get_prod_by_msfid(cr, uid, msfid, context=context)
+            if prod_id:
+                return prod_id
+            for m_msfif in merged_msfid:
+                prod_id = self._get_prod_by_msfid(cr, uid, m_msfif, context=context)
+                if prod_id:
+                    return prod_id
+
 
         if hasattr(data, 'id') and data.id:
             pid = data.id

@@ -1069,6 +1069,7 @@ class product_attributes(osv.osv):
         'kept_initial_product_id': fields.many2one('product.product', string='1st Kept Product in case of chaining', select=1, readonly=1),
         'unidata_merged': fields.boolean('UniData Merged', readonly=1),
         'unidata_merge_date': fields.datetime('Date of UniData Merge', readonly=1, select=1),
+        'is_kept_product': fields.boolean('Is a kept product', readonly=1),
     }
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
@@ -2938,7 +2939,7 @@ class product_attributes(osv.osv):
         if errors:
             raise osv.except_osv(_('Error'), "\n".join(errors))
 
-        new_write_data = {}
+        new_write_data = {'is_kept_product': True}
         if not kept_data['old_code']:
             new_write_data['old_code'] = old_prod_data['default_code']
         elif old_prod_data['default_code'] not in kept_data['old_code'].split(';'):
