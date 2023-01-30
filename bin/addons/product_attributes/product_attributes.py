@@ -2905,8 +2905,8 @@ class product_attributes(osv.osv):
         """
         if context is None:
             context = {}
-        kept_data = self.read(cr, uid, kept_id, ['default_code','perishable', 'batch_management', 'old_code', 'product_tmpl_id', 'cost_price', 'qty_available', 'active', 'standard_ok', 'international_status'], context=context)
-        old_prod_data = self.read(cr, uid, old_prod_id, ['default_code', 'product_tmpl_id', 'cost_price', 'qty_available', 'active', 'can_be_hq_merged', 'international_status', 'standard_ok'], context=context)
+        kept_data = self.read(cr, uid, kept_id, ['default_code','perishable', 'batch_management', 'old_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'standard_ok', 'international_status'], context=context)
+        old_prod_data = self.read(cr, uid, old_prod_id, ['default_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'can_be_hq_merged', 'international_status', 'standard_ok'], context=context)
 
         instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
 
@@ -2946,13 +2946,13 @@ class product_attributes(osv.osv):
             new_write_data['old_code'] = '%s;%s' % (kept_data['old_code'], old_prod_data['default_code'])
 
         if old_prod_data['qty_available'] + kept_data['qty_available']:
-            new_write_data['cost_price'] = (old_prod_data['qty_available'] * old_prod_data['cost_price'] + kept_data['qty_available'] * kept_data['cost_price']) / float(old_prod_data['qty_available'] + kept_data['qty_available'])
-            if abs(new_write_data['cost_price'] - kept_data['cost_price']) > 0.0001:
+            new_write_data['standard_price'] = (old_prod_data['qty_available'] * old_prod_data['standard_price'] + kept_data['qty_available'] * kept_data['standard_price']) / float(old_prod_data['qty_available'] + kept_data['qty_available'])
+            if abs(new_write_data['standard_price'] - kept_data['standard_price']) > 0.0001:
                 self.pool.get('standard.price.track.changes').create(cr, uid, {
-                    'old_standard_price': kept_data['cost_price'],
-                    'new_standard_price': new_write_data['cost_price'],
+                    'old_standard_price': kept_data['standard_price'],
+                    'new_standard_price': new_write_data['standard_price'],
                     'product_id': kept_id,
-                    'transaction_name': 'Merge with %s: qty transferred: %s, avg cost: %s, resulting qty: %s' % (kept_data['default_code'], old_prod_data['qty_available'], old_prod_data['cost_price'], kept_data['qty_available']+old_prod_data['qty_available']),
+                    'transaction_name': 'Merge with %s: qty transferred: %s, avg cost: %s, resulting qty: %s' % (old_prod_data['default_code'], old_prod_data['qty_available'], old_prod_data['standard_price'], kept_data['qty_available']+old_prod_data['qty_available']),
                 }, context=context)
 
         # kept is inactive NSL check at coordo if it must be activated
