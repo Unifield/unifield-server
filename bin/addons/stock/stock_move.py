@@ -297,7 +297,7 @@ class stock_move(osv.osv):
         res = {}
 
         for move in self.browse(cr, uid, ids, context=context):
-            res[move.id] = move.product_id.type
+            res[move.id] = {'product_type': move.product_id.type, 'product_subtype': move.product_id.subtype}
 
         return res
 
@@ -564,12 +564,12 @@ class stock_move(osv.osv):
         'exp_check': fields.function(_get_checks_all, method=True, string='ED', type='boolean', readonly=True, multi="m"),
         'kit_check': fields.function(_get_checks_all, method=True, string='Kit', type='boolean', readonly=True, multi="m"),
 
-        # reson types
+        # reason types
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=300, string='Comment'),
-        'product_type': fields.function(_get_product_types, method=True, type='selection', selection=_get_product_type_selection, string='Product type',
+        'product_type': fields.function(_get_product_types, method=True, type='selection', selection=_get_product_type_selection, string='Product type', multi='product_types',
                                         store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20), }),
-        'product_subtype': fields.function(_get_product_types, method=True, type='selection', selection=_get_product_subtype_selection, string='Product type',
+        'product_subtype': fields.function(_get_product_types, method=True, type='selection', selection=_get_product_subtype_selection, string='Product subtype', multi='product_types',
                                            store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20), }),
         'not_chained': fields.boolean(string='Not chained', help='If checked, the chaining move will not be run.'),
         'sale_line_id': fields.many2one('sale.order.line', 'Sales Order Line', ondelete='set null', select=True, readonly=True),

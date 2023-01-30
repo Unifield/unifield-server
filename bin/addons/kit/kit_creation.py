@@ -377,6 +377,10 @@ class kit_creation(osv.osv):
                 kit_obj.write(cr, uid, [kit.id], kit_values, context=context)
                 # all kits are completed
                 kit_obj.mark_as_completed(cr, uid, [kit.id], context=context)
+            for consumed_move in obj.consumed_ids_kit_creation:
+                if consumed_move.product_subtype == 'kit' and consumed_move.composition_list_id:
+                    self.pool.get('composition.kit').close_kit(cr, uid, [consumed_move.composition_list_id.id],
+                                                               self._name, context=context)
             # state of kitting order is Done
             self.write(cr, uid, [obj.id], {'state': 'done'}, context=context)
             self.log(cr, uid, obj.id, _('The Kitting Order %s has been confirmed.')%obj.name)
@@ -459,10 +463,11 @@ class kit_creation(osv.osv):
             if move.state in ['confirmed', 'cancel'] and not move.kol_lot_manual:
                 move_list.append(move.id)
                 # consolidate the moves qty
-                qty = data.setdefault(move.product_id.id, {}).setdefault('qty', {}).setdefault(move.to_consume_id_stock_move.id, {}).setdefault(move.product_uom.id, 0.0)
+                qty = data.setdefault(move.product_id.id, {}).setdefault('qty', {}).setdefault(move.to_consume_id_stock_move.id, {})\
+                    .setdefault(move.product_uom.id, {}).setdefault(move.composition_list_id.id, 0.00)
                 # if we get an original move among the consolidated ones, we keep a flag to remember that
                 qty += move.product_qty
-                data[move.product_id.id]['qty'][move.to_consume_id_stock_move.id][move.product_uom.id] = qty
+                data[move.product_id.id]['qty'][move.to_consume_id_stock_move.id][move.product_uom.id][move.composition_list_id.id] = qty
                 # save object for efficiency
                 data.setdefault(move.product_id.id, {}).setdefault('object', move.product_id)
             elif move.kol_lot_manual:
@@ -497,27 +502,29 @@ class kit_creation(osv.osv):
             for product_id in data.keys():
                 for to_consume_id in data[product_id]['qty'].keys():
                     for uom_id in data[product_id]['qty'][to_consume_id].keys():
-                        # total qty needed for this product/uom
-                        needed_qty = data[product_id]['qty'][to_consume_id][uom_id]
-                        # the consolidated data contains a move which was original
-                        # true for both batch management and not batch management products
-                        values = {'kit_creation_id_stock_move': obj.id,
-                                  'name': data[product_id]['object'].name,
-                                  'picking_id': obj.internal_picking_id_kit_creation.id,
-                                  'product_uom': uom_id,
-                                  'product_id': product_id,
-                                  'date_expected': context['common']['date'],
-                                  'date': context['common']['date'],
-                                  'product_qty': needed_qty,
-                                  'prodlot_id': False, # the qty is not available
-                                  'location_id': default_location_id,
-                                  'location_dest_id': context['common']['kitting_id'],
-                                  'state': 'confirmed', # not available
-                                  'reason_type_id': context['common']['reason_type_id'],
-                                  'to_consume_id_stock_move': to_consume_id,
-                                  }
-                        move_obj.create(cr, uid, values, context=context)
-                        # we reset original move flag
+                        for kcl_id in data[product_id]['qty'][to_consume_id][uom_id].keys():
+                            # total qty needed for this product/uom and this KCL
+                            needed_qty = data[product_id]['qty'][to_consume_id][uom_id][kcl_id]
+                            # the consolidated data contains a move which was original
+                            # true for both batch management and not batch management products
+                            values = {'kit_creation_id_stock_move': obj.id,
+                                      'name': data[product_id]['object'].name,
+                                      'picking_id': obj.internal_picking_id_kit_creation.id,
+                                      'product_uom': uom_id,
+                                      'product_id': product_id,
+                                      'date_expected': context['common']['date'],
+                                      'date': context['common']['date'],
+                                      'product_qty': needed_qty,
+                                      'prodlot_id': False,  # the qty is not available
+                                      'location_id': default_location_id,
+                                      'location_dest_id': context['common']['kitting_id'],
+                                      'state': 'confirmed',  # not available
+                                      'reason_type_id': context['common']['reason_type_id'],
+                                      'to_consume_id_stock_move': to_consume_id,
+                                      'composition_list_id': kcl_id,
+                                      }
+                            move_obj.create(cr, uid, values, context=context)
+                            # we reset original move flag
         return True
 
     def remove_availability(self, cr, uid, ids, context=None):
@@ -578,25 +585,27 @@ class kit_creation(osv.osv):
             for product_id in data.keys():
                 for to_consume_id in data[product_id]['qty'].keys():
                     for uom_id in data[product_id]['qty'][to_consume_id].keys():
-                        # we check the availability - we use default location from kitting order object
-                        needed_qty = data[product_id]['qty'][to_consume_id][uom_id]
-                        values = {
-                            'kit_creation_id_stock_move': obj.id,
-                            'name': data[product_id]['object'].name,
-                            'picking_id': obj.internal_picking_id_kit_creation.id,
-                            'product_uom': uom_id,
-                            'product_id': product_id,
-                            'date_expected': context['common']['date'],
-                            'date': context['common']['date'],
-                            'product_qty': needed_qty,
-                            'prodlot_id': False, # the qty is not available
-                            'location_id': default_location_id,
-                            'location_dest_id': context['common']['kitting_id'],
-                            'state': 'confirmed', # not available
-                            'reason_type_id': context['common']['reason_type_id'],
-                            'to_consume_id_stock_move': to_consume_id,
-                        }
-                        create_move_ids.append(move_obj.create(cr, uid, values, context=context))
+                        for kcl_id in data[product_id]['qty'][to_consume_id][uom_id].keys():
+                            # we check the availability - we use default location from kitting order object
+                            needed_qty = data[product_id]['qty'][to_consume_id][uom_id][kcl_id]
+                            values = {
+                                'kit_creation_id_stock_move': obj.id,
+                                'name': data[product_id]['object'].name,
+                                'picking_id': obj.internal_picking_id_kit_creation.id,
+                                'product_uom': uom_id,
+                                'product_id': product_id,
+                                'date_expected': context['common']['date'],
+                                'date': context['common']['date'],
+                                'product_qty': needed_qty,
+                                'prodlot_id': False,  # the qty is not available
+                                'location_id': default_location_id,
+                                'location_dest_id': context['common']['kitting_id'],
+                                'state': 'confirmed',  # not available
+                                'reason_type_id': context['common']['reason_type_id'],
+                                'to_consume_id_stock_move': to_consume_id,
+                                'composition_list_id': kcl_id,
+                            }
+                            create_move_ids.append(move_obj.create(cr, uid, values, context=context))
             ctx = context.copy()
             ctx['compute_child'] = obj.consider_child_locations_kit_creation
             self.pool.get('stock.picking').check_availability_manually(cr, uid, [obj.internal_picking_id_kit_creation.id], context=ctx, initial_location=default_location_id, lefo=lefo)
@@ -636,32 +645,10 @@ class kit_creation(osv.osv):
         if context is None:
             context = {}
 
-        ko_more_qty, no_kcl, kcl_more_qty = False, False, False
         for line in kit.to_consume_ids_kit_creation:
             if line.qty_available_to_consume < line.total_qty_to_consume:
                 raise osv.except_osv(_('Warning !'),
                                      _('The Kitting Order cannot be processed unless all product lines are available.'))
-            # Prepare to display the wizard to set the KCL on the lines if necessary
-            if kit.uom_id_kit_creation.rounding == 1 and not line.consumed_to_consume and line.product_subtype == 'kit':
-                if kit.qty_kit_creation > 1:
-                    ko_more_qty = True
-                if not line.kcl_id:
-                    no_kcl = True
-                if line.qty_to_consume > 1:
-                    kcl_more_qty = True
-
-        # Propose to automatically fill kcl_id/composition_list_id with existing completed KCLs
-        if ko_more_qty or no_kcl or kcl_more_qty:
-            wiz_data = {'ko_id': kit.id, 'ko_more_qty': ko_more_qty, 'no_kcl': no_kcl, 'kcl_more_qty': kcl_more_qty}
-            wiz_id = self.pool.get('wizard.kitting.order.kcl.status').create(cr, uid, wiz_data, context=context)
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'kit', 'wizard_kitting_order_kcl_status_form_view')[1]
-            return {'type': 'ir.actions.act_window',
-                    'res_model': 'wizard.kitting.order.kcl.status',
-                    'res_id': wiz_id,
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'context': context}
 
         return True
 
@@ -693,8 +680,22 @@ class kit_creation(osv.osv):
 
             # Check if stock is available
             self.check_lines_availability(cr, uid, obj, context=context)
+            ko_more_qty, no_kcl, kcl_more_qty = False, False, False
+            l_moves = []
             for to_consume in to_consume_list:
-                if not to_consume.consumed_to_consume:
+                # Prepare to display the wizard to automatically set the KCL on the lines if necessary
+                if obj.uom_id_kit_creation.rounding == 1 and not to_consume.consumed_to_consume and\
+                        to_consume.uom_rounding == 1 and to_consume.product_subtype == 'kit':
+                    kcl_domain = [('composition_product_id', '=', to_consume.product_id_to_consume.id),
+                                  ('composition_type', '=', 'real'),  ('state', '=', 'completed'), ('kcl_used_by', '=', False)]
+                    cmplt_kcl_exist = self.pool.get('composition.kit').search_exist(cr, uid, kcl_domain, context=context)
+                    if obj.qty_kit_creation > 1 and to_consume.kcl_id:  # KO Qty > 1 and there is KCL Ref
+                        ko_more_qty = True
+                    if not to_consume.kcl_id and cmplt_kcl_exist:  # Consu line Qty > 1 and unused completed KCL exist
+                        no_kcl = True
+                    if to_consume.qty_to_consume > 1 and to_consume.kcl_id:  # Consu line Qty > 1 and there is KCL Ref
+                        kcl_more_qty = True
+                if not (to_consume.consumed_to_consume or ko_more_qty or no_kcl or kcl_more_qty):
                     # create a corresponding stock move
                     move_values = {'kit_creation_id_stock_move': obj.id,
                                    'to_consume_id_stock_move': to_consume.id,
@@ -720,7 +721,23 @@ class kit_creation(osv.osv):
                                    'prodlot_id': False,
                                    'composition_list_id': to_consume.kcl_id and to_consume.kcl_id.id or False
                                    }
-                    move_obj.create(cr, uid, move_values, context=context)
+                    l_moves.append(move_values)
+            if ko_more_qty or no_kcl or kcl_more_qty:
+                # Propose to automatically fill kcl_id/composition_list_id with existing completed KCLs
+                if ko_more_qty or no_kcl or kcl_more_qty:
+                    wiz_data = {'ko_id': obj.id, 'ko_more_qty': ko_more_qty, 'no_kcl': no_kcl,
+                                'kcl_more_qty': kcl_more_qty, 'consu_line_id': context.get('to_consume_line_id', False)}
+                    wiz_id = self.pool.get('wizard.kitting.order.kcl.status').create(cr, uid, wiz_data, context=context)
+                    return {'type': 'ir.actions.act_window',
+                            'res_model': 'wizard.kitting.order.kcl.status',
+                            'res_id': [wiz_id],
+                            'view_type': 'form',
+                            'view_mode': 'form',
+                            'target': 'new',
+                            'context': context}
+            else:
+                for move_vals in l_moves:
+                    move_obj.create(cr, uid, move_vals, context=context)
 
             # to_consume lines are consumed
             to_consume_obj.write(cr, uid, [x.id for x in to_consume_list], {'consumed_to_consume': True}, context=context)
@@ -1113,13 +1130,15 @@ class wizard_kitting_order_kcl_status(osv.osv_memory):
 
     _columns = {
         'ko_id': fields.many2one('kit.creation', string='Kitting Order', required=True),
-        'ko_more_qty': fields.boolean(string='The Kitting Order has a Qty > 1', required=True),
+        'consu_line_id': fields.many2one('kit.creation.to.consume', string='Component to Consume'),
+        'ko_more_qty': fields.boolean(string='The Kitting Order has a Qty > 1 and at least a line with a Kit and KCL Reference on it', required=True),
         'no_kcl': fields.boolean(string='The Kitting Order has at least a line with a Kit but no KCL Reference on it', required=True),
         'kcl_more_qty': fields.boolean(string='The Kitting Order has at least a line with a Kit and KCL Reference on it but a Qty > 1 on it', required=True),
-        'use_existing_kcl': fields.boolean(string='Use the existing KCLs on the Kit Components to Consume'),
+        'use_existing_kcl': fields.boolean(string='Agree to split'),
     }
 
     _defaults = {
+        'consu_line_id': False,
         'ko_more_qty': False,
         'no_kcl': False,
         'kcl_more_qty': False,
@@ -1133,6 +1152,90 @@ class wizard_kitting_order_kcl_status(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        return {'type': 'ir.actions.act_window_close'}
+
+    def do_process_to_consume_and_kcl_auto(self, cr, uid, ids, context=None):
+        '''
+        - update components to consume
+        - create a stock move for each line and split the line according to existing and unused completed KCLs
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        move_obj = self.pool.get('stock.move')
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            ko = wiz.ko_id
+            lines_to_consume = wiz.consu_line_id and [wiz.consu_line_id] or ko.to_consume_ids_kit_creation
+            for line in lines_to_consume:
+                if not line.consumed_to_consume:
+                    move_values = {'kit_creation_id_stock_move': ko.id,
+                                   'to_consume_id_stock_move': line.id,
+                                   'name': line.product_id_to_consume.name,
+                                   'picking_id': ko.internal_picking_id_kit_creation.id,
+                                   'product_id': line.product_id_to_consume.id,
+                                   'date': context['common']['date'],
+                                   'date_expected': context['common']['date'],
+                                   'product_uom': line.uom_id_to_consume.id,
+                                   'product_uos': line.uom_id_to_consume.id,
+                                   'product_packaging': False,
+                                   'address_id': False,
+                                   'location_id': line.location_src_id_to_consume.id,
+                                   'location_dest_id': context['common']['kitting_id'],
+                                   'sale_line_id': False,
+                                   'tracking_id': False,
+                                   'state': 'confirmed',
+                                   'note': 'Kitting Order - Consume Move',
+                                   'company_id': context['common']['company_id'],
+                                   'reason_type_id': context['common']['reason_type_id'],
+                                   'prodlot_id': False,
+                                   }
+                    if line.product_subtype == 'kit' and line.kcl_id and line.total_qty_to_consume > 1:  # Case 1 + 3
+                        if wiz.use_existing_kcl:
+                            remaining_qty = line.total_qty_to_consume
+                            kcl_domain = [('composition_product_id', '=', line.product_id_to_consume.id),
+                                          ('composition_type', '=', 'real'), ('state', '=', 'completed'), ('kcl_used_by', '=', False)]
+                            if line.kcl_id:  # Use the added KCL Reference first but not on another split
+                                kcl_domain.append(('id', '!=', line.kcl_id.id))
+                                move_values.update({'product_qty': 1, 'product_uos_qty': 1, 'composition_list_id': line.kcl_id.id})
+                                move_obj.create(cr, uid, move_values, context=context)
+                                remaining_qty -= 1
+                            for kcl_id in self.pool.get('composition.kit').search(cr, uid, kcl_domain, context=context):
+                                if remaining_qty == 0:  # If there is more KCLs than total Qty
+                                    break
+                                move_values.update({'product_qty': 1, 'product_uos_qty': 1, 'composition_list_id': kcl_id})
+                                move_obj.create(cr, uid, move_values, context=context)
+                                remaining_qty -= 1
+                            if remaining_qty > 0:
+                                move_values.update({'product_qty': remaining_qty, 'product_uos_qty': remaining_qty,
+                                                    'composition_list_id': False})
+                                move_obj.create(cr, uid, move_values, context=context)
+                        else:  # Refuse to split
+                            move_values.update({'product_qty': line.total_qty_to_consume,
+                                                'product_uos_qty': line.total_qty_to_consume, 'composition_list_id': False})
+                            move_obj.create(cr, uid, move_values, context=context)
+                    else:  # Case 2 + default no Kit
+                        move_values.update({
+                            'product_qty': line.total_qty_to_consume,
+                            'product_uos_qty': line.total_qty_to_consume,
+                            'composition_list_id': line.kcl_id and line.kcl_id.id or False
+                        })
+                        move_obj.create(cr, uid, move_values, context=context)
+
+            # to_consume lines are consumed
+            self.pool.get('kit.creation.to.consume').write(cr, uid, [x.id for x in lines_to_consume], {'consumed_to_consume': True}, context=context)
+
+            return {'name': _("Kitting Order"),
+                    'view_mode': 'form,tree',
+                    'view_type': 'form',
+                    'res_model': 'kit.creation',
+                    'res_id': ko.id,
+                    'type': 'ir.actions.act_window',
+                    'target': 'crush',
+                    }
+
         return {'type': 'ir.actions.act_window_close'}
 
 

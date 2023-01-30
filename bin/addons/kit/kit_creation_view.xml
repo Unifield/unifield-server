@@ -243,29 +243,39 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="An additional action is required for this Kitting Order">
-                    <separator colspan="4" string="File format" />
+                    <separator colspan="4" string="Information" />
                     <field name="ko_more_qty" invisible="1" />
                     <field name="no_kcl" invisible="1" />
                     <field name="kcl_more_qty" invisible="1" />
-					<group colspan="4" attrs="{'invisible': [('ko_more_qty', '=', True)]}">
+					<group colspan="4" attrs="{'invisible': [('ko_more_qty', '=', False)]}">
                         <html colspan="4">
-                            <translate>ko_more_qty</translate>
+                            <translate>This Kitting Order is to create a Qty of more than 1 Kit (Qty X (taken from header) of kits to be created). You have added a KCL ref on a Component but this is unique and cannot be used in more than 1 Kit KCL. The reference(s) will not be used if you do not agree to split automatically.</translate>
                         </html>
+						<newline />
                     </group>
-					<group colspan="4" attrs="{'invisible': [('no_kcl', '=', True)]}">
+					<group colspan="4" attrs="{'invisible': [('no_kcl', '=', False)]}">
                         <html colspan="4">
-                            <translate>no_kcl</translate>
+                            <translate>This Kitting Order includes Kit Component(s) which have their own unused Completed KCL(s). But as you have not added any reference for this, all of those Kits (KCLs) will be created without including any KCL at lower level.</translate>
                         </html>
+						<newline />
                     </group>
-					<group colspan="4" attrs="{'invisible': [('kcl_more_qty', '=', True)]}">
+					<group colspan="4" attrs="{'invisible': [('kcl_more_qty', '=', False)]}">
                         <html colspan="4">
-                            <translate>kcl_more_qty</translate>
+                            <translate>This Kitting Order includes Kit Component(s) with a KCL reference but a Qty > 1. The reference(s) will not be used if you do not agree to split automatically.</translate>
                         </html>
+						<newline />
                     </group>
                     <separator colspan="4" string="Actions" />
-					<field name="use_existing_kcl" />
-                    <group colspan="4" col="4">
-                        <button name="close_wizard" string="Return to previous screen" icon="gtk-cancel" colspan="1" />
+					<html colspan="4">
+						<translate>You must agree to use the unused Completed KCLs if you want to automatically split the Components to Consume if necessary to create Consumed Components with a Qty of 1 and the KCL reference(s). If there is any Qty remaining, there will be no KCL reference on this last Consumed Component line</translate>
+					</html>
+					<newline />
+					<field name="use_existing_kcl" attrs="{'invisible': [('ko_more_qty', '=', False), ('kcl_more_qty', '=', False)]}" />
+                    <newline />
+					<group colspan="4" col="4">
+						<label string="" colspan="2"/>
+                        <button name="do_process_to_consume_and_kcl_auto" string="Continue" type="object" icon="gtk-go-forward" colspan="1" />
+                        <button name="close_wizard" string="Return to previous screen" type="object" icon="gtk-cancel" colspan="1" />
                     </group>
                 </form>
             </field>

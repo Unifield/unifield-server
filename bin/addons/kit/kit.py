@@ -131,6 +131,8 @@ class composition_kit(osv.osv):
             for item in obj.composition_item_ids:
                 if item.item_qty <= 0:
                     raise osv.except_osv(_('Warning !'), _('Kit Items must have a quantity greater than 0.0.'))
+                if item.kcl_id and item.item_qty > 1:
+                    raise osv.except_osv(_('Warning !'), _('Kit Items with a KCL Reference must not have a quantity greater than 1.'))
         self.write(cr, uid, ids, {'state': 'completed'}, context=context)
         return True
 
@@ -183,8 +185,8 @@ class composition_kit(osv.osv):
             ftf = ['composition_product_id', 'composition_combined_ref_lot', 'composition_item_ids', 'kcl_used_by']
             kcl = self.browse(cr, uid, kcl_id, fields_to_fetch=ftf, context=context)
             if kcl.kcl_used_by and not context.get('recurcive_kcl_action') and \
-                    flow_origin not in ['kit.creation.to.consume', 'stock.move', 'real.average.consumption']:
-                raise osv.except_osv(_('Warning !'), _('The KCL %s - %s is being used by %s, please close the other one first to close this one automatically.') %
+                    flow_origin not in ['composition.kit', 'kit.creation', 'stock.move', 'real.average.consumption']:
+                raise osv.except_osv(_('Warning !'), _('The KCL %s - %s is being used by %s, please close the other document first to close this one automatically.') %
                                      (kcl.composition_product_id.default_code, kcl.composition_combined_ref_lot, kcl.kcl_used_by))
             else:
                 for item in kcl.composition_item_ids:
