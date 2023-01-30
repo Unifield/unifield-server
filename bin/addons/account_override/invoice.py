@@ -907,7 +907,8 @@ class account_invoice(osv.osv):
                         if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
-
+        if self.browse(cr, uid, ids[0], context).doc_type == 'donation' and 'state' in vals and vals['state'] == 'open':  # US-10904
+            vals['state'] = 'done'
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
