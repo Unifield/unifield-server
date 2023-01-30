@@ -281,7 +281,7 @@
                                 <button name="button_split_invoice" type="object" string="Split Donation"
                                         icon="gtk-cut"
                                         attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                                <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
+                                <button name="invoice_open" type="object" states="draft" string="Set as done" icon="gtk-go-forward"/>
                                 <group attrs="{'invisible': [('state', 'not in', ['done', 'open', 'paid', 'inv_close'])]}" colspan="6" col="4">
                                     <label string=""/>
                                     <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print"/>
