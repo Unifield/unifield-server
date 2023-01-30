@@ -278,6 +278,7 @@ class account_invoice(osv.osv):
             ('proforma2','Pro-forma'),
             ('open','Open'),
             ('paid','Paid'),
+            ('done', 'Done'),
             ('inv_close','Closed'),
             ('cancel','Cancelled')
         ],'State', select=True, readonly=True,
@@ -285,6 +286,7 @@ class account_invoice(osv.osv):
             \n* The \'Pro-forma\' when invoice is in Pro-forma state,invoice does not have an invoice number. \
             \n* The \'Open\' state is used when user create invoice,a invoice number is generated.Its in open state till user does not pay invoice. \
             \n* The \'Paid\' state is set automatically when invoice is paid.\
+            \n* The \'Done\' state (only for donation invoices) is set automatically when donation invoice is validated and was not cancelled.\
             \n* The \'Cancelled\' state is used when user cancel invoice.'),
         'date_invoice': fields.date('Invoice Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'inv_close':[('readonly',True)]}, select=True, help="Keep empty to use the current date"),
         'date_due': fields.date('Due Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'inv_close':[('readonly',True)]}, select=True,

@@ -141,7 +141,7 @@
             <field name="type">tree</field>
             <field name="priority">20</field>
             <field name="arch" type="xml">
-                <tree string="In-kind Donation" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
+                <tree string="In-kind Donation" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open','done');gray:state in ('cancel')">
                     <field name="document_date" />
                     <field name="date_invoice"/>
                     <field name="number"/>
@@ -282,7 +282,7 @@
                                         icon="gtk-cut"
                                         attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                                 <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
-                                <group attrs="{'invisible': [('state', 'not in', ['open', 'paid', 'inv_close'])]}" colspan="6" col="4">
+                                <group attrs="{'invisible': [('state', 'not in', ['done', 'open', 'paid', 'inv_close'])]}" colspan="6" col="4">
                                     <label string=""/>
                                     <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print"/>
                                 </group>
