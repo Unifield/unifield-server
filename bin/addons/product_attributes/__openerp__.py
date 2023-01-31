@@ -36,7 +36,6 @@
         'data/product_section_code.xml',
         'data/product_supply_source.xml',
         'data/product_justification_code.xml',
-        'data/sale_data.yml',
         'merged_ud_products_report.xml',
     ],
     'update_xml': [

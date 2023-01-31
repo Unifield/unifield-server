@@ -419,7 +419,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('account_id.category', '=', 'FUNDING')]</field>
-            <field name="context">{'search_default_engagements': 1, 'display_fp': True, 'target_filename_prefix': 'Commitment Lines', 'engagement_line_tree': True}</field>
+            <field name="context">{'search_default_engagements': 1, 'search_default_intl_engagements': 1, 'display_fp': True, 'target_filename_prefix': 'Commitment Lines', 'engagement_line_tree': True}</field>
             <field name="view_id" ref="view_account_analytic_line_tree_commline" />
         </record>
         <record id="action_engagement_line_action_tree" model="ir.actions.act_window.view">

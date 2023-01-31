@@ -599,27 +599,6 @@ class account_invoice(osv.osv):
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
             partner_type = p.partner_type  # update the partner type immediately as it is used in a domain in attrs
 
-            if company_id:
-                if p.property_account_receivable.company_id.id != company_id and p.property_account_payable.company_id.id != company_id:
-                    property_obj = self.pool.get('ir.property')
-                    rec_pro_id = property_obj.search(cr,uid,[('name','=','property_account_receivable'),('res_id','=','res.partner,'+str(partner_id)+''),('company_id','=',company_id)])
-                    pay_pro_id = property_obj.search(cr,uid,[('name','=','property_account_payable'),('res_id','=','res.partner,'+str(partner_id)+''),('company_id','=',company_id)])
-                    if not rec_pro_id:
-                        rec_pro_id = property_obj.search(cr,uid,[('name','=','property_account_receivable'),('company_id','=',company_id)])
-                    if not pay_pro_id:
-                        pay_pro_id = property_obj.search(cr,uid,[('name','=','property_account_payable'),('company_id','=',company_id)])
-                    rec_line_data = property_obj.read(cr,uid,rec_pro_id,['name','value_reference','res_id'])
-                    pay_line_data = property_obj.read(cr,uid,pay_pro_id,['name','value_reference','res_id'])
-                    rec_res_id = rec_line_data and rec_line_data[0].get('value_reference',False) and int(rec_line_data[0]['value_reference'].split(',')[1]) or False
-                    pay_res_id = pay_line_data and pay_line_data[0].get('value_reference',False) and int(pay_line_data[0]['value_reference'].split(',')[1]) or False
-                    if not rec_res_id and not pay_res_id:
-                        raise osv.except_osv(_('Configuration Error !'),
-                                             _('Can not find account chart for this company, Please Create account.'))
-                    account_obj = self.pool.get('account.account')
-                    rec_obj_acc = account_obj.browse(cr, uid, [rec_res_id])
-                    pay_obj_acc = account_obj.browse(cr, uid, [pay_res_id])
-                    p.property_account_receivable = rec_obj_acc[0]
-                    p.property_account_payable = pay_obj_acc[0]
 
             if type in ('out_invoice', 'out_refund'):
                 acc_id = p.property_account_receivable.id
@@ -697,29 +676,6 @@ class account_invoice(osv.osv):
         account_obj = self.pool.get('account.account')
         inv_line_obj = self.pool.get('account.invoice.line')
         if company_id and part_id and type:
-            acc_id = False
-            partner_obj = self.pool.get('res.partner').browse(cr,uid,part_id)
-            if partner_obj.property_account_payable and partner_obj.property_account_receivable:
-                if partner_obj.property_account_payable.company_id.id != company_id and partner_obj.property_account_receivable.company_id.id != company_id:
-                    property_obj = self.pool.get('ir.property')
-                    rec_pro_id = property_obj.search(cr, uid, [('name','=','property_account_receivable'),('res_id','=','res.partner,'+str(part_id)+''),('company_id','=',company_id)])
-                    pay_pro_id = property_obj.search(cr, uid, [('name','=','property_account_payable'),('res_id','=','res.partner,'+str(part_id)+''),('company_id','=',company_id)])
-                    if not rec_pro_id:
-                        rec_pro_id = property_obj.search(cr, uid, [('name','=','property_account_receivable'),('company_id','=',company_id)])
-                    if not pay_pro_id:
-                        pay_pro_id = property_obj.search(cr, uid, [('name','=','property_account_payable'),('company_id','=',company_id)])
-                    rec_line_data = property_obj.read(cr, uid, rec_pro_id, ['name','value_reference','res_id'])
-                    pay_line_data = property_obj.read(cr, uid, pay_pro_id, ['name','value_reference','res_id'])
-                    rec_res_id = rec_line_data and rec_line_data[0].get('value_reference',False) and int(rec_line_data[0]['value_reference'].split(',')[1]) or False
-                    pay_res_id = pay_line_data and pay_line_data[0].get('value_reference',False) and int(pay_line_data[0]['value_reference'].split(',')[1]) or False
-                    if not rec_res_id and not pay_res_id:
-                        raise osv.except_osv(_('Configuration Error !'),
-                                             _('Can not find account chart for this company, Please Create account.'))
-                    if type in ('out_invoice', 'out_refund'):
-                        acc_id = rec_res_id
-                    else:
-                        acc_id = pay_res_id
-                    val= {'account_id': acc_id}
             if ids:
                 if company_id:
                     inv_obj = self.browse(cr,uid,ids)

@@ -50,3 +50,4 @@
 "access_sync_server_entity_group_sync_read","model_sync_server_entity_group","sync.server.entity_group",1,1,1,0,sync_common.sync_read_group
 "access_sync_server_survey_it_all","model_sync_server_survey","sync_server.survey",1,1,1,1,sync_common.sync_read_group
 "access_sync_server_survey_groups_read","model_res_groups_instances","res.groups.instances",1,0,0,0,sync_common.sync_read_group
+"access_user_signature_image","access_user_signature_image","signature.image",1,0,0,0,

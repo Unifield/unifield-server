@@ -26,6 +26,7 @@ from osv import fields
 from tools.translate import _
 from tools import flatten
 from lxml import etree
+from datetime import datetime
 
 
 class account_mcdb(osv.osv):
@@ -108,6 +109,8 @@ class account_mcdb(osv.osv):
         'rev_partner_ids': fields.boolean('Exclude partner selection'),
         'rev_employee_ids': fields.boolean('Exclude employee selection'),
         'rev_transfer_journal_ids': fields.boolean('Exclude journal selection'),  # Third Party Journal
+        'excl_inactive_journal_ids': fields.boolean('Exclude inactive journals'),
+        'inactive_at': fields.date('Journals Inactive at'),
         'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
         'rev_analytic_account_dest_ids': fields.boolean('Exclude Destination selection'),
         'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_dest_mcdb", id1="mcdb_id", id2="analytic_account_id",
@@ -186,7 +189,7 @@ class account_mcdb(osv.osv):
         return super(account_mcdb, self).search(cr, uid, new_dom, *a, **b)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        if  context is None:
+        if context is None:
             context = {}
         view = super(account_mcdb, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if context.get('from_query') and view_type == 'form':
@@ -199,9 +202,9 @@ class account_mcdb(osv.osv):
                 field.set('invisible', "0")
             view['arch'] = etree.tostring(form)
 
-        if context.get('from', '') != 'combined.line' and 'document_code' in view['fields']:
+        if 'document_code' in view['fields']:
             view['fields']['document_code']['string'] = _('Sequence numbers')
-            view['fields']['document_code']['help'] = _('You can set several sequences separated by a comma.')
+            view['fields']['document_code']['help'] = _('You can set several sequences separated by a comma or semicolon.')
         return view
 
 
@@ -492,24 +495,17 @@ class account_mcdb(osv.osv):
             if wiz.document_code and wiz.document_code != '':
                 document_code = wiz.document_code
                 document_code_field = 'move_id.name'
-                # For G/L and Analytic Selectors: allow searching several (exact) Entry Sequences separated by a comma
-                # For Combined Journals Report: allow only one Entry Seq. but partial search possible (ex: "FXA-1804")
+                # For G/L and Analytic Selectors and Combined Journals Report: allow searching several (exact) Entry Sequences
+                # separated by a comma or semicolon
                 document_codes = []
                 if res_model == 'account.analytic.line':
                     domain.append('|')
-                    if context.get('from', '') == 'combined.line':
-                        domain.append(('commitment_line_id.commit_id.name', 'ilike', document_code))
-                        domain.append(('entry_sequence', 'ilike', document_code))
-                    else:
-                        document_codes = [i.strip() for i in document_code.split(',')]
-                        domain.append(('commitment_line_id.commit_id.name', 'in', document_codes))
-                        domain.append(('entry_sequence', 'in', document_codes))
+                    document_codes = [i.strip() for i in document_code.replace(';', ',').split(',')]
+                    domain.append(('commitment_line_id.commit_id.name', 'in', document_codes))
+                    domain.append(('entry_sequence', 'in', document_codes))
                 else:
-                    if context.get('from', '') == 'combined.line':
-                        domain.append((document_code_field, 'ilike', document_code))
-                    else:
-                        document_codes = [i.strip() for i in document_code.split(',')]
-                        domain.append((document_code_field, 'in', document_codes))
+                    document_codes = [i.strip() for i in document_code.replace(';', ',').split(',')]
+                    domain.append((document_code_field, 'in', document_codes))
                 if document_codes and wiz.include_related_entries:
                     # note: the domain has no impact on the related entries to be displayed
                     context.update({'related_entries': document_codes})
@@ -569,6 +565,11 @@ class account_mcdb(osv.osv):
                     domain.append(('is_reversal', '=', True))
                 elif wiz.reversed == 'notreversed':
                     domain.append(('is_reversal', '=', False))
+            # exclude inactive journals
+            if wiz.excl_inactive_journal_ids:
+                inactiv_date = wiz.inactive_at or datetime.today().date()
+                inactive_journal_ids = journal_obj.search(cr, uid, [('is_active', '=', False), ('inactivation_date', '<=', inactiv_date)], context=context)
+                domain.append(('journal_id', 'not in', inactive_journal_ids))
             # ANALYTIC AXIS FIELD
             if res_model == 'account.analytic.line':
                 if wiz.analytic_axis == 'fp':
@@ -1209,7 +1210,7 @@ class account_mcdb(osv.osv):
                     value = ', '.join(values_list)
         return value, operator
 
-    def get_selection_from_domain(self, cr, uid, domain, model, context=None):
+    def get_selection_from_domain(self, cr, uid, orig_domain, model, context=None):
         """
         Returns a String corresponding to the domain in parameter:
         criteria separated with ";" and followed by ":" for the value.
@@ -1237,6 +1238,19 @@ class account_mcdb(osv.osv):
                  'period_id.number',  # the check on period number != 0 is not part of the user selection in the interface
                  'account_id.reconcile',  # only reconcile_id is kept (filter 'Unreconciled' in JI view)
                  ]
+            journal_domain = []
+            domain = []
+            for dom in orig_domain:
+                if model == 'account.move.line' and dom[0] == 'journal_id':
+                    journal_domain.append(('id', dom[1], dom[2]))
+                else:
+                    domain.append(dom)
+
+            if journal_domain:
+                journal_obj = self.pool.get('account.journal')
+                journal_ids = journal_obj.search(cr, uid, journal_domain, context=context)
+                dom_selections.append("%s: %s" % (_('Journal Code'),  ', '.join([x['code'] for x in journal_obj.read(cr, uid, journal_ids, ['code'], context=context)])))
+
             if context.get('from', False) == 'account.move.line':
                 to_ignore.remove('move_id')  # 'move_id' (Entry Sequence) should not be ignored if we come from the JI view
             for dom in domain:

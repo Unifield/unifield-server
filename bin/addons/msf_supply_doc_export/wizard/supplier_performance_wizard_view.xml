@@ -26,6 +26,7 @@
                         <field name="po_type_donation_exp" />
                         <field name="po_type_donation_st" />
                         <field name="po_type_loan" />
+                        <field name="po_type_loan_return" />
                         <field name="po_type_in_kind" />
                         <field name="po_type_purchase_list" />
                         <field name="po_type_direct" />

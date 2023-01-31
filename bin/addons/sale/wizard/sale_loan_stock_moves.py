@@ -84,6 +84,7 @@ class sale_loan_stock_moves(osv.osv_memory):
         '''
         sm_obj = self.pool.get('stock.move')
         prod_obj = self.pool.get('product.product')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -91,12 +92,13 @@ class sale_loan_stock_moves(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        type_loan_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        rt_loan_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        rt_loan_ret_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
 
         for wizard in self.browse(cr, uid, ids, context=context):
             sm_domain = []
 
-            sm_domain.append(('reason_type_id', '=', type_loan_id))
+            sm_domain.append(('reason_type_id', 'in', [rt_loan_id, rt_loan_ret_id]))
             sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
                           ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
 

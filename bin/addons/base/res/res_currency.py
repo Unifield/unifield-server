@@ -315,7 +315,6 @@ class res_currency(osv.osv):
         if not ids:
             return True
 
-        property_obj = self.pool.get('ir.property')
         partner_obj = self.pool.get('res.partner')
         pricelist_obj = self.pool.get('product.pricelist')
         version_obj = self.pool.get('product.pricelist.version')
@@ -325,45 +324,31 @@ class res_currency(osv.osv):
 
         # Check if Inter-section partners used one of these currencies
         if 'is_section_currency' in values and not values['is_section_currency']:
-            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id',
-                                                            'in', ids)], order='NO_ORDER', context=context)
-            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=',
-                                                        'section')], order='NO_ORDER', context=context)
-            value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
-            res_reference = ['res.partner,%s' % x for x in partner_ids]
-            property_ids = []
-            if value_reference and res_reference:
-                property_ids = property_obj.search(cr, uid, [('res_id', 'in', res_reference),
-                                                             ('value_reference', 'in', value_reference),
-                                                             '|', ('name', '=', 'property_product_pricelist'),
-                                                             ('name', '=', 'property_product_pricelist_purchase'),], context=context)
-            if property_ids:
-                properties = property_obj.browse(cr, uid, property_ids, context=context)
-                partner_list = ' / '.join(x.res_id.name for x in properties)
+            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], order='NO_ORDER', context=context)
+            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'section'),
+                                                       '|', ('property_product_pricelist_purchase', 'in', pricelist_ids),
+                                                       ('property_product_pricelist', 'in', pricelist_ids)],
+                                             order='NO_ORDER', context=context)
+            if partner_ids:
+                partners = partner_obj.browse(cr, uid, partner_ids, context=context)
+                partner_list = ' / '.join(x.name for x in partners)
                 raise osv.except_osv(_('Error !'),
                                      _('You cannot uncheck the Section checkbox because this currency is used on these \'Inter-section\' partners : \
                                       %s') % (partner_list,))
 
         # Check if ESC partners used one of these currencies
         if 'is_esc_currency' in values and not values['is_esc_currency']:
-            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id',
-                                                            'in', ids)], order='NO_ORDER', context=context)
-            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=',
-                                                        'esc')], order='NO_ORDER', context=context)
-            value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
-            res_reference = ['res.partner,%s' % x for x in partner_ids]
-            property_ids = []
-            if value_reference and res_reference:
-                property_ids = property_obj.search(cr, uid, [('res_id', 'in', res_reference),
-                                                             ('value_reference', 'in', value_reference),
-                                                             '|', ('name', '=', 'property_product_pricelist'),
-                                                             ('name', '=', 'property_product_pricelist_purchase'),], context=context)
-            if property_ids:
-                properties = property_obj.browse(cr, uid, property_ids, context=context)
-                partner_list = ' / '.join(x.res_id.name for x in properties)
+            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], order='NO_ORDER', context=context)
+            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'esc'),
+                                                       '|', ('property_product_pricelist_purchase', 'in', pricelist_ids),
+                                                       ('property_product_pricelist', 'in', pricelist_ids)],
+                                             order='NO_ORDER', context=context)
+            if partner_ids:
+                partners = partner_obj.browse(cr, uid, partner_ids, context=context)
+                partner_list = ' / '.join(x.name for x in partners)
                 raise osv.except_osv(_('Error !'),
                                      _('You cannot uncheck the ESC checkbox because this currency is used on these \'ESC\' partners : \
-                                      %s') % partner_list)
+                                      %s') % (partner_list,))
 
         if 'active' in values and not values.get('currency_table_id', False) and pricelist_obj:
             if values['active'] == False:
@@ -560,7 +545,6 @@ class res_currency(osv.osv):
         pricelist_obj = self.pool.get('product.pricelist')
         purchase_obj = self.pool.get('purchase.order')
         sale_obj = self.pool.get('sale.order')
-        property_obj = self.pool.get('ir.property')
         acc_inv_obj = self.pool.get('account.invoice')
         aml_obj = self.pool.get('account.move.line')
         comm_voucher_obj = self.pool.get('account.commitment')
@@ -595,16 +579,11 @@ class res_currency(osv.osv):
                     "Field Order which isn't Closed.") % keyword)
 
             # Check on Partner (forms)
-            value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
-            property_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
-                                                         ('name', '=', 'property_product_pricelist_purchase'),
-                                                         ('value_reference', 'in', value_reference)], order='NO_ORDER', context=context)
-            for prop in property_obj.browse(cr, uid, property_ids, fields_to_fetch=['res_id'], context=context):
-                # ensure that the partner referenced in ir_property exists before checking if he is active
-                if prop.res_id and prop.res_id._table_name == 'res.partner' and hasattr(prop.res_id, 'active') and \
-                        getattr(prop.res_id, 'active') or False:
-                    raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used '
-                                                                          'in at least one active partner form.') % keyword)
+            partner_domain = [('active', '=', True), '|', ('property_product_pricelist_purchase', 'in', pricelist_ids),
+                              ('property_product_pricelist', 'in', pricelist_ids)]
+            if self.pool.get('res.partner').search(cr, uid, partner_domain, context=context):
+                raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used '
+                                                                      'in at least one active partner form.') % keyword)
 
         # Check on account.invoice
         if acc_inv_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('state', 'not in', ['paid', 'inv_close', 'cancel'])], context=context):

@@ -114,7 +114,7 @@ class sale_order(osv.osv):
         new_data = super(sale_order, self).copy_data(cr, uid, s_id, default=default, context=context)
 
         # UFTP-322: After the copy_data above, if successfully, the name should be exactly the same as of the original document, so it must be increased
-        # in the next statements. ::::::: One of the case that failed the copy_data call above is due to user right  
+        # in the next statements. ::::::: One of the case that failed the copy_data call above is due to user right
         seq_obj = self.pool.get('ir.sequence')
         order = self.browse(cr, uid, s_id)
         if new_data and not 'name' in new_data or new_data.get('name', False) == order.name:
@@ -171,7 +171,7 @@ class sale_order(osv.osv):
                 distrib_id = l_ana_dist_id or o_ana_dist_id or False
 
                 #US-830 : Remove the definition of a default AD for the inter-mission FO is no AD is defined
-                if not distrib_id and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
+                if not distrib_id and not so.order_type in ('loan', 'loan_return', 'donation_st', 'donation_exp'):
                     raise osv.except_osv(
                         _('Warning'),
                         _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',),
@@ -183,7 +183,7 @@ class sale_order(osv.osv):
                     if (not line.analytic_distribution_id or line.analytic_distribution_state == 'none') and \
                        not so.analytic_distribution_id:
                         # We don't raise an error for these types
-                        if so.order_type not in ('loan', 'donation_st', 'donation_exp'):
+                        if so.order_type not in ('loan', 'loan_return', 'donation_st', 'donation_exp'):
                             raise osv.except_osv(
                                 _('Warning'),
                                 _('Analytic distribution is mandatory for this line: %s') % (line.name or '',),
