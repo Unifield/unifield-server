@@ -611,7 +611,7 @@
                 <search string="Search Donation">
                    <group col="10" colspan="4">
                         <filter name="draft" icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Invoices"/>
-                        <filter name="done" icon="terp-camera_test" string="Done" domain="[('state','in', ['open', 'done'])]" help="Open Invoices"/>
+                        <filter name="done" icon="terp-camera_test" string="Done" domain="[('state','in', ['open', 'done'])]" help="Done Invoices"/>
                         <filter name="cancel_state_donation" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
                         <separator orientation="vertical"/>
                         <field name="number"/>
