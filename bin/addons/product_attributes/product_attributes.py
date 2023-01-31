@@ -2018,7 +2018,7 @@ class product_attributes(osv.osv):
             # Check if the product is in an invoice
             has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
                                                             ('invoice_id', '!=', False),
-                                                            ('invoice_id.state', 'not in', ['paid', 'inv_close', 'proforma', 'proforma2', 'cancel'])], context=context)
+                                                            ('invoice_id.state', 'not in', ['paid', 'inv_close', 'done', 'proforma', 'proforma2', 'cancel'])], context=context)
 
             # Check if the invoices where the product is are open and if the header account is reconcilable
             has_open_inv_reconcilable_acc = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
