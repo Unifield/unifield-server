@@ -109,7 +109,10 @@ class kit_creation(osv.osv):
                     if to_cancel:
                         move_obj.action_cancel(cr, uid, to_cancel, context=context)
                     wf_service.trg_validate(uid, 'stock.picking', picking_id.id, 'button_confirm', cr)
-
+                    # Remove the KCL Refs from the moves linked to the Kitting Order in the case the moves are already done
+                    ko_move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id.id), ('kit_creation_id_stock_move', '!=', False)], context=context)
+                    if ko_move_ids:
+                        move_obj.write(cr, uid, ko_move_ids, {'composition_list_id': False}, context=context)
 
         # cancel the kit creation
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
@@ -685,7 +688,7 @@ class kit_creation(osv.osv):
             for to_consume in to_consume_list:
                 # Prepare to display the wizard to automatically set the KCL on the lines if necessary
                 if obj.uom_id_kit_creation.rounding == 1 and not to_consume.consumed_to_consume and\
-                        to_consume.uom_rounding == 1 and to_consume.product_subtype == 'kit':
+                        to_consume.uom_id_to_consume.rounding == 1 and to_consume.product_subtype == 'kit':
                     kcl_domain = [('composition_product_id', '=', to_consume.product_id_to_consume.id),
                                   ('composition_type', '=', 'real'),  ('state', '=', 'completed'), ('kcl_used_by', '=', False)]
                     cmplt_kcl_exist = self.pool.get('composition.kit').search_exist(cr, uid, kcl_domain, context=context)
@@ -956,6 +959,8 @@ class kit_creation_to_consume(osv.osv):
             result.setdefault(obj.id, {}).update({'state': state})
             # fill the fake state attribute - because of openERP bug in attrs, the one2many state field was considered by kitting order attrs, instead of kitting order state
             result.setdefault(obj.id, {}).update({'fake_state': state})
+            # is the UoM PCE
+            result.setdefault(obj.id, {}).update({'uom_rounding_is_pce': obj.uom_id_to_consume and obj.uom_id_to_consume.rounding == 1 or False})
             # qty_available_to_consume
             # corresponding product object
             product = obj.product_id_to_consume
@@ -1047,6 +1052,8 @@ class kit_creation_to_consume(osv.osv):
             # we check for the available qty (in:done, out: assigned, done)
             res = loc_obj.compute_availability(cr, uid, [location_id], consider_child_locations, product_id, uom_id, context=context)
             result.setdefault('value', {}).update({'qty_available_to_consume': res['total']})
+        if not uom_id or self.pool.get('product.uom').browse(cr, uid, uom_id, fields_to_fetch=['rounding']).rounding != 1:
+            result.setdefault('value', {}).update({'uom_rounding_is_pce': False, 'kcl_id': False})
 
         return result
 
@@ -1073,7 +1080,6 @@ class kit_creation_to_consume(osv.osv):
                 'product_id_to_consume': fields.many2one('product.product', string='Product', readonly=True),
                 'qty_to_consume': fields.float(string='Qty per Kit', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='uom_id_to_consume'),
                 'uom_id_to_consume': fields.many2one('product.uom', string='UoM', readonly=True),
-                'uom_rounding': fields.related('uom_id_to_consume', 'rounding', type='float', string="UoM Rounding", digits_compute=dp.get_precision('Product UoM'), store=False, write_relate=False),
                 'location_src_id_to_consume': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'line_number_to_consume': fields.integer(string='Line', required=True, readonly=True),
                 'availability_to_consume': fields.selection(KIT_TO_CONSUME_AVAILABILITY, string='Availability', readonly=True, required=True),
@@ -1093,6 +1099,8 @@ class kit_creation_to_consume(osv.osv):
                                                       'kit.creation': (_get_to_consume_ids, ['state'], 10)}),
                 'batch_check_kit_creation_to_consume': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
                 'expiry_check_kit_creation_to_consume': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
+                'uom_rounding_is_pce': fields.function(_vals_get, method=True, type='boolean', string="UoM Rounding is PCE", multi='get_vals', store=False, readonly=True),
+
                 }
 
     _defaults = {'location_src_id_to_consume': lambda obj, cr, uid, c: c.get('location_src_id_to_consume', False),

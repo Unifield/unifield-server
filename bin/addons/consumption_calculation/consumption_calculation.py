@@ -714,6 +714,7 @@ class real_average_consumption_line(osv.osv):
             # the lines with to_correct_ok=True will be red
             if out.text_error:
                 result[out.id]['to_correct_ok'] = True
+            result[out.id]['uom_rounding_is_pce'] = out.uom_id and out.uom_id.rounding == 1 or False
         return result
 
     def _get_qty(self, cr, uid, product, lot, location, uom):
@@ -841,7 +842,7 @@ class real_average_consumption_line(osv.osv):
                               store={'product.product': (_get_product, ['default_code'], 10),
                                      'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
-        'uom_rounding': fields.related('uom_id', 'rounding', type='float', string="UoM Rounding", digits_compute=dp.get_precision('Product UoM'), store=False, write_relate=False),
+        'uom_rounding': fields.function(_get_checks_all, method=True, type='boolean', string="UoM Rounding is PCE", store=False, readonly=True, multi="m"),
         'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True, related_uom='uom_id'),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True, related_uom='uom_id'),
         'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
@@ -1062,6 +1063,9 @@ class real_average_consumption_line(osv.osv):
             d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
 
         res = {'value': {'product_qty': qty_available, 'kcl_id': False}, 'domain': d}
+
+        if not uom or self.pool.get('product.uom').browse(cr, uid, uom, fields_to_fetch=['rounding']).rounding != 1:
+            res['value'].update({'item_uom_rounding_is_pce': False, 'kcl_id': False})
 
         if product_qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, product_qty, 'consumed_qty', result=res)

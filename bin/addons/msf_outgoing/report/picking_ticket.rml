@@ -463,7 +463,7 @@
                         <para style="LineValue">[[ objects[0].state != 'done' and formatFloatDigitsToUom(getStock(m), m.product_id.uom_id.rounding) or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ m.composition_list_id and m.composition_list_id.name or '' ]]</para>
+                        <para style="LineValue">[[ m.composition_list_id and m.composition_list_id.composition_reference or '' ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.product_id.uom_id.name ]]</para>

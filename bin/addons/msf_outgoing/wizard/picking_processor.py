@@ -356,6 +356,7 @@ class stock_move_processor(osv.osv):
                 'location_supplier_customer_mem_out': loc_supplier or loc_cust or valid_pt,
                 'type_check': line.move_id.picking_id.type,
                 'comment': line.move_id.comment,
+                'uom_rounding_is_pce': line.move_id.product_uom and line.move_id.product_uom.rounding == 1 or False,
             }
 
         return res
@@ -601,14 +602,13 @@ class stock_move_processor(osv.osv):
             help="Category of the expected UoM to receive",
             multi='move_info'
         ),
-        'uom_rounding': fields.related(
-            'uom_id',
-            'rounding',
-            type='float',
-            string="UoM Rounding",
-            digits_compute=dp.get_precision('Product UoM'),
+        'uom_rounding_is_pce': fields.function(
+            _get_move_info,
+            method=True,
+            type='boolean',
+            string="UoM Rounding is PCE",
             store=False,
-            write_relate=False
+            multi='move_info'
         ),
         'location_id': fields.function(
             _get_move_info,
@@ -1003,6 +1003,8 @@ class stock_move_processor(osv.osv):
         for line in self.browse(cr, uid, ids):
             cost = uom_obj._compute_price(cr, uid, line.uom_id.id, line.cost, to_uom_id=uom_id)
             new_qty.setdefault('value', {}).setdefault('cost', cost)
+            if not line.uom_id or line.uom_id.rounding != 1:
+                new_qty.setdefault('value', {}).update({'uom_rounding_is_pce': False, 'composition_list_id': False})
 
         return new_qty
 

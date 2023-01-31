@@ -491,8 +491,9 @@ class composition_kit(osv.osv):
                                                  ('kit_state', '!=', 'cancel')], limit=1, context=context)
             kol_ids = kol_obj.search(cr, uid, [('kcl_id', '=', kcl_id), ('state', '!=', 'cancel')], limit=1, context=context)
             # Picks/OUTs + Consumed components of Kitting Orders
-            move_ids = move_obj.search(cr, uid, [('composition_list_id', '=', kcl_id), ('state', '!=', 'cancel'), '|', '&', ('type', '=', 'out'),
-                                                 ('picking_subtype', 'in', ['picking', 'standard']), ('kit_creation_id_stock_move', '!=', False)],
+            move_ids = move_obj.search(cr, uid, [('composition_list_id', '=', kcl_id), ('state', '!=', 'cancel'),
+                                                 '&', '|', '&', ('type', '=', 'out'), ('picking_subtype', 'in', ['picking', 'standard']),
+                                                 ('kit_creation_id_stock_move', '!=', False), ('kit_creation_id_stock_move.state', '!=', 'cancel')],
                                        limit=1, context=context)
             out_m_proc_ids = out_m_proc_obj.search(cr, uid, [('composition_list_id', '=', kcl_id),
                                                              ('wizard_id.draft', '=', True)], limit=1, context=context)
@@ -527,11 +528,11 @@ class composition_kit(osv.osv):
             else:
                 # Get the ids of the kcls used in documents' non-cancelled lines
                 cr.execute("""SELECT DISTINCT(k.id) FROM composition_kit k 
-                    LEFT JOIN composition_item ki ON ki.kcl_id = k.id AND ki.item_kit_type = 'real'
-                        LEFT JOIN composition_kit kit ON kit.id = ki.item_kit_id AND kit.state != 'cancel'
+                    LEFT JOIN composition_item ki ON ki.kcl_id = k.id AND ki.item_kit_type = 'real' AND ki.state != 'cancel'
                     LEFT JOIN kit_creation_to_consume kcc ON kcc.kcl_id = k.id AND kcc.state != 'cancel'
-                    LEFT JOIN stock_move m ON m.composition_list_id = k.id AND m.type = 'out' AND m.state != 'cancel'
-                        AND m.picking_subtype IN ('standard', 'picking') 
+                    LEFT JOIN stock_move m ON m.composition_list_id = k.id AND m.state != 'cancel' 
+                        AND ((m.type = 'out' AND m.picking_subtype IN ('standard', 'picking')) 
+                        OR m.kit_creation_id_stock_move IS NOT NULL)
                     LEFT JOIN outgoing_delivery_move_processor mp ON mp.composition_list_id = k.id
                         LEFT JOIN outgoing_delivery_processor op ON op.id = mp.wizard_id AND op.draft = 't'
                     LEFT JOIN real_average_consumption_line cl ON cl.kcl_id = k.id
@@ -1126,6 +1127,8 @@ class composition_item(osv.osv):
 
         if qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'item_qty', result=res)
+        if not uom_id or self.pool.get('product.uom').browse(cr, uid, uom_id, fields_to_fetch=['rounding']).rounding != 1:
+            res['value'].update({'item_uom_rounding_is_pce': False, 'kcl_id': False})
 
         return res
 
@@ -1210,6 +1213,8 @@ class composition_item(osv.osv):
             result[obj.id].update({'hidden_perishable_mandatory': obj.item_product_id.perishable})
             # hidden_asset_mandatory
             result[obj.id].update({'hidden_asset_mandatory': obj.item_product_id.type == 'product' and obj.item_product_id.subtype == 'asset'})
+            # product UoM is PCE
+            result[obj.id].update({'item_uom_rounding_is_pce': obj.item_uom_id and obj.item_uom_id.rounding == 1 or False})
 
         return result
 
@@ -1270,7 +1275,6 @@ class composition_item(osv.osv):
                 'item_product_id': fields.many2one('product.product', string='Product', required=True),
                 'item_qty': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='item_uom_id'),
                 'item_uom_id': fields.many2one('product.uom', string='UoM', required=True),
-                'item_uom_rounding': fields.related('item_uom_id', 'rounding', type='float', string="UoM Rounding", digits_compute=dp.get_precision('Product UoM'), store=False, write_relate=False),
                 'item_asset_id': fields.many2one('product.asset', string='Asset'),
                 'item_lot': fields.char(string='Batch Nb', size=1024),
                 'item_exp': fields.date(string='Expiry Date'),
@@ -1299,6 +1303,7 @@ class composition_item(osv.osv):
                 'hidden_perishable_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
                 'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
                 'hidden_asset_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Asset', multi='get_vals', store=False, readonly=True),
+                'item_uom_rounding_is_pce': fields.function(_vals_get, method=True, type='boolean', string="UoM Rounding is PCE", multi='get_vals', store=False, readonly=True),
                 'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
                 'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
                 }

@@ -44,7 +44,7 @@
 				            		<field name="total_qty_to_consume" />
 				            		<field name="uom_id_to_consume"
 				            			on_change="on_change_uom_id(product_id_to_consume, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, uom_id_to_consume, location_src_id_to_consume, context)" />
-				            		<field name="kcl_id" attrs="{'readonly': ['|', '|', '|', '|', ('product_id_to_consume', '=', False), ('product_subtype', '!=', 'kit'), ('fake_state', '!=', 'in_production'), ('uom_rounding', '!=', 1), ('consumed_to_consume', '=', True)]}" />
+				            		<field name="kcl_id" attrs="{'readonly': ['|', '|', '|', '|', ('product_id_to_consume', '=', False), ('product_subtype', '!=', 'kit'), ('fake_state', '!=', 'in_production'), ('uom_rounding_is_pce', '=', False), ('consumed_to_consume', '=', True)]}" />
 									<field name="location_src_id_to_consume"
 				            			attrs="{'readonly': ['|', ('consumed_to_consume', '=', True), ('fake_state', '!=', 'in_production')]}"
 				            			context="{'product_id':product_id_to_consume, 'specific_rules_tree_view':True, 'compute_child':parent.consider_child_locations_kit_creation}" />
@@ -56,7 +56,7 @@
 				            		<button name="do_process_to_consume" type="object" string="Process Line" icon="gtk-go-forward" attrs="{'invisible': ['|', ('consumed_to_consume', '=', True), ('fake_state', '!=', 'in_production')]}" />
 				            		<field name="consumed_to_consume" invisible="True" />
 				            		<field name="product_subtype" invisible="True" />
-				            		<field name="uom_rounding" invisible="True" />
+				            		<field name="uom_rounding_is_pce" invisible="True" />
 				            	</tree>
                     		</field>
                     		<group col="4" colspan="4">
@@ -249,7 +249,7 @@
                     <field name="kcl_more_qty" invisible="1" />
 					<group colspan="4" attrs="{'invisible': [('ko_more_qty', '=', False)]}">
                         <html colspan="4">
-                            <translate>This Kitting Order is to create a Qty of more than 1 Kit (Qty X (taken from header) of kits to be created). You have added a KCL ref on a Component but this is unique and cannot be used in more than 1 Kit KCL. The reference(s) will not be used if you do not agree to split automatically.</translate>
+                            <translate>This Kitting Order is to create a Qty of more than 1 Kit (Qty X (taken from header) of kits to be created). You have added a KCL ref on a Component but this is unique and cannot be used in more than 1 Kit KCL. The existing reference(s) will not be used if you do not agree to split automatically.</translate>
                         </html>
 						<newline />
                     </group>
@@ -267,7 +267,7 @@
                     </group>
                     <separator colspan="4" string="Actions" />
 					<html colspan="4">
-						<translate>You must agree to use the unused Completed KCLs if you want to automatically split the Components to Consume if necessary to create Consumed Components with a Qty of 1 and the KCL reference(s). If there is any Qty remaining, there will be no KCL reference on this last Consumed Component line</translate>
+						<translate>You must agree to use the unused Completed KCLs if you want to automatically split the Components to Consume if necessary, to be able to create Consumed Components with a Qty of 1 and the KCL reference(s). If there is any Qty remaining, there will be no KCL reference on this last Consumed Component line.</translate>
 					</html>
 					<newline />
 					<field name="use_existing_kcl" attrs="{'invisible': [('ko_more_qty', '=', False), ('kcl_more_qty', '=', False)]}" />
