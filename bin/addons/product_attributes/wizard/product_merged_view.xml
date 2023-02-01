@@ -29,7 +29,7 @@
             <field name="type">form</field>
             <field name="priority">50</field>
             <field name="arch" type="xml">
-                <form string="HQ Merge Product">
+                <form string="HQ Merge Products">
                     <field name="old_product_id" colspan="4" />
                     <field name="new_product_id" colspan="4" required="1" on_change="change_warning(new_product_id)" domain="[('active', '=', 't'), ('international_status', '=', 'UniData'), ('kept_product_id', '=', False), ('id', '!=', old_product_id)]" context="{'display_active_filter': 0}"/>
                     <field name="ud_old_code" />

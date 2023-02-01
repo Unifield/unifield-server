@@ -1753,7 +1753,7 @@ class product_attributes(osv.osv):
         if unidata_product and not context.get('sync_update_execution'):
             if 'international_status' not in vals and 'oc_subscription' in vals:
                 if self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '!=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context):
-                    raise osv.except_osv(_('Waning'), _("You can write the oc_subscription field on multiple products only if all products are UniData !"))
+                    raise osv.except_osv(_('Warning'), _("You can write the oc_subscription field on multiple products only if all products are UniData !"))
 
             if 'oc_subscription' in vals and not vals['oc_subscription']:
                 # oc_subscription=False must preval on vals['state_ud']
