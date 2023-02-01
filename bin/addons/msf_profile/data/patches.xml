@@ -889,5 +889,9 @@
         <record id="us_10652_chg_partn_property_fields" model="patch.scripts">
             <field name="method">us_10652_chg_partn_property_fields</field>
         </record>
+
+        <record id="us_10904_donations_done_state" model="patch.scripts">
+            <field name="method">us_10904_donations_done_state</field>
+        </record>
     </data>
 </openerp>

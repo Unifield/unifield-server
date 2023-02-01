@@ -57,6 +57,10 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_10904_donations_done_state(self, cr, uid, *a, **b):
+        cr.execute("update account_invoice set state='done' where is_inkind_donation = 't' and state='open'")
+        return True
+
     # UF28.0
     def us_10652_chg_partn_property_fields(self, cr, uid, *a, **b):
         '''
