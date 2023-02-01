@@ -53,12 +53,15 @@ class sale_order_line_sync(osv.osv):
             context = {}
         pol_dict = line_info.to_dict()
 
+        so_obj = self.pool.get('sale.order')
+        order_label_obj = self.pool.get('sync.order.label')
+
         # search for the parent sale.order:
         order_ref = '%s.%s' % (source, pol_dict['order_id']['name'])
-        sale_order_ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', '=', order_ref)])
+        sale_order_ids = so_obj.search(cr, uid, [('client_order_ref', '=', order_ref)])
         if not sale_order_ids:
             raise Exception, "Cannot find the parent FO with client order ref = %s" % order_ref
-        so_name = self.pool.get('sale.order').read(cr, uid, sale_order_ids[0], ['name'], context=context)['name'] or ''
+        so_name = so_obj.read(cr, uid, sale_order_ids[0], ['name'], context=context)['name'] or ''
 
         try:
             # from purchase.order.line to sale.order.line:
@@ -66,6 +69,13 @@ class sale_order_line_sync(osv.osv):
             sol_values['order_id'] = sale_order_ids[0]
             sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
             sol_values['ir_name_from_sync'] = pol_dict.get('ir_name_for_sync', False)
+            # Check if the new sync FO line comes from a PO with an IR Reference
+            # If that's the case, put it on the new FO line
+            if pol_dict.get('ir_name_for_sync', False):
+                order_label_ids = order_label_obj.search(cr, uid, [('name', '=', line_info.ir_name_for_sync),
+                                                                   ('order_id', '=', sale_order_ids[0])], context=context)
+                if order_label_ids:
+                    sol_values['instance_sync_order_ref'] = order_label_obj.read(cr, uid, order_label_ids[0], ['id'], context=context)['id']
             if line_info.product_id and not sol_values.get('product_id'):
                 raise Exception('FO: %s , Product %s not found' % (so_name, line_info.default_code or ''))
             if sol_values.get('product_id'):
