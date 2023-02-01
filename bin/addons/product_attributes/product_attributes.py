@@ -2407,7 +2407,12 @@ class product_attributes(osv.osv):
                        attribute_ids=False,
                        packaging=False,
                        uf_create_date=False,
-                       uf_write_date=False
+                       uf_write_date=False,
+                       kept_product_id=False,
+                       kept_initial_product_id=False,
+                       unidata_merged=False,
+                       unidata_merge_date=False,
+                       is_kept_product=False,
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
