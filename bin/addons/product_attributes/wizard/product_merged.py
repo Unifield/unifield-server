@@ -10,10 +10,10 @@ class product_merged_wizard(osv.osv_memory):
 
 
     _columns = {
-        'old_product_id': fields.many2one('product.product', 'Old local Product', readonly=1),
-        'new_product_id': fields.many2one('product.product', 'UD Product'),
+        'old_product_id': fields.many2one('product.product', 'Non-kept Product (will be inactivated)', readonly=1),
+        'new_product_id': fields.many2one('product.product', 'Kept Product'),
         'show_ud': fields.boolean('Use Standard / Non Standard UD product', help="Unticked: display UD NSL inactive products\nTicked: display UD ST + NS active products"),
-        'ud_old_code': fields.char('UD Old code', readonly=1, size=1024),
+        'ud_old_code': fields.char('Kept product current "Old code"', readonly=1, size=1024),
         'warning_msg': fields.text('Warning Message'),
         'warning_checked': fields.boolean('Warning Checked'),
         'level': fields.char('Level', size=16),
