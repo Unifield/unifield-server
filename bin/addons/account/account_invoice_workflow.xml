@@ -25,7 +25,6 @@
             <field name="wkf_id" ref="wkf"/>
             <field name="name">open</field>
             <field name="action">action_open_invoice()
-write({'state':'open'})
 action_gen_sync_msg()</field>
             <field name="kind">function</field>
         </record>

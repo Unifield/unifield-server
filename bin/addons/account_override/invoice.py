@@ -907,8 +907,6 @@ class account_invoice(osv.osv):
                         if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
-        if self.browse(cr, uid, ids[0], context).doc_type == 'donation' and 'state' in vals and vals['state'] == 'open':  # US-10904
-            vals['state'] = 'done'
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
@@ -1320,6 +1318,11 @@ class account_invoice(osv.osv):
             return False
         self.check_domain_restrictions(cr, uid, ids, context)  # raises an error if one unauthorized element is used
         self.update_counterpart_inv_status(cr, uid, ids, context=context)
+        for invoice in self.browse(cr, uid, ids, fields_to_fetch=['doc_type'], context=context):
+            if invoice.doc_type == 'donation':
+                self.write(cr, uid, invoice.id, {'state': 'done'}, context=context)
+            else:
+                self.write(cr, uid, invoice.id, {'state': 'open'}, context=context)
         return True
 
 
