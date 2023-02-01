@@ -32,6 +32,9 @@ class product_merged_wizard(osv.osv_memory):
             has_pipe = prod_obj._has_pipe(cr, uid, wiz.new_product_id.id)
             if has_pipe:
                 raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore this product cannot be merged. Instances: %s') % (has_pipe[0][1], ))
+        else:
+            if prod_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('kept_product_id', '=', wiz.new_product_id.id)], count=True, context=context) >= 2:
+                raise osv.except_osv(_('Warning'), _('Merge products is limited to 2 merge actions, %s can not be merged') % wiz.new_product_id.default_code)
 
         block_msg = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, level=wiz.level, blocker=True, context=context)
         if block_msg:
