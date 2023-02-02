@@ -2993,6 +2993,18 @@ class product_attributes(osv.osv):
             ]
         }
 
+        # m2m tables have by standard a unique constraint, so we should delete old prod entry if the new one already exist
+        m2m_relation = {}
+        fields_obj = self.pool.get('ir.model.fields')
+        m2m_ids = fields_obj.search(cr, uid, [('ttype', '=', 'many2many'), ('relation', '=', 'product.product'), ('state', '!=', 'deprecated')], context=context)
+        if m2m_ids:
+            for m2m_rel in fields_obj.browse(cr, uid, m2m_ids, fields_to_fetch=['model', 'name'], context=context):
+                linked_obj = self.pool.get(m2m_rel.model)
+                if linked_obj and not isinstance(linked_obj, osv.osv_memory):
+                    m2m_field = linked_obj._columns.get(m2m_rel.name)
+                    if not m2m_field or isinstance(m2m_field, fields.function):
+                        continue
+                    m2m_relation.setdefault(m2m_field._rel, []).append({'linked_field': m2m_field._id1, 'product_field': m2m_field._id2})
 
         default_code = kept_data['default_code']
         for table in ['product_product', 'product_template']:
@@ -3035,6 +3047,10 @@ class product_attributes(osv.osv):
                 else:
                     add_query = ''
 
+                if table == 'product_product' and x[0] in m2m_relation:
+                    for m2m_rel in m2m_relation[x[0]]:
+                        # delete duplicates on m2m
+                        cr.execute("delete from "+x[0]+" where "+m2m_rel['product_field']+"=%(old_prod)s and "+m2m_rel['linked_field']+" in (select "+m2m_rel['linked_field']+" from "+x[0]+" where "+m2m_rel['product_field']+"=%(kept_id)s)", params) # not_a_user_entry
                 cr.execute('update '+x[0]+' set '+x[1]+'=%(kept_id)s '+add_query+' where '+x[1]+'=%(old_prod)s', params) # not_a_user_entry
 
         write_context = context.copy()
