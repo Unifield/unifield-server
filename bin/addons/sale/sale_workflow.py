@@ -686,7 +686,7 @@ class sale_order_line(osv.osv):
                     _('Line #%s: You have to select a product UoM in the same category than the UoM of the product.')
                     % (sol.line_number,)
                 )
-            if sol.created_by_sync and not sol.sync_linked_pol and not sol.instance_sync_order_ref:
+            if sol.created_by_sync and sol.fo_has_lines_ir_from_sync and not sol.sync_linked_pol and not sol.instance_sync_order_ref:
                 raise osv.except_osv(_('Error'),
                                      _('Line #%s: You can not validate a line created after sync without filling "Order in sync. instance" if it is on a FO created by sync.')
                                      % (sol.line_number,))

@@ -627,6 +627,21 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return ret
 
+    def _check_has_lines_ir_from_sync(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+
+        res = {}
+        for fo in self.browse(cr, uid, ids, fields_to_fetch=['order_line'], context=context):
+            has_ir = False
+            for sol in fo.order_line:
+                if sol.ir_name_from_sync:
+                    has_ir = True
+                    break
+            res[fo.id] = has_ir
+
+        return res
+
     def _get_fake(self, cr, uid, ids, name, args, context=None):
         '''
         Fake method for 'product_id' field
@@ -755,6 +770,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
+        'has_lines_ir_from_sync': fields.function(_check_has_lines_ir_from_sync, type='boolean', method=True, string='Has lines with and at least one with an IR ref. from sync'),
     }
 
     _defaults = {
@@ -2187,6 +2203,22 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def _get_fo_data(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Get data from FO
+        '''
+        if context is None:
+            context = {}
+
+        res = {}
+        for sol in self.browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
+            res[sol.id] = {
+                'fo_was_created_by_po_sync': sol.order_id and sol.order_id.fo_created_by_po_sync or False,
+                'fo_has_lines_ir_from_sync': sol.order_id and sol.order_id.has_lines_ir_from_sync or False,
+            }
+
+        return res
+
     def _get_dpo_id(self, cr, uid, ids, name, arg, context=None):
         if context is None:
             context = {}
@@ -2301,7 +2333,8 @@ class sale_order_line(osv.osv):
         'instance_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance'),
         'cv_line_ids': fields.one2many('account.commitment.line', 'so_line_id', string="Commitment Voucher Lines"),
         'loan_line_id': fields.many2one('purchase.order.line', string='Linked loan line', readonly=True),
-        'fo_was_created_by_po_sync': fields.related('order_id', 'fo_created_by_po_sync', type='boolean', store=False, string='FO created by PO after SYNC', write_relate=False),
+        'fo_was_created_by_po_sync': fields.function(_get_fo_data, method=True, type='boolean', store=False, string='FO created by PO after SYNC', multi='fo_data'),
+        'fo_has_lines_ir_from_sync': fields.function(_get_fo_data, method=True, type='boolean', store=False, string='FO has lines with and at least one with an IR ref. from sync', multi='fo_data'),
     }
     _order = 'sequence, id desc'
     _defaults = {
