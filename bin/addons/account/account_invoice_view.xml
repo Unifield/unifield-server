@@ -619,6 +619,61 @@
             </field>
         </record>
 
+        <record id="view_account_invoice_filter_generic" model="ir.ui.view">
+            <field name="name">account.invoice.select</field>
+            <field name="model">account.invoice</field>
+            <field name="type">search</field>
+            <field name="priority">30</field>
+            <field name="arch" type="xml">
+                <search string="Search Invoice">
+                   <group col="10" colspan="4">
+                        <filter name="draft" icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Invoices"/>
+                        <filter name="unpaid" icon="terp-dolar_ok!" string="Open" domain="[('state','=','open')]" help="Open Invoices"/>
+                        <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
+                        <filter name="done" icon="terp-dolar" string="Done" domain="[('state', '=', 'done')]" />
+                        <filter name="closed" icon="terp-dialog-close" string="Closed" domain="[('state', '=', 'inv_close')]" />
+                        <filter name="cancel_state" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
+                        <separator orientation="vertical"/>
+                        <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
+                        <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
+                        <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
+                        <separator orientation="vertical"/>
+                        <filter name="open_fy" icon="terp-go-year" string="Open FY" domain="[('open_fy', '=', True)]"/>
+                        <separator orientation="vertical"/>
+                        <filter name="draft_cp" icon="terp-document-new" string="Draft Counterparts" domain="[('counterpart_inv_status','=','draft')]" help="Draft Counterparts Invoices"/>
+                        <filter name="open_cp" icon="terp-dolar_ok!" string="Open Counterparts" domain="[('counterpart_inv_status','=','open')]" help="Open Counterparts Invoices"/>
+                        <filter name="paid_cp" icon="terp-dolar" string="Paid Counterparts" domain="[('counterpart_inv_status', '=', 'paid')]"/>
+                        <filter name="closed_cp" icon="terp-dialog-close" string="Closed Counterparts" domain="[('counterpart_inv_status', '=', 'inv_close')]" />
+
+                        <separator orientation="vertical"/>
+                        <field name="number"/>
+                        <field name="partner_id"/>
+                        <field name="origin"/>
+                    </group>
+
+                    <newline/>
+                    <group col="10" colspan="4">
+                        <field name="journal_id" select='1' context="{'search_default_filter_is_active': 1}"/>
+                        <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
+                        <field name="supplier_reference"/>
+                        <field name="name"/>
+                        <field name="amount_total"/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                        <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]"  context="{'group_by':'state'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                        <filter string="Invoice Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_invoice'}"/>
+                        <filter string="Due Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_due'}"/>
+                    </group>
+               </search>
+            </field>
+        </record>
+
         <record id="view_account_invoice_filter" model="ir.ui.view">
             <field name="name">account.invoice.select</field>
             <field name="model">account.invoice</field>
@@ -801,7 +856,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="100" />
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" string="Invoice" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
+                <tree colors="blue:state in ('draft');black:state in ('proforma','proforma2','open', 'done');gray:state in ('cancel')" string="Invoice" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <button name="invoice_open_form_view" string="Display Invoice" icon="gtk-go-forward" type="object"/>
                     <field name="doc_type"/>
                     <field name="date_invoice"/>
@@ -819,7 +874,7 @@
                 </tree>
             </field>
         </record>
-        <act_window context="{'search_default_partner_id': [active_id], 'generic_invoice': True}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner" view_id="generic_invoice_tree" view_mode="tree" search_view_id="view_account_invoice_filter"/>
+        <act_window context="{'search_default_partner_id': [active_id], 'generic_invoice': True}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner" view_id="generic_invoice_tree" view_mode="tree" search_view_id="view_account_invoice_filter_generic"/>
 
 
         <act_window
