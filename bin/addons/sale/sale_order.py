@@ -635,7 +635,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         for fo in self.browse(cr, uid, ids, fields_to_fetch=['order_line'], context=context):
             has_ir = False
             for sol in fo.order_line:
-                if sol.ir_name_from_sync:
+                if sol.ir_name_from_sync and 'IR' in sol.ir_name_from_sync:
                     has_ir = True
                     break
             res[fo.id] = has_ir
