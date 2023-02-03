@@ -195,9 +195,35 @@ class res_partner(osv.osv):
                     res += self._get_source_domain(cr, uid, arg[2][0][2], context=context)
         return res
 
+    def _search_available_on_po_dpo(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+                raise osv.except_osv(_('Error'), _('Filter not implemented on %s') % (name, ))
+            self_partner_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
+            cr.execute('''
+                select
+                    distinct(so.partner_id)
+                from
+                    sale_order so
+                    left join sale_order_line sol on sol.order_id = so.id
+                    left join purchase_order_line pol on pol.linked_sol_id = sol.id
+                where
+                    pol.order_id = %s and
+                    pol.state not in ('cancel', 'cancel_r')
+            ''', (arg[2], ))
+
+            partner_ids = [x[0] for x in cr.fetchall()]
+            if len(partner_ids) > 1 or self_partner_id in partner_ids:
+                return [('id', '=', 0)]
+            return [('id', 'in', partner_ids)]
+        return []
+
+
+
     _columns = {
         'available_for_dpo': fields.function(_get_available_for_dpo, fnct_search=_src_available_for_dpo,
-                                             method=True, type='boolean', string='Available for DPO', store=False),
+                                             method=True, type='boolean', string='Available for DPO (used on FO line)', store=False),
+        'available_on_po_dpo':  fields.function(_get_fake, method=True, type='boolean', string='Available as destination partner on DPO', fnct_search=_search_available_on_po_dpo),
         'check_partner': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type),
         'check_partner_rfq': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type_rfq),
         'check_partner_ir': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type On IR', fnct_search=_check_partner_type_ir),
