@@ -880,6 +880,9 @@ class sale_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # US-11005
+        if not self.browse(cr, uid, ids[0], context=context).company_id.instance_id.po_fo_cost_center_id:
+            raise osv.except_osv(_('Warning !'), _('Add the cost center picked for PO/FO reference'))
         wf_service = netsvc.LocalService("workflow")
 
         for so in self.browse(cr, uid, ids, context=context):
