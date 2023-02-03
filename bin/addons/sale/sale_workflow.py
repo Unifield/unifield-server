@@ -189,6 +189,7 @@ class sale_order_line(osv.osv):
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
                     'ir_name_from_sync': sol.ir_name_from_sync or False,
                     'sync_sourced_origin': sol.sync_sourced_origin,
+                    'original_instance': sol.original_instance,
                 }
                 new_sol_id = self.copy(cr, uid, sol.id, sol_vals, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
