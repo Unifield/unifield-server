@@ -678,6 +678,7 @@ class account_journal(osv.osv):
         'inv_doc_type': fields.function(_get_false, method=True, type='boolean', string='Document Type', store=False,
                                         fnct_search=_search_inv_doc_type),
         'is_active': fields.boolean('Active'),
+        'inactivation_date': fields.date('Inactivation date', readonly=True),
         'is_default': fields.function(_get_is_default, method=True, type='boolean', string='Default Journal',
                                       store=False, help="Journals created by default in new instances"),
         'current_id': fields.function(_get_current_id, method=True, type='integer', string="DB Id (used by the UI)",
@@ -878,6 +879,14 @@ class account_journal(osv.osv):
                     and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
             self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
+            if 'is_active' in vals and not vals['is_active'] and (not context.get('sync_update_execution') or not vals.get('inactivation_date')):
+                if not journal.inactivation_date:
+                    vals.update({'inactivation_date': datetime.today().date()})
+                else:
+                    cr.execute("SELECT date(max(coalesce(write_date, create_date))) FROM account_move WHERE journal_id=%s", (journal.id, ))
+                    last_entry = cr.fetchone()
+                    if last_entry and last_entry[0] > journal.inactivation_date:
+                        vals.update({'inactivation_date': datetime.today().date()})
         self._check_journal_inactivation(cr, uid, ids, vals, context=context)
         ret = super(account_journal, self).write(cr, uid, ids, vals, context=context)
         if vals.get('currency', False):

@@ -785,7 +785,7 @@ class purchase_order_line(osv.osv):
             # Raise an error if no analytic distribution found
             if not distrib:
                 # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
-                if po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind') or po.push_fo:
+                if po.order_type in ('loan', 'loan_return', 'donation_st', 'donation_exp', 'in_kind') or po.push_fo:
                     return True
                 raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
                                      % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
@@ -1358,10 +1358,10 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False, 'loan_line_id': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False})
 
         if not context.get('split_line'):
-            default.update({'stock_take_date': False})
+            default.update({'stock_take_date': False, 'loan_line_id': False})
             if 'location_dest_id' not in default:
                 default['location_dest_id'] = False
 
@@ -1962,7 +1962,7 @@ class purchase_order_line(osv.osv):
             if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
                 return False
 
-            if pol.order_id.order_type in ['loan', 'in_kind', 'donation_st', 'donation_exp']:
+            if pol.order_id.order_type in ['loan', 'loan_return', 'in_kind', 'donation_st', 'donation_exp']:
                 return False
 
             # exclude push flow (FO or FO line created first)

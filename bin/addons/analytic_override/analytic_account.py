@@ -425,11 +425,17 @@ class analytic_account(osv.osv):
             all_instance_ids = []
             missions = set()
             missions_str = ""
+            top_prop_ids = set()
             target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
             if target_cc_ids:
                 field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center', 'is_top_cost_center']
                 for target_cc in acc_target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=field_list, context=context):
                     instance = target_cc.instance_id
+                    if instance:
+                        if instance.level == 'project':
+                            top_prop_ids.add(instance.parent_id.id)
+                        elif instance.level == 'coordo':
+                            top_prop_ids.add(instance.id)
                     all_instance_ids.append(instance.id)
                     if instance.mission:
                         missions.add(instance.mission)
@@ -447,6 +453,7 @@ class analytic_account(osv.osv):
                 'po_fo_cc_instance_ids': po_fo_instance_ids,
                 'cc_missions': missions_str,
                 'cc_instance_ids': all_instance_ids,
+                'top_prop_instance': list(top_prop_ids),
             }
         return res
 
@@ -547,13 +554,13 @@ class analytic_account(osv.osv):
                                                            type='many2many', relation='account.analytic.account',
                                                            fnct_search=_search_fp_compatible_with_acc_dest_ids),
         'top_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
-                                               string="Instances having the CC as Top CC",
+                                               string="Instance having the CC as Top CC",
                                                type="one2many", relation="msf.instance", multi="cc_instances"),
         'is_target_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
-                                                     string="Instances having the CC as Target CC",
+                                                     string="Instance having the CC as Target CC",
                                                      type="one2many", relation="msf.instance", multi="cc_instances"),
         'po_fo_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
-                                                 string="Instances having the CC as CC picked for PO/FO ref",
+                                                 string="Instance having the CC as CC picked for PO/FO ref",
                                                  type="one2many", relation="msf.instance", multi="cc_instances"),
         'cc_missions': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                        string="Missions where the CC is added to",
@@ -561,6 +568,9 @@ class analytic_account(osv.osv):
         'cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                            string="Instances where the CC is added to",
                                            type="one2many", relation="msf.instance", multi="cc_instances"),
+        'top_prop_instance': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                             string="Top Proprietary Instance", type="one2many", relation="msf.instance",
+                                             multi="cc_instances"),
         'select_accounts_only': fields.boolean(string="Select Accounts Only"),
         'fp_account_ids': fields.many2many('account.account', 'fp_account_rel', 'fp_id', 'account_id', string='G/L Accounts',
                                            domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('active', '=', 't')]",

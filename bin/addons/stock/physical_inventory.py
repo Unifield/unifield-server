@@ -931,7 +931,7 @@ class PhysicalInventory(osv.osv):
         ids_seen = {}
 
         sub_rt_dict_by_name = {}
-        for x in self.pool.get('physical.inventory.discrepancy').fields_get(cr, uid, ['sub_reason_type'], context=context):
+        for x in self.pool.get('physical.inventory.discrepancy').fields_get(cr, uid, ['sub_reason_type'], context=context)['sub_reason_type']['selection']:
             sub_rt_dict_by_name[x[1]] = x[0]
 
         for row_index, row in enumerate(discrepancy_report_file.getRows()):

@@ -961,6 +961,7 @@ class product_attributes(osv.osv):
                 ('N1', 'N1 - Narcotic 1'),
                 ('N2', 'N2 - Narcotic 2'),
                 ('P1', 'P1 - Psychotrop 1'),
+                ('P2', 'P2 - Psychotrop 2'),
                 ('P3', 'P3 - Psychotrop 3'),
                 ('P4', 'P4 - Psychotrop 4'),
                 ('DP', 'DP - Drug Precursor'),
@@ -2018,6 +2019,14 @@ class product_attributes(osv.osv):
             has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
                                                             ('invoice_id', '!=', False),
                                                             ('invoice_id.state', 'not in', ['paid', 'inv_close', 'proforma', 'proforma2', 'cancel'])], context=context)
+
+            # Check if the invoices where the product is are open and if the header account is reconcilable
+            has_open_inv_reconcilable_acc = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                                         ('invoice_id', '!=', False),
+                                                                         ('invoice_id.state', 'in', ['open']),
+                                                                         ('invoice_id.account_id.reconcile', '=', False)], context=context)
+            # Allow deactivation of products in open invoices but with non-reconcilable header account
+            has_invoice_line = list(set(has_invoice_line) - set(has_open_inv_reconcilable_acc))
 
             # Check if the product has stock in internal locations
             for loc_id in internal_loc:

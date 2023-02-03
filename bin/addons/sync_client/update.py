@@ -613,7 +613,14 @@ class update_received(osv.osv,fv_formatter):
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
                 if result['res']: #US-852: if everything is Ok, then do import as normal
-                    if obj._name == 'hr.employee' and obj._set_sync_update_as_run(cr, uid, dict(zip(import_fields, row)), update.sdref, context=context):
+                    if result.get('run_without_exec'):
+                        self.write(cr, uid, update.id, {
+                            'run': True,
+                            'editable': False,
+                            'execution_date': datetime.now(),
+                            'log': 'Set as run without exec: %s' % (result['error_message'],),
+                        })
+                    elif obj._name == 'hr.employee' and obj._set_sync_update_as_run(cr, uid, dict(zip(import_fields, row)), update.sdref, context=context):
                         self.write(cr, uid, update.id, {
                             'run': True,
                             'editable': False,
@@ -996,7 +1003,15 @@ class update_received(osv.osv,fv_formatter):
                             return result
 
                         if update.model == 'res.partner.address' and field == 'partner_id/id':
-                            return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
+                            # ignore update except if we have a previous NR on the partner
+                            m, sep, sdref = xmlid.partition('.')
+                            if self.search_exists(cr, uid, [
+                                ('sdref', '=', sdref),
+                                ('run', '=', False),
+                                ('sequence_number', '<=', update.sequence_number)
+                            ], context=context):
+                                return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
+                            return {'res': True, 'run_without_exec': True, 'error_message': 'partner_id %s not found' % xmlid}
                         if update.model == 'account.tax' and field == 'partner_id/id':
                             return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
                         if update.model == 'account.analytic.line' and field in ('cost_center_id/id', 'destination_id/id'):

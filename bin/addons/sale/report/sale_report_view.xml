@@ -98,6 +98,7 @@
                     <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]"/>
                     <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]"/>
                     <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]"/>
+                    <filter icon="terp-partner" string="Loan Return" domain="[('order_type','=','loan_return')]"/>
                 </group>
                 <newline />
                 <group string="Priority" expand="0">

@@ -57,6 +57,62 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF28.0
+    def us_10652_chg_partn_property_fields(self, cr, uid, *a, **b):
+        '''
+        Update the data of the res_partner's fields property_product_pricelist_purchase, property_product_pricelist,
+        property_account_receivable and property_account_payable as they have been changed from fields.property to fields.many2one
+        '''
+        def_purch_plist_id = self.pool.get('product.pricelist').get_company_default_pricelist(cr, uid, 'purchase')
+        def_sale_plist_id = self.pool.get('product.pricelist').get_company_default_pricelist(cr, uid, 'sale')
+        cr.execute("""
+            SELECT p.id, pr.value_reference, pr2.value_reference, pr3.value_reference, pr4.value_reference 
+            FROM res_partner p
+              LEFT JOIN ir_property pr ON pr.res_id = 'res.partner,' || p.id AND pr.name = 'property_product_pricelist_purchase' 
+              LEFT JOIN ir_property pr2 ON pr2.res_id = 'res.partner,' || p.id AND pr2.name = 'property_product_pricelist' 
+              LEFT JOIN ir_property pr3 ON pr3.res_id = 'res.partner,' || p.id AND pr3.name = 'property_account_receivable' 
+              LEFT JOIN ir_property pr4 ON pr4.res_id = 'res.partner,' || p.id AND pr4.name = 'property_account_payable'
+        """)
+        nb_partners = cr.rowcount
+        for res in cr.fetchall():
+            cr.execute("""
+                UPDATE res_partner SET property_product_pricelist_purchase = %s, property_product_pricelist = %s, 
+                property_account_receivable = %s, property_account_payable = %s WHERE id = %s
+            """, (res[1] and int(res[1].split(',')[-1]) or def_purch_plist_id, res[2] and int(res[2].split(',')[-1]) or def_sale_plist_id,
+                  res[3] and int(res[3].split(',')[-1]) or None, res[4] and int(res[4].split(',')[-1]) or None, res[0]))
+        self.log_info(cr, uid, "US-10652: The Purchase Default Currency, Field Orders Default Currency, Account Receivable and Account Payable have been updated on %d partners" % (nb_partners,))
+
+        return True
+
+    def us_10586_running_one_time_accrual(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:
+            cr.execute('''
+                UPDATE msf_accrual_line a SET state='done'
+                FROM account_move_line m
+                WHERE
+                    a.accrual_type='one_time_accrual' AND
+                    a.state='running' AND
+                    a.move_line_id=m.id AND
+                    m.reconcile_id IS NOT NULL
+            ''')
+        return True
+
+    def us_10353_inactivation_date(self, cr, uid, *a,**b):
+        for journal_id in self.pool.get('account.journal').search(cr, uid, [('is_active', '=', False)]):
+            cr.execute("""
+                UPDATE account_journal
+                SET inactivation_date = (SELECT date(create_date)
+                        FROM audittrail_log_line
+                        WHERE
+                            object_id in (SELECT id FROM ir_model WHERE model='account.journal') AND
+                            res_id=%s AND
+                            name='is_active' AND
+                            coalesce(new_value,'')=''
+                        order by create_date desc limit 1)
+                WHERE id=%s
+            """, (journal_id, journal_id))
     # UF27.0
     def store_picking_subtype(self, cr, uid, *a, **b):
         cr.execute("""
@@ -98,7 +154,7 @@ class patch_scripts(osv.osv):
             menu_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'menu_action_res_users_whitelist')[1])
             menu_ids.append(self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'menu_users')[1])
             gp_id = group_obj.create(cr, uid, {
-                'name': ' Sup_Config_HQ',
+                'name': 'Sup_Config_HQ',
                 'level': 'hq',
                 'visible_res_groups': True,
                 'menu_access': [(6, 0, menu_ids)],
@@ -370,7 +426,44 @@ class patch_scripts(osv.osv):
                 self.pool.get('ir.ui.menu').write(cr, uid, [menu_id], {'groups_id': [(4, group_ids[0])]})
         return True
 
+    def us_9406_create_record_rules(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+        sign_user_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')])
+        supply_creator_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_document_creator_supply')])
+        finance_creator_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_document_creator_finance')])
+        model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'signature.follow_up')])
+        data = {
+            'model_id': model_id[0],
+            'perm_read': True,
+            'perm_write': False,
+            'perm_create': False,
+            'perm_unlink': False,
+        }
+        rr_obj = self.pool.get('ir.rule')
+        data.update({
+            'name': 'Signatures Follow-up Supply Creator',
+            'domain_force': "[('doc_type', 'in', ['purchase.order', 'sale.order', 'stock.picking'])]",
+            'groups': [(6, 0, supply_creator_id)],
+        })
+        rr_obj.create(cr, uid, data)
+        data.update({
+            'name': 'Signatures Follow-up Finance Creator',
+            'domain_force': "[('doc_type', 'in', ['account.bank.statement.cash', 'account.bank.statement.bank', 'account.invoice.si', 'account.invoice.donation'])]",
+            'groups': [(6, 0, finance_creator_id)],
+        })
+        rr_obj.create(cr, uid, data)
+        data.update({
+            'name': 'Signatures Follow-up Sign_User',
+            'domain_force': "[('user_id', '=', user.id)]",
+            'groups': [(6, 0, sign_user_id)],
+        })
+        rr_obj.create(cr, uid, data)
+        return True
+
     def us_9406_create_common_acl(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where name='account_hq_entries_action_hq_entries_import_wizard')")
+        cr.execute("delete from ir_model_data where name='account_hq_entries_action_hq_entries_import_wizard'")
         if _get_instance_level(self, cr, uid) != 'hq':
             return True
         model_obj = self.pool.get('ir.model')

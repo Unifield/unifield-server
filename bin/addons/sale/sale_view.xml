@@ -169,13 +169,13 @@
                         <field name="picked_rate" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
                         <field name="fo_created_by_po_sync" invisible="1"/>
-                        <field name="order_type" attrs="{'readonly': ['|', ('fo_created_by_po_sync', '=', True), ('state', '!=', 'draft')]}" on_change="onchange_order_type(order_type, partner_id)"/>
+                        <field name="order_type" attrs="{'readonly': ['|', '|', ('fo_created_by_po_sync', '=', True), ('state', '!=', 'draft'), ('order_type', '=', 'loan_return')]}" on_change="onchange_order_type(order_type, partner_id)"/>
                         <field name="sourcing_trace_ok" invisible="1"/>
                         <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <field name="categ" on_change="onchange_categ(categ)"/> <!-- RO state!=draft set on _column, same on IR -->
                         <group colspan="2" col="2">
                             <field name="fo_to_resource" invisible="1"/>
-                            <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')], 'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('order_type', '!=', 'loan')]}"/>
+                            <field name="loan_duration" attrs="{'invisible': [('order_type', 'not in', ['loan', 'loan_return'])], 'required': [('order_type', 'in', ['loan', 'loan_return'])], 'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('order_type', 'not in', ['loan', 'loan_return'])]}"/>
                             <field name="parent_order_name" readonly="True" attrs="{'invisible': [('fo_to_resource', '=', False)]}"/>
                         </group>
                         <field name="details" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
@@ -511,6 +511,7 @@
                         <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]"/>
                         <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]"/>
                         <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]"/>
+                        <filter icon="terp-partner" string="Loan Return" domain="[('order_type','=','loan_return')]"/>
                     </group>
                     <newline />
                     <group string="Priority" expand="0">

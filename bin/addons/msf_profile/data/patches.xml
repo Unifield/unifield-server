@@ -833,6 +833,10 @@
             <field name="method">us_7852_set_journal_code</field>
         </record>
 
+        <record id="us_10353_inactivation_date" model="patch.scripts">
+            <field name="method">us_10353_inactivation_date</field>
+        </record>
+
         <record id="us_10105_custom_order" model="patch.scripts">
             <field name="method">us_10105_custom_order</field>
         </record>
@@ -873,8 +877,21 @@
             <field name="method">us_9406_create_bar</field>
         </record>
 
+        <record id="us_9406_create_record_rules" model="patch.scripts">
+            <field name="method">us_9406_create_record_rules</field>
+        </record>
+
         <record id="store_picking_subtype" model="patch.scripts">
             <field name="method">store_picking_subtype</field>
+        </record>
+
+        <record id="us_10586_running_one_time_accrual" model="patch.scripts">
+            <field name="method">us_10586_running_one_time_accrual</field>
+        </record>
+
+        <!-- UF28.0 -->
+        <record id="us_10652_chg_partn_property_fields" model="patch.scripts">
+            <field name="method">us_10652_chg_partn_property_fields</field>
         </record>
     </data>
 </openerp>

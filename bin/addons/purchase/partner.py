@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,29 +15,26 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 from osv import fields, osv
 
+
 class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = 'res.partner'
     _columns = {
-        'property_product_pricelist_purchase': fields.property(
-          'product.pricelist',
-          type='many2one', 
-          relation='product.pricelist', 
-          domain=[('type','=','purchase')],
-          string="Purchase Pricelist", 
-          method=True,
-          view_load=True,
-          help="This pricelist will be used, instead of the default one, for purchases from the current partner"),
+        'property_product_pricelist_purchase': fields.many2one(
+            'product.pricelist',
+            domain=[('type', '=', 'purchase')],
+            string="Purchase Pricelist",
+            select=True,
+            help="This pricelist will be used, instead of the default one, for purchases from the current partner"),
     }
+
+
 res_partner()
 
-
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
