@@ -164,7 +164,9 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         cheque_res = self._filter_journal_status(cheque_res)
         cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, encode=False, context=self.context)
         res.extend(cheque_res)
-        return res
+        # sort result by instance code and by journal code
+        sorted_res = sorted(res, key=lambda k: (k['instance'], k['code']))
+        return sorted_res
 
     def set_context(self, objects, data, ids, report_type=None):
         # get the selection made by the user

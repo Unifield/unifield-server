@@ -22,6 +22,8 @@
 from operator import itemgetter
 
 from osv import fields, osv
+from account_override import ACCOUNT_RESTRICTED_AREA
+
 
 class account_fiscal_position(osv.osv):
     _name = 'account.fiscal.position'
@@ -146,26 +148,18 @@ class res_partner(osv.osv):
                                   fnct_search=_credit_search, method=True, string='Total Receivable', multi='dc', help="Total amount this customer owes you."),
         'debit': fields.function(_credit_debit_get, fnct_search=_debit_search, method=True, string='Total Payable', multi='dc', help="Total amount you have to pay to this supplier."),
         'debit_limit': fields.float('Payable Limit'),
-        'property_account_payable': fields.property(
+        'property_account_payable': fields.many2one(
             'account.account',
-            type='many2one',
-            relation='account.account',
             string="Account Payable",
-            method=True,
-            view_load=True,
-            domain="[('type', '=', 'payable')]",
+            domain=ACCOUNT_RESTRICTED_AREA['partner_payable'],
             help="This account will be used instead of the default one as the payable account for the current partner",
-            required=True),
-        'property_account_receivable': fields.property(
+        ),
+        'property_account_receivable': fields.many2one(
             'account.account',
-            type='many2one',
-            relation='account.account',
             string="Account Receivable",
-            method=True,
-            view_load=True,
-            domain="[('type', '=', 'receivable')]",
+            domain=ACCOUNT_RESTRICTED_AREA['partner_receivable'],
             help="This account will be used instead of the default one as the receivable account for the current partner",
-            required=True),
+        ),
         'property_account_position': fields.property(
             'account.fiscal.position',
             type='many2one',
@@ -187,6 +181,7 @@ class res_partner(osv.osv):
                                          'Companies that refers to partner'),
         'last_reconciliation_date': fields.datetime('Latest Reconciliation Date', help='Date on which the partner accounting entries were reconciled last time')
     }
+
 
 res_partner()
 

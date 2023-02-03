@@ -955,13 +955,18 @@ class signature_setup(osv.osv_memory):
         setup = setup_obj.get_config(cr, uid)
         if setup:
             if not wiz.signature:
-                if self.pool.get('signature.image').search_exists(cr, uid, [], context=context):
-                    raise osv.except_osv(_('Warning'), _('Signature Already Created, you cannot disable this feature !'))
+                user_ids = self.pool.get('res.users').search(cr, uid, [('signature_enabled', '=', True)], context=context)
+                if user_ids:
+                    user_data = [u['login'] for u in self.pool.get('res.users').read(cr, uid, user_ids[0:5], ['login'], context=context)]
+                    if len(user_ids) > 5:
+                        user_data.append('...')
+                    raise osv.except_osv(_('Warning'), _('Signature cannot be deactivated: it is enabled on %d user(s). Please untick "Enable Signature" on users: %s') % (len(user_ids), ', '.join(user_data)))
+
             for module, xmlid in [('useability_dashboard_and_menu', 'signature_follow_up_menu'), ('base', 'signature_image_menu'), ('useability_dashboard_and_menu', 'my_signature_menu')]:
                 menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
-            if wiz.signature:
 
+            if wiz.signature:
                 for obj in list_sign:
                     if obj == 'purchase.order':
                         cond = "purchase_order o where o.signature_id is not null and o.rfq_ok='f'"
