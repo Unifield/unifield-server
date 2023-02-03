@@ -877,7 +877,7 @@ class real_average_consumption_line(osv.osv):
         if not ids:
             return True
         cr.execute('''
-            select product.default_code, bn.name, bn.id, bn.life_date, rac.id, rac.name, kcl.name
+            select product.default_code, bn.name, bn.id, bn.life_date, rac.id, rac.name, kcl.id, kcl.name
                 from real_average_consumption rac
                 left join real_average_consumption_line line on line.rac_id = rac.id
                 left join product_product product on product.id = line.product_id
@@ -888,7 +888,7 @@ class real_average_consumption_line(osv.osv):
                 (rac.id, line.product_id, coalesce(line.prodlot_id,0), coalesce(line.kcl_id,0)) 
                     in (select rac_id, product_id, coalesce(prodlot_id, 0), coalesce(kcl_id,0) from real_average_consumption_line where id in %s)
             group by
-                product.default_code, bn.name, bn.id, rac.id, rac.name, kcl.name
+                product.default_code, bn.name, bn.id, rac.id, rac.name, kcl.id, kcl.name
             having count(*) > 1
         ''', (tuple(ids), ))
         error = []
