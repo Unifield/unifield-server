@@ -404,9 +404,7 @@ class stock_move(osv.osv):
         '''
         result = {}
         uom_obj = self.pool.get('product.uom')
-        for move in self.read(cr, uid, ids,
-                              ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'],
-                              context=context):
+        for move in self.read(cr, uid, ids, ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'], context=context):
             default_values = {
                 'total_amount': 0.0,
                 'amount': 0.0,
@@ -437,8 +435,10 @@ class stock_move(osv.osv):
                 amount = 0
             result[move['id']]['amount'] = amount
             result[move['id']]['currency_id'] = move['sale_line_id'] and sale_line['currency_id'] and sale_line['currency_id'][0] or False
+            if move['product_uom']:
+                uom_rounding = uom_obj.read(cr, uid, move['product_uom'][0], ['rounding'], context=context)['rounding']
+                result[move['id']]['product_uom_rounding_is_pce'] = uom_rounding == 1
         return result
-
 
     def _get_picking_with_sysint_name(self, cr, uid, ids, fields, arg, context=None):
         res = {}
@@ -463,6 +463,7 @@ class stock_move(osv.osv):
         'product_uos': fields.many2one('product.uom', 'Product UOS', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
         'product_packaging': fields.many2one('product.packaging', 'Packaging', help="It specifies attributes of packaging like type, quantity of packaging,etc."),
         'product_uom_rounding': fields.related('product_uom', 'rounding', type='float', string="UoM Rounding", digits_compute=dp.get_precision('Product UoM'), store=False, write_relate=False),
+        'product_uom_rounding_is_pce': fields.function(_vals_get, method=True, type='boolean', string="UoM Rounding is PCE", multi='get_vals', store=False, readonly=True),
 
         'location_id': fields.many2one('stock.location', 'Source Location', required=True, select=True,states={'done': [('readonly', True)]}, help="Sets a location if you produce at a fixed location. This can be a partner location if you subcontract the manufacturing operations."),
         'location_dest_id': fields.many2one('stock.location', 'Destination Location', required=True,states={'done': [('readonly', True)]}, select=True, help="Location where the system will stock the finished products."),
