@@ -254,9 +254,8 @@
                                             <field name="display_resourced_orig_line"/>
                                             <field name="sync_linked_pol" invisible="True"/>
                                             <field name="sync_sourced_origin" invisible="True"/>
-                                            <group invisible="not context.get('fo_created_by_po_sync')" colspan="2">
-                                                <field name="instance_sync_order_ref" domain="[('order_id', '=', context.get('sale_id', 0))]" attrs="{'invisible': [('sync_linked_pol', '!=', False)], 'readonly': ['|', ('state', '!=', 'draft'), ('sync_sourced_origin', '!=', False)]}" on_change="on_change_instance_sync_order_ref(instance_sync_order_ref)"/>
-                                            </group>
+                                            <field name="instance_sync_order_ref_needed" invisible="True"/>
+                                            <field name="instance_sync_order_ref" domain="[('order_id', '=', context.get('sale_id', 0))]" attrs="{'readonly': ['|', '|', '|', ('state', '!=', 'draft'), ('sync_sourced_origin', '!=', False), ('instance_sync_order_ref_needed', '=', True)]}" on_change="on_change_instance_sync_order_ref(instance_sync_order_ref)"/>
                                             <separator colspan="4" string="Changes"/>
                                             <group colspan="4">
                                                 <group colspan="2">
@@ -359,7 +358,7 @@
                                     </group>
                                     <newline/>
                                 </form>
-                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}">
+                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or instance_sync_order_ref_needed == True;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}">
                                     <button name="tree_button" string="Add Line" attrs="{'invisible': [('state', '!=', 'validated')]}" />
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
                                     <field name="line_number"/>
@@ -388,6 +387,7 @@
                                     <field name="to_correct_ok" invisible="1"/>
                                     <field name="inactive_product" invisible="1"/>
                                     <field name="soq_updated" invisible="1" readonly="1"/>
+                                    <field name="instance_sync_order_ref_needed" invisible="True"/>
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', '!=', 'validated')]}"/>
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
                                     <button string="Cancel" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>

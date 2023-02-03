@@ -686,7 +686,10 @@ class sale_order_line(osv.osv):
                     _('Line #%s: You have to select a product UoM in the same category than the UoM of the product.')
                     % (sol.line_number,)
                 )
-
+            if sol.instance_sync_order_ref_needed:
+                raise osv.except_osv(_('Error'),
+                                     _('Line #%s: You can not validate line %s without filling "Order in sync. instance".')
+                                     % (sol.line_number,))
 
             supplier = sol.supplier
             # US-4576: Set supplier
