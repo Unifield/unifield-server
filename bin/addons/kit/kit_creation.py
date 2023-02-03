@@ -381,7 +381,7 @@ class kit_creation(osv.osv):
                 # all kits are completed
                 kit_obj.mark_as_completed(cr, uid, [kit.id], context=context)
             for consumed_move in obj.consumed_ids_kit_creation:
-                if consumed_move.product_subtype == 'kit' and consumed_move.composition_list_id:
+                if consumed_move.subtype == 'kit' and consumed_move.composition_list_id:
                     self.pool.get('composition.kit').close_kit(cr, uid, [consumed_move.composition_list_id.id],
                                                                self._name, context=context)
             # state of kitting order is Done
