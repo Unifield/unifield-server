@@ -246,7 +246,7 @@
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('fake_state', '=', 'assigned')]}"
                                             />
                                     <field name="comment" readonly="1"/>
-                                    <field name="composition_list_id" attrs="{'readonly': ['|', '|', ('subtype', '!=', 'kit'), ('fake_state', 'not in', ['confirmed', 'assigned']), ('product_uom_rounding', '!=', 1)]}"
+                                    <field name="composition_list_id" attrs="{'readonly': ['|', '|', '|', ('subtype', '!=', 'kit'), ('fake_state', 'not in', ['confirmed', 'assigned']), ('product_uom_rounding', '!=', 1), ('backmove_id', '!=', False)]}"
                                             domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real'), ('kcl_used_by', '=', False)]"/>
                                     <field name="product_qty"
                                             string="Qty"
@@ -303,6 +303,7 @@
                                     <field name="from_wkf_line" invisible="1" />
                                     <field name="subtype" invisible="1" />
                                     <field name="product_uom_rounding" invisible="1" />
+                                    <field name="backmove_id" invisible="1" />
                                     <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  attrs="{'invisible': [('pt_created', '=', True)]}" context="{'from_button': True}"  />
                                 </tree>
                                 <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
@@ -328,7 +329,7 @@
                                             attrs="{'readonly': [('state', 'not in', ['confirmed', 'assigned'])]}"
                                             on_change="onchange_qty_to_process(qty_to_process, product_qty, product_uom)"
                                             />
-                                        <field name="composition_list_id" attrs="{'readonly': ['|', '|', ('subtype', '!=', 'kit'), ('state', 'not in', ['confirmed', 'assigned']), ('product_uom_rounding', '!=', 1)]}"
+                                        <field name="composition_list_id" attrs="{'readonly': ['|', '|', '|', ('subtype', '!=', 'kit'), ('state', 'not in', ['confirmed', 'assigned']), ('product_uom_rounding', '!=', 1), ('backmove_id', '!=', False)]}"
                                                domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real'), ('kcl_used_by', '=', False)]"/>
                                         <field name="comment" colspan="4" attrs="{'readonly': [('state', '!=', 'confirmed')]}"/>
                                     </group>
@@ -376,6 +377,7 @@
                                     <field name="from_wkf_line" invisible="1" />
                                     <field name="subtype" invisible="1" />
                                     <field name="product_uom_rounding" invisible="1" />
+                                    <field name="backmove_id" invisible="1" />
                                     <label string="" colspan="4"/>
                                     <field name="state"/>
                                     <group col="4" colspan="2">

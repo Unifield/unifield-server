@@ -266,12 +266,14 @@
 						<newline />
                     </group>
                     <separator colspan="4" string="Actions" />
-					<html colspan="4">
-						<translate>You must agree to use the unused Completed KCLs if you want to automatically split the Components to Consume if necessary, to be able to create Consumed Components with a Qty of 1 and the KCL reference(s). If there is any Qty remaining, there will be no KCL reference on this last Consumed Component line.</translate>
-					</html>
-					<newline />
-					<field name="use_existing_kcl" attrs="{'invisible': [('ko_more_qty', '=', False), ('kcl_more_qty', '=', False)]}" />
-                    <newline />
+					<group colspan="4" attrs="{'invisible': [('ko_more_qty', '=', False), ('kcl_more_qty', '=', False)]}">
+						<html colspan="4">
+							<translate>You must agree to use the unused Completed KCLs if you want to automatically split the Components to Consume if necessary, to be able to create Consumed Components with a Qty of 1 and the KCL reference(s). If there is any Qty remaining, there will be no KCL reference on this last Consumed Component line.</translate>
+						</html>
+						<newline />
+						<field name="use_existing_kcl" />
+						<newline />
+					</group>
 					<group colspan="4" col="4">
 						<label string="" colspan="2"/>
                         <button name="do_process_to_consume_and_kcl_auto" string="Continue" type="object" icon="gtk-go-forward" colspan="1" />

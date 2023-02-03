@@ -715,6 +715,7 @@ class real_average_consumption_line(osv.osv):
             if out.text_error:
                 result[out.id]['to_correct_ok'] = True
             result[out.id]['uom_rounding_is_pce'] = out.uom_id and out.uom_id.rounding == 1 or False
+            result[out.id]['product_subtype'] = out.product_id and out.product_id.subtype or False
         return result
 
     def _get_qty(self, cr, uid, product, lot, location, uom):
@@ -842,7 +843,7 @@ class real_average_consumption_line(osv.osv):
                               store={'product.product': (_get_product, ['default_code'], 10),
                                      'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
-        'uom_rounding': fields.function(_get_checks_all, method=True, type='boolean', string="UoM Rounding is PCE", store=False, readonly=True, multi="m"),
+        'uom_rounding_is_pce': fields.function(_get_checks_all, method=True, type='boolean', string="UoM Rounding is PCE", store=False, readonly=True, multi="m"),
         'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True, related_uom='uom_id'),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True, related_uom='uom_id'),
         'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
@@ -864,7 +865,7 @@ class real_average_consumption_line(osv.osv):
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
         'kcl_id': fields.many2one('composition.kit', 'Kit', domain="[('composition_product_id', '=', product_id), ('composition_type', '=', 'real'), ('state', '=', 'completed'), ('kcl_used_by', '=', False)]"),
-        'product_subtype': fields.related('product_id', 'subtype', type='selection', string='Product Subtype', selection=[('single', 'Single Item'), ('kit', 'Kit/Module'), ('asset', 'Asset')], store=False, write_relate=False, readonly=True),
+        'product_subtype': fields.function(_get_checks_all, method=True, type='selection', string='Product Subtype', selection=[('single', 'Single Item'), ('kit', 'Kit/Module'), ('asset', 'Asset')], store=False, readonly=True, multi="m"),
     }
 
     _defaults = {
@@ -876,26 +877,28 @@ class real_average_consumption_line(osv.osv):
         if not ids:
             return True
         cr.execute('''
-            select product.default_code, bn.name, bn.id, bn.life_date, rac.id, rac.name
+            select product.default_code, bn.name, bn.id, bn.life_date, rac.id, rac.name, kcl.name
                 from real_average_consumption rac
                 left join real_average_consumption_line line on line.rac_id = rac.id
                 left join product_product product on product.id = line.product_id
                 left join stock_production_lot bn on bn.id = line.prodlot_id
+                left join composition_kit kcl on kcl.id = line.kcl_id
             where
                 rac.state = 'draft' and
-                (rac.id, line.product_id, coalesce(line.prodlot_id,0)) in (select rac_id, product_id, coalesce(prodlot_id, 0) from real_average_consumption_line where id in %s)
+                (rac.id, line.product_id, coalesce(line.prodlot_id,0), coalesce(line.kcl_id,0)) 
+                    in (select rac_id, product_id, coalesce(prodlot_id, 0), coalesce(kcl_id,0) from real_average_consumption_line where id in %s)
             group by
-                product.default_code, bn.name, bn.id, rac.id, rac.name
+                product.default_code, bn.name, bn.id, rac.id, rac.name, kcl.name
             having count(*) > 1
         ''', (tuple(ids), ))
         error = []
         for x in cr.fetchall():
-            error.append('%s: %s %s' % (x[5], x[0], x[1] or ''))
+            error.append('%s: %s %s %s' % (x[5], x[0], x[1], x[6] or ''))
             if len(error) > 5:
                 error.append('...')
                 break
         if error:
-            raise osv.except_osv(_('Error'), _('Each product or couple product plus batch number has to be unique:\n%s')
+            raise osv.except_osv(_('Error'), _('Each product or couple product plus batch number and kit have to be unique:\n%s')
                                  % "\n".join(error))
 
         return True
@@ -1102,7 +1105,7 @@ class real_average_consumption_line(osv.osv):
                 v.update({'asset_mandatory': True, 'remark': _('You must assign an asset')})
 
             uom = product.uom_id.id
-            v.update({'uom_id': uom})
+            v.update({'uom_id': uom, 'product_subtype': product.subtype})
             d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
             if location_id:
                 v.update({'product_qty': qty_available})
@@ -1115,8 +1118,13 @@ class real_average_consumption_line(osv.osv):
                         'title': _('Warning'),
                         'message': '%s \n %s' % (res.get('warning', {}).get('message', ''), consistency_message)
                     }
+
+            # Make Kit editable if the chosen product on a new line is kit with a PCE UoM
+            if product.uom_id.rounding == 1:
+                v.update({'uom_rounding_is_pce': True})
         else:
-            v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False, 'consumed_qty': 0.00})
+            v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False,
+                      'consumed_qty': 0.00, 'kcl_id': False})
 
         return {'value': v, 'domain': d, 'warning': warning}
 

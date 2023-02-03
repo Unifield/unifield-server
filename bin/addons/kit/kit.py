@@ -301,6 +301,7 @@ class composition_kit(osv.osv):
                           'qty_substitute_item': item.item_qty,
                           'uom_id_substitute_item': item.item_uom_id.id,
                           'asset_id_substitute_item': item.item_asset_id.id,
+                          'kcl_id_substitute_item': item.kcl_id and item.kcl_id.id or False,
                           'lot_mirror': lot_name,
                           'exp_substitute_item': item.item_exp,
                           'comment': item.comment,
@@ -492,8 +493,8 @@ class composition_kit(osv.osv):
             kol_ids = kol_obj.search(cr, uid, [('kcl_id', '=', kcl_id), ('state', '!=', 'cancel')], limit=1, context=context)
             # Picks/OUTs + Consumed components of Kitting Orders
             move_ids = move_obj.search(cr, uid, [('composition_list_id', '=', kcl_id), ('state', '!=', 'cancel'),
-                                                 '&', '|', '&', ('type', '=', 'out'), ('picking_subtype', 'in', ['picking', 'standard']),
-                                                 ('kit_creation_id_stock_move', '!=', False), ('kit_creation_id_stock_move.state', '!=', 'cancel')],
+                                                 '|', '&', ('type', '=', 'out'), ('picking_subtype', 'in', ['picking', 'standard']),
+                                                 '&', ('kit_creation_id_stock_move', '!=', False), ('kit_creation_id_stock_move.state', '!=', 'cancel')],
                                        limit=1, context=context)
             out_m_proc_ids = out_m_proc_obj.search(cr, uid, [('composition_list_id', '=', kcl_id),
                                                              ('wizard_id.draft', '=', True)], limit=1, context=context)
@@ -1113,9 +1114,11 @@ class composition_item(osv.osv):
         if product_id:
             product = prod_obj.browse(cr, uid, product_id, context=context)
             result['value']['item_uom_id'] = product.uom_id.id
+            result['value']['item_uom_rounding_is_pce'] = product.uom_id.rounding == 1
             result['value']['hidden_perishable_mandatory'] = product.perishable
             result['value']['hidden_batch_management_mandatory'] = product.batch_management
             result['value']['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
+            result['value']['product_subtype'] = product.subtype
 
         return result
 
@@ -1215,6 +1218,8 @@ class composition_item(osv.osv):
             result[obj.id].update({'hidden_asset_mandatory': obj.item_product_id.type == 'product' and obj.item_product_id.subtype == 'asset'})
             # product UoM is PCE
             result[obj.id].update({'item_uom_rounding_is_pce': obj.item_uom_id and obj.item_uom_id.rounding == 1 or False})
+            # product subtype
+            result[obj.id].update({'product_subtype': obj.item_product_id and obj.item_product_id.subtype or False})
 
         return result
 
@@ -1287,7 +1292,6 @@ class composition_item(osv.osv):
                 'kit_state': fields.related('item_kit_id', 'state', type='char', size=64, string='Kit State', readonly=True),
                 'to_consume_id': fields.many2one('kit.creation.to.consume', 'KO Components to Consume'),
                 'kcl_id': fields.many2one('composition.kit', 'Kit', domain="[('id', '!=', item_kit_id), ('composition_product_id', '=', item_product_id), ('composition_type', '=', 'real'), ('state', '=', 'completed'), ('kcl_used_by', '=', False)]"),
-                'product_subtype': fields.related('item_product_id', 'subtype', type='selection', string='Product Subtype', selection=[('single','Single Item'),('kit', 'Kit/Module'),('asset','Asset')], store=False, write_relate=False, readonly=True),
                 # functions
                 'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
@@ -1304,6 +1308,7 @@ class composition_item(osv.osv):
                 'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
                 'hidden_asset_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Asset', multi='get_vals', store=False, readonly=True),
                 'item_uom_rounding_is_pce': fields.function(_vals_get, method=True, type='boolean', string="UoM Rounding is PCE", multi='get_vals', store=False, readonly=True),
+                'product_subtype': fields.function(_vals_get, method=True, type='selection', string='Product Subtype', selection=[('single', 'Single Item'), ('kit', 'Kit/Module'), ('asset', 'Asset')], multi='get_vals', store=False, readonly=True),
                 'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
                 'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
                 }

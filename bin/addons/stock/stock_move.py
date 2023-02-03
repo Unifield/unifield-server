@@ -293,19 +293,16 @@ class stock_move(osv.osv):
 
         return result
 
-    def _get_product_types(self, cr, uid, ids, field_name, args, context=None):
+    def _get_product_type(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        for move in self.browse(cr, uid, ids, context=context):
-            res[move.id] = {'product_type': move.product_id.type, 'product_subtype': move.product_id.subtype}
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['product_id'], context=context):
+            res[move.id] = move.product_id.type
 
         return res
 
     def _get_product_type_selection(self, cr, uid, context=None):
         return self.pool.get('product.template').PRODUCT_TYPE
-
-    def _get_product_subtype_selection(self, cr, uid, context=None):
-        return self.pool.get('product.template').PRODUCT_SUBTYPE
 
     def _get_pick_shipment_id(self, cr, uid, ids, field_name, args, context=None):
         """
@@ -567,10 +564,8 @@ class stock_move(osv.osv):
         # reason types
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=300, string='Comment'),
-        'product_type': fields.function(_get_product_types, method=True, type='selection', selection=_get_product_type_selection, string='Product type', multi='product_types',
+        'product_type': fields.function(_get_product_type, method=True, type='selection', selection=_get_product_type_selection, string='Product type',
                                         store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20), }),
-        'product_subtype': fields.function(_get_product_types, method=True, type='selection', selection=_get_product_subtype_selection, string='Product subtype', multi='product_types',
-                                           store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20), }),
         'not_chained': fields.boolean(string='Not chained', help='If checked, the chaining move will not be run.'),
         'sale_line_id': fields.many2one('sale.order.line', 'Sales Order Line', ondelete='set null', select=True, readonly=True),
 

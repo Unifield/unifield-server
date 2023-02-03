@@ -128,7 +128,8 @@
                     </group>
                     <notebook colspan="4">
                     	<page string="Composition Items">
-                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4">
+							<field name="kcl_used_by" invisible="1" />
+                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4" attrs="{'readonly': [('kcl_used_by', '!=', False)]}">
 								<form string="Kit Composition Item" noteditable="state != 'draft'">
 				                    <field name="kit_state" invisible="1" />
 									<group col="6" colspan="4">
@@ -138,7 +139,7 @@
 				           						<field name="item_product_id" />
 						                        <field name="item_qty" />
 						                        <field name="item_uom_id" domain="[('uom_by_product', '=', item_product_id)]" />
-
+												<field name="kcl_id" readonly="1" />
 					                        </page>
 					                        <page string="Notes">
 					                        	<field name="item_description" nolabel="True" />
@@ -157,7 +158,7 @@
 				            		<field name="item_uom_id" on_change="onchange_uom_qty(item_uom_id, item_qty)" domain="[('uom_by_product', '=', item_product_id)]" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
 				            			attrs="{'readonly': ['|', ('hidden_asset_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
-				            		<field name="kcl_id" attrs="{'readonly': ['|', '|', '|', ('item_product_id', '=', False), ('product_subtype', '!=', 'kit'), ('kit_state', '!=', 'draft'), ('item_uom_rounding_is_pce', '=', False)]}" />
+				            		<field name="kcl_id" attrs="{'readonly': ['|', '|', '|', ('item_product_id', '=', False), ('product_subtype', '!=', 'kit'), ('kit_state', 'not in', ['', 'draft', 'completed']), ('item_uom_rounding_is_pce', '=', False)]}" />
 				            		<field name="comment" />
 									<field name="item_lot"
 				            			on_change="on_lot_change(item_product_id, item_lot, context)"
