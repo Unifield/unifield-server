@@ -75,7 +75,7 @@ class sale_order_line_sync(osv.osv):
                 order_label_ids = order_label_obj.search(cr, uid, [('name', '=', line_info.ir_name_for_sync),
                                                                    ('order_id', '=', sale_order_ids[0])], context=context)
                 if order_label_ids:
-                    sol_values['instance_sync_order_ref'] = order_label_ids[0] # TODO
+                    sol_values['instance_sync_order_ref'] = order_label_ids[0]
             if line_info.product_id and not sol_values.get('product_id'):
                 raise Exception('FO: %s , Product %s not found' % (so_name, line_info.default_code or ''))
             if sol_values.get('product_id'):

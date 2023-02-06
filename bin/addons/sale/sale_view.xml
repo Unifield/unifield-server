@@ -255,7 +255,7 @@
                                             <field name="sync_linked_pol" invisible="True"/>
                                             <field name="sync_sourced_origin" invisible="True"/>
                                             <field name="instance_sync_order_ref_needed" invisible="True"/>
-                                            <field name="instance_sync_order_ref" domain="[('order_id', '=', context.get('sale_id', 0))]" attrs="{'readonly': ['|', '|', '|', ('state', '!=', 'draft'), ('sync_sourced_origin', '!=', False), ('instance_sync_order_ref_needed', '=', True)]}" on_change="on_change_instance_sync_order_ref(instance_sync_order_ref)"/>
+                                            <field name="instance_sync_order_ref" domain="[('order_id', '=', context.get('sale_id', 0))]" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('sync_sourced_origin', '!=', False), ('instance_sync_order_ref_needed', '=', False)]}" on_change="on_change_instance_sync_order_ref(instance_sync_order_ref)"/>
                                             <separator colspan="4" string="Changes"/>
                                             <group colspan="4">
                                                 <group colspan="2">

@@ -2210,12 +2210,13 @@ class sale_order_line(osv.osv):
                 sol.id in %s and
                 sol.order_id = so.id and
                 sol.state = 'draft' and
+                so.procurement_request = 'f' and
                 so.fo_created_by_po_sync = 't' and -- not a push flow
-                coalesce(sol.instance_sync_order_ref, '') = '' and
+                sol.instance_sync_order_ref is null and
                 coalesce(sol.sync_linked_pol, '') = '' and  -- not created from a PO line (new line added)
                 other_sol.order_id = sol.order_id and
                 other_sol.state not in ('cancel', 'cancel_r') and
-                coalesce(sol.instance_sync_order_ref, '')  != '' -- at least 1 other line has a IR / FO ref
+                other_sol.instance_sync_order_ref is not null -- at least 1 other line has a IR / FO ref
             group by sol.id
         ''', (tuple(ids), ))
 
@@ -2338,7 +2339,7 @@ class sale_order_line(osv.osv):
         'instance_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance'),
         'cv_line_ids': fields.one2many('account.commitment.line', 'so_line_id', string="Commitment Voucher Lines"),
         'loan_line_id': fields.many2one('purchase.order.line', string='Linked loan line', readonly=True),
-        'instance_sync_order_ref_needed': fields.function(_get_instance_sync_order_ref_needed, method=True, type='boolean', store=False, string='Is instance_sync_order_ref needed ?', multi='fo_data'),
+        'instance_sync_order_ref_needed': fields.function(_get_instance_sync_order_ref_needed, method=True, type='boolean', store=False, string='Is instance_sync_order_ref needed ?'),
     }
     _order = 'sequence, id desc'
     _defaults = {
