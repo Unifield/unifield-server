@@ -165,9 +165,22 @@ class purchase_order_line(osv.osv):
 
         res = {}
         for pol in self.browse(cr, uid, ids, fields_to_fetch=['linked_sol_id'], context=context):
+            if not pol.linked_sol_id:
+                original_instance = self.pool.get('res.company')._get_instance_record(cr, uid).instance
+            elif pol.linked_sol_id.original_instance:
+                original_instance = pol.linked_sol_id.original_instance
+            elif pol.linked_sol_id.order_id.partner_type in ('esc', 'external'):
+                # FO FS to Ext
+                original_instance = self.pool.get('res.company')._get_instance_record(cr, uid).instance
+            else:
+                # IR or FO from scratch to instance
+                original_instance = pol.linked_sol_id.order_id.partner_id.name
+
+
             res[pol.id] = {
                 'customer_ref': pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False,
                 'ir_name_for_sync': pol.linked_sol_id and pol.linked_sol_id.order_id.name or '',
+                'original_instance': original_instance,
             }
 
         return res
@@ -656,6 +669,8 @@ class purchase_order_line(osv.osv):
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
         'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
         'loan_line_id': fields.many2one('sale.order.line', string='Linked loan line', readonly=True),
+
+        'original_instance': fields.function(_get_customer_ref, method=True, type='char', string='Original Instance', multi='custo_ref_ir_name'),
     }
 
     _defaults = {
