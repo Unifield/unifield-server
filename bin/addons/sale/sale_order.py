@@ -2455,6 +2455,7 @@ class sale_order_line(osv.osv):
             'sync_pushed_from_po': False,
             'cv_line_ids': False,
             'extra_qty': False,
+            'sourcing_date': False,
         })
 
         reset_if_not_set = ['ir_name_from_sync', 'in_name_goods_return', 'counterpart_po_line_id', 'instance_sync_order_ref']
@@ -2500,6 +2501,7 @@ class sale_order_line(osv.osv):
             'sync_pushed_from_po': False,
             'cv_line_ids': False,
             'extra_qty': False,
+            'sourcing_date': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False

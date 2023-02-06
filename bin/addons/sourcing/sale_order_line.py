@@ -281,7 +281,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'priority': line.order_id.priority,
                 'categ': line.order_id.categ,
                 'rts': line.order_id.ready_to_ship_date,
-                'rdd': line.procurement_request and line.order_id.delivery_requested_date or line.date_planned,
                 'procurement_request': line.order_id.procurement_request,
                 'loan_type': line.order_id.order_type in ['loan', 'loan_return'],
                 'estimated_delivery_date': self._get_date(cr, uid, line, context=context),
@@ -502,15 +501,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             store=False,
             multi='line_info',
         ),
-        'rdd': fields.function(
-            _get_line_values,
-            method=True,
-            string='RDD',
-            type='date',
-            readonly=True,
-            store=False,
-            multi='line_info',
-        ),
         'stock_uom_id': fields.related(
             'product_id',
             'uom_id',
@@ -531,6 +521,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             store=False,
             readonly=True,
             multi='line_info',
+        ),
+        'sourcing_date': fields.date(
+            string='Date of Sourcing',
+            readonly=True,
         ),
         'display_confirm_button': fields.function(
             _get_line_values,

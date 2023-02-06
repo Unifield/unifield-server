@@ -2,6 +2,8 @@
 
 from osv import osv
 from tools.translate import _
+from datetime import date, datetime
+from tools import DEFAULT_SERVER_DATE_FORMAT
 import netsvc
 
 
@@ -267,7 +269,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'sourced'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced', 'sourcing_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)
 
         # generate sync message manually :
         return_info = {}
@@ -287,7 +289,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced_v', 'sourcing_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)
 
         # generate sync message
         return_info = {}
@@ -307,7 +309,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'sourced_sy'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced_sy', 'sourcing_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)
 
         return True
 
@@ -321,7 +323,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'sourced_n'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced_n', 'sourcing_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)
 
         # generate sync message manually :
         return_info = {}

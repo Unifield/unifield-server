@@ -46,7 +46,7 @@
                     <button name="open_split_wizard" type="object" string="Split line" icon="terp-stock_effects-object-colorize" 
 						attrs="{'invisible': [('display_confirm_button', '=', False)]}" />
 					<field name="rts" invisible="1" />
-					<field name="rdd" readonly="True" />
+					<field name="date_planned" string="RDD" readonly="True" />
 					<field name="type" string="Proc. Method" on_change="onChangeType(type, location_id, supplier)"
 						attrs="{'readonly': ['|', ('state', '!=', 'validated'), ('loan_type', '=', True)]}" />
 					<field name="po_cft"
@@ -74,6 +74,7 @@
 						attrs="{'readonly': ['|', '|', ('po_cft', '=', 'cft'), ('state', '!=', 'validated'), ('type', '=', 'make_to_stock')]}"
 						on_change="onChangeSupplier(supplier, type)" />
 					<field name="customer" invisible="1" />
+					<field name="sourcing_date" invisible="1"/>
 					<field name="estimated_delivery_date" />
 					<button name="confirmLine" string="Source Line" icon="gtk-go-forward" type="object" attrs="{'invisible':[('display_confirm_button', '=', False)]}" />
 
