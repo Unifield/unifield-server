@@ -22,6 +22,7 @@
 from osv import osv, fields
 from tools.translate import _
 from datetime import datetime
+from product._common import rounding
 import decimal_precision as dp
 import logging
 import time
@@ -131,6 +132,11 @@ class composition_kit(osv.osv):
             for item in obj.composition_item_ids:
                 if item.item_qty <= 0:
                     raise osv.except_osv(_('Warning !'), _('Kit Items must have a quantity greater than 0.0.'))
+                if obj.composition_type == 'real':
+                    if item.hidden_batch_management_mandatory and not item.item_lot:
+                        raise osv.except_osv(_('Warning !'), _('Batch NB can not be empty for Kit Items that are Batch mandatory.'))
+                    if item.hidden_perishable_mandatory and not item.item_exp:
+                        raise osv.except_osv(_('Warning !'), _('Expiry Date can not be empty for Kit Items that are Perishable.'))
         self.write(cr, uid, ids, {'state': 'completed'}, context=context)
         return True
 
@@ -1208,6 +1214,28 @@ class composition_item(osv.osv):
                  'inactive_error': lambda *a: '',
                  }
 
+    def open_split_wizard(self, cr, uid, ids, context=None):
+        """
+        Open the split line wizard: the user can select the quantity for the new line
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.read(cr, uid, ids, ['item_qty'], context=context):
+            wiz_data = {'composition_item_id': line['id'], 'original_qty': line['item_qty']}
+            wiz_id = self.pool.get('split.composition.item.wizard').create(cr, uid, wiz_data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'split.composition.item.wizard',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': wiz_id,
+                    'context': context}
+
+        return True
+
     def _composition_item_constraint(self, cr, uid, ids, context=None):
         '''
         constraint on item composition 
@@ -1239,7 +1267,84 @@ class composition_item(osv.osv):
     _constraints = [(_composition_item_constraint, 'Constraint error on Composition Item.', []),
                     (_uom_constraint, 'Constraint error on Uom', [])]
 
+
 composition_item()
+
+
+class split_composition_item_wizard(osv.osv_memory):
+    _name = 'split.composition.item.wizard'
+    _description = 'Split a Composition List item'
+
+    _columns = {
+        'composition_item_id': fields.many2one('composition.item', string='Composition List item id', readonly=True),
+        'original_qty': fields.float(string='Original Quantity', readonly=True),
+        'old_line_qty': fields.float(digits=(16, 2), string='Old line quantity', readonly=True),
+        'new_line_qty': fields.float(digits=(16, 2), string='New line quantity', required=True),
+    }
+
+    _defaults = {
+        'new_line_qty': lambda *a: 0.00,
+    }
+
+    def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context=None):
+        '''
+        Update the old line qty according to the new line qty
+        '''
+        value = {'old_line_qty': original_qty - new_line_qty}
+        result = {'value': value}
+
+        if ids:
+            line = self.browse(cr, uid, ids[0], context=context)
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, line.composition_item_id.item_uom_id.id,
+                                                                       new_line_qty, 'new_line_qty', result=result)
+
+        return result
+
+    def split_line(self, cr, uid, ids, context=None, for_claim=False):
+        '''
+        Create a new KCL line and change the quantity of the old line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for split in self.browse(cr, uid, ids, context=context):
+            # Check if the sum of new line and old line qty is equal to the original qty
+            if split.new_line_qty > split.original_qty:
+                raise osv.except_osv(_('Error'), _('You cannot have a new quantity greater than the original quantity !'))
+            elif split.new_line_qty <= 0.00:
+                raise osv.except_osv(_('Error'), _('The new quantity must be positive !'))
+            elif split.new_line_qty == split.original_qty:
+                raise osv.except_osv(_('Error'), _('The new quantity must be different than the original quantity !'))
+            elif split.new_line_qty != rounding(split.new_line_qty, split.composition_item_id.item_uom_id.rounding):
+                raise osv.except_osv(_('Error'), _('The new quantity must be a multiple of %s !') % split.composition_item_id.item_uom_id.rounding)
+            else:
+                self.infolog(cr, uid, "The Composition List item id:%s (product: %s) has been split" % (
+                    split.composition_item_id.id, split.composition_item_id.item_product_id.default_code,
+                ))
+                # Change the qty of the old line
+                self.pool.get('composition.item').write(cr, uid, [split.composition_item_id.id], {
+                    'item_qty': split.original_qty - split.new_line_qty}, context=context)
+
+                # Copy the original line
+                ci_copy_data = {'item_qty': split.new_line_qty, 'item_lot': False, 'item_exp': False}
+                self.pool.get('composition.item').copy(cr, uid, split.composition_item_id.id, ci_copy_data, context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel(self, cr, uid, ids, context=None):
+        '''
+        Just close the wizard
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {'type': 'ir.actions.act_window_close'}
+
+
+split_composition_item_wizard()
 
 
 class product_product(osv.osv):
