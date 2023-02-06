@@ -303,6 +303,7 @@
         <field name="chained_auto_packing">manual</field>
         <field name="chained_picking_type">internal</field>
         <field name="service_location" eval="True" />
+        <field name="virtual_location">True</field>
     </record>
 
     <record id="stock_location_internal_client_view" model="stock.location">
