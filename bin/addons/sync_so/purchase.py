@@ -29,6 +29,7 @@ import uuid
 
 from sync_client import get_sale_purchase_logger
 from sync_client import SyncException
+from log_sale_purchase import RunWithoutException
 
 
 class purchase_order_line_sync(osv.osv):
@@ -185,7 +186,7 @@ class purchase_order_line_sync(osv.osv):
                     orig_po_line = self.browse(cr, uid, pol_values['resourced_original_line'], fields_to_fetch=['line_number', 'order_id'], context=context)
                     real_forced = self.pool.get('stock.move').search(cr, uid, [('id', 'in', in_lines_ids), ('state', 'in', ['cancel', 'cancel_r', 'done'])], limit=3, context=context)
                     in_forced = self.pool.get('stock.move').browse(cr, uid, real_forced or in_lines_ids[0:4], fields_to_fetch=['picking_id'], context=context)
-                    raise SyncException("%s: Line %s forced on %s, unable to C/R" % (orig_po_line.order_id.name, orig_po_line.line_number, ','.join([x.picking_id.name for x in in_forced])), target_object='in_forced_cr', target_id=orig_po_line.order_id.id)
+                    raise RunWithoutException("%s: Line %s forced on %s, unable to C/R" % (orig_po_line.order_id.name, orig_po_line.line_number, ','.join([x.picking_id.name for x in in_forced])))
                 if orig_po_line.linked_sol_id:
                     resourced_sol_id = self.pool.get('sale.order.line').search(cr, uid, [('resourced_original_line', '=', orig_po_line.linked_sol_id.id)], context=context)
                     ress_fo = orig_po_line.linked_sol_id.order_id.id
