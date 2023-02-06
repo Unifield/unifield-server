@@ -576,7 +576,7 @@ def reconnect_sync_server():
         f.close()
         if lines:
             try:
-                dbname = base64.decodestring(lines[0])
+                dbname = base64.decodestring(lines[0]).strip()
                 password = base64.decodestring(lines[1])
                 logger.info('dbname = %s' % dbname)
                 db, pool = pooler.get_db_and_pool(dbname)
@@ -611,6 +611,10 @@ def check_mako_xml():
     import tools
     logger.info("Check mako and xml files don't contain ExpandedColumnCount tag...")
     path_to_exclude = [os.path.join(tools.config['root_path'], 'backup')]
+    import time
+    print('sleep')
+    time.sleep(2)
+    print('endsleep')
     for file_path in find(tools.config['root_path']):
         full_path = os.path.join(tools.config['root_path'], file_path)
         if not os.path.isfile(full_path):
