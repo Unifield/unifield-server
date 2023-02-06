@@ -942,6 +942,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if not obj['procurement_request']:
                     self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
+        # US-11005
+        if not self.browse(cr, uid, ids[0], context=context).company_id.instance_id.po_fo_cost_center_id:
+            raise osv.except_osv(_('Warning !'), _('Add the cost center picked for PO/FO reference'))
+
         if 'partner_id' in vals:
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist', 'partner_type'], context=context)
             if partner.partner_type in ('internal', 'intermission', 'section'):
@@ -976,6 +980,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
+        if 'partner_id' in vals and vals.get('partner_id', False):
+            # US-11005
+            if not self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context).company_id.instance_id.po_fo_cost_center_id:
+                raise osv.except_osv(_('Warning !'), _('Add the cost center picked for PO/FO reference'))
 
         if not 'pricelist_id' in vals and vals.get('partner_id'):
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist', 'partner_type'], context=context)

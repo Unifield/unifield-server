@@ -1130,6 +1130,10 @@ class purchase_order(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist_purchase', 'partner_type'], context=context)
             if partner.partner_type in ('internal', 'intermission', 'section'):
                 vals['pricelist_id'] = partner.property_product_pricelist_purchase.id
+        if 'partner_id' in vals and vals.get('partner_id', False):
+            # US-11005
+            if not self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context).company_id.instance_id.po_fo_cost_center_id:
+                raise osv.except_osv(_('Warning !'), _('Add the cost center picked for PO/FO reference'))
 
         # common function for so and po
         vals = common_create(self, cr, uid, vals, type=get_type(self), context=context)
@@ -1233,6 +1237,10 @@ class purchase_order(osv.osv):
             ids = [ids]
 
         pol_obj = self.pool.get('purchase.order.line')
+
+        # US-11005
+        if not self.browse(cr, uid, ids[0], context=context).company_id.instance_id.po_fo_cost_center_id:
+            raise osv.except_osv(_('Warning !'), _('Add the cost center picked for PO/FO reference'))
 
         if not 'date_order' in vals:
             vals.update({'date_order': self.browse(cr, uid, ids[0]).date_order})

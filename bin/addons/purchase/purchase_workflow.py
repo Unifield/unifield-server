@@ -959,9 +959,6 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # US-11005
-        if not self.browse(cr, uid, ids[0], context=context).company_id.instance_id.po_fo_cost_center_id:
-            raise osv.except_osv(_('Warning !'), _('Add the cost center picked for PO/FO reference'))
         po = self.browse(cr, uid, ids[0], fields_to_fetch=['order_line'], context=context)
         return self.pool.get('purchase.order.line').validated(cr, uid, [pol.id for pol in po.order_line], context=context)
 
