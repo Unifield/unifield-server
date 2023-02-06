@@ -2187,6 +2187,30 @@ class sale_order_line(osv.osv):
 
         return res
 
+
+    def _defaults_instance_sync_order_ref_needed(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        if not context.get('fo_created_by_po_sync') or not context.get('sale_id'):
+            return False
+
+        cr.execute('''
+            select
+                so.id
+            from
+                sale_order so, sale_order_line other_sol
+            where
+                so.id = %s and
+                so.procurement_request = 'f' and
+                so.fo_created_by_po_sync = 't' and -- not a push flow
+                other_sol.order_id = so.id and
+                other_sol.state not in ('cancel', 'cancel_r') and
+                other_sol.instance_sync_order_ref is not null -- at least 1 other line has a IR / FO ref
+            group by so.id
+        ''', (context['sale_id'], ))
+
+        return cr.rowcount > 0
+
     def _get_instance_sync_order_ref_needed(self, cr, uid, ids, name, arg, context=None):
         '''
         Get data from FO
@@ -2221,7 +2245,7 @@ class sale_order_line(osv.osv):
         ''', (tuple(ids), ))
 
         for sol in cr.fetchall():
-            res[_id] = True
+            res[sol[0]] = True
 
         return res
 
@@ -2363,6 +2387,7 @@ class sale_order_line(osv.osv):
         'sync_pushed_from_po': False,
         'cancelled_by_sync': False,
         'ir_name_from_sync': '',
+        'instance_sync_order_ref_needed': _defaults_instance_sync_order_ref_needed,
     }
 
     def _check_stock_take_date(self, cr, uid, ids, context=None):
