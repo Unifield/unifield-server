@@ -29,7 +29,7 @@ import uuid
 
 from sync_client import get_sale_purchase_logger
 from sync_client import SyncException
-from log_sale_purchase import RunWithoutException
+from sync_client.log_sale_purchase import RunWithoutException
 
 
 class purchase_order_line_sync(osv.osv):
