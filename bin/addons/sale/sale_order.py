@@ -61,6 +61,11 @@ class sale_order(osv.osv):
     _name = "sale.order"
     _description = "Sales Order"
 
+    def __init__(self, pool, cr):
+        super(sale_order, self).__init__(pool, cr)
+        if cr.column_exists('sale_order', 'import_in_progress'):
+            cr.execute("update sale_order set import_in_progress='f' where import_in_progress='t'")
+
     def _where_calc(self, cr, uid, domain, active_test=True, context=None):
         '''
         overwrite to allow search on customer and self instance
