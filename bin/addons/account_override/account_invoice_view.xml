@@ -312,6 +312,7 @@
                     <field name="partner_id"/>
                     <field name="name"/>
                     <field name="origin"/>
+                    <field name="counterpart_inv_number"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="amount_total"/>
@@ -677,7 +678,7 @@
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'ivo')]</field>
             <field name="context">{'doc_type': 'ivo', 'type': 'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1, 'search_default_open_fy': 1}</field>
-            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="search_view_id" ref="account.view_account_invoice_filter_ivx_stv_isi"/>
         </record>
 
         <!-- Link between previous action and Intermission tree view -->
@@ -705,7 +706,7 @@
             <field name="view_id" ref="view_intermission_form"/>
             <field name="domain">[('doc_type', '=', 'ivi')]</field>
             <field name="context">{'doc_type': 'ivi', 'type': 'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True, 'search_default_open_fy': 1}</field>
-            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="search_view_id" ref="account.view_account_invoice_filter_ivx_stv_isi"/>
         </record>
 
         <!-- Link between previous action and Intermission tree view -->
