@@ -190,6 +190,7 @@ class sale_order_line(osv.osv):
                     'ir_name_from_sync': sol.ir_name_from_sync or False,
                     'sync_sourced_origin': sol.sync_sourced_origin,
                     'original_instance': sol.original_instance,
+                    'instance_sync_order_ref': sol.instance_sync_order_ref and sol.instance_sync_order_ref.id or False,
                 }
                 new_sol_id = self.copy(cr, uid, sol.id, sol_vals, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
@@ -687,7 +688,10 @@ class sale_order_line(osv.osv):
                     _('Line #%s: You have to select a product UoM in the same category than the UoM of the product.')
                     % (sol.line_number,)
                 )
-
+            if sol.instance_sync_order_ref_needed:
+                raise osv.except_osv(_('Error'),
+                                     _('Line #%s: You can not validate this line without filling "Order in sync. instance".')
+                                     % (sol.line_number,))
 
             supplier = sol.supplier
             # US-4576: Set supplier

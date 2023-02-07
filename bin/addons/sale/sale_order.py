@@ -2192,6 +2192,68 @@ class sale_order_line(osv.osv):
 
         return res
 
+
+    def _defaults_instance_sync_order_ref_needed(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        if not context.get('fo_created_by_po_sync') or not context.get('sale_id'):
+            return False
+
+        cr.execute('''
+            select
+                so.id
+            from
+                sale_order so, sale_order_line other_sol
+            where
+                so.id = %s and
+                so.procurement_request = 'f' and
+                so.fo_created_by_po_sync = 't' and -- not a push flow
+                other_sol.order_id = so.id and
+                other_sol.state not in ('cancel', 'cancel_r') and
+                other_sol.instance_sync_order_ref is not null -- at least 1 other line has a IR / FO ref
+            group by so.id
+        ''', (context['sale_id'], ))
+
+        return cr.rowcount > 0
+
+    def _get_instance_sync_order_ref_needed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Get data from FO
+        '''
+        if context is None:
+            context = {}
+
+        if not ids:
+            return {}
+
+        res = {}
+        for _id in ids:
+            res[_id] = False
+
+        cr.execute('''
+            select
+                sol.id
+            from
+                sale_order so, sale_order_line sol, sale_order_line other_sol
+            where
+                sol.id in %s and
+                sol.order_id = so.id and
+                sol.state = 'draft' and
+                so.procurement_request = 'f' and
+                so.fo_created_by_po_sync = 't' and -- not a push flow
+                sol.instance_sync_order_ref is null and
+                coalesce(sol.sync_linked_pol, '') = '' and  -- not created from a PO line (new line added)
+                other_sol.order_id = sol.order_id and
+                other_sol.state not in ('cancel', 'cancel_r') and
+                other_sol.instance_sync_order_ref is not null -- at least 1 other line has a IR / FO ref
+            group by sol.id
+        ''', (tuple(ids), ))
+
+        for sol in cr.fetchall():
+            res[sol[0]] = True
+
+        return res
+
     def _get_dpo_id(self, cr, uid, ids, name, arg, context=None):
         if context is None:
             context = {}
@@ -2308,6 +2370,7 @@ class sale_order_line(osv.osv):
         'loan_line_id': fields.many2one('purchase.order.line', string='Linked loan line', readonly=True),
 
         'original_instance': fields.char('Original Instance', size=128, readonly=1),
+        'instance_sync_order_ref_needed': fields.function(_get_instance_sync_order_ref_needed, method=True, type='boolean', store=False, string='Is instance_sync_order_ref needed ?'),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2331,6 +2394,7 @@ class sale_order_line(osv.osv):
         'sync_pushed_from_po': False,
         'cancelled_by_sync': False,
         'ir_name_from_sync': '',
+        'instance_sync_order_ref_needed': _defaults_instance_sync_order_ref_needed,
     }
 
     def _check_stock_take_date(self, cr, uid, ids, context=None):
