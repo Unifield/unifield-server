@@ -18,8 +18,8 @@
                             </div>
                         </html>
                     </group>
-                    <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="ref"/>
+                    <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="location_id" domain="[('usage','=','internal')]"
                            attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
@@ -264,6 +264,15 @@
             <field name="arch" type="xml">
                 <search string="Search Physical Inventory">
                     <group col="10" colspan="4">
+                        <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Physical Inventories"/>
+                        <filter icon="terp-stock_zoom" string="Counting" domain="[('state','=','counting')]" help="Counting Physical Inventories"/>
+                        <filter icon="gtk-paste-v" string="Counted" domain="[('state','=','counted')]" help="Counted Physical Inventories"/>
+                        <filter icon="terp-check" string="Validated" domain="[('state','=','validated')]" help="Validated Physical Inventories"/>
+                        <filter icon="terp-camera_test" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Physical Inventories"/>
+                        <filter icon="terp-dialog-close" string="Closed" domain="[('state','=','closed')]" help="Closed Physical Inventories"/>
+                        <filter icon="gtk-cancel" string="Cancelled" domain="[('state','=','cancel')]" help="Cancelled Physical Inventories"/>
+                        <separator orientation="vertical" />
+                        <field name="ref"/>
                         <field name="name"/>
                         <field name="date"/>
                         <field name="location_id" domain="[('usage','=','internal')]"/>
