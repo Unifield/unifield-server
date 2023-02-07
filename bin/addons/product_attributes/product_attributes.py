@@ -1671,6 +1671,17 @@ class product_attributes(osv.osv):
                     intstat_id = [intstat_id]
                 intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
                 unidata_product = intstat_code == 'unidata'
+                # Prevent Product Creator change during sync if there is stock in the Stock Mission Report
+                if context.get('sync_update_execution'):
+                    prod = self.browse(cr, uid, ids[0], fields_to_fetch=['default_code', 'international_status'], context=context)
+                    if vals['international_status'] != prod.international_status.id \
+                            and prod.international_status.code in ['local', 'itc', 'esc', 'hq', 'unidata'] \
+                            and self.check_exist_srml_stock(cr, uid, ids[0], context=context):
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('The Product Creator of the %s Product %s can not be modified if it has stock in the Stock Mission Report')
+                            % (prod.international_status.name, prod.default_code)
+                        )
 
         if 'default_code' in vals:
             if vals['default_code'] == 'XXX':
@@ -2369,6 +2380,24 @@ class product_attributes(osv.osv):
                 res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
         return res
 
+    def onchange_international_status(self, cr, uid, ids, international_status):
+        '''
+        Check if the international_status can be changed on Coordo or HQ
+        '''
+        res = {}
+        prods = self.browse(cr, uid, ids, fields_to_fetch=['company_id', 'international_status'])
+        for prod in prods:
+            inter_status = prod.international_status
+            instance_level = prod.company_id.instance_id.level
+            srml_stock_exist = self.check_exist_srml_stock(cr, uid, prod.id)
+            if inter_status.code == 'local' and instance_level == 'coordo' and srml_stock_exist:
+                res.update({'value': {'international_status': inter_status.id}, 'warning': {'title': _('Warning'),
+                            'message': _('In a Coordo instance, you can not change the Product Creator of a Local Product if it has stock in the Mission Stock Report')}})
+            elif inter_status.code in ['itc', 'esc', 'hq', 'unidata'] and instance_level == 'section' and srml_stock_exist:
+                res.update({'value': {'international_status': inter_status.id}, 'warning': {'title': _('Warning'),
+                            'message': _('In a HQ instance, you can not change the Product Creator of an ITC, ESC, HQ or Unidata Product if it has stock in the Mission Stock Report')}})
+        return res
+
     fake_ed = '2999-12-31'
     fake_bn = 'TO-BE-REPLACED'
 
@@ -2931,6 +2960,23 @@ class product_attributes(osv.osv):
             return {'value': {'perishable': True}}
         return {}
 
+    def check_exist_srml_stock(self, cr, uid, product_id, context=None):
+        '''
+        Check if there is stock in the Stock Mission Report Lines for a specific product
+        '''
+        if context is None:
+            context = {}
+
+        if not product_id:
+            raise osv.except_osv(_('Error'), _('Please specify which product to check'))
+        srml_domain = [
+            ('product_id', '=', product_id),
+            '|', '|', '|', '|', '|', '|', '|', '|', '|', '|',
+            ('stock_qty', '>', 0), ('in_pipe_coor_qty', '>', 0), ('cross_qty', '>', 0), ('in_pipe_qty', '>', 0),
+            ('cu_qty', '>', 0), ('wh_qty', '>', 0), ('secondary_qty', '>', 0), ('internal_qty', '>', 0),
+            ('quarantine_qty', '>', 0), ('input_qty', '>', 0), ('opdd_qty', '>', 0)
+        ]
+        return self.pool.get('stock.mission.report.line').search(cr, uid, srml_domain, limit=1, context=context) != []
 
 
     _constraints = [
