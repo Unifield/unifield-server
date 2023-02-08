@@ -76,6 +76,9 @@ class purchase_order_line(osv.osv):
                     sol_values['line_number'] = split_po.linked_sol_id.line_number
                     sol_values['original_line_id'] = split_po.linked_sol_id.id
                     sol_values['original_instance'] = split_po.linked_sol_id.original_instance
+
+                    if split_po.linked_sol_id.instance_sync_order_ref:
+                        sol_values['instance_sync_order_ref'] = split_po.linked_sol_id.instance_sync_order_ref.id
         return sol_values
 
 
