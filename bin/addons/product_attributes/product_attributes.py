@@ -1671,17 +1671,17 @@ class product_attributes(osv.osv):
                     intstat_id = [intstat_id]
                 intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
                 unidata_product = intstat_code == 'unidata'
-                # Prevent Product Creator change during sync if there is stock in the Stock Mission Report
-                if context.get('sync_update_execution'):
-                    prod = self.browse(cr, uid, ids[0], fields_to_fetch=['default_code', 'international_status'], context=context)
-                    if vals['international_status'] != prod.international_status.id \
-                            and prod.international_status.code in ['local', 'itc', 'esc', 'hq', 'unidata'] \
-                            and self.check_exist_srml_stock(cr, uid, ids[0], context=context):
-                        raise osv.except_osv(
-                            _('Error'),
-                            _('The Product Creator of the %s Product %s can not be modified if it has stock in the Stock Mission Report')
-                            % (prod.international_status.name, prod.default_code)
-                        )
+
+        # Prevent Product Type change during sync if there is stock in the Stock Mission Report
+        if 'type' in vals and context.get('sync_update_execution'):
+            prod = self.browse(cr, uid, ids[0], fields_to_fetch=['default_code', 'type', 'international_status'], context=context)
+            if vals['type'] != prod.type and prod.international_status.code in ['local', 'itc', 'esc', 'hq', 'unidata'] \
+                    and self.check_exist_srml_stock(cr, uid, ids[0], context=context):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The Product Type of the %s Product %s can not be modified if it has stock in the Stock Mission Report')
+                    % (prod.international_status.name, prod.default_code)
+                )
 
         if 'default_code' in vals:
             if vals['default_code'] == 'XXX':
@@ -2380,22 +2380,31 @@ class product_attributes(osv.osv):
                 res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
         return res
 
-    def onchange_international_status(self, cr, uid, ids, international_status):
+    def on_change_type(self, cr, uid, ids, type, context=None):
         '''
-        Check if the international_status can be changed on Coordo or HQ
+        Check if the type can be changed on Coordo or HQ
+        If type is service_with_reception, procure_method is set to make_to_order
         '''
+        if context is None:
+            context = {}
+
         res = {}
-        prods = self.browse(cr, uid, ids, fields_to_fetch=['company_id', 'international_status'])
+        prods = self.browse(cr, uid, ids, fields_to_fetch=['company_id', 'type', 'international_status'], context=context)
         for prod in prods:
             inter_status = prod.international_status
             instance_level = prod.company_id.instance_id.level
             srml_stock_exist = self.check_exist_srml_stock(cr, uid, prod.id)
             if inter_status.code == 'local' and instance_level == 'coordo' and srml_stock_exist:
-                res.update({'value': {'international_status': inter_status.id}, 'warning': {'title': _('Warning'),
-                            'message': _('In a Coordo instance, you can not change the Product Creator of a Local Product if it has stock in the Mission Stock Report')}})
+                res.update({'value': {'type': prod.type}, 'warning': {'title': _('Warning'),
+                            'message': _('In a Coordo instance, you can not change the Product Type of a Local Product if it has stock in the Mission Stock Report')}})
+                type = prod.type
             elif inter_status.code in ['itc', 'esc', 'hq', 'unidata'] and instance_level == 'section' and srml_stock_exist:
-                res.update({'value': {'international_status': inter_status.id}, 'warning': {'title': _('Warning'),
-                            'message': _('In a HQ instance, you can not change the Product Creator of an ITC, ESC, HQ or Unidata Product if it has stock in the Mission Stock Report')}})
+                res.update({'value': {'type': prod.type}, 'warning': {'title': _('Warning'),
+                            'message': _('In a HQ instance, you can not change the Product Type of an ITC, ESC, HQ or Unidata Product if it has stock in the Mission Stock Report')}})
+                type = prod.type
+
+        if type in ('consu', 'service', 'service_recep'):
+            res.update({'value': {'procure_method': 'make_to_order', 'supply_method': 'buy', }})
         return res
 
     fake_ed = '2999-12-31'
@@ -2977,7 +2986,6 @@ class product_attributes(osv.osv):
             ('quarantine_qty', '>', 0), ('input_qty', '>', 0), ('opdd_qty', '>', 0)
         ]
         return self.pool.get('stock.mission.report.line').search(cr, uid, srml_domain, limit=1, context=context) != []
-
 
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])

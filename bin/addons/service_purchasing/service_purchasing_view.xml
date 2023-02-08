@@ -1,22 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-
-        <record id="product_normal_form_view" model="ir.ui.view">
-            <field name="name">product.normal.form</field>
-            <field name="model">product.product</field>
-            <field name="type">form</field>
-            <field name="priority">20</field>
-            <field name="inherit_id" ref="product.product_normal_form_view" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//page[@string='Information']//field[@name='type']" position="replace">
-                        <field name="type" on_change="on_change_type(type)" />
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
         <record id="view_location_form" model="ir.ui.view">
             <field name="name">stock.location.form</field>
             <field name="model">stock.location</field>
