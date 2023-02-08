@@ -3317,7 +3317,7 @@ class sale_order_line(osv.osv):
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
-        if vals.get('instance_sync_order_ref'):
+        if vals.get('instance_sync_order_ref') and not vals.get('sync_sourced_origin'):
             vals['sync_sourced_origin'] = self.pool.get('sync.order.label').read(cr, uid, vals['instance_sync_order_ref'], ['name'])['name']
 
         so_line_id = super(sale_order_line, self).create(cr, uid, vals, context=context)
@@ -3370,7 +3370,7 @@ class sale_order_line(osv.osv):
         if not 'soq_updated' in vals:
             vals['soq_updated'] = False
 
-        if vals.get('instance_sync_order_ref'):
+        if vals.get('instance_sync_order_ref') and not vals.get('sync_sourced_origin'):
             if self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft'), ('sync_sourced_origin', '=', False)], context=context):
                 vals['sync_sourced_origin'] = self.pool.get('sync.order.label').read(cr, uid, vals['instance_sync_order_ref'], ['name'])['name']
 

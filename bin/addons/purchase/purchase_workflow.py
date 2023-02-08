@@ -255,6 +255,7 @@ class purchase_order_line(osv.osv):
                 sol_values.update({
                     'order_id': so_id,
                     'date_planned': pol.date_planned,
+                    'instance_sync_order_ref': pol.instance_sync_order_ref and pol.instance_sync_order_ref.id or False,
                 })
                 sol_values.update(self.get_split_info(cr, uid, pol, context))
                 if not sol_values.get('is_line_split'):
