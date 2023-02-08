@@ -205,7 +205,7 @@
                     <field name="name"/>
                     <field name="login"/>
                     <field name="address_id" string="Address"/>
-                    <field name="context_department_id" string="Department"/>
+                    <field name="context_department_id" completion="1" widget="selection" string="Department"/>
                     <field name="synchronize"/>
                 </search>
             </field>
