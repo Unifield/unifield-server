@@ -2234,18 +2234,20 @@ class sale_order_line(osv.osv):
             select
                 sol.id
             from
-                sale_order so, sale_order_line sol, sale_order_line other_sol
+                sale_order_line sol
+            inner join sale_order so on so.id = sol.order_id
+            inner join sale_order_line other_sol on other_sol.order_id = sol.order_id
+            left join purchase_order_line pol on pol.linked_sol_id = sol.id
             where
                 sol.id in %s and
-                sol.order_id = so.id and
                 sol.state = 'draft' and
                 so.procurement_request = 'f' and
                 so.fo_created_by_po_sync = 't' and -- not a push flow
                 sol.instance_sync_order_ref is null and
                 coalesce(sol.sync_linked_pol, '') = '' and  -- not created from a PO line (new line added)
-                other_sol.order_id = sol.order_id and
                 other_sol.state not in ('cancel', 'cancel_r') and
-                other_sol.instance_sync_order_ref is not null -- at least 1 other line has a IR / FO ref
+                other_sol.instance_sync_order_ref is not null and -- at least 1 other line has a IR / FO ref
+                pol.id is null -- if sol already sourced to PO it's too late to set the original IR ref
             group by sol.id
         ''', (tuple(ids), ))
 
