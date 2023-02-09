@@ -106,7 +106,7 @@
       </tr>
       <tr>
         <td>
-          <para style="table_header_label">Inventory name</para>
+          <para style="table_header_label">Inventory details</para>
         </td>
         <td>
           <para style="table_header_value">[[ o.name ]]</para>
