@@ -126,9 +126,13 @@ function doLoadingSuccess(app, url) {
             target = xhr.getResponseHeader('X-Target');
             active_id = xhr.getResponseHeader('active_id');
             keep_open = xhr.getResponseHeader('keep-open');
+            popup_message = xhr.getResponseHeader('popup_message');
         }
         if(target) {
             var _openAction;
+            if (popup_message) {
+                window.top.alert(popup_message);
+            }
             if (window.top.openAction) {
                 _openAction = window.top.openAction;
             } else {

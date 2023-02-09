@@ -479,7 +479,8 @@ def act_window_opener(action, data):
         cherrypy.response.headers['height'] = action.get('height')
     if action and action.get('width'):
         cherrypy.response.headers['width'] = action.get('width')
-
+    if action.get('popup_message'):
+        cherrypy.response.headers['popup_message'] = action['popup_message']
     return """<script type="text/javascript">
         window.top.openAction('%s', '%s');
     </script>
