@@ -83,6 +83,8 @@ class product_merged_wizard(osv.osv_memory):
 
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['form', 'tree'], context=context)
         res['res_id'] = wiz.new_product_id.id
+        if wiz.level == 'section':
+            res['popup_message'] = _("Products successfully merged")
         return res
 
     def do_hq_merge_product(self, cr, uid, ids, context=None):
