@@ -1828,7 +1828,7 @@ class product_attributes(osv.osv):
                     vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
 
         ud_unable_to_inactive = []
-        if 'active' in vals and not vals['active'] and not context.get('sync_update_execution') and unidata_product:
+        if 'active' in vals and not vals['active'] and not context.get('sync_update_execution') and unidata_product and not vals.get('kept_product_id'):
             ud_unable_to_inactive = self.unidata_products_used(cr, uid, ids)
             if not prod_state:
                 vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'archived')], context=context)[0]
@@ -2914,7 +2914,7 @@ class product_attributes(osv.osv):
 
     def merge_hq_product(self, cr, uid, kept_id, old_prod_id, context=None):
         """
-            method used at HQ level to merge UD products
+            method used at HQ level to merge UD products, and executed at mission level by sync
         """
         if context is None:
             context = {}
