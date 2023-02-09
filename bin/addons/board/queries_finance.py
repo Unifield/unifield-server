@@ -109,7 +109,7 @@ order by account_period.date_start, m.name;"""
         'headers': [_('Reconcile number'), _('Reconcile date'), _('Difference')],
         'query': """SELECT rec.name, 'rec_date', sum(l.credit-l.debit)
 from account_move_line l, account_move_reconcile rec, msf_instance inst
-where l.reconcile_id=rec.id and rec.instance_id=inst.id and not (rec.is_multi_instance='t' and inst.level='project') 
+where l.reconcile_id=rec.id and l.instance_id=inst.id and not (rec.is_multi_instance='t' and inst.level='project') 
 %s
 group by rec.id, rec.name
 having(abs(sum(l.credit-l.debit)) > 0.0001)
@@ -122,7 +122,7 @@ order by rec.name;
         'headers': [_('Reconcile number'), _('Reconcile date'), _('Difference')],
         'query': """SELECT rec.name, 'rec_date', sum(l.credit_currency-l.debit_currency)
 from account_move_line l, account_move_reconcile rec, msf_instance inst
-where l.reconcile_id=rec.id and rec.instance_id=inst.id and not (rec.is_multi_instance='t' and inst.level='project')
+where l.reconcile_id=rec.id and l.instance_id=inst.id and not (rec.is_multi_instance='t' and inst.level='project')
 %s
 group by rec.id, rec.name
 having(abs(sum(l.credit_currency-l.debit_currency)) > 0.0001 and count(distinct(l.currency_id))=1)
