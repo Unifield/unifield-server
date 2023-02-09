@@ -70,7 +70,7 @@ class sale_order_line_sync(osv.osv):
             sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
             sol_values['ir_name_from_sync'] = pol_dict.get('ir_name_for_sync', False)
             sol_values['original_instance'] = pol_dict.get('original_instance', False)
-            # Check if the new sync FO line comes from a PO with an IR Reference
+            # Check if the new sync FO line comes from a PO with an IR/FO Reference
             # If that's the case, put it on the new FO line
             if pol_dict.get('ir_name_for_sync', False):
                 order_label_ids = order_label_obj.search(cr, uid, [('name', '=', line_info.ir_name_for_sync),
