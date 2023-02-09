@@ -962,7 +962,7 @@ class tender_line(osv.osv):
 
     def _get_total_price(self, cr, uid, ids, field_name, arg, context=None):
         '''
-        return the total price
+        return the subtotal
         '''
         result = {}
         for line in self.browse(cr, uid, ids, context=context):
@@ -997,10 +997,10 @@ class tender_line(osv.osv):
         'date_planned': fields.related('tender_id', 'requested_date', type='date', string='Requested Date', store=False, write_relate=False),
         # functions
         'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
-        'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True),  # same precision as related field!
-        'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date", readonly=True),
-        'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
-        'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
+        'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Unit Price", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True),  # same precision as related field!
+        'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Confirmed DD", readonly=True),
+        'total_price': fields.function(_get_total_price, method=True, type='float', string="Subtotal", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
+        'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Currency', multi='total'),
         'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
         'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),
         'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State", write_relate=False),
@@ -1008,7 +1008,8 @@ class tender_line(osv.osv):
         'comment': fields.char(size=128, string='Comment'),
         'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
         'created_by_rfq': fields.boolean(string='Created by RfQ'),
-        'product_default_code': fields.related('product_id', 'default_code', type='char', string='Product Code', size=64, store=False, write_relate=False)
+        'product_default_code': fields.related('product_id', 'default_code', type='char', string='Product Code', size=64, store=False, write_relate=False),
+        'product_name': fields.related('product_id', 'name', type='char', string='Product Description', size=128, store=False, write_relate=False),
     }
 
     _defaults = {
