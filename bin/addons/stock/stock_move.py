@@ -1750,6 +1750,13 @@ class stock_move(osv.osv):
                         if has_linked_pol:
                             context.pop('sol_done_instead_of_cancel')
 
+            # Remove all KCL references from the OUT process wizard lines linked to the move
+            if move.product_id.subtype == 'kit':
+                out_m_proc_obj = self.pool.get('outgoing.delivery.move.processor')
+                out_m_proc_ids = out_m_proc_obj.search(cr, uid, [('move_id', '=', move.id), ('composition_list_id', '!=', False)], context=context)
+                if out_m_proc_ids:
+                    out_m_proc_obj.write(cr, uid, out_m_proc_ids, {'composition_list_id': False}, context=context)
+
         self.action_done(cr, uid, move_to_done, context=context)
 
         # Search only non unlink move

@@ -158,7 +158,7 @@
 				            		<field name="item_uom_id" on_change="onchange_uom_qty(item_uom_id, item_qty)" domain="[('uom_by_product', '=', item_product_id)]" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
 				            			attrs="{'readonly': ['|', ('hidden_asset_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
-				            		<field name="kcl_id" attrs="{'readonly': ['|', '|', '|', ('item_product_id', '=', False), ('product_subtype', '!=', 'kit'), ('kit_state', 'not in', ['', 'draft', 'completed']), ('item_uom_rounding_is_pce', '=', False)]}" />
+				            		<field name="kcl_id" on_change="onchange_kcl_id(kcl_id, item_qty)" attrs="{'readonly': ['|', '|', '|', ('item_product_id', '=', False), ('product_subtype', '!=', 'kit'), ('kit_state', 'not in', ['', 'draft', 'completed']), ('item_uom_rounding_is_pce', '=', False)]}" />
 				            		<field name="comment" />
 									<field name="item_lot"
 				            			on_change="on_lot_change(item_product_id, item_lot, context)"

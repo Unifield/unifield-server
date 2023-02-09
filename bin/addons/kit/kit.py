@@ -509,7 +509,7 @@ class composition_kit(osv.osv):
                 move = move_obj.browse(cr, uid, move_ids, fields_to_fetch=['picking_id', 'kit_creation_id_stock_move'], context=context)[0]
                 res[kcl_id] = move.kit_creation_id_stock_move and move.kit_creation_id_stock_move.name or move.picking_id.name
             elif out_m_proc_ids:
-                out_m_proc = out_m_proc_obj.browse(cr, uid, move_ids, fields_to_fetch=['wizard_id'], context=context)[0]
+                out_m_proc = out_m_proc_obj.browse(cr, uid, out_m_proc_ids, fields_to_fetch=['wizard_id'], context=context)[0]
                 res[kcl_id] = out_m_proc.wizard_id.picking_id.name
             elif racl_ids:
                 res[kcl_id] = racl_obj.browse(cr, uid, racl_ids, fields_to_fetch=['rac_id'], context=context)[0].rac_id.name
@@ -1132,6 +1132,18 @@ class composition_item(osv.osv):
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'item_qty', result=res)
         if not uom_id or self.pool.get('product.uom').browse(cr, uid, uom_id, fields_to_fetch=['rounding']).rounding != 1:
             res['value'].update({'item_uom_rounding_is_pce': False, 'kcl_id': False})
+
+        return res
+
+    def onchange_kcl_id(self, cr, uid, ids, kcl_id, qty):
+        '''
+        Check the KCL with the qty
+        '''
+        res = {}
+
+        if kcl_id and qty and qty > 1:
+            res.update({'value': {'kcl_id': False}, 'warning': {'title': _('Warning'),
+                        'message': _('Kit Items with a KCL Reference must not have a quantity greater than 1.')}})
 
         return res
 
