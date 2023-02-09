@@ -124,6 +124,7 @@ class composition_kit(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        lot_obj = self.pool.get('stock.production.lot')
         for obj in self.browse(cr, uid, ids, context=context):
             if not len(obj.composition_item_ids):
                 raise osv.except_osv(_('Warning !'), _('Kit Composition cannot be empty.'))
@@ -137,6 +138,18 @@ class composition_kit(osv.osv):
                         raise osv.except_osv(_('Warning !'), _('Batch NB can not be empty for Kit Items that are Batch mandatory.'))
                     if item.hidden_perishable_mandatory and not item.item_exp:
                         raise osv.except_osv(_('Warning !'), _('Expiry Date can not be empty for Kit Items that are Perishable.'))
+                    if item.item_exp:
+                        if item.item_lot:
+                            if not lot_obj.search_exist(cr, uid, [('product_id', '=', item.item_product_id.id), ('name', '=', item.item_lot),
+                                                                  ('life_date', '=', item.item_exp)], context=context):
+                                raise osv.except_osv(_('Warning !'), _('There is no existing batch for %s with the Name %s and the Expiry Date %s.') %
+                                                     (item.item_product_id.default_code, item.item_lot, datetime.strptime(item.item_exp, '%Y-%m-%d').strftime('%d/%m/%Y')))
+                        else:
+                            if not lot_obj.search_exist(cr, uid, [('product_id', '=', item.item_product_id.id),
+                                                                  ('life_date', '=', item.item_exp)], context=context):
+                                raise osv.except_osv(_('Warning !'), _('There is no existing batch for %s with the Expiry Date %s.') %
+                                                     (item.item_product_id.default_code, datetime.strptime(item.item_exp, '%Y-%m-%d').strftime('%d/%m/%Y')))
+
         self.write(cr, uid, ids, {'state': 'completed'}, context=context)
         return True
 
