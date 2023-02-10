@@ -243,9 +243,9 @@
                                         context="{'nom_configurator': True}"
                                         icon="terp-go-week" />
                                     <field name="product_uom_qty" string="Qty" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_qty_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True, price_unit, context)"/>
-                                    <field name="product_uom" attrs="{'readonly': [('fake_state', '!=', '')]}"/>
+                                    <field name="product_uom" />
                                     <field name="price_unit" on_change="change_price_unit(product_uom_qty, price_unit, context)"/>
-                                    <field name="price_subtotal"/>
+                                    <field name="price_subtotal" />
                                     <field name="currency_id"/>
                                     <field name="original_changed" string="CHG" readonly="1"/>
                                     <field name="date_planned" attrs="{'readonly': [('fake_state', 'not in', ['draft', 'validated'])]}"/>
@@ -257,7 +257,7 @@
                                     <field name="kit_pol_check_sale_order_line" invisible="True"/>
                                     <field name="so_state_stored" invisible="True"/>
                                     <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check_sale_order_line', '=', False), ('so_state_stored', 'not in', ['draft', 'validated'])]}"/>
-                                    <field name="type" attrs="{'readonly': [('fake_state', '!=', '')]}"/>
+                                    <field name="type" />
                                     <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="state_to_display"/>
