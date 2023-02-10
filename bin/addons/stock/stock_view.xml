@@ -1115,6 +1115,7 @@
                         <separator string="Picking" colspan="2" />
                         <field name="picking_id" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"/>
                         <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                        <field name="composition_list_id" readonly="1" />
                     </group>
 
                     <group colspan="2" col="2">

@@ -45,6 +45,7 @@
                     <field name="asset_check" invisible="1" />
                     <field name="location_id" invisible="1" />
                     <field name="ssl_check" invisible="1" widget="null_boolean" />
+                    <field name="uom_rounding_is_pce" invisible="1" />
                     <!-- Visible fields -->
                     <field name="line_number" string="Line" />
                     <field name="product_id" string="Product" />
@@ -60,8 +61,8 @@
                            attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}"
                            />
                     <field name="composition_list_id"
-                           domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real')]"
-                           attrs="{'readonly': [('kit_check', '=', False)]}"
+                           domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real'), ('kcl_used_by', '=', False)]"
+                           attrs="{'readonly': ['|', ('kit_check', '=', False), ('uom_rounding_is_pce', '=', False)]}"
                            />
                     <field name="ordered_quantity" />
                     <field name="ordered_uom_id" />
