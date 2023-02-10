@@ -227,160 +227,37 @@
                                 filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="'3'" o2m_selectable="2"
                                 >
-                                <form string="Sales Order Lines">
-                                    <notebook>
-                                        <page string="Order Line">
-                                            <field colspan="4" context="categ=parent.categ,partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,warehouse=parent.warehouse_id,uom=product_uom,available_for_restriction=parent.partner_type,search_default_not_restricted=1" name="product_id" on_change="product_id_on_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], True, parent.date_order, product_packaging, parent.fiscal_position, False, context)" domain="[('sale_ok', '=', True)]" default_focus="1"/>
-                                            <field name="product_uom_qty" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_qty_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True, price_unit, context)"/>
-                                            <field groups="product.group_uos" name="product_uos_qty" invisible="1"/>
-                                            <field groups="product.group_uos" name="product_uos" invisible="1"/>
-                                            <field name="product_uom" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" domain="[('uom_by_product', '=', product_id)]"/>
-                                            <field name="product_packaging" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_packaging_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, False)" domain="[('product_id','=',product_id)]" invisible="1"/>
-                                            <newline/>
-                                            <field name="price_unit" on_change="change_price_unit(product_uom_qty, price_unit, context)"/>
-                                            <field name="supplier" invisible="True"/>
-                                            <field name="po_cft" invisible="True"/>
-                                            <field name="currency_id" invisible="False"/>
-                                            <newline/>
-                                            <field name="functional_subtotal"/>
-                                            <field name="functional_currency_id"/>
-                                            <field name="discount"/>
-                                            <field name="type" on_change="requested_type_change(product_id, type)"/>
-                                            <field name="so_state_stored" invisible="True"/>
-                                            <field name="date_planned" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
-                                            <field name="esti_dd" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
-                                            <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}"/>
-                                            <field name="stock_take_date"/>
-                                            <field name="display_resourced_orig_line"/>
-                                            <field name="sync_linked_pol" invisible="True"/>
-                                            <field name="sync_sourced_origin" invisible="True"/>
-                                            <field name="instance_sync_order_ref_needed" invisible="True"/>
-                                            <field name="instance_sync_order_ref" domain="[('order_id', '=', context.get('sale_id', 0))]" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('sync_sourced_origin', '!=', False), ('instance_sync_order_ref_needed', '=', False)]}" on_change="on_change_instance_sync_order_ref(instance_sync_order_ref)"/>
-                                            <separator colspan="4" string="Changes"/>
-                                            <group colspan="4">
-                                                <group colspan="2">
-                                                    <field name="original_product" colspan="1" readonly="1"/>
-                                                    <field name="original_qty" colspan="1" readonly="1"/>
-                                                    <field name="original_price" colspan="1" readonly="1"/>
-                                                    <field name="original_uom" colspan="1" readonly="1"/>
-                                                </group>
-                                                <field name="modification_comment" colspan="2"/>
-                                            </group>
-                                            <newline/>
-                                            <field name="vat_ok" invisible="1"/>
-                                            <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
-                                                <separator colspan="5" string="Taxes"/>
-                                                <field colspan="4" name="tax_id" nolabel="1" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
-                                            </group>
-                                            <group colspan="4" col="5" groups="base.group_extended">
-                                                <separator colspan="5" string="States"/>
-                                                <field name="state"/>
-                                                <field name="invoiced" invisible="1"/>
-                                                <group attrs="{'invisible':[('invoiced','=',True)]}">
-                                                 </group>
-                                            </group>
-                                        </page>
-                                        <page string="Nomenclature Selection">
-                                            <group colspan="4" col="2">
-                                                <field name="nomenclature_code" colspan="2" invisible="True"/>
-                                                <field name="nomenclature_description" colspan="2" readonly="True"/>
-                                                <field name="comment" colspan="2" attrs="{'required':[('product_id', '=', False)]}"/>
-                                            </group>
-                                            <newline/>
-                                            <group colspan="2" col="5">
-                                                <separator string="Mandatory Levels" colspan="5"/>
-                                                <group colspan="4" col="2">
-                                                    <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection" on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}"/>
-                                                    <field name="nomen_manda_1" domain="[('level', '=', '1'), ('type', '=', 'mandatory')]" widget="selection" get_selection="get_nomen" on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}"/>
-                                                    <field name="nomen_manda_2" domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '!=', False)]" widget="selection" get_selection="get_nomen" on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}"/>
-                                                    <field name="nomen_manda_3" domain="[('level', '=', '3'), ('type', '=', 'mandatory')]" widget="selection" get_selection="get_nomen" on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
-                                                </group>
-                                            </group>
-                                            <group colspan="2" col="5">
-                                                <separator string="Optional Levels" colspan="4"/>
-                                                <group colspan="4" col="2">
-                                                    <field name="nomen_sub_0" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
-                                                    <field name="nomen_sub_1" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
-                                                    <field name="nomen_sub_2" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
-                                                    <field name="nomen_sub_3" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
-                                                    <field name="nomen_sub_4" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
-                                                    <field name="nomen_sub_5" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
-                                                </group>
-                                            </group>
-                                        </page>
-                                        <page string="Notes">
-                                            <field colspan="4" name="notes" nolabel="1"/>
-                                        </page>
-                                    </notebook>
-                                    <newline/>
-                                    <field name="to_correct_ok" readonly="1" invisible="1"/>
-                                    <field name="show_msg_ok" readonly="1" invisible="1"/>
-                                    <field name="inactive_product" invisible="1"/>
-                                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
-                                        <html>
-                                            <style>
-                                    #error_message_unifield 
-                                    {
-                                        border-style: solid;
-                                        border-width: 1px;
-                                        border-radius: 5px;
-                                        border-color: black;
-                                        background-color: #F0EBA4;
-                                    }
-
-                                    #view_form #error_message_unifield .readonlyfield
-                                    {
-                                        border-style: none;
-                                        padding: 5px;
-                                        color: red;
-                                        background-color: #F0EBA4;
-                                        font-weight: bold;
-                                        text-transform: uppercase;
-                                        width: 98%%;
-                                    }
-
-                                    #error_message_unifield p, #error_message_unifield span
-                                    {
-                                        height: 1em;
-                                        min-height: 1em;
-                                        color: red;
-                                        font-weight: bold;
-                                        text-transform: uppercase;
-                                        padding: 5px;
-                                        width: 90%%;
-                                    }
-                                </style>
-                                            <div id="error_message_unifield">
-                                                <field name="text_error" nolabel="1" readonly="1" colspan="4" attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
-                                                <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="6"/>
-                                            </div>
-                                        </html>
-                                    </group>
-                                    <newline/>
-                                </form>
-                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or instance_sync_order_ref_needed == True;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}">
+                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or (not default_code and not nomenclature_description) or instance_sync_order_ref_needed == True;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}" editable="both">
                                     <button name="tree_button" string="Add Line" attrs="{'invisible': [('state', '!=', 'validated')]}" />
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
-                                    <field name="line_number"/>
-                                    <field name="default_code"/>
-                                    <field name="default_name"/>
-                                    <field name="comment"/>
-                                    <field name="nomenclature_description"/>
-                                    <field name="product_uom_qty" string="Qty"/>
-                                    <field name="original_changed" readonly="1"/>
-                                    <field name="product_uom" string="UoM"/>
-                                    <field name="kc_dg"/>
-                                    <field name="date_planned"/>
-                                    <field name="confirmed_delivery_date"/>
-                                    <field name="discount"/>
-                                    <field name="stock_take_date"/>
-                                    <field name="price_subtotal"/>
+                                    <field name="line_number" readonly="1"/>
+                                    <field name="default_code" displayon="noteditable"/>
+                                    <field name="default_name" displayon="noteditable"/>
+                                    <field name="product_id" context="categ=parent.categ,partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,warehouse=parent.warehouse_id,uom=product_uom,available_for_restriction=parent.partner_type,search_default_not_restricted=1" on_change="product_id_on_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], True, parent.date_order, product_packaging, parent.fiscal_position, False, parent.categ, context)" domain="[('sale_ok', '=', True)]" attrs="{'required': [('comment', '=', False)]}" displayon="editable"/>
+                                    <field name="comment" attrs="{'required': [('product_id', '=', False)]}"/>
+                                    <field name="nomenclature_description" readonly="1"/>
+                                    <button name="openform"
+                                        special="openform"
+                                        string="Configurator"
+                                        attrs="{'invisible': ['|', ('default_code', '!=', False), ('fake_state', 'not in', ['draft', 'validated'])]}"
+                                        context="{'nom_configurator': True}"
+                                        icon="terp-go-week" />
+                                    <field name="product_uom_qty" string="Qty" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_qty_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True, price_unit, context)"/>
+                                    <field name="product_uom" />
+                                    <field name="price_unit" on_change="change_price_unit(product_uom_qty, price_unit, context)"/>
+                                    <field name="price_subtotal" />
                                     <field name="currency_id"/>
+                                    <field name="original_changed" string="CHG" readonly="1"/>
+                                    <field name="date_planned" attrs="{'readonly': [('fake_state', 'not in', ['draft', 'validated'])]}"/>
+                                    <field name="esti_dd" attrs="{'readonly': [('fake_state', 'not in', ['draft', 'validated'])]}"/>
+                                    <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}"/>
+                                    <field name="stock_take_date" readonly="1"/>
+                                    <button name="button_analytic_distribution" string="Analytical distribution" type="object" icon="terp-stock_symbol-selection"/>
+                                    <field name="analytic_distribution_state_recap" string="AD"/>
                                     <field name="kit_pol_check_sale_order_line" invisible="True"/>
                                     <field name="so_state_stored" invisible="True"/>
                                     <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check_sale_order_line', '=', False), ('so_state_stored', 'not in', ['draft', 'validated'])]}"/>
-                                    <button name="button_analytic_distribution" string="Analytical distribution" type="object" icon="terp-stock_symbol-selection"/>
-                                    <field name="analytic_distribution_state_recap"/>
+                                    <field name="type" />
                                     <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="state_to_display"/>
@@ -478,6 +355,143 @@
             </field>
         </record>
 
+        <record id="sale_order_line_form" model="ir.ui.view">
+            <field name="name">sale.order.line.form</field>
+            <field name="model">sale.order.line</field>
+            <field name="type">form</field>
+            <field name="priority">15</field>
+            <field name="arch" type="xml">
+                <form string="Sales Order Line">
+                    <notebook>
+                        <page string="Order Line" name="orderline">
+                            <separator string="Product" colspan="4" />
+                            <field colspan="4" context="categ=parent.categ,partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,warehouse=parent.warehouse_id,uom=product_uom,available_for_restriction=parent.partner_type,search_default_not_restricted=1" name="product_id" on_change="product_id_on_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], True, parent.date_order, product_packaging, parent.fiscal_position, False, parent.categ, context)" domain="[('sale_ok', '=', True)]" default_focus="1" string="Product Code"/>
+                            <field name="comment" colspan="4" attrs="{'required': [('product_id', '=', False)]}"/>
+                            <field name="product_uom_qty" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_qty_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True, price_unit, context)"/>
+                            <field groups="product.group_uos" name="product_uos_qty" invisible="1"/>
+                            <field groups="product.group_uos" name="product_uos" invisible="1"/>
+                            <field name="product_uom" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" domain="[('uom_by_product', '=', product_id)]"/>
+                            <field name="product_packaging" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_packaging_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, False)" domain="[('product_id','=',product_id)]" invisible="1"/>
+                            <newline/>
+                            <field name="price_unit" on_change="change_price_unit(product_uom_qty, price_unit, context)"/>
+                            <field name="supplier" invisible="True"/>
+                            <field name="po_cft" invisible="True"/>
+                            <field name="currency_id" invisible="False"/>
+                            <newline/>
+                            <field name="functional_subtotal"/>
+                            <field name="functional_currency_id"/>
+                            <field name="discount" attrs="{'readonly': [('state', '!=', '')]}"/>
+                            <field name="type" attrs="{'readonly': [('state', '!=', '')]}"/>
+                            <field name="date_planned" readonly="1"/>
+                            <field name="esti_dd" readonly="1"/>
+                            <field name="confirmed_delivery_date" readonly="1"/>
+                            <field name="stock_take_date"/>
+                            <field name="display_resourced_orig_line"/>
+                            <field name="sync_linked_pol" invisible="True"/>
+                            <field name="sync_sourced_origin" invisible="True"/>
+                            <field name="instance_sync_order_ref_needed" invisible="True"/>
+                            <field name="instance_sync_order_ref" domain="[('order_id', '=', context.get('sale_id', 0))]" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('sync_sourced_origin', '!=', False), ('instance_sync_order_ref_needed', '=', False)]}" on_change="on_change_instance_sync_order_ref(instance_sync_order_ref)"/>
+                            <separator colspan="4" string="Changes"/>
+                            <group colspan="4">
+                                <group colspan="2">
+                                    <field name="original_product" colspan="1" readonly="1"/>
+                                    <field name="original_qty" colspan="1" readonly="1"/>
+                                    <field name="original_price" colspan="1" readonly="1"/>
+                                    <field name="original_uom" colspan="1" readonly="1"/>
+                                </group>
+                                <field name="modification_comment" colspan="2"/>
+                            </group>
+                            <newline/>
+                            <field name="vat_ok" invisible="1"/>
+                            <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
+                                <separator colspan="5" string="Taxes"/>
+                                <field colspan="4" name="tax_id" nolabel="1" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                            </group>
+                            <group colspan="4" col="5" groups="base.group_extended">
+                                <separator colspan="5" string="States"/>
+                                <field name="state"/>
+                                <field name="invoiced" invisible="1"/>
+                                <group attrs="{'invisible':[('invoiced','=',True)]}">
+                                 </group>
+                            </group>
+                            <separator string="Notes" colspan="4" />
+                            <field colspan="4" name="notes" nolabel="1"/>
+                        </page>
+                        <page string="Nomenclature Selection" name="nomenselection">
+                            <group colspan="4" col="2">
+                                <field name="nomenclature_code" colspan="2" invisible="True"/>
+                                <field name="nomenclature_description" colspan="2" readonly="True"/>
+                            </group>
+                            <newline/>
+                            <group colspan="2" col="5">
+                                <separator string="Mandatory Levels" colspan="5"/>
+                                <group colspan="4" col="2">
+                                    <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection" on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}"/>
+                                    <field name="nomen_manda_1" domain="[('level', '=', '1'), ('type', '=', 'mandatory')]" widget="selection" get_selection="get_nomen" on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}"/>
+                                    <field name="nomen_manda_2" domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '!=', False)]" widget="selection" get_selection="get_nomen" on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}"/>
+                                    <field name="nomen_manda_3" domain="[('level', '=', '3'), ('type', '=', 'mandatory')]" widget="selection" get_selection="get_nomen" on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                </group>
+                            </group>
+                            <group colspan="2" col="5">
+                                <separator string="Optional Levels" colspan="4"/>
+                                <group colspan="4" col="2">
+                                    <field name="nomen_sub_0" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                    <field name="nomen_sub_1" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                    <field name="nomen_sub_2" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                    <field name="nomen_sub_3" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                    <field name="nomen_sub_4" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                    <field name="nomen_sub_5" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                    <newline/>
+                    <field name="to_correct_ok" readonly="1" invisible="1"/>
+                    <field name="show_msg_ok" readonly="1" invisible="1"/>
+                    <field name="inactive_product" invisible="1"/>
+                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}" colspan="4">
+                        <html>
+                            <style>
+                            #error_message_unifield
+                            {
+                                border-style: solid;
+                                border-width: 1px;
+                                border-radius: 5px;
+                                border-color: black;
+                                background-color: #F0EBA4;
+                            }
+
+                            #view_form #error_message_unifield .readonlyfield
+                            {
+                                border-style: none;
+                                padding: 5px;
+                                color: red;
+                                background-color: #F0EBA4;
+                                font-weight: bold;
+                                text-transform: uppercase;
+                                width: 98%%;
+                            }
+
+                            #error_message_unifield p, #error_message_unifield span
+                            {
+                                height: 1em;
+                                min-height: 1em;
+                                color: red;
+                                font-weight: bold;
+                                text-transform: uppercase;
+                                padding: 5px;
+                                width: 90%%;
+                            }
+                            </style>
+                            <div id="error_message_unifield">
+                                <field name="text_error" nolabel="1" readonly="1" colspan="4" attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
+                                <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="6"/>
+                            </div>
+                        </html>
+                    </group>
+                </form>
+            </field>
+        </record>
 
         <record id="view_sales_order_filter" model="ir.ui.view">
             <field name="name">sale.order.list.select</field>
@@ -652,47 +666,8 @@
                 </tree>
             </field>
         </record>
-        <record id="view_order_line_form2" model="ir.ui.view">
-            <field name="name">sale.order.line.form2</field>
-            <field name="model">sale.order.line</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Sales Order Lines">
-                    <group colspan="4" col="6">
-                        <field name="order_id"/>
-                        <field name="order_partner_id" readonly="1" invisible="1"/>
-                        <field name="invoiced"/>
 
-                        <field name="product_id" readonly="1"/>
-                        <field name="product_uom_qty" readonly="1"/>
-                        <field name="product_uom"/>
-
-                        <field colspan="4" name="name" groups="base.group_extended"/>
-                        <field name="company_id" groups="base.group_multi_company" readonly="1"/>
-                    </group>
-                    <separator colspan="4" string="Price"/>
-                    <group colspan="4" col="6">
-                        <field name="price_unit"/>
-                        <field name="discount"/>
-                        <field name="price_subtotal"/>
-                    </group>
-                    <separator colspan="4" string="Notes"/>
-                    <field colspan="4" name="notes" nolabel="1"/>
-                    <separator colspan="4"/>
-                    <field name="state"/>
-                    <group col="3" colspan="2">
-                        <button name="button_cancel"
-                            string="Cancel" type="object"
-                            icon="gtk-cancel"
-                            states="confirmed,exception"/>
-                        <button name="button_done"
-                            string="Done" type="object"
-                            states="confirmed,exception"
-                            icon="gtk-go-forward" />
-                    </group>
-                </form>
-            </field>
-        </record>
+        <!-- WARNING: removed view view_order_line_form2 used in BAR -->
 
         <record id="view_sales_order_line_filter" model="ir.ui.view">
             <field name="name">sale.order.line.select</field>
