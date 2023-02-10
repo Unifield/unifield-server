@@ -667,7 +667,6 @@
             </field>
         </record>
 
-        <!-- WARNING: removed view view_order_line_form2 used in BAR -->
 
         <record id="view_sales_order_line_filter" model="ir.ui.view">
             <field name="name">sale.order.line.select</field>
