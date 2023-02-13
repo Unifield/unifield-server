@@ -453,8 +453,8 @@ class hq_report_ocb(report_sxw.report_sxw):
         if context.get('poc_export'):
             add_column_partner_sql = ', id'
             add_column_employee_sql = ', e.id'
-            add_column_rawdata = ", aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, am.id as DATABASE_ID, ocb_vi.line_number as LINE_NUMBER  "
-            add_column_bs_entries = " , aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, aml.move_id as DATABASE_ID, ocb_vi.line_number as LINE_NUMBER "
+            add_column_rawdata = ", aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, am.id as DATABASE_ID, ocb_vi.line_number as LINE_NUMBER, mapping.mapping_value as HQ_system_account_code  "
+            add_column_bs_entries = " , aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, aml.move_id as DATABASE_ID, ocb_vi.line_number as LINE_NUMBER, mapping.mapping_value as HQ_system_account_code "
         else:
             add_column_partner_sql = ""
             add_column_employee_sql = ""
@@ -579,6 +579,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                      inner join account_period AS p2 on am.period_id = p2.id
                     left outer join hr_employee hr on hr.id = aml.employee_id
                     left join ocb_vi_export_number ocb_vi on ocb_vi.move_id=aml.move_id and ocb_vi.move_line_id=aml.id and ocb_vi.analytic_line_id=al.id
+                    left join account_export_mapping mapping on mapping.account_id = a.id
                 WHERE
                 aa3.category = 'FUNDING'
                 AND p2.number not in (0, 16)
@@ -618,7 +619,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 INNER JOIN res_currency AS cc ON e.currency_id = cc.id
                 INNER JOIN msf_instance AS i ON aml.instance_id = i.id
                 LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
-                LEFT JOIN ocb_vi_export_number ocb_vi on ocb_vi.move_id=aml.move_id and ocb_vi.move_line_id=aml.id and ocb_vi.analytic_line_id=aal.id
+                LEFT JOIN ocb_vi_export_number ocb_vi ON ocb_vi.move_id=aml.move_id AND ocb_vi.move_line_id=aml.id AND ocb_vi.analytic_line_id=aal.id
+                LEFT JOIN account_export_mapping mapping ON mapping.account_id = a.id
                 WHERE aal.id IS NULL
                 AND aml.period_id = %s
                 AND a.shrink_entries_for_hq != 't'
@@ -654,7 +656,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                               'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination',
                               'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency',
                               'Functional debit', 'Functional credit', 'Functional CCY', 'Emplid', 'Partner DB ID',
-                              'PARTNER_ID', 'EMPLOYEE_ID', 'DATABASE_ID', 'LINE_NUMBER' ]
+                              'PARTNER_ID', 'EMPLOYEE_ID', 'DATABASE_ID', 'LINE_NUMBER', 'HQ system account code' ]
 
         else:
             partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive', 'Notes']

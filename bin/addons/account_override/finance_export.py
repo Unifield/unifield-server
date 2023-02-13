@@ -192,10 +192,8 @@ class finance_archive():
             sql = "INSERT INTO ocb_vi_export_number (move_id, move_line_id, analytic_line_id) (%s)" % sql
 
         if fileparams.get('query_params', False):
-            print cr.mogrify(sql, fileparams['query_params'])
             cr.execute(sql, fileparams['query_params'])
         elif fileparams.get('dict_query_params', False):
-            print cr.mogrify(sql, fileparams['dict_query_params'])
             cr.execute(sql, fileparams['dict_query_params'])
         else:
             cr.execute(sql)
