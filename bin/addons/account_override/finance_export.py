@@ -59,6 +59,7 @@ class finance_archive():
     def __init__(self, sql, process, context=None):
         if context is None:
             context = {}
+        self.context = context
         self.sqlrequests = sql
         self.processrequests = process
         if 'background_id' in context:
@@ -176,6 +177,29 @@ class finance_archive():
             new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
+    def _execute_query(self, cr, fileparams, select=None, ocb_vi_cond='', insert_numbering=False):
+        # fetch data with given sql query
+        sql = self.sqlrequests[fileparams['key']]
+        if select is not None:
+            sql = '%s %s' % (select, sql)
+        if fileparams.get('query_tpl_context', False):
+            sql = Template(sql).safe_substitute(
+                fileparams.get('query_tpl_context'))
+
+        if select is not None:
+            sql = sql.replace('#OCB_VI_COND#',  ocb_vi_cond)
+        if insert_numbering:
+            sql = "INSERT INTO ocb_vi_export_number (move_id, move_line_id, analytic_line_id) (%s)" % sql
+
+        if fileparams.get('query_params', False):
+            print cr.mogrify(sql, fileparams['query_params'])
+            cr.execute(sql, fileparams['query_params'])
+        elif fileparams.get('dict_query_params', False):
+            print cr.mogrify(sql, fileparams['dict_query_params'])
+            cr.execute(sql, fileparams['dict_query_params'])
+        else:
+            cr.execute(sql)
+
     def archive(self, cr, uid):
         """
         Create an archive with sqlrequests params and processrequests params.
@@ -209,17 +233,22 @@ class finance_archive():
             else:
                 tmp_file = files[filename]
 
-            # fetch data with given sql query
-            sql = self.sqlrequests[fileparams['key']]
-            if fileparams.get('query_tpl_context', False):
-                sql = Template(sql).safe_substitute(
-                    fileparams.get('query_tpl_context'))
-            if fileparams.get('query_params', False):
-                cr.execute(sql, fileparams['query_params'])
-            elif fileparams.get('dict_query_params', False):
-                cr.execute(sql, fileparams['dict_query_params'])
+            if fileparams.get('select_1') and self.context.get('poc_export'):
+                self._execute_query(cr, fileparams, select=fileparams['select_1'], ocb_vi_cond='AND ocb_vi.id is NULL', insert_numbering=True)
+                cr.execute("""UPDATE ocb_vi_export_number set line_number = num.rn
+                    FROM
+                    (
+                        SELECT row_number() over (partition by move_id order by line_number nulls last, analytic_line_id nulls first, move_line_id) AS rn, id
+                        FROM ocb_vi_export_number
+                    ) AS num
+                    WHERE ocb_vi_export_number.id = num.id and line_number is null;
+                """)
+            if fileparams.get('select_2'):
+                self._execute_query(cr, fileparams, select=fileparams['select_2'])
             else:
-                cr.execute(sql)
+                self._execute_query(cr, fileparams)
+
+
             sqlres = cr.fetchall()
             # Fetch ID column and mark lines as exported
             if fileparams.get('id', None) != None:
