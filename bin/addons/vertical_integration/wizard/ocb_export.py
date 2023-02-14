@@ -42,6 +42,9 @@ class ocb_export_wizard(osv.osv_memory):
         'selection': lambda *a: 'all',
     }
 
+    def onchange_instance_id(self, cr, uid, ids, context=None):
+        return {'value': {'period_id': False}}
+
     def button_export(self, cr, uid, ids, context=None):
         """
         Launch a report to generate the ZIP file.

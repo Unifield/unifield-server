@@ -32,11 +32,18 @@ from report import report_sxw
 
 class ocb_vi_export_number(osv.osv):
     _name = 'ocb_vi.export_number'
+
+    def _auto_init(self, cr, context=None):
+        super(ocb_vi_export_number, self)._auto_init(cr, context)
+        if not cr.index_exists('ocb_vi_export_number', 'ocb_vi_export_number_move_line_id_idx'):
+            cr.execute('CREATE UNIQUE INDEX ocb_vi_export_number_move_line_id_idx ON ocb_vi_export_number (move_line_id) WHERE analytic_line_id IS NULL')
+
+
     _columns = {
         'line_number': fields.integer('JI/AJI line number'),
         'move_id': fields.integer('JE Id', select=1),
         'move_line_id': fields.integer('JI Id', select=1),
-        'analytic_line_id': fields.integer('AJI Id', select=1),
+        'analytic_line_id': fields.integer('AJI Id', select=1), #TODO m2o with ondelete cascade ?
     }
 
     _sql_constraints = [
@@ -86,6 +93,9 @@ class finance_archive(finance_export.finance_archive):
         empl_id_cl = 19
         empl_name_cl = 21
 
+        export_partner_id_cl = empl_name_cl + 1
+        export_employee_id_cl =  empl_name_cl + 2
+
         partner_search_dict = {}
         employee_search_dict = {}
         employee_code_dict = {}
@@ -103,8 +113,6 @@ class finance_archive(finance_export.finance_archive):
             partner_id = False
             partner_hash = ''
             emplid = tmp_line[empl_id_cl]
-            # Complete last column with partner_hash
-            tmp_line.append('')
 
             if not emplid:
                 if len(tmp_line) > partner_id_cl:
@@ -112,21 +120,21 @@ class finance_archive(finance_export.finance_archive):
                     if partner_id:
                         # US-497: extract name from partner_id (better than partner_txt)
                         tmp_line[partner_name_cl] = partner_name_dict[partner_id]
-
                 partner_name = tmp_line[partner_name_cl]
-                # Search only if partner_name is not empty
-                if partner_name:
+                if partner_name and not partner_id:
+                    # no partner_id, no employee_id ...
                     # UFT-8 encoding
                     if isinstance(partner_name, unicode):
                         partner_name = partner_name.encode('utf-8')
-                    if not partner_name in partner_search_dict:
+                    if partner_name not in partner_search_dict:
                         partner_search_dict[partner_name] = partner_obj.search(cr, uid,
                                                                                [('name', '=ilike', partner_name),
                                                                                 ('active', 'in', ['t', 'f'])],
                                                                                order='id')
-                    partner_ids = partner_search_dict[partner_name]
-                    if partner_ids:
-                        partner_id = partner_ids[0]
+                    if partner_search_dict[partner_name]:
+                        partner_id = partner_search_dict[partner_name][0]
+                    if len(tmp_line) > export_partner_id_cl:
+                        tmp_line[export_partner_id_cl] = partner_id
 
                 # If we get some ids, fetch the partner hash
                 if partner_id:
@@ -136,19 +144,18 @@ class finance_archive(finance_export.finance_archive):
                         partner_hash = self.get_hash(cr, uid, [partner_id], 'res.partner')
                         partner_hash_dict[partner_id] = partner_hash
 
-                if not partner_id and tmp_line[partner_name_cl]:
+                if not partner_id and partner_name:
                     if partner_name not in employee_search_dict:
-                        employee_search = employee_obj.search(cr, uid, [('name', '=', partner_name), ('active', 'in', ['t', 'f'])])
-                        if employee_search:
-                            employee_search = employee_search[0]
-                        employee_search_dict[partner_name] = employee_search
-                    emp_id = employee_search_dict[partner_name]
-                    if emp_id:
+                        employee_search_dict[partner_name] = employee_obj.search(cr, uid, [('name', '=', partner_name), ('active', 'in', ['t', 'f'])])
+                    if employee_search_dict[partner_name]:
+                        emp_id = employee_search_dict[partner_name][0]
                         if emp_id not in employee_code_dict:
                             employee_code_dict[emp_id] = employee_obj.read(cr, uid, emp_id, ['identification_id'])['identification_id']
                         empl_code = employee_code_dict[emp_id]
                         if empl_code:
                             tmp_line[empl_id_cl] = empl_code
+                        if len(tmp_line) > export_employee_id_cl:
+                            tmp_line[export_employee_id_cl] = emp_id
             else:
                 partner_hash = ''
                 if tmp_line[empl_name_cl]:
@@ -578,7 +585,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                      inner join account_move AS am on am.id = aml.move_id
                      inner join account_period AS p2 on am.period_id = p2.id
                     left outer join hr_employee hr on hr.id = aml.employee_id
-                    left join ocb_vi_export_number ocb_vi on ocb_vi.move_id=aml.move_id and ocb_vi.move_line_id=aml.id and ocb_vi.analytic_line_id=al.id
+                    left join ocb_vi_export_number ocb_vi on ocb_vi.move_id=aml.move_id and ocb_vi.move_line_id=aml.id and coalesce(ocb_vi.analytic_line_id, 0)=coalesce(al.id, 0)
                     left join account_export_mapping mapping on mapping.account_id = a.id
                 WHERE
                 aa3.category = 'FUNDING'
@@ -619,7 +626,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 INNER JOIN res_currency AS cc ON e.currency_id = cc.id
                 INNER JOIN msf_instance AS i ON aml.instance_id = i.id
                 LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
-                LEFT JOIN ocb_vi_export_number ocb_vi ON ocb_vi.move_id=aml.move_id AND ocb_vi.move_line_id=aml.id AND ocb_vi.analytic_line_id=aal.id
+                LEFT JOIN ocb_vi_export_number ocb_vi ON ocb_vi.move_id=aml.move_id AND ocb_vi.move_line_id=aml.id AND ocb_vi.analytic_line_id is null
                 LEFT JOIN account_export_mapping mapping ON mapping.account_id = a.id
                 WHERE aal.id IS NULL
                 AND aml.period_id = %s
@@ -704,16 +711,28 @@ class hq_report_ocb(report_sxw.report_sxw):
                 """,
                 'select_2': """
                     SELECT
-                       al.id, i.code,
-                       CASE WHEN j.code IN ('OD', 'ODHQ', 'ODX') THEN j.code ELSE aj.code END AS journal,
-                       al.entry_sequence, al.name, al.ref, al.document_date, al.date,
-                       a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, 
-                       CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, 
-                       CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit, 
-                       c.name AS "booking_currency", 
-                       CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, 
-                       CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit,
-                       cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id, hr.name_resource as hr_name
+                       al.id, -- 0
+                       i.code, -- 1
+                       CASE WHEN j.code IN ('OD', 'ODHQ', 'ODX') THEN j.code ELSE aj.code END AS journal, -- 2
+                       al.entry_sequence, -- 3
+                       al.name, -- 4
+                       al.ref, -- 5
+                       al.document_date, -- 6
+                       al.date, -- 7
+                       a.code, -- 8
+                       al.partner_txt, -- 9
+                       aa.code AS dest, -- 10
+                       aa2.code AS cost_center_id, -- 11
+                       aa3.code AS funding_pool,  -- 12
+                       CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, -- 13
+                       CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit,  -- 14
+                       c.name AS "booking_currency",  -- 15
+                       CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, -- 16
+                       CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit, -- 17
+                       cc.name AS "functional_currency", -- 18
+                       hr.identification_id as "emplid", -- 19
+                       aml.partner_id, -- 20
+                       hr.name_resource as hr_name -- 21
                        """ + add_column_rawdata
             },
             {
@@ -734,10 +753,29 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'object': 'account.move.line',
                 'select_1': "SELECT aml.move_id, aml.id, aal.id",
                 'select_2': """
-                    SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, 
-                       a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name,
-                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", 
-                       aml.partner_id, hr.name_resource as hr_name
+                    SELECT
+                        aml.id, -- 0
+                        i.code, -- 1
+                        j.code, -- 2
+                        m.name as "entry_sequence", -- 3
+                        aml.name, -- 4
+                        aml.ref, -- 5
+                        aml.document_date, -- 6
+                        aml.date,  -- 7
+                        a.code, -- 8
+                        aml.partner_txt, -- 9
+                        '', -- 10
+                        '', -- 11
+                        '', -- 12
+                        aml.debit_currency, -- 13
+                        aml.credit_currency, -- 14
+                        c.name, -- 15
+                        ROUND(aml.debit, 2), -- 16
+                        ROUND(aml.credit, 2), -- 17
+                        cc.name, -- 18
+                        hr.identification_id as "Emplid",  -- 19
+                        aml.partner_id, -- 20
+                        hr.name_resource as hr_name -- 21
                 """ + add_column_bs_entries,
             },
             {
