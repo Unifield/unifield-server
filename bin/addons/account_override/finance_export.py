@@ -231,7 +231,8 @@ class finance_archive():
             else:
                 tmp_file = files[filename]
 
-            if fileparams.get('select_1') and self.context.get('poc_export'):
+            if fileparams.get('select_1') and self.context.get('poc_export') and pool.get('res.company')._get_instance_level(cr, uid) == 'section':
+                # trigger ocb_numbering only at HQ level
                 self._execute_query(cr, fileparams, select=fileparams['select_1'], ocb_vi_cond='AND ocb_vi.id is NULL', insert_numbering=True)
                 cr.execute("""UPDATE ocb_vi_export_number set line_number = num.rn
                     FROM

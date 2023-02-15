@@ -460,8 +460,8 @@ class hq_report_ocb(report_sxw.report_sxw):
         if context.get('poc_export'):
             add_column_partner_sql = ', id'
             add_column_employee_sql = ', e.id'
-            add_column_rawdata = ", aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, am.id as DATABASE_ID, ocb_vi.line_number as LINE_NUMBER, mapping.mapping_value as HQ_system_account_code  "
-            add_column_bs_entries = " , aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, aml.move_id as DATABASE_ID, ocb_vi.line_number as LINE_NUMBER, mapping.mapping_value as HQ_system_account_code "
+            add_column_rawdata = ', aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, am.id as "JE Database ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code"  '
+            add_column_bs_entries = ' , aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, aml.move_id as "JE Database ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code" '
         else:
             add_column_partner_sql = ""
             add_column_employee_sql = ""
@@ -663,7 +663,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                               'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination',
                               'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency',
                               'Functional debit', 'Functional credit', 'Functional CCY', 'Emplid', 'Partner DB ID',
-                              'PARTNER_ID', 'EMPLOYEE_ID', 'DATABASE_ID', 'LINE_NUMBER', 'HQ system account code' ]
+                              'PARTNER_ID', 'EMPLOYEE_ID', 'JE Database ID', 'Line Number', 'HQ system account code' ]
 
         else:
             partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive', 'Notes']
