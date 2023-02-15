@@ -30,6 +30,7 @@ from osv.orm import browse_record
 import pooler
 from tools import misc
 from tools.translate import _
+from tools.safe_eval import safe_eval
 from tools import DEFAULT_SERVER_DATE_FORMAT
 from collections import deque
 
@@ -281,7 +282,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'priority': line.order_id.priority,
                 'categ': line.order_id.categ,
                 'rts': line.order_id.ready_to_ship_date,
-                'rdd': line.procurement_request and line.order_id.delivery_requested_date or line.date_planned,
                 'procurement_request': line.order_id.procurement_request,
                 'loan_type': line.order_id.order_type in ['loan', 'loan_return'],
                 'estimated_delivery_date': self._get_date(cr, uid, line, context=context),
@@ -502,15 +502,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             store=False,
             multi='line_info',
         ),
-        'rdd': fields.function(
-            _get_line_values,
-            method=True,
-            string='RDD',
-            type='date',
-            readonly=True,
-            store=False,
-            multi='line_info',
-        ),
         'stock_uom_id': fields.related(
             'product_id',
             'uom_id',
@@ -531,6 +522,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             store=False,
             readonly=True,
             multi='line_info',
+        ),
+        'sourcing_date': fields.date(
+            string='Date of Sourcing',
+            readonly=True,
         ),
         'display_confirm_button': fields.function(
             _get_line_values,
@@ -2384,6 +2379,29 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                              context={}, count=True)  # search with 'new' context
                     g['line_number'] = line_count
         return res
+
+    def view_docs_with_product(self, cr, uid, ids, menu_action, context=None):
+        '''
+        Get info from the given menu action to return the right view with the right data
+        '''
+        if context is None:
+            context = {}
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, menu_action, ['tree', 'form'], new_tab=True, context=context)
+
+        res_context = res.get('context', False) and safe_eval(res['context']) or {}
+        for col in res_context:  # Remove the default filters
+            if 'search_default_' in col:
+                res_context[col] = False
+
+        sol_product_id = False
+        if context.get('active_id', False):
+            sol_product_id = self.read(cr, uid, context['active_id'], ['product_id'], context=context)['product_id'][0]
+        res_context['search_default_product_id'] = sol_product_id
+        res['context'] = res_context
+
+        return res
+
 
 sale_order_line()
 
