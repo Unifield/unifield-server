@@ -133,7 +133,7 @@ class finance_archive(finance_export.finance_archive):
                                                                                order='id')
                     if partner_search_dict[partner_name]:
                         partner_id = partner_search_dict[partner_name][0]
-                    if len(tmp_line) > export_partner_id_cl:
+                    if len(tmp_line) > export_partner_id_cl and self.context.get('poc_export'):
                         tmp_line[export_partner_id_cl] = partner_id
 
                 # If we get some ids, fetch the partner hash
@@ -154,7 +154,7 @@ class finance_archive(finance_export.finance_archive):
                         empl_code = employee_code_dict[emp_id]
                         if empl_code:
                             tmp_line[empl_id_cl] = empl_code
-                        if len(tmp_line) > export_employee_id_cl:
+                        if len(tmp_line) > export_employee_id_cl and self.context.get('poc_export'):
                             tmp_line[export_employee_id_cl] = emp_id
             else:
                 partner_hash = ''

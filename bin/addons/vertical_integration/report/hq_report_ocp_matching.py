@@ -158,6 +158,14 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         else:
             # OCP VI
             excluded_journal_types = ['hq', 'migration']
+        ocb_numbering = ''
+
+        if context.get('poc_export'):
+            ocb_numbering = """,
+                ocb_vi.move_id AS "JE Database ID",
+                ocb_vi.line_number AS "Line Number",
+                mapping.mapping_value AS "HQ system account code"
+            """
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -192,10 +200,8 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 cc.name AS "functional_currency",
                 aml.reconcile_id,
                 %s AS "date_stop",
-                aml.unreconcile_txt,
-                ocb_vi.move_id AS "JE Database ID",
-                ocb_vi.line_number AS "Line Number",
-                mapping.mapping_value AS "HQ system account code"
+                aml.unreconcile_txt
+            """ + ocb_numbering + """
                 FROM account_move_line AS aml
                 LEFT JOIN account_move_reconcile amr ON aml.reconcile_id = amr.id
                 INNER JOIN account_move AS m ON aml.move_id = m.id
