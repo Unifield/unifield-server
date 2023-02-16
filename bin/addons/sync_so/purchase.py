@@ -305,7 +305,7 @@ class purchase_order_line_sync(osv.osv):
             if not pol_values.get('origin') and ress_fo:
                 parent_so_id = ress_fo
             elif not pol_values.get('origin') and sol_dict.get('sync_pushed_from_po'):
-                # resync try to push to original IR
+                # resync try to push to original FO/IR
                 cr.execute('''
                     select so.id
                     from purchase_order_line pol, sale_order_line sol, sale_order so
@@ -313,8 +313,7 @@ class purchase_order_line_sync(osv.osv):
                         pol.order_id=%s and
                         pol.linked_sol_id = sol.id and
                         sol.order_id = so.id and
-                        so.state not in ('draft', 'cancel', 'done') and
-                        so.procurement_request = 't'
+                        so.state not in ('draft', 'cancel', 'done')
                     limit 1
                 ''', (pol_values['order_id'],))
                 result = cr.fetchone()
