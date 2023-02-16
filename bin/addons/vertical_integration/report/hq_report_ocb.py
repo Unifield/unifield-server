@@ -37,6 +37,8 @@ class ocb_vi_export_number(osv.osv):
         super(ocb_vi_export_number, self)._auto_init(cr, context)
         if not cr.index_exists('ocb_vi_export_number', 'ocb_vi_export_number_move_line_id_idx'):
             cr.execute('CREATE UNIQUE INDEX ocb_vi_export_number_move_line_id_idx ON ocb_vi_export_number (move_line_id) WHERE analytic_line_id IS NULL')
+        if not cr.index_exists('ocb_vi_export_number', 'ocb_vi_export_number_line_number_move_id_idx'):
+            cr.execute('CREATE UNIQUE INDEX ocb_vi_export_number_line_number_move_id_idx ON ocb_vi_export_number (line_number,move_id)')
 
 
     _columns = {
