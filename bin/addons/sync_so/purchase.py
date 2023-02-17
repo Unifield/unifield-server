@@ -382,7 +382,17 @@ class purchase_order_line_sync(osv.osv):
                 # pol already confirmed: just update the linked IR line but do no recreate IN
                 self.update_fo_lines(cr, uid, [pol_updated], context=context)
             else:
-                wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
+                try:
+                    wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
+                except Exception, e:
+                    pol_info = self.pool.get('purchase.order.line').browse(cr, uid, pol_updated, fields_to_fetch=['analytic_distribution_id', 'order_id', 'created_by_sync', 'line_number'], context=context)
+                    if pol_info.created_by_sync and not pol_info.analytic_distribution_id and not pol_info.order_id.analytic_distribution_id:
+                        if hasattr(e, 'value'):
+                            msg = e.value
+                        else:
+                            msg = '%s' % e
+                        raise SyncException(msg, target_object='purchase.order.ad', target_id=po_ids[0], line_number=pol_info.line_number)
+                    raise
         elif sol_dict['state'] == 'cancel' or (sol_dict['state'] == 'done' and sol_dict.get('from_cancel_out')):
             cancel_type = 'cancel'
         elif sol_dict['state'] == 'cancel_r':
