@@ -305,7 +305,7 @@ class purchase_order_line_sync(osv.osv):
             if not pol_values.get('origin') and ress_fo:
                 parent_so_id = ress_fo
             elif not pol_values.get('origin') and sol_dict.get('sync_pushed_from_po'):
-                # resync try to push to original IR
+                # resync try to push to original FO/IR
                 cr.execute('''
                     select so.id
                     from purchase_order_line pol, sale_order_line sol, sale_order so
@@ -313,8 +313,7 @@ class purchase_order_line_sync(osv.osv):
                         pol.order_id=%s and
                         pol.linked_sol_id = sol.id and
                         sol.order_id = so.id and
-                        so.state not in ('draft', 'cancel', 'done') and
-                        so.procurement_request = 't'
+                        so.state not in ('draft', 'cancel', 'done')
                     limit 1
                 ''', (pol_values['order_id'],))
                 result = cr.fetchone()
@@ -383,7 +382,17 @@ class purchase_order_line_sync(osv.osv):
                 # pol already confirmed: just update the linked IR line but do no recreate IN
                 self.update_fo_lines(cr, uid, [pol_updated], context=context)
             else:
-                wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
+                try:
+                    wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
+                except Exception, e:
+                    pol_info = self.pool.get('purchase.order.line').browse(cr, uid, pol_updated, fields_to_fetch=['analytic_distribution_id', 'order_id', 'created_by_sync', 'line_number'], context=context)
+                    if pol_info.created_by_sync and not pol_info.analytic_distribution_id and not pol_info.order_id.analytic_distribution_id:
+                        if hasattr(e, 'value'):
+                            msg = e.value
+                        else:
+                            msg = '%s' % e
+                        raise SyncException(msg, target_object='purchase.order.ad', target_id=po_ids[0], line_number=pol_info.line_number)
+                    raise
         elif sol_dict['state'] == 'cancel' or (sol_dict['state'] == 'done' and sol_dict.get('from_cancel_out')):
             cancel_type = 'cancel'
         elif sol_dict['state'] == 'cancel_r':
