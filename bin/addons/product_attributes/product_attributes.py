@@ -3266,13 +3266,15 @@ class product_attributes(osv.osv):
             ('cu_qty', '>', 0), ('wh_qty', '>', 0), ('secondary_qty', '>', 0), ('internal_qty', '>', 0),
             ('quarantine_qty', '>', 0), ('input_qty', '>', 0), ('opdd_qty', '>', 0)
         ]
-        return self.pool.get('stock.mission.report.line').search(cr, uid, srml_domain, limit=1, context=context) != []
+        return self.pool.get('stock.mission.report.line').search_exist(cr, uid, srml_domain, context=context)
 
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
     ]
 
+
 product_attributes()
+
 
 class product_merged(osv.osv):
     """
