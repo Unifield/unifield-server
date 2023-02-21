@@ -127,7 +127,7 @@ class PhysicalInventory(osv.osv):
 
     _columns = {
         'ref': fields.char('Reference', size=64, readonly=True, sort_column='id'),
-        'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'name': fields.char('Details', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
         'date_done': fields.datetime('Date done', readonly=True),

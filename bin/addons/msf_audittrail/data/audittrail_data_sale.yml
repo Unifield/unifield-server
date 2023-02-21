@@ -111,7 +111,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
         fields = ['confirmed_delivery_date', 'date_planned', 'default_code',
-        'name', 'notes', 'price_unit', 'product_uom_qty', 'product_uom', 'state_to_display']
+        'name', 'notes', 'price_unit', 'product_uom_qty', 'product_uom', 'state_to_display', 'sourcing_date']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sale.order.line'), ('name', 'in', fields)], context=context)
         field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'sale.order.line'), ('name', '=', 'line_number')], context=context)
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'sale.order.line'), ('name', '=', 'order_id')], context=context)

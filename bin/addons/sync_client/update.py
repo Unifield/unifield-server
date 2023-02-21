@@ -603,6 +603,13 @@ class update_received(osv.osv,fv_formatter):
 
                 row = eval(update.values)
 
+                if update.model == 'product.merged':
+                    old_product_sdref = row[import_fields.index('old_product_id/id')]
+                    new_product_sdref = row[import_fields.index('new_product_id/id')]
+                    if self.search_exists(cr, uid, [('sdref', 'in', [old_product_sdref, new_product_sdref]), ('run', '=', False), ('sequence_number', '<=', update.sequence_number)]):
+                        self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on produts %s or %s" % (old_product_sdref, new_product_sdref), context=context)
+                        continue
+
                 #4 check for fallback value : report missing fallback_value
                 #US-852: in case the account_move_line is given but not exist, then do not let the import of the current entry
                 #US-2147: same thing for property_product_pricelist and property_product_pricelist_purchase

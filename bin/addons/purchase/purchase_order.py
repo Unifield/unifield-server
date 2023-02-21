@@ -2144,6 +2144,19 @@ class purchase_order(osv.osv):
 
         company_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
 
+        if order_type == 'direct' and (not dest_partner_id or dest_partner_id == company_id):
+            dest_partner_ids = self.pool.get('res.partner').search(cr, uid, [('available_on_po_dpo', '=', ids[0])])
+            if not dest_partner_ids:
+                return {
+                    'value': {'order_type': False},
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _('Direct Purchase Order is not allowed on this order: not all lines are sourced for the same customer.'),
+                    }
+                }
+            dest_partner_id = dest_partner_ids[0]
+            v['dest_partner_id'] = dest_partner_id
+
         if order_type == 'direct' and dest_partner_id and dest_partner_id != company_id:
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id})

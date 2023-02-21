@@ -191,6 +191,7 @@ class picking_ticket(report_sxw.rml_parse):
                 # First create a line without batch
                 dict_res[m.line_number].append(BatchMoveLines(m))
             bm = BatchMoveLines(m)
+            bm.composition_list_id = m.composition_list_id
             bm.product_uom = m.product_uom
             bm.product_qty = m.product_qty
             bm.prodlot_id = m.prodlot_id

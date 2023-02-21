@@ -47,7 +47,6 @@ class purchase_order_line(osv.osv):
 
         if context.get('rfq_ok') and view_type == 'form':
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'rfq_line_form')[1]
-            return super(purchase_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         view = super(purchase_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'form' and context.get('from_tab') != 1:
             form = etree.fromstring(view['arch'])
