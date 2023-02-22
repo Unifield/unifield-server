@@ -27,6 +27,107 @@ from account_override import finance_export
 from time import strftime
 from time import strptime
 
+import netsvc
+import base64
+
+class finance_hq_vi(osv.osv_memory):
+    _name = 'finance.hq.vi'
+    _columns = {
+    }
+
+    def get_ocb_export(self, cr, uid, instance_code, period_name, all_lines=True, context=None):
+        if context is None:
+            context = {}
+        if not context.get('lang'):
+            context['lang'] = 'en_MF'
+
+        context['poc_export'] = True
+
+        result = {
+            'error': False,
+            'success': False,
+            'start_date': strftime('%Y-%m-%d %H:%M'),
+            'content': '',
+        }
+
+        period_obj = self.pool.get('account.period')
+        p_ids = period_obj.search(cr ,uid, [('name', '=ilike', period_name)], context=context)
+        if not p_ids:
+            result.update({'error': 'Period name %s not found', 'end_date': strftime('%Y-%m-%d %H:%M')})
+            return result
+
+        instance_ids = self.pool.get('msf.instance').search(cr, uid, [('code', '=ilike', instance_code), ('level', 'in', ['section', 'coordo'])], context=context)
+        if not instance_ids:
+            result.update({'error': 'No section/coordo instance code found for %s' % (instance_code,), 'file':'', 'success': False, 'end_date': strftime('%Y-%m-%d %H:%M')})
+            return result
+
+
+        p = period_obj.browse(cr, uid, p_ids[0], fields_to_fetch=['fiscalyear_id'], context=context)
+        if not period_obj.search_exists(cr, uid, [('id', '=', p_ids[0]), ('child_mission_hq_closed', '=', [instance_ids[0], p.fiscalyear_id.id]), ('number', '<', 16)], context=context):
+            result.update({'error': 'Period %s is not Mission-Closed or HQ-Closed' % (period_name,), 'file':'', 'success': False, 'end_date': strftime('%Y-%m-%d %H:%M')})
+            return result
+
+        wiz_id = self.pool.get('ocb.export.wizard').create(cr, uid, {
+            'instance_id': instance_ids[0],
+            'fiscalyear_id': p.fiscalyear_id.id,
+            'period_id': p_ids[0],
+            'selection': 'all' if all_lines else 'unexported',
+        }, context=context)
+
+        r_data = self.pool.get('ocb.export.wizard').button_export(cr, uid, wiz_id, context=context)
+        obj = netsvc.LocalService('report.%s' % r_data['report_name'])
+        content, file_format = obj.create(cr, uid, [], r_data['datas'], context=context)
+        result.update({'content': base64.b64encode(content), 'success': True, 'end_date': strftime('%Y-%m-%d %H:%M')})
+        return result
+
+    def get_ocb_matching_export(self, cr, uid, instance_code, period_name, context=None):
+        if context is None:
+            context = {}
+        if not context.get('lang'):
+            context['lang'] = 'en_MF'
+
+        result = {
+            'error': False,
+            'success': False,
+            'start_date': strftime('%Y-%m-%d %H:%M'),
+            'content': '',
+        }
+
+        context['poc_export'] = True
+        context['ocb_matching'] = True
+
+
+        period_obj = self.pool.get('account.period')
+        p_ids = period_obj.search(cr ,uid, [('name', '=ilike', period_name), ('state', '!=', 'created'), ('number', '<', 16)], context=context)
+        if not p_ids:
+            result.update({'error': 'Period name %s not found' % (period_name,), 'file':'', 'success': False, 'end_date': strftime('%Y-%m-%d %H:%M')})
+            return result
+
+
+        instance_ids = self.pool.get('msf.instance').search(cr, uid, [('code', '=ilike', instance_code), ('level', '=', 'coordo')], context=context)
+        if not instance_ids:
+            result.update({'error': 'No coordo instance code found for %s' % (instance_code,), 'file':'', 'success': False, 'end_date': strftime('%Y-%m-%d %H:%M')})
+            return result
+
+
+        p = period_obj.browse(cr, uid, p_ids[0], fields_to_fetch=['fiscalyear_id'], context=context)
+
+        wiz_id = self.pool.get('ocp.matching.export.wizard').create(cr, uid, {
+            'instance_id': instance_ids[0],
+            'fiscalyear_id': p.fiscalyear_id.id,
+            'period_id': p_ids[0],
+        }, context=context)
+
+        r_data = self.pool.get('ocp.matching.export.wizard').button_ocp_matching_export(cr, uid, wiz_id, context=context)
+        obj = netsvc.LocalService('report.%s' % r_data['report_name'])
+        content, file_format = obj.create(cr, uid, [], r_data['datas'], context=context)
+        result.update({'error': '', 'content': base64.b64encode(content), 'success': True, 'end_date': strftime('%Y-%m-%d %H:%M')})
+        return result
+
+
+finance_hq_vi()
+
+
 class ocb_export_wizard(osv.osv_memory):
     _name = "ocb.export.wizard"
 
