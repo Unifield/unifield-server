@@ -121,7 +121,7 @@ class finance_hq_vi(osv.osv_memory):
         r_data = self.pool.get('ocp.matching.export.wizard').button_ocp_matching_export(cr, uid, wiz_id, context=context)
         obj = netsvc.LocalService('report.%s' % r_data['report_name'])
         content, file_format = obj.create(cr, uid, [], r_data['datas'], context=context)
-        result.update({'error': '', 'content': base64.b64encode(content), 'success': True, 'end_date': strftime('%Y-%m-%d %H:%M')})
+        result.update({'content': base64.b64encode(content), 'success': True, 'end_date': strftime('%Y-%m-%d %H:%M')})
         return result
 
 
