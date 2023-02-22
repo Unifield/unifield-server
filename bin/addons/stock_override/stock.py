@@ -776,7 +776,7 @@ class stock_picking(osv.osv):
             if pick.move_lines:
                 src_usage = pick.move_lines[0].location_id.usage
                 dest_usage = pick.move_lines[0].location_dest_id.usage
-            if pick.type == 'out' and dest_usage == 'supplier':
+            if pick.type == 'out' and dest_usage == 'supplier' or (pick.type == 'out' and dest_usage == 'customer' and 'return' in pick.name):
                 inv_type = 'in_refund'
             elif pick.type == 'out' and dest_usage == 'customer':
                 inv_type = 'out_invoice'
@@ -820,7 +820,8 @@ class stock_picking(osv.osv):
         except ValueError:
             rt_id = False
         # type out and partner_type in internal, external or esc
-        if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and sp.partner_id.partner_type in ['external', 'internal', 'esc']:
+        if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and sp.partner_id.partner_type in ['external', 'internal', 'esc']\
+                and invoice_type not in ['in_refund']:
             res = False
         if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and rt_id and sp.partner_id.partner_type in ['intermission', 'section']:
             # Search all stock moves attached to this one. If one of them is deliver partner, then is_invoice_needed is ok
@@ -838,8 +839,11 @@ class stock_picking(osv.osv):
 
         # (US-952) Move out on an external partner should not create a Stock Transfer Voucher
         # US-1212: but should create refund
-        if sp.type == 'out' and sp.partner_id.partner_type == 'external' and invoice_type != 'in_refund':
-            res = False
+        if sp.type == 'out' and sp.partner_id.partner_type == 'external':
+            if invoice_type != 'in_refund':
+                res = False
+            elif invoice_type == 'in_refund':
+                res = True
 
         # Move in on an intermission or intersection partner should not create an IVI / SI (generation of Donations shouldn't be blocked)
         if sp.type == 'in' and sp.purchase_id and sp.purchase_id.order_type not in ('donation_st', 'donation_exp') \

@@ -1571,8 +1571,8 @@ class stock_picking(osv.osv):
         if picking.partner_id.partner_type in ('esc', 'internal'):
             return False, False
 
-        if picking.claim:
-            # don't invoice claim
+        if picking.claim and not any([x in picking.name for x in ['replacement', 'return']]):
+            # don't invoice claim if not linked to a pick-return or IN-replacement
             return False, False
 
         all_claim = True
