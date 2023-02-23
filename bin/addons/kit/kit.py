@@ -203,16 +203,17 @@ class composition_kit(osv.osv):
         for kcl_id in ids:
             ftf = ['composition_product_id', 'composition_combined_ref_lot', 'composition_item_ids', 'kcl_used_by']
             kcl = self.browse(cr, uid, kcl_id, fields_to_fetch=ftf, context=context)
-            if kcl.kcl_used_by and not context.get('recurcive_kcl_action') and \
+            if kcl.kcl_used_by and not context.get('recursive_kcl_action') and \
                     flow_origin not in ['composition.kit', 'kit.creation', 'stock.move', 'real.average.consumption']:
                 raise osv.except_osv(_('Warning !'), _('The KCL %s - %s is being used by %s, please close the other document first to close this one automatically.') %
                                      (kcl.composition_product_id.default_code, kcl.composition_combined_ref_lot, kcl.kcl_used_by))
             else:
                 for item in kcl.composition_item_ids:
                     if item.item_product_id and item.item_product_id.subtype == 'kit' and item.kcl_id:
-                        context['recurcive_kcl_action'] = True
+                        context['recursive_kcl_action'] = True
                         self.close_kit(cr, uid, [item.kcl_id.id], self._name, context=context)
-                        context.pop('recurcive_kcl_action')
+                        if 'recursive_kcl_action' in context:
+                            context.pop('recursive_kcl_action')
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
