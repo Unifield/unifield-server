@@ -59,13 +59,13 @@ class finance_hq_vi(osv.osv_memory):
 
         instance_ids = self.pool.get('msf.instance').search(cr, uid, [('code', '=ilike', instance_code), ('level', 'in', ['section', 'coordo'])], context=context)
         if not instance_ids:
-            result.update({'error': 'No section/coordo instance code found for %s' % (instance_code,), 'file':'', 'success': False, 'end_date': strftime('%Y-%m-%d %H:%M')})
+            result.update({'error': 'No section/coordo instance code found for %s' % (instance_code,), 'end_date': strftime('%Y-%m-%d %H:%M')})
             return result
 
 
         p = period_obj.browse(cr, uid, p_ids[0], fields_to_fetch=['fiscalyear_id'], context=context)
         if not period_obj.search_exists(cr, uid, [('id', '=', p_ids[0]), ('child_mission_hq_closed', '=', [instance_ids[0], p.fiscalyear_id.id]), ('number', '<', 16)], context=context):
-            result.update({'error': 'Period %s is not Mission-Closed or HQ-Closed' % (period_name,), 'file':'', 'success': False, 'end_date': strftime('%Y-%m-%d %H:%M')})
+            result.update({'error': 'Period %s is not Mission-Closed or HQ-Closed' % (period_name,), 'end_date': strftime('%Y-%m-%d %H:%M')})
             return result
 
         wiz_id = self.pool.get('ocb.export.wizard').create(cr, uid, {
@@ -102,13 +102,13 @@ class finance_hq_vi(osv.osv_memory):
         period_obj = self.pool.get('account.period')
         p_ids = period_obj.search(cr ,uid, [('name', '=ilike', period_name), ('state', '!=', 'created'), ('number', '<', 16)], context=context)
         if not p_ids:
-            result.update({'error': 'Period name %s not found' % (period_name,), 'file':'', 'success': False, 'end_date': strftime('%Y-%m-%d %H:%M')})
+            result.update({'error': 'Period name %s not found' % (period_name,), 'end_date': strftime('%Y-%m-%d %H:%M')})
             return result
 
 
         instance_ids = self.pool.get('msf.instance').search(cr, uid, [('code', '=ilike', instance_code), ('level', '=', 'coordo')], context=context)
         if not instance_ids:
-            result.update({'error': 'No coordo instance code found for %s' % (instance_code,), 'file':'', 'success': False, 'end_date': strftime('%Y-%m-%d %H:%M')})
+            result.update({'error': 'No coordo instance code found for %s' % (instance_code,), 'end_date': strftime('%Y-%m-%d %H:%M')})
             return result
 
 
