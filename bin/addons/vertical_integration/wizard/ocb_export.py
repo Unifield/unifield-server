@@ -78,7 +78,7 @@ class finance_hq_vi(osv.osv_memory):
         r_data = self.pool.get('ocb.export.wizard').button_export(cr, uid, wiz_id, context=context)
         obj = netsvc.LocalService('report.%s' % r_data['report_name'])
         content, file_format = obj.create(cr, uid, [], r_data['datas'], context=context)
-        result.update({'content': base64.b64encode(content), 'success': True, 'end_date': strftime('%Y-%m-%d %H:%M'), 'filename': r_data['datas'].get('target_filename')})
+        result.update({'content': base64.b64encode(content), 'success': True, 'end_date': strftime('%Y-%m-%d %H:%M'), 'filename': '%s.%s' % (r_data['datas'].get('target_filename'), file_format)})
         return result
 
     def get_ocb_matching_export(self, cr, uid, instance_code, period_name, context=None):
@@ -123,7 +123,7 @@ class finance_hq_vi(osv.osv_memory):
         r_data = self.pool.get('ocp.matching.export.wizard').button_ocp_matching_export(cr, uid, wiz_id, context=context)
         obj = netsvc.LocalService('report.%s' % r_data['report_name'])
         content, file_format = obj.create(cr, uid, [], r_data['datas'], context=context)
-        result.update({'content': base64.b64encode(content), 'success': True, 'end_date': strftime('%Y-%m-%d %H:%M'), 'filename': r_data['datas'].get('target_filename')})
+        result.update({'content': base64.b64encode(content), 'success': True, 'end_date': strftime('%Y-%m-%d %H:%M'), 'filename': '%s.%s' % (r_data['datas'].get('target_filename'), file_format)})
         return result
 
 
