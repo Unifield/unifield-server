@@ -44,7 +44,7 @@ class finance_hq_vi(osv.osv_memory):
         context['poc_export'] = True
 
         result = {
-            'error': False,
+            'error': '',
             'success': False,
             'start_date': strftime('%Y-%m-%d %H:%M'),
             'content': '',
@@ -88,7 +88,7 @@ class finance_hq_vi(osv.osv_memory):
             context['lang'] = 'en_MF'
 
         result = {
-            'error': False,
+            'error': '',
             'success': False,
             'start_date': strftime('%Y-%m-%d %H:%M'),
             'content': '',
