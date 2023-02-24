@@ -186,7 +186,7 @@
 
 
         <section>
-        <blockTable colWidths="20.0,100.0,120.0,50.0,50.0,45.0,40.0,60.0,70.0,70.0,65.0,65.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="20.0,100.0,120.0,50.0,65.0,45.0,35.0,60.0,70.0,60.0,65.0,65.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -241,7 +241,7 @@
                     <para style="Line">[[ line.comment ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.composition_list_id.composition_reference ]]</para>
+                    <para style="Line">[[ line.prodlot_id and line.composition_list_id.composition_combined_ref_lot or line.composition_list_id.composition_reference ]]</para>
                 </td>
                 <td>
                     <para style="Line">[[ line.product_qty ]]</para>
