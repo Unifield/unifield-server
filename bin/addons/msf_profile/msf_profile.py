@@ -58,6 +58,25 @@ class patch_scripts(osv.osv):
     }
 
     # UF28.0
+    def us_11195_oca_period_nr(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
+            return True
+
+        oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+        cr.execute(oc_sql)
+        oc = cr.fetchone()[0]
+        if oc == 'oca':
+            cr.execute("""update sync_client_update_received set
+                run='t', log='Set as Run by US-11195'
+                where
+                    run='f' and
+                    sdref in ('FY2022/Jul 2022_2022-07-01', 'FY2022/Jun 2022_2022-06-01') and
+                    version in (3, 4)
+            """)
+
+        self.log_info(cr, uid, "US-11195: set %d NR on periods as Run" % (cr.rowcount, ))
+        return True
+
     def us_8417_upd_srv_loc(self, cr, uid, *a, **b):
         '''
         Set 'virtual_location' to True on the existing 'Service' location
