@@ -227,7 +227,7 @@
                     <para style="Line">[[ getSel(line, 'state') ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.composition_list_id and (line.prodlot_id and line.composition_list_id.composition_combined_ref_lot or line.composition_list_id.composition_reference) or '' ]]</para>
+                    <para style="Line">[[ line.composition_list_id and line.composition_list_id.composition_combined_ref_lot or '' ]]</para>
                 </td>
                 <td>
                     <para style="Line">[[ line.asset_id and line.asset_id.name or '' ]]</para>

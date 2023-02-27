@@ -241,7 +241,7 @@
                     <para style="Line">[[ line.comment ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.prodlot_id and line.composition_list_id.composition_combined_ref_lot or line.composition_list_id.composition_reference ]]</para>
+                    <para style="Line">[[ line.composition_list_id.composition_combined_ref_lot ]]</para>
                 </td>
                 <td>
                     <para style="Line">[[ line.product_qty ]]</para>

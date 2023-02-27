@@ -289,7 +289,7 @@
                     <para style="TextInformation3" alignment="RIGHT">[[ line.product_qty and line.product_qty or '0.0' ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation3" alignment="LEFT">[[ line.kcl_id and (line.prodlot_id and line.kcl_id.composition_combined_ref_lot or line.kcl_id.composition_reference) or False ]]</para>
+                    <para style="TextInformation3" alignment="LEFT">[[ line.kcl_id and line.kcl_id.composition_combined_ref_lot or False ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation3" alignment="LEFT">[[ line.prodlot_id and line.prodlot_id.name or False ]]</para>
