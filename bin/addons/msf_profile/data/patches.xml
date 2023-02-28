@@ -897,5 +897,10 @@
         <record id="us_8417_upd_srv_loc" model="patch.scripts">
             <field name="method">us_8417_upd_srv_loc</field>
         </record>
+
+        <!-- UF29.0 -->
+        <record id="us_10629_fix_partner_fo_pricelist" model="patch.scripts">
+            <field name="method">us_10629_fix_partner_fo_pricelist</field>
+        </record>
     </data>
 </openerp>
