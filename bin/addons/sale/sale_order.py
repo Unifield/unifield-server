@@ -2414,7 +2414,7 @@ class sale_order_line(osv.osv):
             nb = form.xpath('//notebook')
             if nb:
                 nb[0].tag = 'empty'
-                view['arch'] = etree.tostring(form)
+                view['arch'] = etree.tostring(form, encoding='unicode')
         return view
 
     def _check_stock_take_date(self, cr, uid, ids, context=None):

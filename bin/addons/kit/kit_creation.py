@@ -505,7 +505,7 @@ class kit_creation(osv.osv):
             for product_id in list(data.keys()):
                 for to_consume_id in list(data[product_id]['qty'].keys()):
                     for uom_id in list(data[product_id]['qty'][to_consume_id].keys()):
-                        for kcl_id in data[product_id]['qty'][to_consume_id][uom_id].keys():
+                        for kcl_id in list(data[product_id]['qty'][to_consume_id][uom_id].keys()):
                             # total qty needed for this product/uom and this KCL
                             needed_qty = data[product_id]['qty'][to_consume_id][uom_id][kcl_id]
                             # the consolidated data contains a move which was original
