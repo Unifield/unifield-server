@@ -9,7 +9,11 @@
                     <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="1"/>
                     <button name="button_journal_add" type="object" string="Add all Journals" icon="gtk-add" colspan="1"/>
                 </group>
-                <field name="rev_journal_ids" colspan="2"/>
+                <group col="6" colspan="2">
+                    <field name="rev_journal_ids" />
+                    <field name="excl_inactive_journal_ids" />
+                    <field name="inactive_at" attrs="{'invisible': [('excl_inactive_journal_ids', '=', False)]}"/>
+                </group>
                 <field name="journal_ids" colspan="2" nolabel="1" context="{'search_default_filter_is_active': 1}">
                     <tree string="Journals" editable="top" noteditable="1">
                         <field name="code"/>

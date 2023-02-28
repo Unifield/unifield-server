@@ -488,8 +488,9 @@ class stock_location_configuration_wizard(osv.osv_memory):
             location = wizard.location_id
             location_name = wizard.location_name
 
-            if wizard.location_usage != 'eprep' and 'eprep' in location_name.lower():
-                raise osv.except_osv(_('Error'), _('The location name must not contain the word "EPREP" if its usage is not "EPREP" as well'))
+            if 'eprep' in location_name.lower() and wizard.location_usage != 'eprep' and \
+                    not (wizard.location_type == 'customer' and wizard.location_usage == 'consumption_unit'):
+                raise osv.except_osv(_('Error'), _('The location name must not contain the word "EPREP" if its usage is not "EPREP" as well or if it is not an External Consumption Unit'))
 
             search_color = False
             # Check if all parent locations are activated in the system

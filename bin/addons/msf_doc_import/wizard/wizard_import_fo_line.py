@@ -60,10 +60,7 @@ class wizard_import_fo_line(osv.osv_memory):
         '''
         Import file
         '''
-        if not context.get('yml_test', False):
-            cr = pooler.get_db(dbname).cursor()
-        else:
-            cr = dbname
+        cr = pooler.get_db(dbname).cursor()
 
         if context is None:
             context = {}
@@ -333,12 +330,13 @@ class wizard_import_fo_line(osv.osv_memory):
                 self.write(cr, uid, ids, wizard_vals, context=context)
                 # we reset the state of the FO to draft (initial state)
             except Exception as e:
+                cr.rollback()
                 self.write(cr, uid, ids, {
                     'message': _('An unknow error occurred, please contact the support team. Error message: %s') % tools.ustr(e),
-                    'state': 'done',
+                    'state': 'error',
                 }, context=context)
             finally:
-                sale_obj.write(cr, uid, fo_id, {'state': 'draft', 'import_in_progress': False}, context)
+                sale_obj.write(cr, uid, fo_id, {'import_in_progress': False}, context)
         cr.commit()
         cr.close(True)
 
@@ -373,12 +371,9 @@ class wizard_import_fo_line(osv.osv_memory):
             except StopIteration:
                 return self.write(cr, uid, ids, {'message': _('The file has not row, nothing to import')})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            sale_obj.write(cr, uid, fo_id, {'state': 'done', 'import_in_progress': True}, context)
-        if not context.get('yml_test', False):
-            thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
-            thread.start()
-        else:
-            self._import(cr, uid, ids, context)
+            sale_obj.write(cr, uid, fo_id, {'import_in_progress': True}, context)
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
 Otherwise, you can continue to use Unifield.""")
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)

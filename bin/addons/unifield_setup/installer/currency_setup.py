@@ -103,13 +103,6 @@ class currency_setup(osv.osv_memory):
         self.pool.get('res.partner').write(cr, uid, partner_ids, {'property_product_pricelist': sale_price_id[0],
                                                                   'property_product_pricelist_purchase': purchase_price_id[0]})
 
-        # Change the default value of the ir.property pricelist fields
-        sale_price_property_ids = self.pool.get('ir.property').search(cr, uid, [('res_id', '=', False), ('name', '=', 'property_product_pricelist')])
-        self.pool.get('ir.property').write(cr, uid, sale_price_property_ids, {'value': sale_price_id[0]})
-        purchase_price_property_ids = self.pool.get('ir.property').search(cr, uid, [('res_id', '=', False), ('name', '=', 'property_product_pricelist_purchase')])
-        self.pool.get('ir.property').write(cr, uid, purchase_price_property_ids, {'value': purchase_price_id[0]})
-
-
         # Modify the currency on some already created objects
         # product_price_type
         price_type_ids = self.pool.get('product.price.type').search(cr, uid, [('currency_id', '=', 1)])

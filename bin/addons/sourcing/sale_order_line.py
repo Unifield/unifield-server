@@ -30,6 +30,7 @@ from osv.orm import browse_record
 import pooler
 from tools import misc
 from tools.translate import _
+from tools.safe_eval import safe_eval
 from tools import DEFAULT_SERVER_DATE_FORMAT
 from collections import deque
 
@@ -281,9 +282,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'priority': line.order_id.priority,
                 'categ': line.order_id.categ,
                 'rts': line.order_id.ready_to_ship_date,
-                'rdd': line.procurement_request and line.order_id.delivery_requested_date or line.date_planned,
                 'procurement_request': line.order_id.procurement_request,
-                'loan_type': line.order_id.order_type == 'loan',
+                'loan_type': line.order_id.order_type in ['loan', 'loan_return'],
                 'estimated_delivery_date': self._get_date(cr, uid, line, context=context),
                 'display_confirm_button': line.state == 'validated',
                 'sale_order_in_progress': line.order_id.sourcing_trace_ok,
@@ -502,15 +502,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             store=False,
             multi='line_info',
         ),
-        'rdd': fields.function(
-            _get_line_values,
-            method=True,
-            string='RDD',
-            type='date',
-            readonly=True,
-            store=False,
-            multi='line_info',
-        ),
         'stock_uom_id': fields.related(
             'product_id',
             'uom_id',
@@ -531,6 +522,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             store=False,
             readonly=True,
             multi='line_info',
+        ),
+        'sourcing_date': fields.date(
+            string='Date of Sourcing',
+            readonly=True,
         ),
         'display_confirm_button': fields.function(
             _get_line_values,
@@ -715,13 +710,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                    context=context)
             ir = order['procurement_request']
             order_p_type = order['partner_type']
-            if order['order_type'] in ('loan', 'donation_exp', 'donation_st') and order['state'] == 'validated':
+            if order['order_type'] in ('loan', 'loan_return', 'donation_exp', 'donation_st') and order['state'] == 'validated':
                 vals.update({
                     'type': 'make_to_stock',
                     'po_cft': False,
                     'supplier': False,
                 })
-                if order['order_type'] == 'loan':
+                if order['order_type'] in ['loan', 'loan_return']:
                     vals['related_sourcing_id'] = False
 
         if product and vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
@@ -834,10 +829,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         l_type = line.type == 'make_to_order'
         o_state = line.state not in ('draft', 'confirmed', 'done')
         ctx_cond = not context.get('fromOrderLine')
-        o_type = line.order_id and line.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] or False
+        o_type = line.order_id and line.order_id.order_type in ['loan', 'loan_return', 'donation_st', 'donation_exp'] or False
 
         if l_type and o_state and ctx_cond and o_type:
-            return _('You can\'t source a %s \'on order\'.') % (line.order_id.order_type == 'loan' and _('loan') or _('donation'))
+            return _('You can\'t source a %s \'on order\'.') % (line.order_id.order_type in ['loan', 'loan_return'] and _('loan') or _('donation'))
 
         return False
 
@@ -1058,7 +1053,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 })
 
         # Search lines to modified with loan or donation values
-        loan_sol_ids = self.search(cr, uid, [('order_id.order_type', 'in', ['loan', 'donation_st', 'donation_exp']),
+        loan_sol_ids = self.search(cr, uid, [('order_id.order_type', 'in', ['loan', 'loan_return', 'donation_st', 'donation_exp']),
                                              ('order_id.state', '=', 'validated'),
                                              ('id', 'in', ids)], context=context)
 
@@ -1166,7 +1161,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ('id', 'in', ids),
             ('type', '=', 'make_to_order'),
             ('order_id.state', '!=', 'draft'),
-            ('order_id.order_type', '=', 'loan'),
+            ('order_id.order_type', 'in', ['loan', 'loan_return']),
         ], count=True, context=context)
 
         if loan_stock:
@@ -1207,7 +1202,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         no_price_ids = self.search(cr, uid, [
             ('id', 'in', ids),
             ('price_unit', '=', 0.00),
-            ('order_id.order_type', 'not in', ['loan', 'donation_st', 'donation_exp']),
+            ('order_id.order_type', 'not in', ['loan', 'loan_return', 'donation_st', 'donation_exp']),
             ('order_id.procurement_request', '=', False),
         ], limit=1, context=context)
 
@@ -1217,17 +1212,27 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 _('You cannot confirm the sourcing of a line with unit price as zero.'),
             )
 
-        int_int_supplier = self.search(cr, uid, [
-            ('id', 'in', ids),
-            ('supplier.partner_type', '=', 'internal'),
-            ('order_id.partner_type', '=', 'internal'),
-            ('order_id.procurement_request', '=', False),
-        ], count=True, context=context)
-        if int_int_supplier:
-            raise osv.except_osv(
-                _('Warning'),
-                _('You cannot confirm the sourcing of a line to an internal customer with an internal supplier.'),
-            )
+        if ids:
+            cr.execute('''
+                select
+                    count(*)
+                from
+                    sale_order_line sol, sale_order so, res_partner p, res_partner supplier
+                where
+                    sol.order_id = so.id and
+                    p.id = so.partner_id and
+                    supplier.id = sol.supplier and
+                    p.partner_type in ('section', 'internal', 'intermission') and
+                    supplier.partner_type in ('section', 'internal', 'intermission') and
+                    coalesce(sol.original_instance, p.name) != p.name and
+                    sol.id in %s
+                ''',  (tuple(ids), ))
+
+            if cr.fetchone()[0]:
+                raise osv.except_osv(
+                    _('Warning'),
+                    _('You cannot re-sync a line more than 2 times')
+                )
 
         self.source_line(cr, uid, ids, context=context)
 
@@ -1329,7 +1334,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 ('partner_id', '=', sourcing_line.partner_id.id),
                 ('state', 'in', ['draft']),
                 ('delivery_requested_date', '=', self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context)),
-                ('order_type', '=', 'loan'),
+                ('order_type', 'in', ['loan', 'loan_return']),
                 ('is_a_counterpart', '=', True),
                 ('unique_fo_id', '=', sourcing_line.order_id.id),
             ]
@@ -1415,7 +1420,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             po_values = {
-                'order_type': 'loan',
+                'order_type': 'loan_return',
                 'origin': sourcing_line.order_id.name,
                 'partner_id': sourcing_line.order_partner_id.id,
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [sourcing_line.order_partner_id.id], ['default'])['default'],
@@ -2374,6 +2379,29 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                              context={}, count=True)  # search with 'new' context
                     g['line_number'] = line_count
         return res
+
+    def view_docs_with_product(self, cr, uid, ids, menu_action, context=None):
+        '''
+        Get info from the given menu action to return the right view with the right data
+        '''
+        if context is None:
+            context = {}
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, menu_action, ['tree', 'form'], new_tab=True, context=context)
+
+        res_context = res.get('context', False) and safe_eval(res['context']) or {}
+        for col in res_context:  # Remove the default filters
+            if 'search_default_' in col:
+                res_context[col] = False
+
+        sol_product_id = False
+        if context.get('active_id', False):
+            sol_product_id = self.read(cr, uid, context['active_id'], ['product_id'], context=context)['product_id'][0]
+        res_context['search_default_product_id'] = sol_product_id
+        res['context'] = res_context
+
+        return res
+
 
 sale_order_line()
 

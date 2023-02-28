@@ -249,26 +249,14 @@ class account_move(osv.osv):
         # Prepare some values
         move = self.browse(cr, uid, ids[0], context=context)
         amount = 0.0
-        total_debit = 0.0
-        total_credit = 0.0
         # Search elements for currency
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency = move.currency_id and move.currency_id.id or company_currency
-        # Search amount for this Journal Entry
-        # We take the biggest amount (debit OR credit)
-        # If debit > credit, then amount = debit
-        # If credit > debit, them amount = credit
-        # If debit = credit and debit != 0.0, then amount = debit = credit (here we take debit)
-        # Else, amount is 0.0
+        # Since US-9996, for the total_amount in global AD wizard, only take into account only amounts from lines
+        # with analytic-addicted accounts that require an AD
         for ml in move.line_id:
-            total_debit += ml.debit_currency
-            total_credit += ml.credit_currency
-        if total_debit > total_credit:
-            amount = total_debit
-        elif total_credit > total_debit:
-            amount = total_credit
-        elif total_credit == total_debit and total_debit != 0.0:
-            amount = total_debit
+            if ml.account_id.is_analytic_addicted:
+                amount += ml.credit_currency - ml.debit_currency
         # Get analytic_distribution_id
         distrib_id = move.analytic_distribution_id and move.analytic_distribution_id.id
         # Prepare values for wizard

@@ -81,8 +81,9 @@
             <blockSpan start="10,0" stop="10,-1" />
             <blockSpan start="11,0" stop="11,-1" />
             <blockSpan start="12,0" stop="12,-1" />
-	    <blockLeftPadding length="2" start="0,0" stop="-1,-1" />
-	    <blockRightPadding length="2" start="0,0" stop="-1,-1" />
+            <blockSpan start="13,0" stop="13,-1" />
+            <blockLeftPadding length="2" start="0,0" stop="-1,-1" />
+            <blockRightPadding length="2" start="0,0" stop="-1,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="FooterInfo">
@@ -113,8 +114,12 @@
             <blockSpan start="10,0" stop="10,-1" />
             <blockSpan start="11,0" stop="11,-1" />
             <blockSpan start="12,0" stop="12,-1" />
+<<<<<<< TREE
 	    <blockLeftPadding length="2" start="0,0" stop="-1,-1" />
 	    <blockRightPadding length="2" start="0,0" stop="-1,-1" />
+=======
+            <blockSpan start="13,0" stop="13,-1" />
+>>>>>>> MERGE-SOURCE
         </blockTableStyle>
 
         <blockTableStyle id="NoteTable">
@@ -270,7 +275,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,55.0,55.0,55.0,75.0,50.0,20.0,20.0,20.0" style="LinesHeader">
+        <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,44.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesHeader">
             <tr>
                 <td>
                     <para style="LineHeader">Item</para>
@@ -286,6 +291,9 @@
                 </td>
                 <td>
                     <para style="LineHeader">Qty in stock</para>
+                </td>
+                <td>
+                    <para style="LineHeader">Kit</para>
                 </td>
                 <td>
                     <para style="LineHeader">Unit of Measure</para>
@@ -349,12 +357,15 @@
                 <td>
                     <para style="LineHeader"></para>
                 </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
             </tr>
         </blockTable>
 
         <pto>
             <pto_header>
-                <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,55.0,55.0,55.0,75.0,50.0,20.0,20.0,20.0" style="LinesHeader">
+                <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,44.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesHeader">
                     <tr>
                         <td>
                             <para style="LineHeader">Item</para>
@@ -370,6 +381,9 @@
                         </td>
                         <td>
                             <para style="LineHeader">Qty in stock</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">Kit</para>
                         </td>
                         <td>
                             <para style="LineHeader">Unit of Measure</para>
@@ -433,12 +447,15 @@
                         <td>
                             <para style="LineHeader"></para>
                         </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
                     </tr>
                 </blockTable>
             </pto_header>
 
             <!-- Lines -->
-            <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,55.0,55.0,55.0,75.0,50.0,20.0,20.0,20.0" style="LinesValues">
+            <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,44.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesValues">
                 [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>
@@ -456,6 +473,9 @@
                     </td>
                     <td>
                         <para style="LineValue">[[ objects[0].state != 'done' and formatFloatDigitsToUom(getStock(m), m.product_id.uom_id.rounding) or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LineValue">[[ m.composition_list_id and m.composition_list_id.composition_reference or '' ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.product_id.uom_id.name ]]</para>
@@ -492,6 +512,9 @@
                     </td>
                     <td>
                         <parawrap style="LineValueLeft">[[ m.comment or '' ]]</parawrap>
+                    </td>
+                    <td>
+                        <para style="LineValue"></para>
                     </td>
                     <td>
                         <para style="LineValue"></para>

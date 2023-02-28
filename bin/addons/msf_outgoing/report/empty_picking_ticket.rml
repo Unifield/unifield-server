@@ -74,7 +74,9 @@
             <blockSpan start="9,1" stop="9,-1" />
             <blockSpan start="10,1" stop="10,-1" />
             <blockSpan start="11,1" stop="11,-1" />
-	    <blockSpan start="12,1" stop="12,-1" />
+            <blockSpan start="12,1" stop="12,-1" />
+            <blockSpan start="13,1" stop="13,-1" />
+            <blockSpan start="14,1" stop="14,-1" />
             <blockLeftPadding length="2" start="0,0" stop="-1,-1"/>
             <blockRightPadding length="2" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
@@ -104,6 +106,7 @@
             <blockSpan start="6,0" stop="6,-1" />
             <blockSpan start="7,0" stop="7,-1" />
             <blockSpan start="8,0" stop="8,-1" />
+            <blockSpan start="9,0" stop="9,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="NoteTable">
@@ -246,8 +249,11 @@
         <setNextTemplate name="second" />
 
         <!-- Lines -->
-        <blockTable colWidths="30.0,100.0,220.0,55.0,65.0,55.0,20.0,20.0,20.0,45.0,45.0,45.0,45.0,45.0" style="LinesHeader">
+        <blockTable colWidths="25.0,100.0,220.0,55.0,44.0,65.0,45.0,17.0,17.0,17.0,45.0,40.0,40.0,40.0,40.0" style="LinesHeader">
             <tr>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
                 <td>
                     <para style="LineHeader"></para>
                 </td>
@@ -303,6 +309,9 @@
                 </td>
                 <td>
                     <para style="LineHeader">Total Qty to pack</para>
+                </td>
+                <td>
+                    <para style="LineHeader">Kit</para>
                 </td>
                 <td>
                     <para style="LineHeader">Batch</para>
@@ -379,6 +388,9 @@
                 <td>
                     <para style="LineHeader"></para>
                 </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
             </tr>
         </blockTable>
 
@@ -405,8 +417,11 @@
                 <td></td>
             </tr>
         </blockTable>
-                <blockTable colWidths="30.0,100.0,220.0,55.0,65.0,55.0,20.0,20.0,20.0,45.0,45.0,45.0,45.0,45.0" style="LinesHeader">
+                <blockTable colWidths="25.0,100.0,220.0,55.0,44.0,65.0,45.0,17.0,17.0,17.0,45.0,40.0,40.0,40.0,40.0" style="LinesHeader">
                     <tr>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
                         <td>
                             <para style="LineHeader"></para>
                         </td>
@@ -462,6 +477,9 @@
                         </td>
                         <td>
                             <para style="LineHeader">Total Qty to pack</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">Kit</para>
                         </td>
                         <td>
                             <para style="LineHeader">Batch</para>
@@ -537,12 +555,15 @@
                         <td>
                             <para style="LineHeader"></para>
                         </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
                     </tr>
                 </blockTable>
             </pto_header>
 
             <!-- Lines -->
-            <blockTable colWidths="30.0,100.0,220.0,55.0,65.0,55.0,20.0,20.0,20.0,45.0,45.0,45.0,45.0,45.0" style="LinesValues">
+            <blockTable colWidths="25.0,100.0,220.0,55.0,44.0,65.0,45.0,17.0,17.0,17.0,45.0,40.0,40.0,40.0,40.0" style="LinesValues">
                 [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>
@@ -558,6 +579,9 @@
                     <td>
 			<para style="LineValue">[[ m.no_product and m.product_qty or removeParentNode('para') ]] [[ m.product_uom.name ]]</para>
                         <para style="LineValueBold">[[ not m.no_product and formatFloatDigitsToUom(m.product_qty or 0.00, m.product_uom.rounding) or removeParentNode('para') ]] [[ m.product_uom.name ]]</para>
+                    </td>
+                    <td>
+                        <para style="LineValue">[[ m.composition_list_id and m.composition_list_id.composition_reference or '' ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.prodlot_id and m.prodlot_id.name or '' ]]</para>
@@ -604,6 +628,9 @@
                     </td>
                     <td>
                         <parawrap style="LineValueLeft">[[ m.comment ]]</parawrap>
+                    </td>
+                    <td>
+                        <para style="LineValue"></para>
                     </td>
                     <td>
                         <para style="LineValue"></para>

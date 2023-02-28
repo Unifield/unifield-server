@@ -47,7 +47,6 @@ class purchase_order_line(osv.osv):
 
         if context.get('rfq_ok') and view_type == 'form':
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'rfq_line_form')[1]
-            return super(purchase_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         view = super(purchase_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'form' and context.get('from_tab') != 1:
             form = etree.fromstring(view['arch'])
@@ -165,9 +164,22 @@ class purchase_order_line(osv.osv):
 
         res = {}
         for pol in self.browse(cr, uid, ids, fields_to_fetch=['linked_sol_id'], context=context):
+            if not pol.linked_sol_id:
+                original_instance = self.pool.get('res.company')._get_instance_record(cr, uid).instance
+            elif pol.linked_sol_id.original_instance:
+                original_instance = pol.linked_sol_id.original_instance
+            elif pol.linked_sol_id.order_id.partner_type in ('esc', 'external'):
+                # FO FS to Ext
+                original_instance = self.pool.get('res.company')._get_instance_record(cr, uid).instance
+            else:
+                # IR or FO from scratch to instance
+                original_instance = pol.linked_sol_id.order_id.partner_id.name
+
+
             res[pol.id] = {
                 'customer_ref': pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False,
                 'ir_name_for_sync': pol.linked_sol_id and pol.linked_sol_id.order_id.name or '',
+                'original_instance': original_instance,
             }
 
         return res
@@ -656,6 +668,8 @@ class purchase_order_line(osv.osv):
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
         'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
         'loan_line_id': fields.many2one('sale.order.line', string='Linked loan line', readonly=True),
+
+        'original_instance': fields.function(_get_customer_ref, method=True, type='char', string='Original Instance', multi='custo_ref_ir_name'),
     }
 
     _defaults = {
@@ -785,7 +799,7 @@ class purchase_order_line(osv.osv):
             # Raise an error if no analytic distribution found
             if not distrib:
                 # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
-                if po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind') or po.push_fo:
+                if po.order_type in ('loan', 'loan_return', 'donation_st', 'donation_exp', 'in_kind') or po.push_fo:
                     return True
                 raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
                                      % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
@@ -1962,7 +1976,7 @@ class purchase_order_line(osv.osv):
             if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
                 return False
 
-            if pol.order_id.order_type in ['loan', 'in_kind', 'donation_st', 'donation_exp']:
+            if pol.order_id.order_type in ['loan', 'loan_return', 'in_kind', 'donation_st', 'donation_exp']:
                 return False
 
             # exclude push flow (FO or FO line created first)

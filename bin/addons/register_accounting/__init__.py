@@ -22,7 +22,6 @@
 ##############################################################################
 
 from . import wizard
-from . import partner
 from . import account_move_line
 from . import account_bank_statement
 from . import account_cash_statement

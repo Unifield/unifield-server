@@ -35,8 +35,14 @@ class sale_order(osv.osv):
         res = {}
         if not order_type:
             return res
+        if order_type == 'loan_return':
+            current_type = id and self.browse(cr, uid, id[0], fields_to_fetch=['order_type'], context=context).order_type or False
+            return {
+                'value': {'order_type': current_type},
+                'warning': {'title': _('Error'), 'message': _('You can not select this Order Type manually')}
+            }
         msg = _('Partner type is not compatible with given Order Type!')
-        if order_type in ['regular', 'donation_st', 'loan', 'donation_exp']:
+        if order_type in ['regular', 'donation_st', 'loan', 'loan_return', 'donation_exp']:
             # Check that partner correspond
             if partner_id:
                 partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
@@ -63,6 +69,7 @@ class sale_order(osv.osv):
             'regular':      ['internal', 'intermission', 'section', 'external', 'esc'],
             'donation_st':  ['internal', 'intermission', 'section', 'external'],
             'loan':         ['internal', 'intermission', 'section', 'external'],
+            'loan_return':  ['internal', 'intermission', 'section', 'external'],
             'donation_exp': ['internal', 'intermission', 'section', 'external'],
             'in_kind':      ['internal', 'intermission', 'section', 'external', 'esc'],
             'direct':       ['internal', 'intermission', 'section', 'external', 'esc'],

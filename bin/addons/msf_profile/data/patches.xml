@@ -833,6 +833,10 @@
             <field name="method">us_7852_set_journal_code</field>
         </record>
 
+        <record id="us_10353_inactivation_date" model="patch.scripts">
+            <field name="method">us_10353_inactivation_date</field>
+        </record>
+
         <record id="us_10105_custom_order" model="patch.scripts">
             <field name="method">us_10105_custom_order</field>
         </record>
@@ -883,6 +887,15 @@
 
         <record id="us_10586_running_one_time_accrual" model="patch.scripts">
             <field name="method">us_10586_running_one_time_accrual</field>
+        </record>
+
+        <!-- UF28.0 -->
+        <record id="us_10652_chg_partn_property_fields" model="patch.scripts">
+            <field name="method">us_10652_chg_partn_property_fields</field>
+        </record>
+
+        <record id="us_8417_upd_srv_loc" model="patch.scripts">
+            <field name="method">us_8417_upd_srv_loc</field>
         </record>
 
         <!-- py3 -->

@@ -21,4 +21,5 @@
 
 from . import product_where_used
 from . import product_merged
+from . import merged_ud_products
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

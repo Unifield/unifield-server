@@ -49,6 +49,7 @@ class stock_reception_report(report_sxw.rml_parse):
 
             cross_docking_id = model_obj.get_object_reference(self.cr, self.uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
             loan_rt_id = model_obj.get_object_reference(self.cr, self.uid, 'reason_types_moves', 'reason_type_loan')[1]
+            loan_ret_rt_id = model_obj.get_object_reference(self.cr, self.uid, 'reason_types_moves', 'reason_type_loan_return')[1]
             for move in move_obj.browse(self.cr, self.uid, moves_ids, context=self.localcontext):
                 pick = move.picking_id
                 move_dest = move.move_dest_id or False
@@ -103,7 +104,7 @@ class stock_reception_report(report_sxw.rml_parse):
                     final_dest_loc = ''
 
                 # Get the final destination partner
-                if move.reason_type_id.id != loan_rt_id:
+                if move.reason_type_id.id not in (loan_rt_id, loan_ret_rt_id):
                     if sol and not sol.procurement_request:
                         final_dest_partner = sol.order_id.partner_id.name
                     elif so and not so.procurement_request:

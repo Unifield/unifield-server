@@ -49,14 +49,14 @@ class res_partner(osv.osv):
         for arg in args:
             if arg[0] == 'check_partner_so':
                 if arg[1] != '=' \
-                        or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'in_kind', 'purchase_list', 'direct']\
+                        or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'loan_return', 'in_kind', 'purchase_list', 'direct']\
                         or not isinstance(arg[2]['partner_id'], int):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_so different than (arg[0], =, %s) not implemented.') % arg[2])
                 order_type = arg[2]['order_type']
                 p_list = []
                 if order_type in ['regular']:
                     p_list = ['internal', 'intermission', 'external', 'esc'] # UTP-953: Cannot create an FO regular for Intersection due to the Push Flow sync
-                elif order_type in ['donation_st', 'loan', 'donation_exp']:
+                elif order_type in ['donation_st', 'loan', 'loan_return', 'donation_exp']:
                     p_list = ['internal', 'intermission', 'section', 'external']
                 elif order_type in ['direct', 'in_kind']:
                     p_list = ['internal', 'intermission', 'section', 'esc', 'external']

@@ -27,6 +27,7 @@ COMPATS = {
     'regular':       ['internal', 'intermission', 'section', 'external', 'esc'],
     'donation_st':   ['internal', 'intermission', 'section'],
     'loan':          ['internal', 'intermission', 'section', 'external'],
+    'loan_return':   ['internal', 'intermission', 'section', 'external'],
     'donation_exp':  ['internal', 'intermission', 'section'],
     'in_kind':       ['external', 'esc'],
     'direct':        ['external', 'esc'],

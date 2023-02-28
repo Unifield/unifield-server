@@ -248,24 +248,28 @@ class account_invoice_import(osv.osv_memory):
                     vals['note'] = notes
                     if account.is_analytic_addicted and analytic_distribution_type and analytic_distribution_type.strip() in ('100%', '100', '1'):
                         if not cost_center_code or not destination_code or not funding_pool_code:
-                            errors.append(_("Line %s: An expense account is set while the analytic distribution values (mandatory) are missing.") % (current_line_num,))
-                            continue
+                            if not cost_center_code:
+                                errors.append(_("Line %s: An expense account is set while the cost center code (mandatory) is missing.") % (current_line_num,))
+                            if not destination_code:
+                                errors.append(_("Line %s: An expense account is set while the destination code (mandatory) is missing.") % (current_line_num,))
+                            if not funding_pool_code:
+                                errors.append(_("Line %s: An expense account is set while the funding pool code (mandatory) is missing.") % (current_line_num,))
                         # If AD is filled - write on each line the AD on the import file. Remove from header.
 
                         cc_ids = aac_obj.search(cr, uid,[('code', '=', cost_center_code),('category', '=', 'OC'), ('type', '!=', 'view')],
                                                 limit=1, context=context)
-                        if not cc_ids:
-                            errors.append(_("Line %s: the cost center %s doesn't exist.") % (current_line_num, cost_center_code))
-                            continue
-
-                        fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING'), ('type', '!=', 'view')], limit=1, context=context)
-                        if not fp_ids:
-                            errors.append(_("Line %s: the funding pool %s doesn't exist.") % (current_line_num, funding_pool_code))
-                            continue
-
-                        dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST'), ('type', '!=', 'view')], limit=1, context=context)
-                        if not dest_ids:
-                            errors.append(_("Line %s: the destination %s doesn't exist.") % (current_line_num, destination_code))
+                        fp_ids = aac_obj.search(cr, uid,
+                                                [('code', '=', funding_pool_code), ('category', '=', 'FUNDING'),
+                                                 ('type', '!=', 'view')], limit=1, context=context)
+                        dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST'),
+                                                            ('type', '!=', 'view')], limit=1, context=context)
+                        if not (cc_ids and fp_ids and dest_ids):
+                            if not cc_ids and cost_center_code:  # in case the CC code is missing, a warning message already created above
+                                errors.append(_("Line %s: the cost center %s doesn't exist.") % (current_line_num, cost_center_code))
+                            if not fp_ids and funding_pool_code:
+                                errors.append(_("Line %s: the funding pool %s doesn't exist.") % (current_line_num, funding_pool_code))
+                            if not dest_ids and destination_code:
+                                errors.append(_("Line %s: the destination %s doesn't exist.") % (current_line_num, destination_code))
                             continue
 
                         current_ad =  invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id

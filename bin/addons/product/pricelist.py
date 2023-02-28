@@ -310,6 +310,24 @@ class product_pricelist(osv.osv):
         res.update({'item_id': {ids[-1]: ids[-1]}})
         return res
 
+    def get_company_default_pricelist(self, cr, uid, type=None, context=None):
+        '''
+        Return the pricelist with a specific type linked to the default currency of the company
+        '''
+        if context is None:
+            context = {}
+
+        pricelist_types = [x[0] for x in self._pricelist_type_get(cr, uid, context=context)]
+        if not type or type not in pricelist_types:
+            return False
+        company_curr_id = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.currency_id.id
+        pricelist_ids = self.search(cr, uid, [('currency_id', '=', company_curr_id), ('type', '=', type)], context=context)
+
+        if pricelist_ids:
+            return pricelist_ids[0]
+        else:
+            return False
+
 
 product_pricelist()
 

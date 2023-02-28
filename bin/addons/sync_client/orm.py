@@ -900,6 +900,9 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
                 if field[0] == 'id':
                     if intersection and row._name == 'product.product':
                         json_data['msfid'] = row['msfid']
+                        if row['is_kept_product']:
+                            cr.execute('select msfid from product_product where kept_product_id = %s and msfid is not null and msfid != 0 order by unidata_merge_date desc', (row['id'], ))
+                            json_data['merged_msfid'] = '; '.join([str(x[0]) for x in cr.fetchall()])
                     json_data[field[0]] = row.get_xml_id(cr, uid, [row.id]).get(row.id)
                 elif field[0] == '.id':
                     json_data[field[0]] = row.id

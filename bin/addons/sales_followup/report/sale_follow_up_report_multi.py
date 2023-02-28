@@ -175,7 +175,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 'state_display': line_state_display_dict.get(line.state_to_display),
             }
 
+            cancelled_move = False
             for move in line.move_ids:
+                cancelled_move = False
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
                 ppl_not_shipped = move.picking_id.subtype == 'ppl' and move.picking_id.state not in ('cancel', 'done')
@@ -278,6 +280,12 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
                     # reset the data to prevent delivered_qty problem when line is split in PICK
                     data = {}
+                # If the move is from a cancelled OUT/Pick plus sometimes returned PPL/Ship but not a cancelled FO line
+                cancelled_pps = line.state not in ('cancel', 'cancel_r') and move.type == 'out' and \
+                    move.picking_subtype in ('standard', 'picking', 'ppl', 'packing') and \
+                    (move.state == 'cancel' or (move.backmove_id and move.backmove_id.state == 'cancel'))
+                if first_line and cancelled_pps:
+                    cancelled_move = True
 
             if first_line:
                 if linked_pol and linked_pol.order_type == 'direct' and linked_pol.state == 'done':
@@ -313,7 +321,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
                         'delivered_qty': 0.00,
                         'delivered_uom': '-',
-                        'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
+                        'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' and not cancelled_move else 0.00,
                         'edd': edd,
                         'cdd': cdd,
                     })

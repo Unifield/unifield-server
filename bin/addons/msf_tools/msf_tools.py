@@ -344,9 +344,10 @@ class data_tools(osv.osv):
         """
         Modifies the string in parameter:
         - replaces the line breaks by spaces if they are in the middle of the string
+        - replaces non-breakable spaces by ordinary spaces
         - removes the line breaks and the spaces at the beginning and at the end
         """
-        return re.sub('[\r\n]', ' ', string_to_format or '').strip()
+        return re.sub('[\r\n\xc2\xa0]', ' ', string_to_format or '').strip()
 
     def replace_line_breaks_from_vals(self, vals, fields, replace=None):
         """

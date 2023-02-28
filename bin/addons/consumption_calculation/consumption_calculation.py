@@ -109,7 +109,7 @@ class real_average_consumption(osv.osv):
             for line in report.line_ids:
                 lines.append(line.id)
             if lines:
-                self.pool.get('real.average.consumption.line').write(cr, uid, lines, {'move_id': False}, context=context)
+                self.pool.get('real.average.consumption.line').write(cr, uid, lines, {'move_id': False, 'kcl_id': False}, context=context)
 
         # update created_ok at this end to disable _check qty on line
         self.write(cr, uid, res, {'created_ok': False})
@@ -444,9 +444,12 @@ class real_average_consumption(osv.osv):
                                                         'location_id': rac.cons_location_id.id,
                                                         'location_dest_id': rac.activity_id.id,
                                                         'state': 'done',
-                                                        'reason_type_id': reason_type_id})
+                                                        'reason_type_id': reason_type_id,
+                                                        'composition_list_id': line.kcl_id and line.kcl_id.id})
                     move_ids.append(move_id)
                     line_obj.write(cr, uid, [line.id], {'move_id': move_id})
+                    if line.product_subtype == 'kit' and line.kcl_id:
+                        self.pool.get('composition.kit').close_kit(cr, uid, [line.kcl_id.id], self._name, context=context)
 
             self.write(cr, uid, [rac.id], {'picking_id': picking_id, 'state': 'done'}, context=context)
 
@@ -711,6 +714,8 @@ class real_average_consumption_line(osv.osv):
             # the lines with to_correct_ok=True will be red
             if out.text_error:
                 result[out.id]['to_correct_ok'] = True
+            result[out.id]['uom_rounding_is_pce'] = out.uom_id and out.uom_id.rounding == 1 or False
+            result[out.id]['product_subtype'] = out.product_id and out.product_id.subtype or False
         return result
 
     def _get_qty(self, cr, uid, product, lot, location, uom):
@@ -741,6 +746,12 @@ class real_average_consumption_line(osv.osv):
                     raise osv.except_osv(_('Error'), _('The consumed qty. must be positive or 0.00'))
                 elif context.get('import_in_progress'):
                     error_message.append(_('The consumed qty. must be positive or 0.00'))
+                    context.update({'error_message': error_message})
+            if obj.consumed_qty > 1 and obj.kcl_id:
+                if not noraise:
+                    raise osv.except_osv(_('Error'), _('If the Kit Reference is filled, the consumed qty can not be greater than 1'))
+                elif context.get('import_in_progress'):
+                    error_message.append(_('If the Kit Reference is filled, the consumed qty can not be greater than 1'))
                     context.update({'error_message': error_message})
 
             location = obj.rac_id.cons_location_id.id
@@ -832,6 +843,7 @@ class real_average_consumption_line(osv.osv):
                               store={'product.product': (_get_product, ['default_code'], 10),
                                      'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
+        'uom_rounding_is_pce': fields.function(_get_checks_all, method=True, type='boolean', string="UoM Rounding is PCE", store=False, readonly=True, multi="m"),
         'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True, related_uom='uom_id'),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True, related_uom='uom_id'),
         'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
@@ -846,11 +858,14 @@ class real_average_consumption_line(osv.osv):
         'remark': fields.char(size=256, string='Comment'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade', select=1),
+        'rac_state': fields.related('rac_id', 'state', type='char', size=64, string='Real Consumption State', readonly=True),
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
         'just_info_ok': fields.boolean(string='Just for info'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
+        'kcl_id': fields.many2one('composition.kit', 'Kit', domain="[('composition_product_id', '=', product_id), ('composition_type', '=', 'real'), ('state', '=', 'completed'), ('kcl_used_by', '=', False)]"),
+        'product_subtype': fields.function(_get_checks_all, method=True, type='selection', string='Product Subtype', selection=[('single', 'Single Item'), ('kit', 'Kit/Module'), ('asset', 'Asset')], store=False, readonly=True, multi="m"),
     }
 
     _defaults = {
@@ -862,26 +877,28 @@ class real_average_consumption_line(osv.osv):
         if not ids:
             return True
         cr.execute('''
-            select product.default_code, bn.name, bn.id, bn.life_date, rac.id, rac.name
+            select product.default_code, bn.name, bn.id, bn.life_date, rac.id, rac.name, kcl.id, kcl.name
                 from real_average_consumption rac
                 left join real_average_consumption_line line on line.rac_id = rac.id
                 left join product_product product on product.id = line.product_id
                 left join stock_production_lot bn on bn.id = line.prodlot_id
+                left join composition_kit kcl on kcl.id = line.kcl_id
             where
                 rac.state = 'draft' and
-                (rac.id, line.product_id, coalesce(line.prodlot_id,0)) in (select rac_id, product_id, coalesce(prodlot_id, 0) from real_average_consumption_line where id in %s)
+                (rac.id, line.product_id, coalesce(line.prodlot_id,0), coalesce(line.kcl_id,0)) 
+                    in (select rac_id, product_id, coalesce(prodlot_id, 0), coalesce(kcl_id,0) from real_average_consumption_line where id in %s)
             group by
-                product.default_code, bn.name, bn.id, rac.id, rac.name
+                product.default_code, bn.name, bn.id, rac.id, rac.name, kcl.id, kcl.name
             having count(*) > 1
         ''', (tuple(ids), ))
         error = []
         for x in cr.fetchall():
-            error.append('%s: %s %s' % (x[5], x[0], x[1] or ''))
+            error.append('%s: %s %s %s' % (x[5], x[0], x[1], x[6] or ''))
             if len(error) > 5:
                 error.append('...')
                 break
         if error:
-            raise osv.except_osv(_('Error'), _('Each product or couple product plus batch number has to be unique:\n%s')
+            raise osv.except_osv(_('Error'), _('Each product or couple product plus batch number and kit have to be unique:\n%s')
                                  % "\n".join(error))
 
         return True
@@ -1048,7 +1065,10 @@ class real_average_consumption_line(osv.osv):
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
 
-        res = {'value': {'product_qty': qty_available}, 'domain': d}
+        res = {'value': {'product_qty': qty_available, 'kcl_id': False}, 'domain': d}
+
+        if not uom or self.pool.get('product.uom').browse(cr, uid, uom, fields_to_fetch=['rounding']).rounding != 1:
+            res['value'].update({'item_uom_rounding_is_pce': False, 'kcl_id': False})
 
         if product_qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, product_qty, 'consumed_qty', result=res)
@@ -1062,7 +1082,7 @@ class real_average_consumption_line(osv.osv):
         if context is None:
             context = {}
         product_obj = self.pool.get('product.product')
-        v = {'batch_mandatory': False, 'date_mandatory': False, 'asset_mandatory': False}
+        v = {'batch_mandatory': False, 'date_mandatory': False, 'asset_mandatory': False, 'kcl_id': False}
         d = {'uom_id': []}
         warning = False
         if product_id:
@@ -1085,7 +1105,7 @@ class real_average_consumption_line(osv.osv):
                 v.update({'asset_mandatory': True, 'remark': _('You must assign an asset')})
 
             uom = product.uom_id.id
-            v.update({'uom_id': uom})
+            v.update({'uom_id': uom, 'product_subtype': product.subtype})
             d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
             if location_id:
                 v.update({'product_qty': qty_available})
@@ -1098,8 +1118,13 @@ class real_average_consumption_line(osv.osv):
                         'title': _('Warning'),
                         'message': '%s \n %s' % (res.get('warning', {}).get('message', ''), consistency_message)
                     }
+
+            # Make Kit editable if the chosen product on a new line is kit with a PCE UoM
+            if product.uom_id.rounding == 1:
+                v.update({'uom_rounding_is_pce': True})
         else:
-            v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False, 'consumed_qty': 0.00})
+            v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False,
+                      'consumed_qty': 0.00, 'kcl_id': False})
 
         return {'value': v, 'domain': d, 'warning': warning}
 
@@ -1110,12 +1135,13 @@ class real_average_consumption_line(osv.osv):
         if not default:
             default = {}
 
-        default.update({'prodlot_id': False, 'expiry_date': False, 'asset_id': False})
+        default.update({'prodlot_id': False, 'expiry_date': False, 'asset_id': False, 'kcl_id': False})
 
         if 'consumed_qty' in default and default['consumed_qty'] < 0.00:
             default['consumed_qty'] = 0.00
 
         return super(real_average_consumption_line, self).copy(cr, uid, line_id[0], default=default, context={'noraise': True})
+
 
 real_average_consumption_line()
 
@@ -1809,13 +1835,14 @@ class product_product(osv.osv):
         # Get all reason types
         get_object_reference = self.pool.get('ir.model.data').get_object_reference
         loan_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        loan_return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
         donation_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
         donation_exp_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
         loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
         discrepancy_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
 
         # Update the domain
-        domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id))]
+        domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, loan_return_id, donation_id, donation_exp_id, loss_id, discrepancy_id))]
         int_return_qery = False
 
         return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1] # code 4
@@ -1926,7 +1953,7 @@ class product_product(osv.osv):
     def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False, remove_negative_amc=False, rounding=True):
         '''
         Compute the Average Monthly Consumption with this formula :
-            AMC = (sum(OUTGOING (except reason types Loan, Donation, Loss, Discrepancy))
+            AMC = (sum(OUTGOING (except reason types Loan, Loan Return, Donation, Loss, Discrepancy))
                   -
                   sum(INCOMING with reason type Return from unit)) / Number of period's months
             The AMC is the addition of all done stock moves for a product within a period.

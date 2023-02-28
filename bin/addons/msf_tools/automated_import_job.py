@@ -354,7 +354,8 @@ class automated_import_job(osv.osv):
                         nb_processed += self.generate_file_report(cr, uid, job, processed, headers, remote=remote)
 
                     if rejected:
-                        nb_rejected += self.generate_file_report(cr, uid, job, rejected, headers, remote=remote, rejected=True)
+                        nb_rejected = nb_processed  # US-7624 If one row is not correct, all processed rows are rejected
+                        self.generate_file_report(cr, uid, job, rejected, headers, remote=remote, rejected=True)
                         state = 'error'
                         for resjected_line in rejected:
                             line_message = ''

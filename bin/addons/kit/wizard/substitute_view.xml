@@ -28,6 +28,7 @@
 			            		<field name="qty_substitute_item" on_change="onchange_qty(item_id_mirror, uom_id_substitute_item, qty_substitute_item)" attrs="{'readonly': [('product_id_substitute_item', '=', False)]}" />
 			            		<field name="uom_id_substitute_item" readonly="True" />
 			            		<field name="asset_id_substitute_item" readonly="True" />
+								<field name="kcl_id_substitute_item" readonly="True" />
 								<field name="comment" readonly="True" />
 			            		<field name="lot_mirror" readonly="True" />
 			            		<field name="exp_substitute_item" readonly="True" />
@@ -62,6 +63,7 @@
                 					domain="[('product_id', '=', product_id_substitute_item)]"
 			            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
                					<field name="comment" />
+               					<field name="kcl_id_substitute_item" attrs="{'readonly': ['|', '|', ('product_id_substitute_item', '=', False), ('product_subtype_substitute_item', '!=', 'kit'), ('uom_substitute_item_is_pce', '=', False)]}" />
                					<field name="type_check" invisible="True" />
                					<field name="hidden_asset_mandatory" invisible="True" />
                 				<field name="hidden_batch_management_mandatory" string="Lot" />
@@ -71,6 +73,8 @@
             					<field name="availability_status_func_substitute_item" />
             					<field name="availability_status_hidden_func_substitute_item" invisible="True" />
 								<field name="wiz_step_substitute" invisible="True" />
+								<field name="uom_substitute_item_is_pce" invisible="True" />
+								<field name="product_subtype_substitute_item" invisible="True" />
                         	</tree>
                         </field>
                     </group>
@@ -97,6 +101,7 @@
             		<field name="qty_substitute_item" readonly="True" />
             		<field name="uom_id_substitute_item" readonly="True" />
             		<field name="asset_id_substitute_item" />
+            		<field name="kcl_id_substitute_item" />
             		<field name="comment" />
             		<field name="lot_mirror" />
             		<field name="exp_substitute_item" />

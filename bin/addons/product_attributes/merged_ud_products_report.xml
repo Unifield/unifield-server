@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="report_merged_ud_products"
+            string="Merged UD products report"
+            model="merged_ud_products"
+            name="report.merged_ud_products"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
+        <record id="merged_ud_products_form" model="ir.ui.view">
+            <field name="name">merged_ud_products</field>
+            <field name="model">merged_ud_products</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Merged UD products report">
+                    <separator colspan="4" string="Parameters" />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="product_code" />
+                    <field name="main_type_id" widget="selection"/>
+                    <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record id="action_merged_ud_products" model="ir.actions.act_window">
+            <field name="name">Merged UD products report</field>
+            <field name="res_model">merged_ud_products</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            id="menu_merged_ud_products"
+            action="action_merged_ud_products"
+            parent="stock.next_id_61"
+            sequence="100"
+            />
+
+    </data>
+</openerp>

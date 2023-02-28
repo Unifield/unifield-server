@@ -296,7 +296,7 @@ class stock_move(osv.osv):
     def _get_product_type(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        for move in self.browse(cr, uid, ids, context=context):
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['product_id'], context=context):
             res[move.id] = move.product_id.type
 
         return res
@@ -404,9 +404,7 @@ class stock_move(osv.osv):
         '''
         result = {}
         uom_obj = self.pool.get('product.uom')
-        for move in self.read(cr, uid, ids,
-                              ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'],
-                              context=context):
+        for move in self.read(cr, uid, ids, ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'], context=context):
             default_values = {
                 'total_amount': 0.0,
                 'amount': 0.0,
@@ -437,8 +435,10 @@ class stock_move(osv.osv):
                 amount = 0
             result[move['id']]['amount'] = amount
             result[move['id']]['currency_id'] = move['sale_line_id'] and sale_line['currency_id'] and sale_line['currency_id'][0] or False
+            if move['product_uom']:
+                uom_rounding = uom_obj.read(cr, uid, move['product_uom'][0], ['rounding'], context=context)['rounding']
+                result[move['id']]['product_uom_rounding_is_pce'] = uom_rounding == 1
         return result
-
 
     def _get_picking_with_sysint_name(self, cr, uid, ids, fields, arg, context=None):
         res = {}
@@ -462,6 +462,8 @@ class stock_move(osv.osv):
         'product_uos_qty': fields.float('Quantity (UOS)', digits_compute=dp.get_precision('Product UoM'), states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, related_uom='product_uos_qty'),
         'product_uos': fields.many2one('product.uom', 'Product UOS', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
         'product_packaging': fields.many2one('product.packaging', 'Packaging', help="It specifies attributes of packaging like type, quantity of packaging,etc."),
+        'product_uom_rounding': fields.related('product_uom', 'rounding', type='float', string="UoM Rounding", digits_compute=dp.get_precision('Product UoM'), store=False, write_relate=False),
+        'product_uom_rounding_is_pce': fields.function(_vals_get, method=True, type='boolean', string="UoM Rounding is PCE", multi='get_vals', store=False, readonly=True),
 
         'location_id': fields.many2one('stock.location', 'Source Location', required=True, select=True,states={'done': [('readonly', True)]}, help="Sets a location if you produce at a fixed location. This can be a partner location if you subcontract the manufacturing operations."),
         'location_dest_id': fields.many2one('stock.location', 'Destination Location', required=True,states={'done': [('readonly', True)]}, select=True, help="Location where the system will stock the finished products."),
@@ -530,8 +532,9 @@ class stock_move(osv.osv):
         'order_type': fields.function(_get_order_information, method=True, string='Order Type', type='selection',
                                       selection=[('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                                  ('donation_st', 'Standard donation'), ('loan', 'Loan'),
-                                                 ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                                 ('direct', 'Direct Purchase Order')], multi='move_order', fnct_search=_search_order),
+                                                 ('loan_return', 'Loan Return'), ('in_kind', 'In Kind Donation'),
+                                                 ('purchase_list', 'Purchase List'), ('direct', 'Direct Purchase Order')],
+                                      multi='move_order', fnct_search=_search_order),
         'sale_ref_id': fields.related('sale_line_id', 'order_id', type='many2one', relation='sale.order', string='Sale', readonly=True),
         'purchase_ref_id': fields.related('purchase_line_id', 'order_id', type='many2one', relation='purchase.order', string='Purchase', readonly=True),
         'init_inv_ids': fields.many2many('initial.stock.inventory', 'initial_stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
@@ -560,7 +563,7 @@ class stock_move(osv.osv):
         'exp_check': fields.function(_get_checks_all, method=True, string='ED', type='boolean', readonly=True, multi="m"),
         'kit_check': fields.function(_get_checks_all, method=True, string='Kit', type='boolean', readonly=True, multi="m"),
 
-        # reson types
+        # reason types
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=300, string='Comment'),
         'product_type': fields.function(_get_product_type, method=True, type='selection', selection=_get_product_type_selection, string='Product type',
@@ -924,6 +927,8 @@ class stock_move(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
+        if context is None:
+            context = {}
         prod_obj = self.pool.get('product.product')
 
         default = default.copy()
@@ -938,6 +943,8 @@ class stock_move(osv.osv):
             default['pt_created'] = False
         if 'integrity_error' not in default:
             default['integrity_error'] = 'empty'
+        if not context.get('from_button'):
+            default['composition_list_id'] = False
         default['included_in_mission_stock'] = False
 
         new_id = super(stock_move, self).copy(cr, uid, id, default, context=context)
@@ -981,12 +988,16 @@ class stock_move(osv.osv):
             # UF-1797: when we duplicate a doc we delete the link with the poline
             if 'purchase_line_id' not in defaults and not context.get('keepPoLine', False):
                 defaults.update(purchase_line_id=False)
-            if context.get('web_copy', False) and 'sale_line_id' not in defaults:
-                defaults.update(sale_line_id=False)
+            if context.get('web_copy', False):
+                if 'sale_line_id' not in defaults:
+                    defaults.update(sale_line_id=False)
+                defaults['composition_list_id'] = False
             if context.get('subtype', False) == 'incoming':
                 # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
                 input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
                 defaults.update(location_dest_id=input_loc)
+        else:
+            defaults['composition_list_id'] = False
         return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
 
     def onchange_lot_processor(self, cr, uid, ids, lot_id, qty, location_id, uom_id, context=None):
@@ -1740,6 +1751,13 @@ class stock_move(osv.osv):
                         if has_linked_pol:
                             context.pop('sol_done_instead_of_cancel')
 
+            # Remove all KCL references from the OUT process wizard lines linked to the move
+            if move.product_id.subtype == 'kit':
+                out_m_proc_obj = self.pool.get('outgoing.delivery.move.processor')
+                out_m_proc_ids = out_m_proc_obj.search(cr, uid, [('move_id', '=', move.id), ('composition_list_id', '!=', False)], context=context)
+                if out_m_proc_ids:
+                    out_m_proc_obj.write(cr, uid, out_m_proc_ids, {'composition_list_id': False}, context=context)
+
         self.action_done(cr, uid, move_to_done, context=context)
 
         # Search only non unlink move
@@ -1890,6 +1908,9 @@ class stock_move(osv.osv):
                 picking_ids.append(move.picking_id.id)
                 if move.type == 'out':
                     vals.update({'reason_type_id': move.picking_id.reason_type_id.id})
+                    # Close the linked KCL when the Shipment processes the PACK
+                    if move.picking_subtype == 'packing' and move.subtype == 'kit' and move.composition_list_id:
+                        self.pool.get('composition.kit').close_kit(cr, uid, [move.composition_list_id.id], self._name, context=context)
             if self._hook_action_done_update_out_move_check(cr, uid, ids, context=context, move=move,):
                 vals.update({'move_history_ids': [(4, move.move_dest_id.id)]})
                 #cr.execute('insert into stock_move_history_ids (parent_id,child_id) values (%s,%s)', (move.id, move.move_dest_id.id))

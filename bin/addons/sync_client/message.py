@@ -398,6 +398,7 @@ class message_received(osv.osv):
         'sync_id': fields.integer('Sync server seq. id', required=True, select=1),
         'target_object': fields.char('Target Object', size=254, readonly=1, select=1),
         'target_id': fields.integer('Target Id', size=254, readonly=1, select=1),
+        'line_number': fields.integer('line number in case of NR', readonly=1),
     }
 
     _sql_constraints = [
@@ -518,6 +519,7 @@ class message_received(osv.osv):
                     if isinstance(e, SyncException):
                         msg_data['target_object'] = e.target_object
                         msg_data['target_id'] = e.target_id
+                        msg_data['line_number'] = e.line_number
 
 
                     self.write(cr, uid, message.id, msg_data, context=context)

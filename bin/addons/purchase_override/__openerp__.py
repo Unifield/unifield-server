@@ -46,7 +46,6 @@
         "security/ir.model.access.csv",
         "purchase_sequence.xml",
         "wizard/purchase_order_group_view.xml",
-        "purchase_data.yml",
     ],
     "demo_xml": [
     ],

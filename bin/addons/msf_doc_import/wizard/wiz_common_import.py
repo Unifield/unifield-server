@@ -540,7 +540,8 @@ class sale_order_line(osv.osv):
                                                              'partner_id',
                                                              'date_order',
                                                              'procurement_request',
-                                                             'fiscal_position'], context=context)
+                                                             'fiscal_position',
+                                                             'categ'], context=context)
 
             values = {'order_id': parent_id,
                       'product_id': p_data['id'],
@@ -565,7 +566,8 @@ class sale_order_line(osv.osv):
                                                         order_data['date_order'],
                                                         False,
                                                         order_data['fiscal_position'] and order_data['fiscal_position'][0] or False,
-                                                        False).get('value', {}),
+                                                        False,
+                                                        order_data['categ']).get('value', {}),
                               context=context)
 
             # Set the quantity to 0.00
@@ -574,6 +576,7 @@ class sale_order_line(osv.osv):
             self.create(cr, uid, values, context=dict(context, noraise=True, import_in_progress=True))
 
         return True
+
 
 sale_order_line()
 

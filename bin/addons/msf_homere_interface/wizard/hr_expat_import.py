@@ -71,6 +71,8 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
             created = 0
             updated = 0
             processed = 0
+            to_update_vals = []
+            to_create_vals = []
             # Check that a file is given
             if not wiz.file:
                 raise osv.except_osv(_('Error'), _('No file given'))
@@ -108,20 +110,17 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                             continue  # inserting an invalid date format in the DB would fail
                         else:
                             contract_end_date_str = contract_end_date and contract_end_date.strftime('%Y-%m-%d') or ''
-                code = get_xml_spreadheet_cell_value(1).strip()
+                code = get_xml_spreadheet_cell_value(1) and get_xml_spreadheet_cell_value(1).strip()
                 if not code:
-                    msg = "At least one employee in the import file does not" \
-                        " have an ID number; make sure all employees in the" \
-                        " file have an ID number and run the import again."
+                    msg = _('THE EMPLOYEE DOES NOT HAVE AN ID NUMBER AT LINE %d.') % line_index
                     manage_error(line_index, msg, name, contract_end_date=contract_end_date_str)
                 active_str = get_xml_spreadheet_cell_value(2)
                 if not active_str:
-                    msg = "Active column is missing or empty at line %d" % line_index
+                    msg = _("Active column is missing or empty at line %d") % line_index
                     manage_error(line_index, msg, name, code, contract_end_date=contract_end_date_str)
                 active_str = active_str and active_str.lower() or ''
                 if active_str not in ('active', 'inactive'):
-                    msg = "Active column invalid value line %d" \
-                        " (should be Active/Inactive)" % line_index
+                    msg = _("Active column invalid value line %d  (should be Active/Inactive)") % line_index
                     manage_error(line_index, msg, name, code, active_str, contract_end_date=contract_end_date_str)
                 active = active_str == 'active' or False
 
@@ -141,20 +140,33 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                 if handle_contract_end_date:
                     vals.update({'contract_end_date': contract_end_date})
                 if ids:
-                    # Update name of Expat employee
-                    hr_emp_obj.write(cr, uid, [ids[0]], vals, context=context)
+                    # Store name of Expat employee to update
+                    to_update_vals.append(([ids[0]], vals))
                     updated += 1
                 else:
-                    # Create Expat employee
+                    # Store Expat employee to create
                     vals.update(
                         {
                             'type': 'ex',
                             'identification_id': code,
                         }
                     )
-                    hr_emp_obj.create(cr, uid, vals, context=context)
+                    to_create_vals.append(vals)
                     created += 1
                 line_index += 1
+            if not rejected_lines:
+                for vals in to_update_vals:
+                    hr_emp_obj.write(cr, uid, vals[0], vals[1], context=context)
+                for vals in to_create_vals:
+                    hr_emp_obj.create(cr, uid, vals, context=context)
+            else:  # US-7624: To avoid partial import, reject all lines if there is at least one invalid employee line
+                created = 0
+                updated = 0
+                rejected_idx = [i[0] for i in rejected_lines]  # get line number of each rejected line
+                temp = [(t[0], t[1], '') for t in processed_lines if
+                        t[0] not in rejected_idx]  # add an empty error column to valid lines
+                rejected_lines += temp
+                rejected_lines.sort(key=lambda j: j[0])  # sort on line number
 
             context.update({'message': ' ', 'from': 'expat_import'})
 

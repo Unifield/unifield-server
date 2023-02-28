@@ -34,6 +34,10 @@ class account_cashbox_line(osv.osv):
     _description = 'CashBox Line'
     _rec_name = 'number'
 
+    _max_amount = 10 ** 10
+    _max_msg = _("The Values or the Total amount of the line is more than 10 digits."
+                 "Please check that the Values and Number are correct to avoid loss of exact information")
+
     def _sub_total(self, cr, uid, ids, name, arg, context=None):
 
         """ Calculates Sub total
@@ -52,8 +56,21 @@ class account_cashbox_line(osv.osv):
         @param pieces: Names of fields.
         @param number:
         """
-        sub = pieces * number
-        return {'value': {'subtotal': sub or 0.0}}
+        return {'value': {'subtotal': pieces * number or 0.0}}
+
+    def _check_number_size(self, cr, uid, vals, context=None):
+        if vals.get('number') and abs(vals['number']) > self._max_amount:
+            raise osv.except_osv(_('Warning'), _(self._max_msg))
+
+    def create(self, cr, uid, vals, context=None):
+        self._check_number_size(cr, uid, vals, context=context)
+        return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        self._check_number_size(cr, uid, vals, context=context)
+        return super(account_cashbox_line, self).write(cr, uid, ids, vals, context=context)
 
     _columns = {
         'pieces': fields.float('Values', digits_compute=dp.get_precision('Account')),
@@ -74,9 +91,19 @@ class account_cashbox_line(osv.osv):
                 if self.search_exist(cr, uid, dom):
                     return False
         return True
+    def _check_subtotal(self, cr, uid, ids):
+        """
+        Blocks the creation/edition of Cashbox line if the integer part of (value * number) is more than 10 digits.
+        """
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['number', 'pieces']):
+            if line.pieces and abs(line.pieces) >= self._max_amount or line.number and abs(line.number) >= self._max_amount or abs(line.pieces * line.number) >= self._max_amount:
+                return False
+        return True
 
     _constraints = [
         (_check_cashbox_closing_duplicates, 'The values of the Closing Balance lines must be unique per register.', ['ending_id', 'pieces']),
+        (_check_subtotal, 'The Values or the Total amount of the line is more than 10 digits. '
+                          'Please check that the Values and Number are correct to avoid loss of exact information', ['number', 'pieces']),
     ]
 
 

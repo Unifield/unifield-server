@@ -26,7 +26,7 @@ from lxml import etree
 import tools
 from datetime import datetime
 import logging
-
+from base.res.signature import _register_log
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -753,6 +753,20 @@ class product_attributes(osv.osv):
                 logging.getLogger('cold chain').info('Cold chain id:%s, update %s products' % (cold['id'], nb_updated))
             return []
 
+    def _get_can_be_hq_merged(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for _id in ids:
+            res[_id] = False
+
+        if self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level != 'section':
+            return res
+
+        for _id in self.search(cr, uid, [('id', 'in', ids), ('active', '=', True), ('international_status', '=', 'UniData'), ('kept_product_id', '=', False)], context=context):
+            if self.search(cr, uid, [('active', 'in', ['t', 'f']), ('kept_product_id', '=', _id)], count=True, context=context) < 2:
+                res[_id] = True
+        return res
+
+
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
@@ -1050,6 +1064,12 @@ class product_attributes(osv.osv):
         'instance_level': fields.function(_get_product_instance_level, method=True, string='Instance Level', internal=1, type='char'),
         'show_ud': fields.function(_get_dummy, fnct_search=_search_show_ud, method=True, type='boolean', string='Search UD NSL or ST/NS', internal=1),
         'currency_fixed': fields.boolean('Currency Changed by US-8196'),
+        'can_be_hq_merged': fields.function(_get_can_be_hq_merged, method=True, string='Can this product be merged to a kept product ?', type='boolean'),
+        'kept_product_id': fields.many2one('product.product', string='Kept Product', select=1, readonly=1),
+        'kept_initial_product_id': fields.many2one('product.product', string='1st Kept Product in case of chaining', select=1, readonly=1),
+        'unidata_merged': fields.boolean('UniData Merged', readonly=1),
+        'unidata_merge_date': fields.datetime('Date of UniData Merge', readonly=1, select=1),
+        'is_kept_product': fields.boolean('Is a kept product', readonly=1),
     }
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
@@ -1654,6 +1674,15 @@ class product_attributes(osv.osv):
         self.clean_standard(cr, uid, vals, context)
         self.clean_bn_ed(cr, uid, vals, context)
 
+        if vals.get('active'):
+            non_kept_ids = self.search(cr, uid, [('id', 'in', ids), ('active', 'in', ['t', 'f']), ('kept_product_id', '!=', False)], context=context)
+            if non_kept_ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _("Merged products cannot be activated: %s") % (', '.join([x['default_code'] for x in self.read(cr, uid, non_kept_ids, ['default_code'], context=context)]))
+                )
+
+
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
@@ -1724,7 +1753,7 @@ class product_attributes(osv.osv):
         if unidata_product and not context.get('sync_update_execution'):
             if 'international_status' not in vals and 'oc_subscription' in vals:
                 if self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '!=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context):
-                    raise osv.except_osv(_('Waning'), _("You can write the oc_subscription field on multiple products only if all products are UniData !"))
+                    raise osv.except_osv(_('Warning'), _("You can write the oc_subscription field on multiple products only if all products are UniData !"))
 
             if 'oc_subscription' in vals and not vals['oc_subscription']:
                 # oc_subscription=False must preval on vals['state_ud']
@@ -1799,7 +1828,7 @@ class product_attributes(osv.osv):
                     vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
 
         ud_unable_to_inactive = []
-        if 'active' in vals and not vals['active'] and not context.get('sync_update_execution') and unidata_product:
+        if 'active' in vals and not vals['active'] and not context.get('sync_update_execution') and unidata_product and not vals.get('kept_product_id'):
             ud_unable_to_inactive = self.unidata_products_used(cr, uid, ids)
             if not prod_state:
                 vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'archived')], context=context)[0]
@@ -1807,11 +1836,13 @@ class product_attributes(osv.osv):
                 ids = list(set(ids) - ud_unable_to_inactive)
                 ud_unable_to_inactive = list(ud_unable_to_inactive)
 
-        if ids and 'active' in vals:
+        if ids and 'active' in vals and not vals.get('kept_product_id'):
             # to manage sync update generation on active field
             fields_to_update = ['active_change_date=%(now)s']
-            if context.get('sync_update_execution'):
+            if context.get('sync_update_execution') and not vals.get('from_hq_merge'):
                 fields_to_update += ['active_sync_change_date=%(now)s']
+            elif vals.get('from_hq_merge'):
+                del(vals['from_hq_merge'])
             cr.execute('update product_product set '+', '.join(fields_to_update)+' where id in %(ids)s and active != %(active)s', {'now': fields.datetime.now(), 'ids': tuple(ids), 'active': vals['active']}) # not_a_user_entry
 
         if ids and unidata_product and not context.get('sync_update_execution') and vals.get('standard_ok') in ('standard', 'non_standard'):
@@ -1910,7 +1941,7 @@ class product_attributes(osv.osv):
 
         return True
 
-    def deactivate_product(self, cr, uid, ids, context=None, try_only=False):
+    def deactivate_product(self, cr, uid, ids, context=None, try_only=False, ignore_draft=True):
         '''
         De-activate product.
         Check if the product is not used in any document in Unifield
@@ -1953,6 +1984,10 @@ class product_attributes(osv.osv):
                 has_product_list = []
 
 
+            states_to_ignore = ['done', 'cancel', 'cancel_r']
+            if ignore_draft:
+                states_to_ignore.append('draft')
+
             # Check if the product is in some purchase order lines or request for quotation lines
             cr.execute('''
                 select
@@ -1961,17 +1996,23 @@ class product_attributes(osv.osv):
                     purchase_order po, purchase_order_line pol
                 where
                     po.id = pol.order_id and
-                    pol.state not in ('draft', 'done', 'cancel', 'cancel_r') and
+                    pol.state not in %s and
                     po.active = 't' and
                     pol.product_id = %s
-            ''', (product.id, ))
+            ''', (tuple(states_to_ignore), product.id, ))
             has_po_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product is in some tender lines
+            states_to_ignore = ['done', 'cancel']
+            if ignore_draft:
+                states_to_ignore.append('draft')
             has_tender_line = tender_line_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                               ('tender_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                               ('tender_id.state', 'not in', states_to_ignore)], context=context)
 
             # Check if the product is in field order lines or in internal request lines
+            states_to_ignore = ['done', 'cancel', 'cancel_r']
+            if ignore_draft:
+                states_to_ignore.append('draft')
             cr.execute('''
                 select
                     sol.id
@@ -1979,31 +2020,38 @@ class product_attributes(osv.osv):
                     sale_order so, sale_order_line sol
                 where
                     so.id = sol.order_id and
-                    sol.state not in ('draft', 'done', 'cancel', 'cancel_r') and
+                    sol.state not in %s and
                     so.active = 't' and
                     sol.product_id = %s
-            ''', (product.id, ))
+            ''', (tuple(states_to_ignore), product.id, ))
             has_fo_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product is in stock picking
             # All stock moves in a stock.picking not draft/cancel/done/delivered or all stock moves in a shipment not delivered/done/cancel
+            states_to_ignore = ['done', 'delivered', 'cancel']
+            if ignore_draft:
+                states_to_ignore.append('draft')
+
             has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
                                                       ('picking_id', '!=', False),
                                                       ('state', 'not in', ['done', 'cancel']),
-                                                      '|', ('picking_id.state', 'not in', ['draft', 'done', 'delivered', 'cancel']),
+                                                      '|', ('picking_id.state', 'not in', states_to_ignore),
                                                       '&', ('picking_id.shipment_id', '!=', False),
                                                       ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel']),
                                                       ], context=context)
 
+            states_to_ignore = ['done', 'cancel']
+            if ignore_draft:
+                states_to_ignore.append('draft')
             # Check if the product is in a stock inventory
             has_inventory_line = inv_obj.search(cr, uid, [('product_id', '=', product.id),
                                                           ('inventory_id', '!=', False),
-                                                          ('inventory_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                          ('inventory_id.state', 'not in', states_to_ignore)], context=context)
 
             # Check if the product is in an initial stock inventory
             has_initial_inv_line = in_inv_obj.search(cr, uid, [('product_id', '=', product.id),
                                                                ('inventory_id', '!=', False),
-                                                               ('inventory_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                               ('inventory_id.state', 'not in', states_to_ignore)], context=context)
 
             # Check if the product is in a real kit composition
             has_kit = kit_obj.search(cr, uid, [('item_product_id', '=', product.id),
@@ -2019,6 +2067,14 @@ class product_attributes(osv.osv):
             has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
                                                             ('invoice_id', '!=', False),
                                                             ('invoice_id.state', 'not in', ['paid', 'inv_close', 'proforma', 'proforma2', 'cancel'])], context=context)
+
+            # Check if the invoices where the product is are open and if the header account is reconcilable
+            has_open_inv_reconcilable_acc = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                                         ('invoice_id', '!=', False),
+                                                                         ('invoice_id.state', 'in', ['open']),
+                                                                         ('invoice_id.account_id.reconcile', '=', False)], context=context)
+            # Allow deactivation of products in open invoices but with non-reconcilable header account
+            has_invoice_line = list(set(has_invoice_line) - set(has_open_inv_reconcilable_acc))
 
             # Check if the product has stock in internal locations
             for loc_id in internal_loc:
@@ -2245,7 +2301,14 @@ class product_attributes(osv.osv):
         if not ids:
             return True
 
-        product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management', 'perishable'], context=context)
+        product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management', 'perishable', 'default_code'], context=context)
+
+        product_merged_obj = self.pool.get('product.merged')
+        merged_ids = product_merged_obj.search(cr, 1, ['|', ('new_product_id', '=', ids[0]), ('old_product_id', '=', ids[0])], context=context)
+        if merged_ids and \
+                product_merged_obj.need_to_push(cr, 1, merged_ids, context=context):
+            raise osv.except_osv(_('Error'), _('There is a UD merge products in the pipe, BN/ED attributes cannot be changed. Please try again after the following synchronization.'))
+
 
         change_target = context.get('change_target')
         if not change_target:
@@ -2327,7 +2390,7 @@ class product_attributes(osv.osv):
         if default is None:
             default = {}
 
-        for to_reset in ['replace_product_id', 'replaced_by_product_id', 'currency_fixed']:
+        for to_reset in ['replace_product_id', 'replaced_by_product_id', 'currency_fixed', 'kept_product_id', 'kept_initial_product_id', 'unidata_merged', 'unidata_merge_date']:
             if to_reset not in default:
                 default[to_reset] = False
 
@@ -2344,7 +2407,12 @@ class product_attributes(osv.osv):
                        attribute_ids=False,
                        packaging=False,
                        uf_create_date=False,
-                       uf_write_date=False
+                       uf_write_date=False,
+                       kept_product_id=False,
+                       kept_initial_product_id=False,
+                       unidata_merged=False,
+                       unidata_merge_date=False,
+                       is_kept_product=False,
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
@@ -2712,16 +2780,26 @@ class product_attributes(osv.osv):
         nb += self.switch_bn_to_no(cr, uid, ids, context)
         return nb
 
-    def check_same_value(self, cr, uid, new_prod_id, old_prod_id, blocker=True, context=None):
+    def check_same_value(self, cr, uid, new_prod_id, old_prod_id, level, blocker=True, context=None):
 
-        if blocker:
-            fields_to_check = [
-                'type', 'subtype', 'perishable', 'batch_management', 'uom_id'
-            ]
+        if level == 'coordo':
+            if blocker:
+                fields_to_check = [
+                    'type', 'subtype', 'perishable', 'batch_management', 'uom_id'
+                ]
+            else:
+                fields_to_check = [
+                    'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods'
+                ]
         else:
-            fields_to_check = [
-                'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods'
-            ]
+            if blocker:
+                fields_to_check = [
+                    'type', 'subtype', 'perishable', 'batch_management', 'uom_id', 'nomen_manda_0'
+                ]
+            else:
+                fields_to_check = [
+                    'nomen_manda_1', 'nomen_manda_2', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods'
+                ]
 
         old_values = self.read(cr, uid, old_prod_id, fields_to_check, context=context)
         new_values = self.read(cr, uid, new_prod_id, fields_to_check, context=context)
@@ -2735,16 +2813,39 @@ class product_attributes(osv.osv):
             fields_data = self.fields_get(cr, uid, failed, context=context)
             values = {'attr': ', '.join([fields_data[x].get('string') for x in failed])}
             if blocker:
-                return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update your local product %(attr)s and then proceed with the merge.') % values
+                if level == 'coordo':
+                    return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update your local product %(attr)s and then proceed with the merge.') % values
+                return _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update (one of) your UniData product\'s %(attr)s and then proceed with the merge.') % values
+
             return _('There is an inconsistency between the selected products’  %(attr)s . Do you still want to proceed with the merge?') % values
 
         return ''
+
+    def open_merge_hq_product_wizard(self, cr, uid, prod_id, context=None):
+        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+            raise osv.except_osv(_('Warning'), _('Merge products can only be done at HQ level.'))
+
+        wiz_id = self.pool.get('product.merged.wizard').create(cr, uid, {'old_product_id': prod_id[0], 'level': 'section'}, context=context)
+
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'hq_product_merged_wizard_form_view')[1]
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.merged.wizard',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'target': 'new',
+            'context': context,
+            'height': '400px',
+            'width': '720px',
+        }
 
     def open_merge_product_wizard(self, cr, uid, prod_id, context=None):
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'coordo':
             raise osv.except_osv(_('Warning'), _('Merge products can only be done at Coordo level.'))
 
-        wiz_id = self.pool.get('product.merged.wizard').create(cr, uid, {'old_product_id': prod_id[0]}, context=context)
+        wiz_id = self.pool.get('product.merged.wizard').create(cr, uid, {'old_product_id': prod_id[0], 'level': 'coordo'}, context=context)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'product.merged.wizard',
@@ -2811,7 +2912,192 @@ class product_attributes(osv.osv):
         return [(x[0],', '.join(x[1])) for x in cr.fetchall()]
 
 
+    def merge_hq_product(self, cr, uid, kept_id, old_prod_id, context=None):
+        """
+            method used at HQ level to merge UD products, and executed at mission level by sync
+        """
+        if context is None:
+            context = {}
+        kept_data = self.read(cr, uid, kept_id, ['default_code','perishable', 'batch_management', 'old_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'standard_ok', 'international_status'], context=context)
+        old_prod_data = self.read(cr, uid, old_prod_id, ['default_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'can_be_hq_merged', 'international_status', 'standard_ok'], context=context)
+
+        instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
+
+        errors = []
+        if not context.get('sync_update_execution'):
+            # checks on HQ only
+            if not old_prod_data['can_be_hq_merged']:
+                errors.append(_('Product %s cannot be merged.') % (old_prod_data['default_code'],))
+            if not old_prod_data['active']:
+                errors.append(_('Product %s must be active.') % (old_prod_data['default_code'],))
+            if not kept_data['active']:
+                errors.append(_('Product %s must be active.') % (kept_data['default_code'],))
+        else:
+            # checks on mission
+            if not old_prod_data['active'] and old_prod_data['standard_ok'] != 'non_standard_local':
+                errors.append(_('Product %s must be active.') % (old_prod_data['default_code'], ))
+            if not kept_data['active'] and kept_data['standard_ok'] != 'non_standard_local':
+                errors.append(_('Product %s must be active.') % (kept_data['default_code'], ))
+
+        if kept_data['international_status'] != old_prod_data['international_status'] or kept_data['international_status'][1] != 'UniData':
+            errors.append(_('Products %s, %s must be UniData.') % (old_prod_data['default_code'], kept_data['default_code']))
+
+
+        if instance_level != 'project':
+            block_msg = self.check_same_value( cr, uid,  kept_id, old_prod_id, level='section', blocker=True, context=context)
+            if block_msg:
+                prod_data = self.read(cr, uid, [kept_id, old_prod_id], ['default_code'], context=context)
+                errors.append(_('%s\nProducts: %s and %s') % (block_msg, prod_data[0]['default_code'], prod_data[1]['default_code']))
+
+        if errors:
+            raise osv.except_osv(_('Error'), "\n".join(errors))
+
+        new_write_data = {'is_kept_product': True}
+        if not kept_data['old_code']:
+            new_write_data['old_code'] = old_prod_data['default_code']
+        elif old_prod_data['default_code'] not in kept_data['old_code'].split(';'):
+            new_write_data['old_code'] = '%s;%s' % (kept_data['old_code'], old_prod_data['default_code'])
+
+        if old_prod_data['qty_available'] + kept_data['qty_available']:
+            new_write_data['standard_price'] = (old_prod_data['qty_available'] * old_prod_data['standard_price'] + kept_data['qty_available'] * kept_data['standard_price']) / float(old_prod_data['qty_available'] + kept_data['qty_available'])
+            if abs(new_write_data['standard_price'] - kept_data['standard_price']) > 0.0001:
+                self.pool.get('standard.price.track.changes').create(cr, uid, {
+                    'old_standard_price': kept_data['standard_price'],
+                    'new_standard_price': new_write_data['standard_price'],
+                    'product_id': kept_id,
+                    'transaction_name': 'Merge with %s: qty transferred: %s, avg cost: %s, resulting qty: %s' % (old_prod_data['default_code'], old_prod_data['qty_available'], old_prod_data['standard_price'], kept_data['qty_available']+old_prod_data['qty_available']),
+                }, context=context)
+
+        # kept is inactive NSL check at coordo if it must be activated
+        if context.get('sync_update_execution'):
+            if kept_data['standard_ok'] == 'non_standard_local' and not kept_data['active'] and old_prod_data['active']:
+                if instance_level == 'coordo':
+                    if not self.deactivate_product(cr, uid, old_prod_id, context=context, try_only=True, ignore_draft=False).get('ok') or \
+                            self._has_pipe(cr, uid, old_prod_id):
+                        # from_hq_merge used to trigger update from COO to activate prod at coo
+                        new_write_data.update({'active': True, 'from_hq_merge': True})
+
+        blacklist_table = {
+            'product_template': [
+                ('product_product', 'product_tmpl_id')
+            ],
+            'product_product': [
+                ('stock_mission_report_line', 'product_id'),
+                ('stock_mission_report_line_location', 'product_id'),
+                ('prod_mass_update_product_rel', 'prod_mass_update_id'),
+                ('product_mass_update_errors', 'product_id'),
+                ('product_merged', 'new_product_id'),
+                ('product_merged', 'old_product_id'),
+                ('standard_price_track_changes', 'product_id'),
+                ('product_product', 'kept_initial_product_id'),
+            ]
+        }
+
+        # m2m tables have by standard a unique constraint, so we should delete old prod entry if the new one already exist
+        m2m_relation = {}
+        fields_obj = self.pool.get('ir.model.fields')
+        m2m_ids = fields_obj.search(cr, uid, [('ttype', '=', 'many2many'), ('relation', '=', 'product.product'), ('state', '!=', 'deprecated')], context=context)
+        if m2m_ids:
+            for m2m_rel in fields_obj.browse(cr, uid, m2m_ids, fields_to_fetch=['model', 'name'], context=context):
+                linked_obj = self.pool.get(m2m_rel.model)
+                if linked_obj and not isinstance(linked_obj, osv.osv_memory):
+                    m2m_field = linked_obj._columns.get(m2m_rel.name)
+                    if not m2m_field or isinstance(m2m_field, fields.function):
+                        continue
+                    m2m_relation.setdefault(m2m_field._rel, []).append({'linked_field': m2m_field._id1, 'product_field': m2m_field._id2})
+
+        default_code = kept_data['default_code']
+        for table in ['product_product', 'product_template']:
+            for x in cr.get_referenced(table):
+                if (x[0], x[1]) in blacklist_table.get(table):
+                    continue
+
+                if table == 'product_product':
+                    params = {'old_prod': old_prod_id, 'kept_id': kept_id}
+                else:
+                    params = {'old_prod': old_prod_data['product_tmpl_id'][0], 'kept_id': kept_data['product_tmpl_id'][0]}
+
+                if x[0] == 'stock_production_lot':
+                    # merge duplicates lot
+                    if kept_data['batch_management'] or kept_data['perishable']:
+                        if kept_data['batch_management']:
+                            add_lot_query = 'and kept_lot.name = old_lot.name '
+                        else:
+                            add_lot_query = ''
+                        cr.execute('''
+                            select
+                                kept_lot.id, old_lot.id
+                            from
+                                stock_production_lot kept_lot, stock_production_lot old_lot
+                            where
+                                kept_lot.product_id = %(kept_id)s and
+                                old_lot.product_id = %(old_prod)s and
+                                kept_lot.life_date = old_lot.life_date
+                                ''' + add_lot_query + '''
+                        ''', params) # not_a_user_entry
+
+                        for kept_lot, old_lot in cr.fetchall():
+                            for referenced in cr.get_referenced('stock_production_lot'):
+                                cr.execute('update ' + referenced[0] + ' set ' + referenced[1] + '=%s where ' + referenced[1] + '=%s', (kept_lot, old_lot)) # not_a_user_entry
+                            cr.execute('delete from stock_production_lot where id=%s', (old_lot, ))
+
+                if cr.column_exists(x[0], 'default_code') and table != 'product_product':
+                    params['default_code'] = default_code
+                    add_query = ' , default_code=%(default_code)s '
+                else:
+                    add_query = ''
+
+                if table == 'product_product' and x[0] in m2m_relation:
+                    for m2m_rel in m2m_relation[x[0]]:
+                        # delete duplicates on m2m
+                        cr.execute("delete from "+x[0]+" where "+m2m_rel['product_field']+"=%(old_prod)s and "+m2m_rel['linked_field']+" in (select "+m2m_rel['linked_field']+" from "+x[0]+" where "+m2m_rel['product_field']+"=%(kept_id)s)", params) # not_a_user_entry
+                cr.execute('update '+x[0]+' set '+x[1]+'=%(kept_id)s '+add_query+' where '+x[1]+'=%(old_prod)s', params) # not_a_user_entry
+
+        write_context = context.copy()
+        write_context['keep_standard_price'] = True # to allow to write standard_price field
+
+        self.write(cr, uid, kept_id, new_write_data, context=write_context)
+        self.write(cr, uid, old_prod_id, {'active': False, 'unidata_merged': True, 'unidata_merge_date': fields.datetime.now(), 'kept_product_id': kept_id, 'kept_initial_product_id': kept_id, 'new_code': kept_data['default_code']}, context=context)
+
+        _register_log(self, cr, uid, kept_id, self._name, 'Merge Product non-kept product', '', old_prod_data['default_code'], 'write', context)
+        _register_log(self, cr, uid, old_prod_id, self._name, 'Merge Product kept product', '', kept_data['default_code'], 'write', context)
+
+        if not context.get('sync_update_execution') or instance_level == 'coordo':
+            merge_data = {'new_product_id': kept_id, 'old_product_id': old_prod_id, 'level': 'section'}
+            new_ctx = context.copy()
+            if instance_level == 'coordo':
+                merge_data['created_on_coo'] = True
+                if context.get('sync_update_execution'):
+                    del(new_ctx['sync_update_execution']) # otherwise product.merged record does not have an xmlid
+            self.pool.get('product.merged').create(cr, 1, merge_data, context=new_ctx)
+
+        # reset mission stock on nsl + old to 0, will be computed on next mission stock update
+        mission_stock_fields_reset = [
+            'stock_qty', 'stock_val',
+            'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
+            'secondary_qty', 'secondary_val',
+            'eprep_qty',
+            'cu_qty', 'cu_val',
+            'cross_qty', 'cross_val',
+            'wh_qty', 'internal_qty',
+            'quarantine_qty', 'input_qty', 'opdd_qty'
+        ]
+        cr.execute('''
+            update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field  for field in mission_stock_fields_reset]) + '''
+                where
+                mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
+                product_id in %(product_ids)s
+        ''', {'zero': 0, 'local_instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),  'product_ids': (kept_id, old_prod_id)}) # not_a_user_entry
+        cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (kept_id, ))
+
+        return True
+
+
+
     def merge_product(self, cr, uid, nsl_prod_id, local_id, context=None):
+        """
+            method used at COO level to merge a local product to a never used UD product
+        """
         if context is None:
             context = {}
 
@@ -2837,7 +3123,7 @@ class product_attributes(osv.osv):
             raise osv.except_osv(_('Warning'), _('Old merged product %s: condition not met: active, local product') % old_prod['default_code'])
 
 
-        block_msg = self.check_same_value( cr, uid,  nsl_prod_id, local_id, blocker=True, context=context)
+        block_msg = self.check_same_value( cr, uid,  nsl_prod_id, local_id, level='coordo', blocker=True, context=context)
         if block_msg:
             prod_data = self.read(cr, uid, [nsl_prod_id, local_id], ['default_code'], context=context)
             raise osv.except_osv(_('Warning'), '%s\nProducts: %s and %s' % (block_msg, prod_data[0]['default_code'], prod_data[1]['default_code']))
@@ -2880,7 +3166,10 @@ class product_attributes(osv.osv):
         write_context = context.copy()
         if not context.get('sync_update_execution'):
             fields_to_keep = self.merged_fields_to_keep
-            new_write_data['old_code'] = '%s;%s' % (new_data['old_code'], old_prod_data['default_code']) if new_data['old_code'] else old_prod_data['default_code']
+            if not new_data['old_code']:
+                new_write_data['old_code'] = old_prod_data['default_code']
+            elif old_prod_data['default_code'] not in new_data['old_code'].split(';'):
+                new_write_data['old_code'] = '%s;%s' % (new_data['old_code'], old_prod_data['default_code'])
         else:
             fields_to_keep = ['list_price', 'standard_price']
             write_context['keep_standard_price'] = True
@@ -2937,27 +3226,40 @@ class product_merged(osv.osv):
     """
 
     _name = 'product.merged'
-    _description = 'NSL products merged'
+    _description = 'Products merged (NSL from Coo / UD from HQ)'
     _rec_name = 'new_product_id'
 
     _columns = {
         'new_product_id': fields.many2one('product.product', 'UD NSL Product', required=1, select=1),
         'old_product_id': fields.many2one('product.product', 'Old local Product', required=1, select=1),
+        'level': fields.char('Level', size=16),
+        'created_on_coo': fields.boolean('Created on coo'),
     }
+
+    _defaults = {
+        'level': 'coordo',
+    }
+
+    def _auto_init(self, cr, context=None):
+        res = super(product_merged, self)._auto_init(cr, context)
+        cr.drop_constraint_if_exists('product_merged', 'product_merged_unique_new_product_id')
+        return res
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
 
         new_id  = super(product_merged, self).create(cr, uid, vals, context=context)
-        if context.get('sync_update_execution'):
-            self.pool.get('product.product').merge_product(cr, uid, vals['new_product_id'], vals['old_product_id'], context=context)
+        if context.get('sync_update_execution') and not vals.get('created_on_coo'):
+            if vals.get('level') == 'section':
+                self.pool.get('product.product').merge_hq_product(cr, uid, vals['new_product_id'], vals['old_product_id'], context=context)
+            else:
+                self.pool.get('product.product').merge_product(cr, uid, vals['new_product_id'], vals['old_product_id'], context=context)
 
         return new_id
 
     _sql_constraints = [
-        ('unique_new_product_id', 'unique(new_product_id)', 'UD already used to merge a local product'),
-        ('unique_old_product_id', 'unique(old_product_id)', 'Local product already merged'),
+        ('unique_old_product_id', 'unique(old_product_id, created_on_coo)', 'Local product already merged'),
     ]
 
 product_merged()

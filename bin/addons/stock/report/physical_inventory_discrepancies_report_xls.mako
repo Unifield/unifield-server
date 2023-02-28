@@ -628,7 +628,7 @@
    <Row ss:AutoFitHeight="0">
     <Cell ss:Index="2" ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s20"><Data ss:Type="String">${_('Inventory Name')|x}</Data><NamedCell
+    <Cell ss:StyleID="s20"><Data ss:Type="String">${_('Inventory Details')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].name or '' |x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>

@@ -44,10 +44,11 @@ class RunWithoutException(Exception):
     pass
 
 class SyncException(Exception):
-    def __init__(self, value, target_object, target_id):
+    def __init__(self, value, target_object, target_id, line_number=False):
         super(Exception, self).__init__(value)
         self.target_object = target_object
         self.target_id = target_id
+        self.line_number = line_number
 
 class log_sale_purchase(osv.osv):
     _name = 'sync.client.log_sale_purchase'

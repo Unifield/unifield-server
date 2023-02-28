@@ -3250,7 +3250,7 @@ class replenishment_segment_line_amc(osv.osv):
                         pol.product_id in %s and
                         pol.state not in ('done', 'cancel_r', 'cancel') and
                         po.partner_type != 'internal' and
-                        po.order_type = 'loan'
+                        po.order_type in ('loan', 'loan_return')
                     group by product_id
                     ''', (tuple(lines.keys()), )
                 )
@@ -3263,7 +3263,7 @@ class replenishment_segment_line_amc(osv.osv):
                         sol.product_id in %s and
                         sol.state not in ('done', 'cancel_r', 'cancel') and
                         so.partner_type != 'internal' and
-                        so.order_type = 'loan'
+                        so.order_type in ('loan', 'loan_return')
                     group by product_id
                     ''', (tuple(lines.keys()), )
                 )

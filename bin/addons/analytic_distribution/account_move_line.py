@@ -124,6 +124,9 @@ class account_move_line(osv.osv):
                                                              help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
     }
 
+    #def create_analytic_lines(self, cr, uid, ids, context=None):
+    # method moved to bin/addons/account/account_move_line.py
+
     def unlink(self, cr, uid, ids, context=None, check=True):
         """
         Delete analytic lines before unlink move lines.

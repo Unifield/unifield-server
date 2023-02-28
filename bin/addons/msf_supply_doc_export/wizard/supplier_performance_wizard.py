@@ -47,6 +47,7 @@ class supplier_performance_wizard(osv.osv_memory):
         'po_type_donation_exp': fields.boolean(string='Donation before expiry'),
         'po_type_donation_st': fields.boolean(string='Standard donation'),
         'po_type_loan': fields.boolean(string='Loan'),
+        'po_type_loan_return': fields.boolean(string='Loan Return'),
         'po_type_in_kind': fields.boolean(string='In Kind Donation'),
         'po_type_purchase_list': fields.boolean(string='Purchase List'),
         'po_type_direct': fields.boolean(string='Direct Purchase Order'),
@@ -102,6 +103,7 @@ class supplier_performance_wizard(osv.osv_memory):
             'donation_exp': _('Donation before expiry'),
             'donation_st': _('Standard donation'),
             'loan': _('Loan'),
+            'loan_return': _('Loan Return'),
             'in_kind': _('In Kind Donation'),
             'purchase_list': _('Purchase List'),
             'direct': _('Direct Purchase Order'),
@@ -116,6 +118,8 @@ class supplier_performance_wizard(osv.osv_memory):
             order_types.append('donation_st')
         if wizard.po_type_loan:
             order_types.append('loan')
+        if wizard.po_type_loan_return:
+            order_types.append('loan_return')
         if wizard.po_type_in_kind:
             order_types.append('in_kind')
         if wizard.po_type_purchase_list:

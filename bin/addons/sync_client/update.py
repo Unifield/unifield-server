@@ -603,6 +603,13 @@ class update_received(osv.osv,fv_formatter):
 
                 row = eval(update.values)
 
+                if update.model == 'product.merged':
+                    old_product_sdref = row[import_fields.index('old_product_id/id')]
+                    new_product_sdref = row[import_fields.index('new_product_id/id')]
+                    if self.search_exists(cr, uid, [('sdref', 'in', [old_product_sdref, new_product_sdref]), ('run', '=', False), ('sequence_number', '<=', update.sequence_number)]):
+                        self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on produts %s or %s" % (old_product_sdref, new_product_sdref), context=context)
+                        continue
+
                 #4 check for fallback value : report missing fallback_value
                 #US-852: in case the account_move_line is given but not exist, then do not let the import of the current entry
                 #US-2147: same thing for property_product_pricelist and property_product_pricelist_purchase
@@ -613,7 +620,14 @@ class update_received(osv.osv,fv_formatter):
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
                 if result['res']: #US-852: if everything is Ok, then do import as normal
-                    if obj._name == 'hr.employee' and obj._set_sync_update_as_run(cr, uid, dict(list(zip(import_fields, row))), update.sdref, context=context):
+                    if result.get('run_without_exec'):
+                        self.write(cr, uid, update.id, {
+                            'run': True,
+                            'editable': False,
+                            'execution_date': datetime.now(),
+                            'log': 'Set as run without exec: %s' % (result['error_message'],),
+                        })
+                    elif obj._name == 'hr.employee' and obj._set_sync_update_as_run(cr, uid, dict(list(zip(import_fields, row))), update.sdref, context=context):
                         self.write(cr, uid, update.id, {
                             'run': True,
                             'editable': False,
@@ -990,7 +1004,15 @@ class update_received(osv.osv,fv_formatter):
                             return result
 
                         if update.model == 'res.partner.address' and field == 'partner_id/id':
-                            return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
+                            # ignore update except if we have a previous NR on the partner
+                            m, sep, sdref = xmlid.partition('.')
+                            if self.search_exists(cr, uid, [
+                                ('sdref', '=', sdref),
+                                ('run', '=', False),
+                                ('sequence_number', '<=', update.sequence_number)
+                            ], context=context):
+                                return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
+                            return {'res': True, 'run_without_exec': True, 'error_message': 'partner_id %s not found' % xmlid}
                         if update.model == 'account.tax' and field == 'partner_id/id':
                             return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
                         if update.model == 'account.analytic.line' and field in ('cost_center_id/id', 'destination_id/id'):

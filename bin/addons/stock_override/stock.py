@@ -1265,7 +1265,7 @@ class stock_move(osv.osv):
                     if move.purchase_line_id:
                         vals['cancel_only'] = True
 
-                if move.sale_line_id and (move.sale_line_id.type == 'make_to_order' or move.sale_line_id.order_id.order_type == 'loan'):
+                if move.sale_line_id and (move.sale_line_id.type == 'make_to_order' or move.sale_line_id.order_id.order_type in ['loan', 'loan_return']):
                     vals['cancel_only'] = True
 
                 wiz_id = self.pool.get('stock.move.cancel.wizard').create(cr, uid, vals, context=context)
@@ -1386,6 +1386,14 @@ class stock_move(osv.osv):
             if not val_type:
                 val_type = picking['type']
             sync_dpo_in = picking['sync_dpo_in']
+
+            # Remove the Loan Return Reason Type
+            loan_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
+            if picking and context.get('web_copy') and vals.get('reason_type_id', False) == loan_ret_rt_id:
+                if picking['type'] == 'out':
+                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+                else:
+                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
 
         if vals.get('product_id', False):
             product = prod_obj.read(cr, uid, vals['product_id'],
@@ -2292,7 +2300,7 @@ class stock_picking_cancel_wizard(osv.osv_memory):
 
         picking_id = context.get('active_id')
         for move in self.pool.get('stock.picking').browse(cr, uid, picking_id, context=context).move_lines:
-            if move.sale_line_id and (move.sale_line_id.type == 'make_to_order' or move.sale_line_id.order_id.order_type == 'loan'):
+            if move.sale_line_id and (move.sale_line_id.type == 'make_to_order' or move.sale_line_id.order_id.order_type in ['loan', 'loan_return']):
                 return False
 
         return True
