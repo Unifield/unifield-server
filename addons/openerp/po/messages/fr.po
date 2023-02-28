@@ -399,8 +399,8 @@ msgid "ID"
 msgstr "Identifiant"
 
 #: controllers/impex.py:476
-msgid "Error opening .CSV file"
-msgstr "Erreur à l'ouverture du fichier CSV"
+msgid "Error opening .CSV file, please try by changing the Encoding field"
+msgstr "Erreur à l'ouverture du fichier CSV, essayez en modifiant le champ Encodage"
 
 #: controllers/impex.py:476
 msgid "Input Error."
@@ -412,6 +412,11 @@ msgid "You cannot import the field '%s', because we cannot auto-detect it"
 msgstr ""
 "Vous ne pouvez pas importer le champ '%s' car il n'est pas détecté "
 "automatiquement"
+
+#: controllers/impex.py:499
+#, python-format
+msgid "We cannot auto-detect the fields from the first line. A single column was found in the file, this often means the file separator is incorrect."
+msgstr "Impossible d'identifier les champs depuis la première ligne. Une colonne unique a été trouvé dans le fichier, cela signifie souvent que le séparateur est incorrect."
 
 #: controllers/impex.py:501
 #, python-format
@@ -446,6 +451,11 @@ msgstr "%d objets importés"
 #, python-format
 msgid "Error trying to import this record: %r.\nErrorMessage:\n%s %s"
 msgstr "Erreur pendant l'import de cet enregistrement: %r.\nMessage d'erreur:\n%s %s"
+
+#: controllers/impex.py:561
+#, python-format
+msgid "Error Message:\n%s %s"
+msgstr "Message d'erreur:\n%s %s"
 
 #: controllers/impex.py:561
 msgid "ImportationError"
@@ -1068,14 +1078,30 @@ msgstr "1. Importer un fichier .CSV"
 msgid "CSV File:"
 msgstr "Fichier CSV :"
 
+#: controllers/templates/imp.mako:120
+msgid "2. CSV Options"
+msgstr "2. Options CSV"
+
+#: controllers/templates/imp.mako:130
+msgid "Apply changes"
+msgstr "Appliquer les changements"
+
 #: controllers/templates/imp.mako:123
-msgid "2. Check your file format"
-msgstr "2. Vérifier le format du fichier"
+msgid "3. Check your file format"
+msgstr "3. Vérifier le format du fichier"
+
+#: controllers/templates/imp.mako:143
+msgid "Select a .CSV file to import. If you need a sample of file to import,"
+msgstr "Selection un fichier CSV à importer. Si vous avez besoin besoin d'un exemple,"
+
+#: controllers/templates/imp.mako:144
+msgid "you should use the export tool with the \"Import Compatible\" option."
+msgstr "utilisez l'outil d'export avec l'option \"Import Compatible avec l'export\"."
 
 #: controllers/templates/imp.mako:130
 #, python-format
-msgid "The import failed due to: %(message)s"
-msgstr "L'import a échoué car : %(message)s"
+msgid "The import failed due to:\n %(message)s"
+msgstr "L'import a échoué car:\n %(message)s"
 
 #: controllers/templates/imp.mako:132
 msgid "Here is a preview of the file we could not import:"

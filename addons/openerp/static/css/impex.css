@@ -50,3 +50,12 @@ td.fields-selector-left div#fields_left {
 td.side_spacing {
 	 padding: 5px 5px 0px;
 }
+#import_data #error {
+   font-size: 1.3em;
+}
+
+#import_data .success {
+   font-size: 1.3em;
+}
+
+

@@ -24,7 +24,7 @@ import xml.dom.minidom
 import cherrypy
 
 from openerp.controllers import SecuredController
-from openerp.utils import rpc, common, TinyDict, node_attributes
+from openerp.utils import rpc, TinyDict, node_attributes
 from openerp.widgets import treegrid
 
 from openobject import tools
@@ -460,9 +460,8 @@ class ImpEx(SecuredController):
                     tree=tree, fields=kw.get('fields', {}), ctx=ctx)
 
     @expose()
-    def detect_data(self, csvfile, csvsep, csvdel, csvcode, csvskip, **kw):
+    def detect_data(self, csvfile, csvsep, csvdel, csvcode, **kw):
         params, data = TinyDict.split(kw)
-
         _fields = {}
         _fields_invert = {}
         error = None
@@ -498,11 +497,13 @@ class ImpEx(SecuredController):
 
 
         try:
-            content = str(csvfile.file.read(), 'utf8')
+            if csvcode == 'utf-8':
+                csvcode = 'utf-8-sig'
+            content = str(csvfile.file.read(), csvcode)
             input=io.StringIO(content)
             data = csv.reader(input, quotechar=str(csvdel), delimiter=str(csvsep))
         except:
-            raise common.warning(_('Error opening .CSV file'), _('Input Error.'))
+            return self.imp(error={'message': _('Error opening .CSV file, please try by changing the Encoding field'), 'title': _('Input Error.')})
 
 
         records = []
@@ -516,15 +517,18 @@ class ImpEx(SecuredController):
                 records.append(row)
                 if i == limit:
                     break
-
             for line in records:
+                col = 0
                 for word in line:
+                    col += 1
                     if word in _fields:
                         fields.append((word, _fields[word]))
                     elif word in list(_fields_invert.keys()):
                         fields.append((_fields_invert[word], word))
                     else:
-                        error = {'message':_("You cannot import the field '%s', because we cannot auto-detect it" % (word,))}
+                        error = {'message':_("You cannot import the field '%s', because we cannot auto-detect it") % (word,)}
+                if error and len(line) == 1:
+                    error = {'message':_("We cannot auto-detect the fields from the first line. A single column was found in the file, this often means the file separator is incorrect.")}
                 break
         except:
             error = {'message':_('Error processing the first line of the file. Field "%s" is unknown') % (word,), 'title':_('Import Error.')}
@@ -536,12 +540,16 @@ class ImpEx(SecuredController):
         return self.imp(records=records, **kw)
 
     @expose()
-    def import_data(self, csvfile, csvsep, csvdel, csvcode, csvskip, fields=[], **kw):
+    def import_data(self, csvfile, csvsep, csvdel, csvcode, fields=None, **kw):
 
+        if fields is None:
+            fields = []
         params, data = TinyDict.split(kw)
         res = None
 
-        content = str(csvfile.file.read(), 'utf8')
+        if csvcode == 'utf-8':
+            csvcode = 'utf-8-sig'
+        content = str(csvfile.file.read(), csvcode)
         input=io.StringIO(content)
         limit = 0
         data = []
@@ -589,7 +597,10 @@ class ImpEx(SecuredController):
         if res[0]>=0:
             return self.imp(success={'message':_('Imported %d objects') % (res[0],)}, **kw)
 
-        msg = _('Error trying to import this record: %r.\nErrorMessage:\n%s %s') % (res[1], res[2], res[3])
+        if res[1]:
+            msg = _('Error trying to import this record: %r.\nErrorMessage:\n%s %s') % (res[1], res[2], res[3])
+        else:
+            msg = _('Error Message:\n%s %s') % (res[2], res[3])
         error = {'message':ustr(msg), 'title':_('ImportationError')}
 
         return self.imp(error=error, **kw)

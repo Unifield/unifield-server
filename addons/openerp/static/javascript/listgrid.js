@@ -775,10 +775,10 @@ MochiKit.Base.update(ListView.prototype, {
         this.reload(edit_inline, null, default_get_ctx);
     },
 
-    save: function(id, prev_id) {
+    save: function(id, prev_id, inline) {
 
         if (openobject.http.AJAX_COUNT > 0) {
-            return callLater(1, bind(this.save, this), id, prev_id);
+            return callLater(1, bind(this.save, this), id, prev_id, inline);
         }
 
         var parent_field = this.name.split('/');
@@ -865,7 +865,12 @@ MochiKit.Base.update(ListView.prototype, {
                 openobject.dom.get(prefix + '_terp_ids').value = obj.ids;
 
                 if(prev_id != undefined) {
-                    self.reload(prev_id , prefix ? 1 : 0);
+                    if (inline === false) {
+                        self.reload(null , prefix ? 1 : 0);
+                        new One2Many(self.name, inline).edit(prev_id);
+                    } else {
+                        self.reload(prev_id , prefix ? 1 : 0);
+                    }
                 } else {
                     self.reload(id > 0 ? null : -1, prefix ? 1 : 0);
                 }
@@ -1197,7 +1202,9 @@ MochiKit.Base.update(ListView.prototype, {
                                 // skip many2x 'text' element, onchange will be triggered from real many2x field
                                 return;
                             }
-                            $this.trigger('change');
+                                $this.trigger('change');
+                                // do not trigger a save for new inline o2m line if fields are not modified
+                                jQuery('[id="' + self.name + '"]').removeAttr('current_id');
                         }
                     });
                 }
@@ -1338,7 +1345,7 @@ function listgridValidation(_list, o2m, record_id, inline) {
     if(o2m) { o2m_obj = new One2Many(_list, inline); }
     if(current_id != null) {
         if(o2m || confirm('The record has been modified \n Do you want to save it ?')) {
-            new ListView(_list).save(current_id, record_id);
+            new ListView(_list).save(current_id, record_id, inline);
         }
     } else{
         if(o2m) {
