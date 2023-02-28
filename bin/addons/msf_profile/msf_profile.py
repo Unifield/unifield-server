@@ -74,7 +74,7 @@ class patch_scripts(osv.osv):
                     version in (3, 4)
             """)
 
-        self.log_info(cr, uid, "US-11195: set %d NR on periods as Run" % (cr.rowcount, ))
+            self.log_info(cr, uid, "US-11195: set %d NR on periods as Run" % (cr.rowcount, ))
         return True
 
     def us_8417_upd_srv_loc(self, cr, uid, *a, **b):
