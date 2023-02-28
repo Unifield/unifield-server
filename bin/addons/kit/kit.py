@@ -683,12 +683,11 @@ class composition_kit(osv.osv):
         res = []
 
         for obj in self.browse(cr, uid, ids, context=context):
-            version = obj.composition_version or 'no_version'
             if obj.composition_type == 'theoretical':
                 date = datetime.strptime(obj.composition_creation_date, db_date_format)
-                name = version + ' - ' + date.strftime(date_format)
+                name = (obj.composition_version or 'no_version') + ' - ' + date.strftime(date_format)
             else:
-                name = obj.composition_product_id.default_code + ' - ' + version
+                name = obj.composition_combined_ref_lot
 
             res += [(obj.id, name)]
         return res

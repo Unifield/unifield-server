@@ -245,7 +245,7 @@
         <setNextTemplate name="second" />
 
         <!-- Lines -->
-        <blockTable colWidths="25.0,100.0,220.0,55.0,44.0,65.0,45.0,17.0,17.0,17.0,45.0,40.0,40.0,40.0,40.0" style="LinesHeader">
+        <blockTable colWidths="20.0,100.0,220.0,50.0,54.0,65.0,45.0,17.0,17.0,17.0,45.0,40.0,40.0,40.0,40.0" style="LinesHeader">
             <tr>
                 <td>
                     <para style="LineHeader"></para>
@@ -413,7 +413,7 @@
                 <td></td>
             </tr>
         </blockTable>
-                <blockTable colWidths="25.0,100.0,220.0,55.0,44.0,65.0,45.0,17.0,17.0,17.0,45.0,40.0,40.0,40.0,40.0" style="LinesHeader">
+                <blockTable colWidths="20.0,100.0,220.0,50.0,54.0,65.0,45.0,17.0,17.0,17.0,45.0,40.0,40.0,40.0,40.0" style="LinesHeader">
                     <tr>
                         <td>
                             <para style="LineHeader"></para>
@@ -559,7 +559,7 @@
             </pto_header>
 
             <!-- Lines -->
-            <blockTable colWidths="25.0,100.0,220.0,55.0,44.0,65.0,45.0,17.0,17.0,17.0,45.0,40.0,40.0,40.0,40.0" style="LinesValues">
+            <blockTable colWidths="20.0,100.0,220.0,50.0,54.0,65.0,45.0,17.0,17.0,17.0,45.0,40.0,40.0,40.0,40.0" style="LinesValues">
                 [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>
@@ -577,7 +577,7 @@
                         <para style="LineValueBold">[[ not m.no_product and formatFloatDigitsToUom(m.product_qty or 0.00, m.product_uom.rounding) or removeParentNode('para') ]] [[ m.product_uom.name ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ m.composition_list_id and m.composition_list_id.composition_reference or '' ]]</para>
+                        <para style="LineValue">[[ m.composition_list_id and m.composition_list_id.composition_combined_ref_lot or '' ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.prodlot_id and m.prodlot_id.name or '' ]]</para>
