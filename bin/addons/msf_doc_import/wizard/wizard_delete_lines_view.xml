@@ -74,7 +74,7 @@
                     <field name="item_qty" />
                     <field name="item_uom_id" />
                     <field name="item_asset_id" />
-                    <field name="item_lot" />
+                    <field name="item_lot_id" />
                     <field name="item_exp" />
                 </tree>
             </field>

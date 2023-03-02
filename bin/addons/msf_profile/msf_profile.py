@@ -57,6 +57,25 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF29.0
+    def us_11177_bn_for_kcl_items(self, cr, uid, *a, **b):
+        '''
+        For each KCL item with item_lot/item_exp filled, the script will try to find a corresponding BN or create a new
+        one, then fill item_lot_id with the data
+        '''
+        kcl_item_obj = self.pool.get('composition.item')
+        bn_obj = self.pool.get('stock.production.lot')
+        kcl_item_ids = kcl_item_obj.search(cr, uid, [('item_kit_type', '=', 'real'), '|', ('item_lot', '!=', False), ('item_exp', '!=', False)])
+        ftf = ['item_product_id', 'item_lot', 'item_exp']
+        for kcl_item in kcl_item_obj.browse(cr, uid, kcl_item_ids, fields_to_fetch=ftf):
+            # Skip if the product is not ED anymore
+            if kcl_item.item_exp and not kcl_item.item_product_id.perishable:
+                continue
+            lot_name = kcl_item.item_product_id.batch_management and kcl_item.item_lot or False
+            new_bn_id = bn_obj._get_or_create_lot(cr, uid, lot_name, kcl_item.item_exp, kcl_item.item_product_id.id)
+            kcl_item_obj.write(cr, uid, kcl_item.id, {'item_lot_id': new_bn_id})
+        return True
+
     # UF28.0
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
