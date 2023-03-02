@@ -161,9 +161,11 @@ class msf_doc_import_accounting(osv.osv_memory):
     def _format_special_char(self, line):
         """
         Replaces back the arbitrary strings used for the special characters with their corresponding hexadecimal codes
+        and remove special character &#20 when it's followed by ± sign
         """
         for i in range(len(line)):
             if line[i] and isinstance(line[i], basestring) and SPECIAL_CHAR in line[i]:
+                line[i] = re.sub('%s_(20)\xb1' % SPECIAL_CHAR, u'\xb1', line[i]) # US-11090 Removes special character &#20 when it's followed by ± sign
                 line[i] = re.sub('%s_([0-9][0-9]{0,1})' % SPECIAL_CHAR, lambda a: chr(int(a.group(1))), line[i])
         return line
 
