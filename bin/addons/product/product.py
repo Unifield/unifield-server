@@ -285,7 +285,7 @@ class product_template(osv.osv):
             if product.seller_ids:
                 partner_list = sorted([(partner_id.sequence, partner_id)
                                        for partner_id in  product.seller_ids
-                                       if partner_id and isinstance(partner_id.sequence, int)])
+                                       if partner_id and isinstance(partner_id.sequence, int)], key=lambda a: (a[0], a[1].id))
                 main_supplier = partner_list and partner_list[0] and partner_list[0][1] or False
                 result[product.id]['seller_delay'] =  main_supplier and main_supplier.delay or 1
                 result[product.id]['seller_qty'] =  main_supplier and main_supplier.qty or 0.0
