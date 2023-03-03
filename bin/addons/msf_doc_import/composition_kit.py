@@ -252,7 +252,7 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Comment, 
                     if not product['batch_management'] and product['perishable'] and batch_value['expired_date'] and \
                             not batch_value['prodlot_id'] and not batch_value['error_list']:
                         batch_value['prodlot_id'] = bn_obj.create(cr, uid, {
-                            'type': 'internal', 'product_id': product.id, 'life_date': batch_value['expired_date'],
+                            'type': 'internal', 'product_id': product['id'], 'life_date': batch_value['expired_date'],
                             'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial')}, context=context)
 
                     to_write.update({'prodlot_id': batch_value['prodlot_id'], 'expiry_date': batch_value['expired_date'], 'error_list': batch_value['error_list']})
