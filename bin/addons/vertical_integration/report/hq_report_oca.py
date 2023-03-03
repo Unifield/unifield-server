@@ -73,6 +73,17 @@ class hq_report_oca(report_sxw.report_sxw):
                 return mapping.mapping_value
         return "0"
 
+    def rmv_spec_char(self, field_value):
+        res = ''
+        if not field_value:
+            return res
+        field_ascii_arr = [ord(x) for x in field_value]
+        for i, _ in enumerate(field_ascii_arr[:-1]):
+            pair = field_ascii_arr[i:i + 2]
+            if pair[0] == 20 and pair[1] > 126:
+                res = field_value[:i] + field_value[i+1:]
+        return res
+
     def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period, department_info, field_activity, context=None):
         if context is None:
             context = {}
@@ -240,11 +251,14 @@ class hq_report_oca(report_sxw.report_sxw):
             round_credit_booking = round(move_line.credit_currency or 0.0, 2)
             round_debit_fctal = round(move_line.debit or 0.0, 2)
             round_credit_fctal = round(move_line.credit or 0.0, 2)
+            name = self.rmv_spec_char(move_line.name)
+            ref = self.rmv_spec_char(move_line.ref)
+            partner_txt = self.rmv_spec_char(move_line.partner_txt)
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
                               journal and journal.code or "",
                               move_line.move_id and move_line.move_id.name or "",
-                              move_line.name,
-                              move_line.ref,
+                              name,
+                              ref,
                               datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               move_line.period_id and move_line.period_id.code or "",
@@ -253,7 +267,7 @@ class hq_report_oca(report_sxw.report_sxw):
                               "",
                               "",
                               "",
-                              move_line.partner_txt,
+                              partner_txt,
                               round_debit_booking,
                               round_credit_booking,
                               currency and currency.name or "",
@@ -359,6 +373,9 @@ class hq_report_oca(report_sxw.report_sxw):
             currency = analytic_line.currency_id
             cost_center_code = analytic_line.cost_center_id and analytic_line.cost_center_id.code or ""
             aji_period_id = analytic_line and analytic_line.period_id or False
+            name = self.rmv_spec_char(analytic_line.name)
+            ref = self.rmv_spec_char(analytic_line.ref)
+            partner_txt = self.rmv_spec_char(analytic_line.partner_txt)
 
             # For the first report:
             round_aal_booking = round(analytic_line.amount_currency or 0.0, 2)
@@ -366,8 +383,8 @@ class hq_report_oca(report_sxw.report_sxw):
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
                               analytic_line.entry_sequence or analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",
-                              analytic_line.name or "",
-                              analytic_line.ref or "",
+                              name or "",
+                              ref or "",
                               datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               aji_period_id and aji_period_id.code or "",
@@ -376,7 +393,7 @@ class hq_report_oca(report_sxw.report_sxw):
                               analytic_line.destination_id and analytic_line.destination_id.code or "",
                               cost_center_code,
                               analytic_line.account_id and analytic_line.account_id.code or "",
-                              analytic_line.partner_txt or "",
+                              partner_txt or "",
                               analytic_line.amount_currency > 0 and "0.00" or -round_aal_booking,
                               analytic_line.amount_currency > 0 and round_aal_booking or "0.00",
                               currency and currency.name or "",
