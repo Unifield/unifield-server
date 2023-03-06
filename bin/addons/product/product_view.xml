@@ -94,7 +94,7 @@
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Base Prices" colspan="2"/>
-                                <field groups="base.group_extended" name="cost_method"/>
+                                <field groups="base.group_extended" name="cost_method" readonly="1"/>
                                 <field name="standard_price" readonly="1"/>
                                 <field name="list_price"/>
                                 <newline/>
@@ -562,7 +562,7 @@
                                 <separator string="Base Prices" colspan="2"/>
                                 <field name="standard_price" readonly="1"/>
                                 <field name="list_price"/>
-                                <field groups="base.group_extended" name="cost_method"/>
+                                <field groups="base.group_extended" name="cost_method" readonly="1"/>
                             </group>
 
                             <group colspan="2" col="2" groups="base.group_extended">
