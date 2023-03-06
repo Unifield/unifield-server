@@ -57,6 +57,15 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF30.0
+    def us_11046_fix_standard_price_products(self, cr, uid, *a, **b):
+        '''
+        Set the Costing Method of all Standard Price Products to Average Price
+        '''
+        cr.execute("""UPDATE product_template SET cost_method = 'average' WHERE cost_method = 'standard'""")
+        self.log_info(cr, uid, "US-11046: The Costing Method of %s product(s) have been set to 'Average Price'" % (cr.rowcount,))
+        return True
+
     # UF28.0
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):

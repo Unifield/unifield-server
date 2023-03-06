@@ -29,7 +29,6 @@ import stock_fill_inventory
 import stock_inventory_line_split
 import stock_invoice_onshipping
 import stock_location_product
-import stock_change_standard_price
 import stock_change_product_qty
 import physical_inventory_select_products
 import physical_inventory_generate_counting_sheet

@@ -95,7 +95,7 @@
                             <group colspan="2" col="2">
                                 <separator string="Base Prices" colspan="2"/>
                                 <field groups="base.group_extended" name="cost_method"/>
-                                <field name="standard_price" attrs="{'readonly':[('cost_method','=','average')]}"/>
+                                <field name="standard_price" readonly="1"/>
                                 <field name="list_price"/>
                                 <newline/>
                                 <field name="price_margin" groups="product.group_product_variant"/>
@@ -560,7 +560,7 @@
 
                             <group colspan="2" col="2">
                                 <separator string="Base Prices" colspan="2"/>
-                                <field name="standard_price" attrs="{'readonly':[('cost_method','=','average')]}"/>
+                                <field name="standard_price" readonly="1"/>
                                 <field name="list_price"/>
                                 <field groups="base.group_extended" name="cost_method"/>
                             </group>

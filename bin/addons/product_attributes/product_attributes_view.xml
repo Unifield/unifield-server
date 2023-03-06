@@ -90,7 +90,7 @@
                             <group colspan="2" col="3">
                                 <separator string="Base Prices" colspan="3"/>
                                 <field name="cost_method" colspan="3"/>
-                                <field name="standard_price" string="Cost Price " attrs="{'readonly':[('cost_method','=','average')]}"/>
+                                <field name="standard_price" string="Cost Price " readonly="1"/>
                                 <field name="currency_id" nolabel="1" />
                                 <field name="list_price" colspan="2"/>
                                 <field name="field_currency_id" nolabel="1" />
