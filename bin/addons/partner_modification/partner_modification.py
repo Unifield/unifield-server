@@ -41,7 +41,7 @@ class product_template(osv.osv):
             return ret
 
         partner_obj = self.pool.get('res.partner')
-        for prod in self.browse(cr, uid, ids):
+        for prod in self.browse(cr, uid, ids, fields_to_fetch=['seller_ids']):
             ret[prod.id] = False
             for seller in prod.seller_ids:
                 if context['delay_supplier_id'] == seller.name.id:

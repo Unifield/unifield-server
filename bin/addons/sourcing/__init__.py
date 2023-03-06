@@ -24,7 +24,6 @@ from . import sale_order_line
 from . import wizard
 
 from . import product_supplierinfo
-from . import product_template
 from . import purchase_order
 from . import res_partner
 from . import sale_order

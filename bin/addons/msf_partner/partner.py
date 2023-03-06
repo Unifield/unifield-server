@@ -81,11 +81,13 @@ class res_partner(osv.osv):
             for i in ids:
                 res[i] = {'in_product': False, 'min_qty': 'N/A', 'delay': 'N/A'}
         else:
-            product = product_obj.browse(cr, uid, context.get('product_id'))
+            product = product_obj.browse(cr, uid, context.get('product_id'), fields_to_fetch=['product_tmpl_id'])
             seller_ids = []
             seller_info = {}
+            supinfo_obj = self.pool.get('product.supplierinfo')
+            sup_ids = supinfo_obj.search(cr, uid, [('name', 'in', ids), ('product_id', '=', product.product_tmpl_id.id)], context=context)
             # Get all suppliers defined on product form
-            for s in product.seller_ids:
+            for s in  supinfo_obj.browse(cr, uid, sup_ids, context=context):
                 seller_ids.append(s.name.id)
                 seller_info.update({s.name.id: {'min_qty': s.min_qty, 'delay': s.delay}})
             # Check if the partner is in product form
@@ -117,8 +119,8 @@ class res_partner(osv.osv):
                        'valide_until_date': False}
 
         if context.get('product_id'):
-            for partner in self.browse(cr, uid, ids, context=context):
-                product = self.pool.get('product.product').browse(cr, uid, context.get('product_id'), context=context)
+            for partner in self.browse(cr, uid, ids, fields_to_fetch=['property_product_pricelist_purchase'], context=context):
+                product = self.pool.get('product.product').browse(cr, uid, context.get('product_id'), fields_to_fetch=['uom_id', 'standard_price', 'product_tmpl_id'], context=context)
                 uom = context.get('uom', product.uom_id.id)
                 pricelist = partner.property_product_pricelist_purchase
                 context.update({'uom': uom})

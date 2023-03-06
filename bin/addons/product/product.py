@@ -278,6 +278,34 @@ class product_template(osv.osv):
 
     def _calc_seller(self, cr, uid, ids, fields, arg, context=None):
         result = {}
+        if ids:
+            for _id in ids:
+                for field in fields:
+                    result[_id] = {field:False}
+                result[_id]['seller_delay'] = 1
+            cr.execute('''
+                select
+                    distinct on (s.product_id) s.product_id, p.supplier_lt, prod.procure_delay, s.qty, s.name, s.id
+                from
+                    product_supplierinfo s
+                    left join res_partner p on p.id = s.name
+                    left join product_product prod on prod.product_tmpl_id = s.product_id
+                where
+                    product_id in %s
+                order by product_id, sequence, id
+                ''', (tuple(ids), )
+            )
+            for seller in cr.fetchall():
+                result[seller[0]] = {
+                    'seller_delay': seller[1] or seller[2] or 1,
+                    'seller_qty': seller[3] or 0.0,
+                    'seller_id': seller[4] or False,
+                    'seller_info_id': seller[5] or False,
+                }
+        return result
+
+
+
         for product in self.browse(cr, uid, ids, context=context):
             for field in fields:
                 result[product.id] = {field:False}
@@ -290,6 +318,7 @@ class product_template(osv.osv):
                 result[product.id]['seller_delay'] =  main_supplier and main_supplier.delay or 1
                 result[product.id]['seller_qty'] =  main_supplier and main_supplier.qty or 0.0
                 result[product.id]['seller_id'] = main_supplier and main_supplier.name.id or False
+                result[product.id]['seller_info_id'] = main_supplier and main_supplier.id or False
         return result
 
     def _get_list_price(self, cr, uid, ids, fields, arg, context=None):
@@ -302,7 +331,7 @@ class product_template(osv.osv):
             ids = [ids]
         res = {}
         setup_obj = self.pool.get('unifield.setup.configuration')
-        for obj in self.browse(cr, uid, ids, context=context):
+        for obj in self.browse(cr, uid, ids, fields_to_fetch=['standard_price'], context=context):
             res[obj.id] = False
             standard_price = obj.standard_price
             #US-1035: Fixed the wrong hardcoded id given when calling config setup object
@@ -353,6 +382,8 @@ class product_template(osv.osv):
         'seller_delay': fields.function(_calc_seller, method=True, type='integer', string='Supplier Lead Time', multi="seller_delay", help="This is the average delay in days between the purchase order confirmation and the reception of goods for this product and for the default supplier. It is used by the scheduler to order requests based on reordering delays."),
         'seller_qty': fields.function(_calc_seller, method=True, type='float', string='Supplier Quantity', multi="seller_qty", help="This is minimum quantity to purchase from Main Supplier.", related_uom='uom_id'),
         'seller_id': fields.function(_calc_seller, method=True, type='many2one', relation="res.partner", string='Main Supplier', help="Main Supplier who has highest priority in Supplier List.", multi="seller_id"),
+        'seller_info_id': fields.function(_calc_seller, method=True, type='many2one', relation='product.supplierinfo', string='Main Supplier Info', help="Main Supplier who has highest priority in Supplier List - Info object.", multi="seller_id"),
+
         'seller_ids': fields.one2many('product.supplierinfo', 'product_id', 'Partners'),
         'loc_rack': fields.char('Rack', size=16),
         'loc_row': fields.char('Row', size=16),
@@ -1015,9 +1046,9 @@ class product_supplierinfo(osv.osv):
         Returns the supplier lt
         '''
         res = {}
-        for price in self.browse(cr, uid, ids, context=context):
+        for price in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
             product_id = self.pool.get('product.product').search(cr, uid, [('product_tmpl_id', '=', price.id)])
-            product = self.pool.get('product.product').browse(cr, uid, product_id)
+            product = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['procure_delay'])
             res[price.id] = (price.name and price.name.supplier_lt) or (product_id and int(product[0].procure_delay)) or 1
 
         return res
