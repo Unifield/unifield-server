@@ -162,7 +162,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
 
         if context.get('poc_export'):
             ocb_numbering = """,
-                ocb_vi.move_id AS "JE Database ID",
+                ocb_vi.move_number AS "JE ID",
                 ocb_vi.line_number AS "Line Number",
                 mapping.mapping_value AS "HQ system account code"
             """
@@ -252,7 +252,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
             },
         ]
         if context.get('poc_export'):
-            processrequests[0]['headers'] += ['JE Database ID', 'Line Number', 'HQ system account code']
+            processrequests[0]['headers'] += ['JE ID', 'Line Number', 'HQ system account code']
         # Launch finance archive object
         fe = finance_archive(sqlrequests, processrequests, context=context)
         # Use archive method to create the archive

@@ -30,6 +30,20 @@ from account_override import finance_export
 
 from report import report_sxw
 
+class ocb_vi_je_period_number(osv.osv):
+    _name = 'ocb_vi.je_period_number'
+
+    _columns = {
+        'move_id': fields.integer('JE Id', select=1, required=1),
+        'period_id': fields.integer('Period Id', select=1, required=1),
+    }
+
+    _sql_constraints = [
+        ('unique_move_id_period_id', 'unique(move_id,period_id)', 'unique move_id/period_id'),
+    ]
+
+ocb_vi_je_period_number()
+
 class ocb_vi_export_number(osv.osv):
     _name = 'ocb_vi.export_number'
 
@@ -38,12 +52,14 @@ class ocb_vi_export_number(osv.osv):
         if not cr.index_exists('ocb_vi_export_number', 'ocb_vi_export_number_move_line_id_idx'):
             cr.execute('CREATE UNIQUE INDEX ocb_vi_export_number_move_line_id_idx ON ocb_vi_export_number (move_line_id) WHERE analytic_line_id IS NULL')
         if not cr.index_exists('ocb_vi_export_number', 'ocb_vi_export_number_line_number_move_id_idx'):
-            cr.execute('CREATE UNIQUE INDEX ocb_vi_export_number_line_number_move_id_idx ON ocb_vi_export_number (line_number,move_id)')
+            cr.execute('CREATE UNIQUE INDEX ocb_vi_export_number_line_number_move_id_idx ON ocb_vi_export_number (line_number,move_number)')
 
 
     _columns = {
+        'move_number': fields.integer('JE number', select=1),
         'line_number': fields.integer('JI/AJI line number'),
         'move_id': fields.integer('JE Id', select=1),
+        'period_id': fields.integer('Period Id', select=1),
         'move_line_id': fields.integer('JI Id', select=1),
         'analytic_line_id': fields.integer('AJI Id', select=1), #TODO m2o with ondelete cascade ?
     }
@@ -54,6 +70,7 @@ class ocb_vi_export_number(osv.osv):
     ]
 
 ocb_vi_export_number()
+
 class finance_archive(finance_export.finance_archive):
     """
     Extend existing class with new methods for this particular export.
@@ -462,8 +479,8 @@ class hq_report_ocb(report_sxw.report_sxw):
         if context.get('poc_export'):
             add_column_partner_sql = ', id'
             add_column_employee_sql = ', e.id'
-            add_column_rawdata = ', aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, am.id as "JE Database ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code"  '
-            add_column_bs_entries = ' , aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, aml.move_id as "JE Database ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code" '
+            add_column_rawdata = ', aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, ocb_vi.move_number as "JE ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code"  '
+            add_column_bs_entries = ' , aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, ocb_vi.move_number as "JE ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code" '
         else:
             add_column_partner_sql = ""
             add_column_employee_sql = ""
@@ -587,7 +604,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                      inner join account_move AS am on am.id = aml.move_id
                      inner join account_period AS p2 on am.period_id = p2.id
                     left outer join hr_employee hr on hr.id = aml.employee_id
-                    left join ocb_vi_export_number ocb_vi on ocb_vi.move_id=aml.move_id and ocb_vi.move_line_id=aml.id and coalesce(ocb_vi.analytic_line_id, 0)=coalesce(al.id, 0)
+                    left join ocb_vi_export_number ocb_vi on ocb_vi.move_id=aml.move_id and ocb_vi.move_line_id=aml.id and al.real_period_id=ocb_vi.period_id and coalesce(ocb_vi.analytic_line_id, 0)=coalesce(al.id, 0)
                     left join account_export_mapping mapping on mapping.account_id = a.id
                 WHERE
                 aa3.category = 'FUNDING'
@@ -628,7 +645,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 INNER JOIN res_currency AS cc ON e.currency_id = cc.id
                 INNER JOIN msf_instance AS i ON aml.instance_id = i.id
                 LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
-                LEFT JOIN ocb_vi_export_number ocb_vi ON ocb_vi.move_id=aml.move_id AND ocb_vi.move_line_id=aml.id AND ocb_vi.analytic_line_id is null
+                LEFT JOIN ocb_vi_export_number ocb_vi ON ocb_vi.move_id=aml.move_id AND ocb_vi.move_line_id=aml.id AND m.period_id=ocb_vi.period_id AND ocb_vi.analytic_line_id is null
                 LEFT JOIN account_export_mapping mapping ON mapping.account_id = a.id
                 WHERE aal.id IS NULL
                 AND aml.period_id = %s
@@ -665,7 +682,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                               'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination',
                               'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency',
                               'Functional debit', 'Functional credit', 'Functional CCY', 'Emplid', 'Partner DB ID',
-                              'PARTNER_ID', 'EMPLOYEE_ID', 'JE Database ID', 'Line Number', 'HQ system account code' ]
+                              'PARTNER_ID', 'EMPLOYEE_ID', 'JE ID', 'Line Number', 'HQ system account code' ]
 
         else:
             partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive', 'Notes']
@@ -709,7 +726,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'object': 'account.analytic.line',
                 'select_1': """
                     SELECT
-                        aml.move_id, aml.id, al.id
+                        aml.move_id, aml.id, al.id, al.real_period_id
                 """,
                 'select_2': """
                     SELECT
@@ -753,7 +770,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
-                'select_1': "SELECT aml.move_id, aml.id, aal.id",
+                'select_1': "SELECT aml.move_id, aml.id, aal.id, m.period_id",
                 'select_2': """
                     SELECT
                         aml.id, -- 0

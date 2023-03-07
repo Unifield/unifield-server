@@ -189,7 +189,7 @@ class finance_archive():
         if select is not None:
             sql = sql.replace('#OCB_VI_COND#',  ocb_vi_cond)
         if insert_numbering:
-            sql = "INSERT INTO ocb_vi_export_number (move_id, move_line_id, analytic_line_id) (%s)" % sql
+            sql = "INSERT INTO ocb_vi_export_number (move_id, move_line_id, analytic_line_id, period_id) (%s)" % sql
 
         if fileparams.get('query_params', False):
             cr.execute(sql, fileparams['query_params'])
@@ -234,10 +234,23 @@ class finance_archive():
             if fileparams.get('select_1') and self.context.get('poc_export') and pool.get('res.company')._get_instance_level(cr, uid) == 'section':
                 # trigger ocb_numbering only at HQ level
                 self._execute_query(cr, fileparams, select=fileparams['select_1'], ocb_vi_cond='AND ocb_vi.id is NULL', insert_numbering=True)
+                # create unique id on move_id, period_id
+                cr.execute("INSERT INTO ocb_vi_je_period_number (move_id, period_id) (SELECT distinct move_id, period_id from ocb_vi_export_number WHERE move_number IS NULL) ON CONFLICT DO NOTHING")
+
+                # update move_number values
+                cr.execute("""UPDATE ocb_vi_export_number set move_number=je_number.id
+                    FROM
+                        ocb_vi_je_period_number je_number
+                    WHERE
+                        ocb_vi_export_number.move_number is null and
+                        ocb_vi_export_number.move_id = je_number.move_id and
+                        ocb_vi_export_number.period_id = je_number.period_id
+                """)
+
                 cr.execute("""UPDATE ocb_vi_export_number set line_number = num.rn
                     FROM
                     (
-                        SELECT row_number() over (partition by move_id order by line_number nulls last, analytic_line_id nulls first, move_line_id) AS rn, id
+                        SELECT row_number() over (partition by move_number order by line_number nulls last, analytic_line_id nulls first, move_line_id) AS rn, id
                         FROM ocb_vi_export_number
                     ) AS num
                     WHERE ocb_vi_export_number.id = num.id and line_number is null;
