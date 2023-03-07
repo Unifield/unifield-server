@@ -61,8 +61,8 @@ class account_chart(osv.osv_memory):
                                LIMIT 1) AS period_stop''', (fiscalyear_id, fiscalyear_id))
             periods =  [i[0] for i in cr.fetchall()]
             if periods and len(periods) > 1:
-                start_period = periods[0]
-                end_period = periods[1]
+                start_period = periods[1]
+                end_period = periods[0]
             res['value'] = {'period_from': start_period, 'period_to': end_period}
 
         # US-1179
