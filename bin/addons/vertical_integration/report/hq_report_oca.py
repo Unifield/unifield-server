@@ -74,14 +74,14 @@ class hq_report_oca(report_sxw.report_sxw):
         return "0"
 
     def rmv_spec_char(self, field_value):
-        res = ''
         if not field_value:
-            return res
+            return field_value
+        res = field_value
         field_ascii_arr = [ord(x) for x in field_value]
         for i, _ in enumerate(field_ascii_arr[:-1]):
             pair = field_ascii_arr[i:i + 2]
             if pair[0] == 20 and pair[1] > 126:
-                res = field_value[:i] + field_value[i+1:]
+                res = res[:i] + res[i+1:]
         return res
 
     def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period, department_info, field_activity, context=None):
