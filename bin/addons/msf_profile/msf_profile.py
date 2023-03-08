@@ -57,6 +57,55 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_6976_analytic_translations(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        is_coordo = instance and instance.level == 'coordo'
+        aa_ids = []
+
+        # update name with en_MF translation
+        cr.execute('''
+            update
+                account_analytic_account
+            set
+                name=tr.value
+            from
+                ir_translation tr
+            where
+                tr.name='account.analytic.account,name' and
+                tr.res_id = account_analytic_account.id and
+                tr.lang='en_MF' and
+                coalesce(tr.value, '') != '' and
+                account_analytic_account.name != tr.value
+            returning account_analytic_account.id
+        ''')
+        if is_coordo:
+            aa_ids = [x[0] for x in cr.fetchall()]
+
+        self.log_info(cr, uid, "US-6976: Update name on %s analytic accounts" % (cr.rowcount, ))
+
+        if aa_ids:
+            # for FP created at coordo, trigger sync to update name to HQ
+            entity = self.pool.get('sync.client.entity')._get_entity(cr)
+            if aa_ids:
+                cr.execute('''
+                    update
+                        ir_model_data d
+                    set
+                        last_modification=NOW(), touched='[''name'']'
+                    from
+                        account_analytic_account a
+                    where
+                        d.res_id = a.id and
+                        d.model= 'account.analytic.account' and
+                        d.module='sd' and
+                        a.category = 'FUNDING' and
+                        d.name like '%s/%%%%' and
+                        d.res_id in %%s
+                    ''' % (entity.identifier ,), (tuple(aa_ids), )) # not_a_user_entry
+                self.log_info(cr, uid, "US-6976: Trigger FP update on %s analytic accounts" % (cr.rowcount, ))
+
+        return True
+
     # UF28.0
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):

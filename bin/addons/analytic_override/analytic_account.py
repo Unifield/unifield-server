@@ -506,7 +506,7 @@ class analytic_account(osv.osv):
         return res
 
     _columns = {
-        'name': fields.char('Name', size=128, required=True, translate=1),
+        'name': fields.char('Name', size=128, required=True),
         'code': fields.char('Code', size=24),
         'type': fields.selection([('view','View'), ('normal','Normal')], 'Type', help='If you select the View Type, it means you won\'t allow to create journal entries using that account.'),
         'date_start': fields.date('Active from', required=True),

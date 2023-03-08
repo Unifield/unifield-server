@@ -896,9 +896,13 @@
 
         <record id="us_8417_upd_srv_loc" model="patch.scripts">
             <field name="method">us_8417_upd_srv_loc</field>
-        </record>
+        </record>t
         <record id="us_11195_oca_period_nr" model="patch.scripts">
             <field name="method">us_11195_oca_period_nr</field>
+        </record>
+
+        <record id="us_6976_analytic_translations" model="patch.scripts">
+            <field name="method">us_6976_analytic_translations</field>
         </record>
     </data>
 </openerp>
