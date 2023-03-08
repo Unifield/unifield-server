@@ -21,11 +21,11 @@
 					<field name="percentage" />
 					<field name="subtotal" />
 					<field name="currency_id" />
-                                        <field name="destination_id" />
+                    <field name="destination_id" />
 					<field name="cost_center_id" />
 					<field name="account_id" />
 					<field name="source_doc" />
-					<field name="partner_id" />
+					<field name="requestor" />
 					<field name="partner_doc" />
 					<field name="state" invisible="1" />
 					<field name="supplier" invisible="1" />
@@ -83,7 +83,7 @@
 				<form string="Purchase order lines allocation report">
 					<group colspan="4" col="6">
 						<field name="name" readonly="1" />
-						<field name="partner_id" readonly="1" />
+						<field name="requestor" readonly="1" />
 						<newline />
 						<field name="order_type" readonly="1" />
 						<field name="categ" readonly="1" />
@@ -105,11 +105,11 @@
 							<field name="percentage" />
 							<field name="subtotal" />
 							<field name="currency_id" />
-                                                        <field name="destination_id" />
+                            <field name="destination_id" />
 							<field name="cost_center_id" />
 							<field name="account_id" />
 							<field name="source_doc" />
-							<field name="partner_id" />
+							<field name="requestor" />
 							<field name="partner_doc" />
 						</tree>
 					</field>

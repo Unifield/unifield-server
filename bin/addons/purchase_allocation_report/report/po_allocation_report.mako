@@ -140,11 +140,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % for o in objects:
 <Worksheet ss:Name="${ o.name or ''|x}">
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="70" ss:Span="13"/>
+<Column ss:AutoFitWidth="1" ss:Width="70" ss:Span="14"/>
 
 <!-- HEADER -->
 <Row>
-    <Cell ss:StyleID="ssTitle" ss:MergeAcross="13">
+    <Cell ss:StyleID="ssTitle" ss:MergeAcross="14">
        <Data ss:Type="String">${_('PURCHASE ORDER LINES ALLOCATION REPORT')}</Data>
     </Cell>
 </Row>
@@ -160,7 +160,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Creation Date')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Creator')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('State')}</Data></Cell>
- <Cell ss:StyleID="ssHeader" ss:MergeAcross="3"><Data ss:Type="String">${_('Details')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader" ss:MergeAcross="4"><Data ss:Type="String">${_('Details')}</Data></Cell>
 </Row>
 
 <Row>
@@ -235,10 +235,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${_('Source Doc')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
-        <Data ss:Type="String">${_('Partner')}</Data>
+        <Data ss:Type="String">${_('Requestor')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Partner Doc')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Comment')}</Data>
     </Cell>
 </Row>
 
@@ -281,10 +284,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${ line.source_doc or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ line.partner_id.name or '' |x}</Data>
+        <Data ss:Type="String">${ line.requestor or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${ line.partner_doc or '' |x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${ line.comment or '' |x}</Data>
     </Cell>
 </Row>
 % endfor
@@ -301,6 +307,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssHeaderNumber">
         <Data ss:Type="Number">${ get_total_amount(o) or 0.0 }</Data>
     </Cell>
+    <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="ssHeader"><Data ss:Type="String"></Data></Cell>
@@ -329,7 +336,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
    <Panes>
     <Pane>
      <Number>3</Number>
-     <ActiveRow>17</ActiveRow>
+     <ActiveRow>18</ActiveRow>
     </Pane>
    </Panes>
    <ProtectObjects>False</ProtectObjects>
