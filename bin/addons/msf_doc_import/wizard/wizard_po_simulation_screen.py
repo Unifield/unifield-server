@@ -1054,6 +1054,11 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                                 # UC 8
                                 to_create = True
 
+                    if to_create and wiz.order_id.partner_type in ['internal', 'intermission', 'section']:
+                        err1 = _('Adding a new line is not allowed on a Validated PO if the Supplier is Internal, Intermission or Inter-section')
+                        values_line_errors.append(_('Line Ext. Ref. %s of the PO: %s') % (ext_ref, err1))
+                        continue
+
 
                     if to_split:
                         new_wl_id = wl_obj.copy(cr, uid, to_split,
