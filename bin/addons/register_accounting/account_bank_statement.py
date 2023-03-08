@@ -26,6 +26,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from tools.safe_eval import safe_eval
+from tools.misc import _max_amount
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import create_cashbox_lines
@@ -2085,10 +2086,9 @@ class account_bank_statement_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        too_big_amount = 10**10
         for regline in self.browse(cr, uid, ids, fields_to_fetch=['amount', 'name'], context=context):
-            if abs(regline.amount or 0.0) >= too_big_amount:
-                raise osv.except_osv(_('Error'), _('The amount of the register line "%s" is more than 10 digits.') % regline.name)
+            if _max_amount(regline.amount):
+                raise osv.except_osv(_('Error'), _('The amount of the register line "%s" is more than 10 digits with decimals or 12 digits without decimals.') % regline.name)
 
     def _check_register_open(self, register, action, context=None):
         """
