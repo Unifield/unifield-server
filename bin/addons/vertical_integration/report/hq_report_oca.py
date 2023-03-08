@@ -76,13 +76,7 @@ class hq_report_oca(report_sxw.report_sxw):
     def rmv_spec_char(self, field_value):
         if not field_value:
             return field_value
-        res = field_value
-        field_ascii_arr = [ord(x) for x in field_value]
-        for i, _ in enumerate(field_ascii_arr[:-1]):
-            pair = field_ascii_arr[i:i + 2]
-            if pair[0] == 20 and pair[1] > 126:
-                res = res[:i] + res[i+1:]
-        return res
+        return field_value.translate({20: None})  # remove all occurences of special char with code ascii 20 in the string
 
     def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period, department_info, field_activity, context=None):
         if context is None:
