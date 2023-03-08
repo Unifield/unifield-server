@@ -88,7 +88,7 @@
                 <para style="InformationHeader">Source Doc</para>
             </td>
             <td>
-                <para style="InformationHeader">Partner</para>
+                <para style="InformationHeader">Requestor</para>
             </td>
             <td>
                 <para style="InformationHeader">Partner Doc</para>
@@ -147,7 +147,7 @@
                 <parawrap style="Information">[[ o.source_doc ]]</parawrap>
             </td>
             <td>
-                <parawrap style="Information">[[ o.partner_id.name ]]</parawrap>
+                <parawrap style="Information">[[ o.requestor ]]</parawrap>
             </td>
             <td>
                 <parawrap style="Information">[[ o.partner_doc ]]</parawrap>

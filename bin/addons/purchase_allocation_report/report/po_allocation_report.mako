@@ -188,7 +188,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssHeaderCell">
         <Data ss:Type="String">${ getSel(o, 'state') or ''|x}</Data>
      </Cell>
-    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="3">
+    <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="4">
         <Data ss:Type="String">${ o.details or ''|x}</Data>
      </Cell>
 </Row>
