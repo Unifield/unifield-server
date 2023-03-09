@@ -22,7 +22,6 @@
 from osv import fields, osv
 from tools.translate import _
 from base import currency_date
-from tools.misc import _max_amount
 
 
 class account_move_line(osv.osv):

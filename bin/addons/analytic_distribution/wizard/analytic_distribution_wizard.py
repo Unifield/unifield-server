@@ -26,7 +26,6 @@ from osv import fields
 from lxml import etree
 from tools.translate import _
 import decimal_precision as dp
-from tools.misc import _max_amount
 
 
 class analytic_distribution_wizard_lines(osv.osv_memory):
