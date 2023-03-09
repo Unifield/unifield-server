@@ -218,7 +218,7 @@ class account_move_line(osv.osv):
                         context.update({'currency_date': curr_date})
                         anal_amount = distrib_line.percentage*amount/100
                         anal_amount_rounded = round(anal_amount, 2)
-                        if _max_amount(anal_amount_rounded) and anal_amount_rounded >= 10**10:
+                        if amount and abs(amount) >= 10**10:
                             anal_amount_rounded = round(anal_amount_rounded)
                         dl_total_amount_rounded += anal_amount_rounded
                         # get the AJI with the biggest absolute value (it will be used for a potential adjustment

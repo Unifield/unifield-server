@@ -149,10 +149,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if not percentage or no_total_amount:
             return {}
         amount = abs((total_amount * percentage) / 100)
-        warning = {}
-        if _max_amount(amount):
-            warning = {'message': _('AD splits on numbers longer than 10 digits will be rounded to the nearest unit.')}
-        return {'value': {'amount': amount, 'is_percentage_amount_touched': True}, 'warning': warning}
+        return {'value': {'amount': amount, 'is_percentage_amount_touched': True}}
 
     def onchange_amount(self, cr, uid, ids, amount, total_amount):
         """
@@ -162,11 +159,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             ids = [ids]
         if not amount or not total_amount:
             return {}
-        warning = {}
-        if _max_amount(amount):
-            warning = {'message': _('AD splits on numbers longer than 10 digits will be rounded to the nearest unit.')}
         percentage = abs((amount / total_amount) * 100)
-        return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}, 'warning': warning}
+        return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}}
 
     def _dest_compatible_with_cc_domain_part(self, tree):
         """
@@ -556,9 +550,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Prepare some values
         res = {}
         for wiz in self.browse(cr, uid, ids):
-            res[wiz.id] = 0.0
+            res[wiz.id] = {'amount': 0.0, 'big_amount': False}
             if wiz.total_amount:
-                res[wiz.id] = abs(wiz.total_amount)
+                res[wiz.id] = {'amount': abs(wiz.total_amount), 'big_amount': abs(wiz.total_amount) >= 10**10}
         return res
 
     def _get_register_line_state(self, cr, uid, ids, name, args, context=None):
@@ -608,7 +602,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         'account_direct_invoice_wizard_line_id': fields.many2one('account.direct.invoice.wizard.line', string="Direct Invoice Wizard Line"),
         'sale_order_id': fields.many2one('sale.order', string="Sale Order"),
         'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
-        'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True),
+        'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True, multi='amount_big'),
+        'big_amount': fields.function(_get_amount, method=True, string="Total amount", type="boolean", readonly=True, multi='amount_big'),
         'posting_date': fields.date('Posting date', readonly=True),
         'document_date': fields.date('Document date', readonly=True),
         'register_line_state': fields.function(_get_register_line_state, method=True, string='Register line state', type='selection', selection=[('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')], readonly=True, store=False),
