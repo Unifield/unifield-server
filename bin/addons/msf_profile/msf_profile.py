@@ -67,21 +67,26 @@ class patch_scripts(osv.osv):
             update
                 account_analytic_account
             set
-                name=tr.value
+                name=coalesce(tr_en.value, tr_fr.value)
             from
-                ir_translation tr
+                account_analytic_account a
+                left join ir_translation tr_en on tr_en.name='account.analytic.account,name' and tr_en.res_id = a.id and tr_en.lang='en_MF'
+                left join ir_translation tr_fr on tr_fr.name='account.analytic.account,name' and tr_fr.res_id = a.id and tr_fr.lang='fr_MF'
             where
-                tr.name='account.analytic.account,name' and
-                tr.res_id = account_analytic_account.id and
-                tr.lang='en_MF' and
-                coalesce(tr.value, '') != '' and
-                account_analytic_account.name != tr.value
+                a.id = account_analytic_account.id and
+                coalesce(tr_en.value, tr_fr.value, '') != '' and
+                account_analytic_account.name != coalesce(tr_en.value, tr_fr.value, '')
             returning account_analytic_account.id
         ''')
         if is_coordo:
             aa_ids = [x[0] for x in cr.fetchall()]
 
         self.log_info(cr, uid, "US-6976: Update name on %s analytic accounts" % (cr.rowcount, ))
+
+        if instance.code == 'OCBCD100':
+            cr.execute('''update account_analytic_account set name='56-1-16 EVAL ROUGEOLE KAMWESHA 2' where name='56-1-31 EVAL ROUGEOLE LINGOMO-DJOLU (copy)' returning id ''');
+            aa_ids += [x[0] for x in cr.fetchall()]
+            self.log_info(cr, uid, "US-6976: Update OCBCD100 name on %s analytic account " % (cr.rowcount, ))
 
         if aa_ids:
             # for FP created at coordo, trigger sync to update name to HQ
