@@ -253,25 +253,17 @@ class res_partner(osv.osv):
         'in_product': fields.function(_set_in_product, fnct_search=search_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
-        'property_product_pricelist_purchase': fields.property(
+        'property_product_pricelist_purchase': fields.many2one(
             'product.pricelist',
-            type='many2one',
-            relation='product.pricelist',
-            domain=[('type','=','purchase')],
+            domain=[('type', '=', 'purchase')],
             string="Purchase default currency",
-            method=True,
-            view_load=True,
-            required=True,
+            select=True,
             help="This currency will be used, instead of the default one, for purchases from the current partner"),
-        'property_product_pricelist': fields.property(
+        'property_product_pricelist': fields.many2one(
             'product.pricelist',
-            type='many2one',
-            relation='product.pricelist',
-            domain=[('type','=','sale')],
+            domain=[('type', '=', 'sale')],
             string="Field orders default currency",
-            method=True,
-            view_load=True,
-            required=True,
+            select=True,
             help="This currency will be used, instead of the default one, for field orders to the current partner"),
         'property_stock_customer': fields.property(
             'stock.location',
@@ -318,6 +310,8 @@ class res_partner(osv.osv):
         'split_po': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'instance_creator': lambda obj, cr, uid, c: obj._get_instance_creator(cr, uid, c),
+        'property_product_pricelist_purchase': lambda self, cr, uid, c: self.pool.get('product.pricelist').get_company_default_pricelist(cr, uid, 'purchase', c),
+        'property_product_pricelist': lambda self, cr, uid, c: self.pool.get('product.pricelist').get_company_default_pricelist(cr, uid, 'sale', c),
     }
 
     def _get_instance_creator(self, cr, uid, context=None):
@@ -371,8 +365,7 @@ class res_partner(osv.osv):
         """
         property_obj = self.pool.get('ir.property')
 
-
-        #US-1344: treat deletion of partner
+        # US-1344: treat deletion of partner
         address_obj = self.pool.get('res.partner.address')
         address_ids = address_obj.search(cr, uid, [('partner_id', 'in', ids)])
 
@@ -382,9 +375,8 @@ class res_partner(osv.osv):
         address_obj.unlink(cr, uid, address_ids, context)
 
         # delete the related fields.properties
-        property_fields = ['property_account_receivable', 'property_account_payable', 'property_product_pricelist',
-                           'property_product_pricelist_purchase', 'property_stock_supplier',
-                           'property_stock_customer', 'property_account_position', 'property_payment_term']
+        property_fields = ['property_stock_supplier', 'property_stock_customer', 'property_account_position',
+                           'property_payment_term']
         res_ids = []
         for partner_id in ids:
             res_id = 'res.partner,%s' % partner_id
@@ -857,7 +849,9 @@ class res_partner(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['ref_companies', 'instance_creator'] # reset this value, otherwise the content of the field triggers the creation of a new company
+        # reset the second value, otherwise the content of the field triggers the creation of a new company
+        fields_to_reset = ['ref_companies', 'instance_creator', 'property_product_pricelist_purchase',
+                           'property_product_pricelist', 'property_account_payable', 'property_account_receivable']
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:
@@ -984,34 +978,46 @@ class res_partner(osv.osv):
         if args is None:
             args = []
 
+
         # Get all supplier
-        tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit,
-                                                  order, context=context, count=count)
         if not context.get('product_id', False) or 'choose_supplier' not in context or count:
-            return tmp_res
-        else:
-            # Get all supplier in product form
-            args.append(('in_product', '=', True))
-            res_in_prod = super(res_partner, self).search(cr, uid, args,
-                                                          offset, limit, order, context=context, count=count)
-            new_res = []
+            return super(res_partner, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
-            # Sort suppliers by sequence in product form
-            if 'product_id' in context:
-                supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id'))], order='sequence')
+        # To get the correct offset
+        args_in_product = args[:]  # copy the list by slicing
+        args_in_product.append(('in_product', '=', True))
+        if offset > 0:
+            nb_res_in_prod = super(res_partner, self).search(cr, uid, args_in_product, None, limit, order,
+                                                             context=context, count=True)
+            offset -= nb_res_in_prod
+            offset = offset > 0 and offset or 0
+        tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
-                for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name']):
+        # Get all supplier in product form
+        res_in_prod = super(res_partner, self).search(cr, uid, args_in_product, offset, limit, order,
+                                                      context=context, count=count)
+        new_res = []
+
+        # Sort suppliers by sequence in product form
+        if 'product_id' in context:
+            supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id'))], order='sequence')
+
+            for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name']):
+                try:
+                    tmp_res.remove(result['name'][0])
+                except:
                     try:
-                        tmp_res.remove(result['name'][0])
-                        new_res.append(result['name'][0])
+                        tmp_res.pop()
                     except:
                         pass
+                finally:
+                    new_res.append(result['name'][0])
 
-            #return new_res  # comment this line to have all suppliers (with suppliers in product form at the top of the list)
+        #return new_res  # comment this line to have all suppliers (with suppliers in product form at the top of the list)
 
-            new_res.extend(tmp_res)
+        new_res.extend(tmp_res)
 
-            return new_res
+        return new_res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """

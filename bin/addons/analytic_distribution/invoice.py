@@ -87,7 +87,10 @@ class account_invoice(osv.osv):
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency = invoice.currency_id and invoice.currency_id.id or company_currency
         for line in invoice.invoice_line:
-            amount += line.price_subtotal
+            # Since US-9996, for the total_amount in global AD wizard, only take into account only amounts from lines
+            # with analytic-addicted accounts that require an AD
+            if line.account_id.is_analytic_addicted:
+                amount += line.price_subtotal
         # Get analytic_distribution_id
         distrib_id = invoice.analytic_distribution_id and invoice.analytic_distribution_id.id
         # Prepare values for wizard

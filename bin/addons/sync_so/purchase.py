@@ -29,6 +29,7 @@ import uuid
 
 from sync_client import get_sale_purchase_logger
 from sync_client import SyncException
+from sync_client.log_sale_purchase import RunWithoutException
 
 
 class purchase_order_line_sync(osv.osv):
@@ -185,7 +186,7 @@ class purchase_order_line_sync(osv.osv):
                     orig_po_line = self.browse(cr, uid, pol_values['resourced_original_line'], fields_to_fetch=['line_number', 'order_id'], context=context)
                     real_forced = self.pool.get('stock.move').search(cr, uid, [('id', 'in', in_lines_ids), ('state', 'in', ['cancel', 'cancel_r', 'done'])], limit=3, context=context)
                     in_forced = self.pool.get('stock.move').browse(cr, uid, real_forced or in_lines_ids[0:4], fields_to_fetch=['picking_id'], context=context)
-                    raise SyncException("%s: Line %s forced on %s, unable to C/R" % (orig_po_line.order_id.name, orig_po_line.line_number, ','.join([x.picking_id.name for x in in_forced])), target_object='in_forced_cr', target_id=orig_po_line.order_id.id)
+                    raise RunWithoutException("%s: Line %s forced on %s, unable to C/R" % (orig_po_line.order_id.name, orig_po_line.line_number, ','.join([x.picking_id.name for x in in_forced])))
                 if orig_po_line.linked_sol_id:
                     resourced_sol_id = self.pool.get('sale.order.line').search(cr, uid, [('resourced_original_line', '=', orig_po_line.linked_sol_id.id)], context=context)
                     ress_fo = orig_po_line.linked_sol_id.order_id.id
@@ -304,7 +305,7 @@ class purchase_order_line_sync(osv.osv):
             if not pol_values.get('origin') and ress_fo:
                 parent_so_id = ress_fo
             elif not pol_values.get('origin') and sol_dict.get('sync_pushed_from_po'):
-                # resync try to push to original IR
+                # resync try to push to original FO/IR
                 cr.execute('''
                     select so.id
                     from purchase_order_line pol, sale_order_line sol, sale_order so
@@ -312,8 +313,7 @@ class purchase_order_line_sync(osv.osv):
                         pol.order_id=%s and
                         pol.linked_sol_id = sol.id and
                         sol.order_id = so.id and
-                        so.state not in ('draft', 'cancel', 'done') and
-                        so.procurement_request = 't'
+                        so.state not in ('draft', 'cancel', 'done')
                     limit 1
                 ''', (pol_values['order_id'],))
                 result = cr.fetchone()
@@ -382,7 +382,17 @@ class purchase_order_line_sync(osv.osv):
                 # pol already confirmed: just update the linked IR line but do no recreate IN
                 self.update_fo_lines(cr, uid, [pol_updated], context=context)
             else:
-                wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
+                try:
+                    wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
+                except Exception, e:
+                    pol_info = self.pool.get('purchase.order.line').browse(cr, uid, pol_updated, fields_to_fetch=['analytic_distribution_id', 'order_id', 'created_by_sync', 'line_number'], context=context)
+                    if pol_info.created_by_sync and not pol_info.analytic_distribution_id and not pol_info.order_id.analytic_distribution_id:
+                        if hasattr(e, 'value'):
+                            msg = e.value
+                        else:
+                            msg = '%s' % e
+                        raise SyncException(msg, target_object='purchase.order.ad', target_id=po_ids[0], line_number=pol_info.line_number)
+                    raise
         elif sol_dict['state'] == 'cancel' or (sol_dict['state'] == 'done' and sol_dict.get('from_cancel_out')):
             cancel_type = 'cancel'
         elif sol_dict['state'] == 'cancel_r':
@@ -717,7 +727,7 @@ class purchase_order_sync(osv.osv):
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
         if partner_type == 'section':
             #US-620: If the FO type is donation or loan, then remove the analytic distribution
-            if so_info.order_type in ('loan', 'donation_st', 'donation_exp'):
+            if so_info.order_type in ('loan', 'loan_return', 'donation_st', 'donation_exp'):
                 if 'analytic_distribution_id' in header_result:
                     del header_result['analytic_distribution_id']
             else:

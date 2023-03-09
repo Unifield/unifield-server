@@ -2,6 +2,8 @@
 
 from osv import osv
 from tools.translate import _
+from datetime import datetime
+from tools import DEFAULT_SERVER_DATE_FORMAT
 import netsvc
 
 
@@ -53,7 +55,7 @@ class sale_order_line(osv.osv):
             distrib_id = l_ana_dist_id or o_ana_dist_id or False
 
             # US-830 : Remove the definition of a default AD for the inter-mission FO is no AD is defined
-            if not distrib_id and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
+            if not distrib_id and not so.order_type in ('loan', 'loan_return', 'donation_st', 'donation_exp'):
                 raise osv.except_osv(
                     _('Warning'),
                     _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',),
@@ -65,7 +67,7 @@ class sale_order_line(osv.osv):
                 if (not line.analytic_distribution_id or line.analytic_distribution_state == 'none') and \
                    not so.analytic_distribution_id:
                     # We don't raise an error for these types
-                    if so.order_type not in ('loan', 'donation_st', 'donation_exp'):
+                    if so.order_type not in ('loan', 'loan_return', 'donation_st', 'donation_exp'):
                         raise osv.except_osv(
                             _('Warning'),
                             _('Analytic distribution is mandatory for this line: %s') % (line.name or '',),
@@ -189,6 +191,8 @@ class sale_order_line(osv.osv):
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
                     'ir_name_from_sync': sol.ir_name_from_sync or False,
                     'sync_sourced_origin': sol.sync_sourced_origin,
+                    'original_instance': sol.original_instance,
+                    'instance_sync_order_ref': sol.instance_sync_order_ref and sol.instance_sync_order_ref.id or False,
                 }
                 new_sol_id = self.copy(cr, uid, sol.id, sol_vals, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
@@ -267,7 +271,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'sourced'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced', 'sourcing_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)
 
         # generate sync message manually :
         return_info = {}
@@ -287,7 +291,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced_v', 'sourcing_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)
 
         # generate sync message
         return_info = {}
@@ -307,7 +311,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'sourced_sy'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced_sy', 'sourcing_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)
 
         return True
 
@@ -321,7 +325,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'sourced_n'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced_n', 'sourcing_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)
 
         # generate sync message manually :
         return_info = {}
@@ -686,11 +690,14 @@ class sale_order_line(osv.osv):
                     _('Line #%s: You have to select a product UoM in the same category than the UoM of the product.')
                     % (sol.line_number,)
                 )
-
+            if sol.instance_sync_order_ref_needed:
+                raise osv.except_osv(_('Error'),
+                                     _('Line #%s: You can not validate this line without filling "Order in sync. instance".')
+                                     % (sol.line_number,))
 
             supplier = sol.supplier
             # US-4576: Set supplier
-            if sol.type == 'make_to_order' and sol.order_id.order_type not in ['loan', 'donation_st', 'donation_exp']\
+            if sol.type == 'make_to_order' and sol.order_id.order_type not in ['loan', 'loan_return', 'donation_st', 'donation_exp']\
                     and sol.product_id and sol.product_id.seller_id and (sol.product_id.seller_id.supplier or
                                                                          sol.product_id.seller_id.manufacturer or sol.product_id.seller_id.transporter):
 
@@ -704,7 +711,7 @@ class sale_order_line(osv.osv):
                 if not is_loc_mar:
                     to_write['po_cft'] = 'po'
 
-            if sol.order_id.order_type == 'loan':
+            if sol.order_id.order_type in ['loan', 'loan_return']:
                 to_write['supplier'] = False
                 to_write['type'] = 'make_to_stock'
                 to_write['po_cft'] = False
@@ -727,7 +734,7 @@ class sale_order_line(osv.osv):
                 self.analytic_distribution_checks(cr, uid, [sol.id], context=context)
                 self.copy_analytic_distribution_on_lines(cr, uid, [sol.id], context=context)
 
-                if sol.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] and sol.type != 'make_to_stock':
+                if sol.order_id.order_type in ['loan', 'loan_return', 'donation_st', 'donation_exp'] and sol.type != 'make_to_stock':
                     to_write['type'] = 'make_to_stock'
 
             elif sol.order_id.procurement_request:  # in case of IR

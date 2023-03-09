@@ -127,7 +127,7 @@ class PhysicalInventory(osv.osv):
 
     _columns = {
         'ref': fields.char('Reference', size=64, readonly=True, sort_column='id'),
-        'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'name': fields.char('Details', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
         'date_done': fields.datetime('Date done', readonly=True),
@@ -931,7 +931,7 @@ class PhysicalInventory(osv.osv):
         ids_seen = {}
 
         sub_rt_dict_by_name = {}
-        for x in self.pool.get('physical.inventory.discrepancy').fields_get(cr, uid, ['sub_reason_type'], context=context):
+        for x in self.pool.get('physical.inventory.discrepancy').fields_get(cr, uid, ['sub_reason_type'], context=context)['sub_reason_type']['selection']:
             sub_rt_dict_by_name[x[1]] = x[0]
 
         for row_index, row in enumerate(discrepancy_report_file.getRows()):

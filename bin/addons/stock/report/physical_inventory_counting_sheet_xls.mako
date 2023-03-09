@@ -418,7 +418,7 @@
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:Height="15.75">
-    <Cell ss:Index="2" ss:StyleID="s24"><Data ss:Type="String">${_('Inventory name')|x}</Data><NamedCell
+    <Cell ss:Index="2" ss:StyleID="s24"><Data ss:Type="String">${_('Inventory details')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s20"><Data ss:Type="String">${objects[0].name or ''|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>

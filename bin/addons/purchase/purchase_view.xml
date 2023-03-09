@@ -140,6 +140,9 @@
                                 <p id="nr_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                     <translate>WARNING: Order line(s) not synchronized, code(s) does not exist</translate>
                                 </p>
+                                <p id="nr_ad_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                    <translate>WARNING: Order line(s) not synchronized, please add an AD on line(s): </translate>
+                                </p>
 
                                 <script language="javascript">
                                     var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
@@ -166,6 +169,11 @@
                                     if (has_nr &amp;&amp; has_nr!= '0') {
                                         $('#nr_lines').show();
                                     }
+                                    var has_ad_nr = $('#ad_lines_message_nr').val() || $('#ad_lines_message_nr').text();
+                                    if (has_ad_nr) {
+                                        $('#nr_ad_lines').append(has_ad_nr);
+                                        $('#nr_ad_lines').show();
+                                    }
 
                                 </script>
                             </html>
@@ -182,7 +190,8 @@
                         <field name="push_fo" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
                         <field name="nb_creation_message_nr" invisible="1"/>
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="ad_lines_message_nr" invisible="1"/>
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('order_type', '=', 'loan_return')]}"/>
                         <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <newline/>
                         <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
@@ -191,7 +200,7 @@
                     </group>
                     <field name="parent_order_name" readonly="True" attrs="{'invisible': [('parent_order_name', '=', False)]}"/>
                     <newline/>
-                    <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}"/>
+                    <field name="loan_duration" attrs="{'invisible': [('order_type', 'not in', ['loan', 'loan_return'])], 'required': [('order_type', 'in', ['loan', 'loan_return'])]}"/>
                     <newline/>
                     <field name="not_beyond_validated" invisible="1"/>
                     <field name="show_default_msg" attrs="{'readonly': [('not_beyond_validated', '=', False)]}"/>
@@ -359,7 +368,7 @@
                             <group colspan="2" col="2">
                                 <separator string="Delivery" colspan="2"/>
                                 <field name="dest_partner_type" invisible="1" />
-                                <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('partner_type', '=', 'internal')]"/>
+                                <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('available_on_po_dpo', '=', active_id)]"/>
                                 <field name="dest_address_id" domain="[('dest_address', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="cross_docking_ok" invisible="1" />
                                 <field name="location_id" domain="[('usage', '=', 'internal')]" readonly="1" on_change="onchange_location_id(location_id,categ)"/>
@@ -373,7 +382,7 @@
                         <page string="Invoices">
                             <group colspan="2" col="2">
                                 <separator string="Invoice Control" colspan="2"/>
-                                <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}"/>
+                                <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan', 'loan_return'])]}"/>
                                 <field name="unallocation_ok" attrs="{'readonly': ['|', ('cross_docking_ok', '=', True), ('allocation_setup', '!=', 'mixed')]}"/>
                                 <field name="fiscal_position" widget="selection" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                                 <field name="invoice_address_id" domain="[('inv_address', 'in', [company_id])]" context="contact_display='partner_address'" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'in', ['confirmed', 'confirmed_p', 'done', 'cancel'])]}"/>
@@ -510,6 +519,7 @@
                         <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]"/>
                         <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]"/>
                         <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]"/>
+                        <filter icon="terp-partner" string="Loan Return" domain="[('order_type','=','loan_return')]"/>
                         <filter icon="terp-gtk-jump-to-rtl" string="In-Kind donation" domain="[('order_type','=','in_kind')]"/>
                         <filter icon="terp-purchase" string="Purchase List" domain="[('order_type','=','purchase_list')]"/>
                         <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]"/>
@@ -682,8 +692,8 @@
                             <separator string="Linked Information" colspan="4" />
                                 <group colspan="2" col="3">
                                 <field name="po_order_type" invisible="1"/>
-                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type, product_id, po_order_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', '|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('link_so_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}" string="Source Document"/>
-                                <field name="select_fo" on_change="on_change_select_fo(select_fo, product_id, po_order_type)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f']), ('order_type', '=', 'regular')]" attrs="{'invisible': ['|', '|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}"/>
+                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type, product_id, po_order_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', '|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('link_so_id', '!=', False), ('po_order_type', 'in', ['loan', 'loan_return', 'donation_exp', 'donation_st', 'in_kind'])]}" string="Source Document"/>
+                                <field name="select_fo" on_change="on_change_select_fo(select_fo, product_id, po_order_type)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f']), ('order_type', '=', 'regular')]" attrs="{'invisible': ['|', '|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('po_order_type', 'in', ['loan', 'loan_return', 'donation_exp', 'donation_st', 'in_kind'])]}"/>
                                 </group>
                                 <field name="customer_ref" string="Customer ref" widget="char"/>
                                 <field name="external_ref" readonly="1"/>
@@ -785,7 +795,7 @@
             <field name="arch" type="xml">
                 <form string="Request for Quotation Line">
                     <notebook colspan="4">
-                        <page string="Order Line">
+                        <page string="Order Line" name="orderline">
                             <field name="tender_line_id" invisible="1"/>
                             <field name="linked_sol_id" invisible="1"/>
                             <field name="created_by_vi_import" invisible="1"/>
@@ -833,7 +843,9 @@
                                     </div>
                                 </html>
                             </group>
+                            <separator string="Product" colspan="4"/>
                             <field name="product_id" colspan="4" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context,False,False,linked_sol_id,po_order_type)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" default_focus="1"/>
+                            <field name="comment" colspan="4" attrs="{'required': [('product_id', '=', False)]}"/>
                             <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment, context)"/>
                             <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
                             <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)"/>
@@ -861,9 +873,6 @@
                             <field name="fake_id" invisible="1"/>
                             <field name="change_price_ok" invisible="1"/>
                             <field name="old_price_unit" invisible="1"/>
-                            <field name="date_planned" attrs="{'readonly': [('state', 'not in', ('draft', 'validated_n', 'validated'))]}"/>
-                            <field name="confirmed_delivery_date" attrs="{'readonly': [('state', 'not in', ('draft', 'validated', 'validated_n', 'rfq_sent', 'rfq_updated'))]}"/>
-                            <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
                             <group colspan="4">
                                 <group colspan="2">
                                     <field name="original_qty" colspan="1" readonly="1"/>
@@ -876,17 +885,11 @@
                                     <field name="modification_comment" colspan="2"/>
                                 </group>
                             </group>
-                            <field name="vat_ok" invisible="1"/>
-                            <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
-                                <separator colspan="4" string="Taxes"/>
-                                <field colspan="4" nolabel="1" name="taxes_id" domain="[('parent_id','=',False),('type_tax_use','!=','sale')]"/>
-                            </group>
                         </page>
-                        <page string="Nomenclature Selection">
+                        <page string="Nomenclature Selection" name="nomenselection">
                             <group colspan="4" col="2">
                                 <field name="nomenclature_code" colspan="2" invisible="True"/>
                                 <field name="nomenclature_description" colspan="2" readonly="True"/>
-                                <field name="comment" colspan="2" attrs="{'required':[('product_id', '=', False)]}"/>
                             </group>
                             <newline/>
                             <group colspan="2" col="5">

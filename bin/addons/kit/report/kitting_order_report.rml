@@ -170,7 +170,7 @@
 
 
         <section>
-        <blockTable colWidths="25.0,80.0,200.0,50.0,30.0,65.0,70.0,90.0,65.0,90.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="25.0,80.0,200.0,45.0,25.0,50.0,70.0,60.0,90.0,55.0,65.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -189,6 +189,9 @@
                 </td>
                 <td>
                     <para style="LHeader">State</para>
+                </td>
+                <td>
+                    <para style="LHeader">Kit</para>
                 </td>
                 <td>
                     <para style="LHeader">Asset</para>
@@ -222,6 +225,9 @@
                 </td>
                 <td>
                     <para style="Line">[[ getSel(line, 'state') ]]</para>
+                </td>
+                <td>
+                    <para style="Line">[[ line.composition_list_id and line.composition_list_id.composition_combined_ref_lot or '' ]]</para>
                 </td>
                 <td>
                     <para style="Line">[[ line.asset_id and line.asset_id.name or '' ]]</para>

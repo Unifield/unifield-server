@@ -167,6 +167,11 @@ class signature(osv.osv):
         ('unique_signature_res_id_model,', 'unique(signature_res_id, signature_res_model)', 'Signature must be unique'),
     ]
 
+    def _log_sign_state(self, cr, uid, _id, model, old, new, context=None):
+        if old != new:
+            states_dict = dict(self._columns['signature_state'].selection)
+            _register_log(self, cr, uid, _id, model, 'Signature State', states_dict.get(old, old) or '', states_dict.get(new, new) or '', 'write', context)
+
     def _set_signature_state(self, cr, uid, ids, context=None):
         assert len(ids) < 2, '_set_signature_state: only 1 id is allowed'
 
@@ -189,7 +194,10 @@ class signature(osv.osv):
             else:
                 signature_state = 'partial'
 
-        self.write(cr, uid, ids, {'signature_state': signature_state}, context=context)
+        cur_obj = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_state', 'signature_res_id', 'signature_res_model'], context=context)
+        if cur_obj.signature_state != signature_state:
+            self.write(cr, uid, ids, {'signature_state': signature_state}, context=context)
+            self._log_sign_state(cr, uid, cur_obj.signature_res_id, cur_obj.signature_res_model, cur_obj.signature_state, signature_state, context)
         return signature_state
 
 
@@ -555,13 +563,14 @@ class signature_line(osv.osv):
         return self._toggle_active(cr, uid, ids, False, context=context)
 
     def _toggle_active(self, cr, uid, ids, value, context=None):
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         for line in self.browse(cr, uid, ids, fields_to_fetch=['is_active', 'signed', 'name', 'signature_id', 'subtype'], context=context):
             if line.is_active == value:
                 continue
             if line['signed']:
                 raise osv.except_osv(_('Warning'), _("You can't change Active value on an already signed role."))
             txt = 'Signature active on role %s' % (line.name, )
-            real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
             _register_log(self, cr, real_uid, line.signature_id.signature_res_id, line.signature_id.signature_res_model, txt, '%s'%(not value, ), '%s'%(value, ), 'write', context)
 
             self.write(cr, uid, line['id'], {'is_active': value}, context=context)
@@ -571,6 +580,7 @@ class signature_line(osv.osv):
                 nb_active = len([x for x in line.signature_id.signature_line_ids if x.is_active and x.subtype == line.subtype]) - 1
                 if nb_users > nb_active:
                     raise osv.except_osv(_('Warning'), _('%d users are allowed to sign, you cannot disable this line.') % nb_users)
+            self.pool.get('signature')._set_signature_state(cr, root_uid, [line.signature_id.id], context=context)
         return True
 
 
@@ -667,6 +677,8 @@ class signature_add_user_wizard(osv.osv_memory):
         'num_col': 1,
     }
     def save(self, cr, uid, ids, context=None):
+        signature_obj = self.pool.get('signature')
+
         wiz = self.browse(cr, uid, ids[0], context=context)
         data = {}
 
@@ -723,12 +735,16 @@ class signature_add_user_wizard(osv.osv_memory):
                 _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, 'Delete User Allowed to sign %s' % (subtype), '%s (id:%s)' % (_to_del_name, _to_del_id), '', 'unlink', context)
                 self.pool.get('signature.users.allowed').unlink(cr, fake_uid, _to_del_id, context=context)
 
+        previous_state = wiz.signature_id.signature_state
         if num_listed_users and wiz.signature_id.signature_state not in ('partial', 'signed'):
             data['signature_state'] = 'open'
         elif not num_listed_users and wiz.signature_id.signature_state == 'open':
             data['signature_state'] = False
+
         if data:
-            self.pool.get('signature').write(cr, fake_uid, wiz.signature_id.id, data, context=context)
+            if 'signature_state' in data:
+                signature_obj._log_sign_state(cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, previous_state, data['signature_state'], context)
+            signature_obj.write(cr, fake_uid, wiz.signature_id.id, data, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -839,7 +855,7 @@ class signature_set_user(osv.osv_memory):
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         if wiz.new_signature:
             if wiz.user_id.esignature_id:
-                self.pool.get('res.users')._archive_signature(cr, root_uid, [real_uid], force=False, context=context)
+                self.pool.get('res.users')._archive_signature(cr, root_uid, [real_uid], context=context)
 
             new_image = self.pool.get('signature.image').create(cr, root_uid, {
                 'user_id': real_uid,
@@ -939,13 +955,18 @@ class signature_setup(osv.osv_memory):
         setup = setup_obj.get_config(cr, uid)
         if setup:
             if not wiz.signature:
-                if self.pool.get('signature.image').search_exists(cr, uid, [], context=context):
-                    raise osv.except_osv(_('Warning'), _('Signature Already Created, you cannot disable this feature !'))
+                user_ids = self.pool.get('res.users').search(cr, uid, [('signature_enabled', '=', True)], context=context)
+                if user_ids:
+                    user_data = [u['login'] for u in self.pool.get('res.users').read(cr, uid, user_ids[0:5], ['login'], context=context)]
+                    if len(user_ids) > 5:
+                        user_data.append('...')
+                    raise osv.except_osv(_('Warning'), _('Signature cannot be deactivated: it is enabled on %d user(s). Please untick "Enable Signature" on users: %s') % (len(user_ids), ', '.join(user_data)))
+
             for module, xmlid in [('useability_dashboard_and_menu', 'signature_follow_up_menu'), ('base', 'signature_image_menu'), ('useability_dashboard_and_menu', 'my_signature_menu')]:
                 menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.signature}, context=context)
-            if wiz.signature:
 
+            if wiz.signature:
                 for obj in list_sign:
                     if obj == 'purchase.order':
                         cond = "purchase_order o where o.signature_id is not null and o.rfq_ok='f'"

@@ -106,8 +106,10 @@
                     <field name="description" />
                     <field name="account_id" domain="[('restricted_area', '=', 'cash_return')]"
                            on_change="onchange_account(account_id, False)"/>
+                    <field name="partner_type_mandatory" invisible="1"/>
                     <field name="partner_type" domain="[('filter_for_third_party_in_advance_return', '=', account_id)]"
-                           context="{'curr': parent.currency_id, 'journal': parent.journal_id}"/>
+                           context="{'curr': parent.currency_id, 'journal': parent.journal_id}"
+                           attrs="{'required': [('partner_type_mandatory', '=', True)]}"/>
                     <field name="analytic_distribution_id" invisible="1"/>
                     <field name="display_analytic_button" invisible="1"/>
 

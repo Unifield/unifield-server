@@ -88,7 +88,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 res['amount'] = abs((total_amount * percentage) / 100.0)
             elif mode == 'amount' and total_amount:
                 res['percentage'] = abs((amount / total_amount) * 100.0)
-        if context and context.get('is_intermission', False):
+        if context and context.get('is_intermission', False)\
+                and self._name not in ('analytic.distribution.wizard.f1.lines','analytic.distribution.wizard.f2.lines'):
             # I/M vouncher: always MSF Private Funds
             try:
                 fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
