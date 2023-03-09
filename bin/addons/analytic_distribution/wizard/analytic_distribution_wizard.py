@@ -26,6 +26,7 @@ from osv import fields
 from lxml import etree
 from tools.translate import _
 import decimal_precision as dp
+from tools.misc import _max_amount
 
 
 class analytic_distribution_wizard_lines(osv.osv_memory):
@@ -148,7 +149,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if not percentage or no_total_amount:
             return {}
         amount = abs((total_amount * percentage) / 100)
-        return {'value': {'amount': amount, 'is_percentage_amount_touched': True}}
+        warning = {}
+        if _max_amount(amount):
+            warning = {'message': _('AD splits on numbers longer than 10 digits will be rounded to the nearest unit.')}
+        return {'value': {'amount': amount, 'is_percentage_amount_touched': True}, 'warning': warning}
 
     def onchange_amount(self, cr, uid, ids, amount, total_amount):
         """
@@ -158,8 +162,11 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             ids = [ids]
         if not amount or not total_amount:
             return {}
+        warning = {}
+        if _max_amount(amount):
+            warning = {'message': _('AD splits on numbers longer than 10 digits will be rounded to the nearest unit.')}
         percentage = abs((amount / total_amount) * 100)
-        return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}}
+        return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}, 'warning': warning}
 
     def _dest_compatible_with_cc_domain_part(self, tree):
         """
