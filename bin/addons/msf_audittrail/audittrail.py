@@ -1186,7 +1186,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             return res
         elif field['ttype'] == 'float':
             try:
-                if values and float(values) >= 10**10:
+                if values and float(values) >= tools.misc._max_fin_amount_digts:
                     return '%.2f' % float(values)
             except:
                 pass

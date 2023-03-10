@@ -25,7 +25,7 @@ from tools.translate import _
 from time import strftime
 import decimal_precision as dp
 from base import currency_date
-
+from tools import misc
 
 class analytic_distribution1(osv.osv):
     _name = "analytic.distribution"
@@ -282,7 +282,7 @@ class distribution_line(osv.osv):
 
         for line in self.browse(cr, uid, ids):
             amount_cur = round((move_line.credit_currency - move_line.debit_currency) * line.percentage / 100, 2)
-            if abs((move_line.credit_currency - move_line.debit_currency)) >= 10**10:
+            if abs((move_line.credit_currency - move_line.debit_currency)) >= misc._max_fin_amount_digts:
                 amount_cur = round(amount_cur, 0)
             ctx = {'currency_date': currency_date.get_date(self, cr, document_date, date, source_date=source_date)}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)

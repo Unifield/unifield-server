@@ -26,7 +26,7 @@ from osv import fields
 from lxml import etree
 from tools.translate import _
 import decimal_precision as dp
-
+from tools import misc
 
 class analytic_distribution_wizard_lines(osv.osv_memory):
     _name = 'analytic.distribution.wizard.lines'
@@ -551,7 +551,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids):
             res[wiz.id] = {'amount': 0.0, 'big_amount': False}
             if wiz.total_amount:
-                res[wiz.id] = {'amount': abs(wiz.total_amount), 'big_amount': abs(wiz.total_amount) >= 10**10}
+                res[wiz.id] = {'amount': abs(wiz.total_amount), 'big_amount': abs(wiz.total_amount) >= misc._max_fin_amount_digts}
         return res
 
     def _get_register_line_state(self, cr, uid, ids, name, args, context=None):

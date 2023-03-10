@@ -1950,11 +1950,13 @@ def get_stack():
     import traceback
     return ustr("".join(traceback.format_list(traceback.extract_stack())))
 
+_max_fin_amount_digts = 10**10
+_max_fin_amount_no_digts = 10**12
 def _max_amount(amount):
     if not amount:
         return False
-    if abs(amount) >= 10**10:
-        if abs(amount) < 10**12 and abs(amount - int(amount)) < 0.001:
+    if abs(amount) >= _max_fin_amount_digts:
+        if abs(amount) < _max_fin_amount_no_digts and abs(amount - int(amount)) < 0.001:
             return False
         return True
     return False

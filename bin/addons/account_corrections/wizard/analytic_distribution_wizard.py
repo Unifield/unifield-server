@@ -26,7 +26,7 @@ from osv import fields
 from tools.translate import _
 import time
 from base import currency_date
-
+from tools import misc
 
 class analytic_distribution_wizard(osv.osv_memory):
     _inherit = 'analytic.distribution.wizard'
@@ -394,7 +394,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             to_override_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
             ctx = {'currency_date': curr_date}
             amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
-            if abs(ml.credit_currency - ml.debit_currency) >= 10**10:
+            if abs(ml.credit_currency - ml.debit_currency) >= misc._max_fin_amount_digts:
                 amount_cur = round(amount_cur)
 
             amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
