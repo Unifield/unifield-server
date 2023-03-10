@@ -549,9 +549,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Prepare some values
         res = {}
         for wiz in self.browse(cr, uid, ids):
-            res[wiz.id] = 0.0
+            res[wiz.id] = {'amount': 0.0, 'big_amount': False}
             if wiz.total_amount:
-                res[wiz.id] = abs(wiz.total_amount)
+                res[wiz.id] = {'amount': abs(wiz.total_amount), 'big_amount': abs(wiz.total_amount) >= 10**10}
         return res
 
     def _get_register_line_state(self, cr, uid, ids, name, args, context=None):
@@ -601,7 +601,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         'account_direct_invoice_wizard_line_id': fields.many2one('account.direct.invoice.wizard.line', string="Direct Invoice Wizard Line"),
         'sale_order_id': fields.many2one('sale.order', string="Sale Order"),
         'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
-        'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True),
+        'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True, multi='amount_big'),
+        'big_amount': fields.function(_get_amount, method=True, string="Big amount", type="boolean", readonly=True, multi='amount_big'),
         'posting_date': fields.date('Posting date', readonly=True),
         'document_date': fields.date('Document date', readonly=True),
         'register_line_state': fields.function(_get_register_line_state, method=True, string='Register line state', type='selection', selection=[('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')], readonly=True, store=False),
