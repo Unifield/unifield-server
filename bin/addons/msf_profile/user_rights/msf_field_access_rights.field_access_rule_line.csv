@@ -628,7 +628,7 @@ ESC Product Coordo,product_attributes.field_product_product_section_code_ids,FAL
 ESC Product Coordo,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/791
 ESC Product Coordo,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/792
 ESC Product Coordo,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/793
-ESC Product Coordo,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/794
+ESC Product Coordo,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/794
 ESC Product Coordo,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/795
 ESC Product Coordo,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/796
 ESC Product Coordo,product_attributes.field_product_product_single_use,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/797
@@ -777,7 +777,7 @@ ITC Product Coordo,product_attributes.field_product_product_section_code_ids,FAL
 ITC Product Coordo,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1091
 ITC Product Coordo,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1092
 ITC Product Coordo,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1093
-ITC Product Coordo,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1094
+ITC Product Coordo,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1094
 ITC Product Coordo,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1095
 ITC Product Coordo,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1096
 ITC Product Coordo,product_attributes.field_product_product_single_use,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1097
@@ -924,7 +924,7 @@ LOCAL Product Coordo,product_attributes.field_product_product_section_code_ids,T
 LOCAL Product Coordo,product.field_product_template_seller_delay,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1391
 LOCAL Product Coordo,product.field_product_template_seller_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1392
 LOCAL Product Coordo,product.field_product_template_seller_ids,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1393
-LOCAL Product Coordo,sourcing.field_product_template_seller_info_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1394
+LOCAL Product Coordo,product.field_product_template_seller_info_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1394
 LOCAL Product Coordo,product.field_product_template_seller_qty,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1395
 LOCAL Product Coordo,product_attributes.field_product_product_short_shelf_life,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1396
 LOCAL Product Coordo,product_attributes.field_product_product_single_use,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1397
@@ -1072,7 +1072,7 @@ TEMP Product Coordo,product_attributes.field_product_product_section_code_ids,TR
 TEMP Product Coordo,product.field_product_template_seller_delay,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1691
 TEMP Product Coordo,product.field_product_template_seller_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1692
 TEMP Product Coordo,product.field_product_template_seller_ids,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1693
-TEMP Product Coordo,sourcing.field_product_template_seller_info_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1694
+TEMP Product Coordo,product.field_product_template_seller_info_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1694
 TEMP Product Coordo,product.field_product_template_seller_qty,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1695
 TEMP Product Coordo,product_attributes.field_product_product_short_shelf_life,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1696
 TEMP Product Coordo,product_attributes.field_product_product_single_use,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/1697
@@ -1241,7 +1241,7 @@ Products - Project - No Access,product_attributes.field_product_product_section_
 Products - Project - No Access,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1862
 Products - Project - No Access,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1863
 Products - Project - No Access,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1864
-Products - Project - No Access,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1865
+Products - Project - No Access,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1865
 Products - Project - No Access,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1866
 Products - Project - No Access,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1867
 Products - Project - No Access,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/1868
@@ -1406,7 +1406,7 @@ Products - Project - Changes allowed,product_attributes.field_product_product_se
 Products - Project - Changes allowed,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2029
 Products - Project - Changes allowed,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2030
 Products - Project - Changes allowed,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2031
-Products - Project - Changes allowed,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2032
+Products - Project - Changes allowed,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2032
 Products - Project - Changes allowed,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2033
 Products - Project - Changes allowed,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2034
 Products - Project - Changes allowed,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2035
@@ -1673,7 +1673,7 @@ HQ Product - Fin Config Full - HQ Access,product_attributes.field_product_produc
 HQ Product - Fin Config Full - HQ Access,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2298
 HQ Product - Fin Config Full - HQ Access,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2299
 HQ Product - Fin Config Full - HQ Access,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2300
-HQ Product - Fin Config Full - HQ Access,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2301
+HQ Product - Fin Config Full - HQ Access,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2301
 HQ Product - Fin Config Full - HQ Access,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2302
 HQ Product - Fin Config Full - HQ Access,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2303
 HQ Product - Fin Config Full - HQ Access,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2304
@@ -1838,7 +1838,7 @@ HQ Product - Fin Config Full - Coordo Access,product_attributes.field_product_pr
 HQ Product - Fin Config Full - Coordo Access,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2465
 HQ Product - Fin Config Full - Coordo Access,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2466
 HQ Product - Fin Config Full - Coordo Access,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2467
-HQ Product - Fin Config Full - Coordo Access,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2468
+HQ Product - Fin Config Full - Coordo Access,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2468
 HQ Product - Fin Config Full - Coordo Access,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2469
 HQ Product - Fin Config Full - Coordo Access,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2470
 HQ Product - Fin Config Full - Coordo Access,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2471
@@ -2003,7 +2003,7 @@ HQ Product - Fin Config Full - Project Access,product_attributes.field_product_p
 HQ Product - Fin Config Full - Project Access,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2632
 HQ Product - Fin Config Full - Project Access,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2633
 HQ Product - Fin Config Full - Project Access,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2634
-HQ Product - Fin Config Full - Project Access,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2635
+HQ Product - Fin Config Full - Project Access,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2635
 HQ Product - Fin Config Full - Project Access,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2636
 HQ Product - Fin Config Full - Project Access,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2637
 HQ Product - Fin Config Full - Project Access,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2638
@@ -2168,7 +2168,7 @@ Local Product - Fin Config Full - HQ Access,product_attributes.field_product_pro
 Local Product - Fin Config Full - HQ Access,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2799
 Local Product - Fin Config Full - HQ Access,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2800
 Local Product - Fin Config Full - HQ Access,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2801
-Local Product - Fin Config Full - HQ Access,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2802
+Local Product - Fin Config Full - HQ Access,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2802
 Local Product - Fin Config Full - HQ Access,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2803
 Local Product - Fin Config Full - HQ Access,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2804
 Local Product - Fin Config Full - HQ Access,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2805
@@ -2333,7 +2333,7 @@ Local Product - Fin Config Full - Coordo Access,product_attributes.field_product
 Local Product - Fin Config Full - Coordo Access,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2966
 Local Product - Fin Config Full - Coordo Access,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2967
 Local Product - Fin Config Full - Coordo Access,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2968
-Local Product - Fin Config Full - Coordo Access,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2969
+Local Product - Fin Config Full - Coordo Access,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2969
 Local Product - Fin Config Full - Coordo Access,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2970
 Local Product - Fin Config Full - Coordo Access,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2971
 Local Product - Fin Config Full - Coordo Access,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/2972
@@ -2498,7 +2498,7 @@ Local Product - Fin Config Full - Project Access,product_attributes.field_produc
 Local Product - Fin Config Full - Project Access,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3133
 Local Product - Fin Config Full - Project Access,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3134
 Local Product - Fin Config Full - Project Access,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3135
-Local Product - Fin Config Full - Project Access,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3136
+Local Product - Fin Config Full - Project Access,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3136
 Local Product - Fin Config Full - Project Access,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3137
 Local Product - Fin Config Full - Project Access,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3138
 Local Product - Fin Config Full - Project Access,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3139
@@ -2649,7 +2649,7 @@ UNIDATA Product Coordo,product_attributes.field_product_product_section_code_ids
 UNIDATA Product Coordo,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/4121
 UNIDATA Product Coordo,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/4122
 UNIDATA Product Coordo,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/4123
-UNIDATA Product Coordo,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/4124
+UNIDATA Product Coordo,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/4124
 UNIDATA Product Coordo,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/4125
 UNIDATA Product Coordo,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/4126
 UNIDATA Product Coordo,product_attributes.field_product_product_single_use,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/4127
@@ -2819,7 +2819,7 @@ All Products - HQ - No Field,product_attributes.field_product_product_section_co
 All Products - HQ - No Field,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3308
 All Products - HQ - No Field,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3309
 All Products - HQ - No Field,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3310
-All Products - HQ - No Field,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3311
+All Products - HQ - No Field,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3311
 All Products - HQ - No Field,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3312
 All Products - HQ - No Field,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3313
 All Products - HQ - No Field,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3314
@@ -2986,7 +2986,7 @@ HQ ESC ITC UD Products - Coordination - No Field,product_attributes.field_produc
 HQ ESC ITC UD Products - Coordination - No Field,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3477
 HQ ESC ITC UD Products - Coordination - No Field,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3478
 HQ ESC ITC UD Products - Coordination - No Field,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3479
-HQ ESC ITC UD Products - Coordination - No Field,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3480
+HQ ESC ITC UD Products - Coordination - No Field,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3480
 HQ ESC ITC UD Products - Coordination - No Field,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3481
 HQ ESC ITC UD Products - Coordination - No Field,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3482
 HQ ESC ITC UD Products - Coordination - No Field,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3483
@@ -3153,7 +3153,7 @@ All Products - Project - No Field,product_attributes.field_product_product_secti
 All Products - Project - No Field,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3646
 All Products - Project - No Field,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3647
 All Products - Project - No Field,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3648
-All Products - Project - No Field,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3649
+All Products - Project - No Field,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3649
 All Products - Project - No Field,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3650
 All Products - Project - No Field,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3651
 All Products - Project - No Field,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/3652
@@ -3326,7 +3326,7 @@ HQ Product Coordo,product_attributes.field_product_product_section_code_ids,FALS
 HQ Product Coordo,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20133
 HQ Product Coordo,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20134
 HQ Product Coordo,product.field_product_template_seller_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20135
-HQ Product Coordo,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20136
+HQ Product Coordo,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20136
 HQ Product Coordo,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20137
 HQ Product Coordo,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20138
 HQ Product Coordo,product_attributes.field_product_product_single_use,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/20139
@@ -4402,7 +4402,7 @@ Products at HQ Supplier tab access only,product_attributes.field_product_product
 Products at HQ Supplier tab access only,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30210
 Products at HQ Supplier tab access only,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30211
 Products at HQ Supplier tab access only,product.field_product_template_seller_ids,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/30212
-Products at HQ Supplier tab access only,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30213
+Products at HQ Supplier tab access only,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30213
 Products at HQ Supplier tab access only,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30214
 Products at HQ Supplier tab access only,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30215
 Products at HQ Supplier tab access only,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30216
@@ -4569,7 +4569,7 @@ Products at Coordo  Supplier tab access only,product_attributes.field_product_pr
 Products at Coordo  Supplier tab access only,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30377
 Products at Coordo  Supplier tab access only,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30378
 Products at Coordo  Supplier tab access only,product.field_product_template_seller_ids,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/30379
-Products at Coordo  Supplier tab access only,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30380
+Products at Coordo  Supplier tab access only,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30380
 Products at Coordo  Supplier tab access only,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30381
 Products at Coordo  Supplier tab access only,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30382
 Products at Coordo  Supplier tab access only,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30383
@@ -4736,7 +4736,7 @@ Products at project  Supplier tab access only,product_attributes.field_product_p
 Products at project  Supplier tab access only,product.field_product_template_seller_delay,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30544
 Products at project  Supplier tab access only,product.field_product_template_seller_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30545
 Products at project  Supplier tab access only,product.field_product_template_seller_ids,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/30546
-Products at project  Supplier tab access only,sourcing.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30547
+Products at project  Supplier tab access only,product.field_product_template_seller_info_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30547
 Products at project  Supplier tab access only,product.field_product_template_seller_qty,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30548
 Products at project  Supplier tab access only,product_attributes.field_product_product_short_shelf_life,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30549
 Products at project  Supplier tab access only,product_attributes.field_product_product_show_cold_chain,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30550
