@@ -1950,6 +1950,15 @@ def get_stack():
     import traceback
     return ustr("".join(traceback.format_list(traceback.extract_stack())))
 
+def _max_amount(amount):
+    if not amount:
+        return False
+    if abs(amount) >= 10**10:
+        if abs(amount) < 10**12 and abs(amount - int(amount)) < 0.001:
+            return False
+        return True
+    return False
+
 class fakeUid(int):
     """
     Emulates the behaviour of an INT while having the ability to store the users real uid in a property called realUid

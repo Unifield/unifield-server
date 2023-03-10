@@ -29,7 +29,6 @@ import tools
 import logging
 from tools.safe_eval import safe_eval as eval
 
-
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
@@ -1185,6 +1184,12 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 else:
                     res = values
             return res
+        elif field['ttype'] == 'float':
+            try:
+                if values and float(values) >= 10**10:
+                    return '%.2f' % float(values)
+            except:
+                pass
 
     return values
 
