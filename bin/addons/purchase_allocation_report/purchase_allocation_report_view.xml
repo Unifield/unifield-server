@@ -83,7 +83,7 @@
 				<form string="Purchase order lines allocation report">
 					<group colspan="4" col="6">
 						<field name="name" readonly="1" />
-						<field name="requestor" readonly="1" />
+						<field name="partner_id" readonly="1" />
 						<newline />
 						<field name="order_type" readonly="1" />
 						<field name="categ" readonly="1" />
