@@ -1294,8 +1294,8 @@
                             <field name="object_name" invisible="1" />
                             <field name="name" readonly="1"/>
                             <field name="date" readonly="True" />
-                            <field name="shipment_actual_date" />
-                            <field name="shipment_expected_date" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="shipment_actual_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'shipped'])]}" />
+                            <field name="shipment_expected_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'shipped'])]}" />
                             <field name="transport_type" attrs="{'readonly': [('state', 'in', ('done', 'delivered', 'cancel'))]}" />
                             <field name="backshipment_id" readonly="True" />
                             <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
@@ -1441,7 +1441,7 @@
                         <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                         <button name="do_create_shipment_bg" states="draft" string="Create Shipment" type="object" icon="gtk-add" context="{'from_button': True}" />
                         <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
-                        <button name="validate_bg" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
+                        <button name="open_select_actual_ship_date_wizard" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
                         <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Reception"
                                 attrs="{'invisible': ['|','|', '&amp;', ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done'), ('num_of_packs', '=', 0)]}" />
                         <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Reception"
@@ -1468,6 +1468,28 @@
                         <field name="dg" />
                         <field name="cs" />
                     </tree>
+            </field>
+        </record>
+
+        <record id="select_actual_ship_date_wizard_form_view" model="ir.ui.view">
+            <field name="name">select.actual.ship.date.wizard.form.view</field>
+            <field name="model">select.actual.ship.date.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Confirm the Actual Ship Date">
+                    <field name="shipment_id" invisible="1" />
+					<group colspan="4" col="2">
+                        <html colspan="2">
+                            <translate>Please select the date the Shipment was actually dispatched:</translate>
+                        </html>
+                        <field name="shipment_actual_date" nolabel="1" required="1" colspan="2" />
+                    </group>
+					<group colspan="4" col="4">
+						<label string="" colspan="2"/>
+                        <button name="validate_ship" string="Validate" type="object" icon="gtk-apply" colspan="1" />
+                        <button name="cancel" string="Cancel" type="object" icon="gtk-cancel" colspan="1" />
+                    </group>
+                </form>
             </field>
         </record>
 
