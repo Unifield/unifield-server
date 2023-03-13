@@ -57,6 +57,23 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_11090_replace_DC4_by_space(self, cr, uid, *a, **b):
+        cr.execute('''
+        UPDATE account_move_line
+        SET
+            ref = regexp_replace(ref, E'\x14', ' ', 'g'),
+            name = regexp_replace(name, E'\x14', ' ', 'g'),
+            partner_txt = regexp_replace(partner_txt, E'\x14', ' ', 'g')
+        ''')
+        cr.execute('''
+        UPDATE account_analytic_line
+        SET
+            ref = regexp_replace(ref, E'\x14', ' ', 'g'),
+            name = regexp_replace(name, E'\x14', ' ', 'g'),
+            partner_txt = regexp_replace(partner_txt, E'\x14', ' ', 'g')
+        ''')
+        return True
+
     # UF28.0
     def us_8417_upd_srv_loc(self, cr, uid, *a, **b):
         '''

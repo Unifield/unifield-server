@@ -897,5 +897,9 @@
         <record id="us_8417_upd_srv_loc" model="patch.scripts">
             <field name="method">us_8417_upd_srv_loc</field>
         </record>
+
+        <record id="us_11090_replace_DC4_by_space" model="patch.scripts">
+            <field name="method">us_11090_replace_DC4_by_space</field>
+        </record>
     </data>
 </openerp>
