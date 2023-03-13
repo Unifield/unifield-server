@@ -461,6 +461,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             to_override_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
             ctx = {'currency_date': curr_date}
             amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
+            if abs(ml.credit_currency - ml.debit_currency) >= 10**10:
+                amount_cur = round(amount_cur)
+
             amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 
             vals = {
@@ -503,6 +506,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         max_line = {'amount': 0, 'aji_bro': False}
         aji_fields = ['amount_currency', 'period_id', 'currency_id', 'source_date', 'document_date', 'date']
         for aji in ana_line_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=aji_fields, context=context):
+
             total_rounded_amount += round(abs(aji.amount_currency or 0.0), 2)
             if has_generated_cor and aji.id in new_line_ids and abs(aji.amount_currency or 0.0) > max_line['amount']:
                 max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}

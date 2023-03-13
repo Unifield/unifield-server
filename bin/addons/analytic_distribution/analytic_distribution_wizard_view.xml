@@ -92,6 +92,7 @@
                     <field name="commitment_line_id" invisible="1"/>
                     <field name="account_id" attrs="{'invisible': ['|', ('register_line_id', '=', False), ('register_line_state', 'in', ['draft', 'hard'])], 'required': [('register_line_state', '=', 'temp')]}" readonly="0" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]"/>
                     <field name="cash_return_id" invisible="1"/>
+                    <field name="big_amount" invisible="1"/>
                     <field name="accrual_line_id" invisible="1"/>
                     <group colspan="2" col="3">
                         <field colspan="2" name="entry_mode" readonly="1"/>
@@ -111,11 +112,19 @@
                                style="text-align:center; color: red; font-weight: bold; font-size: 1.1em;display:none">
                                 <translate>Make sure that there is only one Analytic Distribution line for the entries having a booking amount inferior or equal to 1.</translate>
                             </p>
+                            <p id="label_big_amount"
+                               style="text-align:center; color: red; font-weight: bold; font-size: 1.1em;display:none">
+                                <translate>AD splits on numbers longer than 10 digits will be rounded to the nearest unit.</translate>
+                            </p>
 
                          <script language="javascript">
                             var invalid_small_amount = $('#invalid_small_amount').val() || $('#invalid_small_amount').text();
                             if (invalid_small_amount) {
                                 $('#label_invalid_small_amount').show();
+                            }
+                            var big_amount = $('#big_amount').val() || $('#big_amount').text();
+                            if (big_amount) {
+                                $('#label_big_amount').show();
                             }
                         </script>
                         </html>
