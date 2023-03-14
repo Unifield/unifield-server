@@ -27,6 +27,7 @@ from osv import fields
 from time import strftime
 from tools.translate import _
 from tools.misc import ustr
+from tools.misc import _max_amount
 from datetime import datetime
 from msf_partner import PARTNER_TYPE
 import re
@@ -1705,7 +1706,6 @@ class account_invoice_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        too_big_amount = 10**10
         inv_line_fields = ['quantity', 'price_unit', 'discount', 'name']
         for inv_line in self.browse(cr, uid, ids, fields_to_fetch=inv_line_fields, context=context):
             # check amounts entered manually (cf. huge amounts could cause decimal.InvalidOperation), and the total to be used in JI
@@ -1713,8 +1713,8 @@ class account_invoice_line(osv.osv):
             pu = inv_line.price_unit or 0.0
             discount = inv_line.discount or 0.0
             subtotal = self._amount_line(cr, uid, [inv_line.id], 'price_subtotal', None, context)[inv_line.id]
-            if abs(qty) >= too_big_amount or abs(pu) >= too_big_amount or abs(discount) >= too_big_amount or abs(subtotal) >= too_big_amount:
-                raise osv.except_osv(_('Error'), _('Line "%s": one of the numbers entered is more than 10 digits.') % inv_line.name)
+            if _max_amount(qty)  or _max_amount(pu) or _max_amount(discount) or _max_amount(subtotal):
+                raise osv.except_osv(_('Error'), _('Line "%s": one of the numbers entered is more than 10 digits with decimals or 12 digits without decimals.') % inv_line.name)
 
     def _check_automated_invoice(self, cr, uid, invoice_id, context=None):
         """
