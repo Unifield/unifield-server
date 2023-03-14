@@ -42,27 +42,29 @@ class account_chart(osv.osv_memory):
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id=False, context=None):
         res = {}
         res['value'] = {}
+        periods = {}
         if fiscalyear_id:
             start_period = end_period = False
-            cr.execute('''
-                SELECT * FROM (SELECT p.id
+            cr.execute('''SELECT p.id AS start_id
                                FROM account_period p
                                LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
                                WHERE f.id = %s and number != 0
                                ORDER BY p.date_start ASC
-                               LIMIT 1) AS period_start
-                UNION
-                SELECT * FROM (SELECT p.id
+                               LIMIT 1''', (fiscalyear_id,))
+            periods['period_from'] = [i[0] for i in cr.fetchall()] or False
+
+            cr.execute('''SELECT p.id AS stop_id
                                FROM account_period p
                                LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
                                WHERE f.id = %s and number != 0
                                AND p.date_start < NOW()
                                ORDER BY p.date_stop DESC
-                               LIMIT 1) AS period_stop''', (fiscalyear_id, fiscalyear_id))
-            periods =  [i[0] for i in cr.fetchall()]
-            if periods and len(periods) > 1:
-                start_period = periods[1]
-                end_period = periods[0]
+                               LIMIT 1''', (fiscalyear_id,))
+            periods['period_to'] = [i[0] for i in cr.fetchall()] or False
+
+            if periods and periods['period_from'] and periods['period_to']:
+                start_period = periods['period_from'][0]
+                end_period = periods['period_to'][0]
             res['value'] = {'period_from': start_period, 'period_to': end_period}
 
         # US-1179
