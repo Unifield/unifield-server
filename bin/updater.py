@@ -353,11 +353,13 @@ def do_update():
                 # TODO: if migration ...
                 if ret == 0 and new_python:
                     subprocess.call('sc delete openerp-web-6.0')
-                    subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-web-6.0 "%(INSTDIR)s\python\unifield-web.exe" -Xutf8 """%(INSTDIR)s\Web\openerp-web.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
-                    subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-web-6.0 AppDirectory "%(INSTDIR)s\Web"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
+                    subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-web-py3 "%(INSTDIR)s\python\python.exe" -Xutf8 """%(INSTDIR)s\Web\openerp-web.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
+                    subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-web-py3 AppDirectory "%(INSTDIR)s\Web"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
                 if new_python:
-                    subprocess.call(r'net stop openerp-web-6.0')
-                    subprocess.call(r'net start openerp-web-6.0')
+                    subprocess.call(r'net stop openerp-web-py3')
+                    subprocess.call(r'net start openerp-web-py3')
+                else:
+                    subprocess.call('net start openerp-web-6.0')
 
         except BaseException as e:
             warn("Update failure!")
@@ -389,10 +391,10 @@ def do_update():
             if new_python:
                 ret = subprocess.call('sc delete openerp-server-6.0', stdout=log, stderr=log)
             if ret == 0:
-                warn(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-6.0 "%(INSTDIR)s\python\unifield-server.exe" -Xutf8  """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root})
-                subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-6.0 "%(INSTDIR)s\python\unifield-server.exe" -Xutf8 """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
-                subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-server-6.0 AppDirectory "%(INSTDIR)s\Server"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
-                subprocess.call(r'net start openerp-server-6.0')
+                warn(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" -Xutf8  """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root})
+                subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" -Xutf8 """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
+                subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-server-py3 AppDirectory "%(INSTDIR)s\Server"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
+                subprocess.call(r'net start openerp-server-py3')
             sys.exit(1) # require service to restart
         else:
             warn(("Restart OpenERP in %s:" % exec_path), \
