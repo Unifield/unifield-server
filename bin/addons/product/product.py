@@ -336,7 +336,7 @@ class product_template(osv.osv):
         'volume_updated': fields.boolean(string='Volume updated (deprecated)', readonly=True),
         'weight': fields.float('Gross weight', help="The gross weight in Kg.", digits=(16,5)),
         'weight_net': fields.float('Net weight', help="The net weight in Kg.", digits=(16,5)),
-        'cost_method': fields.selection([('average', 'Average Price')], 'Costing Method', required=True, help="Average Price: the cost price is recomputed at each reception of products."),
+        'cost_method': fields.selection([('average', 'Average Price'), ('standard','Standard Price')], 'Costing Method', required=True, help="Average Price: the cost price is recomputed at each reception of products."),
         'warranty': fields.float('Warranty (months)'),
         'sale_ok': fields.boolean('Can be Sold', help="Determines if the product can be visible in the list of product within a selection from a sale order line."),
         'purchase_ok': fields.boolean('Can be Purchased', help="Determine if the product is visible in the list of products within a selection from a purchase order line."),
