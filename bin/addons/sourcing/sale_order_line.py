@@ -1690,11 +1690,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             rfq_to_use = self.create_rfq_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new RfQ:
                             rfq = po_obj.browse(cr, uid, rfq_to_use, context=context)
-                            rfq_ctx = context.copy()
-                            rfq_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'view_rfq_form')[1]
-                            rfq_ctx.update({'rfq_ok': True, 'request_for_quotation': True, 'view_id': rfq_view_id, '_terp_view_name': _('Request for Quotation')})
                             po_obj.log(cr, uid, rfq_to_use, _('The Request for Quotation %s for supplier %s has been created.')
-                                       % (rfq.name, rfq.partner_id.name), context=rfq_ctx)
+                                       % (rfq.name, rfq.partner_id.name), action_xmlid='purchase.purchase_rfq')
                             po_obj.infolog(cr, uid, _('The Request for Quotation %s for supplier %s has been created.') % (rfq.name, rfq.partner_id.name))
                         else:
                             rfq = po_obj.browse(cr, uid, rfq_to_use, fields_to_fetch=['pricelist_id'], context=context)
