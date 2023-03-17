@@ -791,7 +791,7 @@ class users(osv.osv):
                 raise osv.except_osv(_('Warning'), _('You can not deactivate this user, %d documents have to be signed\n%s') % (len(open_sign_ids), ', '.join(list_of_doc)))
             for xuser in self.browse(cr, uid, ids, fields_to_fetch=['name', 'has_valid_signature'], context=context):
                 if xuser.has_valid_signature:
-                    values.update(self.reset_signature(cr, uid, ids, from_write_user=True, context=None))
+                    values.update(self.reset_signature(cr, uid, ids, context=context, from_write_user=True))
 
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
@@ -1088,7 +1088,7 @@ class users(osv.osv):
     def delete_signature(self, cr, uid, ids, context=None):
         return self._archive_signature(cr, uid, ids, context=context)
 
-    def reset_signature(self, cr, uid, ids, from_write_user=None, context=None):
+    def reset_signature(self, cr, uid, ids, context=None, from_write_user=False):
         return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), from_write_user=from_write_user, context=context)
 
     def add_signature(self, cr, uid, ids, context=None):
