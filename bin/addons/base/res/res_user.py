@@ -789,30 +789,9 @@ class users(osv.osv):
                 if len(open_sign_ids) > 5:
                     list_of_doc.append('...')
                 raise osv.except_osv(_('Warning'), _('You can not deactivate this user, %d documents have to be signed\n%s') % (len(open_sign_ids), ', '.join(list_of_doc)))
-            ftf = ['name', 'has_valid_signature', 'esignature_id', 'signature_from', 'signature_to']
-            for xuser in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            for xuser in self.browse(cr, uid, ids, fields_to_fetch=['name', 'has_valid_signature'], context=context):
                 if xuser.has_valid_signature:
-                    sign_line_obj = self.pool.get('signature.line')
-                    if xuser.esignature_id:
-                        data = {
-                            'from_date': xuser.signature_from,
-                            'to_date': xuser.signature_to or fields.date.today(),
-                            'inactivation_date': fields.datetime.now(),
-                        }
-                        if xuser.esignature_id.user_name != xuser.name:
-                            used_sign_id = sign_line_obj.search(cr, uid, [('image_id', '=', xuser.esignature_id.id)],
-                                                                order='id desc', limit=1, context=context)
-                            if used_sign_id:
-                                last_sign = sign_line_obj.read(cr, uid, used_sign_id[0], ['user_name'], context=context)
-                                data['user_name'] = last_sign['user_name']
-
-                        self.pool.get('signature.image').write(cr, uid, xuser.esignature_id.id, data, context=context)
-                    values['esignature_id'] = False
-                    new_from = fields.date.today()
-                    if new_from is not None:
-                        values['signature_from'] = new_from
-                        if xuser.signature_to and new_from >= xuser.signature_to:
-                            values['signature_to'] = False
+                    values.update(self.reset_signature(cr, uid, ids, from_write_user=True, context=None))
 
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
@@ -1077,7 +1056,7 @@ class users(osv.osv):
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1
 
-    def _archive_signature(self, cr, uid, ids, new_from=None, new_to=None, context=None):
+    def _archive_signature(self, cr, uid, ids, new_from=None, new_to=None, from_write_user=None, context=None):
         sign_line_obj = self.pool.get('signature.line')
         for user in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to', 'name'] , context=context):
             if user.esignature_id:
@@ -1100,14 +1079,17 @@ class users(osv.osv):
                 new_data['signature_from'] = new_from
                 if user.signature_to and new_from >= user.signature_to:
                     new_data['signature_to'] = False
-            self.write(cr, uid, [user.id], new_data, context=context)
+            if from_write_user:
+                return new_data
+            else:
+                self.write(cr, uid, [user.id], new_data, context=context)
         return True
 
     def delete_signature(self, cr, uid, ids, context=None):
         return self._archive_signature(cr, uid, ids, context=context)
 
-    def reset_signature(self, cr, uid, ids, context=None):
-        return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), context=context)
+    def reset_signature(self, cr, uid, ids, from_write_user=None, context=None):
+        return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), from_write_user=from_write_user, context=context)
 
     def add_signature(self, cr, uid, ids, context=None):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
