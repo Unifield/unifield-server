@@ -191,6 +191,7 @@ class finance_archive():
         if insert_numbering:
             sql = "INSERT INTO ocb_vi_export_number (move_id, move_line_id, analytic_line_id, period_id) (%s)" % sql
 
+
         if fileparams.get('query_params', False):
             cr.execute(sql, fileparams['query_params'])
         elif fileparams.get('dict_query_params', False):
@@ -255,6 +256,21 @@ class finance_archive():
                     ) AS num
                     WHERE ocb_vi_export_number.id = num.id and line_number is null;
                 """)
+
+                dbname = 'OCBHQ' # cr.dbname
+                cr.execute("""UPDATE ocb_vi_export_number set coda_identifier=MD5(%s||',account.move.line,['||move_line_id||']')
+                    where
+                        coda_identifier is null and
+                        analytic_line_id is null
+                """, (dbname, ))
+
+                cr.execute("""UPDATE ocb_vi_export_number set coda_identifier=MD5(%s||',account.analytic.line,['||analytic_line_id||']')
+                    where
+                        coda_identifier is null and
+                        analytic_line_id is not null
+                """, (dbname, ))
+
+
             if fileparams.get('select_2'):
                 self._execute_query(cr, fileparams, select=fileparams['select_2'])
             else:

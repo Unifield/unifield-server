@@ -62,6 +62,7 @@ class ocb_vi_export_number(osv.osv):
         'period_id': fields.integer('Period Id', select=1),
         'move_line_id': fields.integer('JI Id', select=1),
         'analytic_line_id': fields.integer('AJI Id', select=1), #TODO m2o with ondelete cascade ?
+        'coda_identifier': fields.char('Code Identifier', size=32),
     }
 
     _sql_constraints = [
