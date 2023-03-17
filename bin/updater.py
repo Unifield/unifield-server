@@ -257,6 +257,7 @@ def do_update():
         files = []
         deleted_files = []
         unifield_root = '..'
+        main_py_version = sys.version_info.major
         try:
             ## Revisions that going to be installed
             revisions = parse_version_file(new_version_file)
@@ -343,20 +344,24 @@ def do_update():
             ## No database update here. I preferred to set modules to update just after the preparation
             ## The reason is, when pool is populated, it will starts by upgrading modules first
             #Restart web server
+            warn('Is new python', new_python, os.path.join(real_root, 'nssm'))
             ret = 1
             if webupdated and os.name == "nt":
                 try:
-                    ret = subprocess.call('net stop openerp-web-6.0')
+                    if main_py_version == 2:
+                        ret = subprocess.call('net stop openerp-web-6.0')
+                    else:
+                        ret = subprocess.call(r'net stop openerp-web-py3')
                 except OSError as e:
                     warn("Exception in Web server restart :")
                     warn(str(e))
-                # TODO: if migration ...
-                if ret == 0 and new_python:
+
+                if ret == 0 and new_python and main_py_version == 2:
                     subprocess.call('sc delete openerp-web-6.0')
                     subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-web-py3 "%(INSTDIR)s\python\python.exe" -Xutf8 """%(INSTDIR)s\Web\openerp-web.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
                     subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-web-py3 AppDirectory "%(INSTDIR)s\Web"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
+
                 if new_python:
-                    subprocess.call(r'net stop openerp-web-py3')
                     subprocess.call(r'net start openerp-web-py3')
                 else:
                     subprocess.call('net start openerp-web-6.0')
@@ -387,14 +392,14 @@ def do_update():
         if os.name == 'nt':
             warn("Exiting OpenERP Server with code 1 to tell service to restart")
             ret = 1
-            # TODO: if new install ...
-            if new_python:
+
+            if new_python and main_py_version == 2:
                 ret = subprocess.call('sc delete openerp-server-6.0', stdout=log, stderr=log)
-            if ret == 0:
-                warn(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" -Xutf8  """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root})
-                subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" -Xutf8 """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
-                subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-server-py3 AppDirectory "%(INSTDIR)s\Server"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
-                subprocess.call(r'net start openerp-server-py3')
+                if ret == 0:
+                    warn(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" -Xutf8  """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root})
+                    subprocess.call(r'"%(INSTDIR)s\nssm\nssm.exe" install openerp-server-py3 "%(INSTDIR)s\python\python.exe" -Xutf8 """%(INSTDIR)s\Server\openerp-server.py"""' % {'INSTDIR': real_root},stdout=log, stderr=log)
+                    subprocess.call(r'"%(INSTDIR)s\nssm\\nssm.exe" set openerp-server-py3 AppDirectory "%(INSTDIR)s\Server"' % {'INSTDIR': real_root},  stdout=log, stderr=log)
+                    subprocess.call(r'net start openerp-server-py3')
             sys.exit(1) # require service to restart
         else:
             warn(("Restart OpenERP in %s:" % exec_path), \
@@ -506,6 +511,13 @@ def do_prepare(cr, revision_ids):
                 values += " - %s (check sum: %s)\n" % ((rev.name or 'unknown'), rev.sum)
         logger.error(message % values)
         return ('missing', message, values)
+
+    new_updater_version = os.path.join(path, 'Server', 'updater.py')
+    logger.info('Updateer.py: %s %s'%(new_updater_version, os.path.isfile(new_updater_version)))
+    if os.path.isfile(new_updater_version):
+        logger.info('Copy %s'%new_updater_version)
+        shutil.copy(new_updater_version, '.')
+
     # Fix the flag of the pending patches
     version.write(cr, 1, need_restart, {'state':'need-restart'})
     # Make a lock file to make OpenERP able to detect an update
