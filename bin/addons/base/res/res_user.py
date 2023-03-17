@@ -789,10 +789,30 @@ class users(osv.osv):
                 if len(open_sign_ids) > 5:
                     list_of_doc.append('...')
                 raise osv.except_osv(_('Warning'), _('You can not deactivate this user, %d documents have to be signed\n%s') % (len(open_sign_ids), ', '.join(list_of_doc)))
-            for xuser in self.browse(cr, uid, ids, fields_to_fetch=['name', 'has_valid_signature'], context=context):
+            ftf = ['name', 'has_valid_signature', 'esignature_id', 'signature_from', 'signature_to']
+            for xuser in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
                 if xuser.has_valid_signature:
-                    raise osv.except_osv(_('Warning'), _('You can not deactivate %s: the signature is active') % (xuser['name'], ))
+                    sign_line_obj = self.pool.get('signature.line')
+                    if xuser.esignature_id:
+                        data = {
+                            'from_date': xuser.signature_from,
+                            'to_date': xuser.signature_to or fields.date.today(),
+                            'inactivation_date': fields.datetime.now(),
+                        }
+                        if xuser.esignature_id.user_name != xuser.name:
+                            used_sign_id = sign_line_obj.search(cr, uid, [('image_id', '=', xuser.esignature_id.id)],
+                                                                order='id desc', limit=1, context=context)
+                            if used_sign_id:
+                                last_sign = sign_line_obj.read(cr, uid, used_sign_id[0], ['user_name'], context=context)
+                                data['user_name'] = last_sign['user_name']
 
+                        self.pool.get('signature.image').write(cr, uid, xuser.esignature_id.id, data, context=context)
+                    values['esignature_id'] = False
+                    new_from = fields.date.today()
+                    if new_from is not None:
+                        values['signature_from'] = new_from
+                        if xuser.signature_to and new_from >= xuser.signature_to:
+                            values['signature_to'] = False
 
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
