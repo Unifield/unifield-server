@@ -192,6 +192,8 @@ class msf_accrual_line(osv.osv):
                 partner_id = vals['partner_id']
                 partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
                 vals['third_party_name'] = partner.name
+            elif vals['third_party_type'] not in ('res.partner', 'hr.employee'):
+                vals['third_party_name'] = False
 
         if 'period_id' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context=context)
@@ -319,8 +321,6 @@ class msf_accrual_line(osv.osv):
                 vals.update({'order_accrual': document_date})
             else:
                 vals.update({'order_accrual': '1901-01-01'})
-        if 'third_party_type' in vals and vals['third_party_type'] not in ('res.partner', 'hr.employee'):
-            vals.update({'third_party_name': False})
         res = super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
         self._check_account_compat(cr, uid, ids, context=context)
         return res
