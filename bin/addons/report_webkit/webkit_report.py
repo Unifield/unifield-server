@@ -372,8 +372,8 @@ class WebKitParser(report_sxw):
         result = self.create_source_pdf(cursor, uid, ids, data, report_xml, context)
         if not result:
             return (False,False)
-        if result and isinstance(result[0], str) and\
-                result[0].startswith('<?xml'):
+        if result and isinstance(result[0], (str, bytes)) and\
+                result[0][0:5] in (b'<?xml', '<?xml'):
             new_result = self.check_malformed_xml_spreadsheet(xml_string=result[0],
                                                               report_name=report_xml.report_name)
             if new_result:
@@ -498,7 +498,7 @@ class WebKitParser(report_sxw):
 
         if xml_modified:
             # return modified xml
-            return etree.tostring(file_dom, xml_declaration=True, encoding="unicode")
+            return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
         return xml_string
 
 
