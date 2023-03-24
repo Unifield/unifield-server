@@ -3631,17 +3631,13 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
         updated = 0
         for row in file_data.getRows():
             idx += 1
-            if idx < 7:
-                # header
-                continue
-
-            # Check if the lines' header is at line 8, to ensure that the right export is used
-            if idx == 7:
-                if row.cells[0].data != _('Product code') or row.cells[10].data != _('Eta For next Pipeline') or \
-                        row.cells[qty_col].data != _('Agreed Order Qty') or row.cells[comment_col].data != _('Order Qty Comment'):
+            # header
+            if idx < 8:
+                # Check if the lines' header is at line 8, to ensure that the right export is used
+                if idx == 7 and (row.cells[0].data != _('Product code') or row.cells[10].data != _('Eta For next Pipeline') or
+                        row.cells[qty_col].data != _('Agreed Order Qty') or row.cells[comment_col].data != _('Order Qty Comment')):
                     raise osv.except_osv(_('Error'), _('Wrong format: Order Calc Excel Export template must be used'))
-                else:
-                    continue
+                continue
 
             if not len(row.cells):
                 continue

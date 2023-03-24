@@ -31,6 +31,7 @@
             file="procurement_cycle/report_doc/replenishment_order_calc.mako"
             report_type="webkit"
             menu="True"
+            sequence="1"
             />
 
       <report
@@ -41,6 +42,7 @@
             file="procurement_cycle/report_doc/replenishment_order_calc.mako"
             report_type="webkit"
             menu="True"
+            sequence="2"
             />
 
       <report
@@ -65,6 +67,7 @@
           <field name="name">Draft Consolidated OC lines</field>
           <field eval="'ir.actions.server,%d'%action_replenishment_order_calc_draft_consolidated" name="value"/>
           <field eval="True" name="object"/>
+          <field name="sequence">3</field>
       </record>
 
       <report
@@ -76,6 +79,7 @@
             target_filename="OC_All_status_Consolidated_%(year)s_%(month)s_%(day)s"
             report_type="webkit"
             menu="True"
+            sequence="4"
             />
 
       <report
