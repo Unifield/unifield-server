@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -23,6 +23,10 @@ import urlparse
 import cherrypy
 from formencode import NestedVariables
 import cgitb, sys
+from datetime import datetime
+#from datetime import timezone
+import pytz
+from dateutil import relativedelta
 
 def nestedvars_tool():
     if hasattr(cherrypy.request, 'params'):
@@ -66,9 +70,11 @@ def no_session_refresh():
 
 def cookie_fix_312_session_persistent_flag():
     """Fix cherrypy 3.1.2 tools.session.persistant = False"""
-    if cherrypy.request.config.get('tools.sessions.persistent', True):
-        return True
     name = cherrypy.request.config.get('tools.sessions.name', 'session_id')
+    if cherrypy.request.config.get('tools.sessions.persistent', True):
+        if 'expires' in cherrypy.response.cookie.get(name, {}) and  cherrypy.session.timeout:
+            cherrypy.response.cookie['session_expired'] = (datetime.now(pytz.utc)+relativedelta.relativedelta(minutes=60)).strftime("%Y-%m-%dT%H:%M:%S")
+        return True
     if 'expires' in cherrypy.response.cookie[name]:
         del cherrypy.response.cookie[name]['expires']
     return True

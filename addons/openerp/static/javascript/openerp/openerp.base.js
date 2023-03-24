@@ -418,7 +418,17 @@ function loader_throb() {
     }
     LOADER_THROBBER = setTimeout(loader_throb, THROBBER_DELAY);
 }
+
+function load_timeout() {
+    console.log(openobject.http.getCookie('session_expired').replaceAll('"',''));
+    a = Date.parse(openobject.http.getCookie('session_expired').replaceAll('"',''));
+    b = Date.parse("2023-03-24T16:16:16");
+    console.log("2023-03-24T16:16:16"==openobject.http.getCookie('session_expired'));
+    console.log(a);
+    console.log(b);
+}
 jQuery(document).bind({
+    ready: load_timeout(),
     ajaxStart: function() {
         var $loader = jQuery('#ajax_loading');
         if(!$loader.length) {
