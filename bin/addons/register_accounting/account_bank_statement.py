@@ -1208,9 +1208,9 @@ class account_bank_statement_line(osv.osv):
         return res
 
     def _search_current_register(self, cr, uid, obj, name, args, context=None):
-        """
-        """
-        if not len(args) or 'current_register_journal' not in context:
+        if context is None:
+            context = {}
+        if not len(args) or len(context) > 0 and 'current_register_journal' not in context:
             return []
         return [('journal_id', '=', context['current_register_journal'])]
 
@@ -1262,7 +1262,7 @@ class account_bank_statement_line(osv.osv):
                                                  help="This move line has been taken for create an Import Cheque in a bank statement."),
         'is_transfer_with_change': fields.function(_get_transfer_with_change_state, method=True, string="Is a transfer with change line?",
                                                    type='boolean', store=False),
-        'is_current_register': fields.function(_get_fake, fnct_search=_search_current_register, method=False,
+        'is_current_register': fields.function(_get_fake, fnct_search=_search_current_register, method=True,
                                                    string="Is this open advance from current register journal?",
                                                    type='boolean', store=False),
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
