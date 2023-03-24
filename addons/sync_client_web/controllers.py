@@ -1,4 +1,4 @@
-from openobject.tools import expose
+from openobject.tools import expose, no_session_refresh
 
 import openerp.controllers
 from openerp.utils import rpc
@@ -8,6 +8,7 @@ class Client_Sync(openerp.controllers.SecuredController):
 
     @expose('json')
     def get_data(self, nb_shortcut_used=0):
+        no_session_refresh()
         try:
             proxy = rpc.RPCProxy('sync.client.entity')
             return {

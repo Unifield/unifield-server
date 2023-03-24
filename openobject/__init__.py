@@ -73,14 +73,19 @@ def enable_static_paths():
     static_dir = os.path.abspath(
         openobject.paths.root('openobject', 'static'))
     application.merge(
-        {'/openobject/static': {
+        {
+        '/openobject/static': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': static_dir
-        }, '/favicon.ico': {
+            'tools.staticdir.dir': static_dir,
+            'tools.sessions.on': False,
+        },
+        '/favicon.ico': {
             'tools.staticfile.on': True,
+            'tools.sessions.on': False,
             'tools.staticfile.filename': os.path.join(static_dir,
                                                       "images", "favicon.ico")
-        }, '/LICENSE.txt': {
+        },
+        '/LICENSE.txt': {
             'tools.staticfile.on': True,
             'tools.staticfile.filename': os.path.join(static_dir, '..', '..',
                                                       'doc', 'LICENSE.txt')

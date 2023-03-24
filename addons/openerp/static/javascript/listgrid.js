@@ -1002,9 +1002,9 @@ MochiKit.Base.update(ListView.prototype, {
     reload_from_wizard: function() {
         return this.reload(undefined, undefined, undefined, undefined, undefined, true);
     },
-    reload: function(edit_inline, concurrency_info, default_get_ctx, clear, ids_to_show, from_close_wizard, triggerchange) {
+    reload: function(edit_inline, concurrency_info, default_get_ctx, clear, ids_to_show, from_close_wizard, triggerchange, auto_refresh) {
         if (openobject.http.AJAX_COUNT > 0) {
-            return callLater(1, bind(this.reload, this), edit_inline, concurrency_info);
+            return callLater(1, bind(this.reload, this), edit_inline, concurrency_info, default_get_ctx, clear, ids_to_show, from_close_wizard, triggerchange, auto_refresh);
         }
 
         var self = this;
@@ -1029,6 +1029,7 @@ MochiKit.Base.update(ListView.prototype, {
         var args = jQuery.extend(this.makeArgs(), {
             _terp_source: this.name,
             _terp_edit_inline: edit_inline,
+            _terp_from_auto_refresh: auto_refresh,
             _terp_source_default_get: default_get_ctx,
             _terp_concurrency_info: concurrency_info,
             _terp_editable: openobject.dom.get('_terp_editable').value,

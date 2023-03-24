@@ -20,7 +20,7 @@ if (auto_field && auto_field.val()){
     }
     global_list_refresh = setTimeout(function(model) {
        if (model == $('#_terp_model').val()) {
-           new ListView('_terp_list').reload();
+           new ListView('_terp_list').reload(undefined, undefined, undefined, undefined, undefined, undefined, undefined, true);
        }
     }, 1000*auto_field.val(), model);
 }
