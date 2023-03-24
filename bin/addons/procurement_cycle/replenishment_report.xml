@@ -25,7 +25,7 @@
 
     <report
             id="report_replenishment_order_calc_xls"
-            string="Order Calc"
+            string="Order Calc Excel Export"
             model="replenishment.order_calc"
             name="report_replenishment_order_calc_xls"
             file="procurement_cycle/report_doc/replenishment_order_calc.mako"
@@ -35,7 +35,7 @@
 
       <report
             id="report_replenishment_order_calc_warning_xls"
-            string="Order Calc (only lines with warning)"
+            string="Order Calc Excel Export (only lines with warning)"
             model="replenishment.order_calc"
             name="report_replenishment_order_calc_warning_xls"
             file="procurement_cycle/report_doc/replenishment_order_calc.mako"
@@ -45,7 +45,7 @@
 
       <report
             id="report_replenishment_order_calc_draft_consolidated_xls"
-            string="Export Draft Consolidated OC lines"
+            string="Draft Consolidated OC lines"
             model="replenishment.order_calc"
             name="report_replenishment_order_calc_draft_consolidated_xls"
             file="procurement_cycle/report_doc/replenishment_order_calc.mako"
@@ -54,7 +54,7 @@
             menu="False"
             />
       <record id="action_replenishment_order_calc_draft_consolidated" model="ir.actions.server">
-          <field name="name">Export Draft Consolidated OC lines</field>
+          <field name="name">Draft Consolidated OC lines</field>
           <field name="model_id" ref="model_replenishment_order_calc"/>
           <field name="state">code</field>
           <field name="code">action = obj.check_draft_consolidated(context=context)</field>
@@ -62,14 +62,14 @@
       <record id="ir_replenishment_order_calc_draft_consolidated" model="ir.values">
           <field name="key2">client_print_multi</field>
           <field name="model">replenishment.order_calc</field>
-          <field name="name">Export Draft Consolidated OC lines</field>
+          <field name="name">Draft Consolidated OC lines</field>
           <field eval="'ir.actions.server,%d'%action_replenishment_order_calc_draft_consolidated" name="value"/>
           <field eval="True" name="object"/>
       </record>
 
       <report
             id="report_replenishment_order_calc_consolidated_xls"
-            string="Export Consolidated OC all status"
+            string="Consolidated OC Lines - All Statuses"
             model="replenishment.order_calc"
             name="report_replenishment_order_calc_consolidated_xls"
             file="procurement_cycle/report_doc/replenishment_order_calc.mako"
