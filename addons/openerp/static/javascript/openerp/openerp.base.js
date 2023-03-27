@@ -334,6 +334,7 @@ jQuery(document).ready(function () {
     });
     // if the initially loaded URL had a hash-url inside
     jQuery(window).trigger('hashchange');
+    load_timeout();
 });
 
 // Hook onclick for boolean alteration propagation
@@ -419,16 +420,31 @@ function loader_throb() {
     LOADER_THROBBER = setTimeout(loader_throb, THROBBER_DELAY);
 }
 
+var LOAD_TIMEOUT;
+var LAST_MESSAGE = '';
 function load_timeout() {
-    console.log(openobject.http.getCookie('session_expired').replaceAll('"',''));
-    a = Date.parse(openobject.http.getCookie('session_expired').replaceAll('"',''));
-    b = Date.parse("2023-03-24T16:16:16");
-    console.log("2023-03-24T16:16:16"==openobject.http.getCookie('session_expired'));
-    console.log(a);
-    console.log(b);
+    expire_str = openobject.http.getCookie('session_expired').replaceAll('"','')
+    if (expire_str) {
+        date = new Date(Date.parse(expire_str));
+        now_utc = new Date(Date.now());
+        if (DISPLAY_WARNING && date - now_utc < DISPLAY_WARNING) {
+            if (LAST_MESSAGE != expire_str) {
+                LAST_MESSAGE = expire_str;
+                deconnected_min =  Math.round(DISPLAY_WARNING/(60. * 10000.))
+                wrn_box = error_display('No activity detected for ' + deconnected_min * 3 + ' minutes, you will be logged out in ' + deconnected_min + ' min.');
+                wrn_box.find('.button-a').click(
+                    function(){$.get('/openerp/unifield_version'); window.top.jQuery.fancybox.close();}
+                );
+            } else if (date < now_utc) {
+                window.location.href="/openerp/logout"
+            }
+        }
+    }
+    if (REFRESH_TIMEOUT) {
+        LOAD_TIMEOUT = setTimeout(load_timeout, REFRESH_TIMEOUT);
+    }
 }
 jQuery(document).bind({
-    ready: load_timeout(),
     ajaxStart: function() {
         var $loader = jQuery('#ajax_loading');
         if(!$loader.length) {

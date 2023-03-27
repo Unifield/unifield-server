@@ -189,6 +189,12 @@ class Root(SecuredController):
                 other_surveys = surveys[1:]
         else:
             signature_required = False
+
+        refresh_timeout = 0 # in ms
+        display_warning = 0 # in ms
+        if cherrypy.session.timeout:
+            display_warning = cherrypy.session.timeout * 60 / 4 * 1000
+            refresh_timeout = cherrypy.session.timeout * 60 / 10 * 1000
         return dict(parents=parents, tools=tools, load_content=(next and next or ''),
                     survey=main_survey,
                     other_surveys=json.dumps(other_surveys),
@@ -196,7 +202,9 @@ class Root(SecuredController):
                     widgets=widgets,
                     from_login=from_login,
                     display_shortcut=display_shortcut,
-                    signature_required=signature_required)
+                    signature_required=signature_required,
+                    display_warning=display_warning,
+                    refresh_timeout=refresh_timeout)
 
     @expose()
     def do_login(self, *arg, **kw):

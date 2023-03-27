@@ -24,9 +24,9 @@ import cherrypy
 from formencode import NestedVariables
 import cgitb, sys
 from datetime import datetime
-#from datetime import timezone
 import pytz
 from dateutil import relativedelta
+
 
 def nestedvars_tool():
     if hasattr(cherrypy.request, 'params'):
@@ -70,10 +70,15 @@ def no_session_refresh():
 
 def cookie_fix_312_session_persistent_flag():
     """Fix cherrypy 3.1.2 tools.session.persistant = False"""
+    from addons.openerp.utils import rpc
     name = cherrypy.request.config.get('tools.sessions.name', 'session_id')
     if cherrypy.request.config.get('tools.sessions.persistent', True):
-        if 'expires' in cherrypy.response.cookie.get(name, {}) and  cherrypy.session.timeout:
-            cherrypy.response.cookie['session_expired'] = (datetime.now(pytz.utc)+relativedelta.relativedelta(minutes=60)).strftime("%Y-%m-%dT%H:%M:%S")
+        if 'expires' in cherrypy.response.cookie.get(name, {}) and cherrypy.session.timeout:
+            if hasattr(rpc.session, 'uid') and rpc.session.is_logged():
+                cherrypy.response.cookie['session_expired'] = (datetime.now(pytz.utc)+relativedelta.relativedelta(minutes=cherrypy.session.timeout)).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+                cherrypy.response.cookie['session_expired']['path'] = '/'
+            else:
+                cherrypy.response.cookie['session_expired'] = ''
         return True
     if 'expires' in cherrypy.response.cookie[name]:
         del cherrypy.response.cookie[name]['expires']
