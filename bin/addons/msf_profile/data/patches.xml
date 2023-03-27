@@ -900,5 +900,9 @@
         <record id="us_11195_oca_period_nr" model="patch.scripts">
             <field name="method">us_11195_oca_period_nr</field>
         </record>
+
+        <record id="us_11022_accrual_third_party" model="patch.scripts">
+            <field name="method">us_11022_accrual_third_party</field>
+        </record>
     </data>
 </openerp>
