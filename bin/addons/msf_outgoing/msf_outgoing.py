@@ -199,29 +199,37 @@ class shipment(osv.osv):
                     # special state corresponding to delivery validated
                     state = 'delivered'
 
-            current_result['state'] = state
             current_result['backshipment_id'] = backshipment_id
 
+            all_returned = True
             pack_fam_ids = shipment['pack_family_memory_ids']
             for pack_fam_id in pack_fam_ids:
                 memory_family = pack_family_dict.get(pack_fam_id)
                 # taken only into account if not done (done means returned packs)
-                if memory_family and not memory_family['not_shipped'] and (shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',)):
-                    # num of packs
-                    num_of_packs = memory_family['num_of_packs']
-                    current_result['num_of_packs'] += int(num_of_packs)
-                    # total weight
-                    total_weight = memory_family['total_weight']
-                    current_result['total_weight'] += int(total_weight)
-                    # total volume
-                    total_volume = memory_family['total_volume']
-                    current_result['total_volume'] += float(total_volume)
-                    # total amount
-                    total_amount = memory_family['total_amount']
-                    current_result['total_amount'] += total_amount
-                    # currency
-                    currency_id = memory_family['currency_id'] or False
-                    current_result['currency_id'] = currency_id
+                if memory_family and not memory_family['not_shipped']:
+                    # The state will not be changed to Returned if all packs are not returned
+                    all_returned = False
+                    if shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',):
+                        # num of packs
+                        num_of_packs = memory_family['num_of_packs']
+                        current_result['num_of_packs'] += int(num_of_packs)
+                        # total weight
+                        total_weight = memory_family['total_weight']
+                        current_result['total_weight'] += int(total_weight)
+                        # total volume
+                        total_volume = memory_family['total_volume']
+                        current_result['total_volume'] += float(total_volume)
+                        # total amount
+                        total_amount = memory_family['total_amount']
+                        current_result['total_amount'] += total_amount
+                        # currency
+                        currency_id = memory_family['currency_id'] or False
+                        current_result['currency_id'] = currency_id
+
+            if pack_fam_ids and all_returned:
+                state = 'cancel'
+
+            current_result['state'] = state
 
         for ship in self.browse(cr, uid, ids, fields_to_fetch=['additional_items_ids'], context=context):
             for add in ship.additional_items_ids:
@@ -362,7 +370,7 @@ class shipment(osv.osv):
                                                                                       ('shipped', 'Ready to ship'),
                                                                                       ('done', 'Dispatched'),
                                                                                       ('delivered', 'Received'),
-                                                                                      ('cancel', 'Cancelled')], string='State', multi='get_vals',
+                                                                                      ('cancel', 'Returned')], string='State', multi='get_vals',
                                  store={
                                      'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
         }),
@@ -4522,7 +4530,7 @@ class pack_family_memory(osv.osv):
                 min(m.width) as width,
                 min(m.height) as height,
                 min(m.weight) as weight,
-                min(m.state) as state,
+                case when bool_and(m.not_shipped) = 't' then 'returned' else min(m.state) end as state,
                 min(m.location_id) as location_id,
                 min(m.location_dest_id) as location_dest_id,
                 min(m.pack_type) as pack_type,
@@ -4607,8 +4615,7 @@ class pack_family_memory(osv.osv):
         'state': fields.selection(selection=[
             ('draft', 'Draft'),
             ('assigned', 'Available'),
-            ('stock_return', 'Returned to Stock'),
-            ('ship_return', 'Returned from Shipment'),
+            ('returned', 'Returned'),
             ('cancel', 'Cancelled'),
             ('done', 'Closed'), ], string='State'),
         'pack_state': fields.char('Pack State', size=64),

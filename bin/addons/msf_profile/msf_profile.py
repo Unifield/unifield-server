@@ -57,6 +57,34 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF29.0
+    def us_8968_shipments_returned(self, cr, uid, *a, **b):
+        '''
+        Set the state of all existing Shipments that have been returned to Returned (cancel)
+        '''
+        ship_obj = self.pool.get('shipment')
+
+        ships_to_cancel = []
+        nb_ships = 0
+        ship_ids = ship_obj.search(cr, uid, [('state', 'in', ['done', 'delivered'])])
+        for ship in ship_obj.browse(cr, uid, ship_ids, fields_to_fetch=['pack_family_memory_ids']):
+            if not ship.pack_family_memory_ids:  # Skip Shipments with no Pack Family
+                continue
+            all_returned = True
+            for fam in ship.pack_family_memory_ids:
+                if not fam.not_shipped:
+                    all_returned = False
+                    break
+            if all_returned:
+                ships_to_cancel.append(ship.id)
+                nb_ships += 1
+
+        if ships_to_cancel:
+            cr.execute("""UPDATE shipment SET state = 'cancel' WHERE id IN %s""", (tuple(ships_to_cancel),))
+            self.log_info(cr, uid, "US-8968: %d Shipments' state have been set to Returned" % (nb_ships,))
+
+        return True
+
     # UF28.0
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
