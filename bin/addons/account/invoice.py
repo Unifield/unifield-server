@@ -450,38 +450,6 @@ class account_invoice(osv.osv):
                 if filter_node:
                     filter_node[0].getparent().remove(filter_node[0])
                 res['arch'] = etree.tostring(doc)
-            # remove the Open FY and counterparts status filters in all invoices but IVO, STV, IVI and ISI
-            if not context.get('doc_type', '') in ('ivo', 'stv', 'ivi', 'isi'):
-                doc = etree.XML(res['arch'])
-                filter_node = doc.xpath("/search/group[1]/filter[@name='open_fy']")
-                draft_node = doc.xpath("/search/group[1]/filter[@name='draft_cp']")
-                open_node = doc.xpath("/search/group[1]/filter[@name='open_cp']")
-                paid_node = doc.xpath("/search/group[1]/filter[@name='paid_cp']")
-                closed_node = doc.xpath("/search/group[1]/filter[@name='closed_cp']")
-                if filter_node:
-                    filter_node[0].getparent().remove(filter_node[0])
-                if draft_node:
-                    draft_node[0].getparent().remove(draft_node[0])
-                if open_node:
-                    open_node[0].getparent().remove(open_node[0])
-                if paid_node:
-                    paid_node[0].getparent().remove(paid_node[0])
-                if closed_node:
-                    closed_node[0].getparent().remove(closed_node[0])
-                res['arch'] = etree.tostring(doc)
-            # remove Import status filters for IVO, STV, IVI and ISI
-            if context.get('doc_type', '') in ('ivo', 'stv', 'ivi', 'isi'):
-                doc = etree.XML(res['arch'])
-                not_imp_node = doc.xpath("/search/group[1]/filter[@name='not_imported']")
-                partial_node = doc.xpath("/search/group[1]/filter[@name='partial']")
-                imp_node = doc.xpath("/search/group[1]/filter[@name='imported']")
-                if not_imp_node:
-                    not_imp_node[0].getparent().remove(not_imp_node[0])
-                if partial_node:
-                    partial_node[0].getparent().remove(partial_node[0])
-                if imp_node:
-                    imp_node[0].getparent().remove(imp_node[0])
-                res['arch'] = etree.tostring(doc)
         if view_type in ('tree', 'search') and (context.get('type') in ['out_invoice', 'out_refund'] or context.get('doc_type') == 'str'):
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='supplier_reference']")
