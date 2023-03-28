@@ -114,12 +114,9 @@
             <blockSpan start="10,0" stop="10,-1" />
             <blockSpan start="11,0" stop="11,-1" />
             <blockSpan start="12,0" stop="12,-1" />
-<<<<<<< TREE
-	    <blockLeftPadding length="2" start="0,0" stop="-1,-1" />
-	    <blockRightPadding length="2" start="0,0" stop="-1,-1" />
-=======
             <blockSpan start="13,0" stop="13,-1" />
->>>>>>> MERGE-SOURCE
+            <blockLeftPadding length="2" start="0,0" stop="-1,-1" />
+            <blockRightPadding length="2" start="0,0" stop="-1,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="NoteTable">
@@ -546,9 +543,11 @@
                 </tr>
             </blockTable>
 
-            <para style="SpacerW">
-                <font color="white"> </font>
-            </para>
+        <blockTable colWidths="830">
+            <tr>
+                <td />
+            </tr>
+        </blockTable>
 
         </pto>
 
