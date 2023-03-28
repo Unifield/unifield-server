@@ -65,3 +65,7 @@ msgstr "Ce calendrier ne peut plus être déplacer"
 #: static/javascript/calendar_week.js:97
 msgid "This calendar object can no longer be resized !"
 msgstr "Ce calendrier ne peut plus être redimensionner"
+
+#: static/javascript/openerp/openerp.base.js:435
+msgid "No activity detected for %(inactivity_min)s minutes, you will be logged out in %(deconnected_min)s min."
+msgstr "Aucune activité détectée depuis %(inactivity_min)s minutes, vous serez déconnectés dans %(deconnected_min)s min."

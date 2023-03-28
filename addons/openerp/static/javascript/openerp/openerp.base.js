@@ -430,8 +430,13 @@ function load_timeout() {
         if (DISPLAY_WARNING && date - now_utc < DISPLAY_WARNING) {
             if (LAST_MESSAGE != expire_str) {
                 LAST_MESSAGE = expire_str;
-                deconnected_min =  Math.round(DISPLAY_WARNING/(60. * 10000.))
-                wrn_box = error_display('No activity detected for ' + deconnected_min * 3 + ' minutes, you will be logged out in ' + deconnected_min + ' min.');
+                var deconnected_min =  Math.round(DISPLAY_WARNING/(60 * 1000));
+                var inactivity_min = deconnected_min * 3;
+
+                wrn_box = error_display(_('No activity detected for %(inactivity_min)s minutes, you will be logged out in %(deconnected_min)s min.')
+                    .replace('%(inactivity_min)s', inactivity_min)
+                    .replace('%(deconnected_min)s', deconnected_min)
+                );
                 wrn_box.find('.button-a').click(
                     function(){$.get('/openerp/unifield_version'); window.top.jQuery.fancybox.close();}
                 );
