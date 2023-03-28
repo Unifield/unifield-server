@@ -518,6 +518,8 @@
                         <filter string="Temp" domain="[('state', '=', 'temp')]" icon="terp-gtk-jump-to-ltr"/>
                         <filter string="Hard" domain="[('state', '=', 'hard')]" icon="terp-camera_test"/>
                         <separator orientation="vertical"/>
+                        <filter name="current_register" string="Only This Journal" domain="[('is_current_register','=', True)]"/>
+                        <separator orientation="vertical"/>
                         <field name="document_date" select='1'/>
                         <field name="date" select='1'/>
                         <newline/>

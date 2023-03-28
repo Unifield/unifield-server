@@ -373,22 +373,11 @@ class stock_move_processor(osv.osv):
 
         res = {}
 
-        move_dict = dict([(x['id'], x['product_id'][0]) for x in self.read(cr, uid, ids,
-                                                                           ['id',
-                                                                            'product_id'],
-                                                                           context=context)])
+        move_dict = dict([(x['id'], x['product_id'][0]) for x in self.read(cr, uid, ids, ['id', 'product_id'], context=context)])
         product_module = self.pool.get('product.product')
-        product_list_dict = product_module.read(cr, uid,
-                                                list(move_dict.values()),
-                                                ['batch_management',
-                                                 'perishable',
-                                                 'type',
-                                                 'subtype',
-                                                 'is_kc',
-                                                 'ssl_txt',
-                                                 'dg_txt',
-                                                 'cs_txt',],
-                                                context=context)
+        product_list_dict = product_module.read(cr, uid, list(move_dict.values()), ['batch_management', 'perishable', 'type',
+                                                                                    'subtype', 'is_kc', 'ssl_txt', 'dg_txt',
+                                                                                    'cs_txt'], context=context)
         procuct_dict = dict([(x['id'], x) for x in product_list_dict])
 
         for move_id, product_id in list(move_dict.items()):
@@ -397,11 +386,8 @@ class stock_move_processor(osv.osv):
                 res[move_id] = {
                     'lot_check': product['batch_management'],
                     'exp_check': product['perishable'],
-                    'asset_check': product['type'] == 'product' and
-                    product['subtype'] == 'asset',
-                    'kit_check': product['type'] == 'product' and
-                    product['subtype'] == 'kit' and not
-                    product['perishable'],
+                    'asset_check': product['type'] == 'product' and product['subtype'] == 'asset',
+                    'kit_check': product['type'] == 'product' and product['subtype'] == 'kit',
                     'kc_check': product['is_kc'] and 'X',
                     'ssl_check': product['ssl_txt'],
                     'dg_check': product['dg_txt'],
