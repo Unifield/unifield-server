@@ -72,6 +72,8 @@
                   parent="object_query.menu_preferences"
                   sequence="2" />
 
+        <menuitem id="menu_finance_fin_queries" name="Finance Queries" action="finance_sync_query_action" parent="account.menu_finance_reporting" sequence="101"/>
+
         <!-- Actions -->
         <act_window name="Activate Sync"
             res_model="finance.sync.query.activation_wizard"
