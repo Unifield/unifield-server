@@ -162,8 +162,8 @@
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="residual" />
-                    <field name="amount_total"/>
+                    <field name="residual" sum="Total Residual"/>
+                    <field name="amount_total" sum="Total Amount"/>
                     <field name="state"/>
                     <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
                 </tree>
