@@ -651,7 +651,7 @@
 
                     <newline/>
                     <group col="10" colspan="4">
-                        <field name="journal_id" select='1' context="{'search_default_filter_is_active': 1}"/>
+                        <field name="currency_id" string="Booking Currency" select='1' />
                         <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="supplier_reference"/>
                         <field name="name"/>
