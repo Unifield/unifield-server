@@ -797,7 +797,7 @@ class analytic_account(osv.osv):
                 return True
             if parent.date and parent.date < datetime.today().strftime('%Y-%m-%d'):
                 raise osv.except_osv(_('Warning !'), _('The parent CC %s is not active, you can not create a child to this parent') % parent.code)
-            if 'date' in vals and vals['date'] and parent.date and vals['date'] > parent.date:
+            if ('date' in vals and vals['date'] and parent.date and vals['date'] > parent.date) or parent.date and ('date' not in vals or ('date' in vals and vals['date'] == False)):
                 msg += _('The sub-costcenter validity date is greater than the parent cost center validity date!') + "\n"
             if 'date_start' in vals and vals['date_start'] and parent.date_start and vals['date_start'] < parent.date_start:
                 msg += _('The sub-costcenter activation date is lower than the parent cost center activation date!') + "\n"
