@@ -2245,6 +2245,7 @@ class sale_order_line(osv.osv):
                 so.procurement_request = 'f' and
                 so.fo_created_by_po_sync = 't' and -- not a push flow
                 sol.instance_sync_order_ref is null and
+                sol.resourced_original_line is null and -- not from a C&R flow
                 coalesce(sol.sync_linked_pol, '') = '' and  -- not created from a PO line (new line added)
                 other_sol.state not in ('cancel', 'cancel_r') and
                 other_sol.instance_sync_order_ref is not null and -- at least 1 other line has a IR / FO ref
