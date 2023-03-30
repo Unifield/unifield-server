@@ -328,6 +328,7 @@ class product_template(osv.osv):
         'rental': fields.boolean('Can be Rent'),
         'categ_id': fields.many2one('product.category','Category', required=True, change_default=True, domain="[('type','=','normal')]" ,help="Select category for the current product"),
         'standard_price': fields.float('Cost Price', required=True, digits_compute=dp.get_precision('Account Computation'), help="Price of product calculated according to the selected costing method."),
+        'finance_price': fields.float('Finance Cost Price', readonly=1, digits_compute=dp.get_precision('Account Computation')),
         'list_price': fields.function(_get_list_price, method=True, type='float', string='Sale Price', digits_compute=dp.get_precision('Sale Price Computation'), help="Base price for computing the customer price. Sometimes called the catalog price.",
                                       store = {
             'product.template': (lambda self, cr, uid, ids, c=None: ids, ['standard_price'], 10),
