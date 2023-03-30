@@ -423,10 +423,17 @@ function loader_throb() {
 var LOAD_TIMEOUT;
 var LAST_MESSAGE = '';
 function load_timeout() {
-    expire_str = openobject.http.getCookie('session_expired').replaceAll('"','')
+    var expire_str = false;
+    var expire_cookie = openobject.http.getCookie('session_expired');
+    console.log(expire_cookie);
+    if (expire_cookie) {
+        expire_str = expire_cookie.replaceAll('"','');
+    }
     if (expire_str) {
         date = new Date(Date.parse(expire_str));
         now_utc = new Date(Date.now());
+	//console.log('EXP' + date);
+	//console.log('Remaining' + (date - now_utc));
         if (DISPLAY_WARNING && date - now_utc < DISPLAY_WARNING) {
             if (LAST_MESSAGE != expire_str) {
                 LAST_MESSAGE = expire_str;
@@ -444,7 +451,9 @@ function load_timeout() {
                 window.location.href="/openerp/logout"
             }
         }
-    }
+    } /*else {
+       console.log('NO TIEMOUT')
+    }*/
     if (REFRESH_TIMEOUT) {
         LOAD_TIMEOUT = setTimeout(load_timeout, REFRESH_TIMEOUT);
     }
