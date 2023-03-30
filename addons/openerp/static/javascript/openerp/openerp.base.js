@@ -437,8 +437,8 @@ function load_timeout() {
         if (DISPLAY_WARNING && date - now_utc < DISPLAY_WARNING) {
             if (LAST_MESSAGE != expire_str) {
                 LAST_MESSAGE = expire_str;
-                var deconnected_min =  Math.round(DISPLAY_WARNING/(60 * 1000));
-                var inactivity_min = deconnected_min * 3;
+                var deconnected_min =  Math.floor(DISPLAY_WARNING/(60 * 1000));
+                var inactivity_min = Math.ceil(DISPLAY_WARNING/(60 * 1000) * 3);
 
                 wrn_box = error_display(_('No activity detected for %(inactivity_min)s minutes, you will be logged out in %(deconnected_min)s min.')
                     .replace('%(inactivity_min)s', inactivity_min)
