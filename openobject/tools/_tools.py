@@ -80,7 +80,6 @@ def cookie_fix_312_session_persistent_flag():
             else:
                 cherrypy.response.cookie['session_expired'] = ''
         return True
-    if 'expires' in cherrypy.response.cookie[name]:
-        del cherrypy.response.cookie[name]['expires']
+    cherrypy.response.cookie['session_expired'] = ''
     return True
 cherrypy.tools.fix_312_session_persistent = cherrypy.Tool('before_finalize', cookie_fix_312_session_persistent_flag)
