@@ -173,7 +173,7 @@ class account_bank_statement(osv.osv):
         if context is None:
             context = {}
 
-        pids = period_pool.search(cr, user, [('date_start','<=',date), ('date_stop','>=',date)])
+        pids = period_pool.search(cr, user, [('date_start','<=',date), ('date_stop','>=',date), ('special', '!=', True)])
         if pids:
             res.update({
                 'period_id':pids[0]
