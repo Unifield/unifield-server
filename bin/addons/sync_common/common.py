@@ -45,6 +45,7 @@ WHITE_LIST_MODEL = [
     'cost.center.distribution.line',
     'country.export.mapping',
     'distribution.line',
+    'esc.invoice.line',
     'financing.contract.contract',
     'financing.contract.donor',
     'financing.contract.format',

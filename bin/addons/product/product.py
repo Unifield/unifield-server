@@ -314,6 +314,14 @@ class product_template(osv.osv):
             res[obj.id] = list_price
         return res
 
+    def _get_finance_price_currency_id(self, cr, uid, ids, fields, arg, context=None):
+        ret = {}
+        cur_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
+
+        for _id in ids:
+            ret[_id] = cur_id
+        return ret
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=True, select=True),
         'product_manager': fields.many2one('res.users','Product Manager',help="This is use as task responsible"),
@@ -329,6 +337,7 @@ class product_template(osv.osv):
         'categ_id': fields.many2one('product.category','Category', required=True, change_default=True, domain="[('type','=','normal')]" ,help="Select category for the current product"),
         'standard_price': fields.float('Cost Price', required=True, digits_compute=dp.get_precision('Account Computation'), help="Price of product calculated according to the selected costing method."),
         'finance_price': fields.float('Finance Cost Price', readonly=1, digits_compute=dp.get_precision('Account Computation')),
+        'finance_price_currency_id': fields.function(_get_finance_price_currency_id, 'Finance CP Currency', method=True, type='many2one', relation='res.currency'),
         'list_price': fields.function(_get_list_price, method=True, type='float', string='Sale Price', digits_compute=dp.get_precision('Sale Price Computation'), help="Base price for computing the customer price. Sometimes called the catalog price.",
                                       store = {
             'product.template': (lambda self, cr, uid, ids, c=None: ids, ['standard_price'], 10),

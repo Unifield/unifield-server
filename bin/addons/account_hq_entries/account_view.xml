@@ -337,7 +337,7 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="International Invoices Liness">
-                    <filter icon="gtk-new" string="Not Done" domain="[('state', '!=', 'onde)]" />
+                    <filter icon="gtk-new" string="Not Done" domain="[('state', '!=', 'done')]" />
                     <filter icon="gtk-apply" string="Done" domain="[('state', '=', 'done')]" />
                     <separator orientation="vertical"/>
                     <field name="po_name" />
@@ -415,11 +415,11 @@
 
 
         <record id="finance_price_track_changes_filter" model="ir.ui.view">
-            <field name="name">Finance Price Track changes (DEV DEBUG)</field>
+            <field name="name">Line Matching</field>
             <field name="model">finance_price.track_changes</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Finance Price Track changes (DEV DEBUG)">
+                <search string="Line Matching">
                     <field name="product_id" />
                     <field name="stock_picking_id" />
                     <field name="matching_type" />
@@ -431,11 +431,11 @@
 
                 <!-- <tree string="International Invoices Line" hide_new_button="1" hide_delete_button="1" editable="top"> -->
         <record id="finance_price_track_changes_tree" model="ir.ui.view">
-            <field name="name">Finance Price Track changes (DEV DEBUG)</field>
+            <field name="name">Line Matching</field>
             <field name="model">finance_price.track_changes</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Finance Price Track changes (DEV DEBUG)" editable="top">
+                <tree string="Line Matching" editable="top">
                         <field name="product_id" />
                         <field name="old_price" />
                         <field name="new_price" />
@@ -452,12 +452,12 @@
         </record>
 
         <record model="ir.actions.act_window" id="finance_price_track_changes_action">
-            <field name="name">Finance Price Track changes (DEV DEBUG)</field>
+            <field name="name">Line Matching</field>
             <field name="res_model">finance_price.track_changes</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
         </record>
-        <menuitem name="Finance Price Track changes (DEV DEBUG)" action="finance_price_track_changes_action" id="finance_price_track_changes_menu" parent="menu_hq" sequence="30"/>
+        <menuitem name="Line Matching" action="finance_price_track_changes_action" id="finance_price_track_changes_menu" parent="menu_hq" sequence="30"/>
 
         <act_window
             id="esc_line_to_finance_price_tc"
