@@ -173,7 +173,7 @@ class account_bank_statement(osv.osv):
         if context is None:
             context = {}
 
-        pids = period_pool.search(cr, user, [('date_start','<=',date), ('date_stop','>=',date), ('special', '!=', True)])
+        pids = period_pool.search(cr, user, [('date_start','<=',date), ('date_stop','>=',date), ('special', '!=', True), ('state', '=', 'draft')])
         if pids:
             res.update({
                 'period_id':pids[0]
@@ -181,6 +181,8 @@ class account_bank_statement(osv.osv):
             context.update({
                 'period_id':pids[0]
             })
+        else:
+            raise osv.except_osv(_('Warning'), _('The chosen period is not open!'))
 
         return {
             'value':res,
