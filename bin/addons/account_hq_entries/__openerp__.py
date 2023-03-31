@@ -33,6 +33,7 @@
         'security/ir.model.access.csv',
         'wizard/wizard_view.xml',
         'account_view.xml',
+        'esc_line_installer.xml',
     ],
     "demo_xml" : [],
     "test": [

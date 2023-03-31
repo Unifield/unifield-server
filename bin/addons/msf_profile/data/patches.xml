@@ -900,5 +900,9 @@
         <record id="us_11195_oca_period_nr" model="patch.scripts">
             <field name="method">us_11195_oca_period_nr</field>
         </record>
+
+        <record id="us_10835_disable_iil_menu" model="patch.scripts">
+            <field name="method">us_10835_disable_iil_menu</field>
+        </record>
     </data>
 </openerp>

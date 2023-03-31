@@ -4,6 +4,7 @@
 from osv import osv
 from osv import fields
 import decimal_precision as dp
+from tools.translate import _
 
 
 class esc_invoice_line(osv.osv):
@@ -101,3 +102,37 @@ class finance_price_track_changes(osv.osv):
     }
 
 finance_price_track_changes()
+
+class esc_line_setup(osv.osv_memory):
+    _name = 'esc_line.setup'
+    _inherit = 'res.config'
+
+    _columns = {
+        'esc_line': fields.boolean(string='Activate International Invoices Lines ?'),
+    }
+
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        """
+        """
+        if context is None:
+            context = {}
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        res = super(esc_line_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
+        res['esc_line'] = setup.esc_line
+        return res
+
+    def execute(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not isinstance(ids, list) or len(ids) != 1:
+            raise osv.except_osv(_('Error'), _('An error has occurred with the item retrieved from the form. Please contact an administrator if the problem persists.'))
+        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['esc_line'], context=context)
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        setup = setup_obj.get_config(cr, uid)
+        if setup:
+            for module, xmlid in [('account_hq_entries', 'finance_price_track_changes_menu'), ('account_hq_entries', 'esc_invoice_line_menu')]:
+                menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
+                self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.esc_line}, context=context)
+            setup_obj.write(cr, uid, [setup.id], {'esc_line': wiz.esc_line}, context=context)
+
+esc_line_setup()

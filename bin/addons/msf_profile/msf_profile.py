@@ -57,6 +57,14 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF29.0
+    def us_10835_disable_iil_menu(self, cr, uid, *a, **b):
+        # hide menuitems
+        setup_obj = self.pool.get('esc_line.setup')
+        esc_line_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [esc_line_install])
+
+
     # UF28.0
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):

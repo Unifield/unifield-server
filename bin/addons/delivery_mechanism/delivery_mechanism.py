@@ -485,7 +485,7 @@ class stock_picking(osv.osv):
 
 
 
-        compute_finance_price = move.picking_id.partner_id.partner_type == 'esc'
+        compute_finance_price = move.picking_id.partner_id.partner_type == 'esc' and self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'esc_line')
 
         qty = line.quantity
         if line.uom_id.id != line.product_id.uom_id.id:
