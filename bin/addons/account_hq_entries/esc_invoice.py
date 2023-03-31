@@ -70,6 +70,7 @@ esc_invoice_line()
 class finance_price_track_changes(osv.osv):
     _name = 'finance_price.track_changes'
     _rec_name = 'product_id'
+    _description = 'Finance Price Track changes'
 
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True, readonly=True,  ondelete='cascade', select=1),
@@ -80,8 +81,8 @@ class finance_price_track_changes(osv.osv):
         'stock_before': fields.float('Qty in Stock Before', readonly=True, digits=(16, 2)),
         'matching_type': fields.selection([('iil', 'IIL'), ('po', 'PO'), ('invoice', 'Invoice')], 'Matching Type', readonly=True),
 
-        'stock_picking_id': fields.many2one('stock.picking', 'IN', readonly=True),
         'stock_move_id': fields.many2one('stock.move', 'Move line', readonly=True),
+        'stock_picking_id': fields.related('stock_move_id', 'picking_id', type='many2one', relation='stock.picking', readonly=True),
 
         'invoice_id': fields.many2one('account.invoice', 'Invoice', readonly=True),
         'invoice_line_id': fields.many2one('account.invoice.line', 'Invoice Line', readonly=True),

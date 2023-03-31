@@ -493,6 +493,7 @@ class stock_picking(osv.osv):
 
         product_availability.setdefault(line.product_id.id, line.product_id.qty_available)
         track_finance_price = []
+        tc_fin_ids = []
         if qty > 0.00:
             if compute_finance_price:
                 esc_dom = [('state','!=', 'done'), ('product_id', '=', line.product_id.id), ('po_name', '=', move.purchase_line_id.order_id.name)]
@@ -510,9 +511,6 @@ class stock_picking(osv.osv):
                     if esc_line.currency_id.id != company_currency_id:
                         unit_iil_price = currency_obj.compute(cr, uid, line.currency.id, company_currency_id, unit_iil_price, round=False, context=context)
 
-                    print 'remaining_in_qty: ', remaining_in_qty
-                    print 'esc_line.remaining_qty', esc_line.remaining_qty
-                    print abs(esc_line.remaining_qty - remaining_in_qty) >= 0.001
                     if esc_line.remaining_qty - remaining_in_qty >= 0.001:
                         total_price += unit_iil_price * remaining_in_qty
 
@@ -531,7 +529,7 @@ class stock_picking(osv.osv):
                         track_finance_price.append({'qty_processed': esc_line.remaining_qty, 'price_unit': unit_iil_price, 'matching_type': 'iil', 'esc_invoice_line_id': esc_line.id})
 
                 if remaining_in_qty > 0:
-                    # all IIL used, no take PO price
+                    # all IIL used: take PO price
                     po_price = move.purchase_line_id.price_unit
                     if move.purchase_line_id.order_id.currency_id.id != company_currency_id:
                         po_price = currency_obj.compute(cr, uid,  move.purchase_line_id.order_id.currency_id.id, company_currency_id, po_price, round=False, context=context)
@@ -572,12 +570,10 @@ class stock_picking(osv.osv):
 
             # Write the field according to price type field
             prod_to_write = {'standard_price': new_std_price}
-            tc_fin_ids = []
             if compute_finance_price:
                 prod_to_write['finance_price'] = new_finance_price
                 for tc_fin in track_finance_price:
                     tc_fin.update({'product_id': line.product_id.id, 'old_price': line.product_id.finance_price, 'new_price': new_finance_price, 'stock_before': product_availability.get(line.product_id.id, 0)})
-                    print tc_fin
                     tc_fin_ids.append(tc_fin_obj.create(cr, uid, tc_fin, context=context))
             product_obj.write(cr, uid, [line.product_id.id], prod_to_write)
 
@@ -882,7 +878,6 @@ class stock_picking(osv.osv):
                 out_moves = mirror_data['moves']
                 average_values = {}
                 move_sptc_values = []
-                tc_fin_ids = []
                 line = False
 
                 if move.purchase_line_id and move.purchase_line_id.id not in po_line_qty:
@@ -928,7 +923,6 @@ class stock_picking(osv.osv):
 
                     if tc_ids:
                         self.pool.get('finance_price.track_changes').write(cr, uid, tc_ids, {'stock_move_id': done_moves[-1]}, context=context)
-                        tc_fin_ids += tc_ids
 
                     values['processed_stock_move'] = False
 
@@ -1115,7 +1109,7 @@ class stock_picking(osv.osv):
                 # If there is remaining quantity for the move, put the ID of the move
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
-                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values, line and line.product_id.id, tc_fin_ids))
+                    backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values, line and line.product_id.id))
                     if process_avg_sysint:
                         move_obj.decrement_sys_init(cr, uid, count, pol_id=move.purchase_line_id and move.purchase_line_id.id or False, context=context)
                 elif not wizard.register_a_claim or not wizard.claim_replacement_picking_expected:
@@ -1126,8 +1120,6 @@ class stock_picking(osv.osv):
                             'transaction_name': _('Reception %s') % move.picking_id.name,
                             'sptc_values': sptc_values.copy(),
                         })
-                    if tc_fin_ids:
-                        self.pool.get('finance_price.track_changes').write(cr, uid, tc_fin_ids, {'stock_picking_id': move.picking_id.id}, context=context)
                     if process_avg_sysint:
                         # update SYS-INT:
                         # min(move.product_qty, count) used if more qty is received
@@ -1209,11 +1201,8 @@ class stock_picking(osv.osv):
                     if back_order_post_copy_vals:
                         self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
 
-                for bo_move, bo_qty, av_values, data_back, move_sptc_values, p_id, tc_fin_ids in backordered_moves:
+                for bo_move, bo_qty, av_values, data_back, move_sptc_values, p_id in backordered_moves:
                     for sptc_values in move_sptc_values:
-                        if tc_fin_ids:
-                            self.pool.get('finance_price.track_changes').write(cr, uid, tc_fin_ids, {'stock_picking_id': backorder_id}, context=context)
-
                         sptc_obj.track_change(cr, uid, p_id,
                                               _('Reception %s') % backorder_name,
                                               sptc_values, context=context)

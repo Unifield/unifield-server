@@ -414,7 +414,6 @@
 
 
 
-----
         <record id="finance_price_track_changes_filter" model="ir.ui.view">
             <field name="name">Finance Price Track changes (DEV DEBUG)</field>
             <field name="model">finance_price.track_changes</field>
