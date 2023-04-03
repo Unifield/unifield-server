@@ -485,7 +485,9 @@ class stock_picking(osv.osv):
 
 
 
-        compute_finance_price = move.picking_id.partner_id.partner_type == 'esc' and self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'esc_line')
+        compute_finance_price = False
+        if self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'esc_line'):
+            compute_finance_price = move.picking_id.partner_id.partner_type == 'esc' or move.dpo_line_id and move.purchase_line_id.from_dpo_esc or False
 
         qty = line.quantity
         if line.uom_id.id != line.product_id.uom_id.id:
@@ -552,7 +554,8 @@ class stock_picking(osv.osv):
             new_std_price = 0.00
             if line.product_id.qty_available <= 0.00:
                 new_std_price = new_price
-                new_finance_price = round(total_price / float(qty), 5)
+                if compute_finance_price:
+                    new_finance_price = round(total_price / float(qty), 5)
             else:
                 # Get the current price in today's rate
                 current_price = product_obj.price_get(cr, uid, [line.product_id.id], 'standard_price', context=context)[line.product_id.id]

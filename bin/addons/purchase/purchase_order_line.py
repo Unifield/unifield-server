@@ -666,6 +666,7 @@ class purchase_order_line(osv.osv):
         'max_qty_cancellable': fields.function(_in_qty_remaining, type='float', string='Total PO qty - already processed + assign qty + confirm qty', method=1, multi='in_remain'),
         'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
+        'from_dpo_esc': fields.boolean('Line sourced to ESC DPO', internal=1),
         'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
         'loan_line_id': fields.many2one('sale.order.line', string='Linked loan line', readonly=True),
 

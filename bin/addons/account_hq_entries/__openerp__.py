@@ -34,6 +34,7 @@
         'wizard/wizard_view.xml',
         'account_view.xml',
         'esc_line_installer.xml',
+        'wizard/esc_lines_import_view.xml',
     ],
     "demo_xml" : [],
     "test": [
