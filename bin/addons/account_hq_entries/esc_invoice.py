@@ -130,7 +130,7 @@ class esc_line_setup(osv.osv_memory):
         setup_obj = self.pool.get('unifield.setup.configuration')
         setup = setup_obj.get_config(cr, uid)
         if setup:
-            for module, xmlid in [('account_hq_entries', 'finance_price_track_changes_menu'), ('account_hq_entries', 'esc_invoice_line_menu')]:
+            for module, xmlid in [('account_hq_entries', 'finance_price_track_changes_menu'), ('account_hq_entries', 'esc_invoice_line_menu'), ('account_hq_entries', 'esc_line_import_menu')]:
                 menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.esc_line}, context=context)
             setup_obj.write(cr, uid, [setup.id], {'esc_line': wiz.esc_line}, context=context)
