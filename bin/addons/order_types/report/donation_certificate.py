@@ -44,7 +44,7 @@ class donation_certificate(report_sxw.rml_parse):
                                                                    pick.company_id.currency_id.id, move.price_unit,
                                                                    round=False, context=self.localcontext), 2)
 
-        return tot_value
+        return round(tot_value, 2)
 
     def _get_lines(self, pick):
         lines = []
