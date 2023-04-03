@@ -193,7 +193,7 @@ def noteditable_fields_view_get(res, view_type, context=None):
             root.set('noteditable', 'True')
             if context.get('procurement_request'):
                 root.set('string', 'Internal request lines')
-        res['arch'] = etree.tostring(root)
+        res['arch'] = etree.tostring(root, encoding='unicode')
 
     return res
 
