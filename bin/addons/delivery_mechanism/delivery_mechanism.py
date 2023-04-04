@@ -511,7 +511,7 @@ class stock_picking(osv.osv):
                         break
                     unit_iil_price = esc_line.price_unit
                     if esc_line.currency_id.id != company_currency_id:
-                        unit_iil_price = currency_obj.compute(cr, uid, line.currency.id, company_currency_id, unit_iil_price, round=False, context=context)
+                        unit_iil_price = currency_obj.compute(cr, uid, esc_line.currency_id.id, company_currency_id, unit_iil_price, round=False, context=context)
 
                     if esc_line.remaining_qty - remaining_in_qty >= 0.001:
                         total_price += unit_iil_price * remaining_in_qty
