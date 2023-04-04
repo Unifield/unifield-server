@@ -3013,7 +3013,7 @@ class replenishment_segment_line(osv.osv):
                 d = self.read(cr, uid, _id, all_fields, context=context)
                 for x in all_fields:
                     all_data +='%s'%d[x]
-                fmc_version = hashlib.md5(''.join(all_data)).hexdigest()
+                fmc_version = hashlib.md5(''.join(all_data).encode('utf8')).hexdigest()
                 cr.execute("update replenishment_segment_line set fmc_version=%s where id=%s and coalesce(fmc_version, '')!=%s returning id", (fmc_version, _id, fmc_version))
                 updated = cr.fetchone()
                 if updated and cycle_line_state[_id] == 'complete':

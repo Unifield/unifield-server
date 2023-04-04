@@ -27,7 +27,7 @@ import re
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
-
+from dateutil import rrule
 
 
 WEEK_DAYS = [('sunday', 'Sunday'), ('monday', 'Monday'),
@@ -70,7 +70,7 @@ class stock_frequence(osv.osv):
         Return the good Date value according to the type of the day param.
         '''
         # Get the day number of the selected day
-        data = {'sunday': relativedelta.SU, 'monday':relativedelta.MO, 'tuesday': relativedelta.TU, 'wednesday': relativedelta.WE, 'thursday': relativedelta.TH, 'friday': relativedelta.FR, 'saturday': relativedelta.SA}
+        data = {'sunday': rrule.SU, 'monday': rrule.MO, 'tuesday': rrule.TU, 'wednesday': rrule.WE, 'thursday': rrule.TH, 'friday': rrule.FR, 'saturday': rrule.SA}
         return data.get(monthly_choose_day, 6)
 
     def check_data(self, data):
