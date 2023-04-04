@@ -1254,8 +1254,8 @@ class claim_event(osv.osv):
                             and origin_ir.location_requestor_id.location_category == 'consumption_unit' \
                             and origin_ir.location_requestor_id.chained_picking_type == 'out':
                         out_move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', current_sol.id),
-                                                                 ('state', '!=', 'cancel')], order='create_date desc',
-                                                       context=context)
+                                                                 ('state', 'not in', ['done', 'cancel'])],
+                                                       order='create_date desc', context=context)
                         for out_move in move_obj.browse(cr, uid, out_move_ids,
                                                         fields_to_fetch=['product_qty', 'product_id'], context=context):
                             # Check for same data
@@ -1426,7 +1426,7 @@ class claim_event(osv.osv):
         claim = obj.return_claim_id_claim_event
         # We cancel the lines of the OUT linked to the IN/INT lines processed
         # if the linked PO lines has an IR whose Location Requestor is ExtCU
-        if obj.from_picking_wizard_claim_event and not obj.replacement_picking_expected_claim_event:
+        if not obj.replacement_picking_expected_claim_event:
             if obj.event_picking_id_claim_event.type == 'in':
                 self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
             else:
