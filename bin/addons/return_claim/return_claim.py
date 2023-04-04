@@ -1426,7 +1426,7 @@ class claim_event(osv.osv):
         claim = obj.return_claim_id_claim_event
         # We cancel the lines of the OUT linked to the IN/INT lines processed
         # if the linked PO lines has an IR whose Location Requestor is ExtCU
-        if not obj.replacement_picking_expected_claim_event:
+        if obj.from_picking_wizard_claim_event and not obj.replacement_picking_expected_claim_event:
             if obj.event_picking_id_claim_event.type == 'in':
                 self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
             else:
