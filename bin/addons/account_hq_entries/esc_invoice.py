@@ -87,6 +87,8 @@ class finance_price_track_changes(osv.osv):
         'product_id': fields.many2one('product.product', string='Product', required=True, readonly=True,  ondelete='cascade', select=1),
         'old_price': fields.float(string='Previous Finance Price', digits_compute=dp.get_precision('Purchase Price Computation'), required=False, readonly=True),
         'new_price': fields.float(string='New Finance Price', digits_compute=dp.get_precision('Purchase Price Computation'), required=False, readonly=True),
+        'user_id': fields.many2one('res.users', 'User', readonly=True),
+        'date': fields.datetime('Date', readonly=True),
         'qty_processed': fields.float('Quantity Processed', readonly=True, digits=(16, 2)),
         'price_unit': fields.float('Unit Price', required=1, digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True),
         'stock_before': fields.float('Qty in Stock Before', readonly=True, digits=(16, 2)),
@@ -101,6 +103,12 @@ class finance_price_track_changes(osv.osv):
         'purchase_oder_line_id': fields.many2one('purchase.order.line', 'PO line', readonly=True),
 
         'esc_invoice_line_id': fields.many2one('esc.invoice.line', 'International Line', readonly=True),
+        'comment': fields.char('Comment', size=256),
+    }
+
+    _defaults = {
+        'user_id': lambda self, cr, uid, *a, **b: hasattr(uid, 'realUid') and uid.realUid or uid,
+        'date': lambda *a:  fields.datetime.now(),
     }
 
 finance_price_track_changes()
