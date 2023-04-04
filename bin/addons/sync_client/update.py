@@ -209,7 +209,12 @@ class update_to_send(osv.osv,fv_formatter):
                 return 0
             domain.append(('id', 'in', ids_need_to_push))
 
-            ids_to_compute = self.search_ext(cr, uid, domain, context=context)
+            order = None
+            if hasattr(self, '_sync_order'):
+                # keep same id order at HQ and lower level
+                order = self._sync_order
+
+            ids_to_compute = self.search_ext(cr, uid, domain, order=order, context=context)
             if not ids_to_compute:
                 return 0
 

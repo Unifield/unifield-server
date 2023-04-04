@@ -12,6 +12,8 @@ class esc_invoice_line(osv.osv):
     _description = 'International Invoices Line'
     _rec_name = 'po_name'
     _order = 'id desc'
+    _sync_order = 'id'
+    _trace = True
 
     def _get_dest_instance_id(self, cr, uid, ids, field_name, args, context=None):
         res = {}
