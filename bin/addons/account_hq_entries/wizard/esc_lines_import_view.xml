@@ -2,16 +2,32 @@
 <openerp>
     <data>
 
+        <report
+            id="esc_line_import_template"
+            string="International Invoices Lines Template"
+            model="esc.line.import"
+            name="esc_line_import_template"
+            file="account_hq_entries/wizard/esc_line_import_template.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
         <record id="esc_line_import_wizard" model="ir.ui.view">
             <field name="name">esc.line.import.wizard</field>
             <field name="model">esc.line.import</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Import International Invoices Lines">
+                <form string="International Invoices Lines Import">
                     <label string="This will import lines from a SpreadSheet xml file." colspan="4"/>
                     <newline/>
-                    <field name="file" filename="filename"/>
-                    <field name="filename" invisible="1"/>
+                    <button name="get_template_file" type="object"  string="Download Empty Template" icon="gtk-justify-fill" colspan="1"/>
+                    <group colspan="3" />
+                    <newline />
+                    <group colspan="4">
+                        <field name="file" filename="filename" colspan="2"/>
+                        <field name="filename" invisible="1"/>
+                    </group>
                     <group colspan="4" col="2">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Import" icon="terp-camera_test"/>
@@ -19,13 +35,15 @@
                 </form>
             </field>
         </record>
+
+
         <record id="esc_line_import_progress_wizard" model="ir.ui.view">
             <field name="name">esc.line.import.wizard</field>
             <field name="model">esc.line.import</field>
             <field name="priority" eval="100" />
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Import International Invoices Lines">
+                <form string="International Invoices Lines Import">
                     <field name="progress" widget="progressbar" colspan="4"/>
                     <newline />
                     <field name="filename" readonly="1" />
@@ -61,12 +79,12 @@
         </record>
 
         <record id="esc_line_import_action" model="ir.actions.server">
-            <field name="name">Import International Invoices Lines</field>
+            <field name="name">International Invoices Lines Import</field>
             <field name="model_id" ref="model_esc_line_import" />
             <field name="state">code</field>
             <field name="code">action = obj.open_wizard(context=context)</field>
         </record>
 
-        <menuitem name="Import International Invoices Lines" action="esc_line_import_action" type="server" id="esc_line_import_menu" parent="menu_hq" sequence="19"/>
+        <menuitem name="International Invoices Lines Import" action="esc_line_import_action" type="server" id="esc_line_import_menu" parent="menu_hq" sequence="19"/>
     </data>
 </openerp>

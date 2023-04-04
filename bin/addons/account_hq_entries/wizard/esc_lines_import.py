@@ -11,13 +11,15 @@ import time
 import base64
 import re
 
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+
 
 class esc_line_import_wizard(osv.osv_memory):
     _name = 'esc.line.import'
     _description = 'Import International Invoices Lines'
 
     _columns = {
-        'file': fields.binary(string="File", required=True),
+        'file': fields.binary(string="File"),
         'filename': fields.char(string="Imported filename", size=256),
         'progress': fields.integer(string="Progression", readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('inprogress', 'In-progress'), ('error', 'Error'), ('done', 'Done'), ('ack', 'ack')],'State', readonly=1),
@@ -58,6 +60,17 @@ class esc_line_import_wizard(osv.osv_memory):
             'context': context,
         }
 
+    def get_template_file(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'esc_line_import_template',
+            'datas': {'target_filename': _('International Invoices Lines Template'), 'keep_open': 1},
+            'context': context,
+        }
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Take a CSV file and fetch some informations for HQ Entries
@@ -69,6 +82,8 @@ class esc_line_import_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if not self.browse(cr, uid, ids[0], context=context).file:
+            raise osv.except_osv(_('Warning'), _('No file to import'))
 
         threading.Thread(target=self.load_bg, args=(cr.dbname, uid, ids[0], context)).start()
         self.write(cr, uid, ids[0], {'state': 'inprogress', 'progress': 0}, context=context)
@@ -245,3 +260,6 @@ class esc_line_import_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 esc_line_import_wizard()
+
+
+SpreadsheetReport('report.esc_line_import_template', 'esc.line.import', 'account_hq_entries/wizard/esc_line_import_template.mako')
