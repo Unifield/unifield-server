@@ -360,24 +360,23 @@
             </field>
         </record>
 
-                <!-- <tree string="International Invoices Line" hide_new_button="1" hide_delete_button="1" editable="top"> -->
         <record id="esc_invoice_line_tree" model="ir.ui.view">
             <field name="name">International Invoices Lines</field>
             <field name="model">esc.invoice.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="International Invoices Line" editable="top">
-                        <field name="po_name" />
-                        <field name="product_id" />
-                        <field name="requestor_cc_id" />
-                        <field name="consignee_cc_id" />
-                        <field name="shipment_ref" />
-                        <field name="price_unit" />
-                        <field name="currency_id" />
-                        <field name="product_qty" />
-                        <field name="remaining_qty" />
-                        <field name="uom_id" />
-                        <field name="state" />
+                <tree string="International Invoices Line" editable="top" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" noteditable="1">
+                        <field name="po_name" readonly="1"/>
+                        <field name="product_id" readonly="1" />
+                        <field name="requestor_cc_id" readonly="1" />
+                        <field name="consignee_cc_id" readonly="1" />
+                        <field name="shipment_ref" readonly="1" />
+                        <field name="price_unit" readonly="1" />
+                        <field name="currency_id" readonly="1" />
+                        <field name="product_qty" readonly="1" />
+                        <field name="remaining_qty" readonly="1" />
+                        <field name="uom_id" readonly="1" />
+                        <field name="state" readonly="1" />
                 </tree>
             </field>
         </record>
@@ -387,18 +386,18 @@
             <field name="model">esc.invoice.line</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="International Invoices Line">
-                        <field name="po_name" />
-                        <field name="product_id" />
-                        <field name="requestor_cc_id" />
-                        <field name="consignee_cc_id" />
-                        <field name="shipment_ref" />
-                        <field name="price_unit" />
-                        <field name="product_qty" />
-                        <field name="remaining_qty" />
-                        <field name="uom_id" />
-                        <field name="currency_id" />
-                        <field name="state" />
+                <form string="International Invoices Line" hide_new_button="1" hide_duplicate_button="1">
+                        <field name="po_name" readonly="1" />
+                        <field name="product_id" readonly="1" />
+                        <field name="requestor_cc_id" readonly="1" />
+                        <field name="consignee_cc_id" readonly="1" />
+                        <field name="shipment_ref" readonly="1" />
+                        <field name="price_unit" readonly="1" />
+                        <field name="product_qty" readonly="1" />
+                        <field name="remaining_qty" readonly="1" />
+                        <field name="uom_id" readonly="1" />
+                        <field name="currency_id" readonly="1" />
+                        <field name="state" readonly="1" />
                 </form>
             </field>
         </record>
@@ -429,13 +428,12 @@
             </field>
         </record>
 
-                <!-- <tree string="International Invoices Line" hide_new_button="1" hide_delete_button="1" editable="top"> -->
         <record id="finance_price_track_changes_tree" model="ir.ui.view">
             <field name="name">Line Matching</field>
             <field name="model">finance_price.track_changes</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Line Matching" editable="top">
+                <tree string="Line Matching" editable="top" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" noteditable="1">
                         <field name="product_id" />
                         <field name="old_price" />
                         <field name="new_price" />
@@ -456,6 +454,7 @@
             <field name="res_model">finance_price.track_changes</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="context">{'display_move_line': True}</field>
         </record>
         <menuitem name="Line Matching" action="finance_price_track_changes_action" id="finance_price_track_changes_menu" parent="menu_hq" sequence="30"/>
 
@@ -467,6 +466,7 @@
             target="current"
             view_type="form"
             view_mode="tree"
+            context="{'display_move_line': True}"
             domain="[('esc_invoice_line_id', 'in', active_ids)]" />
 
     </data>

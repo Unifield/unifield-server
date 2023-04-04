@@ -67,6 +67,6 @@
             <field name="code">action = obj.open_wizard(context=context)</field>
         </record>
 
-        <menuitem name="Import International Invoices Lines" action="esc_line_import_action" type="server" id="esc_line_import_menu" parent="menu_hq" sequence="100"/>
+        <menuitem name="Import International Invoices Lines" action="esc_line_import_action" type="server" id="esc_line_import_menu" parent="menu_hq" sequence="19"/>
     </data>
 </openerp>

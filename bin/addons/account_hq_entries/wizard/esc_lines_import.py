@@ -116,8 +116,8 @@ class esc_line_import_wizard(osv.osv_memory):
                 if not len(row.cells):
                     # empty line
                     continue
-                if len(row.cells) < 8:
-                    manage_error(line, _('A row must have 8 columns'))
+                if len(row.cells) < 7:
+                    manage_error(line, _('a row must have 8 columns'))
                     continue
 
                 if not row.cells[0].data:
@@ -188,7 +188,7 @@ class esc_line_import_wizard(osv.osv_memory):
                     continue
 
                 mapping = ''
-                if row.cells[7].data:
+                if len(row.cells) > 7 and row.cells[7].data:
                     mapping = row.cells[7].data.strip()
 
                 processed += 1

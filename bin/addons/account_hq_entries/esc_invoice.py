@@ -83,22 +83,22 @@ class finance_price_track_changes(osv.osv):
 
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True, readonly=True,  ondelete='cascade', select=1),
-        'old_price': fields.float(string='Old Finance Price', digits_compute=dp.get_precision('Purchase Price Computation'), required=False, readonly=True),
+        'old_price': fields.float(string='Previous Finance Price', digits_compute=dp.get_precision('Purchase Price Computation'), required=False, readonly=True),
         'new_price': fields.float(string='New Finance Price', digits_compute=dp.get_precision('Purchase Price Computation'), required=False, readonly=True),
         'qty_processed': fields.float('Quantity Processed', readonly=True, digits=(16, 2)),
-        'price_unit': fields.float('Unit Price', required=1, digits_compute=dp.get_precision('Purchase Price Computation')),
+        'price_unit': fields.float('Unit Price', required=1, digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True),
         'stock_before': fields.float('Qty in Stock Before', readonly=True, digits=(16, 2)),
-        'matching_type': fields.selection([('iil', 'IIL'), ('po', 'PO'), ('invoice', 'Invoice')], 'Matching Type', readonly=True),
+        'matching_type': fields.selection([('iil', 'International Lines'), ('po', 'PO'), ('invoice', 'Invoice')], 'Matching Type', readonly=True),
 
         'stock_move_id': fields.many2one('stock.move', 'Move line', readonly=True),
-        'stock_picking_id': fields.related('stock_move_id', 'picking_id', type='many2one', relation='stock.picking', readonly=True),
+        'stock_picking_id': fields.related('stock_move_id', 'picking_id', string='IN', type='many2one', relation='stock.picking', readonly=True, domain="[('type', '=', 'in'), ('state', '=', 'done')]"),
 
         'invoice_id': fields.many2one('account.invoice', 'Invoice', readonly=True),
         'invoice_line_id': fields.many2one('account.invoice.line', 'Invoice Line', readonly=True),
 
         'purchase_oder_line_id': fields.many2one('purchase.order.line', 'PO line', readonly=True),
 
-        'esc_invoice_line_id': fields.many2one('esc.invoice.line', 'IIL', readonly=True),
+        'esc_invoice_line_id': fields.many2one('esc.invoice.line', 'International Line', readonly=True),
     }
 
 finance_price_track_changes()
