@@ -36,6 +36,9 @@ class esc_line_import_wizard(osv.osv_memory):
         """
             on click on menutim: display the running hq import
         """
+        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+            raise osv.except_osv(_('Warning'), ('This object can only be imported at HQ level'))
+
         ids = self.search(cr, uid, [('state', 'in', ['inprogress', 'error', 'done'])], context=context)
         if ids:
             res_id = ids[0]
