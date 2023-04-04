@@ -97,7 +97,7 @@ class PhysicalInventory(osv.osv):
                 'discrepancy_lines_absvalue':discrepancy_lines_absvalue
             }
 
-            total['discrepancy_lines_percent'] = 100 * total['discrepancy_lines_number'] / total['inventory_lines_number'] if total['inventory_lines_number'] else 0.0
+            total['discrepancy_lines_percent'] = 100.0 * total['discrepancy_lines_number'] / total['inventory_lines_number'] if total['inventory_lines_number'] else 0.0
             total['discrepancy_lines_percent_value'] = 100 * total['discrepancy_lines_value'] / total['inventory_lines_value'] if total['inventory_lines_value'] else 0.0
             total['discrepancy_lines_percent_absvalue'] = 100 * total['discrepancy_lines_absvalue'] / total['inventory_lines_absvalue'] if total['inventory_lines_absvalue'] else 0.0
 
