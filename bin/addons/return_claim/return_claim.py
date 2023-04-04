@@ -1235,10 +1235,11 @@ class claim_event(osv.osv):
         picking_tools.all(cr, uid, ids, context=context)
         return True
 
-    def _cancel_out_line_linked_to_extcu_ir(self, cr, uid, picking, context=None):
+    def _cancel_out_line_linked_to_extcu_ir(self, cr, uid, picking, claim_from_popup, context=None):
         '''
         Check if IN/INT moves are linked to an IR and if this IR has an ExtCU location Requestor.
-        If that is the case, we cancel the qty from processed move lines of the linked OUT
+        If that is the case, we cancel the qty from processed non-cancelled move lines of the linked OUT for normal
+        claims, and non-closed/cancelled moves lines of the linked OUT for claims from scratch
         '''
         if context is None:
             context = {}
@@ -1253,9 +1254,12 @@ class claim_event(osv.osv):
                     if origin_ir.location_requestor_id.usage == 'customer' \
                             and origin_ir.location_requestor_id.location_category == 'consumption_unit' \
                             and origin_ir.location_requestor_id.chained_picking_type == 'out':
-                        out_move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', current_sol.id),
-                                                                 ('state', 'not in', ['done', 'cancel'])],
-                                                       order='create_date desc', context=context)
+                        out_domain = [('sale_line_id', '=', current_sol.id)]
+                        if not claim_from_popup:
+                            out_domain.append(('state', 'not in', ['done', 'cancel']))
+                        else:
+                            out_domain.append(('state', '!=', 'cancel'))
+                        out_move_ids = move_obj.search(cr, uid, out_domain, order='create_date desc', context=context)
                         for out_move in move_obj.browse(cr, uid, out_move_ids,
                                                         fields_to_fetch=['product_qty', 'product_id'], context=context):
                             # Check for same data
@@ -1329,9 +1333,9 @@ class claim_event(osv.osv):
         # if the linked PO lines has an IR whose Location Requestor is ExtCU
         if not obj.replacement_picking_expected_claim_event:
             if event_picking.type == 'in':
-                self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
+                self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, obj.from_picking_wizard_claim_event, context=context)
             else:
-                self._cancel_out_line_linked_to_extcu_ir(cr, uid, event_picking, context=context)
+                self._cancel_out_line_linked_to_extcu_ir(cr, uid, event_picking, obj.from_picking_wizard_claim_event, context=context)
         # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
         picking_tools.confirm(cr, uid, event_picking.id, context=context)
         # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
@@ -1374,9 +1378,9 @@ class claim_event(osv.osv):
         # if the linked PO lines has an IR whose Location Requestor is ExtCU
         if not obj.replacement_picking_expected_claim_event:
             if event_picking.type == 'in':
-                self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
+                self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, obj.from_picking_wizard_claim_event, context=context)
             else:
-                self._cancel_out_line_linked_to_extcu_ir(cr, uid, event_picking, context=context)
+                self._cancel_out_line_linked_to_extcu_ir(cr, uid, event_picking, obj.from_picking_wizard_claim_event, context=context)
         # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
         picking_tools.confirm(cr, uid, event_picking.id, context=context)
         # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
@@ -1428,9 +1432,9 @@ class claim_event(osv.osv):
         # if the linked PO lines has an IR whose Location Requestor is ExtCU
         if not obj.replacement_picking_expected_claim_event:
             if obj.event_picking_id_claim_event.type == 'in':
-                self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
+                self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, obj.from_picking_wizard_claim_event, context=context)
             else:
-                self._cancel_out_line_linked_to_extcu_ir(cr, uid, obj.event_picking_id_claim_event, context=context)
+                self._cancel_out_line_linked_to_extcu_ir(cr, uid, obj.event_picking_id_claim_event, obj.from_picking_wizard_claim_event, context=context)
         # don't generate financial documents if the claim is linked to an internal or intermission partner
         inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
         # get the picking values and move values according to claim type
