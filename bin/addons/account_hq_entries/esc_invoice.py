@@ -143,6 +143,14 @@ class esc_line_setup(osv.osv_memory):
             for module, xmlid in [('account_hq_entries', 'finance_price_track_changes_menu'), ('account_hq_entries', 'esc_invoice_line_menu'), ('account_hq_entries', 'esc_line_import_menu')]:
                 menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
                 self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': wiz.esc_line}, context=context)
+            report_fin_price_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'report_finance_cost_price')[1]
+            ir_value_id = self.pool.get('ir.values').search(cr, uid, [('key', '=', 'action'), ('key2', '=', 'client_print_multi'), ('model', '=', 'product.product'), ('value', '=', 'ir.actions.report.xml,%d'%report_fin_price_id)], context=context)
+            if ir_value_id:
+                user_id = False
+                if not wiz.esc_line:
+                    user_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'user_sync')[1]
+                self.pool.get('ir.values').write(cr, uid, ir_value_id, {'user_id': user_id}, context=context)
+
             setup_obj.write(cr, uid, [setup.id], {'esc_line': wiz.esc_line}, context=context)
 
 esc_line_setup()
