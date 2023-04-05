@@ -566,7 +566,11 @@ class stock_picking(osv.osv):
                                      + (new_price * qty)) / (product_availability[line.product_id.id] + qty)
 
                     if compute_finance_price:
-                        new_finance_price = round((line.product_id.finance_price *  product_availability[line.product_id.id] + total_price) / (product_availability[line.product_id.id] + qty), 5)
+                        # TODO : init finance_price
+                        if not line.product_id.finance_price:
+                            new_finance_price = round(total_price / float(qty), 5)
+                        else:
+                            new_finance_price = round((line.product_id.finance_price *  product_availability[line.product_id.id] + total_price) / (product_availability[line.product_id.id] + qty), 5)
 
             new_std_price = round(currency_obj.compute(cr, uid, line.currency.id, move.company_id.currency_id.id,
                                                        new_std_price, round=False, context=context), 5)
