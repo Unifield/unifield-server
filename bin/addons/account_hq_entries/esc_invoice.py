@@ -29,6 +29,30 @@ class esc_invoice_line(osv.osv):
             res[esc_line.id] = cc.po_fo_cc_instance_ids and cc.po_fo_cc_instance_ids[0].id or False
         return res
 
+    def _get_in_number(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        if not ids:
+            return {}
+
+        for _id in ids:
+            res[_id] = False
+
+        cr.execute('''
+            select
+                tc.esc_invoice_line_id, string_agg(distinct(pick.name),' ' order by pick.name)
+            from
+                finance_price_track_changes tc, stock_move m, stock_picking pick
+            where
+                m.id = tc.stock_move_id
+                and m.picking_id = pick.id
+                and tc.esc_invoice_line_id in %s
+            group by
+                tc.esc_invoice_line_id
+            ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            res[x[0]] = x[1]
+        return res
+
     _columns = {
         'po_name': fields.char('PO Reference', size=64, required=1, select=1),
         'requestor_cc_id': fields.many2one('account.analytic.account', 'Requestor Cost Center', required=1, domain="[('category','=', 'OC'), ('type', '!=', 'view')]"),
@@ -42,6 +66,7 @@ class esc_invoice_line(osv.osv):
         'currency_id': fields.many2one('res.currency', 'Currency', required=1),
         'shipment_ref': fields.char('Field mapping with IN', size=128),
 
+        'in_number': fields.function(_get_in_number, type='char', method=True, string='IN Number'),
         'state': fields.selection([('1_draft', 'Draft'), ('0_open', 'Open'), ('done', 'Done')], 'State', readonly=1),
 
     }

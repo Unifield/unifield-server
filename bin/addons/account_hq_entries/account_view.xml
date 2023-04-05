@@ -375,6 +375,7 @@
                         <field name="currency_id" readonly="1" />
                         <field name="product_qty" readonly="1" />
                         <field name="remaining_qty" readonly="1" />
+                        <field name="in_number" />
                         <field name="state" readonly="1" />
                 </tree>
             </field>
@@ -396,6 +397,7 @@
                         <field name="remaining_qty" readonly="1" />
                         <field name="uom_id" readonly="1" />
                         <field name="currency_id" readonly="1" />
+                        <field name="in_number" />
                         <field name="state" readonly="1" />
                 </form>
             </field>
