@@ -906,5 +906,10 @@
         <record id="py3_migrate_pickle_ir_values" model="patch.scripts">
             <field name="method">py3_migrate_pickle_ir_values</field>
         </record>
+
+        <!-- UF29.0 -->
+        <record id="us_9321_2_remove_location_colors" model="patch.scripts">
+            <field name="method">us_9321_2_remove_location_colors</field>
+        </record>
     </data>
 </openerp>

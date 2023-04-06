@@ -57,6 +57,20 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_9321_2_remove_location_colors(self, cr, uid, *a, **b):
+        '''
+        Remove the search_color of the locations Configurable locations, Intermediate Stocks and Internal Consumption Units
+        '''
+        obj_data = self.pool.get('ir.model.data')
+        # Get the locations ids
+        conf = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')[1]
+        interm = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
+        iconsu = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
+
+        cr.execute("""UPDATE stock_location SET search_color = NULL WHERE id IN %s""", (tuple([conf, interm, iconsu]),))
+
+        return True
+
     # UF28.0
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
