@@ -10,7 +10,7 @@ from tools.translate import _
 import time
 import base64
 import re
-
+from psycopg2 import IntegrityError
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 
@@ -114,6 +114,7 @@ class esc_line_import_wizard(osv.osv_memory):
         created = 0
         processed = 0
 
+        created_ids = {}
         try:
             cr = pooler.get_db(dbname).cursor()
 
@@ -134,6 +135,7 @@ class esc_line_import_wizard(osv.osv_memory):
                 if not len(row.cells):
                     # empty line
                     continue
+                processed += 1
                 if len(row.cells) < 7:
                     manage_error(line, _('a row must have 8 columns'))
                     continue
@@ -209,9 +211,9 @@ class esc_line_import_wizard(osv.osv_memory):
                 if len(row.cells) > 7 and row.cells[7].data:
                     mapping = row.cells[7].data.strip()
 
-                processed += 1
+                cr.execute("SAVEPOINT esc_line")
                 try:
-                    self.pool.get('esc.invoice.line').create(cr, uid, {
+                    new_line = self.pool.get('esc.invoice.line').create(cr, uid, {
                         'po_name': po_ref,
                         'requestor_cc_id': cc_id,
                         'consignee_cc_id': consignee_id,
@@ -221,9 +223,26 @@ class esc_line_import_wizard(osv.osv_memory):
                         'currency_id': curr_cache[curr_code],
                         'shipment_ref': mapping,
                     }, context=context)
+                    created_ids[new_line] = line
                     created += 1
+                    cr.execute("RELEASE SAVEPOINT esc_line")
                 except osv.except_osv, e:
                     manage_error(line, e.value)
+                except IntegrityError:
+                    cr.execute("ROLLBACK TO SAVEPOINT esc_line")
+                    line_id = False
+                    if created_ids:
+                        line_id = self.pool.get('esc.invoice.line').search(cr, uid, [
+                            ('id', 'in', created_ids.keys()),
+                            ('po_name', '=', po_ref),
+                            ('requestor_cc_id', '=', cc_id),
+                            ('product_id', '=', product_cache[p_code]),
+                            ('price_unit', '=', unit_price),
+                        ], context=context)
+                        if line_id:
+                            manage_error(line, _('duplicates line %d') % created_ids[line_id[0]])
+                    if not line_id:
+                        manage_error(line, _('Line duplicated in the system'))
 
                 if processed%10 == 0:
                     self.write(cr, uid, wiz_id, {'progress': int(processed/float(nb_lines)*100), 'created': created, 'nberrors': len(errors), 'error': "\n".join(errors)}, context=context)
@@ -232,6 +251,7 @@ class esc_line_import_wizard(osv.osv_memory):
             if errors:
                 cr.rollback()
                 state = 'error'
+                errors.insert(0, _('Import rejected'))
                 msg = "\n".join(errors)
             else:
                 msg = _("International Invoices Lines import successful")

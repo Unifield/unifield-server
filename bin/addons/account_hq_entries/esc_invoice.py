@@ -71,6 +71,9 @@ class esc_invoice_line(osv.osv):
 
     }
 
+    _sql_constraints = [
+        ('line_unique', 'unique(po_name,requestor_cc_id,product_id,price_unit)', "The combination Order Reference/Restor CC/Product/Price must be unique."),
+    ]
     def _update_remaining(self, cr, uid, ids, vals, context=None):
         if not ids:
             return
