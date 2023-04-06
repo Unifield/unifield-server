@@ -900,5 +900,10 @@
         <record id="us_11195_oca_period_nr" model="patch.scripts">
             <field name="method">us_11195_oca_period_nr</field>
         </record>
+
+        <!-- UF29.0 -->
+        <record id="us_9321_2_remove_location_colors" model="patch.scripts">
+            <field name="method">us_9321_2_remove_location_colors</field>
+        </record>
     </data>
 </openerp>
