@@ -589,7 +589,7 @@
                     <para style="Total" alignment="RIGHT">[[ getTotM3() ]]</para>
                 </td>
                 <td>
-                    <para style="Total" alignment="RIGHT">[[ getTotValue() ]]</para>
+                    <para style="Total" alignment="RIGHT">[[ formatLang(getTotValue()) ]]</para>
                 </td>
                 <td>
                     <para style="Total" alignment="LEFT">[[ getFonCur(line) ]]</para>

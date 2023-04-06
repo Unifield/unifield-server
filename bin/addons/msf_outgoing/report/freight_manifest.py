@@ -166,10 +166,10 @@ class freight_manifest(report_sxw.rml_parse):
 
         value = sum([x.value or 0 for x in o.additional_items_ids])
         self.valtot += value
-        return [(nb, weigth, round(volume, 4), round(value, 2), self.cur)]
+        return [(nb, round(weigth, 2), round(volume, 4), round(value, 2), self.cur)]
 
     def get_total(self):
-        return [(self.parcetot, self.kgtot, round(self.voltot, 4), round(self.valtot, 2), self.cur)]
+        return [(self.parcetot, round(self.kgtot, 2), round(self.voltot, 4), round(self.valtot, 2), self.cur)]
 
 
 report_sxw.report_sxw('report.freight_manifest', 'shipment', 'addons/msf_outgoing/report/freight_manifest.rml', parser=freight_manifest)
