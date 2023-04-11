@@ -1138,9 +1138,14 @@ class product_attributes(osv.osv):
 
 
     def ud_date(self, cr, uid, date):
-        return datetime.strptime(date, '%Y-%m-%dT%H:%M').replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
+        date = date.split('.')[0] # found 3 formats in UD: 2021-03-30T06:32:51.500, 2021-03-30T06:32:51  and 2021-03-30T06:32
+        try:
+            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+        except:
+            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M')
+        return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
 
-    def ud_validation_sync(self, cr, uid, ud_user, ud_password, context=None):
+    def ud_validation_sync(self, cr, uid, ud_user, ud_password, page=1, context=None):
         session_obj = self.pool.get('ud_validation.sync')
         prod_obj = self.pool.get('product.product')
         country_obj = self.pool.get('unidata.country')
@@ -1161,7 +1166,7 @@ class product_attributes(osv.osv):
             'login': ud_user,
             'password': ud_password,
             'size': page_size,
-            'page': 1,
+            'page': page,
             'publishonweb': False,
         }
         nb_prod = 0
@@ -1177,9 +1182,9 @@ class product_attributes(osv.osv):
 
         logger.info('Sync start, page: %s' % (page_size,))
         updated = 0
-        page = 1
         try:
             while True:
+                cr.execute('SAVEPOINT ud_validation_sync')
                 params['page'] = page
                 logger.info('OC: %s Page: %d' % (oc, page))
                 r = requests.get(base_url, params)
@@ -1194,11 +1199,9 @@ class product_attributes(osv.osv):
                     prod_id = prod_obj.search(cr, uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], context=context)
                     if not prod_id:
                         logger.info('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code'], ))
-                        #continue
-                        # TODO
-                        prod_id = [34]
+                        continue
                     oc_data = x.get('ocValidations', {}).get(oc, {})
-
+                    logger.info('UD: %s' % x)
                     data = {
                         'oc_validation_date': False,
                         'oc_devalidation_date': False,
@@ -1218,7 +1221,7 @@ class product_attributes(osv.osv):
                     for mr in oc_data.get('missionRestrictions', []):
                         if mr.get('country', {}).get('labels', {}).get('english'):
                             if mr['country']['labels']['english'] not in country_cache:
-                                c_id = country_obj.search(cr, uid, [('name,' '=', mr['country']['labels']['english'])], context={'lang': 'en_MF'})
+                                c_id = country_obj.search(cr, uid, [('name', '=', mr['country']['labels']['english'])], context={'lang': 'en_MF'})
                                 if not c_id:
                                     c_id = country_obj.create(cr, uid, {'name': mr['country']['labels']['english']})
                                     if mr['country']['labels'].get('french'):
@@ -1248,13 +1251,15 @@ class product_attributes(osv.osv):
                     logger.info('Write product id: %d, code: %s, msfid: %s, data: %s' % (prod_id[0], x['code'], x['id'], data))
                     prod_obj.write(cr, uid, prod_id[0], data, context=context)
                     updated += 1
+                    # register last msfid
+                    cr.execute('RELEASE SAVEPOINT ud_validation_sync')
 
                 page += 1
         except Exception as e:
-            cr.rollback()
+            cr.execute('ROLLBACK TO SAVEPOINT ud_validation_sync')
             error = tools.misc.get_traceback(e)
             logger.error('Script error: %s' % error)
-            session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'error', 'number_products_pulled': nb_prod, 'error': error, 'nb_page_retrieved': page}, context=context)
+            session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'error', 'number_products_pulled': nb_prod, 'error': error, 'nb_page_retrieved': page, 'number_products_updated': updated}, context=context)
             return False
 
         session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'nb_page_retrieved': page, 'number_products_updated': updated}, context=context)
