@@ -2768,9 +2768,9 @@ class stock_picking(osv.osv):
                 sale_id = sale_id[0]['sale_id']
                 if sale_id:
                     sale_id = sale_id[0]
-                    # today
                     rts = sale_order_obj.read(cr, uid, sale_id, ['ready_to_ship_date'], context=context)['ready_to_ship_date']
                 else:
+                    # today
                     rts = date.today().strftime(db_date_format)
                 # rts + shipment lt
                 shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
@@ -2789,7 +2789,7 @@ class stock_picking(osv.osv):
                                   'address_id': vals['address_id'],
                                   'partner_id2': partner_id,
                                   'shipment_expected_date': rts,
-                                  'shipment_actual_date': rts,
+                                  'shipment_actual_date': time.strftime(db_datetime_format),
                                   'sale_id': vals.get('sale_id', False),
                                   'transport_type': sale_id and sale_order_obj.read(cr, uid, sale_id, ['transport_type'], context=context)['transport_type'] or False,
                                   'sequence_id': self.create_sequence(cr, uid, {'name': name,
