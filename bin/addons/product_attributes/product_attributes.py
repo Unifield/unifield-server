@@ -1131,13 +1131,13 @@ class product_attributes(osv.osv):
         'unidata_merge_date': fields.datetime('Date of UniData Merge', readonly=1, select=1),
         'is_kept_product': fields.boolean('Is a kept product', readonly=1),
 
+        'oc_validation': fields.boolean('OC Validation', readonly=1),
         'oc_validation_date': fields.datetime('Validation Date', readonly=1), #lastValidationDate
         'oc_devalidation_date': fields.datetime('Devalidation Date', readonly=1), #lastDevalidationDate
         'oc_devalidation_reason': fields.text('Devalidation Reason', readonly=1), #devalidationReason
         'oc_comments': fields.text('UD Comments', readonly=1), # comments
-        'oc_project_restrictions': fields.many2many('unidata.project', 'product_project_rel', 'product_id', 'unidata_project_id', 'Project Restrictions'),
-        'oc_country_restrictions': fields.many2many('unidata.country', 'product_country_rel', 'product_id', 'unidata_country_id', 'Country Restrictions'),
-
+        'oc_project_restrictions': fields.many2many('unidata.project', 'product_project_rel', 'product_id', 'unidata_project_id', 'Project Restrictions', readonly=1, order_by='code'),
+        'oc_country_restrictions': fields.many2many('unidata.country', 'product_country_rel', 'product_id', 'unidata_country_id', 'Country Restrictions', readonly=1, order_by='name'),
     }
 
 
@@ -1273,11 +1273,11 @@ class product_attributes(osv.osv):
 
                         oc_data = x.get('ocValidations', {}).get(oc, {})
                         data = {
+                            'oc_validation': oc_data.get('valid'),
                             'oc_validation_date': False,
                             'oc_devalidation_date': False,
                             'oc_devalidation_reason': oc_data.get('devalidationReason'),
                             'oc_comments': oc_data.get('comments'),
-                            'oc_project_restrictions': [(6, 0, [])],
 
                         }
 

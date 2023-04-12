@@ -106,6 +106,12 @@
                                 <!-- uf-1544
                                 <field digits="(14, 3)" name="weight_net" attrs="{'readonly':[('type','=','service')]}"/>
                                  -->
+                                <group colspan="2" col="2" attrs="{'invisible':[('int_status_code', '!=', 'unidata')]}">
+                                    <separator string="UD Comments" colspan="2" />
+                                    <field name="oc_comments" colspan="2" nolabel="1" />
+                                    <separator string="Devalidation Reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}" />
+                                    <field name="oc_devalidation_reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}" nolabel="1"/>
+                                </group>
                             </group>
 
                             <group colspan="2" col="3" name="status">
@@ -117,6 +123,11 @@
                                 <field name="state" colspan="3" widget="selection" />
                                 <field name="state_ud" colspan="3" />
                                 <field name="oc_subscription" colspan="3" readonly="1" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}"/>
+                                <group colspan="3" col="4">
+                                    <field name="oc_validation" readonly="1" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}" />
+                                    <field name="oc_validation_date" readonly="1" attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('oc_validation', '!=', True)]}" widget="date"/>
+                                    <field name="oc_devalidation_date" readonly="1" attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('oc_validation', '=', True)]}" widget="date"/>
+                                </group>
                                 <group colspan="2" col="4">
                                     <field name="active" readonly="1"/>
                                     <field name="nsl_merged" attrs="{'invisible': [('int_status_code', '!=', 'local')]}" />
@@ -149,6 +160,20 @@
                                 <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)" domain="[('compatible_product_id', '=', active_id)]" colspan="3"/>
                                 <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" colspan="3"/>
                             </group>
+                        </page>
+                        <page string="MSL" attrs="{'invisible': ['|', ('instance_level', '!=', 'section'), ('int_status_code', '!=', 'unidata')]}">
+                            <field name="oc_country_restrictions" nolabel="1" colspan="2">
+                                <tree string="Country Restrictions">
+                                    <field name="name" />
+                                </tree>
+                            </field>
+
+                            <field name="oc_project_restrictions" nolabel="1" colspan="2">
+                                <tree string="Project Restrictions">
+                                    <field name="code" />
+                                    <field name="name" />
+                                </tree>
+                            </field>
                         </page>
                         <page string="Specific info">
                             <group colspan="2" col="2">
