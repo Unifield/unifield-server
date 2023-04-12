@@ -123,7 +123,7 @@
                                 <field name="state" colspan="3" widget="selection" />
                                 <field name="state_ud" colspan="3" />
                                 <field name="oc_subscription" colspan="3" readonly="1" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}"/>
-                                <group colspan="3" col="4">
+                                <group colspan="3" col="6">
                                     <field name="oc_validation" readonly="1" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}" />
                                     <field name="oc_validation_date" readonly="1" attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('oc_validation', '!=', True)]}" widget="date"/>
                                     <field name="oc_devalidation_date" readonly="1" attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('oc_validation', '=', True)]}" widget="date"/>

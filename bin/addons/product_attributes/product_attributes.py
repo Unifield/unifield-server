@@ -350,24 +350,348 @@ class unidata_project(osv.osv):
 unidata_project()
 
 
-class ud_validation_sync(osv.osv):
-    _name = 'ud_validation.sync'
+class unidata_sync_log(osv.osv):
+    _name = 'unidata.sync.log'
     _description = 'UD Validation Sync'
     _rec_name = 'start_date'
+    _order = 'id desc'
 
     _columns = {
         'start_date': fields.datetime('Start Date', readonly=1),
         'end_date': fields.datetime('End Date', readonly=1),
-        'number_products_pulled': fields.integer('# products'),
-        'number_products_updated': fields.integer('# updated'),
+        'number_products_pulled': fields.integer('# products', readonly=1),
+        'number_products_updated': fields.integer('# updated', readonly=1),
         'error': fields.text('Error', readonly=1),
-        'page_size': fields.integer('page size'),
+        'page_size': fields.integer('page size', readonly=1),
         'state': fields.selection([('running', 'Running'), ('error', 'Error'), ('done', 'Done')], 'State', readonly=1),
         'msfid_min': fields.integer('Min Msfid', readonly=1),
         'last_date': fields.char('Last Date', size=64, readonly=1),
     }
 
-ud_validation_sync()
+unidata_sync_log()
+
+
+class unidata_sync(osv.osv):
+    _name = 'unidata.sync'
+    _description = "UniData Sync"
+
+    def _get_log(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        cr.execute("select start_date, end_date, state from unidata_sync_log order by id desc limit 1")
+        one = cr.fetchone()
+        if one:
+            last_execution_start_date = one[0]
+            last_execution_end_date = one[1]
+            last_execution_status = one[2]
+        else:
+            last_execution_start_date = last_execution_end_date = last_execution_status = False
+
+        for _id in ids:
+            res[_id] = {
+                'last_execution_start_date': last_execution_start_date,
+                'last_execution_end_date': last_execution_end_date,
+                'last_execution_status': last_execution_status,
+            }
+
+        return res
+
+    def _get_next_planned_date(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        cron_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'ir_cron_unidata_sync')[1]
+        cron_date = self.pool.get('ir.cron').read(cr, uid, cron_id, ['nextcall'])['nextcall']
+        for _id in ids:
+            res[_id] = cron_date
+        return res
+
+    _columns = {
+        'url': fields.char('URL', size=256, required=1),
+        'login': fields.char('Login', size=256),
+        'password': fields.char('Password', size=256),
+
+        'next_run_date': fields.datetime('Force next execution date'),
+        'next_planned_date': fields.function(_get_next_planned_date,  method=True, type='datetime', string='Next Scheduled date'),
+        'page_size': fields.integer('UD Page size'),
+        'ud_timeout': fields.integer('UD Timeout in second'),
+        'last_execution_start_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last Execution Start Date"),
+        'last_execution_end_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last Execution End Date"),
+        'last_execution_status': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('running', 'Running'), ('error', 'Error'), ('done', 'Done')], string="Last Execution End State"),
+        'is_active': fields.boolean('Active'),
+        'interval': fields.integer('Scheduler interval (hours)'),
+    }
+
+    _defaults = {
+        'is_active': False,
+        'interval': 24,
+        'page_size': 500,
+        'ud_timeout': 30,
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if self.search_exists(cr, uid, [], context=context):
+            raise osv.except_osv(_('Error'), _('Only 1 UniData config record is allowed'))
+        return super(unidata_sync, self).create(cr, uid, vals, context=context)
+
+    def _ud_info(self, cr, uid, context=None):
+        sync_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'unidata_sync_config')[1]
+        return self.read(cr, uid, sync_id, context=context)
+
+    def _ud_params(self, cr, uid, info, context=None):
+        return {
+            'login': info['login'],
+            'password': info['password'],
+            'size': info['page_size'],
+            'publishonweb': False,
+        }
+
+    def test_connection(self, cr, uid, ids, vals, context=None):
+        info = self._ud_info(cr, uid, context=context)
+        params = self._ud_params(cr, uid, info, context=context)
+        params['filter'] = 'msfIdentifier=1234'
+        r = requests.get(info['url'], params, timeout=info['ud_timeout'])
+        if r.status_code != requests.codes.ok:
+            try:
+                r.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                raise osv.except_osv(_('Error'), e.message)
+        raise osv.except_osv(_('OK'), _('Login successful'))
+
+
+    def write(self, cr, uid, ids, vals, context=None):
+        cron_data = {}
+        if 'is_active' in vals:
+            cron_data['active'] = vals['is_active']
+        if 'interval' in vals:
+            cron_data['interval_number'] = vals['interval']
+            cron_data['interval_type'] = 'hours'
+        if vals.get('next_run_date'):
+            cron_data['nextcall'] = vals['next_run_date']
+            vals['next_run_date'] = False
+        if cron_data:
+            cron_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'ir_cron_unidata_sync')[1]
+            self.pool.get('ir.cron').write(cr, uid, cron_id, cron_data, context=context)
+
+        return super(unidata_sync, self).write(cr, uid, ids, vals, context=context)
+
+    def ud_date(self, cr, uid, date):
+        date = date.split('.')[0] # found 3 formats in UD: 2021-03-30T06:32:51.500, 2021-03-30T06:32:51  and 2021-03-30T06:32
+        try:
+            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+        except:
+            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M')
+        return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
+
+    def start_ud_sync(self, cr, uid, full=False, context=None):
+
+        # TODO: only at HQ
+        # TODO: prevent concurrent
+        # TODO: request full upgrade
+        # TODO: configure number of log file
+
+        ud_info = self._ud_info(cr, uid, context=context)
+        page_size = ud_info['page_size']
+        params = self._ud_params(cr, uid, ud_info, context=context)
+        max_request_retries = 4
+
+        keep_log = 50
+
+        session_obj = self.pool.get('unidata.sync.log')
+        prod_obj = self.pool.get('product.product')
+        param_obj = self.pool.get('ir.config_parameter')
+
+        country_obj = self.pool.get('unidata.country')
+        country_cache = {}
+        project_obj = self.pool.get('unidata.project')
+        project_cache = {}
+
+        oc = self.pool.get('sync.client.entity').get_entity(cr, uid, context).oc
+
+        nb_prod = 0
+        updated = 0
+
+        logger = logging.getLogger('unidata-sync')
+        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+
+        if tools.config['logfile']:
+            log_file = path.join(path.dirname(tools.config['logfile']), 'ud-sync.log')
+            do_rotate = path.exists(log_file)
+            handler = logging.handlers.RotatingFileHandler(log_file, backupCount=keep_log)
+        else:
+            do_rotate = False
+            handler = logging.StreamHandler(sys.stdout)
+
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.propagate = False
+
+        if do_rotate:
+            handler.doRollover()
+
+
+        if full:
+            param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
+            param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
+
+        last_ud_date_sync = param_obj.get_param(cr, 1, 'LAST_UD_DATE_SYNC') or False
+        min_msfid = param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC') or 0
+        if min_msfid:
+            # do not update last sync date
+            first_query = False
+        else:
+            first_query = True
+
+        date_to_record = False
+        session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync}, context=context)
+        # commit to display running session
+        cr.commit()
+        logger.info('Sync start, page size: %s, last msfid: %s, last date: %s' % (page_size, min_msfid, last_ud_date_sync))
+
+        try:
+            while True:
+                cr.execute('SAVEPOINT unidata_sync_log')
+                transaction_updated = 0
+                cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
+                min_id, max_id = cr.fetchone()
+                min_msfid = max_id
+                if not min_id:
+                    break
+
+                page = 1
+                while True:
+                    ud_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
+                    if last_ud_date_sync:
+                        ud_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(. /metaData/createdOn, "%(last_ud_date_sync)s")) and %(filter)s' %{
+                            'filter': ud_filter,
+                            'last_ud_date_sync': last_ud_date_sync
+                        }
+                    params['filter'] = ud_filter
+                    params['page'] = page
+
+                    request_ok = False
+                    retry = 0
+                    while not request_ok:
+                        try:
+                            logger.info('OC: %s, Page: %d, Filter: %s' % (oc, page, params['filter']))
+                            r = requests.get(ud_info['url'], params, timeout=ud_info['ud_timeout'])
+                            if r.status_code != requests.codes.ok:
+                                r.raise_for_status()
+                            request_ok = True
+                        except Exception as e:
+                            if retry < max_request_retries:
+                                retry += 1
+                                logger.warn('Query error %d, retry in 5sec: %s' % (retry, tools.misc.get_traceback(e)))
+                                time.sleep(5)
+                            else:
+                                raise
+
+                    js = r.json()
+
+                    if not js.get('rows'):
+                        break
+
+                    if first_query:
+                        date_to_record = js.get('context', {}).get('executeDate')
+                    first_query = False
+
+                    for x in js.get('rows'):
+                        logger.info('UD: %s' % x)
+                        nb_prod += 1
+                        prod_id = prod_obj.search(cr, uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], context=context)
+                        if not prod_id:
+                            logger.info('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code'], ))
+                            continue
+
+                        oc_data = x.get('ocValidations', {}).get(oc, {})
+                        data = {
+                            'oc_validation': oc_data.get('valid'),
+                            'oc_validation_date': False,
+                            'oc_devalidation_date': False,
+                            'oc_devalidation_reason': oc_data.get('devalidationReason'),
+                            'oc_comments': oc_data.get('comments'),
+
+                        }
+
+                        if oc_data.get('lastValidationDate'):
+                            data['oc_validation_date'] = self.ud_date(cr, uid, oc_data['lastValidationDate'])
+                        if oc_data.get('lastDevalidationDate'):
+                            data['oc_devalidation_date'] = self.ud_date(cr, uid, oc_data['lastDevalidationDate'])
+
+                        c_restriction = []
+                        p_restriction = []
+                        for mr in oc_data.get('missionRestrictions', []):
+                            if mr.get('country', {}).get('labels', {}).get('english'):
+                                if mr['country']['labels']['english'] not in country_cache:
+                                    c_id = country_obj.search(cr, uid, [('name', '=', mr['country']['labels']['english'])], context={'lang': 'en_MF'})
+                                    if not c_id:
+                                        c_id = country_obj.create(cr, uid, {'name': mr['country']['labels']['english']})
+                                        if mr['country']['labels'].get('french'):
+                                            country_obj.write(cr, uid, c_id, {'name': mr['country']['labels']['french']}, context={'lang': 'fr_MF'})
+
+                                        logger.info('Create country %s' % (mr['country']['labels']['english'],))
+                                        country_cache[mr['country']['labels']['english']] = c_id
+                                    else:
+                                        country_cache[mr['country']['labels']['english']] = c_id[0]
+                                c_restriction.append(country_cache[mr['country']['labels']['english']])
+
+                            for pr in mr.get('projectRestrictions', []):
+                                if pr.get('code'):
+                                    if pr.get('code') not in project_cache:
+                                        p_id = project_obj.search(cr, uid, [('code', '=', pr['code'])], context=context)
+                                        if not p_id:
+                                            logger.info('Create project %s' % (pr['code'], ))
+                                            project_cache[pr['code']] = project_obj.create(cr, uid, {'code': pr['code'], 'name': pr.get('name')}, context=context)
+                                        else:
+                                            project_cache[pr['code']] = p_id[0]
+                                    p_restriction.append(project_cache[pr['code']])
+
+                        data.update({
+                            'oc_country_restrictions': [(6, 0, list(set(c_restriction)))],
+                            'oc_project_restrictions':  [(6, 0, list(set(p_restriction)))],
+                        })
+                        logger.info('Write product id: %d, code: %s, msfid: %s, data: %s' % (prod_id[0], x['code'], x['id'], data))
+                        prod_obj.write(cr, uid, prod_id[0], data, context=context)
+                        transaction_updated += 1
+                    page += 1
+                    if len(js.get('rows')) < page_size:
+                        break
+
+                    # end of requests loop
+
+                param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', min_msfid)
+                cr.execute('RELEASE SAVEPOINT unidata_sync_log')
+                updated += transaction_updated
+
+                # end of sql loop
+
+        except Exception as e:
+            cr.execute('ROLLBACK TO SAVEPOINT unidata_sync_log')
+            error = tools.misc.get_traceback(e)
+            logger.error('End of Script with error: %s' % error)
+            handler.close()
+            session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'error', 'number_products_pulled': nb_prod, 'error': error, 'number_products_updated': updated}, context=context)
+            return False
+
+        logger.info('End of Script')
+        handler.close()
+        session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'number_products_updated': updated}, context=context)
+        param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', '')
+        if date_to_record:
+            param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', date_to_record)
+        return True
+
+
+    def open_menu(self, cr, uid, ids, context=None):
+        res_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'unidata_sync_config')[1]
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'unidata.sync',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': res_id
+        }
+
+unidata_sync()
 
 
 class product_attributes(osv.osv):
@@ -1141,213 +1465,6 @@ class product_attributes(osv.osv):
     }
 
 
-    def ud_date(self, cr, uid, date):
-        date = date.split('.')[0] # found 3 formats in UD: 2021-03-30T06:32:51.500, 2021-03-30T06:32:51  and 2021-03-30T06:32
-        try:
-            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
-        except:
-            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M')
-        return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
-
-    def ud_validation_sync(self, cr, uid, ud_user, ud_password, full=False, context=None):
-
-        base_url = 'https://rest.unidata.msf.org/msf-mdm-unidata/rest/ud-api/v1/articles'
-        page_size = 500
-        request_timeout = 30 # in sec
-        max_request_retries = 4
-
-        log_file = '/tmp/ud-sync.log'
-        keep_log = 50
-
-        session_obj = self.pool.get('ud_validation.sync')
-        prod_obj = self.pool.get('product.product')
-        param_obj = self.pool.get('ir.config_parameter')
-
-        country_obj = self.pool.get('unidata.country')
-        country_cache = {}
-        project_obj = self.pool.get('unidata.project')
-        project_cache = {}
-
-        oc = self.pool.get('sync.client.entity').get_entity(cr, uid, context).oc
-
-        params = {
-            'login': ud_user,
-            'password': ud_password,
-            'size': page_size,
-            'publishonweb': False,
-        }
-
-        nb_prod = 0
-        updated = 0
-
-        logger = logging.getLogger('unidata-sync')
-        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
-
-        if tools.config['logfile']:
-            log_file = path.join(path.dirname(tools.config['logfile']), 'ud-sync.log')
-            do_rotate = path.exists(log_file)
-            handler = logging.handlers.RotatingFileHandler(log_file, backupCount=keep_log)
-        else:
-            do_rotate = False
-            handler = logging.StreamHandler(sys.stdout)
-
-        handler.setLevel(logging.INFO)
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.propagate = False
-
-        if do_rotate:
-            handler.doRollover()
-
-
-        if full:
-            param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
-            param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
-
-        last_ud_date_sync = param_obj.get_param(cr, 1, 'LAST_UD_DATE_SYNC') or False
-        min_msfid = param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC') or 0
-        if min_msfid:
-            # do not update last sync date
-            first_query = False
-        else:
-            first_query = True
-
-        date_to_record = False
-        session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync}, context=context)
-        logger.info('Sync start, page size: %s, last msfid: %s, last date: %s' % (page_size, min_msfid, last_ud_date_sync))
-
-        try:
-            while True:
-                cr.execute('SAVEPOINT ud_validation_sync')
-                transaction_updated = 0
-                cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
-                min_id, max_id = cr.fetchone()
-                min_msfid = max_id
-                if not min_id:
-                    break
-
-                page = 1
-                while True:
-                    ud_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
-                    if last_ud_date_sync:
-                        ud_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(. /metaData/createdOn, "%(last_ud_date_sync)s")) and %(filter)s' %{
-                            'filter': ud_filter,
-                            'last_ud_date_sync': last_ud_date_sync
-                        }
-                    params['filter'] = ud_filter
-                    params['page'] = page
-
-                    request_ok = False
-                    retry = 0
-                    while not request_ok:
-                        try:
-                            logger.info('OC: %s, Page: %d, Filter: %s' % (oc, page, params['filter']))
-                            r = requests.get(base_url, params, timeout=request_timeout)
-                            if r.status_code != requests.codes.ok:
-                                r.raise_for_status()
-                            request_ok = True
-                        except Exception as e:
-                            if retry < max_request_retries:
-                                retry += 1
-                                logger.warn('Query error %d, retry in 5sec: %s' % (retry, tools.misc.get_traceback(e)))
-                                time.sleep(5)
-                            else:
-                                raise
-
-                    js = r.json()
-
-                    if not js.get('rows'):
-                        break
-
-                    if first_query:
-                        date_to_record = js.get('context', {}).get('executeDate')
-                    first_query = False
-
-                    for x in js.get('rows'):
-                        logger.info('UD: %s' % x)
-                        nb_prod += 1
-                        prod_id = prod_obj.search(cr, uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], context=context)
-                        if not prod_id:
-                            logger.info('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code'], ))
-                            continue
-
-                        oc_data = x.get('ocValidations', {}).get(oc, {})
-                        data = {
-                            'oc_validation': oc_data.get('valid'),
-                            'oc_validation_date': False,
-                            'oc_devalidation_date': False,
-                            'oc_devalidation_reason': oc_data.get('devalidationReason'),
-                            'oc_comments': oc_data.get('comments'),
-
-                        }
-
-                        if oc_data.get('lastValidationDate'):
-                            data['oc_validation_date'] = self.ud_date(cr, uid, oc_data['lastValidationDate'])
-                        if oc_data.get('lastDevalidationDate'):
-                            data['oc_devalidation_date'] = self.ud_date(cr, uid, oc_data['lastDevalidationDate'])
-
-                        c_restriction = []
-                        p_restriction = []
-                        for mr in oc_data.get('missionRestrictions', []):
-                            if mr.get('country', {}).get('labels', {}).get('english'):
-                                if mr['country']['labels']['english'] not in country_cache:
-                                    c_id = country_obj.search(cr, uid, [('name', '=', mr['country']['labels']['english'])], context={'lang': 'en_MF'})
-                                    if not c_id:
-                                        c_id = country_obj.create(cr, uid, {'name': mr['country']['labels']['english']})
-                                        if mr['country']['labels'].get('french'):
-                                            country_obj.write(cr, uid, c_id, {'name': mr['country']['labels']['french']}, context={'lang': 'fr_MF'})
-
-                                        logger.info('Create country %s' % (mr['country']['labels']['english'],))
-                                        country_cache[mr['country']['labels']['english']] = c_id
-                                    else:
-                                        country_cache[mr['country']['labels']['english']] = c_id[0]
-                                c_restriction.append(country_cache[mr['country']['labels']['english']])
-
-                            for pr in mr.get('projectRestrictions', []):
-                                if pr.get('code'):
-                                    if pr.get('code') not in project_cache:
-                                        p_id = project_obj.search(cr, uid, [('code', '=', pr['code'])], context=context)
-                                        if not p_id:
-                                            logger.info('Create project %s' % (pr['code'], ))
-                                            project_cache[pr['code']] = project_obj.create(cr, uid, {'code': pr['code'], 'name': pr.get('name')}, context=context)
-                                        else:
-                                            project_cache[pr['code']] = p_id[0]
-                                    p_restriction.append(project_cache[pr['code']])
-
-                        data.update({
-                            'oc_country_restrictions': [(6, 0, list(set(c_restriction)))],
-                            'oc_project_restrictions':  [(6, 0, list(set(p_restriction)))],
-                        })
-                        logger.info('Write product id: %d, code: %s, msfid: %s, data: %s' % (prod_id[0], x['code'], x['id'], data))
-                        prod_obj.write(cr, uid, prod_id[0], data, context=context)
-                        transaction_updated += 1
-                    page += 1
-                    if len(js.get('rows')) < page_size:
-                        break
-
-                    # end of requests loop
-
-                param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', min_msfid)
-                cr.execute('RELEASE SAVEPOINT ud_validation_sync')
-                updated += transaction_updated
-
-                # end of sql loop
-
-        except Exception as e:
-            cr.execute('ROLLBACK TO SAVEPOINT ud_validation_sync')
-            error = tools.misc.get_traceback(e)
-            logger.error('End of Script with error: %s' % error)
-            handler.close()
-            session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'error', 'number_products_pulled': nb_prod, 'error': error, 'number_products_updated': updated}, context=context)
-            return False
-
-        logger.info('End of Script')
-        handler.close()
-        session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'number_products_updated': updated}, context=context)
-        param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', '')
-        if date_to_record:
-            param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', date_to_record)
-        return True
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
         if touched_fields != ['active', 'local_from_hq', 'local_activation_from_merge', 'id']:

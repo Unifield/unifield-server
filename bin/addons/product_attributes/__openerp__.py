@@ -37,6 +37,7 @@
         'data/product_supply_source.xml',
         'data/product_justification_code.xml',
         'merged_ud_products_report.xml',
+        'unidata_sync.xml',
     ],
     'update_xml': [
         'product_attributes_view.xml',
