@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="ir_cron_unidata_sync" model="ir.cron">
+            <field name="function">start_ud_sync</field>
+            <field name="user_id">1</field>
+            <field name="name">Sync UD products</field>
+            <field name="interval_type">hours</field>
+            <field eval="-1" name="numbercall"/>
+            <field eval="5" name="priority"/>
+            <field eval="0" name="doall"/>
+            <field eval="0" name="active"/>
+            <field eval="24" name="interval_number"/>
+            <field name="model">unidata.sync</field>
+        </record>
+
+        <record id="unidata_sync_config" model="unidata.sync">
+            <field name="url">https://rest.unidata.msf.org/msf-mdm-unidata/rest/ud-api/v1/articles</field>
+        </record>
+
+    </data>
+    <data>
+
+        <record model="ir.ui.view" id="unidata_sync_form">
+            <field name="name">unidata.sync.form</field>
+            <field name="model">unidata.sync</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="UniData Configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <field name="url" colspan="4"/>
+                    <field name="login"  />
+                    <field name="password" widget="password" />
+                    <field name="page_size" />
+                    <field name="ud_timeout" />
+                    <button name="test_connection" string="Test connection" colspan="2" type="object" icon="terp-stock_zoom"  /> 
+                    <separator colspan="4" string="Scheduler" />
+                    <field name="is_active" />
+                    <field name="interval" />
+                    <field name="next_planned_date" />
+                    <field name="next_run_date" />
+                    <separator colspan="4" string="Last Sync" />
+                    <field name="last_execution_start_date" />
+                    <field name="last_execution_end_date" />
+                    <field name="last_execution_status" />
+                </form>
+            </field>
+        </record>
+
+        <record id="unidata_sync_action" model="ir.actions.server">
+            <field name="name">UniData Sync Config</field>
+            <field name="model_id" ref="model_unidata_sync" />
+            <field name="state">code</field>
+            <field name="code">action = obj.open_menu(context=context)</field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_sync_log_form">
+            <field name="name">unidata.sync.log.form</field>
+            <field name="model">unidata.sync.log</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="UniData Log" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <field name="start_date" />
+                    <field name="end_date"  />
+                    <field name="page_size" />
+                    <field name="number_products_pulled" />
+                    <field name="number_products_updated" />
+                    <field name="msfid_min" />
+                    <field name="last_date" />
+                    <field name="state" />
+                    <field name="error" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_sync_log_tree">
+            <field name="name">unidata.sync.log.tree</field>
+            <field name="model">unidata.sync.log</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="UniData Log" hide_new_button="1" hide_delete_button="1">
+                    <field name="start_date" />
+                    <field name="end_date"  />
+                    <field name="page_size" />
+                    <field name="number_products_pulled" />
+                    <field name="number_products_updated" />
+                    <field name="msfid_min" />
+                    <field name="last_date" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_sync_log_search">
+            <field name="name">unidata.sync.log.search</field>
+            <field name="model">unidata.sync.log</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="UniData Log">
+                    <field name="start_date" />
+                    <field name="end_date"  />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
+
+        <record id="unidata_sync_log_action" model="ir.actions.act_window">
+            <field name="name">UniData Sync report</field>
+            <field name="res_model">unidata.sync.log</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+        </record>
+
+        <menuitem name="UniData" parent="object_query.menu_preferences" id="unidata_main_menu" sequence="17" />
+        <menuitem name="UniData Sync Config" action="unidata_sync_action" type="server" id="unidata_sync_menu" parent="unidata_main_menu" sequence="10"/>
+        <menuitem name="UniData Sync report" action="unidata_sync_log_action" id="unidata_sync_report_menu" parent="unidata_main_menu" sequence="15"/>
+    </data>
+</openerp>
