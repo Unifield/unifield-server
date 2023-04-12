@@ -30,6 +30,8 @@ import time
 
 import logging
 import logging.handlers
+from os import path
+import sys
 
 from base.res.signature import _register_log
 import requests
@@ -331,24 +333,6 @@ class unidata_country(osv.osv):
 unidata_country()
 
 
-class ud_validation_sync(osv.osv):
-    _name = 'ud_validation.sync'
-    _description = 'UD Validation Sync'
-    _rec_name = 'start_date'
-
-    _columns = {
-        'start_date': fields.datetime('Start Date', readonly=1),
-        'end_date': fields.datetime('End Date', readonly=1),
-        'number_products_pulled': fields.integer('# products'),
-        'number_products_updated': fields.integer('# updated'),
-        'error': fields.text('Error', readonly=1),
-        'nb_page_retrieved': fields.integer('# nb pages'),
-        'page_size': fields.integer('page size'),
-        'state': fields.selection([('running', 'Running'), ('error', 'Error'), ('done', 'Done')], 'State', readonly=1),
-    }
-
-ud_validation_sync()
-
 class unidata_project(osv.osv):
     _name = 'unidata.project'
     _description = 'UniData Project'
@@ -364,6 +348,26 @@ class unidata_project(osv.osv):
     ]
 
 unidata_project()
+
+
+class ud_validation_sync(osv.osv):
+    _name = 'ud_validation.sync'
+    _description = 'UD Validation Sync'
+    _rec_name = 'start_date'
+
+    _columns = {
+        'start_date': fields.datetime('Start Date', readonly=1),
+        'end_date': fields.datetime('End Date', readonly=1),
+        'number_products_pulled': fields.integer('# products'),
+        'number_products_updated': fields.integer('# updated'),
+        'error': fields.text('Error', readonly=1),
+        'page_size': fields.integer('page size'),
+        'state': fields.selection([('running', 'Running'), ('error', 'Error'), ('done', 'Done')], 'State', readonly=1),
+        'msfid_min': fields.integer('Min Msfid', readonly=1),
+        'last_date': fields.char('Last Date', size=64, readonly=1),
+    }
+
+ud_validation_sync()
 
 
 class product_attributes(osv.osv):
@@ -1134,7 +1138,6 @@ class product_attributes(osv.osv):
         'oc_project_restrictions': fields.many2many('unidata.project', 'product_project_rel', 'product_id', 'unidata_project_id', 'Project Restrictions'),
         'oc_country_restrictions': fields.many2many('unidata.country', 'product_country_rel', 'product_id', 'unidata_country_id', 'Country Restrictions'),
 
-        # u'missionRestrictions': [{u'country': {u'labels': {u'french': u'Ha\xefti', u'english': u'Haiti'}}, u'region': {u'labels': {u'french': u'Am\xe9rique', u'english': u'America'}}, u'projectRestrictions': [{u'code': u'HT170', u'name': u'Centre Trauma Tabarre'}]}]
     }
 
 
@@ -1146,17 +1149,20 @@ class product_attributes(osv.osv):
             date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M')
         return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
 
-    def ud_validation_sync(self, cr, uid, ud_user, ud_password, page=1, context=None):
+    def ud_validation_sync(self, cr, uid, ud_user, ud_password, full=False, context=None):
 
         base_url = 'https://rest.unidata.msf.org/msf-mdm-unidata/rest/ud-api/v1/articles'
         page_size = 500
         request_timeout = 30 # in sec
         max_request_retries = 4
-        # TODO / rotate / delete old
-        log_file = '/tmp/ud-%s.log' % (datetime.now().strftime('%Y%m%d-%H%M%S'),)
+
+        log_file = '/tmp/ud-sync.log'
+        keep_log = 50
 
         session_obj = self.pool.get('ud_validation.sync')
         prod_obj = self.pool.get('product.product')
+        param_obj = self.pool.get('ir.config_parameter')
+
         country_obj = self.pool.get('unidata.country')
         country_cache = {}
         project_obj = self.pool.get('unidata.project')
@@ -1164,32 +1170,52 @@ class product_attributes(osv.osv):
 
         oc = self.pool.get('sync.client.entity').get_entity(cr, uid, context).oc
 
-        # TODO
-        #if False:
-        #    filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "2023-03-01T00:00:00.000"))or(date-greater-or-equal(. /metaData/createdOn, "2023-03-01T23:59:59.000"))'
-
         params = {
             'login': ud_user,
             'password': ud_password,
             'size': page_size,
-            'page': page,
             'publishonweb': False,
         }
+
         nb_prod = 0
+        updated = 0
+
         logger = logging.getLogger('unidata-sync')
         formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
 
-        #handler = logging.handlers.RotatingFileHandler(log_file)
-        handler = logging.FileHandler(log_file)
+        if tools.config['logfile']:
+            log_file = path.join(path.dirname(tools.config['logfile']), 'ud-sync.log')
+            do_rotate = path.exists(log_file)
+            handler = logging.handlers.RotatingFileHandler(log_file, backupCount=keep_log)
+        else:
+            do_rotate = False
+            handler = logging.StreamHandler(sys.stdout)
+
         handler.setLevel(logging.INFO)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.propagate = False
-        session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size}, context=context)
 
-        logger.info('Sync start, page: %s' % (page_size,))
-        updated = 0
-        min_msfid = 0
+        if do_rotate:
+            handler.doRollover()
+
+
+        if full:
+            param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
+            param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
+
+        last_ud_date_sync = param_obj.get_param(cr, 1, 'LAST_UD_DATE_SYNC') or False
+        min_msfid = param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC') or 0
+        if min_msfid:
+            # do not update last sync date
+            first_query = False
+        else:
+            first_query = True
+
+        date_to_record = False
+        session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync}, context=context)
+        logger.info('Sync start, page size: %s, last msfid: %s, last date: %s' % (page_size, min_msfid, last_ud_date_sync))
+
         try:
             while True:
                 cr.execute('SAVEPOINT ud_validation_sync')
@@ -1202,7 +1228,13 @@ class product_attributes(osv.osv):
 
                 page = 1
                 while True:
-                    params['filter'] = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
+                    ud_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
+                    if last_ud_date_sync:
+                        ud_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(. /metaData/createdOn, "%(last_ud_date_sync)s")) and %(filter)s' %{
+                            'filter': ud_filter,
+                            'last_ud_date_sync': last_ud_date_sync
+                        }
+                    params['filter'] = ud_filter
                     params['page'] = page
 
                     request_ok = False
@@ -1223,8 +1255,13 @@ class product_attributes(osv.osv):
                                 raise
 
                     js = r.json()
+
                     if not js.get('rows'):
                         break
+
+                    if first_query:
+                        date_to_record = js.get('context', {}).get('executeDate')
+                    first_query = False
 
                     for x in js.get('rows'):
                         logger.info('UD: %s' % x)
@@ -1287,21 +1324,29 @@ class product_attributes(osv.osv):
                     page += 1
                     if len(js.get('rows')) < page_size:
                         break
-                # register last msfid
+
+                    # end of requests loop
+
+                param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', min_msfid)
                 cr.execute('RELEASE SAVEPOINT ud_validation_sync')
                 updated += transaction_updated
+
+                # end of sql loop
 
         except Exception as e:
             cr.execute('ROLLBACK TO SAVEPOINT ud_validation_sync')
             error = tools.misc.get_traceback(e)
-            logger.error('Script error: %s' % error)
+            logger.error('End of Script with error: %s' % error)
             handler.close()
-            session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'error', 'number_products_pulled': nb_prod, 'error': error, 'nb_page_retrieved': page, 'number_products_updated': updated}, context=context)
+            session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'error', 'number_products_pulled': nb_prod, 'error': error, 'number_products_updated': updated}, context=context)
             return False
 
         logger.info('End of Script')
         handler.close()
-        session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'nb_page_retrieved': page, 'number_products_updated': updated}, context=context)
+        session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'number_products_updated': updated}, context=context)
+        param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', '')
+        if date_to_record:
+            param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', date_to_record)
         return True
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
