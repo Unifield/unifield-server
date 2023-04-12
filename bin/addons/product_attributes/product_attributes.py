@@ -26,6 +26,7 @@ from lxml import etree
 import tools
 from datetime import datetime
 from dateutil import tz
+import time
 
 import logging
 import logging.handlers
@@ -1133,7 +1134,7 @@ class product_attributes(osv.osv):
         'oc_project_restrictions': fields.many2many('unidata.project', 'product_project_rel', 'product_id', 'unidata_project_id', 'Project Restrictions'),
         'oc_country_restrictions': fields.many2many('unidata.country', 'product_country_rel', 'product_id', 'unidata_country_id', 'Country Restrictions'),
 
-# u'missionRestrictions': [{u'country': {u'labels': {u'french': u'Ha\xefti', u'english': u'Haiti'}}, u'region': {u'labels': {u'french': u'Am\xe9rique', u'english': u'America'}}, u'projectRestrictions': [{u'code': u'HT170', u'name': u'Centre Trauma Tabarre'}]}]
+        # u'missionRestrictions': [{u'country': {u'labels': {u'french': u'Ha\xefti', u'english': u'Haiti'}}, u'region': {u'labels': {u'french': u'Am\xe9rique', u'english': u'America'}}, u'projectRestrictions': [{u'code': u'HT170', u'name': u'Centre Trauma Tabarre'}]}]
     }
 
 
@@ -1146,6 +1147,14 @@ class product_attributes(osv.osv):
         return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
 
     def ud_validation_sync(self, cr, uid, ud_user, ud_password, page=1, context=None):
+
+        base_url = 'https://rest.unidata.msf.org/msf-mdm-unidata/rest/ud-api/v1/articles'
+        page_size = 500
+        request_timeout = 30 # in sec
+        max_request_retries = 4
+        # TODO / rotate / delete old
+        log_file = '/tmp/ud-%s.log' % (datetime.now().strftime('%Y%m%d-%H%M%S'),)
+
         session_obj = self.pool.get('ud_validation.sync')
         prod_obj = self.pool.get('product.product')
         country_obj = self.pool.get('unidata.country')
@@ -1153,15 +1162,12 @@ class product_attributes(osv.osv):
         project_obj = self.pool.get('unidata.project')
         project_cache = {}
 
-        base_url = 'https://rest.unidata.msf.org/msf-mdm-unidata/rest/ud-api/v1/articles'
+        oc = self.pool.get('sync.client.entity').get_entity(cr, uid, context).oc
 
         # TODO
-        oc = 'oca'
-        page_size = 500
-        log_file = '/tmp/ud.log'
+        #if False:
+        #    filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "2023-03-01T00:00:00.000"))or(date-greater-or-equal(. /metaData/createdOn, "2023-03-01T23:59:59.000"))'
 
-        if False:
-            filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "2023-03-01T00:00:00.000"))or(date-greater-or-equal(. /metaData/createdOn, "2023-03-01T23:59:59.000"))'
         params = {
             'login': ud_user,
             'password': ud_password,
@@ -1173,7 +1179,8 @@ class product_attributes(osv.osv):
         logger = logging.getLogger('unidata-sync')
         formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
 
-        handler = logging.handlers.RotatingFileHandler(log_file)
+        #handler = logging.handlers.RotatingFileHandler(log_file)
+        handler = logging.FileHandler(log_file)
         handler.setLevel(logging.INFO)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
@@ -1182,86 +1189,118 @@ class product_attributes(osv.osv):
 
         logger.info('Sync start, page: %s' % (page_size,))
         updated = 0
+        min_msfid = 0
         try:
             while True:
                 cr.execute('SAVEPOINT ud_validation_sync')
-                params['page'] = page
-                logger.info('OC: %s Page: %d' % (oc, page))
-                r = requests.get(base_url, params)
-                if r.status_code != requests.codes.ok:
-                    r.raise_for_status()
-                js = r.json()
-                if not js.get('rows'):
+                transaction_updated = 0
+                cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
+                min_id, max_id = cr.fetchone()
+                min_msfid = max_id
+                if not min_id:
                     break
 
-                for x in js.get('rows'):
-                    nb_prod += 1
-                    prod_id = prod_obj.search(cr, uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], context=context)
-                    if not prod_id:
-                        logger.info('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code'], ))
-                        continue
-                    oc_data = x.get('ocValidations', {}).get(oc, {})
-                    logger.info('UD: %s' % x)
-                    data = {
-                        'oc_validation_date': False,
-                        'oc_devalidation_date': False,
-                        'oc_devalidation_reason': oc_data.get('devalidationReason'),
-                        'oc_comments': oc_data.get('comments'),
-                        'oc_project_restrictions': [(6, 0, [])],
+                page = 1
+                while True:
+                    params['filter'] = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
+                    params['page'] = page
 
-                    }
+                    request_ok = False
+                    retry = 0
+                    while not request_ok:
+                        try:
+                            logger.info('OC: %s, Page: %d, Filter: %s' % (oc, page, params['filter']))
+                            r = requests.get(base_url, params, timeout=request_timeout)
+                            if r.status_code != requests.codes.ok:
+                                r.raise_for_status()
+                            request_ok = True
+                        except Exception as e:
+                            if retry < max_request_retries:
+                                retry += 1
+                                logger.warn('Query error %d, retry in 5sec: %s' % (retry, tools.misc.get_traceback(e)))
+                                time.sleep(5)
+                            else:
+                                raise
 
-                    if oc_data.get('lastValidationDate'):
-                        data['oc_validation_date'] = self.ud_date(cr, uid, oc_data['lastValidationDate'])
-                    if oc_data.get('lastDevalidationDate'):
-                        data['oc_devalidation_date'] = self.ud_date(cr, uid, oc_data['lastDevalidationDate'])
+                    js = r.json()
+                    if not js.get('rows'):
+                        break
 
-                    c_restriction = []
-                    p_restriction = []
-                    for mr in oc_data.get('missionRestrictions', []):
-                        if mr.get('country', {}).get('labels', {}).get('english'):
-                            if mr['country']['labels']['english'] not in country_cache:
-                                c_id = country_obj.search(cr, uid, [('name', '=', mr['country']['labels']['english'])], context={'lang': 'en_MF'})
-                                if not c_id:
-                                    c_id = country_obj.create(cr, uid, {'name': mr['country']['labels']['english']})
-                                    if mr['country']['labels'].get('french'):
-                                        country_obj.write(cr, uid, c_id, {'name': mr['country']['labels']['french']}, context={'lang': 'fr_MF'})
+                    for x in js.get('rows'):
+                        logger.info('UD: %s' % x)
+                        nb_prod += 1
+                        prod_id = prod_obj.search(cr, uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], context=context)
+                        if not prod_id:
+                            logger.info('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code'], ))
+                            continue
 
-                                    logger.info('Create country %s' % (mr['country']['labels']['english'],))
-                                    country_cache[mr['country']['labels']['english']] = c_id
-                                else:
-                                    country_cache[mr['country']['labels']['english']] = c_id[0]
-                            c_restriction.append(country_cache[mr['country']['labels']['english']])
+                        oc_data = x.get('ocValidations', {}).get(oc, {})
+                        data = {
+                            'oc_validation_date': False,
+                            'oc_devalidation_date': False,
+                            'oc_devalidation_reason': oc_data.get('devalidationReason'),
+                            'oc_comments': oc_data.get('comments'),
+                            'oc_project_restrictions': [(6, 0, [])],
 
-                        for pr in mr.get('projectRestrictions', []):
-                            if pr.get('code'):
-                                if pr.get('code') not in project_cache:
-                                    p_id = project_obj.search(cr, uid, [('code', '=', pr['code'])], context=context)
-                                    if not p_id:
-                                        logger.info('Create project %s' % (pr['code'], ))
-                                        project_cache[pr['code']] = project_obj.create(cr, uid, {'code': pr['code'], 'name': pr.get('name')}, context=context)
+                        }
+
+                        if oc_data.get('lastValidationDate'):
+                            data['oc_validation_date'] = self.ud_date(cr, uid, oc_data['lastValidationDate'])
+                        if oc_data.get('lastDevalidationDate'):
+                            data['oc_devalidation_date'] = self.ud_date(cr, uid, oc_data['lastDevalidationDate'])
+
+                        c_restriction = []
+                        p_restriction = []
+                        for mr in oc_data.get('missionRestrictions', []):
+                            if mr.get('country', {}).get('labels', {}).get('english'):
+                                if mr['country']['labels']['english'] not in country_cache:
+                                    c_id = country_obj.search(cr, uid, [('name', '=', mr['country']['labels']['english'])], context={'lang': 'en_MF'})
+                                    if not c_id:
+                                        c_id = country_obj.create(cr, uid, {'name': mr['country']['labels']['english']})
+                                        if mr['country']['labels'].get('french'):
+                                            country_obj.write(cr, uid, c_id, {'name': mr['country']['labels']['french']}, context={'lang': 'fr_MF'})
+
+                                        logger.info('Create country %s' % (mr['country']['labels']['english'],))
+                                        country_cache[mr['country']['labels']['english']] = c_id
                                     else:
-                                        project_cache[pr['code']] = p_id[0]
-                                p_restriction.append(project_cache[pr['code']])
+                                        country_cache[mr['country']['labels']['english']] = c_id[0]
+                                c_restriction.append(country_cache[mr['country']['labels']['english']])
 
-                    data.update({
-                            'oc_country_restrictions': [(6, 0, c_restriction)],
-                            'oc_project_restrictions':  [(6, 0, p_restriction)],
+                            for pr in mr.get('projectRestrictions', []):
+                                if pr.get('code'):
+                                    if pr.get('code') not in project_cache:
+                                        p_id = project_obj.search(cr, uid, [('code', '=', pr['code'])], context=context)
+                                        if not p_id:
+                                            logger.info('Create project %s' % (pr['code'], ))
+                                            project_cache[pr['code']] = project_obj.create(cr, uid, {'code': pr['code'], 'name': pr.get('name')}, context=context)
+                                        else:
+                                            project_cache[pr['code']] = p_id[0]
+                                    p_restriction.append(project_cache[pr['code']])
+
+                        data.update({
+                            'oc_country_restrictions': [(6, 0, list(set(c_restriction)))],
+                            'oc_project_restrictions':  [(6, 0, list(set(p_restriction)))],
                         })
-                    logger.info('Write product id: %d, code: %s, msfid: %s, data: %s' % (prod_id[0], x['code'], x['id'], data))
-                    prod_obj.write(cr, uid, prod_id[0], data, context=context)
-                    updated += 1
-                    # register last msfid
-                    cr.execute('RELEASE SAVEPOINT ud_validation_sync')
+                        logger.info('Write product id: %d, code: %s, msfid: %s, data: %s' % (prod_id[0], x['code'], x['id'], data))
+                        prod_obj.write(cr, uid, prod_id[0], data, context=context)
+                        transaction_updated += 1
+                    page += 1
+                    if len(js.get('rows')) < page_size:
+                        break
+                # register last msfid
+                cr.execute('RELEASE SAVEPOINT ud_validation_sync')
+                updated += transaction_updated
 
-                page += 1
         except Exception as e:
             cr.execute('ROLLBACK TO SAVEPOINT ud_validation_sync')
             error = tools.misc.get_traceback(e)
             logger.error('Script error: %s' % error)
+            handler.close()
             session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'error', 'number_products_pulled': nb_prod, 'error': error, 'nb_page_retrieved': page, 'number_products_updated': updated}, context=context)
             return False
 
+        logger.info('End of Script')
+        handler.close()
         session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'nb_page_retrieved': page, 'number_products_updated': updated}, context=context)
         return True
 
