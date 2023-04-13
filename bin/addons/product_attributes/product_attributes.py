@@ -32,7 +32,8 @@ import logging
 import logging.handlers
 from os import path, remove
 import sys
-from threading import RLock
+import threading
+import pooler
 
 from base.res.signature import _register_log
 import requests
@@ -358,6 +359,10 @@ class unidata_sync_log(osv.osv):
     _rec_name = 'start_date'
     _order = 'id desc'
 
+    def __init__(self, pool, cr):
+        super(unidata_sync_log, self).__init__(pool, cr)
+        cr.execute("update unidata_sync_log set state='error', error='Server stopped' where state='running'")
+
     def _get_log_exists(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for log in self.read(cr, uid, ids, ['log_file'], context=context):
@@ -395,7 +400,7 @@ unidata_sync_log()
 class unidata_sync(osv.osv):
     _name = 'unidata.sync'
     _description = "UniData Sync"
-    _lock = RLock()
+    _lock = threading.RLock()
 
     def _get_log(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -539,6 +544,29 @@ class unidata_sync(osv.osv):
         param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
         return True
 
+    def _start_bg(self, dbname, uid, context=None):
+        cr = pooler.get_db(dbname).cursor()
+        try:
+            self.start_ud_sync(cr, uid, context=context)
+        except Exception, e:
+            self._error = e
+        finally:
+            cr.commit()
+            cr.close(True)
+        return True
+
+    def start_manual(self, cr, uid, ids, context=None):
+        self._error = ''
+        new_thread = threading.Thread(
+            target=self._start_bg,
+            args=(cr.dbname, uid, context)
+        )
+        new_thread.start()
+        new_thread.join(3.0)
+        if not new_thread.isAlive() and self._error:
+            raise self._error
+        return True
+
     def start_ud_sync(self, cr, uid, context=None):
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
             raise osv.except_osv(_('Error'), _('UD sync can only be started at HQ level.'))
@@ -551,14 +579,11 @@ class unidata_sync(osv.osv):
             self._lock.release()
 
     def _start_ud_sync(self, cr, uid, full=False, context=None):
-        # TODO: configure number of log file
 
         ud_info = self._ud_info(cr, uid, context=context)
         page_size = ud_info['page_size']
         params = self._ud_params(cr, uid, ud_info, context=context)
         max_request_retries = 4
-
-        keep_log = 50
 
         session_obj = self.pool.get('unidata.sync.log')
         prod_obj = self.pool.get('product.product')
@@ -597,8 +622,8 @@ class unidata_sync(osv.osv):
         formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
 
         if tools.config['logfile']:
-            log_file = path.join(path.dirname(tools.config['logfile']), 'ud-sync-%s-%s.log' % (session_id, datetime.strftime('%Y-%m-%d-%H%M')))
-            handler = logging.FileHandler(log_file, backupCount=keep_log)
+            log_file = path.join(path.dirname(tools.config['logfile']), 'ud-sync-%s-%s.log' % (session_id, datetime.now().strftime('%Y-%m-%d-%H%M')))
+            handler = logging.FileHandler(log_file)
             session_obj.write(cr, uid, session_id, {'log_file': log_file}, context=context)
         else:
             handler = logging.StreamHandler(sys.stdout)
@@ -726,8 +751,10 @@ class unidata_sync(osv.osv):
                     # end of requests loop
 
                 param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', min_msfid)
-                cr.execute('RELEASE SAVEPOINT unidata_sync_log')
+                #cr.execute('RELEASE SAVEPOINT unidata_sync_log')
                 updated += transaction_updated
+                session_obj.write(cr, uid, session_id, {'number_products_pulled': nb_prod, 'number_products_updated': updated}, context=context)
+                cr.commit()
 
                 # end of sql loop
 

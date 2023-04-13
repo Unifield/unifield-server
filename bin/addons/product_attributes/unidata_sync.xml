@@ -54,6 +54,11 @@
                     <field name="last_execution_end_date" />
                     <field name="last_execution_sync_type" />
                     <field name="last_execution_status" />
+                    <group colspan="4" col="4">
+                        <button string="Start manually" name="start_manual" type="object" icon="gtk-refresh" />
+                        <group colspan="3" />
+                    </group>
+
                 </form>
             </field>
         </record>
@@ -91,7 +96,7 @@
             <field name="model">unidata.sync.log</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="UniData Log" hide_new_button="1" hide_delete_button="1" noteditable="1">
+                <tree string="UniData Log" hide_new_button="1" hide_delete_button="1" noteditable="1" colors="red:state=='error'">
                     <field name="start_date" />
                     <field name="end_date"  />
                     <field name="page_size" />
