@@ -26,6 +26,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from tools.safe_eval import safe_eval
+from tools.misc import _max_amount
+from tools.misc import get_fake
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import create_cashbox_lines
@@ -516,14 +518,14 @@ class account_bank_statement(osv.osv):
         if register.journal_id and register.journal_id.currency:
             # prepare some values
             name += ' - ' + register.journal_id.code + ' - '+ register.journal_id.currency.name
-            domain.append(('statement_id.journal_id.id', '=', register.journal_id.id))
+            domain.append(('statement_id.journal_id.currency', '=', register.journal_id.currency.id))
         # Prepare view
         view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
         view_id = view and view[1] or False
         # Prepare search view
         search_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_filter')
         search_view_id = search_view and search_view[1] or False
-        context.update({'open_advance': register.id})
+        context.update({'open_advance': register.id, 'search_default_current_register': True, 'current_register_journal': register.journal_id.id})
         return {
             'name': name,
             'type': 'ir.actions.act_window',
@@ -1206,6 +1208,13 @@ class account_bank_statement_line(osv.osv):
             res[regline['id']] = len(regline['imported_account_invoice_ids'])
         return res
 
+    def _search_current_register(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args or 'current_register_journal' not in context:
+            return []
+        return [('journal_id', '=', context['current_register_journal'])]
+
     _columns = {
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
@@ -1254,6 +1263,9 @@ class account_bank_statement_line(osv.osv):
                                                  help="This move line has been taken for create an Import Cheque in a bank statement."),
         'is_transfer_with_change': fields.function(_get_transfer_with_change_state, method=True, string="Is a transfer with change line?",
                                                    type='boolean', store=False),
+        'is_current_register': fields.function(get_fake, fnct_search=_search_current_register, method=True,
+                                               string="Is this open advance from current register journal?",
+                                               type='boolean', store=False),
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
         'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
         'type_for_register': fields.related('account_id','type_for_register', string="Type for register", type='selection', selection=[('none','None'),
@@ -2085,10 +2097,9 @@ class account_bank_statement_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        too_big_amount = 10**10
         for regline in self.browse(cr, uid, ids, fields_to_fetch=['amount', 'name'], context=context):
-            if abs(regline.amount or 0.0) >= too_big_amount:
-                raise osv.except_osv(_('Error'), _('The amount of the register line "%s" is more than 10 digits.') % regline.name)
+            if _max_amount(regline.amount):
+                raise osv.except_osv(_('Error'), _('The amount of the register line "%s" is more than 10 digits with decimals or 12 digits without decimals.') % regline.name)
 
     def _check_register_open(self, register, action, context=None):
         """
