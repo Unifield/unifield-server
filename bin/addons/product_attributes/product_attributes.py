@@ -361,7 +361,8 @@ class unidata_sync_log(osv.osv):
 
     def __init__(self, pool, cr):
         super(unidata_sync_log, self).__init__(pool, cr)
-        cr.execute("update unidata_sync_log set state='error', error='Server stopped' where state='running'")
+        if cr.column_exists('unidata_sync_log', 'state'):
+            cr.execute("update unidata_sync_log set state='error', error='Server stopped' where state='running'")
 
     def _get_log_exists(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -392,6 +393,7 @@ class unidata_sync_log(osv.osv):
         'last_date': fields.char('Last Date', size=64, readonly=1),
         'log_file': fields.char('Path to log file', size=128, readonly=1),
         'log_exists': fields.function(_get_log_exists, type='boolean', method=1, string='Log file exists'),
+        'start_uid': fields.many2one('res.users', 'Started by', readonly=1),
     }
 
 unidata_sync_log()
@@ -469,7 +471,6 @@ class unidata_sync(osv.osv):
             log_obj = self.pool.get('unidata.sync.log')
             log_ids = log_obj.search(cr, uid, [('log_file', '!=', False)], offset=info['nb_keep_log'], order='id desc', context=context)
             to_reset = []
-            print log_ids
             for log in log_obj.read(cr, uid, log_ids, ['log_file', 'log_exists'], context=context):
                 if log['log_exists']:
                     try:
@@ -578,7 +579,9 @@ class unidata_sync(osv.osv):
         finally:
             self._lock.release()
 
-    def _start_ud_sync(self, cr, uid, full=False, context=None):
+    def _start_ud_sync(self, cr, nuid, full=False, context=None):
+
+        uid = self.pool.get('ir.model.data').get_object_reference(cr, nuid, 'base', 'user_unidata_pull')[1]
 
         ud_info = self._ud_info(cr, uid, context=context)
         page_size = ud_info['page_size']
@@ -617,7 +620,8 @@ class unidata_sync(osv.osv):
             first_query = True
 
         date_to_record = False
-        session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync, 'sync_type': sync_type}, context=context)
+        nuid = hasattr(nuid, 'realUid') and nuid.realUid or nuid
+        session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync, 'sync_type': sync_type, 'start_uid': nuid}, context=context)
         logger = logging.getLogger('unidata-sync')
         formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
 
