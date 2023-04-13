@@ -33,15 +33,19 @@
                     <field name="password" widget="password" />
                     <field name="page_size" />
                     <field name="ud_timeout" />
-                    <button name="test_connection" string="Test connection" colspan="2" type="object" icon="terp-stock_zoom"  /> 
+                    <button name="test_connection" string="Test connection" colspan="2" type="object" icon="terp-stock_zoom"  />
                     <separator colspan="4" string="Scheduler" />
                     <field name="is_active" />
-                    <field name="interval" />
                     <field name="next_planned_date" />
+                    <field name="interval" />
                     <field name="next_run_date" />
+                    <field name="eligible_for_full_sync" invisible="1" />
+                    <button name="set_as_full" string="Set next sync as full sync" confirm="The next will be a full sync, this operation cannot be reversed. Do you confirm ?" colspan="2" type="object" icon="gtk-media-previous"  attrs="{'invisible': [('eligible_for_full_sync', '=', False)]}"/>
+                    <separator colspan="4" string="Scheduler" />
                     <separator colspan="4" string="Last Sync" />
                     <field name="last_execution_start_date" />
                     <field name="last_execution_end_date" />
+                    <field name="last_execution_sync_type" />
                     <field name="last_execution_status" />
                 </form>
             </field>
@@ -63,10 +67,12 @@
                     <field name="start_date" />
                     <field name="end_date"  />
                     <field name="page_size" />
+                    <newline />
                     <field name="number_products_pulled" />
                     <field name="number_products_updated" />
                     <field name="msfid_min" />
                     <field name="last_date" />
+                    <field name="sync_type" />
                     <field name="state" />
                     <field name="error" colspan="4" />
                 </form>
@@ -78,14 +84,13 @@
             <field name="model">unidata.sync.log</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="UniData Log" hide_new_button="1" hide_delete_button="1">
+                <tree string="UniData Log" hide_new_button="1" hide_delete_button="1" noteditable="1">
                     <field name="start_date" />
                     <field name="end_date"  />
                     <field name="page_size" />
                     <field name="number_products_pulled" />
                     <field name="number_products_updated" />
-                    <field name="msfid_min" />
-                    <field name="last_date" />
+                    <field name="sync_type" />
                     <field name="state" />
                 </tree>
             </field>
@@ -99,6 +104,7 @@
                 <search string="UniData Log">
                     <field name="start_date" />
                     <field name="end_date"  />
+                    <field name="sync_type" />
                     <field name="state" />
                 </search>
             </field>

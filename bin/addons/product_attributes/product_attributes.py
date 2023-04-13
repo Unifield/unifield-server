@@ -359,11 +359,12 @@ class unidata_sync_log(osv.osv):
     _columns = {
         'start_date': fields.datetime('Start Date', readonly=1),
         'end_date': fields.datetime('End Date', readonly=1),
-        'number_products_pulled': fields.integer('# products', readonly=1),
-        'number_products_updated': fields.integer('# updated', readonly=1),
+        'number_products_pulled': fields.integer('# products pulled', readonly=1),
+        'number_products_updated': fields.integer('# products updated', readonly=1),
         'error': fields.text('Error', readonly=1),
         'page_size': fields.integer('page size', readonly=1),
         'state': fields.selection([('running', 'Running'), ('error', 'Error'), ('done', 'Done')], 'State', readonly=1),
+        'sync_type': fields.selection([('full', 'Full'), ('cont', 'Continuation'), ('diff', 'Based on last modification date')], 'Sync Type', readonly=1),
         'msfid_min': fields.integer('Min Msfid', readonly=1),
         'last_date': fields.char('Last Date', size=64, readonly=1),
     }
@@ -378,20 +379,25 @@ class unidata_sync(osv.osv):
     def _get_log(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        cr.execute("select start_date, end_date, state from unidata_sync_log order by id desc limit 1")
+        cr.execute("select start_date, end_date, state, sync_type from unidata_sync_log order by id desc limit 1")
         one = cr.fetchone()
         if one:
             last_execution_start_date = one[0]
             last_execution_end_date = one[1]
             last_execution_status = one[2]
+            last_execution_sync_type = one[3]
         else:
-            last_execution_start_date = last_execution_end_date = last_execution_status = False
+            last_execution_start_date = last_execution_end_date = last_execution_status = last_execution_sync_type = False
 
+        param_obj = self.pool.get('ir.config_parameter')
+        eligible_for_full_sync = bool(param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC')) or bool(param_obj.get_param(cr, 1, 'LAST_UD_DATE_SYNC')) or False
         for _id in ids:
             res[_id] = {
                 'last_execution_start_date': last_execution_start_date,
                 'last_execution_end_date': last_execution_end_date,
                 'last_execution_status': last_execution_status,
+                'last_execution_sync_type': last_execution_sync_type,
+                'eligible_for_full_sync': eligible_for_full_sync,
             }
 
         return res
@@ -415,7 +421,9 @@ class unidata_sync(osv.osv):
         'ud_timeout': fields.integer('UD Timeout in second'),
         'last_execution_start_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last Execution Start Date"),
         'last_execution_end_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last Execution End Date"),
-        'last_execution_status': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('running', 'Running'), ('error', 'Error'), ('done', 'Done')], string="Last Execution End State"),
+        'last_execution_sync_type': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('full', 'Full'), ('cont', 'Continuation'), ('diff', 'Based on last modification date')], string="Last Execution Sync Type"),
+        'last_execution_status': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('running', 'Running'), ('error', 'Error'), ('done', 'Done')], string="Last Execution State"),
+        'eligible_for_full_sync': fields.function(_get_log, method=True, multi='get_log', type='boolean', string="Eligible for full sync"),
         'is_active': fields.boolean('Active'),
         'interval': fields.integer('Scheduler interval (hours)'),
     }
@@ -481,6 +489,12 @@ class unidata_sync(osv.osv):
             date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M')
         return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
 
+    def set_as_full(self, cr, uid, ids, context=None):
+        param_obj = self.pool.get('ir.config_parameter')
+        param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
+        param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
+        return True
+
     def start_ud_sync(self, cr, uid, full=False, context=None):
 
         # TODO: only at HQ
@@ -533,16 +547,20 @@ class unidata_sync(osv.osv):
             param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
             param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
 
+        sync_type = 'full'
         last_ud_date_sync = param_obj.get_param(cr, 1, 'LAST_UD_DATE_SYNC') or False
+        if last_ud_date_sync:
+            sync_type = 'diff'
         min_msfid = param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC') or 0
         if min_msfid:
             # do not update last sync date
             first_query = False
+            sync_type = 'cont'
         else:
             first_query = True
 
         date_to_record = False
-        session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync}, context=context)
+        session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync, 'sync_type': sync_type}, context=context)
         # commit to display running session
         cr.commit()
         logger.info('Sync start, page size: %s, last msfid: %s, last date: %s' % (page_size, min_msfid, last_ud_date_sync))
@@ -551,6 +569,7 @@ class unidata_sync(osv.osv):
             while True:
                 cr.execute('SAVEPOINT unidata_sync_log')
                 transaction_updated = 0
+                # TODO: include new products
                 cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
                 min_id, max_id = cr.fetchone()
                 min_msfid = max_id
