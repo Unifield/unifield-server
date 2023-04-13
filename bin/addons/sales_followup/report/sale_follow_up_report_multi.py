@@ -279,7 +279,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         m_index += 1
 
                     # reset the data to prevent delivered_qty problem when line is split in PICK
-                    data = {}
+                    data = {
+                        'state': line.state,
+                        'state_display': line_state_display_dict.get(line.state_to_display),
+                    }
                 # If the move is from a cancelled OUT/Pick plus sometimes returned PPL/Ship but not a cancelled FO line
                 cancelled_pps = line.state not in ('cancel', 'cancel_r') and move.type == 'out' and \
                     move.picking_subtype in ('standard', 'picking', 'ppl', 'packing') and \
