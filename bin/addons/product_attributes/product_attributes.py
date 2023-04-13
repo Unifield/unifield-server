@@ -34,6 +34,7 @@ from os import path, remove
 import sys
 import threading
 import pooler
+from dateutil.relativedelta import relativedelta
 
 from base.res.signature import _register_log
 import requests
@@ -602,7 +603,6 @@ class unidata_sync(osv.osv):
         nb_prod = 0
         updated = 0
 
-
         if full:
             param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
             param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
@@ -611,13 +611,18 @@ class unidata_sync(osv.osv):
         last_ud_date_sync = param_obj.get_param(cr, 1, 'LAST_UD_DATE_SYNC') or False
         if last_ud_date_sync:
             sync_type = 'diff'
+
+
         min_msfid = param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC') or 0
         if min_msfid:
             # do not update last sync date
             first_query = False
             sync_type = 'cont'
+            last_ud_date_sync = param_obj.get_param(cr, 1, 'FORMER_UD_DATE_SYNC')
         else:
+            # full or diff
             first_query = True
+            param_obj.set_param(cr, 1, 'FORMER_UD_DATE_SYNC', last_ud_date_sync)
 
         date_to_record = False
         nuid = hasattr(nuid, 'realUid') and nuid.realUid or nuid
@@ -657,9 +662,11 @@ class unidata_sync(osv.osv):
                 while True:
                     ud_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
                     if last_ud_date_sync:
-                        ud_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(. /metaData/createdOn, "%(last_ud_date_sync)s")) and %(filter)s' %{
+                        createdOn = (datetime.strptime(last_ud_date_sync.split('T')[0], '%Y-%m-%d') + relativedelta(days=-3)).strftime('%Y-%m-%dT00:00:00')
+                        ud_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(. /metaData/createdOn, "%(createdOn)s")) and %(filter)s' %{
                             'filter': ud_filter,
-                            'last_ud_date_sync': last_ud_date_sync
+                            'last_ud_date_sync': last_ud_date_sync,
+                            'createdOn': createdOn,
                         }
                     params['filter'] = ud_filter
                     params['page'] = page
@@ -755,6 +762,8 @@ class unidata_sync(osv.osv):
                     # end of requests loop
 
                 param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', min_msfid)
+                if date_to_record:
+                    param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', date_to_record)
                 #cr.execute('RELEASE SAVEPOINT unidata_sync_log')
                 updated += transaction_updated
                 session_obj.write(cr, uid, session_id, {'number_products_pulled': nb_prod, 'number_products_updated': updated}, context=context)
@@ -774,8 +783,6 @@ class unidata_sync(osv.osv):
         handler.close()
         session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'number_products_updated': updated}, context=context)
         param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', '')
-        if date_to_record:
-            param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', date_to_record)
         return True
 
 
