@@ -32,9 +32,12 @@ import logging
 import logging.handlers
 from os import path
 import sys
+from threading import RLock
+
 
 from base.res.signature import _register_log
 import requests
+
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -375,6 +378,7 @@ unidata_sync_log()
 class unidata_sync(osv.osv):
     _name = 'unidata.sync'
     _description = "UniData Sync"
+    _lock = RLock()
 
     def _get_log(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -495,11 +499,18 @@ class unidata_sync(osv.osv):
         param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
         return True
 
-    def start_ud_sync(self, cr, uid, full=False, context=None):
+    def start_ud_sync(self, cr, uid, context=None):
+        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+            raise osv.except_osv(_('Error'), _('UD sync can only be started at HQ level.'))
 
-        # TODO: only at HQ
-        # TODO: prevent concurrent
-        # TODO: request full upgrade
+        if not self._lock.acquire(blocking=False):
+            raise osv.except_osv(_('Error'), _('A sync is already running ...'))
+        try:
+            self._start_ud_sync(cr, uid, context=context)
+        finally:
+            self._lock.release()
+
+    def _start_ud_sync(self, cr, uid, full=False, context=None):
         # TODO: configure number of log file
 
         ud_info = self._ud_info(cr, uid, context=context)
