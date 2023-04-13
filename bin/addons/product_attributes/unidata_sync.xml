@@ -30,18 +30,25 @@
                 <form string="UniData Configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <field name="url" colspan="4"/>
                     <field name="login"  />
-                    <field name="password" widget="password" />
+                    <field name="password" password="True" />
+                    <field name="nb_keep_log" />
                     <field name="page_size" />
                     <field name="ud_timeout" />
-                    <button name="test_connection" string="Test connection" colspan="2" type="object" icon="terp-stock_zoom"  />
+                    <newline />
+                    <group colspan="4" col="4">
+                        <button name="test_connection" string="Test connection" colspan="1" type="object" icon="terp-stock_zoom"  />
+                        <group colspan="3" />
+                    </group>
                     <separator colspan="4" string="Scheduler" />
                     <field name="is_active" />
                     <field name="next_planned_date" />
                     <field name="interval" />
                     <field name="next_run_date" />
                     <field name="eligible_for_full_sync" invisible="1" />
-                    <button name="set_as_full" string="Set next sync as full sync" confirm="The next will be a full sync, this operation cannot be reversed. Do you confirm ?" colspan="2" type="object" icon="gtk-media-previous"  attrs="{'invisible': [('eligible_for_full_sync', '=', False)]}"/>
-                    <separator colspan="4" string="Scheduler" />
+                    <group colspan="4" col="4">
+                        <button name="set_as_full" string="Set next sync as full sync" confirm="The next will be a full sync, this operation cannot be reversed. Do you confirm ?" colspan="1" type="object" icon="gtk-media-previous"  attrs="{'invisible': [('eligible_for_full_sync', '=', False)]}"/>
+                        <group colspan="3" />
+                    </group>
                     <separator colspan="4" string="Last Sync" />
                     <field name="last_execution_start_date" />
                     <field name="last_execution_end_date" />
@@ -92,6 +99,8 @@
                     <field name="number_products_updated" />
                     <field name="sync_type" />
                     <field name="state" />
+                    <field name="log_exists" invisible="1" />
+                    <button string="Get log file" name="get_log_file" type="object" icon="gtk-file" attrs="{'invisible': [('log_exists', '=', False)]}" />
                 </tree>
             </field>
         </record>
@@ -122,5 +131,15 @@
         <menuitem name="UniData" parent="object_query.menu_preferences" id="unidata_main_menu" sequence="17" />
         <menuitem name="UniData Sync Config" action="unidata_sync_action" type="server" id="unidata_sync_menu" parent="unidata_main_menu" sequence="10"/>
         <menuitem name="UniData Sync report" action="unidata_sync_log_action" id="unidata_sync_report_menu" parent="unidata_main_menu" sequence="15"/>
+
+        <report
+            auto="False"
+            id="unidata_sync_log_download"
+            model="unidata.sync.log"
+            name="product_attributes.unidata_sync_log_download"
+            string="Get log file"
+            menu="False"
+        />
+
     </data>
 </openerp>

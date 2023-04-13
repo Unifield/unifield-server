@@ -30,10 +30,9 @@ import time
 
 import logging
 import logging.handlers
-from os import path
+from os import path, remove
 import sys
 from threading import RLock
-
 
 from base.res.signature import _register_log
 import requests
@@ -359,6 +358,22 @@ class unidata_sync_log(osv.osv):
     _rec_name = 'start_date'
     _order = 'id desc'
 
+    def _get_log_exists(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for log in self.read(cr, uid, ids, ['log_file'], context=context):
+            res[log['id']] = log['log_file'] and path.exists(log['log_file'])
+        return res
+
+    def get_log_file(self, cr, uid, ids, context=None):
+        d = self.read(cr, uid, ids[0], ['start_date', 'log_file', 'log_exists'], context=context)
+        if not d['log_exists']:
+            raise osv.except_osv(_('Error'), _('Log file does not exist.'))
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'product_attributes.unidata_sync_log_download',
+            'datas': {'ids': [ids[0]], 'target_filename': path.basename(d['log_file'])}
+        }
+
     _columns = {
         'start_date': fields.datetime('Start Date', readonly=1),
         'end_date': fields.datetime('End Date', readonly=1),
@@ -370,6 +385,8 @@ class unidata_sync_log(osv.osv):
         'sync_type': fields.selection([('full', 'Full'), ('cont', 'Continuation'), ('diff', 'Based on last modification date')], 'Sync Type', readonly=1),
         'msfid_min': fields.integer('Min Msfid', readonly=1),
         'last_date': fields.char('Last Date', size=64, readonly=1),
+        'log_file': fields.char('Path to log file', size=128, readonly=1),
+        'log_exists': fields.function(_get_log_exists, type='boolean', method=1, string='Log file exists'),
     }
 
 unidata_sync_log()
@@ -422,6 +439,7 @@ class unidata_sync(osv.osv):
         'next_run_date': fields.datetime('Force next execution date'),
         'next_planned_date': fields.function(_get_next_planned_date,  method=True, type='datetime', string='Next Scheduled date'),
         'page_size': fields.integer('UD Page size'),
+        'nb_keep_log': fields.integer('Number of log files to keep'),
         'ud_timeout': fields.integer('UD Timeout in second'),
         'last_execution_start_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last Execution Start Date"),
         'last_execution_end_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last Execution End Date"),
@@ -437,7 +455,29 @@ class unidata_sync(osv.osv):
         'interval': 24,
         'page_size': 500,
         'ud_timeout': 30,
+        'nb_keep_log': 30,
     }
+
+    def _purge_log(self, cr, uid, context=None):
+        info = self._ud_info(cr, uid, context=context)
+        if info['nb_keep_log']:
+            log_obj = self.pool.get('unidata.sync.log')
+            log_ids = log_obj.search(cr, uid, [('log_file', '!=', False)], offset=info['nb_keep_log'], order='id desc', context=context)
+            to_reset = []
+            print log_ids
+            for log in log_obj.read(cr, uid, log_ids, ['log_file', 'log_exists'], context=context):
+                if log['log_exists']:
+                    try:
+                        remove(log['log_file'])
+                        to_reset.append(log['id'])
+                    except:
+                        raise
+
+            if to_reset:
+                log_obj.write(cr, uid, to_reset, {'log_file': False}, context=context)
+
+        return True
+
 
     def create(self, cr, uid, vals, context=None):
         if self.search_exists(cr, uid, [], context=context):
@@ -534,25 +574,6 @@ class unidata_sync(osv.osv):
         nb_prod = 0
         updated = 0
 
-        logger = logging.getLogger('unidata-sync')
-        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
-
-        if tools.config['logfile']:
-            log_file = path.join(path.dirname(tools.config['logfile']), 'ud-sync.log')
-            do_rotate = path.exists(log_file)
-            handler = logging.handlers.RotatingFileHandler(log_file, backupCount=keep_log)
-        else:
-            do_rotate = False
-            handler = logging.StreamHandler(sys.stdout)
-
-        handler.setLevel(logging.INFO)
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.propagate = False
-
-        if do_rotate:
-            handler.doRollover()
-
 
         if full:
             param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
@@ -572,6 +593,22 @@ class unidata_sync(osv.osv):
 
         date_to_record = False
         session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync, 'sync_type': sync_type}, context=context)
+        logger = logging.getLogger('unidata-sync')
+        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+
+        if tools.config['logfile']:
+            log_file = path.join(path.dirname(tools.config['logfile']), 'ud-sync-%s-%s.log' % (session_id, datetime.strftime('%Y-%m-%d-%H%M')))
+            handler = logging.FileHandler(log_file, backupCount=keep_log)
+            session_obj.write(cr, uid, session_id, {'log_file': log_file}, context=context)
+        else:
+            handler = logging.StreamHandler(sys.stdout)
+
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.propagate = False
+
+        self._purge_log(cr, uid, context=context)
         # commit to display running session
         cr.commit()
         logger.info('Sync start, page size: %s, last msfid: %s, last date: %s' % (page_size, min_msfid, last_ud_date_sync))
