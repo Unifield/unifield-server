@@ -399,6 +399,162 @@ class unidata_sync_log(osv.osv):
 
 unidata_sync_log()
 
+class ud_sync():
+
+    def __init__(self, cr, uid, pool, oc=False, max_retries=4, logger=False, context=None):
+        self.cr = cr
+        self.uid = uid
+        self.pool = pool
+        self.max_retries = max_retries
+        self.context = context
+        self.logger = logger
+        self.oc = oc
+
+        sync_id = self.pool.get('ir.model.data').get_object_reference(self.cr, self.uid, 'product_attributes', 'unidata_sync_config')[1]
+        config = self.pool.get('unidata.sync').read(self.cr, self.uid, sync_id, context=self.context)
+
+        self.page_size = config['page_size'] or 500
+        self.ud_params = {
+            'login': config['login'],
+            'password': config['password'],
+            'size': self.page_size,
+            'publishonweb': False,
+        }
+        self.url = config['url']
+        self.timeout = config['ud_timeout']
+        self.nb_keep_log = config['nb_keep_log']
+        self.country_cache = {}
+        self.project_cache = {}
+
+        if self.pool.get('res.company')._get_instance_level(self.cr, self.uid) != 'section':
+            raise osv.except_osv(_('Error'), _('UD sync can only be started at HQ level.'))
+
+    def ud_date(self, date):
+        date = date.split('.')[0] # found 3 formats in UD: 2021-03-30T06:32:51.500, 2021-03-30T06:32:51  and 2021-03-30T06:32
+        try:
+            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
+        except:
+            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M')
+        return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
+
+    def query(self, ud_filter, page=1):
+        params = self.ud_params.copy()
+        params['page'] = page
+        params['filter'] = ud_filter
+
+        request_ok = False
+        retry = 0
+        while not request_ok:
+            try:
+                self.log('OC: %s Page: %d, Filter: %s' % (self.oc, page, params['filter']))
+                r = requests.get(self.url, params, timeout=self.timeout)
+                if r.status_code != requests.codes.ok:
+                    r.raise_for_status()
+                request_ok = True
+            except Exception as e:
+                if retry < self.max_retries:
+                    retry += 1
+                    self.log('Query error %d, retry in 5sec: %s' % (retry, tools.misc.get_traceback(e)), 'warn')
+                    time.sleep(5)
+                else:
+                    raise
+        return r.json()
+
+    def log(self, msg, level=None):
+        if self.logger:
+            if level == 'warn':
+                llevel = logging.WARNING
+            elif level == 'error':
+                llevel = logging.ERROR
+            else:
+                llevel = logging.INFO
+            self.logger.log(llevel, msg)
+
+    def update_products(self, ud_filter, record_date):
+        country_obj = self.pool.get('unidata.country')
+        project_obj = self.pool.get('unidata.project')
+        prod_obj = self.pool.get('product.product')
+
+        page = 1
+        date_to_record = False
+        prod_updated = 0
+        rows_seen = 0
+        while True:
+            js = self.query(ud_filter, page=page)
+
+            if record_date:
+                date_to_record = js.get('context', {}).get('executeDate')
+            record_date = False
+
+            if not js.get('rows'):
+                break
+
+            for x in js.get('rows'):
+                self.log('UD: %s' % x)
+                rows_seen += 1
+                prod_id = prod_obj.search(self.cr, self.uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], context=self.context)
+                if not prod_id:
+                    self.log('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code'], ))
+                    continue
+
+                oc_data = x.get('ocValidations', {}).get(self.oc, {})
+                data = {
+                    'oc_validation': oc_data.get('valid'),
+                    'oc_validation_date': False,
+                    'oc_devalidation_date': False,
+                    'oc_devalidation_reason': oc_data.get('devalidationReason'),
+                    'oc_comments': oc_data.get('comments'),
+
+                }
+
+                if oc_data.get('lastValidationDate'):
+                    data['oc_validation_date'] = self.ud_date(oc_data['lastValidationDate'])
+                if oc_data.get('lastDevalidationDate'):
+                    data['oc_devalidation_date'] = self.ud_date(oc_data['lastDevalidationDate'])
+
+                c_restriction = []
+                p_restriction = []
+                for mr in oc_data.get('missionRestrictions', []):
+                    if mr.get('country', {}).get('labels', {}).get('english'):
+                        if mr['country']['labels']['english'] not in self.country_cache:
+                            c_id = country_obj.search(self.cr, self.uid, [('name', '=', mr['country']['labels']['english'])], context={'lang': 'en_MF'})
+                            if not c_id:
+                                c_id = country_obj.create(self.cr, self.uid, {'name': mr['country']['labels']['english']})
+                                if mr['country']['labels'].get('french'):
+                                    country_obj.write(self.cr, self.uid, c_id, {'name': mr['country']['labels']['french']}, context={'lang': 'fr_MF'})
+
+                                self.log('Create country %s' % (mr['country']['labels']['english'],))
+                                self.country_cache[mr['country']['labels']['english']] = c_id
+                            else:
+                                self.country_cache[mr['country']['labels']['english']] = c_id[0]
+                        c_restriction.append(self.country_cache[mr['country']['labels']['english']])
+
+                    for pr in mr.get('projectRestrictions', []):
+                        if pr.get('code'):
+                            if pr.get('code') not in self.project_cache:
+                                p_id = project_obj.search(self.cr, self.uid, [('code', '=', pr['code'])], context=self.context)
+                                if not p_id:
+                                    self.log('Create project %s' % (pr['code'], ))
+                                    self.project_cache[pr['code']] = project_obj.create(self.cr, self.uid, {'code': pr['code'], 'name': pr.get('name')}, context=self.context)
+                                else:
+                                    self.project_cache[pr['code']] = p_id[0]
+                            p_restriction.append(self.project_cache[pr['code']])
+
+                data.update({
+                    'oc_country_restrictions': [(6, 0, list(set(c_restriction)))],
+                    'oc_project_restrictions':  [(6, 0, list(set(p_restriction)))],
+                })
+                self.log('Write product id: %d, code: %s, msfid: %s, data: %s' % (prod_id[0], x['code'], x['id'], data))
+                prod_obj.write(self.cr, self.uid, prod_id[0], data, context=self.context)
+                prod_updated += 1
+            page += 1
+            if len(js.get('rows')) < self.page_size:
+                break
+
+        return date_to_record, rows_seen, prod_updated
+
+
+
 
 class unidata_sync(osv.osv):
     _name = 'unidata.sync'
@@ -467,10 +623,10 @@ class unidata_sync(osv.osv):
     }
 
     def _purge_log(self, cr, uid, context=None):
-        info = self._ud_info(cr, uid, context=context)
-        if info['nb_keep_log']:
+        sync_obj = ud_sync(cr, uid, self.pool, context=context)
+        if sync_obj.nb_keep_log:
             log_obj = self.pool.get('unidata.sync.log')
-            log_ids = log_obj.search(cr, uid, [('log_file', '!=', False)], offset=info['nb_keep_log'], order='id desc', context=context)
+            log_ids = log_obj.search(cr, uid, [('log_file', '!=', False)], offset=sync_obj.nb_keep_log, order='id desc', context=context)
             to_reset = []
             for log in log_obj.read(cr, uid, log_ids, ['log_file', 'log_exists'], context=context):
                 if log['log_exists']:
@@ -491,28 +647,11 @@ class unidata_sync(osv.osv):
             raise osv.except_osv(_('Error'), _('Only 1 UniData config record is allowed'))
         return super(unidata_sync, self).create(cr, uid, vals, context=context)
 
-    def _ud_info(self, cr, uid, context=None):
-        sync_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'unidata_sync_config')[1]
-        return self.read(cr, uid, sync_id, context=context)
-
-    def _ud_params(self, cr, uid, info, context=None):
-        return {
-            'login': info['login'],
-            'password': info['password'],
-            'size': info['page_size'],
-            'publishonweb': False,
-        }
-
     def test_connection(self, cr, uid, ids, vals, context=None):
-        info = self._ud_info(cr, uid, context=context)
-        params = self._ud_params(cr, uid, info, context=context)
-        params['filter'] = 'msfIdentifier=1234'
-        r = requests.get(info['url'], params, timeout=info['ud_timeout'])
-        if r.status_code != requests.codes.ok:
-            try:
-                r.raise_for_status()
-            except requests.exceptions.HTTPError as e:
-                raise osv.except_osv(_('Error'), e.message)
+        try:
+            ud_sync(cr, uid, self.pool, max_retries=0).query(ud_filter='msfIdentifier=1234')
+        except requests.exceptions.HTTPError as e:
+            raise osv.except_osv(_('Error'), e.message)
         raise osv.except_osv(_('OK'), _('Login successful'))
 
 
@@ -532,13 +671,6 @@ class unidata_sync(osv.osv):
 
         return super(unidata_sync, self).write(cr, uid, ids, vals, context=context)
 
-    def ud_date(self, cr, uid, date):
-        date = date.split('.')[0] # found 3 formats in UD: 2021-03-30T06:32:51.500, 2021-03-30T06:32:51  and 2021-03-30T06:32
-        try:
-            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
-        except:
-            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M')
-        return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
 
     def set_as_full(self, cr, uid, ids, context=None):
         param_obj = self.pool.get('ir.config_parameter')
@@ -584,19 +716,9 @@ class unidata_sync(osv.osv):
 
         uid = self.pool.get('ir.model.data').get_object_reference(cr, nuid, 'base', 'user_unidata_pull')[1]
 
-        ud_info = self._ud_info(cr, uid, context=context)
-        page_size = ud_info['page_size']
-        params = self._ud_params(cr, uid, ud_info, context=context)
-        max_request_retries = 4
-
         session_obj = self.pool.get('unidata.sync.log')
-        prod_obj = self.pool.get('product.product')
         param_obj = self.pool.get('ir.config_parameter')
 
-        country_obj = self.pool.get('unidata.country')
-        country_cache = {}
-        project_obj = self.pool.get('unidata.project')
-        project_cache = {}
 
         oc = self.pool.get('sync.client.entity').get_entity(cr, uid, context).oc
 
@@ -613,6 +735,10 @@ class unidata_sync(osv.osv):
             sync_type = 'diff'
 
 
+        logger = logging.getLogger('unidata-sync')
+        sync_obj = ud_sync(cr, uid, self.pool, oc=oc, logger=logger, context=context)
+        page_size = sync_obj.page_size
+
         min_msfid = param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC') or 0
         if min_msfid:
             # do not update last sync date
@@ -624,12 +750,10 @@ class unidata_sync(osv.osv):
             first_query = True
             param_obj.set_param(cr, 1, 'FORMER_UD_DATE_SYNC', last_ud_date_sync)
 
-        date_to_record = False
         nuid = hasattr(nuid, 'realUid') and nuid.realUid or nuid
         session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync, 'sync_type': sync_type, 'start_uid': nuid}, context=context)
-        logger = logging.getLogger('unidata-sync')
-        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
 
+        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
         if tools.config['logfile']:
             log_file = path.join(path.dirname(tools.config['logfile']), 'ud-sync-%s-%s.log' % (session_id, datetime.now().strftime('%Y-%m-%d-%H%M')))
             handler = logging.FileHandler(log_file)
@@ -650,122 +774,31 @@ class unidata_sync(osv.osv):
         try:
             while True:
                 cr.execute('SAVEPOINT unidata_sync_log')
-                transaction_updated = 0
-                # TODO: include new products
                 cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
                 min_id, max_id = cr.fetchone()
                 min_msfid = max_id
                 if not min_id:
                     break
 
-                page = 1
-                while True:
-                    ud_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
-                    if last_ud_date_sync:
-                        createdOn = (datetime.strptime(last_ud_date_sync.split('T')[0], '%Y-%m-%d') + relativedelta(days=-3)).strftime('%Y-%m-%dT00:00:00')
-                        ud_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(. /metaData/createdOn, "%(createdOn)s")) and %(filter)s' %{
-                            'filter': ud_filter,
-                            'last_ud_date_sync': last_ud_date_sync,
-                            'createdOn': createdOn,
-                        }
-                    params['filter'] = ud_filter
-                    params['page'] = page
+                ud_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
+                if last_ud_date_sync:
+                    createdOn = (datetime.strptime(last_ud_date_sync.split('T')[0], '%Y-%m-%d') + relativedelta(days=-3)).strftime('%Y-%m-%dT00:00:00')
+                    ud_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(. /metaData/createdOn, "%(createdOn)s")) and %(filter)s' %{
+                        'filter': ud_filter,
+                        'last_ud_date_sync': last_ud_date_sync,
+                        'createdOn': createdOn,
+                    }
 
-                    request_ok = False
-                    retry = 0
-                    while not request_ok:
-                        try:
-                            logger.info('OC: %s, Page: %d, Filter: %s' % (oc, page, params['filter']))
-                            r = requests.get(ud_info['url'], params, timeout=ud_info['ud_timeout'])
-                            if r.status_code != requests.codes.ok:
-                                r.raise_for_status()
-                            request_ok = True
-                        except Exception as e:
-                            if retry < max_request_retries:
-                                retry += 1
-                                logger.warn('Query error %d, retry in 5sec: %s' % (retry, tools.misc.get_traceback(e)))
-                                time.sleep(5)
-                            else:
-                                raise
-
-                    js = r.json()
-
-                    if not js.get('rows'):
-                        break
-
-                    if first_query:
-                        date_to_record = js.get('context', {}).get('executeDate')
-                    first_query = False
-
-                    for x in js.get('rows'):
-                        logger.info('UD: %s' % x)
-                        nb_prod += 1
-                        prod_id = prod_obj.search(cr, uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], context=context)
-                        if not prod_id:
-                            logger.info('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code'], ))
-                            continue
-
-                        oc_data = x.get('ocValidations', {}).get(oc, {})
-                        data = {
-                            'oc_validation': oc_data.get('valid'),
-                            'oc_validation_date': False,
-                            'oc_devalidation_date': False,
-                            'oc_devalidation_reason': oc_data.get('devalidationReason'),
-                            'oc_comments': oc_data.get('comments'),
-
-                        }
-
-                        if oc_data.get('lastValidationDate'):
-                            data['oc_validation_date'] = self.ud_date(cr, uid, oc_data['lastValidationDate'])
-                        if oc_data.get('lastDevalidationDate'):
-                            data['oc_devalidation_date'] = self.ud_date(cr, uid, oc_data['lastDevalidationDate'])
-
-                        c_restriction = []
-                        p_restriction = []
-                        for mr in oc_data.get('missionRestrictions', []):
-                            if mr.get('country', {}).get('labels', {}).get('english'):
-                                if mr['country']['labels']['english'] not in country_cache:
-                                    c_id = country_obj.search(cr, uid, [('name', '=', mr['country']['labels']['english'])], context={'lang': 'en_MF'})
-                                    if not c_id:
-                                        c_id = country_obj.create(cr, uid, {'name': mr['country']['labels']['english']})
-                                        if mr['country']['labels'].get('french'):
-                                            country_obj.write(cr, uid, c_id, {'name': mr['country']['labels']['french']}, context={'lang': 'fr_MF'})
-
-                                        logger.info('Create country %s' % (mr['country']['labels']['english'],))
-                                        country_cache[mr['country']['labels']['english']] = c_id
-                                    else:
-                                        country_cache[mr['country']['labels']['english']] = c_id[0]
-                                c_restriction.append(country_cache[mr['country']['labels']['english']])
-
-                            for pr in mr.get('projectRestrictions', []):
-                                if pr.get('code'):
-                                    if pr.get('code') not in project_cache:
-                                        p_id = project_obj.search(cr, uid, [('code', '=', pr['code'])], context=context)
-                                        if not p_id:
-                                            logger.info('Create project %s' % (pr['code'], ))
-                                            project_cache[pr['code']] = project_obj.create(cr, uid, {'code': pr['code'], 'name': pr.get('name')}, context=context)
-                                        else:
-                                            project_cache[pr['code']] = p_id[0]
-                                    p_restriction.append(project_cache[pr['code']])
-
-                        data.update({
-                            'oc_country_restrictions': [(6, 0, list(set(c_restriction)))],
-                            'oc_project_restrictions':  [(6, 0, list(set(p_restriction)))],
-                        })
-                        logger.info('Write product id: %d, code: %s, msfid: %s, data: %s' % (prod_id[0], x['code'], x['id'], data))
-                        prod_obj.write(cr, uid, prod_id[0], data, context=context)
-                        transaction_updated += 1
-                    page += 1
-                    if len(js.get('rows')) < page_size:
-                        break
-
-                    # end of requests loop
-
+                s_date_to_record, rows_seen, prod_updated = sync_obj.update_products(ud_filter, first_query)
+                if first_query and s_date_to_record:
+                    logger.info('Set last date: %s', s_date_to_record)
+                    param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', s_date_to_record)
+                first_query = False
                 param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', min_msfid)
-                if date_to_record:
-                    param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', date_to_record)
-                #cr.execute('RELEASE SAVEPOINT unidata_sync_log')
-                updated += transaction_updated
+
+                updated += prod_updated
+                nb_prod += rows_seen
+
                 session_obj.write(cr, uid, session_id, {'number_products_pulled': nb_prod, 'number_products_updated': updated}, context=context)
                 cr.commit()
 
@@ -776,11 +809,13 @@ class unidata_sync(osv.osv):
             error = tools.misc.get_traceback(e)
             logger.error('End of Script with error: %s' % error)
             handler.close()
+            logger.removeHandler(handler)
             session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'error', 'number_products_pulled': nb_prod, 'error': error, 'number_products_updated': updated}, context=context)
             return False
 
         logger.info('End of Script')
         handler.close()
+        logger.removeHandler(handler)
         session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'number_products_updated': updated}, context=context)
         param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', '')
         return True
