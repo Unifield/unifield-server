@@ -401,14 +401,14 @@ unidata_sync_log()
 
 class ud_sync():
 
-    def __init__(self, cr, uid, pool, oc=False, max_retries=4, logger=False, context=None):
+    def __init__(self, cr, uid, pool, max_retries=4, logger=False, context=None):
         self.cr = cr
         self.uid = uid
         self.pool = pool
         self.max_retries = max_retries
         self.context = context
         self.logger = logger
-        self.oc = oc
+        self.oc = self.pool.get('sync.client.entity').get_entity(self.cr, self.uid, context).oc
 
         sync_id = self.pool.get('ir.model.data').get_object_reference(self.cr, self.uid, 'product_attributes', 'unidata_sync_config')[1]
         config = self.pool.get('unidata.sync').read(self.cr, self.uid, sync_id, context=self.context)
@@ -720,7 +720,6 @@ class unidata_sync(osv.osv):
         param_obj = self.pool.get('ir.config_parameter')
 
 
-        oc = self.pool.get('sync.client.entity').get_entity(cr, uid, context).oc
 
         nb_prod = 0
         updated = 0
@@ -736,7 +735,7 @@ class unidata_sync(osv.osv):
 
 
         logger = logging.getLogger('unidata-sync')
-        sync_obj = ud_sync(cr, uid, self.pool, oc=oc, logger=logger, context=context)
+        sync_obj = ud_sync(cr, uid, self.pool, logger=logger, context=context)
         page_size = sync_obj.page_size
 
         min_msfid = param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC') or 0
@@ -3746,6 +3745,24 @@ class product_attributes(osv.osv):
             return {'value': {'perishable': True}}
         return {}
 
+
+
+    def pull_ud(self, cr, uid, ids, context=None):
+        ud = ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+
+        code_updated = []
+        update = False
+        for x in self.read(cr, uid, ids, ['msfid', 'default_code'], context=context):
+            if x['msfid']:
+                try:
+                    ud.update_products(ud_filter='msfIdentifier=%d'%x['msfid'], record_date=False)
+                    code_updated.append(x['default_code'])
+                    if not update:
+                        update = x['id']
+                except requests.exceptions.HTTPError as e:
+                    raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
+        self.log(cr, uid, update, _('%s updated from UniData') % ', '.join(code_updated))
+        return True
 
 
     _constraints = [

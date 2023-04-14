@@ -140,6 +140,7 @@
                                    <button name="reactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': ['|', '|', ('active', '=', True), ('nsl_merged', '=', True), ('unidata_merged', '=', True)]}" />
                                    <button name="open_merge_product_wizard" icon="gtk-convert" string="Merge product" type="object"  attrs="{'invisible': ['|', '|', '|', ('int_status_code', '!=', 'local'), ('nsl_merged', '=', True), ('active', '=', False), ('instance_level', '!=', 'coordo')]}"/>
                                    <button name="open_merge_hq_product_wizard" icon="gtk-convert" string="HQ Merge product" type="object"  attrs="{'invisible': [('can_be_hq_merged', '!=', 'True')]}"/>
+                                   <button name="pull_ud" icon="unidata.png" string="Pull UD OC Validation" type="object"  attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('instance_level', '!=', 'section')]}" />
                                 </group>
                             </group>
                             <group colspan="2" col="3" name="quality">
