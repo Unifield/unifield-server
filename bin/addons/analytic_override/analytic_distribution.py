@@ -282,6 +282,8 @@ class distribution_line(osv.osv):
 
         for line in self.browse(cr, uid, ids):
             amount_cur = round((move_line.credit_currency - move_line.debit_currency) * line.percentage / 100, 2)
+            if abs((move_line.credit_currency - move_line.debit_currency)) >= 10**10:
+                amount_cur = round(amount_cur, 0)
             ctx = {'currency_date': currency_date.get_date(self, cr, document_date, date, source_date=source_date)}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 

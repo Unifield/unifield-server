@@ -27,7 +27,7 @@ from tools.translate import _
 import decimal_precision as dp
 import tools
 import netsvc
-
+from tools.misc import _max_amount
 
 class account_move_line(osv.osv):
     _name = "account.move.line"
@@ -1052,13 +1052,12 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        too_big_amount = 10**10
         if context.get('from_web_menu') or context.get('from_je_import') or context.get('from_invoice_move_creation'):
             aml_fields = ['debit_currency', 'credit_currency', 'amount_currency', 'name']
             for aml in self.browse(cr, uid, ids, fields_to_fetch=aml_fields, context=context):
                 booking_amount = aml.debit_currency or aml.credit_currency or aml.amount_currency or 0.0
-                if abs(booking_amount) >= too_big_amount:
-                    raise osv.except_osv(_('Error'), _('The amount of the line "%s" is more than 10 digits.') % aml.name)
+                if _max_amount(booking_amount):
+                    raise osv.except_osv(_('Error'), _('The amount of the line "%s" is more than 10 digits with decimals or 12 digits without decimals.') % aml.name)
 
     def create(self, cr, uid, vals, context=None, check=True):
         account_obj = self.pool.get('account.account')

@@ -522,7 +522,7 @@
         </record>
 
 		<record id="kit_composition_real_action_form_view" model="ir.actions.act_window.view">
-            <field eval="10" name="sequence" />
+            <field eval="11" name="sequence" />
             <field name="view_mode">form</field>
             <field name="view_id" ref="view_composition_kit_real_form" />
             <field name="act_window_id" ref="kit_composition_real_action" />
