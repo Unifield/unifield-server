@@ -782,7 +782,7 @@ class unidata_sync(osv.osv):
                 ud_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
                 if last_ud_date_sync:
                     createdOn = (datetime.strptime(last_ud_date_sync.split('T')[0], '%Y-%m-%d') + relativedelta(days=-3)).strftime('%Y-%m-%dT00:00:00')
-                    ud_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(. /metaData/createdOn, "%(createdOn)s")) and %(filter)s' %{
+                    ud_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(./metaData/createdOn, "%(createdOn)s")) and %(filter)s' %{
                         'filter': ud_filter,
                         'last_ud_date_sync': last_ud_date_sync,
                         'createdOn': createdOn,
