@@ -747,7 +747,7 @@ class unidata_sync(osv.osv):
         else:
             # full or diff
             first_query = True
-            param_obj.set_param(cr, 1, 'FORMER_UD_DATE_SYNC', last_ud_date_sync)
+            param_obj.set_param(cr, 1, 'FORMER_UD_DATE_SYNC', last_ud_date_sync or '')
 
         nuid = hasattr(nuid, 'realUid') and nuid.realUid or nuid
         session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync, 'sync_type': sync_type, 'start_uid': nuid}, context=context)
