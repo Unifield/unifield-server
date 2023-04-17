@@ -149,8 +149,8 @@
             id="unidata_sync_log_download"
             model="unidata.sync.log"
             name="product_attributes.unidata_sync_log_download"
-            string="Get log file"
-            menu="False"
+            string="Get log files"
+            menu="True"
         />
 
     </data>
