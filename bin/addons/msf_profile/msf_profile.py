@@ -67,15 +67,19 @@ class patch_scripts(osv.osv):
             update
                 account_analytic_account
             set
-                name=coalesce(tr_en.value, tr_fr.value)
+                name=tr.trans
             from
-                account_analytic_account a
-                left join ir_translation tr_en on tr_en.name='account.analytic.account,name' and tr_en.res_id = a.id and tr_en.lang='en_MF'
-                left join ir_translation tr_fr on tr_fr.name='account.analytic.account,name' and tr_fr.res_id = a.id and tr_fr.lang='fr_MF'
+                ( select a.id, coalesce(tr_en.value, tr_fr.value, '') as trans
+                from
+                    account_analytic_account a
+                    left join ir_translation tr_en on tr_en.name='account.analytic.account,name' and tr_en.res_id = a.id and tr_en.lang='en_MF' and tr_en.xml_id not like 'analytic_account%'
+                    left join ir_translation tr_fr on tr_fr.name='account.analytic.account,name' and tr_fr.res_id = a.id and tr_fr.lang='fr_MF' and tr_fr.xml_id not like 'analytic_account%'
+                group by a.id, tr_en.value, tr_fr.value
+                ) as tr
             where
-                a.id = account_analytic_account.id and
-                coalesce(tr_en.value, tr_fr.value, '') != '' and
-                account_analytic_account.name != coalesce(tr_en.value, tr_fr.value, '')
+                tr.id = account_analytic_account.id and
+                tr.trans != '' and
+                account_analytic_account.name != tr.trans
             returning account_analytic_account.id
         ''')
         if is_coordo:
@@ -109,6 +113,7 @@ class patch_scripts(osv.osv):
                     ''' % (entity.identifier ,), (tuple(aa_ids), )) # not_a_user_entry
                 self.log_info(cr, uid, "US-6976: Trigger FP update on %s analytic accounts" % (cr.rowcount, ))
 
+        cr.execute("update ir_translation set name='account.analytic.account,nameko' where name='account.analytic.account,name' and type='model'")
         return True
 
     # UF28.0
