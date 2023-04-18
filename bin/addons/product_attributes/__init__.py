@@ -21,6 +21,7 @@
 
 import product_attributes
 import standard_price_track_changes
+import unidata_sync
 import wizard
 import report
 
