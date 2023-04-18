@@ -328,6 +328,7 @@ class unidata_country(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=256, translate=1, required=1, readonly=1, select=1),
+        'unidata_project_ids': fields.one2many('unidata.project', 'country_id', 'Projects', readonly=1),
     }
 
     _sql_constraints = [
@@ -346,6 +347,14 @@ class unidata_project(osv.osv):
     _columns = {
         'code': fields.char('Code', size=126, required=1, readonly=1, select=1),
         'name': fields.char('Name', size=256, readonly=1),
+        'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
+        'msf_active': fields.boolean('Active', readonly=1),
+        'msfid': fields.integer('MSFID', readonly=1, select=1),
+        'msl_status': fields.char('MSL Status', size=64, readonly=1),
+        'publication': fields.integer('Publication', readonly=1),
+        'publication_date': fields.datetime('Pulbication Date', readonly=1),
+        'msl_ids': fields.one2many('medical.standard.list', 'unidata_project_id', 'MSL', readonly=1),
+        'country_id': fields.many2one('unidata.country', 'Country', readonly=1),
     }
     _sql_constraints = [
         ('unique_code', 'unique(code)', 'Code already exists.'),
@@ -395,9 +404,52 @@ class unidata_sync_log(osv.osv):
         'log_file': fields.char('Path to log file', size=128, readonly=1),
         'log_exists': fields.function(_get_log_exists, type='boolean', method=1, string='Log file exists'),
         'start_uid': fields.many2one('res.users', 'Started by', readonly=1),
+        'server': fields.selection([('msl', 'MSL'), ('ud', 'unidata')], 'Server', readonly=1),
     }
 
 unidata_sync_log()
+
+class medical_standard_list(osv.osv):
+    _name = 'medical.standard.list'
+    _description= 'Medical Standard List'
+    _order = 'instance_code, name, id'
+
+    def _search_ud_sync_needed(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=' or not arg[2]:
+                raise osv.except_osv('Error', 'Filter on ud_sync_needed not implemented')
+
+            cr.execute('''
+                select m.id from
+                    medical_standard_list m, unidata_project p
+                where
+                    p.id = m.unidata_project_id
+                    and
+                        (
+                            m.msl_sync_date is null
+                        or m.msl_sync_date < p.publication_date
+                    )
+            ''')
+        return [('id', 'in', [x[0] for x in cr.fetchall()])]
+
+    _columns = {
+        'name': fields.char('Name', size=256, readonly=1),
+        'msfid': fields.integer('msfid', required=1, readonly=1, select=1),
+        'unidata_project_id': fields.many2one('unidata.project', 'MSL Project', readonly=1),
+        'product_ids': fields.many2many('product.product', 'product_msl_rel', 'msl_id', 'product_id', 'Products', order_by='default_code', readonly=1),
+        'publication_date': fields.related('unidata_project_id', 'publication_date', type='datetime', string='Publication Date', readonly=1),
+        'publication': fields.related('unidata_project_id', 'publication', type='integer', string='Publication', readonly=1),
+        'instance_code': fields.char('Instance', size=64, select=1, readonly=1),
+        'mission': fields.char('Mission', size=64, select=1, readonly=1),
+        'msl_sync_date': fields.datetime('MSL sync date', type='char', size=60, readonly=1),
+        'ud_sync_needed': fields.function(tools.misc.get_fake, fnct_search=_search_ud_sync_needed, method=True, type='boolean', string='To be ud synced'),
+    }
+    _sql_constraints = [
+        ('unique_msfid', 'unique(msfid)', 'MSID must be unique'),
+    ]
+
+medical_standard_list()
+
 
 class ud_sync():
 
@@ -421,13 +473,124 @@ class ud_sync():
             'publishonweb': False,
         }
         self.url = config['url']
+        self.url_msl = config['url_msl']
         self.timeout = config['ud_timeout']
         self.nb_keep_log = config['nb_keep_log']
         self.country_cache = {}
         self.project_cache = {}
+        self.msf_intance_cache = {}
 
         if self.pool.get('res.company')._get_instance_level(self.cr, self.uid) != 'section':
-            raise osv.except_osv(_('Error'), _('UD sync can only be started at HQ level.'))
+            raise osv.except_osv(_('Error'), _('UD/MSL sync can only be started at HQ level.'))
+
+    def create_msl_list(self):
+        oc_number = {
+            'oca': 5,
+            'ocb': 4,
+            'ocg': 7,
+            'ocp': 8,
+        }
+
+        url = '%s/projects' % (self.url_msl, )
+        q_filter = "ocId='%s'" % (oc_number.get(self.oc),)
+
+
+        country_obj = self.pool.get('unidata.country')
+        project_obj = self.pool.get('unidata.project')
+        instance_obj = self.pool.get('msf.instance')
+        list_obj = self.pool.get('medical.standard.list')
+        prod_obj = self.pool.get('product.product')
+
+        # TODO
+        #prod_cache = {}
+        page = 1
+        mission_cache = {}
+        while True:
+            js = self.query(q_filter, page=page, url=url)
+            if not js.get('rows'):
+                break
+            for x in js.get('rows'):
+                self.log(x)
+                if x.get('uniFieldCode'):
+                    if x['uniFieldCode'] not in self.msf_intance_cache:
+                        msf_ids = instance_obj.search(self.cr, self.uid, [('code', '=', x['uniFieldCode'])], context=self.context)
+                        mission_cache[x['uniFieldCode']] = False
+                        if msf_ids:
+                            mission_cache[x['uniFieldCode']] = instance_obj.browse(self.cr, self.uid, msf_ids[0], fields_to_fetch=['mission'], context=self.context).mission
+                        self.msf_intance_cache[x['uniFieldCode']] = msf_ids and msf_ids[0] or False
+                if x.get('country', {}).get('labels', {}).get('english'):
+                    if x['country']['labels']['english'] not in self.country_cache:
+                        c_ids = country_obj.search(self.cr, self.uid, [('name', '=', x['country']['labels']['english'])], context=self.context)
+                        if c_ids:
+                            self.country_cache[x['country']['labels']['english']] = c_ids[0]
+                        else:
+                            self.country_cache[x['country']['labels']['english']] = country_obj.create(self.cr, self.uid, {'name': x['country']['labels']['english']}, context={'lang': 'en_MF'})
+                            if x['country']['labels']['french']:
+                                country_obj.write(self.cr, self.uid, self.country_cache[x['country']['labels']['english']], {'name': x['country']['labels']['french']}, context={'lang': 'fr_MF'})
+
+                data = {
+                    'instance_id': self.msf_intance_cache.get(x.get('uniFieldCode')),
+                    'msf_active': x.get('active'),
+                    'msfid': x.get('id'),
+                    'msl_status': x.get('mslStatus', {}).get('english'),
+                    'name': x.get('name', {}).get('english'),
+                    'publication': x.get('publication'),
+                    'publication_date': x.get('publicationDate') and self.ud_date(x.get('publicationDate')) or False,
+                    'code': x['code'],
+                    'country_id': self.country_cache.get(x.get('country', {}).get('labels', {}).get('english')),
+                }
+
+                write_list = []
+                if x.get('publicationDate'):
+                    for list_id in x.get('lists', []):
+                        list_ids = list_obj.search(self.cr, self.uid, [('msfid', '=', list_id['id'])], context=self.context)
+                        if not list_ids:
+                            write_list.append(list_obj.create(self.cr, self.uid, {'name': list_id.get('designation', {}).get('english', '-'), 'msfid': list_id['id'], 'instance_code': x.get('uniFieldCode'),  'mission': mission_cache.get(x.get('uniFieldCode', ''), '')}, context=self.context))
+                        else:
+                            write_list.append(list_ids[0])
+
+                data['msl_ids'] = [(6, 0, write_list)]
+
+                if x.get('code') not in self.project_cache:
+                    proj_ids = project_obj.search(self.cr, self.uid, [('code', '=', x.get('code'))], context=self.context)
+                    if proj_ids:
+                        self.project_cache[x['code']] = proj_ids[0]
+                if not self.project_cache.get(x.get('code')):
+                    self.project_cache[x['code']] = project_obj.create(self.cr, self.uid, data, context=self.context)
+                else:
+                    project_obj.write(self.cr, self.uid, self.project_cache[x['code']], data, context=self.context)
+
+            page += 1
+            if 'nextPage' not in js['pagination']:
+                break
+
+
+        list_url = '%s/lists' % (self.url_msl, )
+        msl_ids = list_obj.search(self.cr, self.uid, [('ud_sync_needed', '=', True)], context=self.context)
+        for msl in list_obj.browse(self.cr, self.uid, msl_ids, fields_to_fetch=['msfid'], context=self.context):
+            page = 1
+            q_filter = "id='%s'" % (msl.msfid,)
+            exec_date = False
+            while True:
+                js = self.query(q_filter, page=page, url=list_url)
+                page += 1
+                prod_ids = []
+                self.log(js)
+                if not exec_date:
+                    exec_date = self.ud_date(js.get('context', {}).get('executeDate'))
+                for row in js.get('rows', []):
+                    list_name = row.get('name', {}).get('english')
+                    for x in row.get('articles', []):
+                        p_id = prod_obj.search(self.cr, self.uid, [('active', 'in', ['t', 'f']), ('msfid', '=', x['id'])], context=self.context)
+                        if not p_id:
+                            self.warn('Product %s msfid:%s not found' % x['code'], x['msfid'])
+                        else:
+                            prod_ids.append(p_id[0])
+
+                if 'nextPage' not in js['pagination']:
+                    break
+            list_obj.write(self.cr, self.uid, msl.id, {'name': list_name, 'product_ids': [(6, 0, prod_ids)], 'msl_sync_date': exec_date}, context=self.context)
+
 
     def ud_date(self, date):
         date = date.split('.')[0] # found 3 formats in UD: 2021-03-30T06:32:51.500, 2021-03-30T06:32:51  and 2021-03-30T06:32
@@ -437,17 +600,20 @@ class ud_sync():
             date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M')
         return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
 
-    def query(self, ud_filter, page=1):
+    def query(self, q_filter, page=1, url=None):
         params = self.ud_params.copy()
         params['page'] = page
-        params['filter'] = ud_filter
+        params['filter'] = q_filter
 
         request_ok = False
         retry = 0
         while not request_ok:
             try:
                 self.log('OC: %s Page: %d, Filter: %s' % (self.oc, page, params['filter']))
-                r = requests.get(self.url, params, timeout=self.timeout)
+                if url is None:
+                    url = self.url
+
+                r = requests.get(url, params, timeout=self.timeout)
                 if r.status_code != requests.codes.ok:
                     r.raise_for_status()
                 request_ok = True
@@ -470,7 +636,7 @@ class ud_sync():
                 llevel = logging.INFO
             self.logger.log(llevel, msg)
 
-    def update_products(self, ud_filter, record_date):
+    def update_products(self, q_filter, record_date):
         country_obj = self.pool.get('unidata.country')
         project_obj = self.pool.get('unidata.project')
         prod_obj = self.pool.get('product.product')
@@ -480,7 +646,7 @@ class ud_sync():
         prod_updated = 0
         rows_seen = 0
         while True:
-            js = self.query(ud_filter, page=page)
+            js = self.query(q_filter, page=page)
 
             if record_date:
                 date_to_record = js.get('context', {}).get('executeDate')
@@ -597,6 +763,7 @@ class unidata_sync(osv.osv):
 
     _columns = {
         'url': fields.char('URL', size=256, required=1),
+        'url_msl': fields.char('MSL URL', size=256, required=1),
         'login': fields.char('Login', size=256),
         'password': fields.char('Password', size=256),
 
@@ -649,7 +816,7 @@ class unidata_sync(osv.osv):
 
     def test_connection(self, cr, uid, ids, vals, context=None):
         try:
-            ud_sync(cr, uid, self.pool, max_retries=0).query(ud_filter='msfIdentifier=1234')
+            ud_sync(cr, uid, self.pool, max_retries=0).query(q_filter='msfIdentifier=1234')
         except requests.exceptions.HTTPError as e:
             raise osv.except_osv(_('Error'), e.message)
         raise osv.except_osv(_('OK'), _('Login successful'))
@@ -683,6 +850,8 @@ class unidata_sync(osv.osv):
         try:
             self.start_ud_sync(cr, uid, context=context)
         except Exception, e:
+            # TODO
+            raise
             self._error = e
         finally:
             cr.commit()
@@ -708,7 +877,9 @@ class unidata_sync(osv.osv):
         if not self._lock.acquire(blocking=False):
             raise osv.except_osv(_('Error'), _('A sync is already running ...'))
         try:
-            self._start_ud_sync(cr, uid, context=context)
+            sync_obj = ud_sync(cr, uid, self.pool, logger=logging.getLogger('msl'), context=context)
+            sync_obj.create_msl_list()
+            #self._start_ud_sync(cr, uid, context=context)
         finally:
             self._lock.release()
 
@@ -779,16 +950,16 @@ class unidata_sync(osv.osv):
                 if not min_id:
                     break
 
-                ud_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
+                q_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
                 if last_ud_date_sync:
                     createdOn = (datetime.strptime(last_ud_date_sync.split('T')[0], '%Y-%m-%d') + relativedelta(days=-3)).strftime('%Y-%m-%dT00:00:00')
-                    ud_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(./metaData/createdOn, "%(createdOn)s")) and %(filter)s' %{
-                        'filter': ud_filter,
+                    q_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(./metaData/createdOn, "%(createdOn)s")) and %(filter)s' %{
+                        'filter': q_filter,
                         'last_ud_date_sync': last_ud_date_sync,
                         'createdOn': createdOn,
                     }
 
-                s_date_to_record, rows_seen, prod_updated = sync_obj.update_products(ud_filter, first_query)
+                s_date_to_record, rows_seen, prod_updated = sync_obj.update_products(q_filter, first_query)
                 if first_query and s_date_to_record:
                     logger.info('Set last date: %s', s_date_to_record)
                     param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', s_date_to_record)
@@ -3755,7 +3926,7 @@ class product_attributes(osv.osv):
         for x in self.read(cr, uid, ids, ['msfid', 'default_code'], context=context):
             if x['msfid']:
                 try:
-                    ud.update_products(ud_filter='msfIdentifier=%d'%x['msfid'], record_date=False)
+                    ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False)
                     code_updated.append(x['default_code'])
                     if not update:
                         update = x['id']
