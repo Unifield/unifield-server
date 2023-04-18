@@ -155,65 +155,65 @@
         />
 
 
-        <record model="ir.ui.view" id="medical_standard_list_form">
-            <field name="name">medical.standard.list.form</field>
-            <field name="model">medical.standard.list</field>
+        <record model="ir.ui.view" id="unidata_project_form">
+            <field name="name">unidata.project.form</field>
+            <field name="model">unidata.project</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="MSL" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <field name="name" />
                     <field name="mission" />
-                    <field name="instance_code" />
-                    <field name="unidata_project_id" />
+                    <field name="instance_id" />
+                    <field name="code" />
                     <field name="publication_date" widget="date" />
                     <field name="publication" />
                     <field name="msfid"  />
-                    <field name="product_ids"  colspan="4" nolabel="1"/>
+                    <field name="msl_product_ids"  colspan="4" nolabel="1"/>
                 </form>
             </field>
         </record>
 
-        <record model="ir.ui.view" id="medical_standard_list_tree">
-            <field name="name">medical.standard.list.tree</field>
-            <field name="model">medical.standard.list</field>
+        <record model="ir.ui.view" id="unidata_project_tree">
+            <field name="name">unidata.project.tree</field>
+            <field name="model">unidata.project</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="MSL" hide_new_button="1" hide_delete_button="1" noteditable="1">
                     <field name="name" />
                     <field name="mission" />
-                    <field name="instance_code" />
-                    <field name="unidata_project_id" />
+                    <field name="instance_id" />
+                    <field name="code" />
                     <field name="publication_date" widget="date" />
                     <field name="publication" />
-                    <field name="product_ids" />
+                    <field name="msl_product_ids" />
                     <field name="msfid"  />
                 </tree>
             </field>
         </record>
 
-        <record model="ir.ui.view" id="medical_standard_list_search">
-            <field name="name">medical.standard.list.search</field>
-            <field name="model">medical.standard.list</field>
+        <record model="ir.ui.view" id="unidata_project_search">
+            <field name="name">unidata.project.search</field>
+            <field name="model">unidata.project</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="MSL">
                     <field name="name" />
                     <field name="msfid"  />
-                    <field name="unidata_project_id" />
-                    <field name="product_ids" />
+                    <field name="code" />
+                    <field name="msl_product_ids" />
                 </search>
             </field>
         </record>
 
-        <record id="medical_standard_list_action" model="ir.actions.act_window">
+        <record id="unidata_project_action" model="ir.actions.act_window">
             <field name="name">MSL</field>
-            <field name="res_model">medical.standard.list</field>
+            <field name="res_model">unidata.project</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[]</field>
+            <field name="domain">[('publication_date', '!=', False)]</field>
         </record>
 
-        <menuitem name="MSL List" parent="base.menu_product" id="medical_standard_list_menu" action="medical_standard_list_action" sequence="10" />
+        <menuitem name="MSL List" parent="base.menu_product" id="unidata_project_menu" action="unidata_project_action" sequence="10" />
 
     </data>
 </openerp>

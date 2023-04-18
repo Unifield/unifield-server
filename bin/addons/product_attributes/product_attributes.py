@@ -1083,6 +1083,7 @@ class product_attributes(osv.osv):
         'oc_comments': fields.text('UD Comments', readonly=1), # comments
         'oc_project_restrictions': fields.many2many('unidata.project', 'product_project_rel', 'product_id', 'unidata_project_id', 'Project Restrictions', readonly=1, order_by='code'),
         'oc_country_restrictions': fields.many2many('unidata.country', 'product_country_rel', 'product_id', 'unidata_country_id', 'Country Restrictions', readonly=1, order_by='name'),
+        'msl_project_ids': fields.many2many('unidata.project', 'product_msl_rel', 'product_id', 'msl_id', 'MSL List', readonly=1, order_by='code'),
     }
 
 

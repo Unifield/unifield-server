@@ -162,7 +162,7 @@
                                 <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" colspan="3"/>
                             </group>
                         </page>
-                        <page string="MSL" attrs="{'invisible': ['|', ('instance_level', '!=', 'section'), ('int_status_code', '!=', 'unidata')]}">
+                        <page string="MSL" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}">
                             <field name="oc_country_restrictions" nolabel="1" colspan="2">
                                 <tree string="Country Restrictions">
                                     <field name="name" />
@@ -173,6 +173,15 @@
                                 <tree string="Project Restrictions">
                                     <field name="code" />
                                     <field name="name" />
+                                </tree>
+                            </field>
+
+                            <field name="msl_project_ids" nolabel="1" colspan="4">
+                                <tree string="MSL">
+                                    <field name="name" />
+                                    <field name="code" />
+                                    <field name="instance_id" />
+                                    <field name="publication" />
                                 </tree>
                             </field>
                         </page>
