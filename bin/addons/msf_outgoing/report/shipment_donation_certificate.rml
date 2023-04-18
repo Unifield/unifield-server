@@ -62,6 +62,7 @@
         </initialize>
 
         <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+        <paraStyle name="MiniStandard" fontName="Helvetica" fontSize="3.0" leading="3.0" />
 
 		<!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="8.0" spaceBefore="1.0" spaceAfter="1.0" />
@@ -70,8 +71,10 @@
 
         <!-- Lines font style -->
         <paraStyle name="ItemsLineTitle" fontName="Helvetica-Oblique" fontSize="7.0" leading="7.0" />
-        <paraStyle name="ItemsLineValue" fontName="Helvetica" fontSize="7.0" leading="7.0" textColor="blue" />
-        <paraStyle name="ItemsLineValueRight" fontName="Helvetica" fontSize="7.0" leading="7.0" textColor="blue" alignment="right" />
+        <paraStyle name="ItemsLineTitleCenter" fontName="Helvetica-Oblique" fontSize="7.0" leading="7.0" alignment="center" />
+        <paraStyle name="ItemsLineValue" fontName="Helvetica" fontSize="7.0" leading="9.0" textColor="blue" />
+        <paraStyle name="ItemsLineValueRight" fontName="Helvetica" fontSize="7.0" leading="9.0" textColor="blue" alignment="right" />
+        <paraStyle name="ItemsLineValueCenter" fontName="Helvetica" fontSize="7.0" leading="9.0" textColor="blue" alignment="center" />
     </stylesheet>
 
     <story>
@@ -362,6 +365,98 @@
                 </td>
                 <td>
                     <para style="ItemsLineValueRight">[[ line['tot_value'] ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="772.0" style="OrderInformations">
+        [[ o.additional_items_ids or removeParentNode('blockTable') ]]
+            <tr>
+                <td>
+                    <para style="Standard">
+                        <font color="white"> </font>
+                    </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation">Additional items:</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="MiniStandard">
+                        <font color="white"> </font>
+                    </para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="160.0,50.0,272.0,50.0,50.0,70.0,45.0,25.0,25.0,25.0" repeatRows="1" style="ItemsLineHeader">
+        [[ o.additional_items_ids or removeParentNode('blockTable') ]]
+            <tr>
+                <td>
+                    <para style="ItemsLineTitle">Additional Item</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitle">Nb Parcels</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitle">Comment</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitle">Volume[dm³]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitle">Weight[kg]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitle">Value</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitle">Currency</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitleCenter">CC</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitleCenter">DG</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitleCenter">CS</para>
+                </td>
+            </tr>
+            <tr>
+                [[ repeatIn(o.additional_items_ids, 'addline') ]]
+                <td>
+                    <para style="ItemsLineValue">[[ addline.name ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValue">[[ addline.nb_parcels ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValue">[[ addline.comment ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValueRight">[[ addline.volume ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValueRight">[[ addline.weight ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValueRight">[[ addline.value ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValue">[[ getCompany().get('currency_name', '') ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValueCenter">[[ addline.kc and 'X' or '' ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValueCenter">[[ addline.dg and 'X' or '' ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValueCenter">[[ addline.cs and 'X' or '' ]]</para>
                 </td>
             </tr>
         </blockTable>

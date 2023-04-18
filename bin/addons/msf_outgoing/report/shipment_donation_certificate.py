@@ -104,6 +104,7 @@ class shipment_donation_certificate(report_sxw.rml_parse):
 
         res = {}
         if company:
+            res['currency_name'] = company.currency_id and company.currency_id.name or False
             res['partner'] = company.partner_id and company.partner_id.name or False
             if company.partner_id and len(company.partner_id.address):
                 res['street'] = company.partner_id.address[0].street

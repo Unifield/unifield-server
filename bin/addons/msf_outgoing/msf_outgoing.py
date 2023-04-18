@@ -133,6 +133,7 @@ class shipment(osv.osv):
         '''
         picking_obj = self.pool.get('stock.picking')
         pack_family_obj = self.pool.get('pack.family.memory')
+        curr_obj = self.pool.get('res.currency')
 
         result = {}
         shipment_result = self.read(cr, uid, ids, ['pack_family_memory_ids', 'state'], context=context)
@@ -167,11 +168,8 @@ class shipment(osv.osv):
             # delivery validated
             delivery_validated = None
             # browse the corresponding packings
-            for packing in picking_obj.browse(cr, uid, packing_ids,
-                                              fields_to_fetch=[
-                                                  'state',
-                                                  'delivered',
-                                                  'backorder_id'], context=context):
+            for packing in picking_obj.browse(cr, uid, packing_ids, fields_to_fetch=['state', 'delivered',
+                                                                                     'backorder_id'], context=context):
                 # state check
                 # because when the packings are validated one after the other, it triggers the compute of state, and if we have multiple packing for this shipment, it will fail
                 # if one packing is draft, even if other packing have been shipped, the shipment must stay draft until all packing are done
@@ -216,19 +214,28 @@ class shipment(osv.osv):
                     # total volume
                     total_volume = memory_family['total_volume']
                     current_result['total_volume'] += float(total_volume)
-                    # total amount
-                    total_amount = memory_family['total_amount']
-                    current_result['total_amount'] += total_amount
-                    # currency
+                    # total amount and currency
                     currency_id = memory_family['currency_id'] or False
+                    total_amount = memory_family['total_amount']
+                    if current_result.get('currency_id') and current_result['currency_id'][0] != currency_id[0]:
+                        current_result['total_amount'] = curr_obj.compute(cr, uid, current_result['currency_id'][0],
+                                                                          currency_id[0], current_result.get('total_amount', 0.00),
+                                                                          round=False, context=context)
+                    current_result['total_amount'] += total_amount
                     current_result['currency_id'] = currency_id
 
+        comp_curr_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
         for ship in self.browse(cr, uid, ids, fields_to_fetch=['additional_items_ids'], context=context):
             for add in ship.additional_items_ids:
                 result[ship.id]['num_of_packs'] += add.nb_parcels or 0
                 result[ship.id]['total_weight'] += add.weight or 0
                 result[ship.id]['total_volume'] += add.volume or 0
-                result[ship.id]['total_amount'] += add.value or 0
+                add_value = add.value or 0
+                if add_value and result.get(ship.id) and result[ship.id].get('currency_id') \
+                        and result[ship.id]['currency_id'][0] != comp_curr_id:
+                    add_value = curr_obj.compute(cr, uid, comp_curr_id, result[ship.id]['currency_id'][0], add_value,
+                                                 round=False, context=context)
+                result[ship.id]['total_amount'] += add_value
 
         return result
 
