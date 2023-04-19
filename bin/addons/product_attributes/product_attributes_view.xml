@@ -30,6 +30,8 @@
                         <field name="uf_create_date" string="Creation"/>
                         <field name="uf_write_date" string="Modification"/>
                         <field name="active" invisible="1"/>
+                        <field name="restrictions_txt" />
+                        <field name="is_mml_valid" />
                        </tree>
                     </xpath>
                 </data>
@@ -106,12 +108,6 @@
                                 <!-- uf-1544
                                 <field digits="(14, 3)" name="weight_net" attrs="{'readonly':[('type','=','service')]}"/>
                                  -->
-                                <group colspan="2" col="2" attrs="{'invisible':[('int_status_code', '!=', 'unidata')]}">
-                                    <separator string="UD Comments" colspan="2" />
-                                    <field name="oc_comments" colspan="2" nolabel="1" />
-                                    <separator string="Devalidation Reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}" />
-                                    <field name="oc_devalidation_reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}" nolabel="1"/>
-                                </group>
                             </group>
 
                             <group colspan="2" col="3" name="status">
@@ -163,27 +159,26 @@
                             </group>
                         </page>
                         <page string="MSL" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}">
-                            <field name="oc_country_restrictions" nolabel="1" colspan="2">
-                                <tree string="Country Restrictions">
-                                    <field name="name" />
-                                </tree>
-                            </field>
+                            <group colspan="4" col="6">
+                                <field name="oc_coordo_restrictions" nolabel="1" colspan="2">
+                                    <tree string="Mission Restrictions">
+                                        <field name="code" />
+                                    </tree>
+                                </field>
 
-                            <field name="oc_project_restrictions" nolabel="1" colspan="2">
-                                <tree string="Project Restrictions">
-                                    <field name="code" />
-                                    <field name="name" />
-                                </tree>
-                            </field>
+                                <field name="oc_project_restrictions" nolabel="1" colspan="2">
+                                    <tree string="Project Restrictions">
+                                        <field name="instance_id" string="Code"/>
+                                    </tree>
+                                </field>
 
-                            <field name="msl_project_ids" nolabel="1" colspan="4">
-                                <tree string="MSL">
-                                    <field name="name" />
-                                    <field name="code" />
-                                    <field name="instance_id" />
-                                    <field name="publication" />
-                                </tree>
-                            </field>
+                                <field name="msl_project_ids" nolabel="1" colspan="2">
+                                    <tree string="MSL">
+                                        <field name="instance_id" string="Code"/>
+                                        <field name="publication" />
+                                    </tree>
+                                </field>
+                            </group>
                         </page>
                         <page string="Specific info">
                             <group colspan="2" col="2">
@@ -207,6 +202,13 @@
                                 <field name="closed_article" colspan="2"/>
                                 <field name="manufacturer_ref" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
                                 <field name="manufacturer_txt" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
+                                <group colspan="2" col="2" attrs="{'invisible':[('int_status_code', '!=', 'unidata')]}">
+                                    <separator string="MML Info" colspan="2"/>
+                                    <separator string="UD Comments" colspan="2" />
+                                    <field name="oc_comments" colspan="2" nolabel="1" />
+                                    <separator string="Devalidation Reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}" />
+                                    <field name="oc_devalidation_reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}" nolabel="1"/>
+                                </group>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Form" colspan="2" />

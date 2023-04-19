@@ -63,7 +63,7 @@ class unidata_project(osv.osv):
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
     _columns = {
-        'code': fields.char('Code', size=126, required=1, readonly=1, select=1),
+        'code': fields.char('UD Code', size=126, required=1, readonly=1, select=1),
         'name': fields.char('Name', size=256, readonly=1),
         'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
         'msf_active': fields.boolean('Active', readonly=1),
@@ -76,7 +76,6 @@ class unidata_project(osv.osv):
         'msl_product_ids': fields.many2many('product.product', 'product_msl_rel', 'msl_id', 'product_id', 'MSL Products', readonly=1, order_by='default_code'),
         'msl_sync_date': fields.datetime('MSL sync date', type='char', size=60, readonly=1),
         'msl_sync_needed': fields.function(tools.misc.get_fake, fnct_search=_search_ud_sync_needed, method=True, type='boolean', string='To be ud synced'),
-        'mission': fields.char('Mission', size=64, select=1, readonly=1),
         'alpa_msfids': fields.text('Alpa msfids', readonly=1),
     }
     _sql_constraints = [
@@ -186,7 +185,6 @@ class ud_sync():
         # TODO
         #prod_cache = {}
         page = 1
-        mission_cache = {}
         while True:
             js = self.query(q_filter, page=page, url=url)
             if not js.get('rows'):
@@ -196,9 +194,6 @@ class ud_sync():
                 if x.get('uniFieldCode'):
                     if x['uniFieldCode'] not in self.msf_intance_cache:
                         msf_ids = instance_obj.search(self.cr, self.uid, [('code', '=', x['uniFieldCode'])], context=self.context)
-                        mission_cache[x['uniFieldCode']] = False
-                        if msf_ids:
-                            mission_cache[x['uniFieldCode']] = instance_obj.browse(self.cr, self.uid, msf_ids[0], fields_to_fetch=['mission'], context=self.context).mission
                         self.msf_intance_cache[x['uniFieldCode']] = msf_ids and msf_ids[0] or False
                 if x.get('country', {}).get('labels', {}).get('english'):
                     if x['country']['labels']['english'] not in self.country_cache:
@@ -210,7 +205,7 @@ class ud_sync():
                             if x['country']['labels']['french']:
                                 country_obj.write(self.cr, self.uid, self.country_cache[x['country']['labels']['english']], {'name': x['country']['labels']['french']}, context={'lang': 'fr_MF'})
 
-                data = {
+                project_data = {
                     'instance_id': self.msf_intance_cache.get(x.get('uniFieldCode')),
                     'msf_active': x.get('active'),
                     'msfid': x.get('id'),
@@ -220,23 +215,22 @@ class ud_sync():
                     'publication_date': x.get('publicationDate') and self.ud_date(x.get('publicationDate')) or False,
                     'code': x['code'],
                     'country_id': self.country_cache.get(x.get('country', {}).get('labels', {}).get('english')),
-                    'mission': mission_cache.get(x.get('uniFieldCode', ''), ''),
                     'alpa_msfids': '',
                 }
 
                 if x.get('publicationDate'):
-                    data['alpa_msfids'] = ','.join(l['id'] for l in x.get('lists', []))
+                    project_data['alpa_msfids'] = ','.join(l['id'] for l in x.get('lists', []))
                 else:
-                    data['msl_product_ids'] = [(6, 0, [])]
+                    project_data['msl_product_ids'] = [(6, 0, [])]
 
                 if x.get('code') not in self.project_cache:
                     proj_ids = project_obj.search(self.cr, self.uid, [('code', '=', x.get('code'))], context=self.context)
                     if proj_ids:
                         self.project_cache[x['code']] = proj_ids[0]
                 if not self.project_cache.get(x.get('code')):
-                    self.project_cache[x['code']] = project_obj.create(self.cr, self.uid, data, context=self.context)
+                    self.project_cache[x['code']] = project_obj.create(self.cr, self.uid, project_data, context=self.context)
                 else:
-                    project_obj.write(self.cr, self.uid, self.project_cache[x['code']], data, context=self.context)
+                    project_obj.write(self.cr, self.uid, self.project_cache[x['code']], project_data, context=self.context)
 
             page += 1
             if 'nextPage' not in js['pagination']:

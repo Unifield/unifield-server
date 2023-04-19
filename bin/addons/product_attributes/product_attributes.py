@@ -771,6 +771,148 @@ class product_attributes(osv.osv):
                 res[_id] = True
         return res
 
+    def _get_oc_coordo_restrictions(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        ret = {}
+        for _id in ids:
+            ret[_id] = []
+
+        cr.execute('''select
+                p.id, array_agg(inst.id)
+            from
+                product_product p, product_country_rel c_rel, unidata_project up, msf_instance inst
+            where
+                p.id in %s
+                and p.id = c_rel.product_id
+                and up.country_id = c_rel.unidata_country_id
+                and inst.id = up.instance_id
+                and inst.level = 'coordo'
+            group by p.id
+            ''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+        return ret
+
+    def _search_is_mml_valid(self, cr, uid, obj, name, args, context=None):
+        # TODO in _where_cacl
+        for arg in args:
+            if arg[1] != '=' or not arg[2]:
+                raise osv.except_osv('Error', 'Filter on ud_sync_needed not implemented')
+
+        inst =  self.pool.get('res.company')._get_instance_record(cr, uid)
+        return [('in_mml_instance', '=', inst.id)]
+
+        #cr.execute('''
+        #    select p.id from
+        #        product_product p
+        #        left join product_project_rel p_rel on p_rel.product_id = p.id
+        #        left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+        #        left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+        #    where
+        #        p.oc_validation = 't'
+        #        and ( up1.instance_id = %s or up1 is null)
+        #''', (inst.id, ))
+        #return [('id', 'in', [x[0] for x in cr.fetchall()])]
+
+
+    def _get_is_mml_valid(self, cr, uid, ids, field_name, args, context=None):
+        """
+            is product MML valid in the current instance
+
+        """
+        if not ids:
+            return {}
+        ret = {}
+
+        for _id in ids:
+            ret[_id] = False
+
+        inst =  self.pool.get('res.company')._get_instance_record(cr, uid)
+        if inst.level == 'section':
+            return ret
+
+        cr.execute('''select
+                p.id
+            from
+                product_product p, product_project_rel p_rel, unidata_project up
+            where
+                p.id in %s
+                and p.oc_validation = 't'
+                and p_rel.product_id = p.id
+                and up.id = p_rel.unidata_project_id
+                and up.instance_id = %s
+            ''', (tuple(ids), inst.id))
+
+        for prod in cr.fetchall():
+            ret[prod[0]] = True
+
+        cr.execute('''select
+                p.id
+            from
+                product_product p
+                left join product_country_rel c_rel on c_rel.product_id = p.id
+                left join unidata_project up on up.country_id = c_rel.unidata_country_id
+                left join product_project_rel p_rel on p_rel.product_id = p.id
+            where
+                p.id in %s
+                and p.oc_validation = 't'
+                and (up.instance_id = %s or c_rel is null)
+                and p_rel is null
+            ''', (tuple(ids), inst.id))
+
+        for prod in cr.fetchall():
+            ret[prod[0]] = True
+
+        return ret
+
+    def _get_restrictions_txt(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        ret = {}
+
+        temp_ret = {}
+        for _id in ids:
+            temp_ret[_id] = []
+
+        cr.execute('''select
+                c_rel.product_id, array_agg(inst.code order by inst.code)
+            from
+                product_country_rel c_rel, unidata_project up, msf_instance inst
+            where
+                c_rel.product_id in %s
+                and up.country_id = c_rel.unidata_country_id
+                and inst.id = up.instance_id
+                and inst.level = 'coordo'
+            group by c_rel.product_id
+            ''', (tuple(ids), ))
+
+
+        mission_t = _('Missions')
+        for x in cr.fetchall():
+            temp_ret[x[0]] = ['%s: %s' % (mission_t, ', ' .join(x[1]))]
+
+        cr.execute('''select
+                p_rel.product_id, array_agg(inst.code order by inst.code)
+            from
+                product_project_rel p_rel, unidata_project up, msf_instance inst
+            where
+                p_rel.product_id in %s
+                and up.id =  p_rel.unidata_project_id
+                and inst.id = up.instance_id
+            group by p_rel.product_id
+            ''', (tuple(ids), ))
+
+        project_t = _('Projects')
+        for x in cr.fetchall():
+            temp_ret[x[0]] += ['%s: %s' % (project_t, ', ' .join(x[1]))]
+
+        for _id in temp_ret:
+            ret[_id] = "\n".join(temp_ret[_id])
+
+        return ret
+
 
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
@@ -1080,12 +1222,15 @@ class product_attributes(osv.osv):
         'oc_validation_date': fields.datetime('Validation Date', readonly=1), #lastValidationDate
         'oc_devalidation_date': fields.datetime('Devalidation Date', readonly=1), #lastDevalidationDate
         'oc_devalidation_reason': fields.text('Devalidation Reason', readonly=1), #devalidationReason
-        'oc_comments': fields.text('UD Comments', readonly=1), # comments
+        'oc_comments': fields.text('Use Comments', readonly=1), # comments
         'oc_project_restrictions': fields.many2many('unidata.project', 'product_project_rel', 'product_id', 'unidata_project_id', 'Project Restrictions', readonly=1, order_by='code'),
         'oc_country_restrictions': fields.many2many('unidata.country', 'product_country_rel', 'product_id', 'unidata_country_id', 'Country Restrictions', readonly=1, order_by='name'),
+        'oc_coordo_restrictions': fields.function(_get_oc_coordo_restrictions, method=True, type='many2many', relation='msf.instance', string='Mission Restrictions'),
         'msl_project_ids': fields.many2many('unidata.project', 'product_msl_rel', 'product_id', 'msl_id', 'MSL List', readonly=1, order_by='code'),
+        'restrictions_txt': fields.function(_get_restrictions_txt, method=True, type='text', string='Restrictions'),
+        'is_mml_valid': fields.function(_get_is_mml_valid, fnct_search=_search_is_mml_valid, method=True, type='boolean', string='MML Valid ?'),
+        'in_mml_instance': fields.function(tools.misc.get_fake, fnct_search=lambda *a, **b: [], method=True, type='many2one', relation='msf.instance', string='MML Valid for instance ?'),
     }
-
 
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):

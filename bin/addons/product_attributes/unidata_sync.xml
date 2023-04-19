@@ -162,13 +162,24 @@
             <field name="arch" type="xml">
                 <form string="MSL" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <field name="name" />
-                    <field name="mission" />
                     <field name="instance_id" />
                     <field name="code" />
                     <field name="publication_date" widget="date" />
                     <field name="publication" />
                     <field name="msfid"  />
-                    <field name="msl_product_ids"  colspan="4" nolabel="1"/>
+                    <field name="msl_product_ids"  colspan="4" nolabel="1">
+                        <tree>
+                            <field name="default_code" />
+                            <field name="name" />
+                            <field name="nomen_manda_2" />
+                            <field name="standard_ok" />
+                            <field name="oc_subscription" />
+                            <field name="state_ud" />
+                            <field name="state" />
+                            <field name="controlled_substance" />
+                            <field name="justification_code_id" />
+                        </tree>
+                    </field>
                 </form>
             </field>
         </record>
@@ -180,7 +191,6 @@
             <field name="arch" type="xml">
                 <tree string="MSL" hide_new_button="1" hide_delete_button="1" noteditable="1">
                     <field name="name" />
-                    <field name="mission" />
                     <field name="instance_id" />
                     <field name="code" />
                     <field name="publication_date" widget="date" />

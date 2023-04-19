@@ -192,6 +192,7 @@ class expression(object):
                     self.__exp[i] = self.__DUMMY_LEAF
                 else:
                     subexp = field.search(cr, uid, working_table, left, [self.__exp[i]], context=context)
+                    print "jjjjjjjjjjj", subexp
                     if not subexp:
                         self.__exp[i] = self.__DUMMY_LEAF
                     else:
