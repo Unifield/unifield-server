@@ -66,7 +66,8 @@ class unidata_project(osv.osv):
         'code': fields.char('UD Code', size=126, required=1, readonly=1, select=1),
         'name': fields.char('Name', size=256, readonly=1),
         'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
-        'msf_active': fields.boolean('Active', readonly=1),
+        'msl_active': fields.boolean('MSL Active', readonly=1),
+        'uf_active': fields.boolean('Active', readonly=1),
         'msfid': fields.integer('MSFID', readonly=1, select=1),
         'msl_status': fields.char('MSL Status', size=64, readonly=1),
         'publication': fields.integer('Publication', readonly=1),
@@ -83,6 +84,9 @@ class unidata_project(osv.osv):
         ('unique_msfid', 'unique(msfid)', 'MSID must be unique'),
     ]
 
+    _defauls = {
+        'uf_active': False
+    }
 unidata_project()
 
 
@@ -207,7 +211,7 @@ class ud_sync():
 
                 project_data = {
                     'instance_id': self.msf_intance_cache.get(x.get('uniFieldCode')),
-                    'msf_active': x.get('active'),
+                    'msl_active': x.get('active'),
                     'msfid': x.get('id'),
                     'msl_status': x.get('mslStatus', {}).get('english'),
                     'name': x.get('name', {}).get('english'),

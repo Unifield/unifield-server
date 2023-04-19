@@ -816,6 +816,38 @@ class product_attributes(osv.osv):
         #''', (inst.id, ))
         #return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
+    def _get_is_msl_valid(self, cr, uid, ids, field_name, args, context=None):
+        """
+            is product MSL valid in the current instance
+
+        """
+        if not ids:
+            return {}
+        ret = {}
+
+        for _id in ids:
+            ret[_id] = False
+
+        inst =  self.pool.get('res.company')._get_instance_record(cr, uid)
+        if inst.level == 'section':
+            return ret
+
+        cr.execute('''
+            select
+                product_id
+            from
+                product_msl_rel
+            where
+                product_id in %s
+                and uf_active = 't'
+                and publication_date is not null
+                and instance_id = %s
+            ''', (tuple(ids, inst.id))
+        )
+        for prod in cr.fetchall():
+            ret[prod[0]] = True
+        return prod
+
 
     def _get_is_mml_valid(self, cr, uid, ids, field_name, args, context=None):
         """
@@ -1229,7 +1261,9 @@ class product_attributes(osv.osv):
         'msl_project_ids': fields.many2many('unidata.project', 'product_msl_rel', 'product_id', 'msl_id', 'MSL List', readonly=1, order_by='code'),
         'restrictions_txt': fields.function(_get_restrictions_txt, method=True, type='text', string='Restrictions'),
         'is_mml_valid': fields.function(_get_is_mml_valid, fnct_search=_search_is_mml_valid, method=True, type='boolean', string='MML Valid ?'),
-        'in_mml_instance': fields.function(tools.misc.get_fake, fnct_search=lambda *a, **b: [], method=True, type='many2one', relation='msf.instance', string='MML Valid for instance ?'),
+        'is_msl_valid': fields.function(_get_is_msl_valid, method=True, type='boolean', string='MSL Valid ?'),
+        'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance ?'),
+        'in_msl_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='unidata.project', domain=[('uf_active', '=', True)], string='MSL Valid for instance ?'),
     }
 
 

@@ -469,6 +469,7 @@ class product_product(osv.osv):
         filter_in_any_product_list = False
         filter_in_product_list = False
         filter_in_mml_instance = False
+        filter_in_msl_instance = False
         for x in domain:
             if x[0] == 'location_id':
                 location_id = x[2]
@@ -484,6 +485,9 @@ class product_product(osv.osv):
 
             elif x[0] == 'in_mml_instance':
                 filter_in_mml_instance = x[2]
+
+            elif x[0] == 'in_msl_instance':
+                filter_in_msl_instance = x[2]
 
             elif x[0] == 'average':
                 if context.get('history_cons') and context.get('obj_id'):
@@ -540,7 +544,14 @@ class product_product(osv.osv):
             ret.joins['"product_product"'] += ['left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id']
             ret.where_clause.append(''' product_product.oc_validation = 't' and ( up1.instance_id = %s or up1 is null) ''')
             ret.where_clause_params.append(filter_in_mml_instance)
-
+        if filter_in_msl_instance:
+            ret.tables.append('"product_msl_rel"')
+            ret.joins.setdefault('"product_product"', [])
+            ret.joins.setdefault('"product_msl_rel"', [])
+            ret.joins['"product_product"'] += [('"product_msl_rel"', 'id', 'product_id', 'INNER JOIN')]
+            ret.joins['"product_product"'] += ["inner join unidata_project on unidata_project.id=product_msl_rel.msl_id"]
+            ret.where_clause.append(''' "unidata_project".uf_active = 't' and "unidata_project".id = %s  ''')
+            ret.where_clause_params.append(filter_in_msl_instance)
 
         return ret
 
