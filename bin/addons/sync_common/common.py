@@ -170,6 +170,8 @@ WHITE_LIST_MODEL = [
     'hr.payment.method',
     'wizard.template',
     'dest.cc.link',
+    'unidata.country',
+    'unidata.project',
 ]
 
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']

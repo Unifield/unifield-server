@@ -22,7 +22,7 @@ class unidata_country(osv.osv):
     _order = 'name'
 
     _columns = {
-        'name': fields.char('Name', size=256, translate=1, required=1, readonly=1, select=1),
+        'name': fields.char('Name', size=256, required=1, readonly=1, select=1),
         'unidata_project_ids': fields.one2many('unidata.project', 'country_id', 'Projects', readonly=1),
     }
 
@@ -205,9 +205,7 @@ class ud_sync():
                         if c_ids:
                             self.country_cache[x['country']['labels']['english']] = c_ids[0]
                         else:
-                            self.country_cache[x['country']['labels']['english']] = country_obj.create(self.cr, self.uid, {'name': x['country']['labels']['english']}, context={'lang': 'en_MF'})
-                            if x['country']['labels']['french']:
-                                country_obj.write(self.cr, self.uid, self.country_cache[x['country']['labels']['english']], {'name': x['country']['labels']['french']}, context={'lang': 'fr_MF'})
+                            self.country_cache[x['country']['labels']['english']] = country_obj.create(self.cr, self.uid, {'name': x['country']['labels']['english']}, context=self.context)
 
                 project_data = {
                     'instance_id': self.msf_intance_cache.get(x.get('uniFieldCode')),
@@ -362,11 +360,9 @@ class ud_sync():
                 for mr in oc_data.get('missionRestrictions', []):
                     if mr.get('country', {}).get('labels', {}).get('english'):
                         if mr['country']['labels']['english'] not in self.country_cache:
-                            c_id = country_obj.search(self.cr, self.uid, [('name', '=', mr['country']['labels']['english'])], context={'lang': 'en_MF'})
+                            c_id = country_obj.search(self.cr, self.uid, [('name', '=', mr['country']['labels']['english'])], context=self.context)
                             if not c_id:
-                                c_id = country_obj.create(self.cr, self.uid, {'name': mr['country']['labels']['english']})
-                                if mr['country']['labels'].get('french'):
-                                    country_obj.write(self.cr, self.uid, c_id, {'name': mr['country']['labels']['french']}, context={'lang': 'fr_MF'})
+                                c_id = country_obj.create(self.cr, self.uid, {'name': mr['country']['labels']['english']}, context=self.context)
 
                                 self.log('Create country %s' % (mr['country']['labels']['english'],))
                                 self.country_cache[mr['country']['labels']['english']] = c_id
