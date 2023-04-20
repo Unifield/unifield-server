@@ -218,7 +218,6 @@ class update_to_send(osv.osv,fv_formatter):
                                                ids_to_compute, rule.owner_field, context)
 
             if rule.direction == 'mission-private' and owners:
-                print owners
                 for _id in owners:
                     own = owners[_id]
                     if not isinstance(own, (list, tuple)):

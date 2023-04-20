@@ -32,6 +32,23 @@ class unidata_country(osv.osv):
 
 unidata_country()
 
+class product_msl_rel(osv.osv):
+    _name = 'product.msl.rel'
+    _table = 'product_msl_rel'
+
+    _columns = {
+        'msl_id': fields.many2one('unidata.project', 'MSL', required=1, select=1),
+        'product_id': fields.many2one('product.product', 'Product', required=1, select=1),
+        'creation_date': fields.datetime('Date added'),
+        'deletion_date': fields.datetime('Date removed'),
+        'version': fields.integer('Version number'),
+        'to_delete': fields.boolean('to delete'),
+    }
+
+    _sql_constraints = [
+        ('unique_msf_product', 'unique(msl_id,product_id)', 'MSL/Product exists')
+    ]
+product_msl_rel()
 
 class unidata_project(osv.osv):
     _name = 'unidata.project'
@@ -241,6 +258,7 @@ class ud_sync():
 
         list_url = '%s/lists' % (self.url_msl, )
         msl_ids = project_obj.search(self.cr, self.uid, [('msl_sync_needed', '=', True)], context=self.context)
+        exec_date = False
         for msl in project_obj.browse(self.cr, self.uid, msl_ids, fields_to_fetch=['alpa_msfids'], context=self.context):
             prod_ids = set()
             if msl.alpa_msfids:
@@ -265,8 +283,42 @@ class ud_sync():
                         if 'nextPage' not in js['pagination']:
                             break
             if not exec_date:
-                exec_date = datetime.now.strftime('%Y-%m-%d %H:%M:%S')
+                exec_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             project_obj.write(self.cr, self.uid, msl.id, {'msl_product_ids': [(6, 0, list(prod_ids))], 'msl_sync_date': exec_date}, context=self.context)
+            # TODO: increment
+            version = 1
+            self.cr.execute("update product_msl_rel set to_delete='t' where msl_id=%s", (msl.id,))
+            for prod_id in prod_ids:
+                self.cr.execute("insert into product_msl_rel (msl_id, product_id, creation_date, version) values (%s, %s, NOW(), %s) ON CONFLICT (msl_id, product_id) DO UPDATE SET to_delete='f'", (msl.id, prod_id, version))
+            # update version on resurected links
+            self.cr.execute("update product_msl_rel set version=%s, deletion_date=NULL where to_delete='f' and deletion_date is not null and msl_id=%s", (version, msl.id))
+            # mark as to delete
+            self.cr.execute("update product_msl_rel set version=%s, deletion_date=NOW() where to_delete='t' and deletion_date is null and msl_id=%s", (version, msl.id))
+
+            offset = 0
+            search_page = 500
+            while True:
+                rel_ids = self.pool.get('product.msl.rel').search(self.cr, self.uid, [('msl_id', '=', msl.id)], order='id', offset=offset, limit=search_page, context=self.context)
+                if not rel_ids:
+                    break
+                offset += search_page
+                self.pool.get('product.msl.rel').get_sd_ref(self.cr, 1, rel_ids)
+                if len(rel_ids) < search_page:
+                    break
+            self.cr.execute("""
+                update
+                    ir_model_data d
+                set
+                    last_modification=NOW(),
+                    touched='[''product_id'']'
+                from
+                    product_msl_rel r
+                where
+                    d.model = 'product.msl.rel'
+                    and d.module = 'sd'
+                    and d.res_id = r.id
+                    and r.version = %s
+            """, (version, ))
 
 
     def ud_date(self, date):
