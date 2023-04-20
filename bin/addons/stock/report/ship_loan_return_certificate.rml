@@ -117,10 +117,10 @@
 
         <blockTable colWidths="540.0" >
             <tr><td>
-                <para style="StandardLeft">The undersigned parties :</para>
+                <para style="StandardLeft">The undersigned parties declare :</para>
             </td></tr>
             <tr><td>
-                <para style="StandardLeft">I declare that the following listed items are returned by the Proprietary Instance : [[ getCompany().get('partner', '') ]]</para>
+                <para style="StandardLeft">That the following listed items are returned by the Proprietary Instance : [[ getCompany().get('partner', '') ]]</para>
                 <para style="StandardLeft">to the Partner : [[ o.partner_id and o.partner_id.name or '' ]]</para>
             </td></tr>
         </blockTable>
