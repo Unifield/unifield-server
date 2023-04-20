@@ -1,0 +1,313 @@
+<?xml version="1.0" ?>
+<document filename="test.pdf">
+
+    <template pageSize="(595.0,842.0)" title="Loan Return Certificate" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="30.0" y1="10.0" width="530" height="720" />
+
+        <pageGraphics>
+            <setFont name="Helvetica-Bold" size="20"/>
+            <drawCentredString x="300" y="750.0">LOAN RETURN CERTIFICATE</drawCentredString>
+            <image x="30" y="760.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+            <drawString x="520.0" y="30.0">Page : <pageNumber /> / </drawString>
+            <drawString x="557.0" y="30.0"><pageCount /></drawString>
+        </pageGraphics>
+
+    </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="ItemsLineHeader">
+            <blockAlignment value="CENTER" />
+            <blockValign value="CENTER" />
+            <lineStyle kind="OUTLINE" colorName="black" />
+            <lineStyle kind="INNERGRID" colorName="black" />
+            <blockBackground colorName="#FFCC99" start="0,0" stop="-1,0"/>
+        </blockTableStyle>
+
+        <initialize>
+            <paraStyle name="all" alignment="justify"/>
+        </initialize>
+
+        <paraStyle name="StandardBig" fontName="Helvetica" fontSize="12.0" leading="12" alignment="LEFT" spaceBefore="1.0" spaceAfter="1.0"/>
+        <paraStyle name="StandardBigBold" fontName="Helvetica-Bold" fontSize="12.0" leading="12" alignment="LEFT" spaceBefore="1.0" spaceAfter="1.0"/>
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="9.0" leading="9.0" alignment="CENTER" spaceBefore="1.0" spaceAfter="1.0"/>
+        <paraStyle name="StandardLeft" fontName="Helvetica" fontSize="9.0" leading="9.0" alignment="LEFT" spaceBefore="1.0" spaceAfter="1.0"/>
+        <paraStyle name="StandardBold" fontName="Helvetica-Bold" fontSize="9.0" leading="9.0" alignment="CENTER" spaceBefore="1.0" spaceAfter="1.0"/>
+        <paraStyle name="StandardMini" fontName="Helvetica" fontSize="5.0" leading="5.0" alignment="CENTER" spaceBefore="1.0" spaceAfter="1.0"/>
+
+    </stylesheet>
+
+    <story>
+        <para style="Standard">[[ repeatIn(objects,'o') ]]</para>
+        <para style="Standard"><font color="white"> </font></para>
+
+        <blockTable colWidths="540.0" >
+            <tr><td>
+                <para style="StandardBig"><b>Loan Reference :</b> [[ o.sale_id and (o.sale_id.name + ' /') or o.purchase_id and (o.purchase_id.name + ' /') or '' ]] [[ o.name ]]</para>
+            </td></tr>
+            <tr><td>
+                <para style="StandardBig"><b>Original Loan :</b> [[ o.sale_id and o.sale_id.loan_id and o.sale_id.loan_id.name or o.purchase_id and (o.purchase_id.loan_id and o.purchase_id.loan_id.name or o.purchase_id.origin) or '' ]]</para>
+            </td></tr>
+        </blockTable>
+
+        <para style="Standard"><font color="white"> </font></para>
+        <para style="Standard"><font color="white"> </font></para>
+
+        <blockTable colWidths="270.0,270.0">
+            [[ o.type == 'out' or removeParentNode('blockTable') ]]
+            <tr>
+                <td>
+                    <para style="StandardBigBold">Loan returned by :</para>
+                </td>
+                <td>
+                    <para style="StandardBigBold">Return of Loan received by :</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">Proprietary Instance : [[ o.company_id.name ]]</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">Return of Loan received by : [[ o.partner_id.name ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">[[ o.company_id.partner_id and o.company_id.partner_id.address and o.company_id.partner_id.address[0].street or '' ]]</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">[[ o.address_id and o.address_id.street or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">[[ o.company_id.partner_id and o.company_id.partner_id.address and o.company_id.partner_id.address[0].street2 or '' ]]</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">[[ o.address_id and o.address_id.street2 or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">[[ o.company_id.partner_id and o.company_id.partner_id.address and o.company_id.partner_id.address[0].zip and o.company_id.partner_id.address[0].city and '%s %s' % (o.company_id.partner_id.address[0].zip, o.company_id.partner_id.address[0].city) or '' ]]</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">[[ o.address_id and o.address_id.zip and o.address_id.city and '%s %s' % (o.address_id.zip, o.address_id.city) or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">[[ o.company_id.partner_id and o.company_id.partner_id.address and o.company_id.partner_id.address[0].country_id and o.company_id.partner_id.address[0].country_id.name or '' ]]</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">[[ o.address_id and o.address_id.country_id and o.address_id.country_id.name or '' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+        <blockTable colWidths="270.0,270.0">
+            [[ o.type == 'in' or removeParentNode('blockTable') ]]
+            <tr>
+                <td>
+                    <para style="StandardBigBold">Loan returned by :</para>
+                </td>
+                <td>
+                    <para style="StandardBigBold">Return of Loan received by :</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">Return of Loan received by : [[ o.partner_id.name ]]</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">Proprietary Instance : [[ o.company_id.name ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">[[ o.address_id and o.address_id.street or '' ]]</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">[[ o.company_id.partner_id and o.company_id.partner_id.address and o.company_id.partner_id.address[0].street or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">[[ o.address_id and o.address_id.street2 or '' ]]</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">[[ o.company_id.partner_id and o.company_id.partner_id.address and o.company_id.partner_id.address[0].street2 or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">[[ o.address_id and o.address_id.zip and o.address_id.city and '%s %s' % (o.address_id.zip, o.address_id.city) or '' ]]</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">[[ o.company_id.partner_id and o.company_id.partner_id.address and o.company_id.partner_id.address[0].zip and o.company_id.partner_id.address[0].city and '%s %s' % (o.company_id.partner_id.address[0].zip, o.company_id.partner_id.address[0].city) or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">[[ o.address_id and o.address_id.country_id and o.address_id.country_id.name or '' ]]</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">[[ o.company_id.partner_id and o.company_id.partner_id.address and o.company_id.partner_id.address[0].country_id and o.company_id.partner_id.address[0].country_id.name or '' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Standard"><font color="white"> </font></para>
+        <para style="Standard"><font color="white"> </font></para>
+
+        <blockTable colWidths="540.0" >
+            <tr><td>
+                <para style="StandardLeft">The undersigned parties :</para>
+            </td></tr>
+            <tr><td>
+                [[ o.type == 'out' or removeParentNode('tr') ]]
+                <para style="StandardLeft">I declare that the following listed items are returned by the Proprietary Instance : [[ o.company_id.name ]]</para>
+                <para style="StandardLeft">to the Partner : [[ o.partner_id and o.partner_id.name or '' ]]</para>
+            </td></tr>
+            <tr><td>
+                [[ o.type == 'in' or removeParentNode('tr') ]]
+                <para style="StandardLeft">I declare that the following listed items are returned by the Partner : [[ o.partner_id and o.partner_id.name or o.ext_cu and o.ext_cu.name or '' ]]</para>
+                <para style="StandardLeft">to the Proprietary Instance : [[ o.company_id.name ]]</para>
+            </td></tr>
+        </blockTable>
+
+        <para style="Standard"><font color="white"> </font></para>
+        <para style="Standard"><font color="white"> </font></para>
+
+        <blockTable colWidths="270.0,270.0">
+            <tr>
+                <td>
+                    <para style="StandardBold">
+                        <para>
+                        Value : [[ displayValue() and getTotalValue(o) or removeParentNode('para') ]] [[ getCurrencyName(o) ]]
+                        </para>
+                    </para>
+                </td>
+                <td>
+                    <para style="StandardBold">Date of return : [[ o.date_done and formatLang(o.date_done, date_time=True)[:-6] or '' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Standard"><font color="white"> </font></para>
+
+        <blockTable colWidths="110.0,220.0,50.0,90.0,70.0" repeatRows="1" style="ItemsLineHeader">
+            <tr>
+                <td>
+                    <para style="Standard">Code</para>
+                </td>
+                <td>
+                    <para style="Standard">Product Description</para>
+                </td>
+                <td>
+                    <para style="Standard">Quantity</para>
+                </td>
+                <td>
+                    <para style="Standard">Batch Number</para>
+                </td>
+                <td>
+                    <para style="Standard">Expiry Date</para>
+                </td>
+            </tr>
+            <tr>
+                [[ repeatIn(o.move_lines, 'line') ]]
+                <td>
+                    <para style="Standard">[[ line.product_id.default_code ]]</para>
+                </td>
+                <td>
+                    <para style="Standard">[[ line.product_id.name ]]</para>
+                </td>
+                <td>
+                    <para style="Standard">[[ line.product_qty ]]</para>
+                </td>
+                <td>
+                    <para style="Standard">[[ line.prodlot_id and line.prodlot_id.name or '' ]]</para>
+                </td>
+                <td>
+                    <para style="Standard">[[ line.prodlot_id and formatLang(line.prodlot_id.life_date, date=True) or '' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Standard"><font color="white"> </font></para>
+        <para style="Standard"><font color="white"> </font></para>
+
+        <blockTable colWidths="270.0,270.0">
+            <tr>
+                <td>
+                    <para style="StandardBig">Proprietary Instance : [[ o.company_id.name ]]</para>
+                </td>
+                <td>
+                    <para style="StandardBig">Partner : [[ o.partner_id and o.partner_id.name or o.ext_cu and o.ext_cu.name or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">The representative</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">The representative</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">Name :</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">Name :</para>
+                </td>
+            </tr>
+            <tr>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">Signature :</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">Signature :</para>
+                </td>
+            </tr>
+            <tr>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+            </tr>
+            <tr>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+            </tr>
+            <tr>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">Date :</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">Date :</para>
+                </td>
+            </tr>
+            <tr>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">Place :</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">Place :</para>
+                </td>
+            </tr>
+        </blockTable>
+    </story>
+</document>
