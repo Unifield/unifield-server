@@ -234,6 +234,7 @@ class sync_rule(osv.osv):
         'can_delete' : 'can_delete',
         'type_name' : 'type',
         'handle_priority' : 'handle_priority',
+        'direction': 'direction',
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):
