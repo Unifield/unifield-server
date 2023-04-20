@@ -120,6 +120,7 @@ class sync_rule(osv.osv):
             ('down', 'Down'),
             ('bidirectional', 'Bidirectional'),
             ('bi-private', 'Bidirectional-Private'),
+            ('mission-private', 'Mission-Private'),
         ], 'Directionality', required = True,),
         'domain':fields.text('Domain', required = False),
         'owner_field':fields.char('Owner Field', size = 64, required = False),
@@ -459,7 +460,8 @@ class sync_rule(osv.osv):
         return (message, error)
 
     def check_owner_field(self, cr, uid, rec, context=None):
-        if rec.direction != 'bi-private': return ('', False)
+        if rec.direction not in ('bi-private', 'mission-private'):
+            return ('', False)
         error = False
         message = "* Owner field existence... "
         try:

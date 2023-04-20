@@ -454,6 +454,14 @@ class update(osv.osv):
                 else:
                     privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
                         [update.owner.id]
+
+            elif update.rule_id.direction == 'mission-private' and update.owner:
+                privates = [x for x in
+                            self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) +
+                            [update.owner.id] +
+                            self.pool.get('sync.server.entity')._get_all_children(cr, uid, update.owner.id, context=context)
+                            if x != update.source.id
+                            ]
             else:
                 privates = []
             if (update.rule_id.direction == 'up' and update.source.id in children) or \
@@ -530,6 +538,7 @@ class update(osv.osv):
         if recover:
             filters.append("source = %s" % (entity.id, ))
         filters.append("direction = 'bi-private' AND (is_deleted = 't' OR owner IN (" + (','.join(map(str, children + [entity.id]))) + "))")
+        filters.append("direction = 'mission-private' AND source != " + str(entity.id) + " AND owner IN (" + (','.join(map(str, ancestor + children + [entity.id]))) + ")")
         base_query += ' AND ((' + ') OR ('.join(filters) + '))'
 
         ## Recover add own client updates to the list

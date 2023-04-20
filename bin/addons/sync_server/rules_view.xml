@@ -92,7 +92,7 @@
                             <field name="can_delete" />
                             <field name="handle_priority"/>
                             <field name="direction" on_change="invalidate(model_ref)" string="Direction"/>
-                            <field name="owner_field" on_change="invalidate(model_ref)" attrs="{'invisible':[('direction','!=','bi-private')], 'required':[('direction','=','bi-private')]}" colspan="4"/>
+                            <field name="owner_field" on_change="invalidate(model_ref)" attrs="{'invisible':[('direction','not in',['bi-private', 'mission-private'])], 'required':[('direction','in',['bi-private', 'mission-private'])]}" colspan="4"/>
                             <field name="master_data" />
                         </group>
                         <group col="2">
