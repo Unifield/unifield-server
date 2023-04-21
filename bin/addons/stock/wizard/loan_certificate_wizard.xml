@@ -2,10 +2,11 @@
 <openerp>
     <data>
         <!-- IN & OUT -->
-        <record id="action_loan_certificate_wizard_form" model="ir.ui.view">
+        <record id="action_loan_certificate_wizard_form_view" model="ir.ui.view">
             <field name="name">loan.certificate.wizard.form.view</field>
             <field name="model">loan.certificate.wizard</field>
             <field name="type">form</field>
+            <field name="priority">15</field>
             <field name="arch" type="xml">
                 <form string="Loan Certificate Export">
                     <group colspan="4">
@@ -20,7 +21,7 @@
             </field>
         </record>
 
-        <act_window id="action_loan_certificate_wizard_form"
+        <act_window id="action_loan_certificate_wizard"
             name="Loan Certificate Export"
             view_ids="view_picking_in_tree,view_picking_in_form,view_picking_out_tree,view_picking_out_form"
             res_model="loan.certificate.wizard"
@@ -54,10 +55,11 @@
         />
 
         <!-- SHIP -->
-        <record id="action_ship_loan_certificate_wizard_form" model="ir.ui.view">
+        <record id="action_ship_loan_certificate_wizard_form_view" model="ir.ui.view">
             <field name="name">ship.loan.certificate.wizard.form.view</field>
             <field name="model">ship.loan.certificate.wizard</field>
             <field name="type">form</field>
+            <field name="priority">15</field>
             <field name="arch" type="xml">
                 <form string="Loan Certificate Export">
                     <field name="ship_id" invisible="1"/>
@@ -76,16 +78,7 @@
             </field>
         </record>
 
-        <act_window id="action_ship_loan_certificate_wizard_form"
-            name="Loan Certificate Export"
-            view_ids="msf_outgoing.view_shipment_tree,msf_outgoing.view_shipment_form"
-            res_model="ship.loan.certificate.wizard"
-            src_model="shipment"
-            view_mode='form'
-            view_type='form'
-            key2="client_print_multi"
-            context="{'active_id': active_id}"
-            target='new' />
+        <!-- Action "action_ship_loan_certificate_wizard" is in addons/msf_outgoing/msf_outgoing_report.xml -->
 
         <report id="ship_loan_certificate"
         string="Loan Certificate"

@@ -8,7 +8,7 @@
         <pageGraphics>
             <setFont name="Helvetica-Bold" size="20"/>
             <drawCentredString x="300" y="750.0">LOAN RETURN CERTIFICATE</drawCentredString>
-            <image x="30" y="760.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <image x="30" y="765.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
             <drawString x="520.0" y="30.0">Page : <pageNumber /> / </drawString>
