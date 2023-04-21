@@ -259,6 +259,9 @@ class ud_sync():
         list_url = '%s/lists' % (self.url_msl, )
         msl_ids = project_obj.search(self.cr, self.uid, [('msl_sync_needed', '=', True)], context=self.context)
         exec_date = False
+        self.cr.execute("SELECT nextval('unidata_sync_msl_seq')")
+        version = self.cr.fetchone()[0]
+
         for msl in project_obj.browse(self.cr, self.uid, msl_ids, fields_to_fetch=['alpa_msfids'], context=self.context):
             prod_ids = set()
             if msl.alpa_msfids:
@@ -284,9 +287,8 @@ class ud_sync():
                             break
             if not exec_date:
                 exec_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            project_obj.write(self.cr, self.uid, msl.id, {'msl_product_ids': [(6, 0, list(prod_ids))], 'msl_sync_date': exec_date}, context=self.context)
-            # TODO: increment
-            version = 1
+            project_obj.write(self.cr, self.uid, msl.id, {'msl_sync_date': exec_date}, context=self.context)
+
             self.cr.execute("update product_msl_rel set to_delete='t' where msl_id=%s", (msl.id,))
             for prod_id in prod_ids:
                 self.cr.execute("insert into product_msl_rel (msl_id, product_id, creation_date, version) values (%s, %s, NOW(), %s) ON CONFLICT (msl_id, product_id) DO UPDATE SET to_delete='f'", (msl.id, prod_id, version))
@@ -305,21 +307,22 @@ class ud_sync():
                 self.pool.get('product.msl.rel').get_sd_ref(self.cr, 1, rel_ids)
                 if len(rel_ids) < search_page:
                     break
-            self.cr.execute("""
-                update
-                    ir_model_data d
-                set
-                    last_modification=NOW(),
-                    touched='[''product_id'']'
-                from
-                    product_msl_rel r
-                where
-                    d.model = 'product.msl.rel'
-                    and d.module = 'sd'
-                    and d.res_id = r.id
-                    and r.version = %s
-            """, (version, ))
+        self.cr.execute("""
+            update
+                ir_model_data d
+            set
+                last_modification=NOW(),
+                touched='[''product_id'']'
+            from
+                product_msl_rel r
+            where
+                d.model = 'product.msl.rel'
+                and d.module = 'sd'
+                and d.res_id = r.id
+                and r.version = %s
+        """, (version, ))
 
+        self.log('End MML refresh')
 
     def ud_date(self, date):
         date = date.split('.')[0] # found 3 formats in UD: 2021-03-30T06:32:51.500, 2021-03-30T06:32:51  and 2021-03-30T06:32
@@ -453,6 +456,10 @@ class unidata_sync(osv.osv):
     _name = 'unidata.sync'
     _description = "UniData Sync"
     _lock = threading.RLock()
+
+    def __init__(self, pool, cr):
+        super(unidata_sync, self).__init__(pool, cr)
+        cr.execute('CREATE SEQUENCE IF NOT EXISTS  unidata_sync_msl_seq')
 
     def _get_log(self, cr, uid, ids, field_name, args, context=None):
         res = {}
