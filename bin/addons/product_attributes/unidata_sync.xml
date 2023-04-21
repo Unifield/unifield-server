@@ -225,5 +225,59 @@
 
         <menuitem name="MSL List" parent="base.menu_product" id="unidata_project_menu" action="unidata_project_action" sequence="10" />
 
+
+
+        <record model="ir.ui.view" id="product_product_mml_tree">
+            <field name="name">product.product.mml.tree</field>
+            <field name="model">product.product</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="198" />
+            <field name="arch" type="xml">
+                <tree string="MML Products" hide_new_button="1" hide_delete_button="1">
+                    <field name="default_code" />
+                    <field name="name" />
+                    <field name="standard_ok" />
+                    <field name="restrictions_txt" />
+                    <field name="oc_comments" />
+                    <field name="oc_subscription" />
+                    <field name="state_ud"  />
+                    <field name="state"  />
+                    <field name="is_msl_valid"  />
+                    <field name="is_mml_valid"  />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="product_product_mml_search">
+            <field name="name">product.product.mml.search</field>
+            <field name="model">product.product</field>
+            <field name="type">search</field>
+            <field name="priority" eval="198" />
+            <field name="arch" type="xml">
+                <search string="MML Products">
+                    <field name="default_code" />
+                    <field name="name"  />
+                    <field name="standard_ok" />
+                    <field name="in_mml_instance" />
+                    <field name="oc_subscription" />
+                    <field name="state_ud" />
+                    <field name="state" />
+                    <field name="in_msl_instance" />
+                </search>
+            </field>
+        </record>
+
+        <record  model="ir.actions.act_window" id="product_product_mml_action">
+            <field name="name">MML Products</field>
+            <field name="res_model">product.product</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('oc_validation', '=', True)]</field>
+            <field name="search_view_id" ref="product_product_mml_search" />
+            <field name="view_id" ref="product_product_mml_tree" />
+        </record>
+
+        <menuitem name="MML Products" parent="base.menu_product" id="product_product_mml_menu" action="product_product_mml_action" sequence="15" />
+
     </data>
 </openerp>
