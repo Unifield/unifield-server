@@ -170,8 +170,8 @@ class ship_loan_certificate_wizard(osv.osv_memory):
                             move_price = move.price_unit or move.product_id.standard_price or 0.00
                             if move.price_currency_id.id != wiz.ship_id.currency_id.id:
                                 move_price = self.pool.get('res.currency').\
-                                    compute(self.cr, self.uid, move.price_currency_id.id, wiz.ship_id.currency_id.id,
-                                            move_price, round=False, context=self.localcontext)
+                                    compute(cr, uid, move.price_currency_id.id, wiz.ship_id.currency_id.id,
+                                            move_price, round=False, context=context)
                             value += move.product_qty * move_price
             data = {
                 'ids': [wiz.ship_id.id],
