@@ -172,6 +172,7 @@ WHITE_LIST_MODEL = [
     'dest.cc.link',
     'unidata.country',
     'unidata.project',
+    'product.msl.rel',
 ]
 
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']

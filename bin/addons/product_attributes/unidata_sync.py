@@ -48,6 +48,18 @@ class product_msl_rel(osv.osv):
     _sql_constraints = [
         ('unique_msf_product', 'unique(msl_id,product_id)', 'MSL/Product exists')
     ]
+
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        res = dict.fromkeys(ids, False)
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['msl_id'], context=context):
+            if not line.msl_id.instance_id:
+                continue
+            if line.msl_id.instance_id.level == 'project':
+                res[line.id] = line.msl_id.instance_id.parent_id.instance
+            elif line.msl_id.instance_id.level == 'coordo':
+                res[line.id] = line.msl_id.instance_id.instance
+        return res
+
 product_msl_rel()
 
 class unidata_project(osv.osv):
@@ -104,6 +116,16 @@ class unidata_project(osv.osv):
     _defauls = {
         'uf_active': False
     }
+
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        res = dict.fromkeys(ids, False)
+        for proj in self.browse(cr, uid, ids, fields_to_fetch=['instance_id'], context=context):
+            if proj.instance_id.level == 'project':
+                res[proj.id] = proj.instance_id.parent_id.instance
+            elif proj.instance_id.level == 'coordo':
+                res[proj.id] = proj.instance_id.instance
+        return res
+
 unidata_project()
 
 
@@ -605,6 +627,7 @@ class unidata_sync(osv.osv):
         return True
 
     def start_ud_sync(self, cr, uid, context=None):
+        print self.pool.get('res.company')._get_instance_level(cr, uid)
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
             raise osv.except_osv(_('Error'), _('UD sync can only be started at HQ level.'))
 
