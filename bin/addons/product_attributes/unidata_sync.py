@@ -180,6 +180,7 @@ class unidata_sync_log(osv.osv):
         'log_exists': fields.function(_get_log_exists, type='boolean', method=1, string='Log file exists'),
         'start_uid': fields.many2one('res.users', 'Started by', readonly=1),
         'server': fields.selection([('msl', 'MSL'), ('ud', 'unidata')], 'Server', readonly=1),
+        'number_lists_pulled': fields.integer('# list pulled', readonly=1),
     }
 
 unidata_sync_log()
@@ -237,11 +238,15 @@ class ud_sync():
         # TODO
         #prod_cache = {}
         page = 1
+        nb_lists = 0
+        nb_products = 0
         while True:
+            self.log('Query %s, page: %s' % (q_filter, page))
             js = self.query(q_filter, page=page, url=url)
             if not js.get('rows'):
                 break
             for x in js.get('rows'):
+                nb_lists += 1
                 self.log(x)
                 if x.get('uniFieldCode'):
                     if x['uniFieldCode'] not in self.msf_intance_cache:
@@ -307,15 +312,17 @@ class ud_sync():
                         if not exec_date:
                             exec_date = self.ud_date(js.get('context', {}).get('executeDate'))
                         for row in js.get('rows', []):
+                            nb_products += 1
                             for x in row.get('articles', []):
                                 p_id = prod_obj.search(self.cr, self.uid, [('active', 'in', ['t', 'f']), ('msfid', '=', x['id'])], context=self.context)
                                 if not p_id:
-                                    self.warn('Product %s msfid:%s not found' % x['code'], x['msfid'])
+                                    self.log('Product %s msfid:%s not found' % x['code'], x['msfid'], 'warn')
                                 else:
                                     prod_ids.add(p_id[0])
 
                         if 'nextPage' not in js['pagination']:
                             break
+
             if not exec_date:
                 exec_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             project_obj.write(self.cr, self.uid, msl.id, {'msl_sync_date': exec_date}, context=self.context)
@@ -329,7 +336,7 @@ class ud_sync():
             self.cr.execute("update product_msl_rel set version=%s, deletion_date=NOW() where to_delete='t' and deletion_date is null and msl_id=%s", (version, msl.id))
 
             offset = 0
-            search_page = 500
+            search_page = self.page_size
             while True:
                 rel_ids = self.pool.get('product.msl.rel').search(self.cr, self.uid, [('msl_id', '=', msl.id)], order='id', offset=offset, limit=search_page, context=self.context)
                 if not rel_ids:
@@ -338,6 +345,7 @@ class ud_sync():
                 self.pool.get('product.msl.rel').get_sd_ref(self.cr, 1, rel_ids)
                 if len(rel_ids) < search_page:
                     break
+
         self.cr.execute("""
             update
                 ir_model_data d
@@ -354,6 +362,8 @@ class ud_sync():
         """, (version, ))
 
         self.log('End MML refresh')
+
+        return nb_lists, nb_products
 
     def ud_date(self, date):
         date = date.split('.')[0] # found 3 formats in UD: 2021-03-30T06:32:51.500, 2021-03-30T06:32:51  and 2021-03-30T06:32
@@ -495,7 +505,7 @@ class unidata_sync(osv.osv):
     def _get_log(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        cr.execute("select start_date, end_date, state, sync_type from unidata_sync_log order by id desc limit 1")
+        cr.execute("select start_date, end_date, state, sync_type from unidata_sync_log where server='ud' order by id desc limit 1")
         one = cr.fetchone()
         if one:
             last_execution_start_date = one[0]
@@ -504,6 +514,16 @@ class unidata_sync(osv.osv):
             last_execution_sync_type = one[3]
         else:
             last_execution_start_date = last_execution_end_date = last_execution_status = last_execution_sync_type = False
+
+        cr.execute("select start_date, end_date, state from unidata_sync_log where server='msl' order by id desc limit 1")
+        one = cr.fetchone()
+        if one:
+            last_msl_execution_start_date = one[0]
+            last_msl_execution_end_date = one[1]
+            last_msl_execution_status = one[2]
+        else:
+            last_execution_start_date = last_execution_end_date = last_execution_status = last_execution_sync_type = False
+            last_msl_execution_start_date = last_msl_execution_end_date = last_msl_execution_status = False
 
         param_obj = self.pool.get('ir.config_parameter')
         eligible_for_full_sync = bool(param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC')) or bool(param_obj.get_param(cr, 1, 'LAST_UD_DATE_SYNC')) or False
@@ -514,6 +534,10 @@ class unidata_sync(osv.osv):
                 'last_execution_status': last_execution_status,
                 'last_execution_sync_type': last_execution_sync_type,
                 'eligible_for_full_sync': eligible_for_full_sync,
+
+                'last_msl_execution_start_date': last_msl_execution_start_date,
+                'last_msl_execution_end_date': last_msl_execution_end_date,
+                'last_msl_execution_status': last_msl_execution_status,
             }
 
         return res
@@ -536,12 +560,15 @@ class unidata_sync(osv.osv):
         'next_planned_date': fields.function(_get_next_planned_date,  method=True, type='datetime', string='Next Scheduled date'),
         'page_size': fields.integer('UD Page size'),
         'nb_keep_log': fields.integer('Number of log files to keep'),
-        'ud_timeout': fields.integer('UD Timeout in second'),
-        'last_execution_start_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last Execution Start Date"),
-        'last_execution_end_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last Execution End Date"),
-        'last_execution_sync_type': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('full', 'Full'), ('cont', 'Continuation'), ('diff', 'Based on last modification date')], string="Last Execution Sync Type"),
-        'last_execution_status': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('running', 'Running'), ('error', 'Error'), ('done', 'Done')], string="Last Execution State"),
+        'ud_timeout': fields.integer('Network Timeout (seconds)'),
+        'last_execution_start_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last UD Execution Start Date"),
+        'last_execution_end_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last UD Execution End Date"),
+        'last_execution_sync_type': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('full', 'Full'), ('cont', 'Continuation'), ('diff', 'Based on last modification date')], string="Last UD Execution Sync Type"),
+        'last_execution_status': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('running', 'Running'), ('error', 'Error'), ('done', 'Done')], string="Last UD Execution State"),
         'eligible_for_full_sync': fields.function(_get_log, method=True, multi='get_log', type='boolean', string="Eligible for full sync"),
+        'last_msl_execution_start_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last MSL Execution Start Date"),
+        'last_msl_execution_end_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last MSL Execution End Date"),
+        'last_msl_execution_status': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('running', 'Running'), ('error', 'Error'), ('done', 'Done')], string="Last MSL Execution State"),
         'is_active': fields.boolean('Active'),
         'interval': fields.integer('Scheduler interval (hours)'),
     }
@@ -610,22 +637,83 @@ class unidata_sync(osv.osv):
         param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
         return True
 
-    def _start_bg(self, dbname, uid, context=None):
+    def _start_bg(self, dbname, uid, method, context=None):
         cr = pooler.get_db(dbname).cursor()
         try:
-            self.start_ud_sync(cr, uid, context=context)
+            method(cr, uid, context=context)
         except Exception, e:
-            self._error = e
+            self._error = tools.misc.get_traceback(e)
         finally:
             cr.commit()
             cr.close(True)
         return True
 
-    def start_manual(self, cr, uid, ids, context=None):
+    def msl_start_manual(self, cr, uid, ids, context=None):
+        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+            raise osv.except_osv(_('Error'), _('MSL sync can only be started at HQ level.'))
         self._error = ''
         new_thread = threading.Thread(
             target=self._start_bg,
-            args=(cr.dbname, uid, context)
+            args=(cr.dbname, uid, self.start_msl_sync, context)
+        )
+        new_thread.start()
+        new_thread.join(3.0)
+        if not new_thread.isAlive() and self._error:
+            raise Exception(self._error)
+        return True
+
+    def start_msl_sync(self, cr, nuid, context=None):
+
+        if not self._lock.acquire(blocking=False):
+            raise osv.except_osv(_('Error'), _('A sync is already running ...'))
+
+        session_obj = self.pool.get('unidata.sync.log')
+        try:
+            handler = False
+            uid = self.pool.get('ir.model.data').get_object_reference(cr, nuid, 'base', 'user_unidata_pull')[1]
+            logger = logging.getLogger('msl-sync')
+            sync_obj = ud_sync(cr, uid, self.pool, logger=logger, context=context)
+            page_size = sync_obj.page_size
+
+            nuid = hasattr(nuid, 'realUid') and nuid.realUid or nuid
+            session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size,  'start_uid': nuid, 'server': 'msl'}, context=context)
+
+            formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+            if tools.config['logfile']:
+                log_file = path.join(path.dirname(tools.config['logfile']), 'msl-sync-%s-%s.log' % (session_id, datetime.now().strftime('%Y-%m-%d-%H%M')))
+                handler = logging.FileHandler(log_file)
+                session_obj.write(cr, uid, session_id, {'log_file': log_file}, context=context)
+            else:
+                handler = logging.StreamHandler(sys.stdout)
+
+            handler.setLevel(logging.INFO)
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
+            logger.propagate = False
+
+            self._purge_log(cr, uid, context=context)
+            # commit to display running session
+            cr.commit()
+            logger.info('Sync start, page size: %s' % (page_size, ))
+
+            nb_lists, nb_products = sync_obj.create_msl_list()
+            session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'number_lists_pulled': nb_lists, 'number_products_updated': nb_products,'state': 'done'}, context=context)
+        except Exception as e:
+            cr.rollback()
+            error = tools.misc.get_traceback(e)
+            logger.error('End of Script with error: %s' % error)
+            session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'error', 'error': error}, context=context)
+        finally:
+            if handler:
+                handler.close()
+                logger.removeHandler(handler)
+            self._lock.release()
+
+    def ud_start_manual(self, cr, uid, ids, context=None):
+        self._error = ''
+        new_thread = threading.Thread(
+            target=self._start_bg,
+            args=(cr.dbname, uid, self.start_ud_sync, context)
         )
         new_thread.start()
         new_thread.join(3.0)
@@ -640,11 +728,15 @@ class unidata_sync(osv.osv):
         if not self._lock.acquire(blocking=False):
             raise osv.except_osv(_('Error'), _('A sync is already running ...'))
         try:
-            sync_obj = ud_sync(cr, uid, self.pool, logger=logging.getLogger('msl'), context=context)
-            sync_obj.create_msl_list()
-            #self._start_ud_sync(cr, uid, context=context)
+            self._start_ud_sync(cr, uid, context=context)
         finally:
             self._lock.release()
+
+    def start_msl_ud_sync(self, cr, uid, context=None):
+        self.start_msl_sync(cr, uid, context=context)
+        cr.commit()
+        self.start_ud_sync(cr, uid, context=context)
+
 
     def _start_ud_sync(self, cr, nuid, full=False, context=None):
 
@@ -652,8 +744,6 @@ class unidata_sync(osv.osv):
 
         session_obj = self.pool.get('unidata.sync.log')
         param_obj = self.pool.get('ir.config_parameter')
-
-
 
         nb_prod = 0
         updated = 0
@@ -684,7 +774,7 @@ class unidata_sync(osv.osv):
             param_obj.set_param(cr, 1, 'FORMER_UD_DATE_SYNC', last_ud_date_sync or '')
 
         nuid = hasattr(nuid, 'realUid') and nuid.realUid or nuid
-        session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync, 'sync_type': sync_type, 'start_uid': nuid}, context=context)
+        session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync, 'sync_type': sync_type, 'start_uid': nuid, 'server': 'ud'}, context=context)
 
         formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
         if tools.config['logfile']:

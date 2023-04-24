@@ -8,9 +8,9 @@
         </record>
 
         <record id="ir_cron_unidata_sync" model="ir.cron">
-            <field name="function">start_ud_sync</field>
+            <field name="function">start_msl_ud_sync</field>
             <field name="user_id">1</field>
-            <field name="name">Sync UD products</field>
+            <field name="name">Sync UD/MSL products</field>
             <field name="interval_type">hours</field>
             <field eval="-1" name="numbercall"/>
             <field eval="5" name="priority"/>
@@ -36,6 +36,7 @@
             <field name="arch" type="xml">
                 <form string="UniData Configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <field name="url" colspan="4"/>
+                    <field name="url_msl" colspan="4" />
                     <field name="login"  />
                     <field name="password" password="True" />
                     <field name="nb_keep_log" />
@@ -53,17 +54,22 @@
                     <field name="next_run_date" />
                     <field name="eligible_for_full_sync" invisible="1" />
                     <group colspan="4" col="4">
-                        <button name="set_as_full" string="Set next sync as full sync" confirm="The next will be a full sync, this operation cannot be reversed. Do you confirm ?" colspan="1" type="object" icon="gtk-media-previous"  attrs="{'invisible': [('eligible_for_full_sync', '=', False)]}"/>
+                        <button name="set_as_full" string="Set next UD sync as full sync" confirm="The next will be a full sync, this operation cannot be reversed. Do you confirm ?" colspan="1" type="object" icon="gtk-media-previous"  attrs="{'invisible': [('eligible_for_full_sync', '=', False)]}"/>
                         <group colspan="3" />
                     </group>
-                    <separator colspan="4" string="Last Sync" />
+                    <separator colspan="4" string="MSL Last Sync" />
+                    <field name="last_msl_execution_start_date" />
+                    <field name="last_msl_execution_end_date" />
+                    <field name="last_msl_execution_status" />
+                    <separator colspan="4" string="UD Last Sync" />
                     <field name="last_execution_start_date" />
                     <field name="last_execution_end_date" />
-                    <field name="last_execution_sync_type" />
                     <field name="last_execution_status" />
+                    <field name="last_execution_sync_type" />
                     <group colspan="4" col="4">
-                        <button string="Start manually" name="start_manual" type="object" icon="gtk-refresh" />
-                        <group colspan="3" />
+                        <button string="UD Start manually" name="ud_start_manual" type="object" icon="gtk-refresh" />
+                        <button string="MSL Start manually" name="msl_start_manual" type="object" icon="gtk-refresh" />
+                        <group colspan="2" />
                     </group>
 
                 </form>
@@ -138,12 +144,91 @@
             <field name="res_model">unidata.sync.log</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[]</field>
+            <field name="domain">[('server', '=', 'ud')]</field>
         </record>
+
+        <record model="ir.ui.view" id="unidata_sync_log_msl_form">
+            <field name="name">unidata.sync.log.msl.form</field>
+            <field name="model">unidata.sync.log</field>
+            <field name="type">form</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <form string="MSL Log" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <field name="start_date" />
+                    <field name="end_date"  />
+                    <field name="page_size" />
+                    <field name="start_uid" />
+                    <newline />
+                    <field name="number_lists_pulled" />
+                    <field name="number_products_updated" />
+                    <field name="state" />
+                    <field name="error" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_sync_log_msl_tree">
+            <field name="name">unidata.sync.log.msl.tree</field>
+            <field name="model">unidata.sync.log</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <tree string="MSL Log" hide_new_button="1" hide_delete_button="1" noteditable="1" colors="red:state=='error'">
+                    <field name="start_date" />
+                    <field name="end_date"  />
+                    <field name="page_size" />
+                    <field name="number_lists_pulled" />
+                    <field name="number_products_updated" />
+                    <field name="state" />
+                    <field name="log_exists" invisible="1" />
+                    <button string="Get log file" name="get_log_file" type="object" icon="gtk-file" attrs="{'invisible': [('log_exists', '=', False)]}" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_sync_log_msl_search">
+            <field name="name">unidata.sync.log.msl.search</field>
+            <field name="model">unidata.sync.log</field>
+            <field name="type">search</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <search string="MSL Log">
+                    <field name="start_date" />
+                    <field name="end_date"  />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
+
+        <record id="unidata_sync_log_msl_action" model="ir.actions.act_window">
+            <field name="name">UniData Sync report</field>
+            <field name="res_model">unidata.sync.log</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="unidata_sync_log_msl_search" />
+            <field name="view_id" ref="unidata_sync_log_msl_tree" />
+            <field name="domain">[('server', '=', 'msl')]</field>
+        </record>
+        <record id="unidata_sync_log_msl_action_tree" model="ir.actions.act_window.view">
+            <field eval="10" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="unidata_sync_log_msl_tree"/>
+            <field name="act_window_id" ref="unidata_sync_log_msl_action"/>
+        </record>
+
+        <record id="unidata_sync_log_msl_action_form" model="ir.actions.act_window.view">
+            <field eval="20" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="unidata_sync_log_msl_form"/>
+            <field name="act_window_id" ref="unidata_sync_log_msl_action"/>
+        </record>
+
 
         <menuitem name="UniData" parent="object_query.menu_preferences" id="unidata_main_menu" sequence="17" />
         <menuitem name="UniData Sync Config" action="unidata_sync_action" type="server" id="unidata_sync_menu" parent="unidata_main_menu" sequence="10"/>
         <menuitem name="UniData Sync report" action="unidata_sync_log_action" id="unidata_sync_report_menu" parent="unidata_main_menu" sequence="15"/>
+        <menuitem name="MSL Sync report" action="unidata_sync_log_msl_action" id="unidata_sync_report_msl_menu" parent="unidata_main_menu" sequence="25"/>
 
         <report
             auto="False"
