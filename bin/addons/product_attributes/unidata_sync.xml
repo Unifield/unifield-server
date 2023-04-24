@@ -328,7 +328,7 @@
                     <field name="oc_subscription" />
                     <field name="state_ud" />
                     <field name="state" />
-                    <field name="in_msl_instance" />
+                    <field name="in_msl_instance" widget="many2one"/>
                 </search>
             </field>
         </record>
