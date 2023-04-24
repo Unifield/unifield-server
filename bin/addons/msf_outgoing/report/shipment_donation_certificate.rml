@@ -295,14 +295,8 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="95.0,60.0,32.0,80.0,200.0,60.0,65.0,50.0,40.0,40.0,60.0" repeatRows="1" style="ItemsLineHeader">
+        <blockTable colWidths="42.0,95.0,265.0,65.0,85.0,65.0,50.0,50.0,65.0" repeatRows="1" style="ItemsLineHeader">
             <tr>
-                <td>
-                    <para style="ItemsLineTitle">FO Ref.</para>
-                </td>
-                <td>
-                    <para style="ItemsLineTitle">PPL Ref.</para>
-                </td>
                 <td>
                     <para style="ItemsLineTitle">Item</para>
                 </td>
@@ -334,12 +328,6 @@
             <tr>
                 [[ repeatIn(getLines(o), 'line') ]]
                 <td>
-                    <para style="ItemsLineValue">[[ ', '.join(sortData(line['fo_refs'])) ]]</para>
-                </td>
-                <td>
-                    <para style="ItemsLineValue">[[ ', '.join(sortData(line['ppl_refs'])) ]]</para>
-                </td>
-                <td>
                     <para style="ItemsLineValue">[[ ', '.join(sortData(line['line_numbers'])) ]]</para>
                 </td>
                 <td>
@@ -358,13 +346,13 @@
                     <para style="ItemsLineValue">[[ line['exp_date'] and formatLang(line['exp_date'], date=True) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="ItemsLineValue">[[ line['currency'] ]]</para>
+                    <para style="ItemsLineValue">[[ o.currency_id.name ]]</para>
                 </td>
                 <td>
-                    <para style="ItemsLineValueRight">[[ line['unit_price'] ]]</para>
+                    <para style="ItemsLineValueRight">[[ formatLang(line['unit_price']) ]]</para>
                 </td>
                 <td>
-                    <para style="ItemsLineValueRight">[[ line['tot_value'] ]]</para>
+                    <para style="ItemsLineValueRight">[[ formatLang(line['tot_value']) ]]</para>
                 </td>
             </tr>
         </blockTable>

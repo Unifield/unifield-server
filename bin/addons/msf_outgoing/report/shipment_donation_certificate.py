@@ -46,9 +46,9 @@ class shipment_donation_certificate(report_sxw.rml_parse):
         keys = []
         for pack in ship.pack_family_memory_ids:
             for move in pack.move_lines:
+                key = (move.product_id.id, move.prodlot_id and move.prodlot_id.id or False)
+                move_price = float(move.price_unit)
                 line = {
-                    'fo_refs': [pack.sale_order_id.name],
-                    'ppl_refs': [pack.ppl_id.name],
                     'line_numbers': [str(move.line_number)],
                     'p_id': move.product_id.id,
                     'p_code': move.product_id.default_code,
@@ -60,38 +60,28 @@ class shipment_donation_certificate(report_sxw.rml_parse):
                     'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
                     'prodlot': move.prodlot_id and move.prodlot_id.name or '',
                     'exp_date': move.prodlot_id and move.prodlot_id.life_date or move.expired_date or '',
-                    'currency_id': move.price_currency_id.id,
                     'currency': move.price_currency_id.name,
-                    'unit_price': move.price_unit,
-                    'tot_value': move.product_qty * move.price_unit,
+                    'unit_price': move_price,
+                    'tot_value': move.product_qty * move_price,
                 }
-                if move.prodlot_id:
-                    key = (move.product_id.id, move.prodlot_id.id)
-                    if key in keys:
-                        for line in lines:
-                            if line['p_id'] == key[0] and line['prodlot_id'] == key[1]:
-                                if pack.sale_order_id.name not in line['fo_refs']:
-                                    line['fo_refs'].append(pack.sale_order_id.name)
-                                if pack.ppl_id.name not in line['ppl_refs']:
-                                    line['ppl_refs'].append(pack.ppl_id.name)
-                                if str(move.line_number) not in line['line_numbers']:
-                                    line['line_numbers'].append(str(move.line_number))
-                                move_qty = move.product_qty
-                                if line['uom_rounding'] != move.product_uom.rounding:
-                                    move_qty = uom_obj._compute_round_up_qty(self.cr, self.uid, line['uom_rounding'],
-                                                                             move_qty, context=self.localcontext)
-                                tot_qty = line['qty'] + move_qty
-                                move_price = move.price_unit
-                                if line['currency_id'] != move.price_currency_id.id:
-                                    move_price = curr_obj.compute(self.cr, self.uid, move.price_currency_id.id,
-                                                                  line['currency_id'], move_price, round=False,
-                                                                  context=self.localcontext)
-                                line.update({'qty': tot_qty, 'tot_value': tot_qty * move_price})
-                                break
-                    else:
-                        keys.append(key)
-                        lines.append(line)
+                if key in keys:
+                    for line in lines:
+                        if line['p_id'] == key[0] and line['prodlot_id'] == key[1]:
+                            if str(move.line_number) not in line['line_numbers']:
+                                line['line_numbers'].append(str(move.line_number))
+                            move_qty = move.product_qty
+                            if line['uom_rounding'] != move.product_uom.rounding:
+                                move_qty = uom_obj._compute_round_up_qty(self.cr, self.uid, line['uom_rounding'],
+                                                                         move_qty, context=self.localcontext)
+                            tot_qty = line['qty'] + move_qty
+                            if ship.currency_id.id != move.price_currency_id.id:
+                                move_price = curr_obj.compute(self.cr, self.uid, move.price_currency_id.id,
+                                                              ship.currency_id.id, move_price, round=False,
+                                                              context=self.localcontext)
+                            line.update({'qty': tot_qty, 'unit_price': move_price, 'tot_value': tot_qty * move_price})
+                            break
                 else:
+                    keys.append(key)
                     lines.append(line)
 
         return lines
