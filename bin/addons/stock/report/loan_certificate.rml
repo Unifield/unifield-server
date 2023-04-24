@@ -45,23 +45,18 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="530.0" >
+        <blockTable colWidths="540.0" >
             <tr><td>
-                <para style="StandardBig"><b>Loan Reference :</b> [[ o.sale_id and (o.sale_id.name + ' /') or o.purchase_id and (o.purchase_id.name + ' /') or '' ]] [[ o.name ]]</para>
+                <para style="StandardBig"><b>Original Loan Request :</b> [[ o.sale_id and o.sale_id.name or o.purchase_id and o.purchase_id.name or '' ]], <b>Original Loan Delivery :</b> [[ o.name ]]</para>
             </td></tr>
             <tr><td><para style="Standard"><font color="white"> </font></para></td></tr>
             <tr><td>
-                <para style="StandardLeft">The undersigned parties declare :</para>
-            </td></tr>
-            <tr><td>
                 [[ o.type == 'out' or removeParentNode('tr') ]]
-                <para style="StandardLeft">That the following listed items are loaned by the Proprietary Instance : [[ o.company_id.name ]]</para>
-                <para style="StandardLeft">to the Partner : [[ o.partner_id and o.partner_id.name or '' ]]</para>
+                <para style="StandardLeft">The undersigned parties declare that the following listed items are loaned by [[ o.company_id.name ]] to [[ o.partner_id and o.partner_id.name or '' ]]</para>
             </td></tr>
             <tr><td>
                 [[ o.type == 'in' or removeParentNode('tr') ]]
-                <para style="StandardLeft">That the following listed items are loaned by the Partner : [[ o.partner_id and o.partner_id.name or o.ext_cu and o.ext_cu.name or '' ]]</para>
-                <para style="StandardLeft">to the Proprietary Instance : [[ o.company_id.name ]]</para>
+                <para style="StandardLeft">The undersigned parties declare that the following listed items are loaned by [[ o.partner_id and o.partner_id.name or o.ext_cu and o.ext_cu.name or '' ]] to [[ o.company_id.name ]]</para>
             </td></tr>
         </blockTable>
 
@@ -73,7 +68,7 @@
                 <td>
                     <para style="StandardBold">
                         <para>
-                        Value : [[ displayValue() and getTotalValue(o) or removeParentNode('para') ]] [[ getCurrencyName(o) ]]
+                        Value : [[ displayValue() and formatLang(getTotalValue(o)) or removeParentNode('para') ]] [[ getCurrencyName(o) ]]
                         </para>
                     </para>
                 </td>

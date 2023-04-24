@@ -72,10 +72,10 @@
             </tr>
             <tr>
                 <td>
-                    <para style="StandardLeft">Proprietary Instance : [[ getCompany().get('partner', '') ]]</para>
+                    <para style="StandardLeft">[[ getCompany().get('partner', '') ]]</para>
                 </td>
                 <td>
-                    <para style="StandardLeft">Return of Loan received by : [[ o.partner_id.name ]]</para>
+                    <para style="StandardLeft">[[ o.partner_id.name ]]</para>
                 </td>
             </tr>
             <tr>
@@ -117,11 +117,7 @@
 
         <blockTable colWidths="540.0" >
             <tr><td>
-                <para style="StandardLeft">The undersigned parties declare :</para>
-            </td></tr>
-            <tr><td>
-                <para style="StandardLeft">That the following listed items are returned by the Proprietary Instance : [[ getCompany().get('partner', '') ]]</para>
-                <para style="StandardLeft">to the Partner : [[ o.partner_id and o.partner_id.name or '' ]]</para>
+                <para style="StandardLeft">The undersigned parties declare that the following listed items are returned by [[ getCompany().get('partner', '') ]] to [[ o.partner_id and o.partner_id.name or '' ]]</para>
             </td></tr>
         </blockTable>
 
@@ -133,7 +129,7 @@
                 <td>
                     <para style="StandardBold">
                         <para>
-                        Value : [[ displayValue() and getTotalValue() or removeParentNode('para') ]] [[ o.currency_id.name ]]
+                        Value : [[ displayValue() and formatLang(getTotalValue()) or removeParentNode('para') ]] [[ o.currency_id.name ]]
                         </para>
                     </para>
                 </td>

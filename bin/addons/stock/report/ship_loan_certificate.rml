@@ -46,20 +46,16 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="530.0" >
+        <blockTable colWidths="540.0" >
             <tr><td>
-                <para style="StandardBigBold">Loan Reference(s) for [[ o.name ]] :</para>
+                <para style="StandardBigBold">Original Loan Reference(s) for [[ o.name ]] :</para>
             </td></tr>
             <tr><td>
                 <para style="StandardBig">[[ ', '.join([loan['loan_ref'] for loan in getLoansData(o.pack_family_memory_ids, o.shipment_actual_date, False)]) ]]</para>
             </td></tr>
             <tr><td><para style="Standard"><font color="white"> </font></para></td></tr>
             <tr><td>
-                <para style="StandardLeft">The undersigned parties declare :</para>
-            </td></tr>
-            <tr><td>
-                <para style="StandardLeft">That the following listed items are loaned by the Proprietary Instance : [[ getCompany().get('partner', '') ]]</para>
-                <para style="StandardLeft">to the Partner : [[ o.partner_id and o.partner_id.name or '' ]]</para>
+                <para style="StandardLeft">The undersigned parties declare that the following listed items are loaned by [[ getCompany().get('partner', '') ]] to [[ o.partner_id and o.partner_id.name or '' ]]</para>
             </td></tr>
         </blockTable>
 
@@ -71,7 +67,7 @@
                 <td>
                     <para style="StandardBold">
                         <para>
-                        Value : [[ displayValue() and getTotalValue() or removeParentNode('para') ]] [[ o.currency_id.name ]]
+                        Value : [[ displayValue() and formatLang(getTotalValue()) or removeParentNode('para') ]] [[ o.currency_id.name ]]
                         </para>
                     </para>
                 </td>
