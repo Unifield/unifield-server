@@ -30,8 +30,6 @@
                         <field name="uf_create_date" string="Creation"/>
                         <field name="uf_write_date" string="Modification"/>
                         <field name="active" invisible="1"/>
-                        <field name="restrictions_txt" />
-                        <field name="is_mml_valid" />
                        </tree>
                     </xpath>
                 </data>
@@ -176,6 +174,7 @@
                                     <tree string="MSL">
                                         <field name="instance_id" string="Code"/>
                                         <field name="publication" />
+                                        <field name="uf_active" />
                                     </tree>
                                 </field>
                             </group>
@@ -204,7 +203,7 @@
                                 <field name="manufacturer_txt" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
                                 <group colspan="2" col="2" attrs="{'invisible':[('int_status_code', '!=', 'unidata')]}">
                                     <separator string="MML Info" colspan="2"/>
-                                    <separator string="UD Comments" colspan="2" />
+                                    <separator string="Use Comments" colspan="2" />
                                     <field name="oc_comments" colspan="2" nolabel="1" />
                                     <separator string="Devalidation Reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}" />
                                     <field name="oc_devalidation_reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}" nolabel="1"/>

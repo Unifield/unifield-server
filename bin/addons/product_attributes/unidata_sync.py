@@ -65,17 +65,17 @@ product_msl_rel()
 class unidata_project(osv.osv):
     _name = 'unidata.project'
     _description = 'UniData Project'
-    _rec_name = 'code'
+    _rec_name = 'instance_name'
     _order = 'code'
 
-    def name_get(self, cr, uid, ids, context=None):
-        if not len(ids):
-            return []
-        res = []
-        for proj in self.browse(cr, uid, ids, fields_to_fetch=['name', 'code'], context=context):
-            res.append((proj.id, '%s - %s' % (proj['name'], proj['code'])))
-
-        return res
+    #def name_get(self, cr, uid, ids, context=None):
+    #    if not len(ids):
+    #        return []
+    #    res = []
+    #    for proj in self.browse(cr, uid, ids, fields_to_fetch=['name', 'code'], context=context):
+    #        res.append((proj.id, '%s - %s' % (proj['name'], proj['code'])))
+    #
+    #    return res
 
     def _search_ud_sync_needed(self, cr, uid, obj, name, args, context=None):
         for arg in args:
@@ -95,15 +95,16 @@ class unidata_project(osv.osv):
         'code': fields.char('UD Code', size=126, required=1, readonly=1, select=1),
         'name': fields.char('Name', size=256, readonly=1),
         'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
+        'instance_name': fields.related('instance_id', 'code', type='char', size=64, string='Instance', store=True, readonly=1),
         'msl_active': fields.boolean('MSL Active', readonly=1),
-        'uf_active': fields.boolean('Active', readonly=1),
+        'uf_active': fields.boolean('Active'),
         'msfid': fields.integer('MSFID', readonly=1, select=1),
         'msl_status': fields.char('MSL Status', size=64, readonly=1),
         'publication': fields.integer('Publication', readonly=1),
         'publication_date': fields.datetime('Pulbication Date', readonly=1),
         'country_id': fields.many2one('unidata.country', 'Country', readonly=1),
 
-        'msl_product_ids': fields.many2many('product.product', 'product_msl_rel', 'msl_id', 'product_id', 'MSL Products', readonly=1, order_by='default_code'),
+        'msl_product_ids': fields.many2many('product.product', 'product_msl_rel', 'msl_id', 'product_id', 'MSL Products', readonly=1, order_by='default_code', sql_rel_domain="product_msl_rel.creation_date is not null"),
         'msl_sync_date': fields.datetime('MSL sync date', type='char', size=60, readonly=1),
         'msl_sync_needed': fields.function(tools.misc.get_fake, fnct_search=_search_ud_sync_needed, method=True, type='boolean', string='To be ud synced'),
         'alpa_msfids': fields.text('Alpa msfids', readonly=1),
@@ -125,6 +126,14 @@ class unidata_project(osv.osv):
             elif proj.instance_id.level == 'coordo':
                 res[proj.id] = proj.instance_id.instance
         return res
+
+    def activate(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'uf_active': True}, context=context)
+        return True
+
+    def de_activate(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'uf_active': False}, context=context)
+        return True
 
 unidata_project()
 
@@ -606,8 +615,6 @@ class unidata_sync(osv.osv):
         try:
             self.start_ud_sync(cr, uid, context=context)
         except Exception, e:
-            # TODO
-            raise
             self._error = e
         finally:
             cr.commit()
@@ -627,7 +634,6 @@ class unidata_sync(osv.osv):
         return True
 
     def start_ud_sync(self, cr, uid, context=None):
-        print self.pool.get('res.company')._get_instance_level(cr, uid)
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
             raise osv.except_osv(_('Error'), _('UD sync can only be started at HQ level.'))
 

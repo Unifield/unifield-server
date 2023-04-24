@@ -155,13 +155,47 @@
         />
 
 
+        <record model="ir.ui.view" id="unidata_project_search">
+            <field name="name">unidata.project.search</field>
+            <field name="model">unidata.project</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="MSL List">
+                    <field name="name" />
+                    <field name="msfid"  />
+                    <field name="code" />
+                    <field name="msl_product_ids" />
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_project_tree">
+            <field name="name">unidata.project.tree</field>
+            <field name="model">unidata.project</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="MSL Lists" hide_new_button="1" hide_delete_button="1" colors="red:not instance_id">
+                    <field name="name" />
+                    <field name="instance_id" />
+                    <field name="code" />
+                    <field name="publication_date" widget="date" />
+                    <field name="publication" />
+                    <field name="msl_product_ids" />
+                    <field name="uf_active" />
+                    <button type="object" string="Activate" name="activate" icon="terp-check" attrs="{'invisible': [('uf_active', '=', True)]}"/>
+                    <button type="object" string="De-activate" name="de_activate" icon="gtk-stop" attrs="{'invisible': [('uf_active', '=', False)]}"/>
+                </tree>
+            </field>
+        </record>
+
         <record model="ir.ui.view" id="unidata_project_form">
             <field name="name">unidata.project.form</field>
             <field name="model">unidata.project</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="MSL" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                <form string="MSL List" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <field name="name" />
+                    <field name="uf_active" />
                     <field name="instance_id" />
                     <field name="code" />
                     <field name="publication_date" widget="date" />
@@ -184,48 +218,35 @@
             </field>
         </record>
 
-        <record model="ir.ui.view" id="unidata_project_tree">
-            <field name="name">unidata.project.tree</field>
-            <field name="model">unidata.project</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="MSL" hide_new_button="1" hide_delete_button="1" noteditable="1">
-                    <field name="name" />
-                    <field name="instance_id" />
-                    <field name="code" />
-                    <field name="publication_date" widget="date" />
-                    <field name="publication" />
-                    <field name="msl_product_ids" />
-                    <field name="msfid"  />
-                </tree>
-            </field>
-        </record>
-
-        <record model="ir.ui.view" id="unidata_project_search">
-            <field name="name">unidata.project.search</field>
-            <field name="model">unidata.project</field>
-            <field name="type">search</field>
-            <field name="arch" type="xml">
-                <search string="MSL">
-                    <field name="name" />
-                    <field name="msfid"  />
-                    <field name="code" />
-                    <field name="msl_product_ids" />
-                </search>
-            </field>
-        </record>
-
         <record id="unidata_project_action" model="ir.actions.act_window">
-            <field name="name">MSL</field>
+            <field name="name">MSL Lists</field>
             <field name="res_model">unidata.project</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('publication_date', '!=', False)]</field>
         </record>
 
-        <menuitem name="MSL List" parent="base.menu_product" id="unidata_project_menu" action="unidata_project_action" sequence="10" />
+        <menuitem name="MSL Lists" parent="base.menu_product" id="unidata_project_menu" action="unidata_project_action" sequence="15" />
 
-
+        <record model="ir.ui.view" id="product_product_mml_search">
+            <field name="name">product.product.mml.search</field>
+            <field name="model">product.product</field>
+            <field name="type">search</field>
+            <field name="priority" eval="198" />
+            <field name="arch" type="xml">
+                <search string="MML Products">
+                    <filter string="MML Valid" icon="terp-check" domain="[('in_mml_instance', '=', True)]" />
+                    <field name="default_code" />
+                    <field name="name"  />
+                    <field name="standard_ok" />
+                    <field name="in_mml_instance" />
+                    <field name="oc_subscription" />
+                    <field name="state_ud" />
+                    <field name="state" />
+                    <field name="in_msl_instance" />
+                </search>
+            </field>
+        </record>
 
         <record model="ir.ui.view" id="product_product_mml_tree">
             <field name="name">product.product.mml.tree</field>
@@ -248,25 +269,6 @@
             </field>
         </record>
 
-        <record model="ir.ui.view" id="product_product_mml_search">
-            <field name="name">product.product.mml.search</field>
-            <field name="model">product.product</field>
-            <field name="type">search</field>
-            <field name="priority" eval="198" />
-            <field name="arch" type="xml">
-                <search string="MML Products">
-                    <field name="default_code" />
-                    <field name="name"  />
-                    <field name="standard_ok" />
-                    <field name="in_mml_instance" />
-                    <field name="oc_subscription" />
-                    <field name="state_ud" />
-                    <field name="state" />
-                    <field name="in_msl_instance" />
-                </search>
-            </field>
-        </record>
-
         <record  model="ir.actions.act_window" id="product_product_mml_action">
             <field name="name">MML Products</field>
             <field name="res_model">product.product</field>
@@ -277,7 +279,63 @@
             <field name="view_id" ref="product_product_mml_tree" />
         </record>
 
-        <menuitem name="MML Products" parent="base.menu_product" id="product_product_mml_menu" action="product_product_mml_action" sequence="15" />
+        <menuitem name="MML Products" parent="base.menu_product" id="product_product_mml_menu" action="product_product_mml_action" sequence="10" />
+
+        <record model="ir.ui.view" id="product_product_msl_search">
+            <field name="name">product.product.msl.search</field>
+            <field name="model">product.product</field>
+            <field name="type">search</field>
+            <field name="priority" eval="177" />
+            <field name="arch" type="xml">
+                <search string="MSL Products">
+                    <filter string="MML Valid" icon="terp-check" domain="[('in_mml_instance', '=', True)]" />
+                    <field name="default_code" />
+                    <field name="name"  />
+                    <field name="standard_ok" />
+                    <field name="oc_subscription" />
+                    <field name="state_ud" />
+                    <field name="state" />
+                    <field name="in_msl_instance" widget="many2one"/>
+                    <field name="justification_code_id" />
+                    <field name="controlled_substance" />
+                    <field name="in_mml_instance" />
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="product_product_msl_tree">
+            <field name="name">product.product.msl.tree</field>
+            <field name="model">product.product</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="177" />
+            <field name="arch" type="xml">
+                <tree string="MSL Products" hide_new_button="1" hide_delete_button="1">
+                    <field name="default_code" />
+                    <field name="name" />
+                    <field name="nomen_manda_2" />
+                    <field name="standard_ok" />
+                    <field name="oc_subscription" />
+                    <field name="state_ud"  />
+                    <field name="state"  />
+                    <field name="in_msl_instance" truncate="100" string="MSL DB"/>
+                    <field name="justification_code_id" />
+                    <field name="controlled_substance" />
+                    <field name="is_mml_valid"  />
+                </tree>
+            </field>
+        </record>
+
+        <record  model="ir.actions.act_window" id="product_product_msl_action">
+            <field name="name">MSL Products</field>
+            <field name="res_model">product.product</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('in_msl_instance', '=', True)]</field>
+            <field name="search_view_id" ref="product_product_msl_search" />
+            <field name="view_id" ref="product_product_msl_tree" />
+        </record>
+
+        <menuitem name="MSL Products" parent="base.menu_product" id="product_product_mSl_menu" action="product_product_msl_action" sequence="20" />
 
     </data>
 </openerp>
