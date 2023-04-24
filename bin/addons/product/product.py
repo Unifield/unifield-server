@@ -491,7 +491,7 @@ class product_product(osv.osv):
 
             elif x[0] == 'in_msl_instance':
                 if x[2] is True:
-                    filter_in_msl_instance = 0
+                    filter_in_msl_instance = -1
                     instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
                     ud_project_ids = self.pool.get('unidata.project').search(cr, uid, [('instance_id', '=', instance_id)], context=context)
                     if ud_project_ids:
