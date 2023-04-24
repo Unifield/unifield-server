@@ -47,7 +47,7 @@ class shipment_donation_certificate(report_sxw.rml_parse):
         for pack in ship.pack_family_memory_ids:
             for move in pack.move_lines:
                 key = (move.product_id.id, move.prodlot_id and move.prodlot_id.id or False)
-                move_price = float(move.price_unit)
+                move_price = move.price_unit
                 line = {
                     'line_numbers': [str(move.line_number)],
                     'p_id': move.product_id.id,
