@@ -22,4 +22,5 @@
 import standard_price_track_changes_report
 import merged_ud_products
 import unidata_sync_log
+import product_mml
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

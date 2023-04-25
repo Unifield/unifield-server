@@ -626,7 +626,10 @@ class product_product(osv.osv):
         '''
         res = {}
         if ids is not None:
-            read_result = self.read(cr, uid, ids, ['default_code', 'seller_ids'], context=context)
+            fields_to_read = ['default_code']
+            if partner_id:
+                fields_to_read.append('seller_ids')
+            read_result = self.read(cr, uid, ids, fields_to_read, context=context)
             res = dict([(x['id'], x['default_code']) for x in read_result])
             if not partner_id:
                 return dict([(x['id'], x['default_code']) for x in read_result])
