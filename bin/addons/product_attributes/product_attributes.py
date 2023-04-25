@@ -1682,7 +1682,6 @@ class product_attributes(osv.osv):
                     _("Merged products cannot be activated: %s") % (', '.join([x['default_code'] for x in self.read(cr, uid, non_kept_ids, ['default_code'], context=context)]))
                 )
 
-
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
@@ -1702,15 +1701,22 @@ class product_attributes(osv.osv):
                 unidata_product = intstat_code == 'unidata'
 
         # Prevent Product Type change during sync if there is stock in the Stock Mission Report
+        # or at Project Level if there is stock available
         if 'type' in vals and context.get('sync_update_execution'):
-            prod = self.browse(cr, uid, ids[0], fields_to_fetch=['default_code', 'type', 'international_status'], context=context)
-            if vals['type'] != prod.type and prod.international_status.code in ['local', 'itc', 'esc', 'hq', 'unidata'] \
-                    and self.check_exist_srml_stock(cr, uid, ids[0], context=context):
-                raise osv.except_osv(
-                    _('Error'),
-                    _('The Product Type of the %s Product %s can not be modified if it has stock in the Stock Mission Report')
-                    % (prod.international_status.name, prod.default_code)
-                )
+            ftf = ['default_code', 'type', 'international_status', 'company_id', 'qty_available']
+            prod = self.browse(cr, uid, ids[0], fields_to_fetch=ftf, context=context)
+            if vals['type'] != prod.type and prod.international_status.code in ['local', 'itc', 'esc', 'hq', 'unidata']:
+                if self.check_exist_srml_stock(cr, uid, ids[0], context=context):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The Product Type of the %s Product %s can not be modified if it has stock in the Stock Mission Report')
+                        % (prod.international_status.name, prod.default_code)
+                    )
+                if prod.company_id.instance_id.level == 'project' and prod.qty_available > 0:
+                    raise osv.except_osv(
+                        _('Error'), _('The Product Type of the %s Product %s can not be modified if it has stock available')
+                        % (prod.international_status.name, prod.default_code)
+                    )
 
         if 'default_code' in vals:
             if vals['default_code'] == 'XXX':
