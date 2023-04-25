@@ -237,8 +237,8 @@
 
         <menuitem name="UniData" parent="object_query.menu_preferences" id="unidata_main_menu" sequence="17" />
         <menuitem name="UniData Sync Config" action="unidata_sync_action" type="server" id="unidata_sync_menu" parent="unidata_main_menu" sequence="10"/>
-        <menuitem name="UniData Sync report" action="unidata_sync_log_action" id="unidata_sync_report_menu" parent="unidata_main_menu" sequence="15"/>
-        <menuitem name="MSL Sync report" action="unidata_sync_log_msl_action" id="unidata_sync_report_msl_menu" parent="unidata_main_menu" sequence="25"/>
+        <menuitem name="MSL Sync report" action="unidata_sync_log_msl_action" id="unidata_sync_report_msl_menu" parent="unidata_main_menu" sequence="15"/>
+        <menuitem name="UniData Sync report" action="unidata_sync_log_action" id="unidata_sync_report_menu" parent="unidata_main_menu" sequence="25"/>
 
         <report
             auto="False"
