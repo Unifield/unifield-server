@@ -323,6 +323,37 @@
 
         <menuitem name="MSL Lists" parent="base.menu_product" id="unidata_project_menu" action="unidata_project_action" sequence="15" />
 
+        <record id="unidata_project_mass_activate" model="ir.actions.server">
+            <field name="name">Activate Selection</field>
+            <field name="model_id" ref="model_unidata_project"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.wiz_activate(state='active', context=context)</field>
+        </record>
+        <record id="open_msl_activate" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">unidata.project</field>
+            <field name="name">Activate Selection</field>
+            <field name="view_ids" ref="unidata_project_tree" />
+            <field eval="'ir.actions.server,%d'%unidata_project_mass_activate" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="unidata_project_mass_deactivate" model="ir.actions.server">
+            <field name="name">De-activate Selection</field>
+            <field name="model_id" ref="model_unidata_project"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.wiz_activate(state='inactive', context=context)</field>
+        </record>
+        <record id="open_msl_deactivate" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">unidata.project</field>
+            <field name="name">De-activate Selection</field>
+            <field name="view_ids" ref="unidata_project_tree" />
+            <field eval="'ir.actions.server,%d'%unidata_project_mass_deactivate" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+
         <record model="ir.ui.view" id="product_product_mml_search">
             <field name="name">product.product.mml.search</field>
             <field name="model">product.product</field>

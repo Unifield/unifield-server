@@ -67,6 +67,7 @@ class unidata_project(osv.osv):
     _description = 'UniData Project'
     _rec_name = 'instance_name'
     _order = 'code'
+    _trace = True
 
     #def name_get(self, cr, uid, ids, context=None):
     #    if not len(ids):
@@ -134,6 +135,11 @@ class unidata_project(osv.osv):
     def de_activate(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'uf_active': False}, context=context)
         return True
+
+    def wiz_activate(self, cr, uid, fids, state, context=None):
+        ids = context.get('active_ids')
+        self.write(cr, uid, ids, {'uf_active': state=='active'}, context=context)
+        return {'type': 'ir.actions.refresh_o2m', 'o2m_refresh': '_terp_list'}
 
 unidata_project()
 

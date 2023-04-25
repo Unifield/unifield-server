@@ -72,3 +72,28 @@
             self.write(cr, uid, rule_id, vals, context=context)
         # Subscribe to the rule
         self.subscribe(cr, uid, rule_id)
+
+-
+  UD MSL Activation
+-
+  !python {model: audittrail.rule}: |
+    name = 'MSL Activation rule'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'unidata.project')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['uf_active']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'unidata.project'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[]",
+                'log_write': True,
+                'log_unlink': False,
+                'log_create': False,
+                'field_ids': [(6, 0, fields_ids)],
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
