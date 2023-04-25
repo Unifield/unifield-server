@@ -422,5 +422,46 @@
 
         <menuitem name="MSL Products" parent="base.menu_product" id="product_product_mSl_menu" action="product_product_msl_action" sequence="20" />
 
+        <record model="ir.ui.view" id="unidata_project_missing_search">
+            <field name="name">unidata.project.missing.search</field>
+            <field name="model">unidata.project</field>
+            <field name="type">search</field>
+            <field name="priority">120</field>
+            <field name="arch" type="xml">
+                <search string="UD Projects with no link to UF">
+                    <field name="code" />
+                    <field name="name" />
+                    <field name="msl_status" />
+                    <field name="msfid"  />
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_project_missing_tree">
+            <field name="name">unidata.project.missing.tree</field>
+            <field name="model">unidata.project</field>
+            <field name="type">tree</field>
+            <field name="priority">120</field>
+            <field name="arch" type="xml">
+                <tree string="UD Projects with no link to UF" hide_new_button="1" hide_delete_button="1" noteditable="1">
+                    <field name="code" />
+                    <field name="name" />
+                    <field name="msl_status" />
+                    <field name="msfid" />
+                </tree>
+            </field>
+        </record>
+
+        <record  model="ir.actions.act_window" id="unidata_project_missing_action">
+            <field name="name">UD Projects with no link to UF</field>
+            <field name="res_model">unidata.project</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="domain">[('instance_id', '=', False)]</field>
+            <field name="search_view_id" ref="unidata_project_missing_search" />
+            <field name="view_id" ref="unidata_project_missing_tree" />
+        </record>
+
+        <menuitem name="UD Projects with no link to UF" parent="unidata_main_menu" id="unidata_project_missing_menu" action="unidata_project_missing_action" sequence="30" />
     </data>
 </openerp>
