@@ -316,7 +316,7 @@ class ud_sync():
                             for x in row.get('articles', []):
                                 p_id = prod_obj.search(self.cr, self.uid, [('active', 'in', ['t', 'f']), ('msfid', '=', x['id'])], context=self.context)
                                 if not p_id:
-                                    self.log('Product %s msfid:%s not found' % x['code'], x['msfid'], 'warn')
+                                    self.log('Product %s msfid:%s not found' % (x['code'], x['id']), 'warn')
                                 else:
                                     prod_ids.add(p_id[0])
 
