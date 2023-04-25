@@ -2870,7 +2870,7 @@ class stock_picking(osv.osv):
                         vals = {'state': 'draft'}
                     else:
                         vals = {'state': move.state}
-                vals.update({'backmove_id': False})
+                vals.update({'backmove_id': False, 'composition_list_id': False})
                 # If the move comes from a DPO, don't change the destination location
                 if move.dpo_id:
                     pass
@@ -3049,6 +3049,13 @@ class stock_picking(osv.osv):
         pack_loc_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
         if move_to_update:
             for move in move_obj.browse(cr, uid, move_to_update, context=context):
+                # Remove all KCL references from the OUT process wizard lines linked to the move
+                if move.product_id.subtype == 'kit':
+                    out_m_proc_obj = self.pool.get('outgoing.delivery.move.processor')
+                    out_m_proc_ids = out_m_proc_obj.search(cr, uid, [('move_id', '=', move.id), ('composition_list_id', '!=', False)], context=context)
+                    if out_m_proc_ids:
+                        out_m_proc_obj.write(cr, uid, out_m_proc_ids, {'composition_list_id': False}, context=context)
+
                 move_obj.write(cr, uid, [move.id], {
                     'location_dest_id': pack_loc_id,
                     'old_out_location_dest_id': move.location_dest_id.id,
@@ -3059,7 +3066,7 @@ class stock_picking(osv.osv):
         if not context.get('sync_message_execution', False):
             self._hook_create_rw_out_sync_messages(cr, uid, [out.id], context, False)
 
-        context.update({'picking_type': 'picking', 'search_view_id': search_view_id})
+        context.update({'picking_type': 'picking', 'search_view_id': search_view_id, 'from_button': False})
         return {'name': _('Picking Tickets'),
                 'view_mode': 'form,tree',
                 'view_id': [view_id, tree_view_id],

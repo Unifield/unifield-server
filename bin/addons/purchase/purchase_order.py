@@ -820,6 +820,26 @@ class purchase_order(osv.osv):
 
         return ret
 
+    def _get_ad_lines_message_nr(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = 0
+
+        cr.execute("""select target_id, array_agg(distinct(line_number))
+            from sync_client_message_received
+            where
+                run='f' and
+                target_object='purchase.order.ad' and
+                target_id in %s
+            group by target_id""", (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = ', '.join(['%s'%l for l in x[1]])
+
+        return ret
+
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -1000,6 +1020,7 @@ class purchase_order(osv.osv):
         'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
         'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
+        'ad_lines_message_nr': fields.function(_get_ad_lines_message_nr, type='char', size=1024, method=1, string='Line number of NR message for missing AD'),
         'tax_line': fields.one2many('account.invoice.tax', 'purchase_id', 'Tax Lines'),
     }
     _defaults = {

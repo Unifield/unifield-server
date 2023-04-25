@@ -897,5 +897,8 @@
         <record id="us_8417_upd_srv_loc" model="patch.scripts">
             <field name="method">us_8417_upd_srv_loc</field>
         </record>
+        <record id="us_11195_oca_period_nr" model="patch.scripts">
+            <field name="method">us_11195_oca_period_nr</field>
+        </record>
     </data>
 </openerp>

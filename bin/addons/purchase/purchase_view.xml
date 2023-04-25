@@ -140,6 +140,9 @@
                                 <p id="nr_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                     <translate>WARNING: Order line(s) not synchronized, code(s) does not exist</translate>
                                 </p>
+                                <p id="nr_ad_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                    <translate>WARNING: Order line(s) not synchronized, please add an AD on line(s): </translate>
+                                </p>
 
                                 <script language="javascript">
                                     var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
@@ -166,6 +169,11 @@
                                     if (has_nr &amp;&amp; has_nr!= '0') {
                                         $('#nr_lines').show();
                                     }
+                                    var has_ad_nr = $('#ad_lines_message_nr').val() || $('#ad_lines_message_nr').text();
+                                    if (has_ad_nr) {
+                                        $('#nr_ad_lines').append(has_ad_nr);
+                                        $('#nr_ad_lines').show();
+                                    }
 
                                 </script>
                             </html>
@@ -182,6 +190,7 @@
                         <field name="push_fo" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
                         <field name="nb_creation_message_nr" invisible="1"/>
+                        <field name="ad_lines_message_nr" invisible="1"/>
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('order_type', '=', 'loan_return')]}"/>
                         <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <newline/>

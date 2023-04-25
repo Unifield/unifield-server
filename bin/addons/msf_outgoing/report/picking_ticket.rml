@@ -263,7 +263,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,44.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesHeader">
+        <blockTable colWidths="25.0,100.0,220.0,55.0,50.0,54.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesHeader">
             <tr>
                 <td>
                     <para style="LineHeader">Item</para>
@@ -353,7 +353,7 @@
 
         <pto>
             <pto_header>
-                <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,44.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesHeader">
+                <blockTable colWidths="25.0,100.0,220.0,55.0,50.0,54.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesHeader">
                     <tr>
                         <td>
                             <para style="LineHeader">Item</para>
@@ -443,7 +443,7 @@
             </pto_header>
 
             <!-- Lines -->
-            <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,44.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesValues">
+            <blockTable colWidths="25.0,100.0,220.0,55.0,50.0,54.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesValues">
                 [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>
@@ -463,7 +463,7 @@
                         <para style="LineValue">[[ objects[0].state != 'done' and formatFloatDigitsToUom(getStock(m), m.product_id.uom_id.rounding) or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ m.composition_list_id and m.composition_list_id.composition_reference or '' ]]</para>
+                        <para style="LineValue">[[ m.composition_list_id and m.composition_list_id.composition_combined_ref_lot or '' ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.product_id.uom_id.name ]]</para>
