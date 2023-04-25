@@ -53,23 +53,30 @@
                     <field name="interval" />
                     <field name="next_run_date" />
                     <field name="eligible_for_full_sync" invisible="1" />
-                    <group colspan="4" col="4">
-                        <button name="set_as_full" string="Set next UD sync as full sync" confirm="The next will be a full sync, this operation cannot be reversed. Do you confirm ?" colspan="1" type="object" icon="gtk-media-previous"  attrs="{'invisible': [('eligible_for_full_sync', '=', False)]}"/>
-                        <group colspan="3" />
-                    </group>
+                    <field name="eligible_msl_full_sync" invisible="1" />
+
                     <separator colspan="4" string="MSL Last Sync" />
                     <field name="last_msl_execution_start_date" />
                     <field name="last_msl_execution_end_date" />
                     <field name="last_msl_execution_status" />
+                    <field name="last_msl_execution_sync_type" />
+                    <group colspan="4" col="4">
+                        <button name="set_msl_as_full" string="Set next MSL sync as full sync" confirm="The next MSL sync will be full, this operation cannot be reversed. Do you confirm ?" colspan="1" type="object" icon="gtk-media-previous"  attrs="{'invisible': [('eligible_msl_full_sync', '=', False)]}"/>
+                        <group colspan="3" />
+                        <button string="MSL Start manually" name="msl_start_manual" type="object" icon="gtk-refresh" />
+                        <group colspan="3" />
+                    </group>
+
                     <separator colspan="4" string="UD Last Sync" />
                     <field name="last_execution_start_date" />
                     <field name="last_execution_end_date" />
                     <field name="last_execution_status" />
                     <field name="last_execution_sync_type" />
                     <group colspan="4" col="4">
+                        <button name="set_as_full" string="Set next UD sync as full sync" confirm="The next UD sync will be full, this operation cannot be reversed. Do you confirm ?" colspan="1" type="object" icon="gtk-media-previous"  attrs="{'invisible': [('eligible_for_full_sync', '=', False)]}"/>
+                        <group colspan="3" />
                         <button string="UD Start manually" name="ud_start_manual" type="object" icon="gtk-refresh" />
-                        <button string="MSL Start manually" name="msl_start_manual" type="object" icon="gtk-refresh" />
-                        <group colspan="2" />
+                        <group colspan="3" />
                     </group>
 
                 </form>
@@ -161,6 +168,7 @@
                     <newline />
                     <field name="number_lists_pulled" />
                     <field name="number_products_updated" />
+                    <field name="sync_type" />
                     <field name="state" />
                     <field name="error" colspan="4" />
                 </form>
@@ -179,6 +187,7 @@
                     <field name="page_size" />
                     <field name="number_lists_pulled" />
                     <field name="number_products_updated" />
+                    <field name="sync_type" />
                     <field name="state" />
                     <field name="log_exists" invisible="1" />
                     <button string="Get log file" name="get_log_file" type="object" icon="gtk-file" attrs="{'invisible': [('log_exists', '=', False)]}" />
@@ -195,6 +204,7 @@
                 <search string="MSL Log">
                     <field name="start_date" />
                     <field name="end_date"  />
+                    <field name="sync_type" />
                     <field name="state" />
                 </search>
             </field>

@@ -294,7 +294,7 @@ class ud_sync():
 
         list_url = '%s/lists' % (self.url_msl, )
         msl_ids = project_obj.search(self.cr, self.uid, [('msl_sync_needed', '=', True)], context=self.context)
-        exec_date = False
+        #exec_date = False
         self.cr.execute("SELECT nextval('unidata_sync_msl_seq')")
         version = self.cr.fetchone()[0]
 
@@ -304,13 +304,13 @@ class ud_sync():
                 for list_msfid in msl.alpa_msfids.split(','):
                     page = 1
                     q_filter = "id='%s'" % (list_msfid,)
-                    exec_date = False
+                    #exec_date = False
                     while True:
                         js = self.query(q_filter, page=page, url=list_url)
                         page += 1
                         self.log(js)
-                        if not exec_date:
-                            exec_date = self.ud_date(js.get('context', {}).get('executeDate'))
+                        #if not exec_date:
+                        #    exec_date = self.ud_date(js.get('context', {}).get('executeDate'))
                         for row in js.get('rows', []):
                             nb_products += 1
                             for x in row.get('articles', []):
@@ -323,9 +323,10 @@ class ud_sync():
                         if 'nextPage' not in js['pagination']:
                             break
 
-            if not exec_date:
-                exec_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            project_obj.write(self.cr, self.uid, msl.id, {'msl_sync_date': exec_date}, context=self.context)
+            #if not exec_date:
+            #    exec_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            #project_obj.write(self.cr, self.uid, msl.id, {'msl_sync_date': exec_date}, context=self.context)
+            self.cr.execute('update unidata_project set msl_sync_date=publication_date where id=%s', (msl.id,))
 
             self.cr.execute("update product_msl_rel set to_delete='t' where msl_id=%s", (msl.id,))
             for prod_id in prod_ids:
@@ -515,18 +516,21 @@ class unidata_sync(osv.osv):
         else:
             last_execution_start_date = last_execution_end_date = last_execution_status = last_execution_sync_type = False
 
-        cr.execute("select start_date, end_date, state from unidata_sync_log where server='msl' order by id desc limit 1")
+        cr.execute("select start_date, end_date, state, sync_type from unidata_sync_log where server='msl' order by id desc limit 1")
         one = cr.fetchone()
         if one:
             last_msl_execution_start_date = one[0]
             last_msl_execution_end_date = one[1]
             last_msl_execution_status = one[2]
+            last_msl_execution_sync_type = one[3]
         else:
             last_execution_start_date = last_execution_end_date = last_execution_status = last_execution_sync_type = False
-            last_msl_execution_start_date = last_msl_execution_end_date = last_msl_execution_status = False
+            last_msl_execution_start_date = last_msl_execution_end_date = last_msl_execution_status = last_msl_execution_sync_type = False
 
         param_obj = self.pool.get('ir.config_parameter')
         eligible_for_full_sync = bool(param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC')) or bool(param_obj.get_param(cr, 1, 'LAST_UD_DATE_SYNC')) or False
+        eligible_msl_full_sync = self.pool.get('unidata.project').search_exists(cr, uid, [('msl_sync_date', '!=', False)], context=context)
+
         for _id in ids:
             res[_id] = {
                 'last_execution_start_date': last_execution_start_date,
@@ -538,6 +542,8 @@ class unidata_sync(osv.osv):
                 'last_msl_execution_start_date': last_msl_execution_start_date,
                 'last_msl_execution_end_date': last_msl_execution_end_date,
                 'last_msl_execution_status': last_msl_execution_status,
+                'last_msl_execution_sync_type': last_msl_execution_sync_type,
+                'eligible_msl_full_sync': eligible_msl_full_sync,
             }
 
         return res
@@ -565,10 +571,12 @@ class unidata_sync(osv.osv):
         'last_execution_end_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last UD Execution End Date"),
         'last_execution_sync_type': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('full', 'Full'), ('cont', 'Continuation'), ('diff', 'Based on last modification date')], string="Last UD Execution Sync Type"),
         'last_execution_status': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('running', 'Running'), ('error', 'Error'), ('done', 'Done')], string="Last UD Execution State"),
-        'eligible_for_full_sync': fields.function(_get_log, method=True, multi='get_log', type='boolean', string="Eligible for full sync"),
+        'eligible_for_full_sync': fields.function(_get_log, method=True, multi='get_log', type='boolean', string="Eligible for full UD sync"),
         'last_msl_execution_start_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last MSL Execution Start Date"),
         'last_msl_execution_end_date': fields.function(_get_log, method=True, multi='get_log', type='datetime', string="Last MSL Execution End Date"),
         'last_msl_execution_status': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('running', 'Running'), ('error', 'Error'), ('done', 'Done')], string="Last MSL Execution State"),
+        'last_msl_execution_sync_type': fields.function(_get_log, method=True, multi='get_log', type='selection', selection=[('full', 'Full'), ('cont', 'Continuation'), ('diff', 'Based on last modification date')], string="Last MSL Execution Sync Type"),
+        'eligible_msl_full_sync': fields.function(_get_log, method=True, multi='get_log', type='boolean', string="Eligible for full MSL sync"),
         'is_active': fields.boolean('Active'),
         'interval': fields.integer('Scheduler interval (hours)'),
     }
@@ -637,6 +645,10 @@ class unidata_sync(osv.osv):
         param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
         return True
 
+    def set_msl_as_full(self, cr, uid, ids, context=None):
+        cr.execute('update unidata_project set msl_sync_date=NULL')
+        return True
+
     def _start_bg(self, dbname, uid, method, context=None):
         cr = pooler.get_db(dbname).cursor()
         try:
@@ -676,7 +688,10 @@ class unidata_sync(osv.osv):
             page_size = sync_obj.page_size
 
             nuid = hasattr(nuid, 'realUid') and nuid.realUid or nuid
-            session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size,  'start_uid': nuid, 'server': 'msl'}, context=context)
+            sync_type = 'full'
+            if self.pool.get('unidata.project').search_exists(cr, uid, [('msl_sync_date', '!=', False)], context=context):
+                sync_type = 'diff'
+            session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size,  'start_uid': nuid, 'server': 'msl', 'sync_type': sync_type}, context=context)
 
             formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
             if tools.config['logfile']:
@@ -805,10 +820,11 @@ class unidata_sync(osv.osv):
 
                 q_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
                 if last_ud_date_sync:
+                    lastsync = (datetime.strptime(last_ud_date_sync.split('T')[0], '%Y-%m-%d') + relativedelta(hours=-24)).strftime('%Y-%m-%dT00:00:00')
                     createdOn = (datetime.strptime(last_ud_date_sync.split('T')[0], '%Y-%m-%d') + relativedelta(days=-3)).strftime('%Y-%m-%dT00:00:00')
                     q_filter = '(date-greater-or-equal(./metaData/mostRecentUpdate, "%(last_ud_date_sync)s") or date-greater-or-equal(./metaData/createdOn, "%(createdOn)s")) and %(filter)s' %{
                         'filter': q_filter,
-                        'last_ud_date_sync': last_ud_date_sync,
+                        'last_ud_date_sync': lastsync,
                         'createdOn': createdOn,
                     }
 
