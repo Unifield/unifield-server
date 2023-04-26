@@ -797,6 +797,25 @@ class analytic_account(osv.osv):
                 # validate that activation date
             raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
 
+    def _check_sub_cc(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if 'category' in vals and vals['category'] == 'OC' and 'parent_id' in vals and vals['parent_id']:
+            msg = ''
+            parent = self.browse(cr, uid, vals['parent_id'], fields_to_fetch=['date_start', 'date', 'code'], context=context)
+            if parent.code == 'OC':  # If parent CC is OC, no need to check
+                return True
+            if parent.date and parent.date < datetime.today().strftime('%Y-%m-%d'):
+                raise osv.except_osv(_('Warning !'), _('The parent CC %s is not active, you can not create a child to this parent') % parent.code)
+            if ('date' in vals and vals['date'] and parent.date and vals['date'] > parent.date) or parent.date and ('date' not in vals or ('date' in vals and vals['date'] == False)):
+                msg += _('The sub-costcenter validity date is greater than the parent cost center validity date!') + "\n"
+            if 'date_start' in vals and vals['date_start'] and parent.date_start and vals['date_start'] < parent.date_start:
+                msg += _('The sub-costcenter activation date is lower than the parent cost center activation date!') + "\n"
+
+            if msg:
+                raise osv.except_osv(_('Warning !'), msg)
+
+
     def copy_translations(self, cr, uid, old_id, new_id, context=None):
         """
         Don't copy translations when duplicating an analytic account, i.e. we will have "name (copy)" in all languages
@@ -952,6 +971,7 @@ class analytic_account(osv.osv):
         if context.get('from_web', False) or context.get('from_import_menu', False):
             self.check_fp(cr, uid, vals, to_update=True, context=context)
         self._check_date(vals)
+        self._check_sub_cc(cr, uid, vals=vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
         vals_copy = vals.copy()
