@@ -292,7 +292,6 @@ class product_attributes_template(osv.osv):
 
     _defaults = {
         'type': 'product',
-        'cost_method': lambda *a: 'average',
         'state': _get_valid_stat,
     }
 
@@ -1530,6 +1529,9 @@ class product_attributes(osv.osv):
                 elif vals.get('state_ud') != 'archived':
                     vals['active'] = True
 
+        if 'cost_method' in vals and vals['cost_method'] != 'average':
+            vals['cost_method'] = 'average'
+
         for f in ['sterilized', 'closed_article', 'single_use']:
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
@@ -1852,6 +1854,9 @@ class product_attributes(osv.osv):
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
                 vals['controlled_substance'] = 'True'
+
+        if 'cost_method' in vals and vals['cost_method'] != 'average':
+            vals['cost_method'] = 'average'
 
         for f in ['sterilized', 'closed_article', 'single_use']:
             if f in vals and not vals.get(f):
