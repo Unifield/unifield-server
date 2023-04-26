@@ -136,6 +136,65 @@ class patch_scripts(osv.osv):
         cr.execute("update account_invoice set state='done' where is_inkind_donation = 't' and state='open'")
         return True
 
+    def us_6976_analytic_translations(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        is_coordo = instance and instance.level == 'coordo'
+        aa_ids = []
+
+        # update name with en_MF translation
+        cr.execute('''
+            update
+                account_analytic_account
+            set
+                name=tr.trans
+            from
+                ( select a.id, coalesce(tr_en.value, tr_fr.value, '') as trans
+                from
+                    account_analytic_account a
+                    left join ir_translation tr_en on tr_en.name='account.analytic.account,name' and tr_en.res_id = a.id and tr_en.lang='en_MF' and tr_en.xml_id not like 'analytic_account%'
+                    left join ir_translation tr_fr on tr_fr.name='account.analytic.account,name' and tr_fr.res_id = a.id and tr_fr.lang='fr_MF' and tr_fr.xml_id not like 'analytic_account%'
+                group by a.id, tr_en.value, tr_fr.value
+                ) as tr
+            where
+                tr.id = account_analytic_account.id and
+                tr.trans != '' and
+                account_analytic_account.name != tr.trans
+            returning account_analytic_account.id
+        ''')
+        if is_coordo:
+            aa_ids = [x[0] for x in cr.fetchall()]
+
+        self.log_info(cr, uid, "US-6976: Update name on %s analytic accounts" % (cr.rowcount, ))
+
+        if instance.code == 'OCBCD100':
+            cr.execute('''update account_analytic_account set name='56-1-16 EVAL ROUGEOLE KAMWESHA 2' where name='56-1-31 EVAL ROUGEOLE LINGOMO-DJOLU (copy)' returning id ''');
+            aa_ids += [x[0] for x in cr.fetchall()]
+            self.log_info(cr, uid, "US-6976: Update OCBCD100 name on %s analytic account " % (cr.rowcount, ))
+
+        if aa_ids:
+            # for FP created at coordo, trigger sync to update name to HQ
+            entity = self.pool.get('sync.client.entity')._get_entity(cr)
+            if aa_ids:
+                cr.execute('''
+                    update
+                        ir_model_data d
+                    set
+                        last_modification=NOW(), touched='[''name'']'
+                    from
+                        account_analytic_account a
+                    where
+                        d.res_id = a.id and
+                        d.model= 'account.analytic.account' and
+                        d.module='sd' and
+                        a.category = 'FUNDING' and
+                        d.name like '%s/%%%%' and
+                        d.res_id in %%s
+                    ''' % (entity.identifier ,), (tuple(aa_ids), )) # not_a_user_entry
+                self.log_info(cr, uid, "US-6976: Trigger FP update on %s analytic accounts" % (cr.rowcount, ))
+
+        cr.execute("update ir_translation set name='account.analytic.account,nameko' where name='account.analytic.account,name' and type='model'")
+        return True
+
     # UF28.0
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):

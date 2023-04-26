@@ -925,5 +925,9 @@
         <record id="us_10904_donations_done_state" model="patch.scripts">
             <field name="method">us_10904_donations_done_state</field>
         </record>
+
+        <record id="us_6976_analytic_translations" model="patch.scripts">
+            <field name="method">us_6976_analytic_translations</field>
+        </record>
     </data>
 </openerp>

@@ -506,7 +506,7 @@ class analytic_account(osv.osv):
         return res
 
     _columns = {
-        'name': fields.char('Name', size=128, required=True, translate=1),
+        'name': fields.char('Name', size=128, required=True),
         'code': fields.char('Code', size=24),
         'type': fields.selection([('view','View'), ('normal','Normal')], 'Type', help='If you select the View Type, it means you won\'t allow to create journal entries using that account.'),
         'date_start': fields.date('Active from', required=True),
@@ -846,29 +846,15 @@ class analytic_account(osv.osv):
         """
         if context is None:
             context = {}
-        lang_obj = self.pool.get('res.lang')
         # no check at sync time (note that there may be some accounts with duplicated names created before US-5224)
         if not context.get('sync_update_execution', False):
             if isinstance(ids, (int, long)):
                 ids = [ids]
-            lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
             for analytic_acc in self.read(cr, uid, ids, ['category', 'name'], context=context):
                 dom = [('category', '=', analytic_acc.get('category', '')),
                        ('name', '=ilike', analytic_acc.get('name', '')),
                        ('id', '!=', analytic_acc.get('id'))]
-                duplicate = 0
-                # check the potential duplicates in all languages
-                if lang_ids:
-                    for lang in lang_obj.browse(cr, uid, lang_ids, fields_to_fetch=['code'], context=context):
-                        if self.search_exist(cr, uid, dom, context={'lang': lang.code}):
-                            duplicate += 1
-                elif self.search_exist(cr, uid, dom, context=context):
-                    duplicate += 1
-                if duplicate > 0:
-                    ir_trans = self.pool.get('ir.translation')
-                    trans_ids = ir_trans.search(cr, uid, [('res_id', 'in', ids), ('name', '=', 'account.analytic.account,name')], context=context)
-                    if trans_ids:
-                        ir_trans.clear_transid(cr, uid, trans_ids, context=context)
+                if self.search_exist(cr, uid, dom, context=context):
                     raise osv.except_osv(_('Warning !'), _('You cannot have the same name between analytic accounts in the same category!'))
         return True
 
