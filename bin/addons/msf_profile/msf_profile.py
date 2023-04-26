@@ -108,6 +108,24 @@ class patch_scripts(osv.osv):
         '''
         cr.execute("""UPDATE product_template SET cost_method = 'average' WHERE cost_method = 'standard'""")
         self.log_info(cr, uid, "US-11046: The Costing Method of %s product(s) have been set to 'Average Price'" % (cr.rowcount,))
+        return True
+
+    def us_10629_fix_partner_fo_pricelist(self, cr, uid, *a, **b):
+        '''
+        Set property_product_pricelist to the value of property_product_pricelist_purchase in Partners where they are
+        different
+        '''
+        cr.execute("""
+            SELECT p.id, pl.currency_id FROM res_partner p 
+            LEFT JOIN product_pricelist pl on p.property_product_pricelist_purchase = pl.id 
+            LEFT JOIN product_pricelist pl2 on p.property_product_pricelist = pl2.id 
+            WHERE pl.currency_id != pl2.currency_id
+        """)
+
+        for x in cr.fetchall():
+            fo_pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('currency_id', '=', x[1]), ('type', '=', 'sale')])
+            if fo_pricelist_ids:
+                cr.execute("""UPDATE res_partner SET property_product_pricelist = %s WHERE id = %s""", (fo_pricelist_ids[0], x[0]))
 
         return True
 
