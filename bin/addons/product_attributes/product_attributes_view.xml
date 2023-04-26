@@ -83,7 +83,7 @@
                         <page string="Information">
                             <group colspan="2" col="2">
                                 <separator string="Procurement" colspan="2"/>
-                                <field name="type"/>
+                                <field name="type" on_change="on_change_type(type)"/>
                                 <field name="procure_method" />
                                 <field name="supply_method"/>
                             </group>
