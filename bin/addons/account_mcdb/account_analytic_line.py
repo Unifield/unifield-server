@@ -106,6 +106,24 @@ class account_analytic_line(osv.osv):
                                                           [('cheque_number', 'ilike', args[0][2])], context=context)
         return [('move_id', 'in', m_ids)] if m_ids else [('id', 'in', [])]
 
+    def _get_hq_system_acc(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        mapping_obj = self.pool.get('account.export.mapping')
+        for aal in self.browse(cr, uid, ids, fields_to_fetch=['general_account_id'], context=context):
+            mapping_ids = mapping_obj.search(cr, uid, [('account_id', '=', aal.general_account_id.id)], context=context)
+            if not mapping_ids:
+                return res
+            else:
+                mapping = mapping_obj.browse(cr, uid, mapping_ids, fields_to_fetch=['mapping_value'], context=context)
+                res[aal.id]['hq_system_account']= mapping and mapping.mapping_value or False
+        return res
+
+
     _columns = {
         'output_amount': fields.function(_get_output, string="Output amount", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_amount_debit': fields.function(_get_output, string="Output debit", type='float', method=True, store=False, multi="analytic_output_currency"),
@@ -114,7 +132,9 @@ class account_analytic_line(osv.osv):
                                            multi="analytic_output_currency"),
         'cheque_number': fields.function(_get_cheque_number, type='char',
                                          method=True, string='Cheque Number',
-                                         fnct_search=_search_cheque_number)  # BKLG-7: move cheque number
+                                         fnct_search=_search_cheque_number),  # BKLG-7: move cheque
+        'hq_system_account': fields.function(_get_hq_system_acc, type='char', store=True,
+                                            method=True, string='HQ System Account', size=16),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

@@ -303,6 +303,23 @@ class account_move_line(osv.osv):
             ret[i] = finance_export.finance_archive._get_hash(cr, uid, [i], 'account.move.line')
         return ret
 
+    def _get_hq_system_acc(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        mapping_obj = self.pool.get('account.export.mapping')
+        for aml in self.browse(cr, uid, ids, fields_to_fetch=['account_id'], context=context):
+            mapping_ids = mapping_obj.search(cr, uid, [('account_id', '=', aml.account_id.id)], context=context)
+            if not mapping_ids:
+                return res
+            else:
+                mapping = mapping_obj.browse(cr, uid, mapping_ids, fields_to_fetch=['mapping_value'], context=context)
+                res[aml.id]['hq_system_account'] = mapping and mapping.mapping_value or False
+        return res
+
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
@@ -363,6 +380,8 @@ class account_move_line(osv.osv):
         'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
                                  store=False, help='DB ID used for Vertical Integration'),
         'product_code': fields.related('product_id', 'default_code', type='char', size=64, string='Product Code', readonly=True),
+        'hq_system_account': fields.function(_get_hq_system_acc, type='char', store=True,
+                                             method=True, string='HQ System Account', size=16),
     }
 
     _defaults = {

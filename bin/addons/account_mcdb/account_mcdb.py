@@ -132,6 +132,7 @@ class account_mcdb(osv.osv):
         'display_partner': fields.boolean('Display Partners?'),
         'display_employee': fields.boolean('Display Employees?'),
         'display_transfer_journal': fields.boolean('Display Transfer Journals?'),
+        'display_hq_system_accounts': fields.boolean('Display HQ System Accounts?'),
         'user': fields.many2one('res.users', "User"),
         'cheque_number': fields.char('Cheque Number', size=120),  # BKLG-7
         'partner_txt': fields.char('Third Party', size=120),  # BKLG-7
@@ -162,6 +163,7 @@ class account_mcdb(osv.osv):
         'display_funding_pool': lambda *a: False,
         'display_cost_center': lambda *a: False,
         'display_destination': lambda *a: False,
+        'display_hq_system_accounts': lambda *a: False,
         'user': lambda self, cr, uid, c: uid or False,
         'display_mcdb_load_button': lambda *a: True,
     }
