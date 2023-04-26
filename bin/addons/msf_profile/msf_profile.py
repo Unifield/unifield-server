@@ -76,12 +76,39 @@ class patch_scripts(osv.osv):
             kcl_item_obj.write(cr, uid, kcl_item.id, {'item_lot_id': new_bn_id})
         return True
 
+    def us_8968_shipments_returned(self, cr, uid, *a, **b):
+        '''
+        Set the state of all existing Shipments that have been returned to Returned (cancel)
+        '''
+        ship_obj = self.pool.get('shipment')
+
+        ships_to_cancel = []
+        nb_ships = 0
+        ship_ids = ship_obj.search(cr, uid, [('state', 'in', ['done', 'delivered'])])
+        for ship in ship_obj.browse(cr, uid, ship_ids, fields_to_fetch=['pack_family_memory_ids']):
+            if not ship.pack_family_memory_ids:  # Skip Shipments with no Pack Family
+                continue
+            all_returned = True
+            for fam in ship.pack_family_memory_ids:
+                if not fam.not_shipped:
+                    all_returned = False
+                    break
+            if all_returned:
+                ships_to_cancel.append(ship.id)
+                nb_ships += 1
+
+        if ships_to_cancel:
+            cr.execute("""UPDATE shipment SET state = 'cancel' WHERE id IN %s""", (tuple(ships_to_cancel),))
+            self.log_info(cr, uid, "US-8968: %d Shipments' state have been set to Returned" % (nb_ships,))
+        return True
+
     def us_11046_fix_standard_price_products(self, cr, uid, *a, **b):
         '''
         Set the Costing Method of all Standard Price Products to Average Price
         '''
         cr.execute("""UPDATE product_template SET cost_method = 'average' WHERE cost_method = 'standard'""")
         self.log_info(cr, uid, "US-11046: The Costing Method of %s product(s) have been set to 'Average Price'" % (cr.rowcount,))
+
         return True
 
     # UF28.0
