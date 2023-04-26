@@ -278,6 +278,7 @@ class account_invoice(osv.osv):
             ('proforma2','Pro-forma'),
             ('open','Open'),
             ('paid','Paid'),
+            ('done', 'Done'),
             ('inv_close','Closed'),
             ('cancel','Cancelled')
         ],'State', select=True, readonly=True,
@@ -285,9 +286,13 @@ class account_invoice(osv.osv):
             \n* The \'Pro-forma\' when invoice is in Pro-forma state,invoice does not have an invoice number. \
             \n* The \'Open\' state is used when user create invoice,a invoice number is generated.Its in open state till user does not pay invoice. \
             \n* The \'Paid\' state is set automatically when invoice is paid.\
+            \n* The \'Done\' state (only for donation invoices) is set automatically when donation invoice is validated and was not cancelled.\
             \n* The \'Cancelled\' state is used when user cancel invoice.'),
-        'date_invoice': fields.date('Invoice Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'inv_close':[('readonly',True)]}, select=True, help="Keep empty to use the current date"),
-        'date_due': fields.date('Due Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'inv_close':[('readonly',True)]}, select=True,
+        'date_invoice': fields.date('Invoice Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
+                                                            'inv_close':[('readonly',True)], 'done':[('readonly',True)]},
+                                    select=True, help="Keep empty to use the current date"),
+        'date_due': fields.date('Due Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
+                                                    'inv_close':[('readonly',True)], 'done':[('readonly',True)]}, select=True,
                                 help="If you use payment terms, the due date will be computed automatically at the generation "\
                                 "of accounting entries. If you keep the payment term and the due date empty, it means direct payment. The payment term may compute several due dates, for example 50% now, 50% in one month."),
         'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=True, states={'draft':[('readonly',False)]}),
@@ -329,7 +334,8 @@ class account_invoice(osv.osv):
         'journal_type': fields.related('journal_id', 'type', type='selection', string='Journal Type',
                                        selection=_get_journal_type, store=False, write_relate=False),
         'company_id': fields.many2one('res.company', 'Company', required=True, change_default=True, readonly=True, states={'draft':[('readonly',False)]}),
-        'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'inv_close':[('readonly',True)],'paid':[('readonly',True)]}),
+        'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'inv_close':[('readonly',True)],
+                                                                                                 'paid':[('readonly',True)], 'done':[('readonly',True)]}),
         'reconciled': fields.function(_reconciled, method=True, string='Paid/Reconciled', type='boolean',
                                       store={
                                           'account.invoice': (lambda self, cr, uid, ids, c={}: ids, None, 50), # Check if we can remove ?

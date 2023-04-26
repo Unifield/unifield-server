@@ -921,5 +921,9 @@
         <record id="us_11022_accrual_third_party" model="patch.scripts">
             <field name="method">us_11022_accrual_third_party</field>
         </record>
+
+        <record id="us_10904_donations_done_state" model="patch.scripts">
+            <field name="method">us_10904_donations_done_state</field>
+        </record>
     </data>
 </openerp>

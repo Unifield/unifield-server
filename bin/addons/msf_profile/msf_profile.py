@@ -132,6 +132,10 @@ class patch_scripts(osv.osv):
         cr.execute('''UPDATE msf_accrual_line SET third_party_name = NULL WHERE third_party_type IS NULL AND third_party_name IS NOT NULL ''')
         return True
 
+    def us_10904_donations_done_state(self, cr, uid, *a, **b):
+        cr.execute("update account_invoice set state='done' where is_inkind_donation = 't' and state='open'")
+        return True
+
     # UF28.0
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
