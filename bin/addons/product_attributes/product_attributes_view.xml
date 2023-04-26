@@ -156,7 +156,7 @@
                                 <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" colspan="3"/>
                             </group>
                         </page>
-                        <page string="MSL" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}">
+                        <page string="UD OC Validation" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}">
                             <group colspan="4" col="6">
                                 <field name="oc_coordo_restrictions" nolabel="1" colspan="2">
                                     <tree string="Mission Restrictions">
