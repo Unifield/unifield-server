@@ -211,6 +211,11 @@ class ir_sequence(osv.osv):
             return False
         if context is None:
             context = {}
+        try:
+            interpolated_prefix = self._process(cr, uid, seq['prefix'])
+            interpolated_suffix = self._process(cr, uid, seq['suffix'])
+        except ValueError:
+            raise osv.except_osv(_('Warning'), _('Invalid prefix or suffix for sequence \'%s\'') % (seq.get('name')))
         if seq['implementation'] == 'psql':
             cr.execute("SELECT nextval('ir_sequence_%03d')" % seq['id'])  # not_a_user_entry
             seq['number_next'] = cr.fetchone()
@@ -219,11 +224,6 @@ class ir_sequence(osv.osv):
             seq['number_next'] = cr.fetchone()
             cr.execute("UPDATE ir_sequence SET number_next=number_next+number_increment WHERE id=%s ", (seq['id'],))
         #d = self._interpolation_dict()
-        try:
-            interpolated_prefix = self._process(cr, uid, seq['prefix'])
-            interpolated_suffix = self._process(cr, uid, seq['suffix'])
-        except ValueError:
-            raise osv.except_osv(_('Warning'), _('Invalid prefix or suffix for sequence \'%s\'') % (seq.get('name')))
         return interpolated_prefix + '%%0%sd' % seq['padding'] % seq['number_next'] + interpolated_suffix
 
     def get_id(self, cr, uid, sequence_code_or_id, code_or_id='id', context=None):
