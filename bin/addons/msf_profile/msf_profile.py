@@ -126,7 +126,10 @@ class patch_scripts(osv.osv):
             fo_pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('currency_id', '=', x[1]), ('type', '=', 'sale')])
             if fo_pricelist_ids:
                 cr.execute("""UPDATE res_partner SET property_product_pricelist = %s WHERE id = %s""", (fo_pricelist_ids[0], x[0]))
+        return True
 
+    def us_11022_accrual_third_party(self, cr, uid, *a, **b):
+        cr.execute('''UPDATE msf_accrual_line SET third_party_name = NULL WHERE third_party_type IS NULL AND third_party_name IS NOT NULL ''')
         return True
 
     # UF28.0

@@ -917,5 +917,9 @@
         <record id="us_10629_fix_partner_fo_pricelist" model="patch.scripts">
             <field name="method">us_10629_fix_partner_fo_pricelist</field>
         </record>
+
+        <record id="us_11022_accrual_third_party" model="patch.scripts">
+            <field name="method">us_11022_accrual_third_party</field>
+        </record>
     </data>
 </openerp>
