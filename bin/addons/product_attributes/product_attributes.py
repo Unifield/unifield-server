@@ -1925,6 +1925,8 @@ class product_attributes(osv.osv):
             if product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already active.') % (product.default_code, product.name))
             if product.standard_ok == 'non_standard_local':
+                if not product.oc_subscription:
+                    raise osv.except_osv(_('Error'), _('Product activation is not allowed on Non-Standard Local Products which are not OC Subscribed'))
                 if instance_level == 'coordo':
                     return {
                         'type': 'ir.actions.act_window',
