@@ -28,6 +28,7 @@ import decimal_precision as dp
 from tools.translate import _
 from time import strftime
 import finance_export
+import tools
 
 
 class account_move_line(osv.osv):
@@ -104,7 +105,7 @@ class account_move_line(osv.osv):
         """
         if name and value:
             sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s" # not_a_user_entry
-            cr.execute(sql, (value, aml_id))
+            cr.execute(sql, (tools.ustr(value), aml_id))
         return True
 
     def _search_reference(self, cr, uid, obj, name, args, context):
