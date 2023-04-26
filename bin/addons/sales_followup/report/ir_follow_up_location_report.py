@@ -458,6 +458,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     'product_code': line.product_id.code or '-',
                     'is_delivered': False,
                     'backordered_qty': bo_qty if line.order_id.state != 'cancel' else 0.00,
+                    'state': line.state,
+                    'state_display': line_state_display_dict.get(line.state_to_display),
                 })
             elif bo_qty < 0:
                 lines[fl_index]['extra_qty'] = abs(bo_qty) if line.order_id.state != 'cancel' else 0.00
