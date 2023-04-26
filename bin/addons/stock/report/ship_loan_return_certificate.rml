@@ -55,7 +55,7 @@
             <tr>
                 [[ repeatIn(getLoansData(o.pack_family_memory_ids, o.shipment_actual_date, True), 'loan') ]]
                 <td>
-                    <para style="StandardBig"><b>Ref. :</b> [[ loan['loan_ref'] ]], <b>Original Loan :</b> [[ loan['loan_origin'] ]]</para>
+                    <para style="StandardBig"><b>Loan Request :</b> [[ loan['loan_ref'] ]], <b>Original Loan :</b> [[ loan['loan_origin'] ]]</para>
                 </td>
             </tr>
         </blockTable>

@@ -49,7 +49,7 @@
 
         <blockTable colWidths="540.0" >
             <tr><td>
-                <para style="StandardBig"><b>Original Loan Request :</b> [[ o.sale_id and o.sale_id.name or o.purchase_id and o.purchase_id.name or '' ]], <b>Original Loan Delivery :</b> [[ o.name ]]</para>
+                <para style="StandardBig"><b>Loan Request :</b> [[ o.sale_id and o.sale_id.name or o.purchase_id and o.purchase_id.name or '' ]], <b>Loan Delivery :</b> [[ o.name ]]</para>
             </td></tr>
             <tr><td><para style="Standard"><font color="white"> </font></para></td></tr>
             <tr><td>

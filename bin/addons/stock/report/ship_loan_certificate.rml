@@ -50,7 +50,7 @@
 
         <blockTable colWidths="540.0" >
             <tr><td>
-                <para style="StandardBigBold">Original Loan Reference(s) for [[ o.name ]] :</para>
+                <para style="StandardBigBold">Loan Reference(s) for [[ o.name ]] :</para>
             </td></tr>
             <tr><td>
                 <para style="StandardBig">[[ ', '.join([loan['loan_ref'] for loan in getLoansData(o.pack_family_memory_ids, o.shipment_actual_date, False)]) ]]</para>
