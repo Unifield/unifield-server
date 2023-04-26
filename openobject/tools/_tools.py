@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -23,6 +23,10 @@ import urlparse
 import cherrypy
 from formencode import NestedVariables
 import cgitb, sys
+from datetime import datetime
+import pytz
+from dateutil import relativedelta
+
 
 def nestedvars_tool():
     if hasattr(cherrypy.request, 'params'):
@@ -49,21 +53,33 @@ cherrypy.tools.cgitb = cherrypy.Tool('before_error_response', cgitb_traceback)
 def cookie_secure_flag():
     """Add the secure cookie attribute."""
     name = cherrypy.request.config.get('tools.sessions.name', 'session_id')
-    cherrypy.response.cookie[name]['secure'] = 1
+    if cherrypy.response.cookie.get(name):
+        cherrypy.response.cookie[name]['secure'] = 1
 cherrypy.tools.secure_cookies = cherrypy.Tool('before_finalize', cookie_secure_flag)
 
 def cookie_httponly_flag():
     """Add the HttpOnly cookie attribute."""
     name = cherrypy.request.config.get('tools.sessions.name', 'session_id')
-    cherrypy.response.cookie[name]['httponly'] = 1
+    if cherrypy.response.cookie.get(name):
+        cherrypy.response.cookie[name]['httponly'] = 1
 cherrypy.tools.httponly_cookies = cherrypy.Tool('before_finalize', cookie_httponly_flag)
+
+def no_session_refresh():
+    cherrypy.serving.request._sessionsaved = True
+    cherrypy.serving.response.cookie.clear()
 
 def cookie_fix_312_session_persistent_flag():
     """Fix cherrypy 3.1.2 tools.session.persistant = False"""
-    if cherrypy.request.config.get('tools.sessions.persistent', True):
-        return True
+    from addons.openerp.utils import rpc
     name = cherrypy.request.config.get('tools.sessions.name', 'session_id')
-    if 'expires' in cherrypy.response.cookie[name]:
-        del cherrypy.response.cookie[name]['expires']
+    if cherrypy.request.config.get('tools.sessions.persistent', True):
+        if 'expires' in cherrypy.response.cookie.get(name, {}) and cherrypy.session.timeout:
+            if hasattr(rpc.session, 'uid') and rpc.session.is_logged():
+                cherrypy.response.cookie['session_expired'] = (datetime.now(pytz.utc)+relativedelta.relativedelta(minutes=cherrypy.session.timeout)).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+                cherrypy.response.cookie['session_expired']['path'] = '/'
+            else:
+                cherrypy.response.cookie['session_expired'] = ''
+        return True
+    cherrypy.response.cookie['session_expired'] = ''
     return True
 cherrypy.tools.fix_312_session_persistent = cherrypy.Tool('before_finalize', cookie_fix_312_session_persistent_flag)

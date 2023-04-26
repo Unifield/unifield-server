@@ -11,6 +11,9 @@
         var DOCUMENT_TO_LOAD = "${load_content|n}";
         var CAL_INSTANCE = null;
 
+        var DISPLAY_WARNING = ${display_warning};
+        var REFRESH_TIMEOUT = ${refresh_timeout};
+
         // Make user home widgets deletable
         jQuery(document).delegate('#user_widgets a.close', 'click', function(e) {
             var $widget = jQuery(this);

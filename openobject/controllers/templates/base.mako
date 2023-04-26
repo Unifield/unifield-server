@@ -38,6 +38,9 @@
     <script type="text/javascript">
         window.SCRIPT_PATH = "${cp.request.app.script_name}";
         openobject.http.SCRIPT_PATH = "${cp.request.app.script_name}";
+
+        var REFRESH_TIMEOUT;
+        var DISPLAY_WARNING;
     </script>
     
 % for js in widget_javascript.get('head', []):

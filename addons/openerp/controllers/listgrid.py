@@ -28,7 +28,7 @@ from openerp.widgets import listgrid, listgroup
 
 import form
 import wizard
-from openobject.tools import expose, ast
+from openobject.tools import expose, ast, no_session_refresh
 
 class List(SecuredController):
 
@@ -243,6 +243,8 @@ class List(SecuredController):
     def get(self, **kw):
         params, data = TinyDict.split(kw)
 
+        if params.get('_terp_from_auto_refresh'):
+            no_session_refresh()
         groupby = params.get('_terp_group_by_ctx')
         if groupby and isinstance(groupby, basestring):
             groupby = groupby.split(',')
