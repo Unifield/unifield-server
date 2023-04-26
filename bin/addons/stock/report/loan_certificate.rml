@@ -20,11 +20,11 @@
 
     <stylesheet>
         <blockTableStyle id="ItemsLineHeader">
-            <blockAlignment value="CENTER" />
-            <blockValign value="CENTER" />
-            <lineStyle kind="OUTLINE" colorName="black" />
-            <lineStyle kind="INNERGRID" colorName="black" />
-            <blockBackground colorName="#FFCC99" start="0,0" stop="-1,0"/>
+            <blockAlignment value="LEFT" />
+            <blockValign value="MIDDLE" />
+            <lineStyle kind="LINEBELOW" colorName="black" start="0,0" stop="-1,0" />
+            <lineStyle kind="LINEBELOW" colorName="#c0c0c0" start="0,1" stop="-1,-1" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="0,0" stop="-1,0" />
         </blockTableStyle>
 
         <initialize>
@@ -37,6 +37,8 @@
         <paraStyle name="StandardBold" fontName="Helvetica-Bold" fontSize="9.0" leading="9.0" alignment="CENTER" spaceBefore="1.0" spaceAfter="1.0"/>
         <paraStyle name="StandardMini" fontName="Helvetica" fontSize="5.0" leading="5.0" alignment="CENTER" spaceBefore="1.0" spaceAfter="1.0"/>
 
+        <paraStyle name="ItemsLineTitle" fontName="Helvetica-Oblique" fontSize="9.0" leading="10.0" />
+        <paraStyle name="ItemsLineValue" fontName="Helvetica" fontSize="8.5" leading="9.0" textColor="blue" />
     </stylesheet>
 
     <story>
@@ -83,37 +85,37 @@
         <blockTable colWidths="110.0,220.0,50.0,90.0,70.0" repeatRows="1" style="ItemsLineHeader">
             <tr>
                 <td>
-                    <para style="Standard">Code</para>
+                    <para style="ItemsLineTitle">Code</para>
                 </td>
                 <td>
-                    <para style="Standard">Product Description</para>
+                    <para style="ItemsLineTitle">Product Description</para>
                 </td>
                 <td>
-                    <para style="Standard">Quantity</para>
+                    <para style="ItemsLineTitle">Quantity</para>
                 </td>
                 <td>
-                    <para style="Standard">Batch Number</para>
+                    <para style="ItemsLineTitle">Batch Number</para>
                 </td>
                 <td>
-                    <para style="Standard">Expiry Date</para>
+                    <para style="ItemsLineTitle">Expiry Date</para>
                 </td>
             </tr>
             <tr>
                 [[ repeatIn(o.move_lines, 'line') ]]
                 <td>
-                    <para style="Standard">[[ line.product_id.default_code ]]</para>
+                    <para style="ItemsLineValue">[[ line.product_id.default_code ]]</para>
                 </td>
                 <td>
-                    <para style="Standard">[[ line.product_id.name ]]</para>
+                    <para style="ItemsLineValue">[[ line.product_id.name ]]</para>
                 </td>
                 <td>
-                    <para style="Standard">[[ line.product_qty ]]</para>
+                    <para style="ItemsLineValue">[[ line.product_qty ]]</para>
                 </td>
                 <td>
-                    <para style="Standard">[[ line.prodlot_id and line.prodlot_id.name or '' ]]</para>
+                    <para style="ItemsLineValue">[[ line.prodlot_id and line.prodlot_id.name or '' ]]</para>
                 </td>
                 <td>
-                    <para style="Standard">[[ line.prodlot_id and formatLang(line.prodlot_id.life_date, date=True) or '' ]]</para>
+                    <para style="ItemsLineValue">[[ line.prodlot_id and formatLang(line.prodlot_id.life_date, date=True) or '' ]]</para>
                 </td>
             </tr>
         </blockTable>
@@ -124,10 +126,10 @@
         <blockTable colWidths="270.0,270.0">
             <tr>
                 <td>
-                    <para style="StandardBig">Proprietary Instance : [[ o.company_id.name ]]</para>
+                    <para style="StandardBig">[[ o.company_id.name ]]</para>
                 </td>
                 <td>
-                    <para style="StandardBig">Partner : [[ o.partner_id and o.partner_id.name or o.ext_cu and o.ext_cu.name or '' ]]</para>
+                    <para style="StandardBig">[[ o.partner_id and o.partner_id.name or o.ext_cu and o.ext_cu.name or '' ]]</para>
                 </td>
             </tr>
             <tr>
