@@ -905,6 +905,7 @@
         <!-- UF29.0 -->
         <record id="us_11177_bn_for_kcl_items" model="patch.scripts">
             <field name="method">us_11177_bn_for_kcl_items</field>
+        </record>
 
         <record id="us_11046_fix_standard_price_products" model="patch.scripts">
             <field name="method">us_11046_fix_standard_price_products</field>
