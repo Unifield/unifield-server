@@ -92,7 +92,7 @@
                     <filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('state', '=', 'validated')]" />
 					<filter name="sourced" string="Sourced" icon="terp-camera_test" domain="[('state', 'not in', ['draft', 'validated', 'cancel', 'cancel_r'])]" />
 					<separator orientation="vertical"/>
-					<field name="order_id" string="Order" />
+					<field name="order_id" string="Order" domain="[('procurement_request', 'in', ['t', 'f'])]" context="{'from_ost': True}" />
 					<field name="priority" />
 					<field name="categ" />
 					<field name="sale_order_state" />

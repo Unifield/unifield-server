@@ -795,6 +795,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
     _order = 'id desc'
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        view = super(sale_order, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' and context.get('from_ost'):
+            form = etree.fromstring(view['arch'])
+            form.attrib['string'] = _('Field Orders and Internal Requests')
+            view['arch'] = etree.tostring(form)
+        return view
+
     def _check_stock_take_date(self, cr, uid, ids, context=None):
         if not context:
             context = {}
