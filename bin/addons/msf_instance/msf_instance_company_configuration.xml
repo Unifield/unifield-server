@@ -88,7 +88,7 @@
                         <field name="has_book_pl_results"/>
 
                         <separator string="HQ System Accounts Mapping" colspan="4"/>
-                        <field name="display_hq_system_accounts" />
+                        <field name="display_hq_system_accounts_buttons" />
 
                         <!-- Functional amount computation settings - for information purpose only -->
                         <separator string="Computation in functional currency" colspan="4"/>
