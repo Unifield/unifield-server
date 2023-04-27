@@ -72,7 +72,9 @@ class patch_scripts(osv.osv):
             if kcl_item.item_exp and not kcl_item.item_product_id.perishable:
                 continue
             if kcl_item.item_product_id.batch_management or kcl_item.item_product_id.perishable:
-                lot_name = kcl_item.item_lot or self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial')
+                lot_name = kcl_item.item_lot or False
+                if kcl_item.item_product_id.batch_management and not lot_name:
+                     lot_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial')
                 lot_date = kcl_item.item_exp or time.strftime('%Y-%m-%d')
                 new_bn_id = bn_obj._get_or_create_lot(cr, uid, lot_name, lot_date, kcl_item.item_product_id.id)
                 kcl_item_obj.write(cr, uid, kcl_item.id, {'item_lot_id': new_bn_id, 'item_exp': lot_date})
