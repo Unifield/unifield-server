@@ -480,7 +480,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         if context.get('poc_export'):
             add_column_partner_sql = ', id'
             add_column_employee_sql = ', e.id'
-            add_column_rawdata = ', aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, aj.id as JOURNAL_ID, ocb_vi.move_number as "JE ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code"  '
+            add_column_rawdata = """, aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, case when j.code NOT IN ('OD', 'ODHQ', 'ODX') then aj.id ELSE (select sj.id from account_journal sj where sj.code=j.code and sj.instance_id=j.instance_id) END as JOURNAL_ID, ocb_vi.move_number as "JE ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code"  """
             add_column_bs_entries = ' , aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, j.id as JOURNAL_ID, ocb_vi.move_number as "JE ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code" '
             add_column_journal = ' , j.id'
         else:
