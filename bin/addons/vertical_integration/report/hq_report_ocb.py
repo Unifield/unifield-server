@@ -480,13 +480,15 @@ class hq_report_ocb(report_sxw.report_sxw):
         if context.get('poc_export'):
             add_column_partner_sql = ', id'
             add_column_employee_sql = ', e.id'
-            add_column_rawdata = ', aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, ocb_vi.move_number as "JE ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code"  '
-            add_column_bs_entries = ' , aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, ocb_vi.move_number as "JE ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code" '
+            add_column_rawdata = ', aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, aj.id as JOURNAL_ID, ocb_vi.move_number as "JE ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code"  '
+            add_column_bs_entries = ' , aml.partner_id as PARTNER_ID, aml.employee_id as EMPLOYEE_ID, j.id as JOURNAL_ID, ocb_vi.move_number as "JE ID", ocb_vi.line_number as "Line Number", mapping.mapping_value as "HQ system account code" '
+            add_column_journal = ' , j.id'
         else:
             add_column_partner_sql = ""
             add_column_employee_sql = ""
             add_column_rawdata = ""
             add_column_bs_entries = ""
+            add_column_journal = ""
         partner_sql = """
                             SELECT id, name, ref, partner_type, CASE WHEN active='t' THEN 'True' WHEN active='f' THEN 'False' END AS active, comment """ + add_column_partner_sql + """
                             FROM res_partner 
@@ -522,6 +524,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             """,
             'journal': """
                 SELECT i.code, j.code, j.id, j.type, c.name
+            """ + add_column_journal + """
                 FROM account_journal AS j LEFT JOIN res_currency c ON j.currency = c.id, msf_instance AS i
                 WHERE j.instance_id = i.id
                 AND j.instance_id in %s;
@@ -683,7 +686,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                               'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination',
                               'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency',
                               'Functional debit', 'Functional credit', 'Functional CCY', 'Emplid', 'Partner DB ID',
-                              'PARTNER_ID', 'EMPLOYEE_ID', 'JE ID', 'Line Number', 'HQ system account code' ]
+                              'PARTNER_ID', 'EMPLOYEE_ID', 'Journal DB ID', 'JE ID', 'Line Number', 'HQ system account code' ]
+            journal_header = ['Instance', 'Code', 'Name', 'Journal type', 'Currency', 'Journal DB ID']
 
         else:
             partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive', 'Notes']
@@ -692,6 +696,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                               'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination',
                               'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency',
                               'Functional debit', 'Functional credit', 'Functional CCY', 'Emplid', 'Partner DB ID']
+            journal_header = ['Instance', 'Code', 'Name', 'Journal type', 'Currency']
 
         processrequests = [
             {
@@ -708,7 +713,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'fnct_params': [('hr.employee', 'employee_type', 3)],
             },
             {
-                'headers': ['Instance', 'Code', 'Name', 'Journal type', 'Currency'],
+                'headers': journal_header,
                 'filename': instance_name + '_' + year + month + '_Journals.csv',
                 'key': 'journal',
                 'query_params': (tuple(instance_ids),),
