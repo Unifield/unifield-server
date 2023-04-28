@@ -212,7 +212,7 @@
 
 
         <record id="unidata_sync_log_msl_action" model="ir.actions.act_window">
-            <field name="name">UniData Sync report</field>
+            <field name="name">MSL Sync report</field>
             <field name="res_model">unidata.sync.log</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
