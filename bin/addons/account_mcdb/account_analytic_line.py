@@ -115,12 +115,12 @@ class account_analytic_line(osv.osv):
 
         mapping_obj = self.pool.get('account.export.mapping')
         for aal in self.browse(cr, uid, ids, fields_to_fetch=['general_account_id'], context=context):
-            mapping_ids = mapping_obj.search(cr, uid, [('account_id', '=', aal.general_account_id.id)], context=context)
-            if not mapping_ids:
+            mapping_id = mapping_obj.search(cr, uid, [('account_id', '=', aal.general_account_id.id)], context=context)
+            if not mapping_id:
                 return res
             else:
-                mapping = mapping_obj.browse(cr, uid, mapping_ids, fields_to_fetch=['mapping_value'], context=context)
-                res[aal.id]['hq_system_account']= mapping and mapping.mapping_value or False
+                mapping = mapping_obj.browse(cr, uid, mapping_id[0], fields_to_fetch=['mapping_value'], context=context)
+                res[aal.id] = {'hq_system_account': mapping and mapping.mapping_value or False}
         return res
 
 

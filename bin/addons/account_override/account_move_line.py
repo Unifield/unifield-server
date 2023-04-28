@@ -312,12 +312,12 @@ class account_move_line(osv.osv):
 
         mapping_obj = self.pool.get('account.export.mapping')
         for aml in self.browse(cr, uid, ids, fields_to_fetch=['account_id'], context=context):
-            mapping_ids = mapping_obj.search(cr, uid, [('account_id', '=', aml.account_id.id)], context=context)
-            if not mapping_ids:
+            mapping_id = mapping_obj.search(cr, uid, [('account_id', '=', aml.account_id.id)], context=context)
+            if not mapping_id:
                 return res
             else:
-                mapping = mapping_obj.browse(cr, uid, mapping_ids, fields_to_fetch=['mapping_value'], context=context)
-                res[aml.id]['hq_system_account'] = mapping and mapping.mapping_value or False
+                mapping = mapping_obj.browse(cr, uid, mapping_id[0], fields_to_fetch=['mapping_value'], context=context)
+                res[aml.id] = {'hq_system_account': mapping and mapping.mapping_value or False}
         return res
 
 

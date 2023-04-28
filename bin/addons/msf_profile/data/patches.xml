@@ -900,5 +900,8 @@
         <record id="us_11195_oca_period_nr" model="patch.scripts">
             <field name="method">us_11195_oca_period_nr</field>
         </record>
+        <record id="us_11130_hq_account_mapping" model="patch.scripts">
+            <field name="method">us_11130_hq_account_mapping</field>
+        </record>
     </data>
 </openerp>
