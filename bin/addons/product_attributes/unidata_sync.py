@@ -186,7 +186,7 @@ class unidata_sync_log(osv.osv):
         'log_exists': fields.function(_get_log_exists, type='boolean', method=1, string='Log file exists'),
         'start_uid': fields.many2one('res.users', 'Started by', readonly=1),
         'server': fields.selection([('msl', 'MSL'), ('ud', 'unidata')], 'Server', readonly=1),
-        'number_lists_pulled': fields.integer('# list pulled', readonly=1),
+        'number_lists_pulled': fields.integer('# projects pulled', readonly=1),
     }
 
 unidata_sync_log()
