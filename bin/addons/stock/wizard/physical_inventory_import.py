@@ -16,6 +16,20 @@ class PhysicalInventoryImportWizard(osv.osv_memory):
     def action_close(self, cr, uid, ids, context=None):
         return self.close_action()
 
+    def message(self, cr, button_uid, title, message, context=None):
+        uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
+        return {
+            'name': title,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': self._name,
+            'res_id': self.create(cr, uid, {'message': message}, context=context),
+            'type': 'ir.actions.act_window',
+            'view_id': [self.get_view_by_name(cr, uid, 'physical_inventory_import_wizard_view_fullerror')],
+            'target': 'new',
+            'context': context or {},
+        }
+
     def message_box_noclose(self, cr, button_uid, title, message, context=None):
         uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
         return {

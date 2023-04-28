@@ -32,6 +32,7 @@ import logging.handlers
 from base.res.signature import _register_log
 import requests
 import unidata_sync
+import json
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -1381,6 +1382,12 @@ class product_attributes(osv.osv):
         if view_type == 'tree' and context.get('display_old_code'):
             root = etree.fromstring(res['arch'])
             for field in root.xpath('//field[@name="old_code"]'):
+                field.set('invisible', '0')
+            res['arch'] = etree.tostring(root)
+
+        if view_type == 'form' and uid == 1:
+            root = etree.fromstring(res['arch'])
+            for field in root.xpath('//button[@name="debug_ud"]'):
                 field.set('invisible', '0')
             res['arch'] = etree.tostring(root)
 
@@ -3428,6 +3435,19 @@ class product_attributes(osv.osv):
         return {}
 
 
+    def debug_ud(self, cr, uid, ids, context=None):
+        ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+        for x in self.read(cr, uid, ids, ['msfid', 'default_code'], context=context):
+            if x['msfid']:
+                try:
+                    p = ud.query(q_filter='msfIdentifier=%d'%x['msfid'])
+                    wizard_obj = self.pool.get('physical.inventory.import.wizard')
+                    return wizard_obj.message(cr, uid, title=_('API Result'), message=json.dumps(p, indent=2))
+                except requests.exceptions.HTTPError as e:
+                    raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
+            else:
+                raise osv.except_osv(_('Error'), _('MSID not set on product %s') % (x['default_code'], ))
+        return True
 
     def pull_ud(self, cr, uid, ids, context=None):
         ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
@@ -3443,7 +3463,8 @@ class product_attributes(osv.osv):
                         update = x['id']
                 except requests.exceptions.HTTPError as e:
                     raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
-        self.log(cr, uid, update, _('%s updated from UniData') % ', '.join(code_updated))
+        if code_updated:
+            self.log(cr, uid, update, _('%s updated from UniData') % ', '.join(code_updated))
         return True
 
 
