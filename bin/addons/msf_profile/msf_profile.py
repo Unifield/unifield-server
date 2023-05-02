@@ -71,9 +71,12 @@ class patch_scripts(osv.osv):
             # Skip if the product is not ED anymore
             if kcl_item.item_exp and not kcl_item.item_product_id.perishable:
                 continue
-            lot_name = kcl_item.item_product_id.batch_management and kcl_item.item_lot or False
-            new_bn_id = bn_obj._get_or_create_lot(cr, uid, lot_name, kcl_item.item_exp, kcl_item.item_product_id.id)
-            kcl_item_obj.write(cr, uid, kcl_item.id, {'item_lot_id': new_bn_id})
+            # Use fake name and date for KCL lines with missing data, caused by BN/ED attributes changes over time
+            if kcl_item.item_product_id.batch_management or kcl_item.item_product_id.perishable:
+                lot_name = kcl_item.item_product_id.batch_management and (kcl_item.item_lot or 'TO-BE-REPLACED') or False
+                lot_date = kcl_item.item_exp or '2999-12-31'
+                new_bn_id = bn_obj._get_or_create_lot(cr, uid, lot_name, lot_date, kcl_item.item_product_id.id)
+                kcl_item_obj.write(cr, uid, kcl_item.id, {'item_lot_id': new_bn_id, 'item_exp': lot_date})
         return True
 
     def us_8968_shipments_returned(self, cr, uid, *a, **b):
