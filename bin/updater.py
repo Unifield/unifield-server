@@ -515,6 +515,13 @@ def do_prepare(cr, revision_ids):
                 values += " - %s (check sum: %s)\n" % ((rev.name or 'unknown'), rev.sum)
         logger.error(message % values)
         return ('missing', message, values)
+
+    new_updater_version = os.path.join(path, 'Server', 'updater.py')
+    logger.info('Updater.py status: %s %s'%(new_updater_version, os.path.isfile(new_updater_version)))
+    if os.path.isfile(new_updater_version):
+        logger.info('Copy %s'%new_updater_version)
+        shutil.copy(new_updater_version, '.')
+
     # Fix the flag of the pending patches
     version.write(cr, 1, need_restart, {'state':'need-restart'})
     # Make a lock file to make OpenERP able to detect an update
