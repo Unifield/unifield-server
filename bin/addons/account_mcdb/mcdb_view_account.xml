@@ -31,7 +31,8 @@
                                 </group>
                                 <group col="4" colspan="2">
                                     <field name="rev_account_type_ids" colspan="2"/>
-                                    <field name="display_hq_system_accounts" colspan="2"/>
+                                    <field name="display_hq_system_accounts_buttons" invisible="1"/>
+                                    <field name="display_hq_system_accounts" colspan="2" attrs="{'invisible': [('display_hq_system_accounts_buttons', '!=', True)]}"/>
                                 </group>
                                 <field name="account_type_ids" colspan="2" nolabel="1">
                                     <tree string="Account types" editable="top" noteditable="1">

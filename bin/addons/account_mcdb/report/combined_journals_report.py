@@ -89,6 +89,7 @@ class combined_journals_report(report_sxw.rml_parse):
             bg_id = self.context['background_id']
         company = user_obj.browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=self.context).company_id
         func_currency_name = company.currency_id.name
+        allow_display_hq_accounts = company.display_hq_system_accounts_buttons
         if bg_id:
             self.percent += 0.05  # 5% of the total process
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
@@ -133,7 +134,7 @@ class combined_journals_report(report_sxw.rml_parse):
                     'func_currency': func_currency_name,
                     'reconcile': aml.reconcile_txt or '',
                     'status': aml.move_state,
-                    'hq_system_account': aml.hq_system_account or '',
+                    'hq_system_account': allow_display_hq_accounts and aml.hq_system_account or '',
                 }
                 amls.append(aml_dict)
                 self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(aml_ids), before=0.05, after=0.15, context=self.context)
@@ -191,7 +192,7 @@ class combined_journals_report(report_sxw.rml_parse):
                         'func_currency': func_currency_name,
                         'reconcile': aal.move_id and aal.move_id.reconcile_txt or '',
                         'status': aal.move_id and aal.move_id.move_state or '',
-                        'hq_system_account': aal.hq_system_account or '',
+                        'hq_system_account': allow_display_hq_accounts and aal.hq_system_account or '',
                     }
                     res.append(aal_dict)
                     self.total_booking_debit += aal_dict['booking_debit']
