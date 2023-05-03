@@ -377,6 +377,7 @@
                         <field name="remaining_qty" readonly="1" />
                         <field name="in_number" />
                         <field name="state" readonly="1" />
+                        <button name="delete" string="Delete" icon="gtk-del" type="object" states='1_draft' confirm="Do you want to delete this line ?" />
                 </tree>
             </field>
         </record>
@@ -469,6 +470,21 @@
             view_mode="tree"
             context="{'display_move_line': True}"
             domain="[('esc_invoice_line_id', 'in', active_ids)]" />
+
+        <record id="esc_line_delete_action" model="ir.actions.server">
+            <field name="name">Delete Selected draft entries</field>
+            <field name="model_id" ref="model_esc_invoice_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.delete_action(context=context)</field>
+        </record>
+
+        <record id="esc_line_delete_menu" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">esc.invoice.line</field>
+            <field name="name">Delete Selected draft entries</field>
+            <field eval="'ir.actions.server,%d'%esc_line_delete_action" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
 
     </data>
 </openerp>

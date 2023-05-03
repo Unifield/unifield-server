@@ -93,6 +93,19 @@ class esc_invoice_line(osv.osv):
         self._update_remaining(cr, uid, [new_id], vals, context)
         return new_id
 
+    def delete_action(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        active_ids = context.get('active_ids')
+        self.delete(cr, uid, active_ids, context=context)
+        return {'type': 'ir.actions.refresh_o2m', 'o2m_refresh': '_terp_list'}
+
+    def delete(self, cr, uid, ids, context=None):
+        to_del_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', '1_draft')], context=context)
+        if to_del_ids:
+            self.unlink(cr, uid, to_del_ids, context=context)
+        return True
+
     _defaults = {
         'state': '1_draft',
     }
