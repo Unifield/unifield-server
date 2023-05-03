@@ -59,6 +59,9 @@
    <Column ss:Index="6" ss:StyleID="s62" ss:AutoFitWidth="0" ss:Width="216.5"/>
    <Column ss:StyleID="s62" ss:Width="73"/>
    <Column ss:StyleID="s62" ss:AutoFitWidth="0" ss:Width="120"/>
+    % if with_error():
+        <Column ss:StyleID="s62" ss:AutoFitWidth="0" ss:Width="216"/>
+    % endif
    <Row ss:AutoFitHeight="0" ss:Height="26.5">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Order Reference</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Requestor instance reference/Cost Center</Data></Cell>
@@ -68,7 +71,27 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">Unit Price</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Currency</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Field mapping with IN</Data></Cell>
+    % if with_error():
+        <Cell ss:StyleID="s63"><Data ss:Type="String">Error</Data></Cell>
+    % endif
    </Row>
+   % for rows in get_row(objects[0].id):
+        <Row>
+            % for cell in rows[0]:
+                <Cell>
+                % if cell['type'] in ('float', 'int') and cell['data']:
+                    <Data ss:Type="Number">${cell['data'] or ''}</Data>
+                % else:
+                    <Data ss:Type="String">${cell['data'] or ''}</Data>
+                % endif
+                </Cell>
+            % endfor
+            % for num in range(len(rows[0]), 8):
+                <Cell />
+            % endfor
+            <Cell><Data ss:Type="String">${rows[1]}</Data></Cell>
+        </Row>
+   % endfor
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <Unsynced/>

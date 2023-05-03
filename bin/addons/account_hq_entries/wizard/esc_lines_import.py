@@ -11,12 +11,26 @@ import time
 import base64
 import re
 from psycopg2 import IntegrityError
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 
-class esc_line_import_wizard(osv.osv_memory):
+class esc_line_import_rejected(osv.osv):
+    _name = 'esc.line.import.rejected'
+    _description = 'Rejected Lines'
+    _rec_name = 'wiz_id'
+    _order = 'wiz_id desc, id asc'
+
+    _columns = {
+        'wiz_id': fields.many2one('esc.line.import', 'Import', required=1),
+        'error': fields.text('Reason'),
+        'xls_row': fields.text('Row'),
+    }
+
+esc_line_import_rejected()
+
+class esc_line_import_wizard(osv.osv):
     _name = 'esc.line.import'
     _description = 'Import International Invoices Lines'
+    _rec_name = 'start_date'
 
     _columns = {
         'file': fields.binary(string="File"),
@@ -34,6 +48,14 @@ class esc_line_import_wizard(osv.osv_memory):
     _defaults = {
         'state': 'draft',
     }
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        # remove concurrency warning on refresh
+        if self.CONCURRENCY_CHECK_FIELD in context:
+            del context[self.CONCURRENCY_CHECK_FIELD]
+        return super(esc_line_import_wizard, self).write(cr, uid, ids, vals, context)
+
     def open_wizard(self, cr, uid, ids, context=None):
         """
             on click on menutim: display the running hq import
@@ -71,6 +93,17 @@ class esc_line_import_wizard(osv.osv_memory):
             'context': context,
         }
 
+    def get_error_file(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'esc_line_import_rejected',
+            'datas': {'target_filename': _('International Invoices Rejected Lines'), 'keep_open': 1, 'active_id': ids[0]},
+            'context': context,
+        }
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Take a CSV file and fetch some informations for HQ Entries
@@ -103,8 +136,13 @@ class esc_line_import_wizard(osv.osv_memory):
 
 
     def load_bg(self, dbname, uid, wiz_id, context=None):
-        def manage_error(line_index, msg):
+        def manage_error(line_index, msg, row):
             errors.append(_('Line %s, %s') % (line_index, _(msg)))
+            line_data = []
+            len_cell = len(row.cells)
+            for x in range(0, min(len_cell, 8)):
+                line_data.append({'type': row.cells[x].type, 'data': row.cells[x].data})
+            self.pool.get('esc.line.import.rejected').create(cr, uid, {'wiz_id': wiz_id, 'error': msg, 'xls_row': tools.ustr(line_data)}, context=context)
 
         errors = []
         curr_cache = {}
@@ -115,12 +153,14 @@ class esc_line_import_wizard(osv.osv_memory):
         processed = 0
 
         created_ids = {}
+        consignee_instances = {}
         try:
             cr = pooler.get_db(dbname).cursor()
 
             target_cc_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('instance_id.state', '!=', 'inactive'), ('is_po_fo_cost_center', '=', True)], context=context)
-            for target in self.pool.get('account.target.costcenter').browse(cr, uid, target_cc_ids, fields_to_fetch=['cost_center_id'], context=context):
+            for target in self.pool.get('account.target.costcenter').browse(cr, uid, target_cc_ids, fields_to_fetch=['cost_center_id', 'instance_id'], context=context):
                 cost_center[target.cost_center_id.code.lower()] = target.cost_center_id.id
+                consignee_instances[target.instance_id.instance.lower()] = target.cost_center_id.id
 
             wiz = self.browse(cr, uid, wiz_id, context=None)
             file_data = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
@@ -137,74 +177,81 @@ class esc_line_import_wizard(osv.osv_memory):
                     continue
                 processed += 1
                 if len(row.cells) < 7:
-                    manage_error(line, _('a row must have 8 columns'))
+                    manage_error(line, _('a row must have 8 columns'), row)
                     continue
 
                 if not row.cells[0].data:
-                    manage_error(line, _('Order ref is mandatory'))
+                    manage_error(line, _('Order ref is mandatory'), row)
                     continue
 
                 po_ref = row.cells[0].data.strip()
                 if not re.match('^[0-9]{2}/[^/]+/\w+/PO\d+$', po_ref):
-                    manage_error(line, _('Order ref %s does not match the PO pattern') % po_ref)
+                    manage_error(line, _('Order ref %s does not match the PO pattern') % po_ref, row)
                     continue
 
                 if not row.cells[1].data:
-                    manage_error(line, _('Requestor Cost Center is mandatory'))
+                    manage_error(line, _('Requestor Cost Center is mandatory'), row)
                     continue
 
                 cc = row.cells[1].data.strip().lower()
                 if cc not in cost_center:
-                    manage_error(line, _('Requestor Cost Center %s not found or does not match any active instance.') % row.cells[1].data)
+                    manage_error(line, _('Requestor Cost Center %s not found or does not match any active instance.') % row.cells[1].data, row)
                     continue
                 cc_id = cost_center[cc]
 
                 consignee_id = False
                 if row.cells[2].data:
                     cc = row.cells[2].data.strip().lower()
-                    if cc not in cost_center:
-                        manage_error(line, _('Requestor Cost Center %s not found or does not match any active instance.') % row.cells[2].data)
+
+                    if cc in cost_center:
+                        consignee_id = cost_center[cc]
+                        consignee_instance_txt = ''
+                    elif cc in consignee_instances:
+                        consignee_id= consignee_instances[cc]
+                        consignee_instance_txt = row.cells[2].data.strip()
+                    else:
+                        manage_error(line, _('Consignee Cost Center/Instance %s not found or does not match any active instance.') % row.cells[2].data, row)
                         continue
-                    consignee_id = cost_center[cc]
+
 
                 if not row.cells[3].data:
-                    manage_error(line, _('Product Code is mandatory.'))
+                    manage_error(line, _('Product Code is mandatory.'), row)
                     continue
                 p_code = row.cells[3].data.strip().lower()
                 if p_code not in product_cache:
                     p_ids = self.pool.get('product.product').search(cr, uid, [('default_code', '=ilike', p_code)], context=context)
                     product_cache[p_code] = p_ids[0] if p_ids else False
                 if not product_cache[p_code]:
-                    manage_error(line, _('Product Code %s not found.') % (row.cells[3].data,))
+                    manage_error(line, _('Product Code %s not found.') % (row.cells[3].data,), row)
                     continue
 
                 if not row.cells[4].data:
-                    manage_error(line, _('Product quantity is mandatory.'))
+                    manage_error(line, _('Product quantity is mandatory.'), row)
                     continue
                 try:
                     qty = float(row.cells[4].data)
                 except:
-                    manage_error(line, _('Product Quantity %s is not a number.') % (row.cells[4].data, ))
+                    manage_error(line, _('Product Quantity %s is not a number.') % (row.cells[4].data, ), row)
                     continue
 
                 if not row.cells[5].data:
-                    manage_error(line, _('Unit Price is mandatory.'))
+                    manage_error(line, _('Unit Price is mandatory.'), row)
                     continue
                 try:
                     unit_price = float(row.cells[5].data)
                 except:
-                    manage_error(line, _('Unit Price %s is not a number.') % (row.cells[5].data, ))
+                    manage_error(line, _('Unit Price %s is not a number.') % (row.cells[5].data, ), row)
                     continue
 
                 if not row.cells[6].data:
-                    manage_error(line, _('Currency is mandatory.'))
+                    manage_error(line, _('Currency is mandatory.'), row)
                     continue
                 curr_code = row.cells[6].data.strip().lower()
                 if curr_code not in curr_cache:
                     curr_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=ilike', curr_code)], context=context)
                     curr_cache[curr_code] = curr_ids[0] if curr_ids else False
                 if not curr_cache[curr_code]:
-                    manage_error(line, _('Currency %s not found.') % (row.cells[6].data,))
+                    manage_error(line, _('Currency %s not found.') % (row.cells[6].data,), row)
                     continue
 
                 mapping = ''
@@ -217,6 +264,7 @@ class esc_line_import_wizard(osv.osv_memory):
                         'po_name': po_ref,
                         'requestor_cc_id': cc_id,
                         'consignee_cc_id': consignee_id,
+                        'imported_consignee_instance': consignee_instance_txt,
                         'product_id': product_cache[p_code],
                         'price_unit': unit_price,
                         'product_qty': qty,
@@ -227,36 +275,43 @@ class esc_line_import_wizard(osv.osv_memory):
                     created += 1
                     cr.execute("RELEASE SAVEPOINT esc_line")
                 except osv.except_osv, e:
-                    manage_error(line, e.value)
+                    cr.execute("ROLLBACK TO SAVEPOINT esc_line")
+                    manage_error(line, e.value, row)
                 except IntegrityError:
                     cr.execute("ROLLBACK TO SAVEPOINT esc_line")
                     line_id = False
+
                     if created_ids:
                         line_id = self.pool.get('esc.invoice.line').search(cr, uid, [
                             ('id', 'in', created_ids.keys()),
                             ('po_name', '=', po_ref),
                             ('requestor_cc_id', '=', cc_id),
+                            ('consignee_cc_id', '=', consignee_id),
                             ('product_id', '=', product_cache[p_code]),
                             ('price_unit', '=', unit_price),
+                            ('product_qty', '=', qty),
+                            ('currency_id', '=', curr_cache[curr_code]),
+                            ('shipment_ref', '=', mapping)
                         ], context=context)
                         if line_id:
-                            manage_error(line, _('duplicates line %d') % created_ids[line_id[0]])
+                            manage_error(line, _('duplicates line %d') % created_ids[line_id[0]], row)
                     if not line_id:
-                        manage_error(line, _('Line duplicated in the system'))
+                        manage_error(line, _('Line duplicated in the system'), row)
 
                 if processed%10 == 0:
                     self.write(cr, uid, wiz_id, {'progress': int(processed/float(nb_lines)*100), 'created': created, 'nberrors': len(errors), 'error': "\n".join(errors)}, context=context)
 
             state = 'done'
             if errors:
-                cr.rollback()
                 state = 'error'
-                errors.insert(0, _('Import rejected'))
+                nb_errors = len(errors)
+                errors.insert(0, _('Imported with error(s)'))
                 msg = "\n".join(errors)
             else:
                 msg = _("International Invoices Lines import successful")
+                nb_errors = 0
 
-            self.write(cr, uid, wiz_id, {'progress': 100, 'state': state, 'created': created, 'total': processed, 'error': msg, 'nberrors': len(errors), 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+            self.write(cr, uid, wiz_id, {'progress': 100, 'state': state, 'created': created, 'total': processed, 'error': msg, 'nberrors': nb_errors, 'end_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'file': False}, context=context)
 
         except Exception, e:
             cr.rollback()
@@ -281,5 +336,3 @@ class esc_line_import_wizard(osv.osv_memory):
 
 esc_line_import_wizard()
 
-
-SpreadsheetReport('report.esc_line_import_template', 'esc.line.import', 'account_hq_entries/wizard/esc_line_import_template.mako')

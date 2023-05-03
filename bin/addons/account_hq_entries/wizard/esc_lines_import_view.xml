@@ -59,6 +59,13 @@
                     <newline />
                     <field name="created" />
                     <field name="nberrors" />
+                    <newline />
+                    <group colspan="4" col="4">
+                        <button name="get_error_file" type="object"  string="Download Rejected Lines" icon="gtk-justify-fill" colspan="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
+                        <group colspan="3" />
+                    </group>
+                    <newline />
+                    <newline />
                     <field name="error" colspan="4" nolabel="1" />
                     <group colspan="4" col="2">
                         <button name="dummy" string="Update" icon="gtk-refresh" invisible="1"/>

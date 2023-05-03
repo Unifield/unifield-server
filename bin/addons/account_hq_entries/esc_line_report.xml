@@ -20,7 +20,19 @@
             string="International Invoices Lines Template"
             model="esc.line.import"
             name="esc_line_import_template"
-            file="account_hq_entries/wizard/esc_line_import_template.mako"
+            file="account_hq_entries/report/esc_line_import_template.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
+        <report
+            id="esc_line_import_rejected"
+            string="International Invoices Rejected Lines"
+            model="esc.line.import"
+            name="esc_line_import_rejected"
+            file="account_hq_entries/report/esc_line_import_template.mako"
             report_type="webkit"
             header="False"
             auto="False"

@@ -57,6 +57,7 @@ class esc_invoice_line(osv.osv):
         'po_name': fields.char('PO Reference', size=64, required=1, select=1),
         'requestor_cc_id': fields.many2one('account.analytic.account', 'Requestor Cost Center', required=1, domain="[('category','=', 'OC'), ('type', '!=', 'view')]"),
         'consignee_cc_id': fields.many2one('account.analytic.account', 'Consignee Cost Center', domain="[('category','=', 'OC'), ('type', '!=', 'view')]"),
+        'imported_consignee_instance': fields.char('Consignee Instance', size=128),
         'dest_instance_id': fields.function(_get_dest_instance_id, method=1, type='many2one', relation='msf.instance', string='Destination Instance'),
         'product_id': fields.many2one('product.product', 'Product', required=1, select=1),
         'price_unit': fields.float('Unit Price', required=1, digits_compute=dp.get_precision('Purchase Price Computation')),
@@ -71,9 +72,17 @@ class esc_invoice_line(osv.osv):
 
     }
 
+    _defaults = {
+        'state': '1_draft',
+    }
+
+
     _sql_constraints = [
-        ('line_unique', 'unique(po_name,requestor_cc_id,product_id,price_unit)', "The combination Order Reference/Restor CC/Product/Price must be unique."),
+        ('line_unique', 'unique(po_name,requestor_cc_id,consignee_cc_id,product_id,product_qty,price_unit,shipment_ref,currency_id)', "The combination of all fields must be unique."),
+        ('product_qty', 'check(product_qty>0)', 'Quantity must be greater than 0.'),
     ]
+
+
     def _update_remaining(self, cr, uid, ids, vals, context=None):
         if not ids:
             return
@@ -106,14 +115,6 @@ class esc_invoice_line(osv.osv):
             self.unlink(cr, uid, to_del_ids, context=context)
         return True
 
-    _defaults = {
-        'state': '1_draft',
-    }
-
-
-    _sql_contraints = {
-        ('product_qty', 'product_qty>0', 'Quantity must be greater than 0.'),
-    }
 
 
 esc_invoice_line()
