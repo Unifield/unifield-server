@@ -28,17 +28,6 @@ from spreadsheet_xml.xlsx_write import XlsxReport
 from spreadsheet_xml.xlsx_write import XlsxReportParser
 from openpyxl.cell import WriteOnlyCell
 
-DOC_TYPES = {
-    'purchase.order': _('PO'),
-    'sale.order': _('IR'),
-    'account.bank.statement.cash': _('Cash Register'),
-    'account.bank.statement.bank': _('Bank Register'),
-    'account.bank.statement.cheque': _('Cheque Register'),
-    'account.invoice.si': _('Supplier Invoice'),
-    'account.invoice.donation': _('Donation'),
-    'stock.picking': _('IN'),
-}
-
 
 def _get_filters_info(self, fields, search_domain, source, context=None):
     if context is None:
@@ -47,6 +36,17 @@ def _get_filters_info(self, fields, search_domain, source, context=None):
         raise osv.except_osv(_('Error!'), _('Please fill all attributes to use this method'))
     if source not in ['signature.follow_up.search.pdf', 'signature.follow_up.search.xlsx']:
         raise osv.except_osv(_('Error!'), _('This method is only usable for the Signature Follow Up Search Exports'))
+
+    DOC_TYPES = {
+        'purchase.order': _('PO'),
+        'sale.order': _('IR'),
+        'account.bank.statement.cash': _('Cash Register'),
+        'account.bank.statement.bank': _('Bank Register'),
+        'account.bank.statement.cheque': _('Cheque Register'),
+        'account.invoice.si': _('Supplier Invoice'),
+        'account.invoice.donation': _('Donation'),
+        'stock.picking': _('IN'),
+    }
 
     data = []
     for filter in search_domain:
