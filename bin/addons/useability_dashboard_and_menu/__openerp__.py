@@ -62,6 +62,7 @@
         "dashboard/board_purchase_view.xml",
         "dashboard/board_sale_view.xml",
         "dashboard/board_warehouse_view.xml",
+
         "view/signature_view.xml",
     ],
     'demo_xml': [

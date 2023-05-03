@@ -79,6 +79,7 @@
         'res/res_widget_data.xml',
         'res/signature_view.xml',
         'res/installer_signature_view.xml',
+        'res/wizard/signature_follow_up_search_wizard.xml'
     ],
     'demo_xml': [
         'base_demo.xml',

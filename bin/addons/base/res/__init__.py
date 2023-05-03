@@ -36,3 +36,4 @@ import ir_property
 import res_widget
 import signature
 import report_module
+import wizard

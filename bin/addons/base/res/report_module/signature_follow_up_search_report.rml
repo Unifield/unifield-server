@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<document filename="signature_follow_up_search_report.pdf">
+    <template pageSize="(842.0,595.0)" title="signature_follow_up_search_report" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="42.0" y1="62.0" width="756" height="500" />
+      <pageGraphics>
+        <fill color="blue"/>
+        <setFont name="Helvetica" size="9"/>
+        <fill color="black"/>
+        <drawString x="20.0" y="10.0">Page : <pageNumber /> / </drawString>
+        <drawString x="60.0" y="10.0"><pageCount /> </drawString>
+
+      </pageGraphics>
+    </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="table_title">
+            <blockBackground colorName="peachpuff" start="0,0" stop="-1,0"/>
+            <lineStyle kind="GRID" colorName="grey"/>
+            <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+            <blockValign value="MIDDLE" />
+        </blockTableStyle>
+
+        <paraStyle name="topTitle" fontName="Helvetica-Bold" fontSize="17" alignment="CENTER" />
+        <paraStyle name="title" fontName="Helvetica-Bold" fontSize="9"/>
+        <paraStyle name="titleBig" fontName="Helvetica-Bold" fontSize="10"/>
+        <paraStyle name="line" fontName="Helvetica" fontSize="9" alignment="LEFT"/>
+        <paraStyle name="lineBig" fontName="Helvetica" fontSize="10" alignment="LEFT"/>
+    </stylesheet>
+
+    <story>
+        <blockTable colWidths="782.0">
+            <tr>
+                <td><para style="topTitle">Signature Follow Up - [[ getTitleInfo() ]]</para></td>
+            </tr>
+        </blockTable>
+
+        <para style="line"><font color="white"> </font></para>
+        <para style="line"><font color="white"> </font></para>
+
+        <blockTable colWidths="120.0,662.0">
+            <tr>
+                <td><para style="titleBig">Filters used :</para></td>
+                <td></td>
+            </tr>
+            <tr>
+                [[ repeatIn(getFiltersInfo(), 'filter') ]]
+                <td><para style="lineBig">[[ filter.get('name', '') ]]</para></td>
+                <td><para style="lineBig">[[ filter.get('value', '') ]]</para></td>
+            </tr>
+        </blockTable>
+
+        <para style="line"><font color="white"> </font></para>
+        <para style="line"><font color="white"> </font></para>
+
+        <blockTable style="table_title" colWidths="115.0,165.0,80.0,70.0,70.0,70.0,50.0,100.0,62.0">
+            <tr>
+                <td><para style="title">User</para></td>
+                <td><para style="title">Document Name</para></td>
+                <td><para style="title">Document State</para></td>
+                <td><para style="title">Document Type</para></td>
+                <td><para style="title">Type of Signature</para></td>
+                <td><para style="title">Signature State</para></td>
+                <td><para style="title">Signed</para></td>
+                <td><para style="title">Signature Date</para></td>
+                <td><para style="title">Signature Closed</para></td>
+            </tr>
+            <tr>
+                [[ repeatIn(getLines(), 'line') ]]
+                <td><para style="line">[[ line.user_id and line.user_id.name or '' ]]</para></td>
+                <td><para style="line">[[ line.doc_name or '' ]]</para></td>
+                <td><para style="line">[[ getSel(line, 'doc_state') ]]</para></td>
+                <td><para style="line">[[ getSel(line, 'doc_type') ]]</para></td>
+                <td><para style="line">[[ getSel(line, 'subtype') ]]</para></td>
+                <td><para style="line">[[ getSel(line, 'status') ]]</para></td>
+                <td><para style="line">[[ line.signed > 0 and translate('Yes') or translate('No') ]]</para></td>
+                <td><para style="line">[[ line.signature_date and formatLang(line.signature_date, date_time=True) or '' ]]</para></td>
+                <td><para style="line">[[ line.signature_is_closed and translate('Yes') or translate('No') ]]</para></td>
+            </tr>
+        </blockTable>
+
+    </story>
+</document>
