@@ -29,14 +29,14 @@ from spreadsheet_xml.xlsx_write import XlsxReportParser
 from openpyxl.cell import WriteOnlyCell
 
 DOC_TYPES = {
-    'purchase.order': 'PO',
-    'sale.order': 'IR',
-    'account.bank.statement.cash': 'Cash Register',
-    'account.bank.statement.bank': 'Bank Register',
-    'account.bank.statement.cheque': 'Cheque Register',
-    'account.invoice.si': 'Supplier Invoice',
-    'account.invoice.donation': 'Donation',
-    'stock.picking': 'IN',
+    'purchase.order': _('PO'),
+    'sale.order': _('IR'),
+    'account.bank.statement.cash': _('Cash Register'),
+    'account.bank.statement.bank': _('Bank Register'),
+    'account.bank.statement.cheque': _('Cheque Register'),
+    'account.invoice.si': _('Supplier Invoice'),
+    'account.invoice.donation': _('Donation'),
+    'stock.picking': _('IN'),
 }
 
 
@@ -52,10 +52,10 @@ def _get_filters_info(self, fields, search_domain, source, context=None):
     for filter in search_domain:
         if not fields.get(filter[0], False):
             continue
-        name = fields.get(filter[0]) and fields[filter[0]]['string'] or filter[0]
+        name = fields[filter[0]].get('string', False) or filter[0]
         value = filter[2]
         if filter[0] == 'user_id':
-            if value == self.uid and {'name': _('My Signature'), 'value': _('Yes')} not in data:
+            if value == self.uid and {'name': _('My Signatures'), 'value': _('Yes')} not in data:
                 name = _('My Signatures')
                 value = _('Yes')
             elif value != self.uid:
