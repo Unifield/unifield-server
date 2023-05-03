@@ -234,7 +234,8 @@ class signature_follow_up_search_report_xlsx(XlsxReportParser):
             self.add_cell(self.getSel(sign, 'subtype') or '', line_style)
             self.add_cell(self.getSel(sign, 'status') or '', line_style)
             self.add_cell(sign.signed > 0 and _('Yes') or _('No'), line_style)
-            self.add_cell(datetime.strptime(sign.signature_date, '%Y-%m-%d %H:%M:%S') or '', date_style, number_format='DD/MM/YYYY HH:MM')
+            self.add_cell(sign.signature_date and datetime.strptime(sign.signature_date, '%Y-%m-%d %H:%M:%S') or '',
+                          date_style, number_format='DD/MM/YYYY HH:MM')
             self.add_cell(sign.signature_is_closed and _('Yes') or _('No'), line_style)
 
             sheet.append(self.rows)
