@@ -34,7 +34,7 @@
             target_filename="${_('Signature Follow Up')}"
             model="signature.follow_up"
             name="signature.follow_up.search.pdf"
-            rml="base/res/report_module/signature_follow_up_search_report.rml"
+            rml="useability_dashboard_and_menu/report/signature_follow_up_search_report.rml"
             header="False"
             auto="False"
             menu="False"/>

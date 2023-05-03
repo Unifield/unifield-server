@@ -19,3 +19,6 @@
 #
 ##############################################################################
 import sale
+import signature
+import wizard
+import report

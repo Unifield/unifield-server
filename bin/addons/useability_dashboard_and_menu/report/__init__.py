@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,20 +19,4 @@
 #
 ##############################################################################
 
-import tools
-
-import country
-import bank
-import res_lang
-import partner
-import res_config
-import res_currency
-import res_company
-import res_user
-import res_request
-import res_lang
-import res_log
-import ir_property
-import res_widget
-import signature
-import report_module
+import signature_follow_up_search_report

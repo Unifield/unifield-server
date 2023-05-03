@@ -27,7 +27,6 @@ from datetime import datetime
 from spreadsheet_xml.xlsx_write import XlsxReport
 from spreadsheet_xml.xlsx_write import XlsxReportParser
 from openpyxl.cell import WriteOnlyCell
-import tools
 
 DOC_TYPES = {
     'purchase.order': 'PO',
@@ -126,7 +125,7 @@ class signature_follow_up_search_report(report_sxw.rml_parse):
 
 
 report_sxw.report_sxw('report.signature.follow_up.search.pdf', 'signature.follow_up',
-                      'base/res/report_module/signature_follow_up_search_report.rml', header=False,
+                      'useability_dashboard_and_menu/report/signature_follow_up_search_report.rml', header=False,
                       parser=signature_follow_up_search_report)
 
 
@@ -241,4 +240,5 @@ class signature_follow_up_search_report_xlsx(XlsxReportParser):
             sheet.append(self.rows)
 
 
-XlsxReport('report.signature.follow_up.search.xlsx', parser=signature_follow_up_search_report_xlsx, template='addons/base/res/report_module/signature_follow_up_search_report.xlsx')
+XlsxReport('report.signature.follow_up.search.xlsx', parser=signature_follow_up_search_report_xlsx,
+           template='addons/useability_dashboard_and_menu/report/signature_follow_up_search_report.xlsx')
