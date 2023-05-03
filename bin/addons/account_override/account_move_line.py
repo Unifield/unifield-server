@@ -307,17 +307,20 @@ class account_move_line(osv.osv):
         if context is None:
             context = {}
         res = {}
+        mapping_dict = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         mapping_obj = self.pool.get('account.export.mapping')
-        for aml in self.browse(cr, uid, ids, fields_to_fetch=['account_id'], context=context):
-            mapping_id = mapping_obj.search(cr, uid, [('account_id', '=', aml.account_id.id)], context=context)
-            if not mapping_id:
-                return res
-            else:
-                mapping = mapping_obj.browse(cr, uid, mapping_id[0], fields_to_fetch=['mapping_value'], context=context)
-                res[aml.id] = {'hq_system_account': mapping and mapping.mapping_value or False}
+        mapping_ids = mapping_obj.search(cr, uid, [('account_id', '!=', False)], context=context)
+        if not mapping_ids:
+            return res
+        for mapping_id in mapping_ids:
+            mapping = mapping_obj.browse(cr, uid, mapping_id, fields_to_fetch=['account_id', 'mapping_value'], context=context)
+            mapping_dict[mapping.account_id.id] = mapping.mapping_value
+        amls = self.browse(cr, uid, ids, fields_to_fetch=['account_id'], context=context)
+        for aml in amls:
+            res[aml.id] = {'hq_system_account': mapping_dict.get(aml.account_id.id, False)}
         return res
 
 
@@ -380,8 +383,8 @@ class account_move_line(osv.osv):
         'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
                                  store=False, help='DB ID used for Vertical Integration'),
         'product_code': fields.related('product_id', 'default_code', type='char', size=64, string='Product Code', readonly=True),
-        'hq_system_account': fields.function(_get_hq_system_acc, type='char', store=True,
-                                             method=True, string='HQ System Account', size=16),
+        'hq_system_account': fields.function(_get_hq_system_acc, type='char', store=False,
+                                             method=True, string='HQ System Account', size=32),
     }
 
     _defaults = {
