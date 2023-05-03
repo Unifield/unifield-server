@@ -199,6 +199,25 @@ class patch_scripts(osv.osv):
         return True
 
     # UF28.0
+    def us_10885_tc_entries(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance in ('BD_DHK_OCA', 'HQ_OCA', 'MY_CPLC_OCA', 'OCBHQ', 'OCBPK105', 'OCG_HQ'):
+            cr.execute('''
+                update
+                    audittrail_log_line l set res_id = p.product_tmpl_id
+                from
+                    ir_model m, ir_model_fields f , product_product p
+                where
+                    m.id=l.object_id
+                    and f.id = l.field_id
+                    and p.id=l.res_id
+                    and f.model_id != m.id
+                    and m.model='product.template'
+                    and p.id!=p.product_tmpl_id
+                    and l.create_date > (select applied from sync_client_version where name='UF27.0')
+            ''')
+        return True
+
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
             return True
