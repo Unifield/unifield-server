@@ -41,10 +41,9 @@ class account_mcdb(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=self.context).company_id
-        allow_display_hq_accounts = company.display_hq_system_accounts_buttons
         mcdbs = self.browse(cr, uid, ids, context=context)
         for mcdb in mcdbs:
-            res[mcdb.id] = {'display_hq_system_accounts_buttons': allow_display_hq_accounts or False}
+            res[mcdb.id] = company.display_hq_system_accounts_buttons or False
         return res
 
     _columns = {

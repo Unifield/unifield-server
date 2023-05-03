@@ -320,7 +320,7 @@ class account_move_line(osv.osv):
             mapping_dict[mapping.account_id.id] = mapping.mapping_value
         amls = self.browse(cr, uid, ids, fields_to_fetch=['account_id'], context=context)
         for aml in amls:
-            res[aml.id] = {'hq_system_account': mapping_dict.get(aml.account_id.id, False)}
+            res[aml.id] = mapping_dict.get(aml.account_id.id, False)
         return res
 
 

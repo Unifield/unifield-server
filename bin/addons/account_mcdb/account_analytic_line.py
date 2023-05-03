@@ -123,7 +123,7 @@ class account_analytic_line(osv.osv):
             mapping_dict[mapping.account_id.id] = mapping.mapping_value
         aals = self.browse(cr, uid, ids, fields_to_fetch=['general_account_id'], context=context)
         for aal in aals:
-            res[aal.id] = {'hq_system_account': mapping_dict.get(aal.general_account_id.id, False)}
+            res[aal.id] = mapping_dict.get(aal.general_account_id.id, False)
         return res
 
 
