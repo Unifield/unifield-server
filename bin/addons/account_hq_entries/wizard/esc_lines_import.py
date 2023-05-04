@@ -243,6 +243,10 @@ class esc_line_import_wizard(osv.osv):
                     manage_error(line, _('Product Quantity %s is not a number.') % (row.cells[4].data, ), row)
                     continue
 
+                if qty <= 0:
+                    manage_error(line, _('Product Quantity %s cannot be 0 or negative') % (row.cells[4].data, ), row)
+                    continue
+
                 if not row.cells[5].data:
                     manage_error(line, _('Unit Price is mandatory.'), row)
                     continue
