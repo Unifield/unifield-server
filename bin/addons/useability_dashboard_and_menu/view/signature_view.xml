@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-
         <record id="signature_follow_up_search" model="ir.ui.view">
             <field name="name">signature_follow_up_tree</field>
             <field name="model">signature.follow_up</field>
             <field name="type">search</field>
+            <field name="priority">15</field>
             <field name="arch" type="xml">
                 <search>
                     <filter name="my_sign" string="My Signatures" icon="terp-personal" domain="[('user_id', '=', uid)]" />
@@ -32,6 +32,7 @@
             <field name="name">signature_follow_up_tree</field>
             <field name="model">signature.follow_up</field>
             <field name="type">tree</field>
+            <field name="priority">16</field>
             <field name="arch" type="xml">
                 <tree hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <field name="user_id" />
@@ -53,7 +54,7 @@
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">signature.follow_up</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree</field>
+            <field name="view_mode">tree,form</field>
             <field name="view_id" ref="signature_follow_up_tree"/>
             <field name="search_view_id" ref="signature_follow_up_search"/>
             <field name="context">{}</field>
