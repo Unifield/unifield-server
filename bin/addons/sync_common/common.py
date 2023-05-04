@@ -170,6 +170,7 @@ WHITE_LIST_MODEL = [
     'hr.payment.method',
     'wizard.template',
     'dest.cc.link',
+    'account.export.mapping',
 ]
 
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']
