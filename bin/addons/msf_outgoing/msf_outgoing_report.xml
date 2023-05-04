@@ -58,6 +58,18 @@
                 string="Packing List (xls)"
                 sequence="6" />
 
+        <!-- The rest is in addons/stock/wizard/loan_certificate_wizard.xml -->
+        <act_window id="action_ship_loan_certificate_wizard"
+            name="Loan Certificate Export"
+            view_ids="view_shipment_tree,view_shipment_form"
+            res_model="ship.loan.certificate.wizard"
+            src_model="shipment"
+            view_mode='form'
+            view_type='form'
+            key2="client_print_multi"
+            context="{'active_id': active_id}"
+            target='new' />
+
 
         <report auto="False" 
                 id="picking_ticket" 

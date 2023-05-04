@@ -314,6 +314,31 @@ class shipment(osv.osv):
             ret[x] = _('Shipment List')
         return ret
 
+    def _check_loan(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if the Shipment contains Pack(s) with the Loan or Loan Return Reason Type
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        data_obj = self.pool.get('ir.model.data')
+        loan_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        loan_return_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
+
+        res = {}
+        for ship in self.browse(cr, uid, ids, fields_to_fetch=['pack_family_memory_ids'], context=context):
+            has_loan, has_ret_loan = False, False
+            for pack in ship.pack_family_memory_ids:
+                if pack.ppl_id and pack.ppl_id.reason_type_id.id == loan_id:
+                    has_loan = True
+                if pack.ppl_id and pack.ppl_id.reason_type_id.id == loan_return_id:
+                    has_ret_loan = True
+            res[ship.id] = {'has_loan': has_loan, 'has_ret_loan': has_ret_loan}
+
+        return res
+
     _columns = {
         'name': fields.char(string='Reference', size=1024),
         'date': fields.datetime(string='Creation Date'),
@@ -396,6 +421,8 @@ class shipment(osv.osv):
             }
         ),
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title', internal="1"),
+        'has_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Pack(s)'),
+        'has_ret_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Return Pack(s)'),
     }
 
     def _get_sequence(self, cr, uid, context=None):
