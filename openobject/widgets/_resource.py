@@ -114,6 +114,7 @@ def register_resource_directory(config, modulename, directory):
     directory = os.path.abspath(directory)
     config.update({'/%s/static' % modulename: {
         'tools.staticdir.on': True,
-        'tools.staticdir.dir': directory
+        'tools.staticdir.dir': directory,
+        'tools.sessions.on': False,
     }})
     return True

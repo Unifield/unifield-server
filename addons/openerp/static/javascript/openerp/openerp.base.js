@@ -334,6 +334,7 @@ jQuery(document).ready(function () {
     });
     // if the initially loaded URL had a hash-url inside
     jQuery(window).trigger('hashchange');
+    load_timeout();
 });
 
 // Hook onclick for boolean alteration propagation
@@ -417,6 +418,45 @@ function loader_throb() {
         $loader.text($loader.text().replace(/(\.*)(\s)(\s*)$/, '$1.$3'));
     }
     LOADER_THROBBER = setTimeout(loader_throb, THROBBER_DELAY);
+}
+
+var LOAD_TIMEOUT;
+var LAST_MESSAGE = '';
+function load_timeout() {
+    var expire_str = false;
+    var expire_cookie = openobject.http.getCookie('session_expired');
+    //console.log(expire_cookie);
+    if (expire_cookie) {
+        expire_str = expire_cookie.replaceAll('"','');
+    }
+    if (expire_str) {
+        date = new Date(Date.parse(expire_str));
+        now_utc = new Date(Date.now());
+        //console.log('EXP' + date);
+        //console.log('Remaining' + (date - now_utc));
+        if (DISPLAY_WARNING && date - now_utc < DISPLAY_WARNING) {
+            if (LAST_MESSAGE != expire_str) {
+                LAST_MESSAGE = expire_str;
+                var deconnected_min =  Math.floor(DISPLAY_WARNING/(60 * 1000));
+                var inactivity_min = Math.ceil(DISPLAY_WARNING/(60 * 1000) * 3);
+
+                wrn_box = error_display(_('No activity detected for %(inactivity_min)s minutes, you will be logged out in %(deconnected_min)s min.')
+                    .replace('%(inactivity_min)s', inactivity_min)
+                    .replace('%(deconnected_min)s', deconnected_min)
+                );
+                wrn_box.find('.button-a').click(
+                    function(){$.get('/openerp/unifield_version'); window.top.jQuery.fancybox.close();}
+                );
+            } else if (date < now_utc) {
+                window.location.href="/openerp/logout"
+            }
+        }
+    } /*else {
+       console.log('NO TIEMOUT')
+    }*/
+    if (REFRESH_TIMEOUT) {
+        LOAD_TIMEOUT = setTimeout(load_timeout, REFRESH_TIMEOUT);
+    }
 }
 jQuery(document).bind({
     ajaxStart: function() {

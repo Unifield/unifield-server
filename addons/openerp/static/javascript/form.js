@@ -352,6 +352,7 @@ function error_display(msg, title='Warning Message') {
             }
         });
     }
+    return error;
 }
 
 function get_sidebar_status(args, noterp) {
