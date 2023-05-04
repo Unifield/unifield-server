@@ -836,7 +836,7 @@ class po_follow_up_mixin(object):
                     report_lines.extend(self.printAnalyticLines(analytic_lines))
                 first_line = False
 
-            for spsul in sorted(same_product_same_uom, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
+            for spsul in sorted(same_product_same_uom, key=lambda spsu: spsu.get('backorder_id') or 0, reverse=True):
                 report_line = {
                     'order_ref': po[2] or '',
                     'order_created': po[3],
@@ -889,7 +889,7 @@ class po_follow_up_mixin(object):
                         report_lines.extend(self.printAnalyticLines(analytic_lines))
                     first_line = False
 
-            for spl in sorted(same_product, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
+            for spl in sorted(same_product, key=lambda spsu: spsu.get('backorder_id') or 0, reverse=True):
                 report_line = {
                     'order_ref': po[2] or '',
                     'order_created': po[3],

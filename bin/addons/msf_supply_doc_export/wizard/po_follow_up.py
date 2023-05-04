@@ -206,7 +206,7 @@ class po_follow_up(osv.osv_memory):
                     report_lines.append(report_line)
                 first_line = False
 
-            for spsul in sorted(same_product_same_uom, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
+            for spsul in sorted(same_product_same_uom, key=lambda spsu: spsu.get('backorder_id') or 0, reverse=True):
                 report_line = {
                     'qty_backordered': self.get_qty_backordered(cr, uid, line.id, first_line and line.product_qty or 0.0, spsul.get('state') == 'done' and spsul.get('product_qty', 0.0) or 0.0, first_line),
                 }
@@ -216,7 +216,7 @@ class po_follow_up(osv.osv_memory):
                 if first_line:
                     first_line = False
 
-            for spl in sorted(same_product, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
+            for spl in sorted(same_product, key=lambda spsu: spsu.get('backorder_id') or 0, reverse=True):
                 report_line = {
                     'qty_backordered': self.get_qty_backordered(cr, uid, line.id, first_line and line.product_qty or 0.0, spl.get('state') == 'done' and spl.get('product_qty', 0.0) or 0.0, first_line),
                 }

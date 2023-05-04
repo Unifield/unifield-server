@@ -205,7 +205,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             if len(line.move_ids) > 0:
                 pick_data = {}
                 first_sort = sorted(line.move_ids, key=lambda x: x.id)
-                for move in sorted(first_sort, key=lambda x: sort_state.get(x.state, 0)):
+                for move in sorted(first_sort, key=lambda x: sort_state.get(x.state, 0) or 0):
                     data = {
                         'state': line.state,
                         'state_display': line_state_display_dict.get(line.state_to_display),
