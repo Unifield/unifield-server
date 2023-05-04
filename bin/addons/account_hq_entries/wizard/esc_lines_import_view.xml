@@ -67,10 +67,11 @@
                     <newline />
                     <newline />
                     <field name="error" colspan="4" nolabel="1" />
-                    <group colspan="4" col="2">
+                    <group colspan="4" col="4">
                         <button name="dummy" string="Update" icon="gtk-refresh" invisible="1"/>
-                        <button string="Ok" name="done" type="object" icon="gtk-ok" states="done" />
-                        <button string="Cancel" name="ack" type="object" icon="gtk-cancel" states="error"/>
+                        <button string="OK" name="done" type="object" icon="gtk-ok" states="done" />
+                        <button string="Reset" name="done" type="object" icon="gtk-ok" states="error" help="Reset import and close the window" />
+                        <button string="Close" special="cancel" icon="gtk-cancel" states="error" help="Keep import results and close the window"/>
                     </group>
                 </form>
             </field>

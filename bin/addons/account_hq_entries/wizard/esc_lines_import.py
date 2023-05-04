@@ -48,6 +48,14 @@ class esc_line_import_wizard(osv.osv):
     _defaults = {
         'state': 'draft',
     }
+
+    def __init__(self, pool, cr):
+        super(esc_line_import_wizard, self).__init__(pool, cr)
+        if cr.column_exists('esc_line_import_wizard', 'state'):
+            cr.execute("update esc_line_import_wizard set state='error' where state='inprogress'")
+        if cr.column_exists('esc_line_import_wizard', 'file'):
+            cr.execute("update esc_line_import_wizard set file=null where file is not null")
+
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
@@ -200,6 +208,7 @@ class esc_line_import_wizard(osv.osv):
                 cc_id = cost_center[cc]
 
                 consignee_id = False
+                consignee_instance_txt = False
                 if row.cells[2].data:
                     cc = row.cells[2].data.strip().lower()
 

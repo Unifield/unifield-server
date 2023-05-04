@@ -15,6 +15,12 @@ class esc_invoice_line(osv.osv):
     _sync_order = 'id'
     _trace = True
 
+    def _auto_init(self, cr, context=None):
+        super(esc_invoice_line, self)._auto_init(cr, context)
+        if not cr.index_exists('esc_invoice_line', 'esc_invoice_line_line_unique_all_field_idx'):
+            cr.execute("CREATE UNIQUE INDEX esc_invoice_line_line_unique_all_field_idx ON esc_invoice_line (po_name,requestor_cc_id,coalesce(consignee_cc_id, 0),product_id,product_qty,price_unit,coalesce(shipment_ref,''),currency_id)")
+
+
     def _get_dest_instance_id(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         cur_instance = self.pool.get('res.company')._get_instance_record(cr, uid)
@@ -78,7 +84,6 @@ class esc_invoice_line(osv.osv):
 
 
     _sql_constraints = [
-        ('line_unique', 'unique(po_name,requestor_cc_id,consignee_cc_id,product_id,product_qty,price_unit,shipment_ref,currency_id)', "The combination of all fields must be unique."),
         ('product_qty', 'check(product_qty>0)', 'Quantity must be greater than 0.'),
     ]
 
