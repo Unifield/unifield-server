@@ -322,7 +322,7 @@ class ud_sync():
                             for x in row.get('articles', []):
                                 p_id = prod_obj.search(self.cr, self.uid, [('active', 'in', ['t', 'f']), ('msfid', '=', x['id'])], order='active desc, id', context=self.context)
                                 if not p_id:
-                                    self.log('Product %s msfid:%s not found' % (x['code'], x['id']), 'warn')
+                                    self.log('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code']), 'warn')
                                 else:
                                     prod_ids.add(p_id[0])
 
@@ -440,7 +440,7 @@ class ud_sync():
                 rows_seen += 1
                 prod_id = prod_obj.search(self.cr, self.uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], order='active desc, id', context=self.context)
                 if not prod_id:
-                    self.log('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code'], ))
+                    self.log('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code'], ), 'warn')
                     continue
 
                 oc_data = x.get('ocValidations', {}).get(self.oc, {})
