@@ -30,14 +30,23 @@
                 string="Invoice"
                 sequence="3" />
 
-        <report auto="False" 
+        <report auto="False"
+                id="report_shipment_donation_certificate"
+                model="shipment"
+                name="shipment.donation.certificate"
+                header="False"
+                rml="addons/msf_outgoing/report/shipment_donation_certificate.rml"
+                string="Donation Certificate"
+                sequence="4" />
+
+        <report auto="False"
                 id="report_certificate_free_gift" 
                 model="shipment" 
                 name="certificate.free.gift"
                 header="False"
                 rml="addons/msf_outgoing/report/certificate_free_gift.rml"
                 string="Free Gift Certificate"
-                sequence="4" />
+                sequence="5" />
 
         <report auto="False" 
                 id="report_packing_list" 
@@ -46,7 +55,7 @@
                 header="False"
                 rml="addons/msf_outgoing/report/packing_list.rml"
                 string="Packing List"
-                sequence="5" />
+                sequence="6" />
 
         <report auto="False"
                 id="report_packing_list_xls"
@@ -56,7 +65,7 @@
                 report_type="webkit"
                 file="msf_outgoing/report/packing_list_xls.mako"
                 string="Packing List (xls)"
-                sequence="6" />
+                sequence="7" />
 
         <!-- The rest is in addons/stock/wizard/loan_certificate_wizard.xml -->
         <act_window id="action_ship_loan_certificate_wizard"

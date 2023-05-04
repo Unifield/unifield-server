@@ -24,6 +24,7 @@ from osv import osv
 from tools.translate import _
 from report import report_sxw
 
+
 class certificate_free_gift(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(certificate_free_gift, self).__init__(cr, uid, name, context=context)
@@ -62,5 +63,6 @@ class certificate_free_gift(report_sxw.rml_parse):
                 raise osv.except_osv(_('Warning !'), _('Free Gift Certificate is only available for Shipment Objects (not draft)!'))
 
         return super(certificate_free_gift, self).set_context(objects, data, ids, report_type=report_type)
+
 
 report_sxw.report_sxw('report.certificate.free.gift', 'shipment', 'addons/msf_outgoing/report/certificate_free_gift.rml', parser=certificate_free_gift, header="external")

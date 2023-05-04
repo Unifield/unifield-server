@@ -1,0 +1,218 @@
+<?xml version="1.0"?>
+<document filename="free_gift_certificate.pdf">
+
+    <template pageSize="(595.0,842.0)" title="Free Gift Certificate" author="MSF, Unifield" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="0.0" y1="0.0" width="590" height="785" />
+
+            <pageGraphics>
+                <setFont name="Helvetica-Bold" size="13.0"/>
+                <drawString x="230" y="800">FREE GIFT CERTIFICATE</drawString>
+                <image x="30" y="780" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+
+                <setFont name="Helvetica" size="9.00" />
+                <lineMode width="0.5" />
+                <lines>0.9cm 2.4cm 20.0cm 2.4cm</lines>
+                <drawString x="30" y="45">Médecins sans Frontières declares that no exchange of foreign currency between the country of destination and the country of origin</drawString>
+                <drawString x="30" y="35">is involved in connection with this shipment and that the goods belonging to this shipment will be used for humanitarian purposes only.</drawString>
+                <lines>0.9cm 0.5cm 20.0cm 0.5cm</lines>
+
+            </pageGraphics>
+        </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="NoBorder">
+            <blockAlignment value="LEFT"/>
+            <blockValign value="TOP"/>
+        </blockTableStyle>
+
+        <blockTableStyle id="DonationMessage">
+            <blockAlignment value="CENTER"/>
+            <blockValign value="MIDDLE"/>
+        </blockTableStyle>
+
+
+        <paraStyle name="ShipRef" fontName="Helvetica-Bold" fontSize="9.0" />
+        <paraStyle name="ShipRefBlue" fontName="Helvetica-Bold" fontSize="9.0" textColor="blue" />
+
+        <paraStyle name="Message" fontName="Helvetica" fontSize="8.0" alignment="CENTER" />
+
+        <paraStyle name="Info" fontName="Helvetica" fontSize="7.0" />
+        <paraStyle name="InfoBlue" fontName="Helvetica" fontSize="7.0" textColor="blue" />
+
+        <paraStyle name="Address" fontName="Helvetica" fontSize="7.0" textColor="blue" />
+    </stylesheet>
+
+    <story>
+
+        <para>[[repeatIn(objects,'p')]]</para>
+
+        <blockTable colWidths="160.0,400.0" style="NoBorder">
+            <tr>
+                <td>
+                    <para style="ShipRef">Delivery Order reference :</para>
+                </td>
+                <td>
+                    <para style="ShipRefBlue">[[ p.name ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="560.0" style="DonationMessage">
+            <tr>
+                <td>
+                    <para style="Message">WE UNDERSIGNED "MEDECINS SANS FRONTIERES" CERTIFY THAT WE MAKE A DONATION</para>
+                    <para style="Message"> OF THE FOLLOWING PRODUCTS:</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="130.0,430.0" style="NoBorder">
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="Info">Description of goods:</para>
+                </td>
+                <td>
+                    <para style="InfoBlue">Humanitarian relief goods</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="Info">Transport mode:</para>
+                </td>
+                <td>
+                    <para style="InfoBlue">[[ p.sale_id and getSel(p.sale_id, 'transport_type') or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="Info">Estimated commercial value:</para>
+                </td>
+                <td>
+                    <para style="InfoBlue">[[ formatLang(getTotalAmount(p, getCurrency(p).get('currency_id', '')) or 0.00) ]] [[ getCurrency(p).get('currency_name', '') or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="Info">(For customs only)</para>
+                </td>
+                <td>
+                    <para style="InfoBlue"></para>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+        <blockTable rowHeights="10.0" colWidths="40.0,240.0,40.0,240.0" style="NoBorder">
+            <tr>
+                <td>
+                    <para style="Info">FROM:</para>
+                </td>
+                <td></td>
+                <td>
+                    <para style="Info">TO:</para>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <para style="Address">[[ p.company_id.name ]]</para>
+                </td>
+                <td></td>
+                <td>
+                    <para style="Address">[[ p.address_id and p.address_id.partner_id and p.address_id.partner_id.name or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <para style="Address">[[ p.company_id.partner_id.address and p.company_id.partner_id.address[0].street or '' ]]</para>
+                </td>
+                <td></td>
+                <td>
+                    <para style="Address">[[ p.address_id and p.address_id.street or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <para style="Address">[[ p.company_id.partner_id.address and p.company_id.partner_id.address[0].street2 or '' ]]</para>
+                </td>
+                <td></td>
+                <td>
+                    <para style="Address">[[ p.address_id and p.address_id.street2 or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <para style="Address">[[ p.company_id.partner_id.address and p.company_id.partner_id.address[0].zip or '' ]] [[ p.company_id.partner_id.address and p.company_id.partner_id.address[0].city or '' ]]</para>
+                </td>
+                <td></td>
+                <td>
+                    <para style="Address">[[ p.address_id and p.address_id.zip and p.address_id.city and '%s %s' % (p.address_id.zip, p.address_id.city) or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <para style="Address">[[ p.company_id.partner_id.address and p.company_id.partner_id.address[0].country_id and p.company_id.partner_id.address[0].country_id.name or '' ]]</para>
+                </td>
+                <td></td>
+                <td>
+                    <para style="Address">[[ p.address_id and p.address_id.country_id and p.address_id.country_id.name or '' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="130.0,430.0" style="NoBorder">
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="Info">Date:</para>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="Info">Signature &amp; stamp:</para>
+                </td>
+                <td></td>
+            </tr>
+        </blockTable>
+
+      </story>
+
+</document>
