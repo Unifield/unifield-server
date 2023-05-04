@@ -102,10 +102,10 @@ class unidata_project(osv.osv):
         'msfid': fields.integer('MSFID', readonly=1, select=1),
         'msl_status': fields.char('MSL Status', size=64, readonly=1),
         'publication': fields.integer('Publication', readonly=1),
-        'publication_date': fields.datetime('Pulbication Date', readonly=1),
+        'publication_date': fields.datetime('Publication Date', readonly=1),
         'country_id': fields.many2one('unidata.country', 'Country', readonly=1),
 
-        'msl_product_ids': fields.many2many('product.product', 'product_msl_rel', 'msl_id', 'product_id', 'MSL Products', readonly=1, order_by='default_code', sql_rel_domain="product_msl_rel.creation_date is not null"),
+        'msl_product_ids': fields.many2many('product.product', 'product_msl_rel', 'msl_id', 'product_id', 'Product Code', readonly=1, order_by='default_code', sql_rel_domain="product_msl_rel.creation_date is not null"),
         'msl_sync_date': fields.datetime('MSL sync date', type='char', size=60, readonly=1),
         'msl_sync_needed': fields.function(tools.misc.get_fake, fnct_search=_search_ud_sync_needed, method=True, type='boolean', string='To be ud synced'),
         'alpa_msfids': fields.text('Alpa msfids', readonly=1),
@@ -563,7 +563,7 @@ class unidata_sync(osv.osv):
         return res
 
     _columns = {
-        'url': fields.char('URL', size=256, required=1),
+        'url': fields.char('UniData URL', size=256, required=1),
         'url_msl': fields.char('MSL URL', size=256, required=1),
         'login': fields.char('Login', size=256),
         'password': fields.char('Password', size=256),
