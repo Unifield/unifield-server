@@ -57,6 +57,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_11130_trigger_down_sync(self, cr, uid, *a, **b):
+        cr.execute("""UPDATE ir_model_data
+        SET last_modification=NOW(), touched='[''account_id'', ''mapping_value'']'
+        WHERE model='account.export.mapping'
+        """)
+
     def us_11130_hq_account_mapping(self, cr, uid, *a, **b):
         cr.execute("""UPDATE account_analytic_line aal
         SET hq_system_account=aem.mapping_value
