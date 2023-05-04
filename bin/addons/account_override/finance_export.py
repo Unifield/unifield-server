@@ -59,6 +59,7 @@ class finance_archive():
     def __init__(self, sql, process, context=None):
         if context is None:
             context = {}
+        self.context = context
         self.sqlrequests = sql
         self.processrequests = process
         if 'background_id' in context:
@@ -176,6 +177,28 @@ class finance_archive():
             new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
+    def _execute_query(self, cr, fileparams, select=None, ocb_vi_cond='', insert_numbering=False):
+        # fetch data with given sql query
+        sql = self.sqlrequests[fileparams['key']]
+        if select is not None:
+            sql = '%s %s' % (select, sql)
+        if fileparams.get('query_tpl_context', False):
+            sql = Template(sql).safe_substitute(
+                fileparams.get('query_tpl_context'))
+
+        if select is not None:
+            sql = sql.replace('#OCB_VI_COND#',  ocb_vi_cond)
+        if insert_numbering:
+            sql = "INSERT INTO ocb_vi_export_number (move_id, move_line_id, analytic_line_id, period_id) (%s)" % sql
+
+
+        if fileparams.get('query_params', False):
+            cr.execute(sql, fileparams['query_params'])
+        elif fileparams.get('dict_query_params', False):
+            cr.execute(sql, fileparams['dict_query_params'])
+        else:
+            cr.execute(sql)
+
     def archive(self, cr, uid):
         """
         Create an archive with sqlrequests params and processrequests params.
@@ -209,17 +232,51 @@ class finance_archive():
             else:
                 tmp_file = files[filename]
 
-            # fetch data with given sql query
-            sql = self.sqlrequests[fileparams['key']]
-            if fileparams.get('query_tpl_context', False):
-                sql = Template(sql).safe_substitute(
-                    fileparams.get('query_tpl_context'))
-            if fileparams.get('query_params', False):
-                cr.execute(sql, fileparams['query_params'])
-            elif fileparams.get('dict_query_params', False):
-                cr.execute(sql, fileparams['dict_query_params'])
+            if fileparams.get('select_1') and self.context.get('poc_export') and pool.get('res.company')._get_instance_level(cr, uid) == 'section':
+                # trigger ocb_numbering only at HQ level
+                self._execute_query(cr, fileparams, select=fileparams['select_1'], ocb_vi_cond='AND ocb_vi.id is NULL', insert_numbering=True)
+                # create unique id on move_id, period_id
+                cr.execute("INSERT INTO ocb_vi_je_period_number (move_id, period_id) (SELECT distinct move_id, period_id from ocb_vi_export_number WHERE move_number IS NULL) ON CONFLICT DO NOTHING")
+
+                # update move_number values
+                cr.execute("""UPDATE ocb_vi_export_number set move_number=je_number.id
+                    FROM
+                        ocb_vi_je_period_number je_number
+                    WHERE
+                        ocb_vi_export_number.move_number is null and
+                        ocb_vi_export_number.move_id = je_number.move_id and
+                        ocb_vi_export_number.period_id = je_number.period_id
+                """)
+
+                cr.execute("""UPDATE ocb_vi_export_number set line_number = num.rn
+                    FROM
+                    (
+                        SELECT row_number() over (partition by move_number order by line_number nulls last, analytic_line_id nulls first, move_line_id) AS rn, id
+                        FROM ocb_vi_export_number
+                    ) AS num
+                    WHERE ocb_vi_export_number.id = num.id and line_number is null;
+                """)
+
+                dbname = 'OCBHQ' # cr.dbname
+                cr.execute("""UPDATE ocb_vi_export_number set coda_identifier=MD5(%s||',account.move.line,['||move_line_id||']')
+                    where
+                        coda_identifier is null and
+                        analytic_line_id is null
+                """, (dbname, ))
+
+                cr.execute("""UPDATE ocb_vi_export_number set coda_identifier=MD5(%s||',account.analytic.line,['||analytic_line_id||']')
+                    where
+                        coda_identifier is null and
+                        analytic_line_id is not null
+                """, (dbname, ))
+
+
+            if fileparams.get('select_2'):
+                self._execute_query(cr, fileparams, select=fileparams['select_2'])
             else:
-                cr.execute(sql)
+                self._execute_query(cr, fileparams)
+
+
             sqlres = cr.fetchall()
             # Fetch ID column and mark lines as exported
             if fileparams.get('id', None) != None:
