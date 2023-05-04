@@ -930,8 +930,14 @@
         <record id="us_6976_analytic_translations" model="patch.scripts">
             <field name="method">us_6976_analytic_translations</field>
         </record>
+
         <record id="us_10885_tc_entries" model="patch.scripts">
             <field name="method">us_10885_tc_entries</field>
         </record>
+
+        <record id="us_11399_oca_mm_target" model="patch.scripts">
+            <field name="method">us_11399_oca_mm_target</field>
+        </record>
+
     </data>
 </openerp>
