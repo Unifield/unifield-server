@@ -2328,7 +2328,7 @@ class product_attributes(osv.osv):
                     GROUP BY m.product_id)
             """, (product.id, product.id))
             for prod in cr.fetchall():
-                if prod[0] > 0:
+                if prod[0] and prod[0] > 0:
                     in_use_stock = True
                     break
         # Check for Available INs and for Available Moves of Picking Tickets with 0 qty and Processed Line State
