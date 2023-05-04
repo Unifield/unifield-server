@@ -422,6 +422,49 @@ SELECT res_id, touched
         self.touch(cr, uid, ids, None, True, context=context)
         return True
 
+    def sql_touch(self, cr, ids, fields):
+        """
+        Includes in the next synchro the records with the ids in param on the current object.
+
+        Add new fields to the existing touched entries
+        """
+        if not ids:
+            return True
+
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if isinstance(fields, str):
+            fields = [fields]
+        cr.execute('''
+            select
+                id, touched
+            from ir_model_data
+            where
+                module='sd' and
+                model=%s and
+                res_id in %s and
+                coalesce(touched, '') != '' and
+                touched != '[]'
+            for update
+            ''', (self._name, tuple(ids))
+        )
+        for x in cr.fetchall():
+            f = list(set(fields).union(eval(x[1])))
+            cr.execute("update ir_model_data set last_modification=NOW(), touched=%s where id = %s", ('%s'%sorted(f), x[0]))
+
+        cr.execute("""
+              UPDATE ir_model_data
+              SET touched =%s, last_modification=NOW()
+              WHERE module='sd'
+              AND model=%s
+              AND res_id IN %s
+              AND
+              (touched = '[]' or coalesce(touched, '') = '')
+           """ , ('%s'%sorted(fields), self._name, tuple(ids))
+        )
+        return True
+
     def sql_synchronize(self, cr, ids, field='name'):
         """
         Includes in the next synchro the records with the ids in param on the current object.

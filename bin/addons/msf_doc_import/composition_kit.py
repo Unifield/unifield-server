@@ -173,6 +173,7 @@ Module, Product Code*, Product Description, Quantity, Product UOM, Comment, B.Nu
         asset_obj = self.pool.get('product.asset')
         uom_obj = self.pool.get('product.uom')
         line_obj = self.pool.get('composition.item')
+        bn_obj = self.pool.get('stock.production.lot')
         cell_data_obj = self.pool.get('import.cell.data')
         obj_data = self.pool.get('ir.model.data')
         view_id = obj_data.get_object_reference(cr, uid, 'kit', 'view_composition_kit_form')[1]
@@ -218,17 +219,14 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Comment, 
             module = cell_data_obj.get_cell_data(cr, uid,  ids, row, cell_nb)
 
             # Cell 1: Product Code
-            p_value = {}
             p_value = check_line.product_value(cr, uid, cell_nb=1, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
             to_write.update({'product_id': p_value['default_code'], 'error_list': p_value['error_list']})
 
             # Cell 3: Quantity
-            qty_value = {}
             qty_value = check_line.quantity_value(cell_nb=3, product_obj=product_obj, row=row, to_write=to_write, context=context)
             to_write.update({'qty': qty_value['product_qty'], 'error_list': qty_value['error_list'], 'warning_list': qty_value['warning_list']})
 
             # Cell 4: UOM
-            uom_value = {}
             uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
             qty = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'])
             to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list'], 'qty': qty})
@@ -237,19 +235,27 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Comment, 
             to_write.update({'comment': row.cells[5] and row.cells[5].data or ''})
 
             # Cell 6: Asset
-            asset_value = {}
             if col_count > 6 and row[6]:
                 asset_value = check_line.compute_asset_value(cr, uid, cell_nb=6, asset_obj=asset_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'asset_id': asset_value['asset_id'], 'error_list': asset_value['error_list']})
 
-            # Cell 7: Batch (only text)
-            cell_nb = 7
-            batch = cell_data_obj.get_cell_data(cr, uid,  ids, row, cell_nb)
+            # Cells 7 & 8: Batch and Expiry Date
+            if to_write.get('product_id'):
+                product = product_obj.read(cr, uid, to_write['product_id'], ['batch_management', 'perishable'], context=context)
+                if product['batch_management'] or product['perishable']:
+                    batch_value = check_line.compute_batch_expiry_value(
+                        cr, uid, row=row, to_write=to_write, bn_obj=bn_obj, product_obj=product_obj, bn_cell_nb=7,
+                        ed_cell_nb=8, date_format=self.pool.get('date.tools').get_date_format(cr, uid, context=context),
+                        product_id=to_write.get('product_id'), picking_type=None)
 
-            # Cell 8: Expiry Date
-            expiry_date_value = {}
-            expiry_date_value = cell_data_obj.get_expired_date(cr, uid, ids, row, 8, to_write['error_list'], line_num, context)
-            to_write.update({'expiry_date': expiry_date_value})
+                    # Create the internal batch number if not exists
+                    if not product['batch_management'] and product['perishable'] and batch_value['expired_date'] and \
+                            not batch_value['prodlot_id'] and not batch_value['error_list']:
+                        batch_value['prodlot_id'] = bn_obj.create(cr, uid, {
+                            'type': 'internal', 'product_id': product['id'], 'life_date': batch_value['expired_date'],
+                            'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial')}, context=context)
+
+                    to_write.update({'prodlot_id': batch_value['prodlot_id'], 'expiry_date': batch_value['expired_date'], 'error_list': batch_value['error_list']})
 
             line_data = {'item_kit_id': item_kit_id,
                          'item_module': module,
@@ -258,8 +264,8 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Comment, 
                          'item_uom_id': to_write['product_uom'],
                          'comment': to_write['comment'],
                          'item_asset_id': 'asset_id' in to_write and to_write['asset_id'] or False,
-                         'item_lot': batch,
-                         'item_exp': to_write['expiry_date'],
+                         'item_lot_id': to_write.get('prodlot_id', False),
+                         'item_exp': to_write.get('expiry_date', False),
                          'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
                          'text_error': '\n'.join(to_write['error_list'])}
 

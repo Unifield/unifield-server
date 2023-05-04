@@ -981,7 +981,7 @@ class account_move(osv.osv):
         'journal_id': fields.many2one('account.journal', 'Journal',
                                       required=True, states={'posted':[('readonly',True)]},
                                       domain="[('type', 'not in', "
-                                             " ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra', 'correction', 'correction_hq']),"
+                                             " ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra', 'correction', 'correction_hq', 'revaluation']),"
                                              "('code', '!=', 'ISI'), "
                                              "('is_active', '=', True), "
                                              "('instance_filter', '=', True)]",

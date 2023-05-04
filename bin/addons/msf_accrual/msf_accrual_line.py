@@ -192,6 +192,8 @@ class msf_accrual_line(osv.osv):
                 partner_id = vals['partner_id']
                 partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
                 vals['third_party_name'] = partner.name
+            elif vals['third_party_type'] not in ('res.partner', 'hr.employee'):
+                vals['third_party_name'] = False
 
         if 'period_id' in vals:
             period = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context=context)

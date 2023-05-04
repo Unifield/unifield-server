@@ -902,12 +902,41 @@
             <field name="method">us_11195_oca_period_nr</field>
         </record>
 
+
+        <!-- UF29.0 -->
+        <record id="us_11177_bn_for_kcl_items" model="patch.scripts">
+            <field name="method">us_11177_bn_for_kcl_items</field>
+        </record>
+
+        <record id="us_11046_fix_standard_price_products" model="patch.scripts">
+            <field name="method">us_11046_fix_standard_price_products</field>
+        </record>
+
+        <record id="us_8968_shipments_returned" model="patch.scripts">
+            <field name="method">us_8968_shipments_returned</field>
+        </record>
+
+        <record id="us_10629_fix_partner_fo_pricelist" model="patch.scripts">
+            <field name="method">us_10629_fix_partner_fo_pricelist</field>
+        </record>
+
+        <record id="us_11022_accrual_third_party" model="patch.scripts">
+            <field name="method">us_11022_accrual_third_party</field>
+        </record>
+
+        <record id="us_10904_donations_done_state" model="patch.scripts">
+            <field name="method">us_10904_donations_done_state</field>
+        </record>
+
+        <record id="us_6976_analytic_translations" model="patch.scripts">
+            <field name="method">us_6976_analytic_translations</field>
+        </record>
+
         <!-- py3 -->
         <record id="py3_migrate_pickle_ir_values" model="patch.scripts">
             <field name="method">py3_migrate_pickle_ir_values</field>
         </record>
 
-        <!-- UF29.0 -->
         <record id="us_9321_2_remove_location_colors" model="patch.scripts">
             <field name="method">us_9321_2_remove_location_colors</field>
         </record>

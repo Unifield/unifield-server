@@ -467,7 +467,7 @@ class signature_line(osv.osv):
 
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'subtype'], context=context)
         if (real_uid, sign_line.subtype) not in [(x.user_id.id, x.subtype) for x in sign_line.signature_id.signature_user_ids]:
-            raise osv.except_osv(_('Warning'), _("Operation denied"))
+            raise osv.except_osv(_('Warning'), _("You are not on the list of users allowed to sign this document - please contact the document creator"))
 
         if sign_line.signature_id.signature_is_closed:
             raise osv.except_osv(_('Warning'), _("Signature Closed."))

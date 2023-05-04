@@ -429,9 +429,9 @@ class account_invoice(osv.osv):
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
         'date_invoice': fields.date('Posting Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
-                                                            'inv_close':[('readonly',True)]}, select=True),
+                                                            'inv_close':[('readonly',True)], 'done':[('readonly',True)]}, select=True),
         'document_date': fields.date('Document Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
-                                                              'inv_close':[('readonly',True)]}, select=True),
+                                                              'inv_close':[('readonly',True)], 'done':[('readonly',True)]}, select=True),
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
         'is_intermission': fields.boolean(string="Is an Intermission Voucher?"),
@@ -909,7 +909,6 @@ class account_invoice(osv.osv):
                         if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
-
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
@@ -1299,6 +1298,11 @@ class account_invoice(osv.osv):
             return False
         self.check_domain_restrictions(cr, uid, ids, context)  # raises an error if one unauthorized element is used
         self.update_counterpart_inv_status(cr, uid, ids, context=context)
+        for invoice in self.browse(cr, uid, ids, fields_to_fetch=['doc_type'], context=context):
+            if invoice.doc_type == 'donation':
+                self.write(cr, uid, invoice.id, {'state': 'done'}, context=context)
+            else:
+                self.write(cr, uid, invoice.id, {'state': 'open'}, context=context)
         return True
 
 

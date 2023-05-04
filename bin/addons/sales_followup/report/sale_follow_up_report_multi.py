@@ -279,7 +279,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         m_index += 1
 
                     # reset the data to prevent delivered_qty problem when line is split in PICK
-                    data = {}
+                    data = {
+                        'state': line.state,
+                        'state_display': line_state_display_dict.get(line.state_to_display),
+                    }
                 # If the move is from a cancelled OUT/Pick plus sometimes returned PPL/Ship but not a cancelled FO line
                 cancelled_pps = line.state not in ('cancel', 'cancel_r') and move.type == 'out' and \
                     move.picking_subtype in ('standard', 'picking', 'ppl', 'packing') and \
@@ -306,6 +309,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'delivered_qty': line.product_uom_qty,
                         'first_line': True,
                         'is_delivered': True,
+                        'state': line.state,
+                        'state_display': line_state_display_dict.get(line.state_to_display),
                     }
                     bo_qty -= line.product_uom_qty
                     first_line = False
@@ -340,6 +345,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'product_code': line.product_id.code,
                     'is_delivered': False,
                     'backordered_qty': bo_qty if line.order_id.state != 'cancel' else 0.00,
+                    'state': line.state,
+                    'state_display': line_state_display_dict.get(line.state_to_display),
                 })
             elif only_bo:
                 lines[fl_index].update({

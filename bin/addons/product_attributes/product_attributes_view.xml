@@ -83,14 +83,14 @@
                         <page string="Information">
                             <group colspan="2" col="2">
                                 <separator string="Procurement" colspan="2"/>
-                                <field name="type"/>
+                                <field name="type" on_change="on_change_type(type)"/>
                                 <field name="procure_method" />
                                 <field name="supply_method"/>
                             </group>
                             <group colspan="2" col="3">
                                 <separator string="Base Prices" colspan="3"/>
-                                <field name="cost_method" colspan="3"/>
-                                <field name="standard_price" string="Cost Price " attrs="{'readonly':[('cost_method','=','average')]}"/>
+                                <field name="cost_method" colspan="3" readonly="1"/>
+                                <field name="standard_price" string="Cost Price " readonly="1"/>
                                 <field name="currency_id" nolabel="1" />
                                 <field name="list_price" colspan="2"/>
                                 <field name="field_currency_id" nolabel="1" />

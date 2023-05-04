@@ -147,7 +147,7 @@ class assign_to_kit(osv.osv_memory):
                                    'item_product_id': obj.product_id_assign_to_kit.id,
                                    'item_qty': mem.assigned_qty_assign_to_kit_line,
                                    'item_uom_id': obj.uom_id_assign_to_kit.id,
-                                   'item_lot': obj.prodlot_id_assign_to_kit and obj.prodlot_id_assign_to_kit.name or False,
+                                   'item_lot_id': obj.prodlot_id_assign_to_kit and obj.prodlot_id_assign_to_kit.id or False,
                                    'item_exp': obj.expiry_date_assign_to_kit or False,
                                    'item_kit_id': mem.kit_id_assign_to_kit_line.id,
                                    'item_description': 'Kitting Order',

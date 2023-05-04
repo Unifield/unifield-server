@@ -25,8 +25,10 @@ class finance_sync_query(osv.osv):
             name as name,
             wizard_name as model,
             id as template_id,
+            create_date as creation_date,
             coalesce(last_modification, write_date, create_date) as last_modification,
             coalesce(hq_template,'f') as synced,
+            coalesce(write_uid, create_uid) as last_editor,
             user_id as user_id
         FROM wizard_template
         WHERE coalesce(name, '') != ''
@@ -37,8 +39,10 @@ class finance_sync_query(osv.osv):
             description as name,
             CASE %s END as model,
             id as template_id,
+            create_date as creation_date,
             coalesce(write_date, create_date) as last_modification,
             coalesce(hq_template, 'f') as synced,
+            coalesce(write_uid, create_uid) as last_editor,
             "user" as user_id
         FROM account_mcdb
         WHERE coalesce(description,'') != ''
@@ -61,8 +65,10 @@ class finance_sync_query(osv.osv):
         ], string='Type', size=128, readonly=1, required=1),
         'template_id': fields.integer('Template id', readonly=1),
         'last_modification': fields.datetime('Last Modification', readonly=1),
+        'creation_date': fields.datetime('Creation Date', readonly=1),
         'synced': fields.boolean('Synced query', readonly=1),
         'user_id': fields.many2one('res.users', 'User', readonly=1),
+        'last_editor': fields.many2one('res.users', 'Last Editor', readonly=1),
     }
 
     def create(self, cr, uid, values, context=None):
@@ -95,10 +101,12 @@ class finance_sync_query(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if isinstance(ids, int):
             ids = [ids]
-        for x in self.read(cr, uid, ids, ['template_id', 'model'], context=context):
-            if x['template_id']:
+        for x in self.read(cr, uid, ids, ['template_id', 'model', 'synced'], context=context):
+            if x['template_id'] and not x['synced']:
                 model = self._get_target_obj(cr, uid, x)
                 model.unlink(cr, uid, x['template_id'])
+            if x['synced']:
+                raise osv.except_osv(_('Warning'), _('You cannot delete at instance level the synchronized queries!'))
         return True
 
     def _set_sync_status(self, cr, uid, ids, status, context=None):

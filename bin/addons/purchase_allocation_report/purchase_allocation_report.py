@@ -96,12 +96,12 @@ class purchase_order_line_allocation_report(osv.osv):
         #'account_id': fields.many2one('account.account', string='Account'),
         'account_id': fields.function(_get_product_account, method=True, string='Account', type='many2one', relation='account.account', store=False),
         'source_doc': fields.char(size=128, string='Source Doc.'),
-        'partner_id': fields.many2one('res.partner', string='Partner'),
+        'requestor': fields.char(size=128, string='Requestor'),
         'partner_doc': fields.char(size=128, string='Partner Doc.'),
         'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, string='State'),
         'supplier': fields.many2one('res.partner', string='Supplier'),
         'creation_date': fields.date(string='Creation date'),
-
+        'comment': fields.char('Comment', size=1024),
     }
 
     def init(self, cr):
@@ -126,11 +126,12 @@ class purchase_order_line_allocation_report(osv.osv):
                     al.currency_id,
                     al.cost_center_id,
                     al.source_doc,
-                    al.partner_id,
+                    al.requestor,
                     al.supplier,
                     al.state,
                     al.creation_date,
-                    al.partner_doc
+                    al.partner_doc,
+                    al.comment
                 FROM
                 ((SELECT 
                     po.id AS order_id,
@@ -149,11 +150,13 @@ class purchase_order_line_allocation_report(osv.osv):
                     ppl.currency_id AS currency_id,
                     aaa.id AS cost_center_id,
                     so.name AS source_doc,
-                    so.partner_id AS partner_id,
+                    (CASE WHEN so.procurement_request = 't' THEN loc.name 
+                        WHEN pol.linked_sol_id IS NOT NULL THEN sop.name ELSE '' END) AS requestor,
                     po.partner_id AS supplier,
                     po.state AS state,
                     po.date_order AS creation_date,
-                    so.client_order_ref AS partner_doc
+                    so.client_order_ref AS partner_doc,
+                    pol.comment AS comment
                 FROM
                     purchase_order_line pol
                   LEFT JOIN
@@ -188,6 +191,14 @@ class purchase_order_line_allocation_report(osv.osv):
                     sale_order so
                     ON
                     sol.order_id = so.id
+                  LEFT JOIN
+                    res_partner sop
+                    ON
+                    so.partner_id = sop.id
+                  LEFT JOIN
+                    stock_location loc
+                    ON
+                    so.location_requestor_id = loc.id
                 WHERE pol.analytic_distribution_id IS NOT NULL
 		    AND po.rfq_ok = 'f' AND pol.state not in ('cancel', 'cancel_r'))
                 UNION
@@ -208,11 +219,13 @@ class purchase_order_line_allocation_report(osv.osv):
                     ppl.currency_id AS currency_id,
                     aaa.id AS cost_center_id,
                     so.name AS source_doc,
-                    so.partner_id AS partner_id,
+                    (CASE WHEN so.procurement_request = 't' THEN loc.name 
+                        WHEN pol.linked_sol_id IS NOT NULL THEN sop.name ELSE '' END) AS requestor,
                     po.partner_id AS supplier,
                     po.state AS state,
                     po.date_order AS creation_date,
-                    so.client_order_ref AS partner_doc
+                    so.client_order_ref AS partner_doc,
+                    pol.comment AS comment
                 FROM
                     purchase_order_line pol
                   LEFT JOIN
@@ -247,10 +260,19 @@ class purchase_order_line_allocation_report(osv.osv):
                     sale_order so
                     ON
                     sol.order_id = so.id
+                  LEFT JOIN
+                    res_partner sop
+                    ON
+                    so.partner_id = sop.id
+                  LEFT JOIN
+                    stock_location loc
+                    ON
+                    so.location_requestor_id = loc.id
                 WHERE 
                     pol.analytic_distribution_id IS NULL
 		    AND po.rfq_ok = 'f' AND pol.state not in ('cancel', 'cancel_r'))) AS al
             );""")
+
 
 purchase_order_line_allocation_report()
 

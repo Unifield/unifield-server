@@ -57,6 +57,7 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # python 3
     def us_9321_2_remove_location_colors(self, cr, uid, *a, **b):
         '''
         Remove the search_color of the locations Configurable locations, Intermediate Stocks and Internal Consumption Units
@@ -68,7 +69,177 @@ class patch_scripts(osv.osv):
         iconsu = obj_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
 
         cr.execute("""UPDATE stock_location SET search_color = NULL WHERE id IN %s""", (tuple([conf, interm, iconsu]),))
+        return True
 
+    def py3_migrate_pickle_ir_values(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            return True
+        import pickle
+        import json
+        cr.execute("select id, value from ir_values where object='f'")
+        ok=0
+        fail=0
+        for x in cr.fetchall():
+            try:
+                val = json.dumps(pickle.loads(bytes(x[1], 'utf8')))
+                cr.execute('update ir_values set value=%s where id=%s', (val, x[0]))
+                ok += 1
+            except:
+                fail += 1
+
+        cr.execute("select id, meta from ir_values where coalesce(meta, '')!='' and meta!='web'")
+        for x in cr.fetchall():
+            try:
+                val = json.dumps(pickle.loads(bytes(x[1], 'utf8')))
+                cr.execute('update ir_values set meta=%s where id=%s', (val, x[0]))
+                ok += 1
+            except:
+                fail += 1
+
+        self.log_info(cr, uid, 'Pickle ir_values conversion: ok: %d , fail: %d' % (ok, fail))
+        return True
+
+
+
+    # UF29.0
+    def us_11177_bn_for_kcl_items(self, cr, uid, *a, **b):
+        '''
+        For each KCL item with item_lot/item_exp filled, the script will try to find a corresponding BN or create a new
+        one, then fill item_lot_id with the data
+        '''
+        kcl_item_obj = self.pool.get('composition.item')
+        bn_obj = self.pool.get('stock.production.lot')
+        kcl_item_ids = kcl_item_obj.search(cr, uid, [('item_kit_type', '=', 'real'), '|', ('item_lot', '!=', False), ('item_exp', '!=', False)])
+        ftf = ['item_product_id', 'item_lot', 'item_exp']
+        for kcl_item in kcl_item_obj.browse(cr, uid, kcl_item_ids, fields_to_fetch=ftf):
+            # Skip if the product is not ED anymore
+            if kcl_item.item_exp and not kcl_item.item_product_id.perishable:
+                continue
+            # Use fake name and date for KCL lines with missing data, caused by BN/ED attributes changes over time
+            if kcl_item.item_product_id.batch_management or kcl_item.item_product_id.perishable:
+                lot_name = kcl_item.item_product_id.batch_management and (kcl_item.item_lot or 'TO-BE-REPLACED') or False
+                lot_date = kcl_item.item_exp or '2999-12-31'
+                new_bn_id = bn_obj._get_or_create_lot(cr, uid, lot_name, lot_date, kcl_item.item_product_id.id)
+                kcl_item_obj.write(cr, uid, kcl_item.id, {'item_lot_id': new_bn_id, 'item_exp': lot_date})
+        return True
+
+    def us_8968_shipments_returned(self, cr, uid, *a, **b):
+        '''
+        Set the state of all existing Shipments that have been returned to Returned (cancel)
+        '''
+        ship_obj = self.pool.get('shipment')
+
+        ships_to_cancel = []
+        nb_ships = 0
+        ship_ids = ship_obj.search(cr, uid, [('state', 'in', ['done', 'delivered'])])
+        for ship in ship_obj.browse(cr, uid, ship_ids, fields_to_fetch=['pack_family_memory_ids']):
+            if not ship.pack_family_memory_ids:  # Skip Shipments with no Pack Family
+                continue
+            all_returned = True
+            for fam in ship.pack_family_memory_ids:
+                if not fam.not_shipped:
+                    all_returned = False
+                    break
+            if all_returned:
+                ships_to_cancel.append(ship.id)
+                nb_ships += 1
+
+        if ships_to_cancel:
+            cr.execute("""UPDATE shipment SET state = 'cancel' WHERE id IN %s""", (tuple(ships_to_cancel),))
+            self.log_info(cr, uid, "US-8968: %d Shipments' state have been set to Returned" % (nb_ships,))
+        return True
+
+    def us_11046_fix_standard_price_products(self, cr, uid, *a, **b):
+        '''
+        Set the Costing Method of all Standard Price Products to Average Price
+        '''
+        cr.execute("""UPDATE product_template SET cost_method = 'average' WHERE cost_method = 'standard'""")
+        self.log_info(cr, uid, "US-11046: The Costing Method of %s product(s) have been set to 'Average Price'" % (cr.rowcount,))
+        return True
+
+    def us_10629_fix_partner_fo_pricelist(self, cr, uid, *a, **b):
+        '''
+        Set property_product_pricelist to the value of property_product_pricelist_purchase in Partners where they are
+        different
+        '''
+        cr.execute("""
+            SELECT p.id, pl.currency_id FROM res_partner p 
+            LEFT JOIN product_pricelist pl on p.property_product_pricelist_purchase = pl.id 
+            LEFT JOIN product_pricelist pl2 on p.property_product_pricelist = pl2.id 
+            WHERE pl.currency_id != pl2.currency_id
+        """)
+
+        for x in cr.fetchall():
+            fo_pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('currency_id', '=', x[1]), ('type', '=', 'sale')])
+            if fo_pricelist_ids:
+                cr.execute("""UPDATE res_partner SET property_product_pricelist = %s WHERE id = %s""", (fo_pricelist_ids[0], x[0]))
+        return True
+
+    def us_11022_accrual_third_party(self, cr, uid, *a, **b):
+        cr.execute('''UPDATE msf_accrual_line SET third_party_name = NULL WHERE third_party_type IS NULL AND third_party_name IS NOT NULL ''')
+        return True
+
+    def us_10904_donations_done_state(self, cr, uid, *a, **b):
+        cr.execute("update account_invoice set state='done' where is_inkind_donation = 't' and state='open'")
+        return True
+
+    def us_6976_analytic_translations(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        is_coordo = instance and instance.level == 'coordo'
+        aa_ids = []
+
+        # update name with en_MF translation
+        cr.execute('''
+            update
+                account_analytic_account
+            set
+                name=tr.trans
+            from
+                ( select a.id, coalesce(tr_en.value, tr_fr.value, '') as trans
+                from
+                    account_analytic_account a
+                    left join ir_translation tr_en on tr_en.name='account.analytic.account,name' and tr_en.res_id = a.id and tr_en.lang='en_MF' and tr_en.xml_id not like 'analytic_account%'
+                    left join ir_translation tr_fr on tr_fr.name='account.analytic.account,name' and tr_fr.res_id = a.id and tr_fr.lang='fr_MF' and tr_fr.xml_id not like 'analytic_account%'
+                group by a.id, tr_en.value, tr_fr.value
+                ) as tr
+            where
+                tr.id = account_analytic_account.id and
+                tr.trans != '' and
+                account_analytic_account.name != tr.trans
+            returning account_analytic_account.id
+        ''')
+        if is_coordo:
+            aa_ids = [x[0] for x in cr.fetchall()]
+
+        self.log_info(cr, uid, "US-6976: Update name on %s analytic accounts" % (cr.rowcount, ))
+
+        if instance.code == 'OCBCD100':
+            cr.execute('''update account_analytic_account set name='56-1-16 EVAL ROUGEOLE KAMWESHA 2' where name='56-1-31 EVAL ROUGEOLE LINGOMO-DJOLU (copy)' returning id ''');
+            aa_ids += [x[0] for x in cr.fetchall()]
+            self.log_info(cr, uid, "US-6976: Update OCBCD100 name on %s analytic account " % (cr.rowcount, ))
+
+        if aa_ids:
+            # for FP created at coordo, trigger sync to update name to HQ
+            entity = self.pool.get('sync.client.entity')._get_entity(cr)
+            if aa_ids:
+                cr.execute('''
+                    update
+                        ir_model_data d
+                    set
+                        last_modification=NOW(), touched='[''name'']'
+                    from
+                        account_analytic_account a
+                    where
+                        d.res_id = a.id and
+                        d.model= 'account.analytic.account' and
+                        d.module='sd' and
+                        a.category = 'FUNDING' and
+                        d.name like '%s/%%%%' and
+                        d.res_id in %%s
+                    ''' % (entity.identifier ,), (tuple(aa_ids), )) # not_a_user_entry
+                self.log_info(cr, uid, "US-6976: Trigger FP update on %s analytic accounts" % (cr.rowcount, ))
+
+        cr.execute("update ir_translation set name='account.analytic.account,nameko' where name='account.analytic.account,name' and type='model'")
         return True
 
     # UF28.0
@@ -540,35 +711,6 @@ class patch_scripts(osv.osv):
         setup_obj.execute(cr, uid, [sign_install])
 
         return True
-
-    def py3_migrate_pickle_ir_values(self, cr, uid, *a, **b):
-        if not self.pool.get('sync.client.entity'):
-            return True
-        import pickle
-        import json
-        cr.execute("select id, value from ir_values where object='f'")
-        ok=0
-        fail=0
-        for x in cr.fetchall():
-            try:
-                val = json.dumps(pickle.loads(bytes(x[1], 'utf8')))
-                cr.execute('update ir_values set value=%s where id=%s', (val, x[0]))
-                ok += 1
-            except:
-                fail += 1
-
-        cr.execute("select id, meta from ir_values where coalesce(meta, '')!='' and meta!='web'")
-        for x in cr.fetchall():
-            try:
-                val = json.dumps(pickle.loads(bytes(x[1], 'utf8')))
-                cr.execute('update ir_values set meta=%s where id=%s', (val, x[0]))
-                ok += 1
-            except:
-                fail += 1
-
-        self.log_info(cr, uid, 'Pickle ir_values conversion: ok: %d , fail: %d' % (ok, fail))
-        return True
-
 
     # UF26.0
     def fix_us_10163_ocbhq_funct_amount(self, cr, uid, *a, **b):

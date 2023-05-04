@@ -34,7 +34,6 @@ class report_reception(report_sxw.rml_parse):
             'enumerate': enumerate,
             'get_lines_by_packing': self.get_lines_by_packing,
             'getDateCreation': self.getDateCreation,
-            'getNbItem': self.getNbItem,
             'check': self.check,
             'getTotItems': self.getTotItems,
             'getConfirmedDeliveryDate': self.getConfirmedDeliveryDate,
@@ -47,7 +46,6 @@ class report_reception(report_sxw.rml_parse):
             'getPOref': self.getPOref,
             'getDetail': self.getDetail,
             'getProject': self.getProject,
-            'getQtyPO': self.getQtyPO,
             'getQtyIS': self.getQtyIS,
             'getWarning': self.getWarning,
             'getOriginRef': self.getOriginRef,
@@ -93,19 +91,19 @@ class report_reception(report_sxw.rml_parse):
             warn += _(' goods products, please refer to the appropriate procedures')
         return warn
 
-    def getQtyPO(self,line):
-        # line amount from the PO, always the same on all INs for a given PO
-        val = 0
-        if line.state in ('assigned', 'confirmed', 'done'):
-            val = line.product_qty
-        return val
+    def getQtyBO(self, line):
+        '''
+        Get the remaining qty to receive, comparing the sum of the qty of all done IN moves linked to the PO line, to
+        the confirmed qty of the linked PO line
+        '''
+        bo_qty = line.state != 'done' and line.product_qty or 0
+        if line.purchase_line_id:
+            self.cr.execute("""SELECT SUM(product_qty) FROM stock_move WHERE purchase_line_id = %s AND state = 'done'
+                AND type = 'in'""", (line.purchase_line_id.id,))
+            sum_data = self.cr.fetchone()
+            bo_qty = line.purchase_line_id.product_qty - (sum_data and sum_data[0] or 0)
 
-    def getQtyBO(self,line,o):
-        bo_qty = 0
-        if line.state in ('assigned', 'shipped', 'confirmed'):
-            bo_qty = line.product_qty
-
-        return bo_qty
+        return bo_qty >= 0 and bo_qty or 0
 
     def getQtyIS(self, line, o):
         # Amount received in this IN only
@@ -194,10 +192,6 @@ class report_reception(report_sxw.rml_parse):
             return getattr(line, options[opt])
 
         return ' '
-
-    def getNbItem(self, ):
-        self.item += 1
-        return self.item
 
     def getDateCreation(self, o):
         return time.strftime('%d-%b-%Y', time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))

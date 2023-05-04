@@ -313,6 +313,7 @@ class account_move(osv.osv):
         """
         if context is None:
             context = {}
+        aml_to_touch = []
         for m in self.browse(cr, uid, ids):
             for ml in m.line_id:
                 if ml.account_id and ml.account_id.is_analytic_addicted:
@@ -324,6 +325,9 @@ class account_move(osv.osv):
                         # UF-2248: Improve the code by using a sql directly, and not a write -- make no impact on the validation, as it will be done in the call super.validate_button
                         #self.pool.get('account.move.line').write(cr, uid, [ml.id], {'analytic_distribution_id': new_distrib_id})
                         cr.execute('update account_move_line set analytic_distribution_id=%s where id=%s', (new_distrib_id, ml.id))
+                        aml_to_touch.append(ml.id)
+        if aml_to_touch:
+            self.pool.get('account.move.line').sql_touch(cr, aml_to_touch, ['analytic_distribution_id'])
 
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 

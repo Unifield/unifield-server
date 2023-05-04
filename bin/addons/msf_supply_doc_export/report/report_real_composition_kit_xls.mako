@@ -97,7 +97,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_uom_id and line.item_uom_id.name or ''|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.comment or ''|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_asset_id and line.item_asset_id.name or ''|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_lot or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_lot_id and line.item_lot_id.name or ''|x}</Data></Cell>
         % if line.item_exp and isDate(line.item_exp):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.item_exp|x}</Data></Cell>
         % else:

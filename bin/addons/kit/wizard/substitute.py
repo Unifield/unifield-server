@@ -361,7 +361,7 @@ class substitute(osv.osv_memory):
                                'item_uom_id': item.uom_id_substitute_item.id,
                                'item_asset_id': item.asset_id_substitute_item.id,
                                'kcl_id': item.kcl_id_substitute_item and item.kcl_id_substitute_item.id or False,
-                               'item_lot': item.lot_id_substitute_item.name,
+                               'item_lot_id': item.lot_id_substitute_item.id,
                                'item_exp': item.exp_substitute_item,
                                'item_kit_id': obj.kit_id.id,
                                'item_description': 'Replacement Item from %s location.'%item.location_id_substitute_item.name,
@@ -394,9 +394,8 @@ class substitute(osv.osv_memory):
             available_qty = res['value']['qty_substitute_item']
             if available_qty < 1.0:
                 # we display the back button - hide close button
-                raise osv.except_osv(_("Error"),
-                                     _("The Kit \'%s\' is not available from selected source location \'%s\'"
-                                       %(obj.product_id_substitute.name, obj.source_location_id.name)))
+                raise osv.except_osv(_("Error"), _("The Kit \'%s\' is not available from selected source location \'%s\'")
+                                     % (obj.product_id_substitute.name, obj.source_location_id.name))
             else:
                 return self._do_de_kitting(cr, uid, ids, context=context)
 
@@ -442,7 +441,13 @@ class substitute(osv.osv_memory):
                 # analyze each item
                 self._handle_compo_item(cr, uid, ids, obj, item, items_to_stock_ids, pick_id, context=context)
                 if item.item_id_mirror:
-                    comp_item_obj.write(cr, uid, item.item_id_mirror, {'item_lot': item.lot_mirror, 'item_exp': item.exp_substitute_item}, context=context)
+                    prodlot_ids = False
+                    if item.lot_mirror:
+                        prodlot_ids = self.pool.get('stock.production.lot').\
+                            search(cr, uid, [('product_id', '=', item.product_id_substitute_item.id), ('name', '=', item.lot_mirror),
+                                             ('life_date', '=', item.exp_substitute_item)], context=context)
+                    comp_item_obj.write(cr, uid, item.item_id_mirror, {'item_lot_id': prodlot_ids and prodlot_ids[0] or False,
+                                                                       'item_exp': item.exp_substitute_item}, context=context)
             # the corresponding kit is set to done
             kit_obj.close_kit(cr, uid, kit_ids, self._name, context=context)
             # a move with a kit from kitting location is created

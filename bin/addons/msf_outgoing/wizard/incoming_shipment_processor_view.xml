@@ -14,9 +14,10 @@
                     <field name="display_process_to_ship_button" invisible="1" />
                     <field name="sequence_issue" invisible="1" />
                     <field name="fields_as_ro" invisible="1" />
-                    <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" set_ids="move_ids"/>
-                    <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" set_ids="move_ids"/>
-                    <group name="import_file_lines" string="Import Lines" colspan="4">
+                    <field name="imp_filename" invisible="1" />
+                    <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" set_ids="move_ids" attrs="{'invisible': [('imp_filename', '!=', False)]}"/>
+                    <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" set_ids="move_ids" attrs="{'invisible': [('imp_filename', '!=', False)]}"/>
+                    <group name="import_file_lines" string="Import Lines" colspan="4" attrs="{'invisible': [('imp_filename', '!=', False)]}">
                         <button name="launch_simulation" string="Import IN" icon="gtk-execute" colspan="1" type="object" />
                         <button name="launch_simulation_pack" string="Import IN, process IN &amp; pick and pack" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible': [('linked_to_out', '=', False)]}"/>
                     </group>

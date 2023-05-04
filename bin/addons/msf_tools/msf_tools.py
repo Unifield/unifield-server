@@ -720,6 +720,17 @@ class ir_translation(osv.osv):
         if context is None:
             context = {}
         if context.get('sync_update_execution') and vals.get('name') in fields and vals.get('lang'):
+            if vals.get('name') == 'account.analytic.account,name' and vals.get('lang') == 'en_MF' and vals['value']:
+                # translations removed on anaylitc account name, but still in (init) sync
+                obj_id = False
+                if vals.get('res_id'):
+                    obj_id = vals['res_id']
+                elif vals.get('xml_id'):
+                    obj_id = self._get_res_id(cr, uid, vals['name'], vals['xml_id'], context=context)
+                if obj_id:
+                    self.pool.get('account.analytic.account').write(cr, uid, obj_id, {'name': vals['value']}, context=context)
+                return True
+
             obj_name = vals['name'].split(',')[0]
             obj = self.pool.get(obj_name)
             audit_rule_ids = obj.check_audit(cr, uid, 'write')
