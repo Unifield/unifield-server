@@ -58,6 +58,20 @@ class patch_scripts(osv.osv):
     }
 
     # UF29.0
+    def us_11399_oca_mm_target(self, cr, uid, *a, **b):
+        if self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id:
+            cr.execute('''
+                update
+                    account_target_costcenter
+                set
+                    is_target='f'
+                where
+                    is_target='t'
+                    and id in
+                        (select res_id from ir_model_data where name='b8c174f0-2483-11e5-9d58-0050569320a7/account_target_costcenter/723')
+            ''')
+        return True
+
     def us_11177_bn_for_kcl_items(self, cr, uid, *a, **b):
         '''
         For each KCL item with item_lot/item_exp filled, the script will try to find a corresponding BN or create a new

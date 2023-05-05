@@ -938,5 +938,9 @@
         <record id="us_10835_disable_iil_menu" model="patch.scripts">
             <field name="method">us_10835_disable_iil_menu</field>
         </record>
+
+        <record id="us_11399_oca_mm_target" model="patch.scripts">
+            <field name="method">us_11399_oca_mm_target</field>
+        </record>
     </data>
 </openerp>
