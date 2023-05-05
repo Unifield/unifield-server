@@ -467,11 +467,15 @@ class stock_picking(osv.osv):
         uom_obj = self.pool.get('product.uom')
         currency_obj = self.pool.get('res.currency')
         product_obj = self.pool.get('product.product')
+        esc_line_obj = self.pool.get('esc.invoice.line')
+        tc_fin_obj = self.pool.get('finance_price.track_changes')
 
         if context is None:
             context = {}
 
         average_values = {}
+
+        company_currency_id = move.company_id.currency_id.id
 
         if move.price_currency_id:
             move_currency_id = move.price_currency_id.id
@@ -479,13 +483,63 @@ class stock_picking(osv.osv):
             move_currency_id = move.company_id.currency_id.id
         context['currency_id'] = move_currency_id
 
+
+
+        compute_finance_price = False
+        if self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'esc_line'):
+            compute_finance_price = move.picking_id.partner_id.partner_type == 'esc' or move.dpo_line_id and move.purchase_line_id.from_dpo_esc or False
+
         qty = line.quantity
         if line.uom_id.id != line.product_id.uom_id.id:
             qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, line.quantity, line.product_id.uom_id.id)
 
         product_availability.setdefault(line.product_id.id, line.product_id.qty_available)
-
+        track_finance_price = []
+        tc_fin_ids = []
         if qty > 0.00:
+            if compute_finance_price:
+                esc_dom = [('state','!=', 'done'), ('product_id', '=', line.product_id.id), ('po_name', '=', move.purchase_line_id.order_id.name)]
+                # exact qty
+                esc_ids = esc_line_obj.search(cr, uid, esc_dom + [('remaining_qty', '=', qty)], order='state, id', limit=1, context=context)
+                if not esc_ids:
+                    esc_ids = esc_line_obj.search(cr, uid, esc_dom, order='state, id', context=context)
+
+                remaining_in_qty = qty
+                total_price = 0
+                for esc_line in esc_line_obj.browse(cr, uid, esc_ids, context=context):
+                    if remaining_in_qty <= 0:
+                        break
+                    unit_iil_price = esc_line.price_unit
+                    if esc_line.currency_id.id != company_currency_id:
+                        unit_iil_price = currency_obj.compute(cr, uid, esc_line.currency_id.id, company_currency_id, unit_iil_price, round=False, context=context)
+
+                    if esc_line.remaining_qty - remaining_in_qty >= 0.001:
+                        total_price += unit_iil_price * remaining_in_qty
+
+                        remaining_iil_qty = esc_line.remaining_qty - remaining_in_qty
+                        if abs(remaining_iil_qty) <= 0.001:
+                            esc_line_obj.write(cr, uid, esc_line.id, {'state': 'done', 'remaining_qty': 0}, context=context)
+                        else:
+                            esc_line_obj.write(cr, uid, esc_line.id, {'state': '0_open', 'remaining_qty': remaining_iil_qty}, context=context)
+                        track_finance_price.append({'qty_processed': remaining_in_qty, 'price_unit': unit_iil_price, 'matching_type': 'iil', 'esc_invoice_line_id': esc_line.id})
+                        remaining_in_qty = 0
+
+                    else:
+                        esc_line_obj.write(cr, uid, esc_line.id, {'state': 'done', 'remaining_qty': 0}, context=context)
+                        total_price += unit_iil_price * esc_line.remaining_qty
+                        remaining_in_qty -= esc_line.remaining_qty
+                        track_finance_price.append({'qty_processed': esc_line.remaining_qty, 'price_unit': unit_iil_price, 'matching_type': 'iil', 'esc_invoice_line_id': esc_line.id})
+
+                if remaining_in_qty > 0:
+                    # all IIL used: take PO price
+                    po_price = move.purchase_line_id.price_unit
+                    if move.purchase_line_id.order_id.currency_id.id != company_currency_id:
+                        po_price = currency_obj.compute(cr, uid,  move.purchase_line_id.order_id.currency_id.id, company_currency_id, po_price, round=False, context=context)
+                    total_price += remaining_in_qty * po_price
+                    track_finance_price.append({'qty_processed': remaining_in_qty, 'price_unit': po_price, 'matching_type': 'po', 'purchase_oder_line_id': move.purchase_line_id.id})
+
+
+                # by remaining qty
             new_price = line.cost
             # Recompute unit price if the currency used is not the functional currency
             if line.currency.id != move_currency_id:
@@ -500,19 +554,36 @@ class stock_picking(osv.osv):
             new_std_price = 0.00
             if line.product_id.qty_available <= 0.00:
                 new_std_price = new_price
+                if compute_finance_price:
+                    new_finance_price = round(total_price / float(qty), 5)
             else:
                 # Get the current price in today's rate
                 current_price = product_obj.price_get(cr, uid, [line.product_id.id], 'standard_price', context=context)[line.product_id.id]
+
                 # Check no division by zero
                 if product_availability[line.product_id.id]:
                     new_std_price = ((current_price * product_availability[line.product_id.id])
                                      + (new_price * qty)) / (product_availability[line.product_id.id] + qty)
 
+                    if compute_finance_price:
+                        # TODO : init finance_price
+                        if not line.product_id.finance_price:
+                            new_finance_price = round(total_price / float(qty), 5)
+                        else:
+                            new_finance_price = round((line.product_id.finance_price *  product_availability[line.product_id.id] + total_price) / (product_availability[line.product_id.id] + qty), 5)
+
             new_std_price = round(currency_obj.compute(cr, uid, line.currency.id, move.company_id.currency_id.id,
                                                        new_std_price, round=False, context=context), 5)
 
             # Write the field according to price type field
-            product_obj.write(cr, uid, [line.product_id.id], {'standard_price': new_std_price})
+            prod_to_write = {'standard_price': new_std_price}
+            if compute_finance_price:
+                prod_to_write['finance_price'] = new_finance_price
+                for tc_fin in track_finance_price:
+                    tc_fin.update({'product_id': line.product_id.id, 'old_price': line.product_id.finance_price, 'new_price': new_finance_price, 'stock_before': product_availability.get(line.product_id.id, 0)})
+                    tc_fin_ids.append(tc_fin_obj.create(cr, uid, tc_fin, context=context))
+            product_obj.write(cr, uid, [line.product_id.id], prod_to_write)
+
             pchanged = False
             # Is price changed ?
             if line.cost and move.purchase_line_id:
@@ -531,7 +602,7 @@ class stock_picking(osv.osv):
                 'price_currency_id': line.currency.id,
             }
 
-        return average_values, sptc_values
+        return average_values, sptc_values, tc_fin_ids
 
     def _get_values_from_line(self, cr, uid, move, line, db_data, context=None):
         """
@@ -814,7 +885,6 @@ class stock_picking(osv.osv):
                 out_moves = mirror_data['moves']
                 average_values = {}
                 move_sptc_values = []
-
                 line = False
 
                 if move.purchase_line_id and move.purchase_line_id.id not in po_line_qty:
@@ -828,11 +898,13 @@ class stock_picking(osv.osv):
 
                     if not values.get('product_qty', 0.00):
                         continue
+
+                    tc_ids = []
                     # Check if we must re-compute the price of the product
                     compute_average = process_avg_sysint and picking_dict['type'] == 'in' and line.product_id.cost_method == 'average'
 
                     if compute_average:
-                        average_values, sptc_values = self._compute_average_values(cr, uid, move, line, product_availability, context=context)
+                        average_values, sptc_values, tc_ids = self._compute_average_values(cr, uid, move, line, product_availability, context=context)
                         values.update(average_values)
                         move_sptc_values.append(sptc_values)
 
@@ -855,6 +927,9 @@ class stock_picking(osv.osv):
                         new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
                         context['keepLineNumber'] = False
                         done_moves.append(new_move_id)
+
+                    if tc_ids:
+                        self.pool.get('finance_price.track_changes').write(cr, uid, tc_ids, {'stock_move_id': done_moves[-1]}, context=context)
 
                     values['processed_stock_move'] = False
 

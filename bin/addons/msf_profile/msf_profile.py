@@ -198,6 +198,14 @@ class patch_scripts(osv.osv):
         cr.execute("update ir_translation set name='account.analytic.account,nameko' where name='account.analytic.account,name' and type='model'")
         return True
 
+    def us_10835_disable_iil_menu(self, cr, uid, *a, **b):
+        # hide menuitems
+        setup_obj = self.pool.get('esc_line.setup')
+        esc_line_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [esc_line_install])
+        return True
+
+
     # UF28.0
     def us_10885_tc_entries(self, cr, uid, *a, **b):
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id

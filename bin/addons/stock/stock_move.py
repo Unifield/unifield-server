@@ -38,8 +38,14 @@ class stock_move(osv.osv):
 
     def name_get(self, cr, uid, ids, context=None):
         res = []
-        for line in self.browse(cr, uid, ids, context=context):
-            res.append((line.id, (line.product_id.code or '/')+': '+line.location_id.name+' > '+line.location_dest_id.name))
+        if context is None:
+            context = {}
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['product_id', 'line_number', 'location_id', 'location_dest_id'], context=context):
+            if context.get('display_move_line'):
+                prefix = '#%s %s' % (line.line_number, line.product_id.code or '/')
+            else:
+                prefix = line.product_id.code or '/'
+            res.append((line.id, '%s: %s > %s' % (prefix, line.location_id.name, line.location_dest_id.name)))
         return res
 
     def _get_picking_ids(self, cr, uid, ids, context=None):

@@ -329,7 +329,162 @@
         <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="6"/>
         <menuitem name="HQ Import" action="action_hq_entries_import_wizard" type="server" id="menu_hq_entries_import" parent="menu_hq" sequence="1"/>
         <menuitem name="HQ Entries" action="action_hq_entries_tree" id="menu_hq_entries" parent="menu_hq" sequence="2"/>
-        
+
+
+        <record id="esc_invoice_line_filter" model="ir.ui.view">
+            <field name="name">International Invoices Lines</field>
+            <field name="model">esc.invoice.line</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="International Invoices Lines">
+                    <filter icon="gtk-new" string="Not Done" domain="[('state', '!=', 'done')]" />
+                    <filter icon="gtk-apply" string="Done" domain="[('state', '=', 'done')]" />
+                    <separator orientation="vertical"/>
+                    <field name="po_name" />
+                    <field name="product_id" />
+                    <field name="requestor_cc_id" />
+                    <field name="consignee_cc_id"/>
+                    <field name="shipment_ref"/>
+                    <newline/>
+                    <group expand="0" string="Group By..." colspan="12" col="10">
+                        <filter string="PO Reference" icon="terp-partner" domain="[]" context="{'group_by':'po_name'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Product"  icon="terp-folder-green" context="{'group_by':'product_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Requestor" icon="terp-go-month" domain="[]" context="{'group_by':'requestor_cc_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Consignee" icon="gtk-about" domain="[]" context="{'group_by': 'consignee_cc_id'}"/>
+                    </group>
+                    <newline/>
+                </search>
+            </field>
+        </record>
+
+        <record id="esc_invoice_line_tree" model="ir.ui.view">
+            <field name="name">International Invoices Lines</field>
+            <field name="model">esc.invoice.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="International Invoices Line" editable="top" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" noteditable="1">
+                        <field name="po_name" readonly="1"/>
+                        <field name="product_id" readonly="1" />
+                        <field name="requestor_cc_id" readonly="1" />
+                        <field name="consignee_cc_id" readonly="1" />
+                        <field name="shipment_ref" readonly="1" />
+                        <field name="price_unit" readonly="1" />
+                        <field name="currency_id" readonly="1" />
+                        <field name="product_qty" readonly="1" />
+                        <field name="remaining_qty" readonly="1" />
+                        <field name="in_number" />
+                        <field name="state" readonly="1" />
+                        <button name="delete" string="Delete" icon="gtk-del" type="object" states='1_draft' confirm="Do you want to delete this line ?" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="esc_invoice_line_form" model="ir.ui.view">
+            <field name="name">International Invoices Lines</field>
+            <field name="model">esc.invoice.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="International Invoices Line" hide_new_button="1" hide_duplicate_button="1">
+                        <field name="po_name" readonly="1" />
+                        <field name="product_id" readonly="1" />
+                        <field name="requestor_cc_id" readonly="1" />
+                        <field name="consignee_cc_id" readonly="1" />
+                        <field name="shipment_ref" readonly="1" />
+                        <field name="price_unit" readonly="1" />
+                        <field name="product_qty" readonly="1" />
+                        <field name="remaining_qty" readonly="1" />
+                        <field name="uom_id" readonly="1" />
+                        <field name="currency_id" readonly="1" />
+                        <field name="in_number" />
+                        <field name="state" readonly="1" />
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="esc_invoice_line_action">
+            <field name="name">International Invoices Lines</field>
+            <field name="res_model">esc.invoice.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="esc_invoice_line_tree"/>
+        </record>
+        <menuitem name="International Invoices Lines" action="esc_invoice_line_action" id="esc_invoice_line_menu" parent="menu_hq" sequence="20"/>
+
+
+
+        <record id="finance_price_track_changes_filter" model="ir.ui.view">
+            <field name="name">Line Matching</field>
+            <field name="model">finance_price.track_changes</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Line Matching">
+                    <field name="product_id" />
+                    <field name="stock_picking_id" />
+                    <field name="matching_type" />
+                    <field name="esc_invoice_line_id"/>
+                    <newline/>
+                </search>
+            </field>
+        </record>
+
+        <record id="finance_price_track_changes_tree" model="ir.ui.view">
+            <field name="name">Line Matching</field>
+            <field name="model">finance_price.track_changes</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Line Matching" editable="top" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" noteditable="1">
+                        <field name="product_id" />
+                        <field name="old_price" />
+                        <field name="new_price" />
+                        <field name="qty_processed" />
+                        <field name="price_unit" />
+                        <field name="stock_before" />
+                        <field name="stock_picking_id" />
+                        <field name="stock_move_id" />
+                        <field name="purchase_oder_line_id" />
+                        <field name="esc_invoice_line_id" />
+                        <field name="matching_type" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="finance_price_track_changes_action">
+            <field name="name">Line Matching</field>
+            <field name="res_model">finance_price.track_changes</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'display_move_line': True}</field>
+        </record>
+        <menuitem name="Line Matching" action="finance_price_track_changes_action" id="finance_price_track_changes_menu" parent="menu_hq" sequence="30"/>
+
+        <act_window
+            id="esc_line_to_finance_price_tc"
+            name="Matching"
+            src_model="esc.invoice.line"
+            res_model="finance_price.track_changes"
+            target="current"
+            view_type="form"
+            view_mode="tree"
+            context="{'display_move_line': True}"
+            domain="[('esc_invoice_line_id', 'in', active_ids)]" />
+
+        <record id="esc_line_delete_action" model="ir.actions.server">
+            <field name="name">Delete Selected draft entries</field>
+            <field name="model_id" ref="model_esc_invoice_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.delete_action(context=context)</field>
+        </record>
+
+        <record id="esc_line_delete_menu" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">esc.invoice.line</field>
+            <field name="name">Delete Selected draft entries</field>
+            <field eval="'ir.actions.server,%d'%esc_line_delete_action" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
 
     </data>
 </openerp>

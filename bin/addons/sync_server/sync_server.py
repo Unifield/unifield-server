@@ -1097,6 +1097,9 @@ class sync_server_monitor_email(osv.osv):
                                 to_retrieve.append(x)
                     else:
                         to_retrieve = list_to_retrieve
+                elif rules[update.rule_id.id]['direction'] == 'single-private':
+                    if update.owner:
+                        to_retrieve.append(update.owner.id)
 
                 puller_ids = [y.entity_id.id for y in update.puller_ids]
                 not_pulled = []

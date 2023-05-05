@@ -120,6 +120,7 @@ class sync_rule(osv.osv):
             ('down', 'Down'),
             ('bidirectional', 'Bidirectional'),
             ('bi-private', 'Bidirectional-Private'),
+            ('single-private', 'Single-Private'),
         ], 'Directionality', required = True,),
         'domain':fields.text('Domain', required = False),
         'owner_field':fields.char('Owner Field', size = 64, required = False),
@@ -459,7 +460,8 @@ class sync_rule(osv.osv):
         return (message, error)
 
     def check_owner_field(self, cr, uid, rec, context=None):
-        if rec.direction != 'bi-private': return ('', False)
+        if rec.direction not in ('bi-private', 'single-private'):
+            return ('', False)
         error = False
         message = "* Owner field existence... "
         try:
@@ -516,6 +518,10 @@ class sync_rule(osv.osv):
             mess, err = self.check_owner_field(cr, uid, rec, context)
             error = err or error
             message.append(mess)
+
+            if rec.direction == 'single-private' and rec.can_delete:
+                error = True
+                message.append('Single-Private and Can delete not implemented')
 
             message.append("* Sequence is unique... ")
             if self.search(cr, uid,

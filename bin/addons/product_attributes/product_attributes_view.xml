@@ -94,6 +94,8 @@
                                 <field name="currency_id" nolabel="1" />
                                 <field name="list_price" colspan="2"/>
                                 <field name="field_currency_id" nolabel="1" />
+                                <field name="finance_price" colspan="2" invisible="1" />
+                                <field name="finance_price_currency_id" nolabel="1" invisible="1" />
                                 <newline/>
                             </group>
 

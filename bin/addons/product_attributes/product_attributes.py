@@ -1168,6 +1168,12 @@ class product_attributes(osv.osv):
                 field.set('invisible', '0')
             res['arch'] = etree.tostring(root)
 
+        if view_type == 'form' and self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'esc_line'):
+            root = etree.fromstring(res['arch'])
+            for field in root.xpath('//field[@name="finance_price"]|//field[@name="finance_price_currency_id"]'):
+                field.set('invisible', '0')
+            res['arch'] = etree.tostring(root)
+
         if view_type == 'search' and context.get('available_for_restriction'):
             context.update({'search_default_not_restricted': 1})
             root = etree.fromstring(res['arch'])
