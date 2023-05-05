@@ -336,7 +336,7 @@
             <field name="model">esc.invoice.line</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="International Invoices Liness">
+                <search string="International Invoices Lines">
                     <filter icon="gtk-new" string="Not Done" domain="[('state', '!=', 'done')]" />
                     <filter icon="gtk-apply" string="Done" domain="[('state', '=', 'done')]" />
                     <separator orientation="vertical"/>
