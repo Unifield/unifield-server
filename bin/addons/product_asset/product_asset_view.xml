@@ -169,8 +169,7 @@
 		</record>
 
 		<!-- Assets in SALES>Products -->
-		<menuitem id="menu_asset_sales" name="Assets" parent="base.menu_product"
-			sequence="3" />
+		<menuitem id="menu_asset_sales" name="Assets" parent="base.menu_product" sequence="100" />
 		<menuitem action="asset_normal_action" id="menu_assets_sales"
 			parent="menu_asset_sales" sequence="1" />
 

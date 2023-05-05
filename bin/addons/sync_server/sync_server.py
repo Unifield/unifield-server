@@ -1101,6 +1101,10 @@ class sync_server_monitor_email(osv.osv):
                     if update.owner:
                         to_retrieve.append(update.owner.id)
 
+                elif rules[update.rule_id.id]['direction'] == 'mission-private':
+                    if update.owner:
+                        to_retrieve = [x for x in ancestors_cache[update.owner.id] + [update.owner.id] + children_cache[update.owner.id] if x != update.source.id]
+
                 puller_ids = [y.entity_id.id for y in update.puller_ids]
                 not_pulled = []
                 for need_pull in to_retrieve:

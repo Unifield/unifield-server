@@ -477,6 +477,8 @@ class product_product(osv.osv):
         cond_average = '>'
         filter_in_any_product_list = False
         filter_in_product_list = False
+        filter_in_mml_instance = False
+        filter_in_msl_instance = False
         for x in domain:
             if x[0] == 'location_id':
                 location_id = x[2]
@@ -489,6 +491,22 @@ class product_product(osv.osv):
 
             elif x[0] == 'in_product_list':
                 filter_in_product_list = x[2]
+
+            elif x[0] == 'in_mml_instance':
+                if x[2] is True:
+                    filter_in_mml_instance = self.pool.get('res.company')._get_instance_id(cr, uid)
+                else:
+                    filter_in_mml_instance = x[2]
+
+            elif x[0] == 'in_msl_instance':
+                if x[2] is True:
+                    filter_in_msl_instance = -1
+                    instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+                    ud_project_ids = self.pool.get('unidata.project').search(cr, uid, [('instance_id', '=', instance_id)], context=context)
+                    if ud_project_ids:
+                        filter_in_msl_instance = ud_project_ids[0]
+                else:
+                    filter_in_msl_instance = x[2]
 
             elif x[0] == 'average':
                 if context.get('history_cons') and context.get('obj_id'):
@@ -537,6 +555,22 @@ class product_product(osv.osv):
             ret.joins['"product_product"'] += [('"product_history_consumption_product" phc1', 'id', 'product_id', 'INNER JOIN')]
             ret.where_clause.append(''' "phc1"."consumption_id" = %%s and "phc1"."name" = 'average' and "phc1"."value" %s 0 ''' % (cond_average, ))
             ret.where_clause_params.append(filter_average)
+        if filter_in_mml_instance:
+            ret.tables.append('"product_project_rel" p_rel')
+            ret.joins.setdefault('"product_product"', [])
+            ret.joins['"product_product"'] += [('"product_project_rel" p_rel', 'id', 'product_id', 'LEFT JOIN')]
+            ret.joins['"product_product"'] += ['left join product_country_rel c_rel on p_rel is null and c_rel.product_id = product_product.id']
+            ret.joins['"product_product"'] += ['left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id']
+            ret.where_clause.append(''' product_product.oc_validation = 't' and ( up1.instance_id = %s or up1 is null) ''')
+            ret.where_clause_params.append(filter_in_mml_instance)
+        if filter_in_msl_instance:
+            ret.tables.append('"product_msl_rel"')
+            ret.joins.setdefault('"product_product"', [])
+            ret.joins.setdefault('"product_msl_rel"', [])
+            ret.joins['"product_product"'] += [('"product_msl_rel"', 'id', 'product_id', 'INNER JOIN')]
+            ret.joins['"product_product"'] += ["inner join unidata_project on unidata_project.id=product_msl_rel.msl_id"]
+            ret.where_clause.append(''' "product_msl_rel".creation_date is not null and  "unidata_project".uf_active = 't' and "unidata_project".id = %s  ''')
+            ret.where_clause_params.append(filter_in_msl_instance)
 
         return ret
 
@@ -601,7 +635,10 @@ class product_product(osv.osv):
         '''
         res = {}
         if ids is not None:
-            read_result = self.read(cr, uid, ids, ['default_code', 'seller_ids'], context=context)
+            fields_to_read = ['default_code']
+            if partner_id:
+                fields_to_read.append('seller_ids')
+            read_result = self.read(cr, uid, ids, fields_to_read, context=context)
             res = dict([(x['id'], x['default_code']) for x in read_result])
             if not partner_id:
                 return dict([(x['id'], x['default_code']) for x in read_result])

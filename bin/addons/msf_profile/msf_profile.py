@@ -5859,9 +5859,13 @@ class res_users(osv.osv):
     _name = 'res.users'
 
     def _get_default_ctx_lang(self, cr, uid, context=None):
-        config_lang = self.pool.get('unifield.setup.configuration').get_config(cr, uid).lang_id
-        if config_lang:
-            return config_lang
+        config_obj = self.pool.get('unifield.setup.configuration')
+        if config_obj.search_exists(cr, uid, [], context=context):
+            # if not record, get_config create a record
+            # incorrect in case of user creation during install
+            config_lang = config_obj.get_config(cr, uid).lang_id
+            if config_lang:
+                return config_lang
         if self.pool.get('res.lang').search(cr, uid, [('translatable','=',True), ('code', '=', 'en_MF')]):
             return 'en_MF'
         return 'en_US'

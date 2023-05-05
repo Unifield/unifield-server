@@ -121,6 +121,7 @@ class sync_rule(osv.osv):
             ('bidirectional', 'Bidirectional'),
             ('bi-private', 'Bidirectional-Private'),
             ('single-private', 'Single-Private'),
+            ('mission-private', 'Mission-Private'),
         ], 'Directionality', required = True,),
         'domain':fields.text('Domain', required = False),
         'owner_field':fields.char('Owner Field', size = 64, required = False),
@@ -234,6 +235,7 @@ class sync_rule(osv.osv):
         'can_delete' : 'can_delete',
         'type_name' : 'type',
         'handle_priority' : 'handle_priority',
+        'direction': 'direction',
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):
@@ -460,7 +462,7 @@ class sync_rule(osv.osv):
         return (message, error)
 
     def check_owner_field(self, cr, uid, rec, context=None):
-        if rec.direction not in ('bi-private', 'single-private'):
+        if rec.direction not in ('bi-private', 'single-private', 'mission-private'):
             return ('', False)
         error = False
         message = "* Owner field existence... "

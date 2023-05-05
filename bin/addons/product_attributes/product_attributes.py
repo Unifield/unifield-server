@@ -25,8 +25,14 @@ from tools.translate import _
 from lxml import etree
 import tools
 from datetime import datetime
+
 import logging
+import logging.handlers
+
 from base.res.signature import _register_log
+import requests
+import unidata_sync
+import json
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -765,6 +771,200 @@ class product_attributes(osv.osv):
                 res[_id] = True
         return res
 
+    def _get_oc_coordo_restrictions(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        ret = {}
+        for _id in ids:
+            ret[_id] = []
+
+        cr.execute('''select
+                p.id, array_agg(inst.id)
+            from
+                product_product p, product_country_rel c_rel, unidata_project up, msf_instance inst
+            where
+                p.id in %s
+                and p.id = c_rel.product_id
+                and up.country_id = c_rel.unidata_country_id
+                and inst.id = up.instance_id
+                and inst.level = 'coordo'
+            group by p.id
+            ''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+        return ret
+
+    def _get_valid_msl_instance(self, cr, uid, ids, field_name, args, context=None):
+        """
+            list unidata.project with activated MSL
+        """
+        if not ids:
+            return {}
+        ret = {}
+
+        for _id in ids:
+            ret[_id] = False
+
+        cr.execute('''
+            select
+                rel.product_id, array_agg(p.id order by p.instance_name)
+            from
+                product_msl_rel rel, unidata_project p
+            where
+                rel.msl_id = p.id
+                and rel.product_id in %s
+                and p.uf_active = 't'
+                and rel.creation_date is not null
+                and p.publication_date is not null
+            group by
+                rel.product_id
+            ''', (tuple(ids), )
+        )
+
+        for prod in cr.fetchall():
+            ret[prod[0]] = prod[1]
+
+        return ret
+
+    def _get_is_msl_valid(self, cr, uid, ids, field_name, args, context=None):
+        """
+            is product MSL valid in the current instance
+
+        """
+        if not ids:
+            return {}
+        inst =  self.pool.get('res.company')._get_instance_record(cr, uid)
+        if inst.level == 'section':
+            return dict.fromkeys(ids, '')
+
+        ret = {}
+
+        for _id in ids:
+            ret[_id] = 'no'
+
+        inst =  self.pool.get('res.company')._get_instance_record(cr, uid)
+        if inst.level == 'section':
+            return ret
+
+        cr.execute('''
+            select
+                rel.product_id
+            from
+                product_msl_rel rel, unidata_project p
+            where
+                rel.msl_id = p.id
+                and rel.product_id in %s
+                and p.uf_active = 't'
+                and rel.creation_date is not null
+                and p.publication_date is not null
+                and instance_id = %s
+            ''', (tuple(ids), inst.id)
+        )
+
+        for prod in cr.fetchall():
+            ret[prod[0]] = 'yes'
+
+        return ret
+
+
+    def _get_is_mml_valid(self, cr, uid, ids, field_name, args, context=None):
+        """
+            is product MML valid in the current instance
+
+        """
+        if not ids:
+            return {}
+
+        inst =  self.pool.get('res.company')._get_instance_record(cr, uid)
+        if inst.level == 'section':
+            return dict.fromkeys(ids, '')
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = 'no'
+
+
+        cr.execute('''select
+                p.id
+            from
+                product_product p, product_project_rel p_rel, unidata_project up
+            where
+                p.id in %s
+                and p.oc_validation = 't'
+                and p_rel.product_id = p.id
+                and up.id = p_rel.unidata_project_id
+                and up.instance_id = %s
+            ''', (tuple(ids), inst.id))
+
+        for prod in cr.fetchall():
+            ret[prod[0]] = 'yes'
+
+        cr.execute('''select
+                p.id
+            from
+                product_product p
+                left join product_country_rel c_rel on c_rel.product_id = p.id
+                left join unidata_project up on up.country_id = c_rel.unidata_country_id
+                left join product_project_rel p_rel on p_rel.product_id = p.id
+            where
+                p.id in %s
+                and p.oc_validation = 't'
+                and (up.instance_id = %s or c_rel is null)
+                and p_rel is null
+            ''', (tuple(ids), inst.id))
+
+        for prod in cr.fetchall():
+            ret[prod[0]] = 'yes'
+
+        return ret
+
+    def _get_restrictions_txt(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        ret = {}
+
+        temp_ret = {}
+        for _id in ids:
+            temp_ret[_id] = []
+
+        cr.execute('''select
+                c_rel.product_id, array_agg(inst.code order by inst.code)
+            from
+                product_country_rel c_rel, unidata_project up, msf_instance inst
+            where
+                c_rel.product_id in %s
+                and up.country_id = c_rel.unidata_country_id
+                and inst.id = up.instance_id
+                and inst.level = 'coordo'
+            group by c_rel.product_id
+            ''', (tuple(ids), ))
+
+
+        mission_t = _('Missions')
+        for x in cr.fetchall():
+            temp_ret[x[0]] = ['%s: %s' % (mission_t, ', ' .join(x[1]))]
+
+        cr.execute('''select
+                p_rel.product_id, array_agg(inst.code order by inst.code)
+            from
+                product_project_rel p_rel, unidata_project up, msf_instance inst
+            where
+                p_rel.product_id in %s
+                and up.id =  p_rel.unidata_project_id
+                and inst.id = up.instance_id
+            group by p_rel.product_id
+            ''', (tuple(ids), ))
+
+        project_t = _('Projects')
+        for x in cr.fetchall():
+            temp_ret[x[0]] += ['%s: %s' % (project_t, ', ' .join(x[1]))]
+
+        for _id in temp_ret:
+            ret[_id] = "\n".join(temp_ret[_id])
+
+        return ret
+
 
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
@@ -1069,7 +1269,23 @@ class product_attributes(osv.osv):
         'unidata_merged': fields.boolean('UniData Merged', readonly=1),
         'unidata_merge_date': fields.datetime('Date of UniData Merge', readonly=1, select=1),
         'is_kept_product': fields.boolean('Is a kept product', readonly=1),
+
+        'oc_validation': fields.boolean('OC Validation', readonly=1),
+        'oc_validation_date': fields.datetime('Validation Date', readonly=1), #lastValidationDate
+        'oc_devalidation_date': fields.datetime('Devalidation Date', readonly=1), #lastDevalidationDate
+        'oc_devalidation_reason': fields.text('Devalidation Reason', readonly=1), #devalidationReason
+        'oc_comments': fields.text('Use Comments', readonly=1), # comments
+        'oc_project_restrictions': fields.many2many('unidata.project', 'product_project_rel', 'product_id', 'unidata_project_id', 'Project Restrictions', readonly=1, order_by='code'),
+        'oc_country_restrictions': fields.many2many('unidata.country', 'product_country_rel', 'product_id', 'unidata_country_id', 'Country Restrictions', readonly=1, order_by='name'),
+        'oc_coordo_restrictions': fields.function(_get_oc_coordo_restrictions, method=True, type='many2many', relation='msf.instance', string='Mission Restrictions'),
+        'msl_project_ids': fields.many2many('unidata.project', 'product_msl_rel', 'product_id', 'msl_id', 'MSL List', readonly=1, order_by='code', sql_rel_domain="product_msl_rel.creation_date is not null"),
+        'restrictions_txt': fields.function(_get_restrictions_txt, method=True, type='text', string='Restrictions'),
+        'is_mml_valid': fields.function(_get_is_mml_valid, method=True, type='selection', selection=[('yes', 'Yes'), ('no', 'No'), ('', '')], string='MML Valid ?'),
+        'is_msl_valid': fields.function(_get_is_msl_valid, method=True, type='selection', selection=[('yes', 'Yes'), ('no', 'No'), ('', '')], string='MSL Valid ?'),
+        'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance ?'),
+        'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unidata.project', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
     }
+
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
         if touched_fields != ['active', 'local_from_hq', 'local_activation_from_merge', 'id']:
@@ -1168,11 +1384,17 @@ class product_attributes(osv.osv):
                 field.set('invisible', '0')
             res['arch'] = etree.tostring(root)
 
-        if view_type == 'form' and self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'esc_line'):
-            root = etree.fromstring(res['arch'])
-            for field in root.xpath('//field[@name="finance_price"]|//field[@name="finance_price_currency_id"]'):
-                field.set('invisible', '0')
-            res['arch'] = etree.tostring(root)
+        if view_type == 'form':
+            esc_line = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'esc_line')
+            if esc_line or uid == 1:
+                root = etree.fromstring(res['arch'])
+                if esc_line:
+                    for field in root.xpath('//button[@name="debug_ud"]'):
+                        field.set('invisible', '0')
+                if esc_line:
+                    for field in root.xpath('//field[@name="finance_price"]|//field[@name="finance_price_currency_id"]'):
+                        field.set('invisible', '0')
+                res['arch'] = etree.tostring(root)
 
         if view_type == 'search' and context.get('available_for_restriction'):
             context.update({'search_default_not_restricted': 1})
@@ -3286,6 +3508,39 @@ class product_attributes(osv.osv):
             ('quarantine_qty', '>', 0), ('input_qty', '>', 0), ('opdd_qty', '>', 0)
         ]
         return self.pool.get('stock.mission.report.line').search_exist(cr, uid, srml_domain, context=context)
+
+    def debug_ud(self, cr, uid, ids, context=None):
+        ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+        for x in self.read(cr, uid, ids, ['msfid', 'default_code'], context=context):
+            if x['msfid']:
+                try:
+                    p = ud.query(q_filter='msfIdentifier=%d'%x['msfid'])
+                    wizard_obj = self.pool.get('physical.inventory.import.wizard')
+                    return wizard_obj.message(cr, uid, title=_('API Result'), message=json.dumps(p, indent=2))
+                except requests.exceptions.HTTPError as e:
+                    raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
+            else:
+                raise osv.except_osv(_('Error'), _('MSFID not set on product %s') % (x['default_code'], ))
+        return True
+
+    def pull_ud(self, cr, uid, ids, context=None):
+        ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+
+        code_updated = []
+        update = False
+        for x in self.read(cr, uid, ids, ['msfid', 'default_code'], context=context):
+            if x['msfid']:
+                try:
+                    ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False)
+                    code_updated.append(x['default_code'])
+                    if not update:
+                        update = x['id']
+                except requests.exceptions.HTTPError as e:
+                    raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
+        if code_updated:
+            self.log(cr, uid, update, _('%s updated from UniData') % ', '.join(code_updated))
+        return True
+
 
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])

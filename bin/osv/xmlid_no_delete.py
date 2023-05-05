@@ -80,7 +80,8 @@ prevent_deletion =  {
         ('order_types', 'res_partner_local_market')
     ],
     'res.users': [
-        ('base', 'user_sync')
+        ('base', 'user_sync'),
+        ('base', 'user_unidata_pull'),
     ],
     'stock.incoterms': [
         ('stock', 'incoterm_EXW'),
