@@ -3446,7 +3446,7 @@ class product_attributes(osv.osv):
                 except requests.exceptions.HTTPError as e:
                     raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
             else:
-                raise osv.except_osv(_('Error'), _('MSID not set on product %s') % (x['default_code'], ))
+                raise osv.except_osv(_('Error'), _('MSFID not set on product %s') % (x['default_code'], ))
         return True
 
     def pull_ud(self, cr, uid, ids, context=None):

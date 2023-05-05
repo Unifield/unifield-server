@@ -112,7 +112,7 @@ class unidata_project(osv.osv):
     }
     _sql_constraints = [
         ('unique_code', 'unique(code)', 'Code already exists.'),
-        ('unique_msfid', 'unique(msfid)', 'MSID must be unique'),
+        ('unique_msfid', 'unique(msfid)', 'MSFID must be unique'),
     ]
 
     _defauls = {
