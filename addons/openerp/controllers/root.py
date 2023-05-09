@@ -195,7 +195,7 @@ class Root(SecuredController):
 
         refresh_timeout = 0 # in ms
         display_warning = 0 # in ms
-        if cherrypy.session.timeout:
+        if cherrypy.request.config.get('tools.sessions.persistent', True) and cherrypy.session.timeout:
             display_warning = cherrypy.session.timeout * 60 / 4 * 1000
             refresh_timeout = cherrypy.session.timeout * 60 / 10 * 1000
         return dict(parents=parents, tools=tools, load_content=(next and next or ''),
