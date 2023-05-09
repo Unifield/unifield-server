@@ -411,7 +411,9 @@ class ir_sequence(osv.osv):
 
     def _get_instance(self, cr, uid):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.po_fo_cost_center_id and company.instance_id.po_fo_cost_center_id.code or ''
+        if company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.po_fo_cost_center_id:
+            return company.instance_id.po_fo_cost_center_id.code
+        raise osv.except_osv(_('Error'), _('Add the cost center picked for PO/FO reference'))
 
     def _get_instance_code(self, cr, uid):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id

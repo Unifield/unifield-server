@@ -1515,23 +1515,10 @@ class purchase_order(osv.osv):
             )
         return res
 
-    def action_sent(self, cr, uid, ids, context=None):
+    def rfq_sent(self, cr, uid, ids, context=None):
         '''
         Method called when calling button Sent RfQ
         '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        self.write(cr, uid, ids, {
-            'rfq_state': 'sent',
-            'date_confirm': time.strftime('%Y-%m-%d'),
-        }, context=context)
-
-        return True
-
-    def rfq_sent(self, cr, uid, ids, context=None):
         if not ids:
             return {}
         if isinstance(ids, (int, long)):
@@ -1540,20 +1527,11 @@ class purchase_order(osv.osv):
             context = {}
 
         self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
-        for rfq in self.browse(cr, uid, ids, context=context):
-            self.action_sent(cr, uid, [rfq.id], context=context)
-            self.infolog(cr, uid, "The RfQ id:%s (%s) has been sent." % (
-                rfq.id, rfq.name,
-            ))
+        for rfq in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
+            self.write(cr, uid, rfq.id, {'rfq_state': 'sent', 'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
+            self.infolog(cr, uid, "The RfQ id:%s (%s) has been sent." % (rfq.id, rfq.name,))
 
-        datas = {'ids': ids}
-        if len(ids) == 1:
-            # UFTP-92: give a name to report when generated from RfQ worklow sent_rfq stage
-            datas['target_filename'] = 'RFQ_' + rfq.name
-
-        return {'type': 'ir.actions.report.xml',
-                'report_name': 'msf.purchase.quotation',
-                'datas': datas}
+        return True
 
     def action_updated(self, cr, uid, ids, context=None):
         '''

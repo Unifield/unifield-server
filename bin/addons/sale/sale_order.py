@@ -795,6 +795,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
     _order = 'id desc'
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        view = super(sale_order, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' and context.get('from_ost'):
+            form = etree.fromstring(view['arch'])
+            form.attrib['string'] = _('Field Orders and Internal Requests')
+            view['arch'] = etree.tostring(form)
+        return view
+
     def _check_stock_take_date(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -2245,6 +2256,8 @@ class sale_order_line(osv.osv):
                 so.procurement_request = 'f' and
                 so.fo_created_by_po_sync = 't' and -- not a push flow
                 sol.instance_sync_order_ref is null and
+                sol.resourced_original_line is null and -- not from a C&R flow
+                sol.is_line_split = 'f' and -- not a split line (split only available on validated FO lines)
                 coalesce(sol.sync_linked_pol, '') = '' and  -- not created from a PO line (new line added)
                 other_sol.state not in ('cancel', 'cancel_r') and
                 other_sol.instance_sync_order_ref is not null and -- at least 1 other line has a IR / FO ref

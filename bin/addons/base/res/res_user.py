@@ -791,8 +791,7 @@ class users(osv.osv):
                 raise osv.except_osv(_('Warning'), _('You can not deactivate this user, %d documents have to be signed\n%s') % (len(open_sign_ids), ', '.join(list_of_doc)))
             for xuser in self.browse(cr, uid, ids, fields_to_fetch=['name', 'has_valid_signature'], context=context):
                 if xuser.has_valid_signature:
-                    raise osv.except_osv(_('Warning'), _('You can not deactivate %s: the signature is active') % (xuser['name'], ))
-
+                    values.update(self.reset_signature(cr, uid, ids, context=context, from_write_user=True))
 
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
@@ -1057,7 +1056,7 @@ class users(osv.osv):
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1
 
-    def _archive_signature(self, cr, uid, ids, new_from=None, new_to=None, context=None):
+    def _archive_signature(self, cr, uid, ids, new_from=None, new_to=None, from_write_user=None, context=None):
         sign_line_obj = self.pool.get('signature.line')
         for user in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to', 'name'] , context=context):
             if user.esignature_id:
@@ -1080,14 +1079,17 @@ class users(osv.osv):
                 new_data['signature_from'] = new_from
                 if user.signature_to and new_from >= user.signature_to:
                     new_data['signature_to'] = False
-            self.write(cr, uid, [user.id], new_data, context=context)
+            if from_write_user:
+                return new_data
+            else:
+                self.write(cr, uid, [user.id], new_data, context=context)
         return True
 
     def delete_signature(self, cr, uid, ids, context=None):
         return self._archive_signature(cr, uid, ids, context=context)
 
-    def reset_signature(self, cr, uid, ids, context=None):
-        return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), context=context)
+    def reset_signature(self, cr, uid, ids, context=None, from_write_user=False):
+        return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), from_write_user=from_write_user, context=context)
 
     def add_signature(self, cr, uid, ids, context=None):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid

@@ -48,17 +48,6 @@ class product_product(osv.osv):
     '''
     _inherit = 'product.product'
 
-    def on_change_type(self, cr, uid, ids, type, context=None):
-        '''
-        if type is service_with_reception, procure_method is set to make_to_order
-        '''
-        if context is None:
-            context = {}
-
-        if type in ('consu', 'service', 'service_recep'):
-            return {'value': {'procure_method': 'make_to_order', 'supply_method': 'buy', }}
-        return {}
-
     def _check_procurement_for_service_with_recep(self, cr, uid, ids, context=None):
         """
         You cannot select Service Location as Source Location.

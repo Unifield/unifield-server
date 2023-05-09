@@ -133,6 +133,7 @@ class shipment(osv.osv):
         '''
         picking_obj = self.pool.get('stock.picking')
         pack_family_obj = self.pool.get('pack.family.memory')
+        curr_obj = self.pool.get('res.currency')
 
         result = {}
         shipment_result = self.read(cr, uid, ids, ['pack_family_memory_ids', 'state'], context=context)
@@ -167,11 +168,8 @@ class shipment(osv.osv):
             # delivery validated
             delivery_validated = None
             # browse the corresponding packings
-            for packing in picking_obj.browse(cr, uid, packing_ids,
-                                              fields_to_fetch=[
-                                                  'state',
-                                                  'delivered',
-                                                  'backorder_id'], context=context):
+            for packing in picking_obj.browse(cr, uid, packing_ids, fields_to_fetch=['state', 'delivered',
+                                                                                     'backorder_id'], context=context):
                 # state check
                 # because when the packings are validated one after the other, it triggers the compute of state, and if we have multiple packing for this shipment, it will fail
                 # if one packing is draft, even if other packing have been shipped, the shipment must stay draft until all packing are done
@@ -199,36 +197,53 @@ class shipment(osv.osv):
                     # special state corresponding to delivery validated
                     state = 'delivered'
 
-            current_result['state'] = state
             current_result['backshipment_id'] = backshipment_id
 
+            all_returned = True
             pack_fam_ids = shipment['pack_family_memory_ids']
             for pack_fam_id in pack_fam_ids:
                 memory_family = pack_family_dict.get(pack_fam_id)
                 # taken only into account if not done (done means returned packs)
-                if memory_family and not memory_family['not_shipped'] and (shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',)):
-                    # num of packs
-                    num_of_packs = memory_family['num_of_packs']
-                    current_result['num_of_packs'] += int(num_of_packs)
-                    # total weight
-                    total_weight = memory_family['total_weight']
-                    current_result['total_weight'] += int(total_weight)
-                    # total volume
-                    total_volume = memory_family['total_volume']
-                    current_result['total_volume'] += float(total_volume)
-                    # total amount
-                    total_amount = memory_family['total_amount']
-                    current_result['total_amount'] += total_amount
-                    # currency
-                    currency_id = memory_family['currency_id'] or False
-                    current_result['currency_id'] = currency_id
+                if memory_family and not memory_family['not_shipped']:
+                    # The state will not be changed to Returned if all packs are not returned
+                    all_returned = False
+                    if shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',):
+                        # num of packs
+                        num_of_packs = memory_family['num_of_packs']
+                        current_result['num_of_packs'] += int(num_of_packs)
+                        # total weight
+                        total_weight = memory_family['total_weight']
+                        current_result['total_weight'] += int(total_weight)
+                        # total volume
+                        total_volume = memory_family['total_volume']
+                        current_result['total_volume'] += float(total_volume)
+                        # total amount and currency
+                        currency_id = memory_family['currency_id'] or False
+                        total_amount = memory_family['total_amount']
+                        if current_result.get('currency_id') and current_result['currency_id'][0] != currency_id[0]:
+                            current_result['total_amount'] = curr_obj.compute(cr, uid, current_result['currency_id'][0],
+                                                                              currency_id[0], current_result.get('total_amount', 0.00),
+                                                                              round=False, context=context)
+                        current_result['total_amount'] += total_amount
+                        current_result['currency_id'] = currency_id
 
+            if pack_fam_ids and all_returned:
+                state = 'cancel'
+
+            current_result['state'] = state
+
+        comp_curr_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
         for ship in self.browse(cr, uid, ids, fields_to_fetch=['additional_items_ids'], context=context):
             for add in ship.additional_items_ids:
                 result[ship.id]['num_of_packs'] += add.nb_parcels or 0
                 result[ship.id]['total_weight'] += add.weight or 0
                 result[ship.id]['total_volume'] += add.volume or 0
-                result[ship.id]['total_amount'] += add.value or 0
+                add_value = add.value or 0
+                if add_value and result.get(ship.id) and result[ship.id].get('currency_id') \
+                        and result[ship.id]['currency_id'][0] != comp_curr_id:
+                    add_value = curr_obj.compute(cr, uid, comp_curr_id, result[ship.id]['currency_id'][0], add_value,
+                                                 round=False, context=context)
+                result[ship.id]['total_amount'] += add_value
 
         return result
 
@@ -306,6 +321,31 @@ class shipment(osv.osv):
             ret[x] = _('Shipment List')
         return ret
 
+    def _check_loan(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if the Shipment contains Pack(s) with the Loan or Loan Return Reason Type
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        data_obj = self.pool.get('ir.model.data')
+        loan_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        loan_return_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
+
+        res = {}
+        for ship in self.browse(cr, uid, ids, fields_to_fetch=['pack_family_memory_ids'], context=context):
+            has_loan, has_ret_loan = False, False
+            for pack in ship.pack_family_memory_ids:
+                if pack.ppl_id and pack.ppl_id.reason_type_id.id == loan_id:
+                    has_loan = True
+                if pack.ppl_id and pack.ppl_id.reason_type_id.id == loan_return_id:
+                    has_ret_loan = True
+            res[ship.id] = {'has_loan': has_loan, 'has_ret_loan': has_ret_loan}
+
+        return res
+
     _columns = {
         'name': fields.char(string='Reference', size=1024),
         'date': fields.datetime(string='Creation Date'),
@@ -362,7 +402,7 @@ class shipment(osv.osv):
                                                                                       ('shipped', 'Ready to ship'),
                                                                                       ('done', 'Dispatched'),
                                                                                       ('delivered', 'Received'),
-                                                                                      ('cancel', 'Cancelled')], string='State', multi='get_vals',
+                                                                                      ('cancel', 'Returned')], string='State', multi='get_vals',
                                  store={
                                      'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
         }),
@@ -388,6 +428,8 @@ class shipment(osv.osv):
             }
         ),
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title', internal="1"),
+        'has_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Pack(s)'),
+        'has_ret_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Return Pack(s)'),
     }
 
     def _get_sequence(self, cr, uid, context=None):
@@ -4579,7 +4621,7 @@ class pack_family_memory(osv.osv):
                 min(m.width) as width,
                 min(m.height) as height,
                 min(m.weight) as weight,
-                min(m.state) as state,
+                case when bool_and(m.not_shipped) = 't' then 'returned' else min(m.state) end as state,
                 min(m.location_id) as location_id,
                 min(m.location_dest_id) as location_dest_id,
                 min(m.pack_type) as pack_type,
@@ -4664,8 +4706,7 @@ class pack_family_memory(osv.osv):
         'state': fields.selection(selection=[
             ('draft', 'Draft'),
             ('assigned', 'Available'),
-            ('stock_return', 'Returned to Stock'),
-            ('ship_return', 'Returned from Shipment'),
+            ('returned', 'Returned'),
             ('cancel', 'Cancelled'),
             ('done', 'Closed'), ], string='State'),
         'pack_state': fields.char('Pack State', size=64),

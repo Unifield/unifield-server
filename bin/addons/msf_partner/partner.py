@@ -968,6 +968,39 @@ class res_partner(osv.osv):
 
         return {'value': r}
 
+    def on_change_po_pricelist(self, cr, uid, ids, po_pricelist_id, context=None):
+        """
+        Set the data of property_product_pricelist to match property_product_pricelist_purchase's currency
+        """
+        if context is None:
+            context = {}
+
+        pricel_obj = self.pool.get('product.pricelist')
+        fo_pricelist_ids = False
+        if po_pricelist_id:
+            po_pricel_curr_id = pricel_obj.browse(cr, uid, po_pricelist_id, fields_to_fetch=['currency_id'],
+                                                  context=context).currency_id.id
+            fo_pricelist_ids = pricel_obj.search(cr, uid, [('currency_id', '=', po_pricel_curr_id), ('type', '=', 'sale')], context=context)
+        return {'value': {'property_product_pricelist': fo_pricelist_ids and fo_pricelist_ids[0] or False}}
+
+    def on_change_fo_pricelist(self, cr, uid, ids, po_pricelist_id, context=None):
+        """
+        Prevent the manual modification of property_product_pricelist
+        """
+        if context is None:
+            context = {}
+
+        pricel_obj = self.pool.get('product.pricelist')
+        fo_pricelist_ids = False
+        if po_pricelist_id:
+            po_pricel_curr_id = pricel_obj.browse(cr, uid, po_pricelist_id, fields_to_fetch=['currency_id'],
+                                                  context=context).currency_id.id
+            fo_pricelist_ids = pricel_obj.search(cr, uid, [('currency_id', '=', po_pricel_curr_id), ('type', '=', 'sale')], context=context)
+        return {
+            'warning': {'title': _('Warning'), 'message': _('You can not change the Field Orders Default Currency manually. It will automatically match the currency of Purchase Default Currency when it is changed.')},
+            'value': {'property_product_pricelist': fo_pricelist_ids and fo_pricelist_ids[0] or False}
+        }
+
     def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
         '''
         Sort suppliers to have all suppliers in product form at the top of the list

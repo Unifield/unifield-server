@@ -1313,7 +1313,9 @@
 
                     <notebook colspan="4">
                         <page string="Pack Families">
-                            <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])], 'notselectable': [('state', '!=', 'draft')]}" o2m_selectable="2">
+                            <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])], 'notselectable': [('state', '!=', 'draft')]}"
+                            filter_selector="[('Show all', []), ('Hide closed', [('state', '!=', 'done')]), ('Show closed only', [('state', '=', 'done')]), ('Hide returned', [('state', 'not in', ['returned', 'cancel'])]), ('Show returned only', [('state', 'in', ['returned', 'cancel'])])]"
+                            default_selector="'3'" o2m_selectable="2">
                                 <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1" editable_style="new" noteditable="fake_state not in ['draft','assigned']">
                                     <field name="fake_state" invisible="True" />
                                     <field name="sale_order_id" readonly="1"/>
@@ -1334,7 +1336,7 @@
                                     <field name="currency_id" readonly="1" />
                                     <field name="state" readonly="1" />
                                     <field name="pack_state" readonly="1" invisible="1"/>
-                                    <field name="not_shipped"  string="Returned" readonly="1" />
+                                    <field name="not_shipped" string="Returned" invisible="1" />
                                     <field name="volume_set" invisible="1" />
                                     <field name="weight_set" invisible="1" />
                                     <field name="quick_flow" invisible="1" />
@@ -1505,7 +1507,7 @@
 						<filter icon="terp-check" name="shipped" string="Ready to ship" domain="[('state','=','shipped')]" />
 						<filter icon="terp-dialog-close" name="closed" string="Dispatched" domain="[('state','=','done')]" />
 						<filter icon="gtk-yes" name="delivered" string="Received" domain="[('state','=','delivered')]" />
-                        <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
+                        <filter icon="gtk-undo" name="returned" string="Returned" domain="[('state','=','cancel')]" />
 						<separator orientation="vertical"/>
 						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('num_of_packs','=', 0)]" />
 						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('num_of_packs','!=', 0)]" />

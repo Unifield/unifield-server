@@ -62,7 +62,9 @@
         "dashboard/board_purchase_view.xml",
         "dashboard/board_sale_view.xml",
         "dashboard/board_warehouse_view.xml",
+
         "view/signature_view.xml",
+        'wizard/signature_follow_up_search_wizard.xml',
     ],
     'demo_xml': [
     ],

@@ -250,6 +250,7 @@ class automated_import_job(osv.osv):
             started_job_id = False
             md5 = False
             error = None
+            non_blocking_error = None
             data64 = None
             filename = False
             oldest_file = False
@@ -306,23 +307,24 @@ class automated_import_job(osv.osv):
                                 break
 
                         elif md5 and self.search_exist(cr, uid, [('import_id', '=', import_data.id), ('file_sum', '=', md5)], context=context):
-                            error = _('A file with same checksum has been already imported !')
+                            non_blocking_error = _('A file with same checksum has been already imported !')
                             remote.move_to_process_path(filename, success=False)
                             self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
 
-                    if error:
-                        self.infolog(cr, uid, '%s :: %s' % (import_data.name , error))
+                    if error or non_blocking_error:
+                        self.infolog(cr, uid, '%s :: %s' % (import_data.name, error or non_blocking_error))
                         self.write(cr, uid, [job.id], {
                             'filename': filename,
                             'file_to_import': data64,
                             'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                             'nb_processed_records': 0,
                             'nb_rejected_records': 0,
-                            'comment': error,
+                            'comment': error or non_blocking_error,
                             'file_sum': md5,
                             'state': 'done' if no_file else 'error',
                         }, context=context)
-                        no_file = True
+                        if error:
+                            no_file = True
                         continue
                 else: # file to import given
                     no_file = True

@@ -897,8 +897,41 @@
         <record id="us_8417_upd_srv_loc" model="patch.scripts">
             <field name="method">us_8417_upd_srv_loc</field>
         </record>
+
         <record id="us_11195_oca_period_nr" model="patch.scripts">
             <field name="method">us_11195_oca_period_nr</field>
+        </record>
+
+        <!-- UF29.0 -->
+        <record id="us_11177_bn_for_kcl_items" model="patch.scripts">
+            <field name="method">us_11177_bn_for_kcl_items</field>
+        </record>
+
+        <record id="us_11046_fix_standard_price_products" model="patch.scripts">
+            <field name="method">us_11046_fix_standard_price_products</field>
+        </record>
+
+        <record id="us_8968_shipments_returned" model="patch.scripts">
+            <field name="method">us_8968_shipments_returned</field>
+        </record>
+
+        <record id="us_10629_fix_partner_fo_pricelist" model="patch.scripts">
+            <field name="method">us_10629_fix_partner_fo_pricelist</field>
+        </record>
+
+        <record id="us_11022_accrual_third_party" model="patch.scripts">
+            <field name="method">us_11022_accrual_third_party</field>
+        </record>
+
+        <record id="us_10904_donations_done_state" model="patch.scripts">
+            <field name="method">us_10904_donations_done_state</field>
+        </record>
+
+        <record id="us_6976_analytic_translations" model="patch.scripts">
+            <field name="method">us_6976_analytic_translations</field>
+        </record>
+        <record id="us_10885_tc_entries" model="patch.scripts">
+            <field name="method">us_10885_tc_entries</field>
         </record>
     </data>
 </openerp>

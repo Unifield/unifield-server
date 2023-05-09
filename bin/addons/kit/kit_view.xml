@@ -61,8 +61,8 @@
 				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
 				            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
 				            		<field name="comment" />
-									<field name="item_lot"
-				            			on_change="on_lot_change(item_product_id, item_lot, context)" 
+									<field name="item_lot_id"
+				            			on_change="on_lot_change(item_product_id, item_lot_id, context)"
 				            			attrs="{'readonly': [('hidden_batch_management_mandatory', '=', False)], 'required': [('composition_type', '=', 'real'), ('hidden_batch_management_mandatory', '=', True)]}" />
 				            		<field name="item_exp" attrs="{'readonly': [('hidden_perishable_mandatory', '=', False)], 'required': [('composition_type', '=', 'real'), ('hidden_perishable_mandatory', '=', True)]}" />
 				            		<field name="hidden_asset_mandatory" invisible="True" />
@@ -161,8 +161,8 @@
 				            			attrs="{'readonly': ['|', ('hidden_asset_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="kcl_id" on_change="onchange_kcl_id(kcl_id, item_qty)" attrs="{'readonly': ['|', '|', '|', ('item_product_id', '=', False), ('product_subtype', '!=', 'kit'), ('kit_state', 'not in', ['', 'draft', 'completed']), ('item_uom_rounding_is_pce', '=', False)]}" />
 				            		<field name="comment" />
-									<field name="item_lot"
-				            			on_change="on_lot_change(item_product_id, item_lot, context)"
+									<field name="item_lot_id" domain="[('product_id','=',item_product_id), ('check_type','=', True)]"
+				            			on_change="on_lot_change(item_product_id, item_lot_id, context)"
 				            			attrs="{'readonly': ['|', ('hidden_batch_management_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])], 'required': [('hidden_batch_management_mandatory', '=', True)]}" />
 				            		<field name="item_exp" attrs="{'readonly': ['|', ('hidden_perishable_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])], 'required': [('hidden_perishable_mandatory', '=', True)]}" />
 				            		<field name="hidden_asset_mandatory" invisible="True" />
@@ -350,7 +350,7 @@
 		                        <field name="item_qty" readonly="True" />
 		                        <field name="item_uom_id" readonly="True" />
 		                        <field name="item_asset_id" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
-		                        <field name="item_lot" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
+		                        <field name="item_lot_id" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
             					<field name="item_exp" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
 	                        </page>
 	                        <page string="Notes">
@@ -378,7 +378,7 @@
 					<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_asset_id" readonly="True" />
-            		<field name="item_lot" readonly="True" />
+            		<field name="item_lot_id" readonly="True" />
             		<field name="item_exp" readonly="True" />
             		<field name="hidden_batch_management_mandatory" />
             		<field name="hidden_perishable_mandatory" />
@@ -402,7 +402,7 @@
 					<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_asset_id" readonly="True" />
-            		<field name="item_lot" readonly="True" string="Component/BN" />
+            		<field name="item_lot_id" readonly="True" string="Component/BN" />
             		<field name="item_exp" readonly="True" />
             		<field name="hidden_batch_management_mandatory" />
             		<field name="hidden_perishable_mandatory" />
@@ -449,7 +449,7 @@
 					<field name="item_kit_id" domain="[('composition_type', '=', 'real')]" select="1" string="Kit" />
                     <field name="item_module" select="1" />
                     <field name="item_product_id" select="1" />
-                    <field name="item_lot" select="1" />
+                    <field name="item_lot_id" select="1" />
                     <field name="item_exp" select="1" />
 					<newline />
                   	<group expand="0" string="Group By..." colspan="4" col="10">
@@ -458,7 +458,7 @@
                   		<filter string="Module" icon="gtk-directory" domain="[]" context="{'group_by':'item_module'}" />
 	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'item_product_id'}" />
 	                    <separator orientation="vertical"/>
-	                    <filter string="Batch Nb" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'item_lot'}" />
+	                    <filter string="Batch Nb" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'item_lot_id'}" />
 	                    <filter string="Expiry Date" icon="terp-go-today" domain="[]" context="{'group_by':'item_exp'}" />
                 	</group>
               	</search>
@@ -522,7 +522,7 @@
         </record>
 
 		<record id="kit_composition_real_action_form_view" model="ir.actions.act_window.view">
-            <field eval="10" name="sequence" />
+            <field eval="11" name="sequence" />
             <field name="view_mode">form</field>
             <field name="view_id" ref="view_composition_kit_real_form" />
             <field name="act_window_id" ref="kit_composition_real_action" />
