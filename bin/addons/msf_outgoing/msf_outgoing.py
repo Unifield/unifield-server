@@ -792,7 +792,6 @@ class shipment(osv.osv):
         # Objects
         data_obj = self.pool.get('ir.model.data')
 
-        date_tools = self.pool.get('date.tools')
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1648,7 +1647,13 @@ class shipment(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
 
+        if context is None:
+            context = {}
+
+        if context.get('shipment_actual_date'):
+            self.write(cr, uid, ids, {'shipment_actual_date': context['shipment_actual_date']}, context=context)
         for shipment in self.browse(cr, uid, ids, context=context):
+
             # validate should only be called on shipped shipments
             if shipment.state != 'shipped':
                 raise osv.except_osv(
@@ -1919,7 +1924,7 @@ class select_actual_ship_date_wizard(osv.osv_memory):
 
         ship_obj = self.pool.get('shipment')
         for wiz in self.browse(cr, uid, ids, context=context):
-            ship_obj.write(cr, uid, wiz.shipment_id.id, {'shipment_actual_date': wiz.shipment_actual_date}, context=context)
+            context['shipment_actual_date'] = wiz.shipment_actual_date
             ship_obj.validate_bg(cr, uid, [wiz.shipment_id.id], context=context)
 
         return {'type': 'ir.actions.act_window_close'}

@@ -1178,7 +1178,7 @@ class job_in_progress(osv.osv_memory):
         job_id = self.create(cr, uid, {'res_id': object_id, 'model': model, 'name': name, 'total': nb_lines, 'src_name': src_name})
         th = threading.Thread(
             target=self._run_bg_job,
-            args=(cr, uid, job_id,  method_to_call),
+            args=(cr.dbname, uid, job_id,  method_to_call),
             kwargs={'src_ids': src_ids, 'context': context}
         )
         th.start()
@@ -1194,9 +1194,9 @@ class job_in_progress(osv.osv_memory):
         return return_success
 
 
-    def _run_bg_job(self, cr, uid, job_id, method, src_ids, context=None):
+    def _run_bg_job(self, crname, uid, job_id, method, src_ids, context=None):
 
-        new_cr = pooler.get_db(cr.dbname).cursor()
+        new_cr = pooler.get_db(crname).cursor()
         try:
             res = False
             process_error = False
