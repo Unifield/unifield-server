@@ -28,7 +28,7 @@
     "category" : "Generic Modules/Inventory Control",
     # depends on specific_locations because of view_picking_out_form -> stock_moves>form>location_id>quarantine domain
     # depends on reason_types_moves because of view_picking_form -> stock_moves>form>location_id>domain restriction
-    "depends" : ["sale", "purchase", "stock", "procurement_cycle", "specific_locations", "reason_types_moves", "stock_override"],
+    "depends" : ["sale", "purchase", "stock", "procurement_cycle", "specific_locations", "reason_types_moves", "stock_override", "procurement_request"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
