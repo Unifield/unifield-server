@@ -323,6 +323,53 @@ class account_move_line(osv.osv):
             res[aml.id] = mapping_dict.get(aml.account_id.id, False)
         return res
 
+    def _search_hq_acc(self, cr, uid, ids, name, args, context=None):
+        if not len(args):
+            return []
+        if len(args) != 1:
+            msg = _("Domain %s not supported") % (str(args),)
+            raise osv.except_osv(_('Error'), msg)
+        dom = []
+        if args[0][1] not in ('ilike', 'not ilike', 'in', 'not in', '=', '<>'):
+            msg = _("Operator %s not supported") % (args[0][1],)
+            raise osv.except_osv(_('Error'), msg)
+        if not args[0][2]:
+            return []
+        if args[0][1] in ('ilike', 'not ilike'):
+            mapping_ids = self.pool.get('account.export.mapping').search(cr, uid, [('mapping_value', 'ilike', args[0][2])], context=context)
+            aml_query = '''
+                          SELECT aml.id,aem.mapping_value
+                          FROM account_move_line aml, account_export_mapping aem
+                          WHERE aml.account_id = aem.account_id and aem.id = ANY(%s);
+                          '''
+            cr.execute(aml_query, (mapping_ids,))
+            aml_ids = cr.fetchall() or []
+
+        else:
+            if args[0][1] in ('=', '<>'):
+                aml_query = '''
+                              SELECT aml.id,aem.mapping_value
+                              FROM account_move_line aml, account_export_mapping aem
+                              WHERE aml.account_id = aem.account_id AND aem.mapping_value = %s;
+                              '''
+
+            if args[0][1] in ('in', 'not in'):
+                aml_query = '''
+                              SELECT aml.id,aem.mapping_value
+                              FROM account_move_line aml, account_export_mapping aem
+                              WHERE aml.account_id = aem.account_id AND aem.mapping_value = ANY(%s);
+                              '''
+
+            cr.execute(aml_query, (args[0][2],))
+            aml_ids = cr.fetchall() or []
+
+        if not aml_ids:
+            return dom
+        if args[0][1] in ('ilike','=', 'in'):
+            dom = [('id', 'in', [x[0] for x in aml_ids])]
+        elif args[0][1] in ('not ilike', '<>', 'not in'):
+            dom = [('id', 'not in', [x[0] for x in aml_ids])]
+        return dom
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
@@ -383,7 +430,7 @@ class account_move_line(osv.osv):
         'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
                                  store=False, help='DB ID used for Vertical Integration'),
         'product_code': fields.related('product_id', 'default_code', type='char', size=64, string='Product Code', readonly=True),
-        'hq_system_account': fields.function(_get_hq_system_acc, type='char', store=False,
+        'hq_system_account': fields.function(_get_hq_system_acc, type='char', store=False, fnct_search=_search_hq_acc,
                                              method=True, string='HQ System Account', size=32),
     }
 

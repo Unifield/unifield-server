@@ -63,20 +63,6 @@ class patch_scripts(osv.osv):
         WHERE model='account.export.mapping'
         """)
 
-    def us_11130_hq_account_mapping(self, cr, uid, *a, **b):
-        cr.execute("""UPDATE account_analytic_line aal
-        SET hq_system_account=aem.mapping_value
-        FROM account_export_mapping aem
-        WHERE aal.general_account_id=aem.account_id
-        """)
-
-        cr.execute("""UPDATE account_move_line aml
-                SET hq_system_account=aem.mapping_value
-                FROM account_export_mapping aem
-                WHERE aml.account_id=aem.account_id
-                """)
-        return True
-
     # UF28.0
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
