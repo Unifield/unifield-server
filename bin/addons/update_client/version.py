@@ -12,7 +12,8 @@ from updater import base_version, server_version, isset_lock
 import calendar
 import time
 import logging
-
+from tools import config
+import os
 import hashlib
 from io import StringIO
 import tarfile
@@ -30,7 +31,7 @@ class version(osv.osv):
 
     def _patch_needs_to_be_downloaded(self, cr, uid, ids, name, args, context=None):
         cr.execute("""\
-            SELECT id, patch IS NULL FROM %s WHERE id IN %%s""" % self._table, [tuple(ids)])  # not_a_user_entry
+            SELECT id, patch IS NULL and coalesce(patch_path, '')='' FROM %s WHERE id IN %%s""" % self._table, [tuple(ids)])  # not_a_user_entry
         return dict(cr.fetchall())
 
     _columns = {
@@ -44,6 +45,7 @@ class version(osv.osv):
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag", readonly=True),
         'need_download' : fields.function(_patch_needs_to_be_downloaded,
                                           type='boolean', method=True, readonly=True),
+        'patch_path': fields.char('Patch stored on filesystem', size=256),
     }
 
     _defaults = {
@@ -57,6 +59,12 @@ class version(osv.osv):
     ]
 
     _logger = logging.getLogger('update_client')
+
+    def get_patch_folder(self):
+        folder = os.path.join(config['root_path'], '..', 'Patches')
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        return folder
 
     def init(self, cr):
         try:
@@ -87,6 +95,43 @@ class version(osv.osv):
                 self.write(cr, 1, [versions_id[server_version_keys[-1]]], {'applied':fields.datetime.now()})
         except BaseException:
             self._logger.exception("version init failure!")
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'patch' in vals:
+            if not vals['patch']:
+                vals['patch_path'] = False
+            else:
+                if isinstance(ids, int):
+                    name = '%s.zip' % ids
+                else:
+                    name = '%s.zip' % ids[0]
+
+                patch_folder = self.get_patch_folder()
+                vals['patch_path'] = os.path.join(patch_folder, name)
+                with open(vals['patch_path'], 'wb') as desc:
+                    desc.write(vals['patch'])
+                vals['patch'] = False
+        return super(version, self).write(cr, uid, ids, vals, context=context)
+
+    def read(self, cr, uid, ids, fields, context=None, load='_classic_read'):
+        if 'patch' in fields:
+            fields.append('patch_path')
+
+        datas = super(version, self).read(cr, uid, ids, fields, context=context, load=load)
+        if isinstance(ids, int):
+            datas = [datas]
+
+        if 'patch' in fields:
+            for d in datas:
+                if not d['patch'] and d['patch_path']:
+                    d['patch'] = open(d['patch_path'], 'rb').read()
+                    del(d['patch_path'])
+
+        if isinstance(ids, int):
+            return datas[0]
+        return datas
+
+
 
     def _need_restart(self, cr, uid, context=None):
         return isset_lock()

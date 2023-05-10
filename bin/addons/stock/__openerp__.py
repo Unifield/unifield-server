@@ -86,6 +86,7 @@ Thanks to the double entry management, the inventory controlling is powerful and
         "wizard/stock_delivery_wizard_view.xml",
         "report/stock_delivery_report_view.xml",
         "report/closed_physical_inventory_report.xml",
+        "wizard/loan_certificate_wizard.xml",
     ],
     'installable': True,
     'active': False,

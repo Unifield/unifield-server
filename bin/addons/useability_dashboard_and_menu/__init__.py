@@ -20,3 +20,5 @@
 ##############################################################################
 from . import sale
 from . import signature
+from . import wizard
+from . import report

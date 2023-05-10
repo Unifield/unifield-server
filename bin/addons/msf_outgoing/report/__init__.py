@@ -23,6 +23,7 @@ from . import pro_forma_invoice
 from . import invoice
 from . import certificate_donation
 from . import certificate_free_gift
+from . import shipment_donation_certificate
 from . import stock_picking_test
 from . import picking_ticket
 from . import packing_list

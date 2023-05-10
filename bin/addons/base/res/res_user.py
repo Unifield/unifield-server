@@ -114,6 +114,7 @@ class groups(osv.osv):
             context = {}
         if not ids:
             return True
+
         if 'name' in vals:
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
@@ -246,6 +247,8 @@ def _tz_get(self,cr,uid, context=None):
 class users(osv.osv):
     __admin_ids = {}
     __sync_user_ids = {}
+    __unidata_pull_ids = {}
+    __ignore_ur_ids = {}
     _uid_cache = {}
     _name = "res.users"
     _order = 'name'
@@ -639,6 +642,16 @@ class users(osv.osv):
             self.__sync_user_ids[cr.dbname] = ir_model_data_obj.read(cr, 1, [mdid], ['res_id'])[0]['res_id']
         return self.__sync_user_ids[cr.dbname]
 
+    def _get_unidata_pull_user_id(self, cr):
+        if self.__unidata_pull_ids.get(cr.dbname) is None:
+            self.__unidata_pull_ids[cr.dbname] = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_unidata_pull')[1]
+        return self.__unidata_pull_ids[cr.dbname]
+
+    def _get_ignore_ur_ids(self, cr):
+        if self.__ignore_ur_ids.get(cr.dbname) is None:
+            self.__ignore_ur_ids[cr.dbname] = [self._get_unidata_pull_user_id(cr), self._get_sync_user_id(cr)]
+        return self.__ignore_ur_ids[cr.dbname]
+
     def _get_company(self,cr, uid, context=None, uid2=False):
         if not uid2:
             uid2 = uid
@@ -768,6 +781,9 @@ class users(osv.osv):
                     if not (values['company_id'] in self.read(cr, 1, uid, ['company_ids'], context=context)['company_ids']):
                         del values['company_id']
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
+
+        if values.get('active') and self._get_unidata_pull_user_id(cr) in ids:
+            raise osv.except_osv(_('Error'), _('Activation of UniData_pull user is not allowed.'))
 
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()

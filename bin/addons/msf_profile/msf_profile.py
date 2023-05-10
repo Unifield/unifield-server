@@ -102,6 +102,20 @@ class patch_scripts(osv.osv):
 
 
     # UF29.0
+    def us_11399_oca_mm_target(self, cr, uid, *a, **b):
+        if self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id:
+            cr.execute('''
+                update
+                    account_target_costcenter
+                set
+                    is_target='f'
+                where
+                    is_target='t'
+                    and id in
+                        (select res_id from ir_model_data where name='b8c174f0-2483-11e5-9d58-0050569320a7/account_target_costcenter/723')
+            ''')
+        return True
+
     def us_11177_bn_for_kcl_items(self, cr, uid, *a, **b):
         '''
         For each KCL item with item_lot/item_exp filled, the script will try to find a corresponding BN or create a new
@@ -242,7 +256,34 @@ class patch_scripts(osv.osv):
         cr.execute("update ir_translation set name='account.analytic.account,nameko' where name='account.analytic.account,name' and type='model'")
         return True
 
+    def us_10835_disable_iil_menu(self, cr, uid, *a, **b):
+        # hide menuitems
+        setup_obj = self.pool.get('esc_line.setup')
+        esc_line_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [esc_line_install])
+        return True
+
+
     # UF28.0
+    def us_10885_tc_entries(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance in ('BD_DHK_OCA', 'HQ_OCA', 'MY_CPLC_OCA', 'OCBHQ', 'OCBPK105', 'OCG_HQ'):
+            cr.execute('''
+                update
+                    audittrail_log_line l set res_id = p.product_tmpl_id
+                from
+                    ir_model m, ir_model_fields f , product_product p
+                where
+                    m.id=l.object_id
+                    and f.id = l.field_id
+                    and p.id=l.res_id
+                    and f.model_id != m.id
+                    and m.model='product.template'
+                    and p.id!=p.product_tmpl_id
+                    and l.create_date > (select applied from sync_client_version where name='UF27.0')
+            ''')
+        return True
+
     def us_11195_oca_period_nr(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
             return True
@@ -5862,9 +5903,13 @@ class res_users(osv.osv):
     _name = 'res.users'
 
     def _get_default_ctx_lang(self, cr, uid, context=None):
-        config_lang = self.pool.get('unifield.setup.configuration').get_config(cr, uid).lang_id
-        if config_lang:
-            return config_lang
+        config_obj = self.pool.get('unifield.setup.configuration')
+        if config_obj.search_exists(cr, uid, [], context=context):
+            # if not record, get_config create a record
+            # incorrect in case of user creation during install
+            config_lang = config_obj.get_config(cr, uid).lang_id
+            if config_lang:
+                return config_lang
         if self.pool.get('res.lang').search(cr, uid, [('translatable','=',True), ('code', '=', 'en_MF')]):
             return 'en_MF'
         return 'en_US'

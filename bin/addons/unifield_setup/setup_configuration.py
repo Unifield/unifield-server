@@ -62,6 +62,7 @@ class unifield_setup_configuration(osv.osv):
         'previous_fy_dates_allowed': fields.boolean(string='Does the system allow document dates on previous Fiscal Year?'),
         'customer_commitment': fields.boolean(string='Does the system allow Customer Commitment Vouchers ?'),
         'signature': fields.boolean(string='Activate Electronic Validation ?'),
+        'esc_line': fields.boolean(string='Activate International Invoices Lines ?'),
     }
 
     _defaults = {
@@ -79,6 +80,7 @@ class unifield_setup_configuration(osv.osv):
         'previous_fy_dates_allowed': lambda *a: False,
         'customer_commitment': False,
         'signature': False,
+        'esc_line': False,
     }
 
     _constraints = [

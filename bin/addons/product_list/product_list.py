@@ -543,7 +543,7 @@ product and can't be deleted"""),
         # UFTP-327 default_code passed from size 14 to 18
         # http://jira.unifield.org/browse/UFTP-327?focusedCommentId=36173&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-36173
         'default_code': fields.char(
-            string='CODE',
+            string='Code',
             size=18,
             select=True,
         ),
@@ -615,7 +615,7 @@ class product_template(osv.osv):
     _columns = {
         'name': fields.char(
             size=128,
-            string='DESCRIPTION',
+            string='Description',
             required=True,
             translate=True,
         ),

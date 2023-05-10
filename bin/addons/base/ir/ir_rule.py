@@ -107,7 +107,7 @@ class ir_rule(osv.osv):
             return None
 
         # do not merge these 2 conditions to prevent infinite loop
-        if uid == self.pool.get('res.users')._get_sync_user_id(cr):
+        if uid in self.pool.get('res.users')._get_ignore_ur_ids(cr):
             return None
 
         cr.execute("""SELECT r.id

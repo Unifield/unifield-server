@@ -586,7 +586,7 @@ class ir_model_access(osv.osv):
             # TODO: exclude xml-rpc requests
             return True
 
-        if uid== self.pool.get('res.users')._get_sync_user_id(cr):
+        if uid in self.pool.get('res.users')._get_ignore_ur_ids(cr):
             # User for sync have all accesses
             return True
 

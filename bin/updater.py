@@ -513,7 +513,7 @@ def do_prepare(cr, revision_ids):
         return ('missing', message, values)
 
     new_updater_version = os.path.join(path, 'Server', 'updater.py')
-    logger.info('Updateer.py: %s %s'%(new_updater_version, os.path.isfile(new_updater_version)))
+    logger.info('Updater.py status: %s %s'%(new_updater_version, os.path.isfile(new_updater_version)))
     if os.path.isfile(new_updater_version):
         logger.info('Copy %s'%new_updater_version)
         shutil.copy(new_updater_version, '.')

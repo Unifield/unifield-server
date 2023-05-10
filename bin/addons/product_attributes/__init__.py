@@ -21,7 +21,6 @@
 
 from . import product_attributes
 from . import standard_price_track_changes
+from . import unidata_sync
 from . import wizard
 from . import report
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

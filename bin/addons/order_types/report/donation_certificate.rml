@@ -122,7 +122,7 @@
                         <section>
                             The undersigned parties declare that the following listed items, with an approximate value of
                         </section>
-                        <b>[[ '%s' % (getTotalValue(o) or 0) ]]</b> [[ '%s' % (o.company_id.currency_id.currency_name) ]]
+                        <b>[[ '%s' % (formatLang(getTotalValue(o) or 0)) ]]</b> [[ '%s' % (o.company_id.currency_id.currency_name) ]]
                         <section>
                             , are donated by Médecins Sans Frontières, without any exchange of currency.
                         </section>
@@ -359,10 +359,10 @@
                     <para style="ItemsLineValue">[[ line['currency'] ]]</para>
                 </td>
                 <td>
-                    <para style="ItemsLineValueRight">[[ line['unit_price'] ]]</para>
+                    <para style="ItemsLineValueRight">[[ formatLang(line['unit_price'], digits=2) ]]</para>
                 </td>
                 <td>
-                    <para style="ItemsLineValueRight">[[ line['tot_value'] ]]</para>
+                    <para style="ItemsLineValueRight">[[ formatLang(line['tot_value']) ]]</para>
                 </td>
                 <td>
                     <para style="ItemsLineValue">[[ line['comments'] ]]</para>

@@ -37,5 +37,5 @@ from . import manage_expired_stock
 from . import reserved_products_wizard
 from . import stock_reception_wizard
 from . import stock_delivery_wizard
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+from . import loan_certificate_wizard
 
