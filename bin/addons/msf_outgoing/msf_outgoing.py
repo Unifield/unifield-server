@@ -350,7 +350,7 @@ class shipment(osv.osv):
         'name': fields.char(string='Reference', size=1024),
         'date': fields.datetime(string='Creation Date'),
         'shipment_expected_date': fields.datetime(string='Expected Ship Date'),
-        'shipment_actual_date': fields.datetime(string='Actual Ship Date', readonly=True,),
+        'shipment_actual_date': fields.datetime(string='Actual Ship Date'),
         'transport_type': fields.selection(TRANSPORT_TYPE,
                                            string="Transport Type", readonly=False),
         'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer", required=1),
@@ -792,14 +792,8 @@ class shipment(osv.osv):
         # Objects
         data_obj = self.pool.get('ir.model.data')
 
-        date_tools = self.pool.get('date.tools')
         if context is None:
             context = {}
-
-        db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
-        today = time.strftime(db_datetime_format)
-
-
         if isinstance(ids, int):
             ids = [ids]
 
@@ -826,7 +820,7 @@ class shipment(osv.osv):
                 'parent_id': shipment.id,
                 'transport_type': shipment.transport_type,
                 'carrier_id': shipment.carrier_id and shipment.carrier_id.id or False,
-                'shipment_actual_date': today,
+                'shipment_actual_date': shipment.shipment_actual_date,
             }
             for cpf in cp_fields:
                 ship_val[cpf] = shipment[cpf]
@@ -1599,6 +1593,28 @@ class shipment(osv.osv):
 
         return True
 
+    def open_select_actual_ship_date_wizard(self, cr, uid, ids, context=None):
+        """
+        Open the split line wizard: the user can confirm the Actual Ship Date
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        for ship in self.read(cr, uid, ids, ['shipment_actual_date'], context=context):
+            wiz_data = {'shipment_id': ship['id'], 'shipment_actual_date': ship['shipment_actual_date']}
+            wiz_id = self.pool.get('select.actual.ship.date.wizard').create(cr, uid, wiz_data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'select.actual.ship.date.wizard',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': wiz_id,
+                    'context': context}
+
+        return True
+
     def validate_bg(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -1631,7 +1647,13 @@ class shipment(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
 
+        if context is None:
+            context = {}
+
+        if context.get('shipment_actual_date'):
+            self.write(cr, uid, ids, {'shipment_actual_date': context['shipment_actual_date']}, context=context)
         for shipment in self.browse(cr, uid, ids, context=context):
+
             # validate should only be called on shipped shipments
             if shipment.state != 'shipped':
                 raise osv.except_osv(
@@ -1878,7 +1900,47 @@ class shipment2(osv.osv):
         'pack_family_memory_ids': fields.one2many('pack.family.memory', 'shipment_id', string='Memory Families'),
     }
 
+
 shipment2()
+
+
+class select_actual_ship_date_wizard(osv.osv_memory):
+    _name = 'select.actual.ship.date.wizard'
+    _description = 'Confirm the Actual Ship Date'
+
+    _columns = {
+        'shipment_id': fields.many2one('shipment', string='Shipment id', readonly=True),
+        'shipment_actual_date': fields.datetime(string='Actual Ship Date'),
+    }
+
+    def validate_ship(self, cr, uid, ids, context=None):
+        '''
+        Launch the validate_bg method
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        ship_obj = self.pool.get('shipment')
+        for wiz in self.browse(cr, uid, ids, context=context):
+            context['shipment_actual_date'] = wiz.shipment_actual_date
+            ship_obj.validate_bg(cr, uid, [wiz.shipment_id.id], context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel(self, cr, uid, ids, context=None):
+        '''
+        Just close the wizard
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        return {'type': 'ir.actions.act_window_close'}
+
+
+select_actual_ship_date_wizard()
 
 
 class ppl_customize_label(osv.osv):
@@ -2753,9 +2815,9 @@ class stock_picking(osv.osv):
                 sale_id = sale_id[0]['sale_id']
                 if sale_id:
                     sale_id = sale_id[0]
-                    # today
                     rts = sale_order_obj.read(cr, uid, sale_id, ['ready_to_ship_date'], context=context)['ready_to_ship_date']
                 else:
+                    # today
                     rts = date.today().strftime(db_date_format)
                 # rts + shipment lt
                 shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
@@ -2774,7 +2836,7 @@ class stock_picking(osv.osv):
                                   'address_id': vals['address_id'],
                                   'partner_id2': partner_id,
                                   'shipment_expected_date': rts,
-                                  'shipment_actual_date': rts,
+                                  'shipment_actual_date': time.strftime(db_datetime_format),
                                   'sale_id': vals.get('sale_id', False),
                                   'transport_type': sale_id and sale_order_obj.read(cr, uid, sale_id, ['transport_type'], context=context)['transport_type'] or False,
                                   'sequence_id': self.create_sequence(cr, uid, {'name': name,
