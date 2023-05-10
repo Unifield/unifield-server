@@ -22,12 +22,22 @@
     <stylesheet>
 
         <!-- BlockTables -->
+        <blockTableStyle id="OrderInformationsDate">
+            <blockAlignment value="LEFT" />
+            <blockValign value="TOP" />
+            <blockSpan start="6,0" stop="6,7"/>
+            <blockLeftPadding length="4" start="0,0" stop="-1,-1"/>
+            <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
+        </blockTableStyle>
+
         <blockTableStyle id="OrderInformations">
             <blockAlignment value="LEFT" />
             <blockValign value="TOP" />
             <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="4,-1" thickness="0.5" />
             <blockSpan start="6,0" stop="6,7"/>
+            <blockLeftPadding length="4" start="0,0" stop="-1,-1"/>
+            <blockRightPadding length="0" start="0,0" stop="-1,-1"/>
         </blockTableStyle>
         <blockTableStyle id="ItemsLineHeader">
             <blockAlignment value="LEFT" />
@@ -61,10 +71,10 @@
             <paraStyle name="all" alignment="justify"/>
         </initialize>
 
-        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" spaceAfter="10" />
         <paraStyle name="MiniStandard" fontName="Helvetica" fontSize="3.0" leading="3.0" />
 
-		<!-- Information font style -->
+        <!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="8.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformationHeight" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="16.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformationWarning" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="11.0" spaceBefore="1.0" spaceAfter="2.0" />
@@ -83,7 +93,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="772.0" style="OrderInformations">
+        <blockTable colWidths="772.0" style="OrderInformationsDate">
             <tr>
                 <td>
                     <para style="TextInformation">Date: <font color="blue">[[ formatLang(time.strftime('%Y-%m-%d'), date=True) ]]</font></para>
