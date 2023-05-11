@@ -18,7 +18,7 @@ psutil==5.9.0
 psycopg2==2.9.3
 pyaml==20.4.0
 pycparser==2.20
-pyflakes==2.3.1
+pyflakes==2.4.0
 PyJWT==2.1.0
 PyNaCl==1.4.0
 pysftp==0.2.9
@@ -43,3 +43,7 @@ tinycss2==1.2.1
 webencodings==0.5.1
 zopfli==0.2.1
 weasyprint==57.1
+msvc-runtime==14.29.30133; sys_platform == 'win32'
+pywin32==306; sys_platform == 'win32'
+sqlite-bro==0.12.1; sys_platform == 'win32'
+winpython==4.6.20220116; sys_platform == 'win32'
