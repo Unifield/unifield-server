@@ -583,7 +583,7 @@ def reconnect_sync_server():
     import tools
     credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
     if os.path.isfile(credential_filepath):
-        from . import pooler
+        import pooler
         f = open(credential_filepath, 'rb')
         lines = f.readlines()
         f.close()
