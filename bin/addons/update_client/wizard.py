@@ -103,10 +103,10 @@ class upgrade(osv.osv_memory):
             password = base64.b64encode(bytes(password, 'utf8'))
             db_name = base64.b64encode(bytes(cr.dbname, 'utf8'))
             credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
-            f = open(credential_filepath, 'wb')
-            f.write(db_name)
-            f.write(password)
-            f.close()
+            with open(credential_filepath, 'wb') as f:
+                f.write(db_name)
+                f.write(b'\n')
+                f.write(password)
 
         ## Check if revision upgrade applies
         next_state = self._get_state(cr, uid, context=context)
