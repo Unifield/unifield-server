@@ -135,7 +135,6 @@ class version(osv.osv):
 
         with open(patch_file, 'rb') as fp:
             fp.seek(offset)
-            print offset
             return (True, base64.b64encode(fp.read(1024*1024*10))) # 10MB
 
         return (True, rec.patch)
