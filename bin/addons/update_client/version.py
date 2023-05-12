@@ -60,11 +60,6 @@ class version(osv.osv):
 
     _logger = logging.getLogger('update_client')
 
-    def get_patch_folder(self):
-        folder = os.path.join(config['root_path'], '..', 'Patches')
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        return folder
 
     def init(self, cr):
         try:
@@ -96,42 +91,14 @@ class version(osv.osv):
         except BaseException:
             self._logger.exception("version init failure!")
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if 'patch' in vals:
-            if not vals['patch']:
-                vals['patch_path'] = False
-            else:
-                if isinstance(ids, int):
-                    name = '%s.zip' % ids
-                else:
-                    name = '%s.zip' % ids[0]
+    def get_patch_folder(self, cr):
+        folder = os.path.join(config['root_path'], '..', 'Patches', cr.dbname)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        return folder
 
-                patch_folder = self.get_patch_folder()
-                vals['patch_path'] = os.path.join(patch_folder, name)
-                with open(vals['patch_path'], 'wb') as desc:
-                    desc.write(vals['patch'])
-                vals['patch'] = False
-        return super(version, self).write(cr, uid, ids, vals, context=context)
-
-    def read(self, cr, uid, ids, fields, context=None, load='_classic_read'):
-        if 'patch' in fields:
-            fields.append('patch_path')
-
-        datas = super(version, self).read(cr, uid, ids, fields, context=context, load=load)
-        if isinstance(ids, int):
-            datas = [datas]
-
-        if 'patch' in fields:
-            for d in datas:
-                if not d['patch'] and d['patch_path']:
-                    d['patch'] = open(d['patch_path'], 'rb').read()
-                    del(d['patch_path'])
-
-        if isinstance(ids, int):
-            return datas[0]
-        return datas
-
-
+    def get_patch_file(self, cr, uid, id, context=None):
+        return os.path.join(self.get_patch_folder(cr), '%s.zip' % id)
 
     def _need_restart(self, cr, uid, context=None):
         return isset_lock()
@@ -168,7 +135,8 @@ class version(osv.osv):
 
     def _is_update_available(self, cr, uid, ids, context=None):
         for id in ids if isinstance(ids, list) else [ids]:
-            if not self.browse(cr, uid, id, context=context).patch:
+            rev = self.browse(cr, uid, id, context=context)
+            if not rev.patch and not rev.patch_path:
                 return False
         return True
 

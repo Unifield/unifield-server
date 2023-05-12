@@ -80,7 +80,6 @@ class manage_version(osv.osv):
                     'name':  wiz.name,
                     'sum': checksum,
                     'date': fields.datetime.now(),
-                    'patch': wiz.patch,
                     'comment': wiz.comment,
                     'importance': wiz.importance,
                 }
@@ -113,12 +112,16 @@ class manage_version(osv.osv):
                 data = {
                     'name': wiz.name,
                     'date': fields.datetime.now(),
-                    'patch': wiz.patch,
                     'comment': wiz.comment,
                     'importance': wiz.importance,
                 }
 
                 version_pool.write(cr, uid, [res_id], data, context=context)
+
+            patch_file = version_pool._get_patch_path(cr, uid, res_id)
+            f = open(patch_file, 'wb')
+            f.write(patch)
+            f.close()
 
 
             self.write(cr, uid, [wiz.id], {'version_ids' : [(4, res_id)],
