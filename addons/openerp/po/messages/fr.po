@@ -1923,6 +1923,10 @@ msgstr "peut impacter les performances de la machine"
 msgid "Do you have any questions on how to use UniField ? You can click on the button"
 msgstr "Avez vous des questions sur comment utiliser UniField ? Vous pouvez cliquer sur le bouton"
 
+#: controllers/templates/index.mako:102
+msgid "Here is the link to the survey"
+msgstr "Voici le lien vers le sondage"
+
 #: controllers/templates/index.mako:99
 msgid "on the top right of the screen to reach the User Manuals website."
 msgstr "en haut à droite de l'écran pour être redirigé sur la documentation web des manuels utilisateurs"

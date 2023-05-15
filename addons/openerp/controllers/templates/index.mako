@@ -73,6 +73,7 @@
 
 <%def name="content()">
 
+    <% user_locale = cp.locale().language %>
     <div id="root">
         <table id="content" class="three-a open" width="100%" height="100%">
             <tr>
@@ -99,9 +100,24 @@
             </tr>
             % if from_login:
             <tr>
-               <td id="shortcut_message" colspan="3">${_('Do you have any questions on how to use UniField ? You can click on the button')} <a id="help_banner_icon" href="https://doc.unifield.org/" target="_blank"></a> ${_('on the top right of the screen to reach the User Manuals website.')}
+               <td id="shortcut_message" colspan="3">${_('Do you have any questions on how to use UniField ? You can click on the button')} <a id="help_banner_icon" href="https://doc.unifield.org/" target="_blank"></a> ${_('on the top right of the screen to reach the User Manuals website.')}</td>
             </tr>
             % endif
+            % for goto_survey in goto_surveys:
+                % if user_locale == 'fr' and goto_survey.get('name_fr'):
+                    <% survery_name = goto_survey.get('name_fr') %>
+                % else:
+                    <% survery_name = goto_survey.get('name') %>
+                % endif
+                % if user_locale == 'fr' and goto_survey.get('url_fr'):
+                    <% survey_link = goto_survey.get('url_fr') %>
+                % else:
+                    <% survey_link = goto_survey.get('url_en') %>
+                % endif
+                <tr>
+                    <td id="shortcut_message" colspan="3">${_('Here is the link to the survey')} <a href="${survey_link}" target="_blank">${survery_name}</a></td>
+                </tr>
+            % endfor
 
             % if tools is not None:
                 <tr>
@@ -176,7 +192,6 @@
                     </td>
                 </tr>
             % endif
-            <% user_locale = cp.locale().language %>
             <tr>
                 <td id="footer_section" colspan="4">
                     <div class="footer-a">
