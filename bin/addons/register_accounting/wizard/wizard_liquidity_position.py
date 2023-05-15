@@ -36,7 +36,7 @@ class wizard_liquidity_position(osv.osv_memory):
 
     _columns = {
         'period_id': fields.many2one('account.period', 'Period', required=True,
-                                     domain="[('state', '!=', 'created'), ('number', 'not in', range(13, 17))]"),
+                                     domain="[('state', '!=', 'created'), ('number', 'not in', [13, 14, 15, 16])]"),
         'export_type': fields.selection(
             (('excel', 'Excel'),
              ('pdf', 'PDF')),
