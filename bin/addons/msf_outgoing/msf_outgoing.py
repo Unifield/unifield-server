@@ -198,6 +198,10 @@ class shipment(osv.osv):
                     state = 'delivered'
 
             current_result['backshipment_id'] = backshipment_id
+            has_non_ret_sub_ship = False
+            if shipment['state'] == 'draft':  # Main Ships
+                has_non_ret_sub_ship = self.search_exist(cr, uid, [('state', '!=', 'cancel'),
+                                                                   ('backshipment_id', '=', shipment['id'])], context=context)
 
             all_returned = True
             pack_fam_ids = shipment['pack_family_memory_ids']
@@ -227,7 +231,7 @@ class shipment(osv.osv):
                         current_result['total_amount'] += total_amount
                         current_result['currency_id'] = currency_id
 
-            if pack_fam_ids and all_returned:
+            if pack_fam_ids and all_returned and not has_non_ret_sub_ship:
                 state = 'cancel'
 
             current_result['state'] = state
@@ -246,6 +250,16 @@ class shipment(osv.osv):
                 result[ship.id]['total_amount'] += add_value
 
         return result
+
+    def _search_backshipment_id(self, cr, uid, ids, fields, arg, context=None):
+        if not arg or not arg[0][2]:
+            return []
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ship_ids = self.search(cr, uid, [('parent_id', arg[0][1], arg[0][2])], context=context)
+        return [('id', 'in', ship_ids)]
 
     def _get_shipment_ids(self, cr, uid, ids, context=None):
         '''
@@ -406,7 +420,7 @@ class shipment(osv.osv):
                                  store={
                                      'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
         }),
-        'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
+        'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals', fnct_search=_search_backshipment_id),
         'parent_id': fields.many2one('shipment', string='Parent shipment'),
         # TODO check if really deprecated ?
         'invoice_id': fields.many2one('account.invoice', string='Related invoice (deprecated)'),
