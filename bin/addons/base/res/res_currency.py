@@ -41,6 +41,23 @@ class res_currency_table(osv.osv):
         'state': 'draft',
     }
 
+    def create(self, cr, uid, values, context=None):
+        '''
+        Create method override to enable currency table duplication
+        '''
+        if '__copy_data_seen' in context:
+            if values.get('name', False):
+                if len(values.get('name')) < 58:
+                    values['name'] = values.get('name') + '(copy)'
+                else:
+                    values['name'] = values['name'][:58] + '(copy)'
+            if values.get('code', False):
+                if len(values.get('code')) < 10:
+                    values['code'] = values.get('code') + '(copy)'
+                else:
+                    values['code'] = values['code'][:10] + '(copy)'
+        return super(res_currency_table, self).create(cr, uid, values, context=context)
+
     def validate(self, cr, uid, ids, context=None):
         if not context:
             context = {}
