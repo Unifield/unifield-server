@@ -32,9 +32,11 @@ class survey_common(osv.osv):
         'date_filter': fields.function(tools.misc.get_fake, type='char', string='Filter on dates', method=True, fnct_search=_search_date_filter),
         'active': fields.boolean('Active'),
         'server_write_date': fields.datetime('Sync server last mod', select=1),
+        'include_condition': fields.selection([('and', 'AND'), ('or', 'OR')], 'Included groups condition', required=1),
     }
 
     _defaults = {
+        'include_condition': 'or',
         'active': True,
     }
 
@@ -70,7 +72,15 @@ class sync_client_survey(osv.osv):
                 u.active='t' and
                 u.id != 1
             group by u.id, survey.id
-            having(array_agg(rel.gid)&&array_remove(array_agg(included.group_id), NULL) and not(array_agg(excluded.group_id)&&array_agg(rel.gid)))
+            having(
+                (
+                    survey.include_condition='or' and array_agg(rel.gid)&&array_remove(array_agg(included.group_id), NULL)
+                    or
+                    survey.include_condition='and' and array_agg(rel.gid)@>array_remove(array_agg(included.group_id), NULL)
+                )
+                and not(array_agg(excluded.group_id)&&array_agg(rel.gid))
+            )
+            order by u.login
         ''', {'survey_ids': tuple(ids)})
 
         for rel in cr.fetchall():
@@ -102,7 +112,15 @@ class sync_client_survey(osv.osv):
                 survey.end_date > NOW() AND
                 survey.active='t'
             group by stat.last_choice, stat.id, stat.last_displayed, stat.nb_displayed, survey.name, survey.name_fr, survey.url_en, survey.url_fr, survey.id
-            having array_remove(array_agg(included.group_id), NULL)&&array_agg(groups.gid) AND not(array_agg(excluded.group_id)&&array_agg(groups.gid))
+            having (
+                (
+                    survey.include_condition='or' and array_remove(array_agg(included.group_id), NULL)&&array_agg(groups.gid)
+                    or
+                    survey.include_condition='and' and array_remove(array_agg(included.group_id), NULL) <@ array_agg(groups.gid)
+                )
+
+                AND not(array_agg(excluded.group_id)&&array_agg(groups.gid))
+            )
         ''', {'user_id': uid}
         )
 
@@ -112,12 +130,14 @@ class sync_client_survey(osv.osv):
                 x['stat_id'] = self.pool.get('sync_client.survey.user').create(cr, 1, {'survey_id': x['survey_id'], 'user_id': uid , 'last_displayed': time.strftime('%Y-%m-%d %H:%M:%S') , 'nb_displayed': 1})
                 x['nb_displayed'] = 0
             else:
-                if x['last_choice'] in ('never', 'goto'):
+                if x['last_choice'] == 'never':
                     continue
-                cr.execute('update sync_client_survey_user set nb_displayed=nb_displayed+1 where id=%s', (x['stat_id'], ))
-            x['nb_displayed'] += 1
+                elif x['last_choice'] != 'goto':
+                    cr.execute('update sync_client_survey_user set nb_displayed=nb_displayed+1 where id=%s', (x['stat_id'], ))
+            if x['last_choice'] != 'goto':
+                x['nb_displayed'] += 1
 
-            result.append({'nb_displayed': x['nb_displayed'], 'name': x['name'], 'name_fr': x['name_fr'], 'url_en': x['url_en'], 'url_fr': x['url_fr'], 'id': x['survey_id'], 'stat_id': x['stat_id']})
+            result.append({'nb_displayed': x['nb_displayed'], 'name': x['name'], 'name_fr': x['name_fr'], 'url_en': x['url_en'], 'url_fr': x['url_fr'], 'id': x['survey_id'], 'stat_id': x['stat_id'], 'last_choice': x['last_choice']})
 
         return result
 
