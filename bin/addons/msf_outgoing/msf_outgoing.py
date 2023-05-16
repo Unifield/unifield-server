@@ -198,10 +198,8 @@ class shipment(osv.osv):
                     state = 'delivered'
 
             current_result['backshipment_id'] = backshipment_id
-            has_non_ret_sub_ship = False
-            if shipment['state'] == 'draft':  # Main Ships
-                has_non_ret_sub_ship = self.search_exist(cr, uid, [('state', '!=', 'cancel'),
-                                                                   ('backshipment_id', '=', shipment['id'])], context=context)
+            has_non_ret_sub_ship = self.search_exist(cr, uid, [('state', '!=', 'cancel'),
+                                                               ('backshipment_id', '=', shipment['id'])], context=context)
 
             all_returned = True
             pack_fam_ids = shipment['pack_family_memory_ids']
