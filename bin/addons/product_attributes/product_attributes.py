@@ -1388,7 +1388,7 @@ class product_attributes(osv.osv):
             esc_line = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'esc_line')
             if esc_line or uid == 1:
                 root = etree.fromstring(res['arch'])
-                if esc_line:
+                if uid == 1:
                     for field in root.xpath('//button[@name="debug_ud"]'):
                         field.set('invisible', '0')
                 if esc_line:
