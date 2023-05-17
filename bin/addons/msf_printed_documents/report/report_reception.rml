@@ -663,8 +663,7 @@
                                     <para style="TextInformation4" alignment="CENTER">[[ not objects[0].purchase_id and formatFloatDigitsToUom(getFromScratchQty(line).get('backorder', 0.00), line.product_uom.rounding) or removeParentNode('para') ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ objects[0].purchase_id and getQtyIS(line, objects[0], line.product_uom.rounding) or removeParentNode('para') ]]</para>
-                                    <para style="TextInformation4" alignment="CENTER">[[ not objects[0].purchase_id and formatFloatDigitsToUom(getFromScratchQty(line).get('received', 0.00), line.product_uom.rounding) or removeParentNode('para') ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyIS(line, objects[0], line.product_uom.rounding) ]]</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">[[ getBatch(line) ]]</para>
