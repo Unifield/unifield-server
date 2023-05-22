@@ -48,14 +48,18 @@ class purchase_order_line(osv.osv):
         if context.get('rfq_ok') and view_type == 'form':
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'rfq_line_form')[1]
         view = super(purchase_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type == 'form' and context.get('from_tab') != 1:
+        if view_type == 'form':
             form = etree.fromstring(view['arch'])
-            for tag in form.xpath('//page[@name="nomenselection"]'):
-                tag.getparent().remove(tag)
-            nb = form.xpath('//notebook')
-            if nb:
-                nb[0].tag = 'empty'
-                view['arch'] = etree.tostring(form)
+            if context.get('partner_type', False) in ['internal', 'intermission', 'section'] and context.get('purchase_id')\
+                    and self.pool.get('purchase.order').read(cr, uid, context['purchase_id'], context=context)['state'] in ['validated', 'validated_p']:
+                form.attrib.update({'hide_new_button': '1'})
+            if context.get('from_tab') != 1:
+                for tag in form.xpath('//page[@name="nomenselection"]'):
+                    tag.getparent().remove(tag)
+                nb = form.xpath('//notebook')
+                if nb:
+                    nb[0].tag = 'empty'
+            view['arch'] = etree.tostring(form)
         return view
 
     def _amount_line(self, cr, uid, ids, prop, arg, context=None):
