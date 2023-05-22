@@ -64,12 +64,22 @@ class upgrade(osv.osv_memory):
         for rev in revisions.browse(cr, uid, next_revisions, context=context):
             text += (" - [%(importance)s] %(name)s (%(date)s)\n   " % rev) + \
                     (_("Comment: %(comment)s (sum is %(sum)s)") % rev) + "\n\n"
-            if not rev.patch:
-                patch = proxy.get_zip( uuid,  self.pool.get("sync.client.entity")._hardware_id, rev.sum )
-                if not patch[0]:
-                    raise osv.except_osv(_("Error!"), _("Can't retrieve the patch %(name)s (%(sum)s)!") % rev)
-                revisions.write(cr, uid, rev.id, {'patch':patch[1]})
-                cr.commit()
+            offset = 0
+            patch_name = revisions.get_patch_file(cr, uid, rev.id, context=context)
+            if os.path.exists(patch_name):
+                offset = os.path.getsize(patch_name)
+            with open(patch_name, 'ab') as fp:
+                while True:
+                    patch = proxy.get_zip( uuid,  self.pool.get("sync.client.entity")._hardware_id, rev.sum, offset)
+                    if not patch[0]:
+                        raise osv.except_osv(_("Error!"), _("Can't retrieve the patch %(name)s (%(sum)s)!") % rev)
+                    if not patch[1]:
+                        break
+                    d_patch = b64decode(patch[1])
+                    fp.write(d_patch)
+                    offset += len(d_patch)
+            revisions.write(cr, uid, rev.id, {'patch_path': patch_name}, context=context)
+
         return self.write(cr, uid, ids, {
             'message' : text,
             'state' : 'need-install',
