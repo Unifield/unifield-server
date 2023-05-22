@@ -38,6 +38,7 @@
                     <field name="activated" />
                     <field name="url_en" widget="url"/>
                     <field name="url_fr" widget="url"/>
+                    <field name="include_condition" />
                     <field name="included_group_ids" truncate="256" />
                     <field name="excluded_group_ids" truncate="256" />
                 </tree>
@@ -45,7 +46,7 @@
         </record>
 
         <record model="ir.ui.view" id="sync_server_survey_form">
-            <field name="name">sync_server_survey_tree</field>
+            <field name="name">sync_server_survey_form</field>
             <field name="model">sync_server.survey</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
@@ -70,6 +71,7 @@
                         <button name="activate" icon="gtk-connect" type="object" string="Activate Sync" attrs="{'invisible': [('activated', '=', True)]}"/>
                         <button name="deactivate" icon="gtk-disconnect" type="object" string="De-Activate Sync" attrs="{'invisible': [('activated', '=', False)]}" />
                     </group>
+                    <field name="include_condition" />
                     <newline />
                     <field name="included_group_ids" context="{'hide': excluded_group_ids}" nolabel="1" colspan="2">
                         <tree string="Included Groups">
