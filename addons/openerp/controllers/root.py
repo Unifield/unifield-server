@@ -178,17 +178,27 @@ class Root(SecuredController):
 
         main_survey = False
         other_surveys = []
+        goto_surveys = []
 
+        check_survey = False
         if rpc.session.has_logged:
             rpc.session.has_logged = False
+            check_survey = True
         elif from_login:
-            surveys = rpc.RPCProxy('sync_client.survey').get_surveys()
-            if surveys:
-                main_survey = surveys[0]
-            if len(surveys) > 1:
-                other_surveys = surveys[1:]
+            check_survey = True
         else:
             signature_required = False
+
+        if check_survey:
+            surveys = rpc.RPCProxy('sync_client.survey').get_surveys()
+            if surveys:
+                for survey in surveys:
+                    if survey['last_choice'] == 'goto':
+                        goto_surveys.append(survey)
+                    elif not main_survey:
+                        main_survey = survey
+                    else:
+                        other_surveys.append(survey)
 
         refresh_timeout = 0 # in ms
         display_warning = 0 # in ms
@@ -198,6 +208,7 @@ class Root(SecuredController):
         return dict(parents=parents, tools=tools, load_content=(next and next or ''),
                     survey=main_survey,
                     other_surveys=json.dumps(other_surveys),
+                    goto_surveys=goto_surveys,
                     show_close_btn=rpc.session.uid == 1,
                     widgets=widgets,
                     from_login=from_login,
