@@ -494,9 +494,24 @@ class product_product(osv.osv):
 
             elif x[0] == 'in_mml_instance':
                 if x[2] is True:
-                    filter_in_mml_instance = self.pool.get('res.company')._get_instance_id(cr, uid)
+                    local_instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+                    if local_instance.level == 'section':
+                        new_dom.append(['id', '=', 0])
+                    else:
+                        filter_in_mml_instance = [local_instance.id]
                 else:
-                    filter_in_mml_instance = x[2]
+                    if isinstance(x[2], basestring):
+                        instance_ids = self.pool.get('msf.instance').search(cr, uid, [('name', 'ilike', x[2])], context=context)
+                    elif isinstance(x[2], (int, long)):
+                        instance_ids = [x[2]]
+                    else:
+                        instance_ids = x[2]
+
+                    if self.pool.get('msf.instance').search_exists(cr, uid, [('id', 'in', instance_ids), ('level', '=', 'section')], context=context):
+                        new_dom.append(['id', '=', 0])
+                    else:
+                        filter_in_mml_instance = instance_ids
+
 
             elif x[0] == 'in_msl_instance':
                 if x[2] is True:
@@ -561,8 +576,8 @@ class product_product(osv.osv):
             ret.joins['"product_product"'] += [('"product_project_rel" p_rel', 'id', 'product_id', 'LEFT JOIN')]
             ret.joins['"product_product"'] += ['left join product_country_rel c_rel on p_rel is null and c_rel.product_id = product_product.id']
             ret.joins['"product_product"'] += ['left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id']
-            ret.where_clause.append(''' product_product.oc_validation = 't' and ( up1.instance_id = %s or up1 is null) ''')
-            ret.where_clause_params.append(filter_in_mml_instance)
+            ret.where_clause.append(''' product_product.oc_validation = 't' and ( up1.instance_id in %s or up1 is null) ''')
+            ret.where_clause_params.append(tuple(filter_in_mml_instance))
         if filter_in_msl_instance:
             ret.tables.append('"product_msl_rel"')
             ret.joins.setdefault('"product_product"', [])
