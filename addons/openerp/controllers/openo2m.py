@@ -70,13 +70,6 @@ class OpenO2M(Form):
         if ctx.get('default_name'):
             del ctx['default_name']
 
-        arch = params.views.get('form', {}).get('arch', False)
-        if arch:
-            dom = xml.dom.minidom.parseString(arch.encode('utf-8'))
-            form_attribute = node_attributes(dom.childNodes[0])
-            if form_attribute.get('hide_new_button'):
-                params.hide_new_button = expr_eval(form_attribute.get('hide_new_button', False), {'context': ctx})
-
         params.context = ctx or {}
         params.hidden_fields = [tw.form.Hidden(name='_terp_parent_model', default=params.parent_model),
                                 tw.form.Hidden(name='_terp_parent_id', default=params.parent_id),
@@ -89,6 +82,13 @@ class OpenO2M(Form):
 
         form = tw.form_view.ViewForm(params, name="view_form", action="/openerp/openo2m/save")
         form.screen.string = wid.screen.string
+
+        arch = params.views.get('form', {}).get('arch', False) or form.screen.view.get('arch', False)
+        if arch:
+            dom = xml.dom.minidom.parseString(arch.encode('utf-8'))
+            form_attribute = node_attributes(dom.childNodes[0])
+            if form_attribute.get('hide_new_button'):
+                params.hide_new_button = expr_eval(form_attribute.get('hide_new_button', False), {'context': ctx})
 
         return form
 
