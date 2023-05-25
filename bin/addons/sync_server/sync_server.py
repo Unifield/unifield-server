@@ -749,7 +749,7 @@ class sync_manager(osv.osv):
             return {'active': [], 'deactivated_ids': deactivated_ids, 'max_date': max_date}
 
         return {
-            'active': survey_obj.read(cr, 1, survey_ids, ['name', 'name_fr',  'profile', 'start_date', 'end_date', 'url_en', 'url_fr', 'server_write_date', 'included_group_txt', 'excluded_group_txt'], context=context),
+            'active': survey_obj.read(cr, 1, survey_ids, ['name', 'name_fr',  'profile', 'start_date', 'end_date', 'url_en', 'url_fr', 'server_write_date', 'included_group_txt', 'excluded_group_txt', 'include_condition'], context=context),
             'deactivated_ids': deactivated_ids,
             'max_date': max_date
         }

@@ -657,17 +657,20 @@
                                 </blockTable>
                                 </td>
 
+                                % if :
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ formatFloatDigitsToUom(line.purchase_line_id and line.purchase_line_id.product_qty or line.product_qty, line.product_uom.rounding) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ objects[0].purchase_id and formatFloatDigitsToUom(line.purchase_line_id and line.purchase_line_id.product_qty or line.product_qty, line.product_uom.rounding) or removeParentNode('para') ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ not objects[0].purchase_id and formatFloatDigitsToUom(getFromScratchQty(line).get('confirmed', 0.00), line.product_uom.rounding) or removeParentNode('para') ]]</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">[[ line.product_uom and line.product_uom.name or False ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ formatFloatDigitsToUom(getQtyBO(line), line.product_uom.rounding) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ objects[0].purchase_id and formatFloatDigitsToUom(getQtyBO(line), line.product_uom.rounding) or removeParentNode('para') ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ not objects[0].purchase_id and formatFloatDigitsToUom(getFromScratchQty(line).get('backorder', 0.00), line.product_uom.rounding) or removeParentNode('para') ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ formatFloatDigitsToUom(getQtyIS(line,objects[0]), line.product_uom.rounding) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyIS(line, objects[0], line.product_uom.rounding) ]]</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">[[ getBatch(line) ]]</para>

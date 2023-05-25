@@ -26,6 +26,7 @@ from tools.translate import _
 from msf_order_date import TRANSPORT_TYPE
 import time
 
+
 class return_shipment_processor(osv.osv):
     """
     Wizard to return products to stock from a draft shipment
@@ -107,7 +108,7 @@ class return_shipment_processor(osv.osv):
             shipment = wizard.shipment_id
 
             for family in shipment.pack_family_memory_ids:
-                if family.state == 'done':
+                if family.state in ['done', 'returned']:
                     continue
 
                 family_vals = {
@@ -250,6 +251,7 @@ class return_shipment_processor(osv.osv):
 
         return shipment_obj.do_return_packs(cr, uid, ids, context=context)
 
+
 return_shipment_processor()
 
 
@@ -356,6 +358,5 @@ class return_shipment_family_processor(osv.osv):
         'integrity_status': 'empty',
     }
 
-return_shipment_family_processor()
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+return_shipment_family_processor()
