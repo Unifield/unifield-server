@@ -613,12 +613,7 @@ class product_template(osv.osv):
 
     # SP-193 : Change field size 60 to 128 digits
     _columns = {
-        'name': fields.char(
-            size=128,
-            string='Description',
-            required=True,
-            translate=True,
-        ),
+        'name': fields.char(size=128, string='Description', required=True, translate=True, copy_translate=False),
     }
 product_template()
 

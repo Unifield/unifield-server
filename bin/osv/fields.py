@@ -90,6 +90,7 @@ class _column(object):
         self.ondelete = ondelete
         self.null_value = args.get('null_value')
         self.translate = translate
+        self.copy_translate = args.get('copy_translate', True)
         self._domain = domain
         self._context = context
         self.write = False

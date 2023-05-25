@@ -352,7 +352,7 @@ class product_template(osv.osv):
         return ret
 
     _columns = {
-        'name': fields.char('Name', size=128, required=True, translate=True, select=True),
+        'name': fields.char('Name', size=128, required=True, translate=True, select=True, copy_translate=False),
         'product_manager': fields.many2one('res.users','Product Manager',help="This is use as task responsible"),
         'description': fields.text('Description',translate=True),
         'description_purchase': fields.text('Purchase Description',translate=True),

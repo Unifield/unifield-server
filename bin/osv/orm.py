@@ -1420,6 +1420,8 @@ class orm_template(object):
                             'selectable', 'internal', 'hide_default_menu', 'sort_column'):
                     if getattr(field_col, arg):
                         res[f][arg] = getattr(field_col, arg)
+                if res[f].get('translate'):
+                    res[f]['copy_translate'] = getattr(field_col, 'copy_translate', True)
                 if not write_access:
                     res[f]['readonly'] = True
                     res[f]['states'] = {}
@@ -5196,7 +5198,7 @@ class orm(orm_template):
                 for (old_child, new_child) in zip(old_children, new_children):
                     target_obj.copy_translations(cr, uid, old_child, new_child, context=context)
             # and for translatable fields we keep them for copy
-            elif field_def.get('translate'):
+            elif field_def.get('translate') and field_def.get('copy_translate', True):
                 trans_name = ''
                 if field_name in self._columns:
                     trans_name = self._name + "," + field_name
