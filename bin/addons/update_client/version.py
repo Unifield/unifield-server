@@ -115,7 +115,7 @@ class version(osv.osv):
         return res
 
     def _get_last_revision(self, cr, uid, context=None):
-        rev_ids = self.search(cr, uid, [('state','=','installed')], limit=1, order='applied desc', context=context)
+        rev_ids = self.search(cr, uid, [('state','=','installed')], limit=1, order='applied desc, id desc', context=context)
         return self.browse(cr, uid, rev_ids[0]) if rev_ids else False
 
     def _get_next_revisions(self, cr, uid, context=None):
