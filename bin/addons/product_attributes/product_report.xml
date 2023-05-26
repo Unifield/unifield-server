@@ -16,5 +16,31 @@
             run_in_background="True"
          />
 
+        <report
+            id="report_project_product_msl"
+            string="Products"
+            model="unidata.project"
+            name="report.project_product_msl"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="True"
+            target_filename="MSL_%(instance)s_%(year)s_%(month)s_%(day)s"
+            run_in_background="True"
+         />
+
+        <report
+            id="report_product_msl"
+            string="MSL Products"
+            model="product.project"
+            name="report.product_msl"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="True"
+            view_ids="product_product_msl_tree"
+            target_filename="MSL_%(instance)s_%(year)s_%(month)s_%(day)s"
+            run_in_background="True"
+         />
     </data>
 </openerp>
