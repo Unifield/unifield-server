@@ -992,7 +992,7 @@ class stock_move(osv.osv):
             defaults['pack_info_id'] = False
 
         if context.get('subtype') != 'in' or (context.get('from_button') and context.get('web_copy')):
-            defaults.update({'composition_list_id': False, 'confirmed_qty': 0})
+            defaults['confirmed_qty'] = 0
 
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
