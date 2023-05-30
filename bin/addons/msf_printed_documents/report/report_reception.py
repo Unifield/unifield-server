@@ -154,7 +154,7 @@ class report_reception(report_sxw.rml_parse):
         '''
         pick_obj = self.pool.get('stock.picking')
         qties = {
-            'confirmed': line.product_qty,
+            'confirmed': line.product_qty,  # Kept for old INs that don't have confirmed_qty
             'backorder': line.state not in ['done', 'cancel'] and line.product_qty or 0.00,
         }
 
