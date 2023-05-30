@@ -592,6 +592,7 @@ class product_product(osv.osv):
             ret.joins['"product_product"'] += ["inner join unidata_project on unidata_project.id=product_msl_rel.msl_id"]
             ret.where_clause.append(''' "product_msl_rel".creation_date is not null and  "unidata_project".uf_active = 't' and "unidata_project".id in %s  ''')
             ret.where_clause_params.append(tuple(filter_in_msl_instance))
+            ret.having_group_by = ' GROUP BY "product_product"."id" '
 
         return ret
 
