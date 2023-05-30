@@ -478,7 +478,7 @@ class product_product(osv.osv):
         filter_in_any_product_list = False
         filter_in_product_list = False
         filter_in_mml_instance = False
-        filter_in_msl_instance = False
+        filter_in_msl_instance = []
         for x in domain:
             if x[0] == 'location_id':
                 location_id = x[2]
@@ -515,13 +515,19 @@ class product_product(osv.osv):
 
             elif x[0] == 'in_msl_instance':
                 if x[2] is True:
-                    filter_in_msl_instance = -1
+                    t_filter_in_msl_instance = -1
                     instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
                     ud_project_ids = self.pool.get('unidata.project').search(cr, uid, [('instance_id', '=', instance_id)], context=context)
                     if ud_project_ids:
-                        filter_in_msl_instance = ud_project_ids[0]
+                        t_filter_in_msl_instance = ud_project_ids[0]
+                    if not filter_in_msl_instance:
+                        filter_in_msl_instance.append(t_filter_in_msl_instance)
+                elif isinstance(x[2], basestring):
+                    filter_in_msl_instance = self.pool.get('unidata.project').search(cr, uid, [('instance_id.name', 'ilike', x[2])], context=context)
+                    if not filter_in_msl_instance:
+                        filter_in_msl_instance = [0]
                 else:
-                    filter_in_msl_instance = x[2]
+                    filter_in_msl_instance = [x[2]]
 
             elif x[0] == 'average':
                 if context.get('history_cons') and context.get('obj_id'):
@@ -584,8 +590,8 @@ class product_product(osv.osv):
             ret.joins.setdefault('"product_msl_rel"', [])
             ret.joins['"product_product"'] += [('"product_msl_rel"', 'id', 'product_id', 'INNER JOIN')]
             ret.joins['"product_product"'] += ["inner join unidata_project on unidata_project.id=product_msl_rel.msl_id"]
-            ret.where_clause.append(''' "product_msl_rel".creation_date is not null and  "unidata_project".uf_active = 't' and "unidata_project".id = %s  ''')
-            ret.where_clause_params.append(filter_in_msl_instance)
+            ret.where_clause.append(''' "product_msl_rel".creation_date is not null and  "unidata_project".uf_active = 't' and "unidata_project".id in %s  ''')
+            ret.where_clause_params.append(tuple(filter_in_msl_instance))
 
         return ret
 
