@@ -45,14 +45,28 @@
 
         <report
             id="report_product_mml_nonconform"
-            string="MML Non Conformity"
+            string="MML Non-Conform"
             model="product.product"
             name="report.product_mml_nonconform"
             report_type="openpyxl"
             header="False"
             auto="False"
             menu="True"
-            target_filename="MML Non Conform_%(instance)s_%(year)s_%(month)s_%(day)s"
+            view_ids="product_product_mml_tree"
+            target_filename="MML_Non_Conform_%(instance)s_%(year)s_%(month)s_%(day)s"
+            run_in_background="True"
+         />
+
+        <report
+            id="report_product_msl_nonconform"
+            string="MSL Non-Conform"
+            model="unidata.project"
+            name="report.product_msl_nonconform"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="True"
+            target_filename="MSL_Non_Conform_%(instance)s_%(year)s_%(month)s_%(day)s"
             run_in_background="True"
          />
     </data>

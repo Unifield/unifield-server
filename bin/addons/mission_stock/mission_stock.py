@@ -1005,7 +1005,7 @@ class stock_mission_report(osv.osv):
                     po.partner_id = p.id and
                     pol.product_id is not null
                 GROUP BY pol.product_id, pol.product_uom, p.name
-                UNION
+                UNION ALL
                 SELECT m.product_id as product_id, sum(m.product_qty) as product_qty, m.product_uom as uom_id, p.name as p_name
                     FROM stock_move m
                     LEFT JOIN stock_picking s ON m.picking_id = s.id

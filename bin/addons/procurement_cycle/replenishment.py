@@ -1304,7 +1304,7 @@ class replenishment_segment(osv.osv):
                           location_dest_id in %(location_id)s and
                           coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned) <= %(date)s
                         group by coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned)
-                        UNION
+                        UNION ALL
 
                         select date(m.date) as date, sum(product_qty) as product_qty from stock_move m, stock_picking p
                             where
