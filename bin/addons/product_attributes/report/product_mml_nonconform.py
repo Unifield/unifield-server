@@ -298,6 +298,52 @@ class product_msl_nonconform(common_non_conform):
     def extra_col(self):
         return {'label': _('In MML?'), 'field': 'is_mml_valid'}
 
+"""
+
+            select p.id, smr.instance_id,count(msl_rel)
+            from product_product p
+            inner join product_template tmpl on tmpl.id = p.product_tmpl_id
+            inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            inner join stock_mission_report_line smrl on p.id = smrl.product_id and (smrl.in_pipe_qty > 0 or smrl.internal_qty > 0)
+            inner join stock_mission_report smr on smr.id=smrl.mission_report_id and smr.full_view = 'f'
+            inner join product_international_status creator on creator.id = p.international_status
+            left join unidata_project ud_proj on ud_proj.instance_id = smr.instance_id
+            left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and msl_rel.msl_id = ud_proj.id
+            where
+                nom.name='MED'
+                and nom.level = 0
+                and creator.code = 'unidata'
+                and coalesce(oc_validation,'f')='f'
+            group by p.id, smr.instance_id
+            order by p.default_code
+
+            select p.id, p.default_code, smr.instance_id, count(msl_rel)
+            from product_product p
+            inner join product_template tmpl on tmpl.id = p.product_tmpl_id
+            inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            inner join stock_mission_report_line smrl on p.id = smrl.product_id and (smrl.in_pipe_qty > 0 or smrl.internal_qty > 0)
+            inner join stock_mission_report smr on smr.id=smrl.mission_report_id and smr.full_view = 'f'
+            inner join product_international_status creator on creator.id = p.international_status
+            left join product_project_rel p_rel on p.id = p_rel.product_id
+            left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+            left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+            left join unidata_project ud_proj on ud_proj.instance_id = smr.instance_id
+            left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and msl_rel.msl_id = ud_proj.id
+            where
+                nom.name='MED'
+                and nom.level = 0
+                and creator.code = 'unidata'
+                and coalesce(oc_validation,'f')='t'
+            group by p.id, p.default_code, smr.instance_id
+            HAVING
+                (
+                        not ARRAY[smr.instance_id]<@array_agg(up1.instance_id)
+                        and
+                        count(up1.instance_id)>0
+                 )
+            order by p.default_code
+"""
+
 XlsxReport('report.report.product_mml_nonconform', parser=product_mml_nonconform, template='addons/product_attributes/report/product_mml_nonconform.xlsx')
 XlsxReport('report.report.product_msl_nonconform', parser=product_msl_nonconform, template='addons/product_attributes/report/product_mml_nonconform.xlsx')
 
