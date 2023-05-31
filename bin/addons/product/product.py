@@ -578,6 +578,7 @@ class product_product(osv.osv):
             ret.joins['"product_product"'] += ['left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id']
             ret.where_clause.append(''' product_product.oc_validation = 't' and ( up1.instance_id in %s or up1 is null) ''')
             ret.where_clause_params.append(tuple(filter_in_mml_instance))
+            #  SELECT product_product.id, product_product.default_code, array_agg(up1.instance_id) FROM "product_product" LEFT JOIN "product_project_rel" p_rel ON ("product_product"."id" = p_rel."product_id") left join product_country_rel c_rel on p_rel is null and c_rel.product_id = product_product.id  left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id  WHERE (product_product.active = 'True') AND (product_product.oc_validation = 'True') AND up1.instance_id is not null group by product_product.id having (not ARRAY[62]<@array_agg(up1.instance_id));
         if filter_in_msl_instance:
             ret.tables.append('"product_msl_rel"')
             ret.joins.setdefault('"product_product"', [])
