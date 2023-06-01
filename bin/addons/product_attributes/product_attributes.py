@@ -928,6 +928,7 @@ class product_attributes(osv.osv):
         for _id in ids:
             temp_ret[_id] = []
 
+        mission_t = _('Missions')
         cr.execute('''select
                 c_rel.product_id, array_agg(inst.code order by inst.code)
             from
@@ -941,10 +942,11 @@ class product_attributes(osv.osv):
             ''', (tuple(ids), ))
 
 
-        mission_t = _('Missions')
         for x in cr.fetchall():
             temp_ret[x[0]] = ['%s: %s' % (mission_t, ', ' .join(x[1]))]
 
+
+        project_t = _('Projects')
         cr.execute('''select
                 p_rel.product_id, array_agg(inst.code order by inst.code)
             from
@@ -956,7 +958,6 @@ class product_attributes(osv.osv):
             group by p_rel.product_id
             ''', (tuple(ids), ))
 
-        project_t = _('Projects')
         for x in cr.fetchall():
             temp_ret[x[0]] += ['%s: %s' % (project_t, ', ' .join(x[1]))]
 
@@ -3540,6 +3541,19 @@ class product_attributes(osv.osv):
         if code_updated:
             self.log(cr, uid, update, _('%s updated from UniData') % ', '.join(code_updated))
         return True
+
+    def open_mml_nonconform_report(self, cr, uid, ids, context=None):
+        instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
+        if instance_level == 'section':
+            report = 'report.hq_product_mml_nonconform'
+        else:
+            report = 'report.product_mml_nonconform'
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': report,
+            'context': context,
+        }
 
 
     _constraints = [
