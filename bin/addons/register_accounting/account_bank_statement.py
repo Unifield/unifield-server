@@ -740,7 +740,7 @@ The starting balance will be proposed automatically and the closing balance is t
         if context is None:
             context = {}
         reg = self.browse(cr, uid, reg_id, fields_to_fetch=['period_id', 'journal_id'], context=context)
-        if reg.period_id.state in ['field-closed', 'mission-closed', 'done']:
+        if reg.period_id.state in ['field-closed', 'mission-closed', 'done'] or reg.period_id.special:
             raise osv.except_osv(_('Error'),
                                  _('The associated period is closed.'))
         if reg.journal_id.type == 'cash':
