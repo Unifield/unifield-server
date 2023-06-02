@@ -182,7 +182,10 @@ class account_bank_statement(osv.osv):
                 'period_id':pids[0]
             })
         else:
-            raise osv.except_osv(_('Warning'), _('The chosen period is not open!'))
+            return {
+                'warning': {'title': _('Warning'), 'message': _('The chosen period is not open!')},
+                'value': {'date': False}
+            }
 
         return {
             'value':res,
