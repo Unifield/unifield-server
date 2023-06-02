@@ -500,6 +500,7 @@ class stock_move(osv.osv):
 
         'qty_to_process': fields.float('Qty to Process', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
         'qty_processed': fields.float('Qty Processed', help="Main pick, resgister sum of qties processed"),
+        'confirmed_qty': fields.float('Confirmed Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom', help="Quantity saved during the IN move's confirmation"),
         'type': fields.related('picking_id', 'type', string='Type', type='selection',
                                selection = [('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], readonly=True,
                                store = {
@@ -770,6 +771,7 @@ class stock_move(osv.osv):
         'integrity_error': 'empty',
         'included_in_mission_stock': False,
         'in_forced': False,
+        'confirmed_qty': 0.0,
     }
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):
@@ -988,6 +990,9 @@ class stock_move(osv.osv):
 
         if 'pack_info_id' not in defaults:
             defaults['pack_info_id'] = False
+
+        if context.get('subtype') != 'in' or (context.get('from_button') and context.get('web_copy')):
+            defaults['confirmed_qty'] = 0
 
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
@@ -1365,8 +1370,13 @@ class stock_move(osv.osv):
         # check qty > 0 or raise
         self.check_product_quantity(cr, uid, ids, context=context)
 
-        vals.update({'state': 'confirmed', 'already_confirmed': True})
-        self.write(cr, uid, ids, vals)
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['picking_id', 'product_qty', 'confirmed_qty'], context=context):
+            l_vals = vals
+            l_vals.update({'state': 'confirmed', 'already_confirmed': True})
+            if move.picking_id.type == 'in' and not move.picking_id.purchase_id and move.product_qty and \
+                    not move.confirmed_qty:
+                l_vals.update({'confirmed_qty': move.product_qty})
+            self.write(cr, uid, move.id, vals)
         self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
 
