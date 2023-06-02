@@ -116,7 +116,7 @@ class common_non_conform(XlsxReportParser):
         label_state_ud = dict(fields['state_ud']['selection'])
         label_extra_col = dict(fields[extra_col['field']]['selection'])
 
-        page_size = 100
+        page_size = 250
         offset = 0
         progress = 0
 
@@ -124,14 +124,11 @@ class common_non_conform(XlsxReportParser):
 
         query = self.get_query()
 
-
         while True:
             self.cr.execute(query+ "offset %s limit %s", (offset, page_size))
             p_ids = [x[0] for x in self.cr.fetchall()]
-
             if not p_ids:
                 break
-
             progress += 5
             if bk_id:
                 self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': min(progress, 95)/100.})
@@ -188,7 +185,11 @@ class common_non_conform(XlsxReportParser):
             if bk_id:
                 self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': min(progress, 95)/100.})
 
-            for prod in prod_obj.browse(self.cr, self.uid, p_ids, fields_to_fetch=['default_code', 'name', 'international_status', 'standard_ok', 'state_ud', 'state', extra_col['field'], 'standard_price', 'incoming_qty'], context=context):
+            # ctx change to include Cross Dock in PO pipe qty
+            ctx = context.copy()
+            ctx['location_category'] = ['stock', 'consumption_unit', 'eprep', 'transition']
+            ctx['location_usage'] = ['internal']
+            for prod in prod_obj.browse(self.cr, self.uid, p_ids, fields_to_fetch=['default_code', 'name', 'international_status', 'standard_ok', 'state_ud', 'state', extra_col['field'], 'standard_price', 'incoming_qty'], context=ctx):
                 line = [
                     self.cell_ro(prod.default_code, 'row'),
                     self.cell_ro(prod.name, 'row'),
@@ -230,21 +231,35 @@ class product_mml_nonconform(common_non_conform):
             from product_product p
             left join product_template tmpl on tmpl.id = p.product_tmpl_id
             left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-            left join stock_mission_report_line_location l on p.id = l.product_id and l.quantity > 0
-            left join stock_location location on location.id = l.location_id and location.usage = 'internal'
+            left join (
+                select l.product_id as product_id
+                from
+                stock_mission_report_line_location l, stock_location location
+                where
+                    l.quantity > 0
+                    and location.id = l.location_id
+                    and  location.usage = 'internal'
+            ) smr on smr.product_id = p.id
             left join product_project_rel p_rel on p.id = p_rel.product_id
             left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
             left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
             left join purchase_order_line pol on pol.product_id = p.id and pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
-            left join stock_move m on m.product_id = p.id and m.state in ('confirmed' ,'assigned') and m.product_qty > 0
-            left join stock_location l2 on l2.id = m.location_dest_id and l2.usage = 'internal'
+            left join (
+                select m.product_id as product_id
+                from stock_move m, stock_location l2
+                where
+                l2.id = m.location_dest_id
+                and l2.usage = 'internal'
+                and m.state in ('confirmed' ,'assigned')
+                and m.product_qty > 0
+            ) inc on inc.product_id = p.id
             where
                 nom.name='MED'
                 and nom.level = 0
             group by p.id
             HAVING
                 (
-                    (count(location.id) > 0 or count(pol.id) > 0 or count(l2.id) > 0)
+                    (count(smr.product_id) > 0 or count(pol.id) > 0 or count(inc.product_id) > 0)
                     and (
                         bool_or(coalesce(oc_validation,'f'))='f'
                         or
@@ -272,11 +287,25 @@ class product_msl_nonconform(common_non_conform):
             from product_product p
             left join product_template tmpl on tmpl.id = p.product_tmpl_id
             left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-            left join stock_mission_report_line_location l on p.id = l.product_id and l.quantity > 0
-            left join stock_location location on location.id = l.location_id and location.usage = 'internal'
+            left join (
+                select l.product_id as product_id
+                from
+                stock_mission_report_line_location l, stock_location location
+                where
+                    l.quantity > 0
+                    and location.id = l.location_id
+                    and  location.usage = 'internal'
+            ) smr on smr.product_id = p.id
             left join purchase_order_line pol on pol.product_id = p.id and pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
-            left join stock_move m on m.product_id = p.id and m.state in ('confirmed' ,'assigned') and m.product_qty > 0
-            left join stock_location l2 on l2.id = m.location_dest_id and l2.usage = 'internal'
+            left join (
+                select m.product_id as product_id
+                from stock_move m, stock_location l2
+                where
+                l2.id = m.location_dest_id
+                and l2.usage = 'internal'
+                and m.state in ('confirmed' ,'assigned')
+                and m.product_qty > 0
+            ) inc on inc.product_id = p.id
             left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and msl_rel.msl_id = %s
             left join product_international_status creator on creator.id = p.international_status
             where
@@ -287,7 +316,7 @@ class product_msl_nonconform(common_non_conform):
             group by p.id
             HAVING
                 (
-                    count(location.id) > 0 or count(pol.id) > 0 or count(l2.id) > 0
+                    count(smr.product_id) > 0 or count(pol.id) > 0 or count(inc.product_id) > 0
                 )
             order by p.default_code
         """ % ud_proj[0]

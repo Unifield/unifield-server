@@ -118,7 +118,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
 
         p_ids = [product_code[x] for x in sorted(product_code.keys())]
         len_p_ids = len(p_ids)
-        page_size = 100
+        page_size = 500
         offset = 0
 
         bk_id = self.context.get('background_id')
@@ -128,7 +128,6 @@ class hq_product_mml_nonconform(XlsxReportParser):
             if not prod_ids:
                 break
             offset += page_size
-
             self.cr.execute('''
             select x.id, x.instance_name, x.internal_qty, x.in_pipe_qty, x.has_msl from (
                 select p.id, instance.name as instance_name, smrl.internal_qty, smrl.in_pipe_qty, count(msl_rel) as has_msl
