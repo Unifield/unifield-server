@@ -106,6 +106,77 @@ class account_analytic_line(osv.osv):
                                                           [('cheque_number', 'ilike', args[0][2])], context=context)
         return [('move_id', 'in', m_ids)] if m_ids else [('id', 'in', [])]
 
+    def _search_hq_acc(self, cr, uid, ids, name, args, context=None):
+        if not len(args):
+            return []
+        if len(args) != 1:
+            msg = _("Domain %s not supported") % (str(args),)
+            raise osv.except_osv(_('Error'), msg)
+        dom = []
+        if args[0][1] not in ('ilike', 'not ilike', 'in', 'not in', '=', '<>'):
+            msg = _("Operator %s not supported") % (args[0][1],)
+            raise osv.except_osv(_('Error'), msg)
+        if not args[0][2]:
+            return []
+        if args[0][1] in ('ilike', 'not ilike'):
+            mapping_ids = self.pool.get('account.export.mapping').search(cr, uid,
+                                                                         [('mapping_value', 'ilike', args[0][2])],
+                                                                         context=context)
+            aal_query = '''
+                          SELECT aal.id,aem.mapping_value
+                          FROM account_analytic_line aal, account_export_mapping aem
+                          WHERE aal.general_account_id = aem.account_id and aem.id = ANY(%s);
+                          '''
+            cr.execute(aal_query, (mapping_ids,))
+            aal_ids = cr.fetchall() or []
+
+        else:
+            if args[0][1] in ('=', '<>'):
+                aal_query = '''
+                              SELECT aal.id,aem.mapping_value
+                              FROM account_analytic_line aal, account_export_mapping aem
+                              WHERE aal.general_account_id = aem.account_id AND aem.mapping_value = %s;
+                              '''
+
+            if args[0][1] in ('in', 'not in'):
+                aal_query = '''
+                              SELECT aal.id,aem.mapping_value
+                              FROM account_analytic_line aal, account_export_mapping aem
+                              WHERE aal.general_account_id = aem.account_id AND aem.mapping_value = ANY(%s);
+                              '''
+
+            cr.execute(aal_query, (args[0][2],))
+            aal_ids = cr.fetchall() or []
+
+        if not aal_ids:
+            return dom
+        if args[0][1] in ('ilike', '=', 'in'):
+            dom = [('id', 'in', [x[0] for x in aal_ids])]
+        elif args[0][1] in ('not ilike', '<>', 'not in'):
+            dom = [('id', 'not in', [x[0] for x in aal_ids])]
+        return dom
+
+    def _get_hq_system_acc(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+        res = {}
+        mapping_dict = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        mapping_obj = self.pool.get('account.export.mapping')
+        mapping_ids = mapping_obj.search(cr, uid, [('account_id', '!=', False)], context=context)
+        if not mapping_ids:
+            return res
+        for mapping_id in mapping_ids:
+            mapping = mapping_obj.browse(cr, uid, mapping_id, fields_to_fetch=['account_id', 'mapping_value'], context=context)
+            mapping_dict[mapping.account_id.id] = mapping.mapping_value
+        aals = self.browse(cr, uid, ids, fields_to_fetch=['general_account_id'], context=context)
+        for aal in aals:
+            res[aal.id] = mapping_dict.get(aal.general_account_id.id, False)
+        return res
+
+
     _columns = {
         'output_amount': fields.function(_get_output, string="Output amount", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_amount_debit': fields.function(_get_output, string="Output debit", type='float', method=True, store=False, multi="analytic_output_currency"),
@@ -114,7 +185,9 @@ class account_analytic_line(osv.osv):
                                            multi="analytic_output_currency"),
         'cheque_number': fields.function(_get_cheque_number, type='char',
                                          method=True, string='Cheque Number',
-                                         fnct_search=_search_cheque_number)  # BKLG-7: move cheque number
+                                         fnct_search=_search_cheque_number),  # BKLG-7: move cheque
+        'hq_system_account': fields.function(_get_hq_system_acc, type='char', store=False, fnct_search=_search_hq_acc,
+                                             method=True, string='HQ System Account', size=32),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

@@ -42,6 +42,7 @@
                     <field name="user_id" invisible="1"/>
                     <field name="product_code" invisible="1"/>
                     <field name="entry_quantity" invisible="1"/>
+                    <field name="hq_system_account" />
                 </tree>
             </field>
         </record>
@@ -86,6 +87,7 @@
                             <field name="invoice_id" invisible="1"/>
                             <field name="purchase_order_id" invisible="1"/>
                             <field name="db_id" invisible="1"/>
+                            <field name="hq_system_account" />
                         </group>
                     </group>
                 </form>
