@@ -106,75 +106,11 @@ class account_analytic_line(osv.osv):
                                                           [('cheque_number', 'ilike', args[0][2])], context=context)
         return [('move_id', 'in', m_ids)] if m_ids else [('id', 'in', [])]
 
-    def _search_hq_acc(self, cr, uid, ids, name, args, context=None):
-        if not len(args):
-            return []
-        if len(args) != 1:
-            msg = _("Domain %s not supported") % (str(args),)
-            raise osv.except_osv(_('Error'), msg)
-        dom = []
-        if args[0][1] not in ('ilike', 'not ilike', 'in', 'not in', '=', '<>'):
-            msg = _("Operator %s not supported") % (args[0][1],)
-            raise osv.except_osv(_('Error'), msg)
-        if not args[0][2]:
-            return []
-        if args[0][1] in ('ilike', 'not ilike'):
-            mapping_ids = self.pool.get('account.export.mapping').search(cr, uid,
-                                                                         [('mapping_value', 'ilike', args[0][2])],
-                                                                         context=context)
-            aal_query = '''
-                          SELECT aal.id,aem.mapping_value
-                          FROM account_analytic_line aal, account_export_mapping aem
-                          WHERE aal.general_account_id = aem.account_id and aem.id = ANY(%s);
-                          '''
-            cr.execute(aal_query, (mapping_ids,))
-            aal_ids = cr.fetchall() or []
-
-        else:
-            if args[0][1] in ('=', '<>'):
-                aal_query = '''
-                              SELECT aal.id,aem.mapping_value
-                              FROM account_analytic_line aal, account_export_mapping aem
-                              WHERE aal.general_account_id = aem.account_id AND aem.mapping_value = %s;
-                              '''
-
-            if args[0][1] in ('in', 'not in'):
-                aal_query = '''
-                              SELECT aal.id,aem.mapping_value
-                              FROM account_analytic_line aal, account_export_mapping aem
-                              WHERE aal.general_account_id = aem.account_id AND aem.mapping_value = ANY(%s);
-                              '''
-
-            cr.execute(aal_query, (args[0][2],))
-            aal_ids = cr.fetchall() or []
-
-        if not aal_ids:
-            return dom
-        if args[0][1] in ('ilike', '=', 'in'):
-            dom = [('id', 'in', [x[0] for x in aal_ids])]
-        elif args[0][1] in ('not ilike', '<>', 'not in'):
-            dom = [('id', 'not in', [x[0] for x in aal_ids])]
-        return dom
-
     def _get_hq_system_acc(self, cr, uid, ids, field_name, args, context=None):
-        if context is None:
-            context = {}
-        res = {}
-        mapping_dict = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
+        return self.pool.get('account.export.mapping')._get_hq_system_acc(cr, uid, ids, field_name, args, self, context=context)
 
-        mapping_obj = self.pool.get('account.export.mapping')
-        mapping_ids = mapping_obj.search(cr, uid, [('account_id', '!=', False)], context=context)
-        if not mapping_ids:
-            return res
-        for mapping_id in mapping_ids:
-            mapping = mapping_obj.browse(cr, uid, mapping_id, fields_to_fetch=['account_id', 'mapping_value'], context=context)
-            mapping_dict[mapping.account_id.id] = mapping.mapping_value
-        aals = self.browse(cr, uid, ids, fields_to_fetch=['general_account_id'], context=context)
-        for aal in aals:
-            res[aal.id] = mapping_dict.get(aal.general_account_id.id, False)
-        return res
+    def _search_hq_acc(self, cr, uid, ids, name, args, context=None):
+        return self.pool.get('account.export.mapping')._search_hq_acc(cr, uid, ids, name, args, self, context=context)
 
 
     _columns = {
@@ -225,6 +161,7 @@ class account_analytic_line(osv.osv):
                         cheque_number_node)
 
             view['arch'] = etree.tostring(tree)
+        self.pool.get('account.export.mapping').update_view_with_mapping_field(cr, uid, view_type, view, context=context)
         return view
 
     def copy(self, cr, uid, id, default=None, context=None):

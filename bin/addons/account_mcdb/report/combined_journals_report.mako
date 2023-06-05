@@ -280,9 +280,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Status')}</Data>
     </Cell>
+    % if display_hq_account():
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('HQ System Account')}</Data>
     </Cell>
+    % endif
 </Row>
 
 % for line in lines():
@@ -357,9 +359,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${getSelValue('account.move', 'state', line['status']) or ''|x}</Data>
     </Cell>
+    % if display_hq_account():
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${line['hq_system_account'] or ''|x}</Data>
     </Cell>
+    % endif
 </Row>
 % endfor
 

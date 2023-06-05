@@ -50,7 +50,24 @@ class combined_journals_report(report_sxw.rml_parse):
             'total_func_debit': lambda *a: self.total_func_debit,
             'total_func_credit': lambda *a: self.total_func_credit,
             'update_percent_display': self._update_percent_display,
+            'display_hq_account': self.display_hq_account,
+            'get_col_widths': self.get_col_widths,
         })
+        self._display_hq_account = self.pool.get('account.export.mapping')._is_mapping_display_active(cr, uid)
+
+    def display_hq_account(self):
+        return self._display_hq_account
+
+    def get_col_widths(self):
+        if self._display_hq_account:
+            if self.analytic_axis == 'fp':
+                return {'colWidths': "45.0,33.0,41.0,52.0,38.0,44.0,44.0,30.0,39.0,39.0,35.0,36.0,26.0,40.0,40.0,28.0,40.0,40.0,28.0,31.0,35.0,39.0"}
+            return {'colWidths': "45.0,35.0,43.0,53.0,40.0,48.0,48.0,33.0,42.0,47.0,42.0,38.0,47.0,32.0,42.0,40.0,32.0,37.0,38.0,41.0"}
+
+        if self.analytic_axis == 'fp':
+            return {'colWidths': "45.0,36.0,46.0,52.0,39.0,45.0,45.0,31.0,40.0,40.0,36.0,37.0,33.0,41.0,41.0,31.0,41.0,41.0,31.0,36.0,36.0"}
+
+        return {'colWidths': "45.0,36.0,48.0,55.0,41.0,49.0,49.0,34.0,43.0,48.0,43.0,45.0,45.0,38.0,45.0,45.0,38.0,38.0,38.0"}
 
     def _cmp_sequence_account_type(self, a, b):
         """

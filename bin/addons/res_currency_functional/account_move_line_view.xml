@@ -73,7 +73,7 @@
                         <field name="amount_currency" invisible="1"/>
                         <field name="product_code" invisible="1"/>
                         <field name="quantity" invisible="1"/>
-                        <field name="hq_system_account" />
+                        <field name="hq_system_account" invisible="1"/>
                     </group>
 
                     <group col="6" colspan="4">
@@ -150,7 +150,7 @@
                     <field name="state"/>
                     <field name="product_code" invisible="1"/>
                     <field name="quantity" invisible="1"/>
-                    <field name="hq_system_account" />
+                    <field name="hq_system_account" invisible="1" />
                 </tree>
             </field>
         </record>

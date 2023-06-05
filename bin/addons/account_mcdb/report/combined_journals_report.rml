@@ -75,8 +75,8 @@
       </tr>
     </blockTable>
 
-    <blockTable style="Table2" colWidths="45.0,33.0,41.0,52.0,38.0,44.0,44.0,30.0,39.0,39.0,35.0,36.0,26.0,40.0,40.0,28.0,40.0,40.0,28.0,31.0,35.0,39.0">
-      [[ analytic_axis() == 'fp' or setTag('blockTable', 'blockTable', {'colWidths': "45.0,35.0,43.0,53.0,40.0,48.0,48.0,33.0,42.0,47.0,42.0,38.0,47.0,32.0,42.0,40.0,32.0,37.0,38.0,41.0"}) ]]
+    <blockTable style="Table2" colWidths="">
+      [[ setTag('blockTable', 'blockTable', get_col_widths()) ]]
       <tr>
         <td>
           <parawrap style="P3">Proprietary Instance</parawrap>
@@ -142,6 +142,7 @@
           <parawrap style="P3">Status</parawrap>
         </td>
         <td>
+          [[ display_hq_account() or removeParentNode('td') ]]
           <parawrap style="P3">HQ System Account</parawrap>
         </td>
       </tr>
@@ -213,7 +214,7 @@
           <parawrap style="P3">[[ getSelValue('account.move', 'state', line['status']) or '' ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3">[[ getSelValue('account.move', 'state', line['hq_system_account']) or '' ]]</parawrap>
+          <parawrap style="P3">[[ line['hq_system_account'] if display_hq_account() else removeParentNode('td') ]]</parawrap>
         </td>
       </tr>
       <!-- TOTAL -->
@@ -279,6 +280,7 @@
           <para style="P3"></para>
         </td>
         <td>
+        [[ display_hq_account() or removeParentNode('td') ]]
           <para style="P3"></para>
         </td>
       </tr>

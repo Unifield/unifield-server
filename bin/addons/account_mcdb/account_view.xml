@@ -44,6 +44,7 @@
                     <field name="reconcile_txt" />
                     <field name="state"/>
                     <field name="statement_id" invisible="1"/>
+                    <field name="hq_system_account" invisible="1" />
                 </tree>
             </field>
         </record>
@@ -83,6 +84,7 @@
                     <field name="output_currency"/>
                     <field name="reversal_origin_txt"/>
                     <field name="user_id" invisible="1"/>
+                    <field name="hq_system_account" invisible="1" />
                 </tree>
             </field>
         </record>
