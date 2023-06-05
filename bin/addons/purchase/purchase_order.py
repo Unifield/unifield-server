@@ -2550,9 +2550,12 @@ class purchase_order(osv.osv):
             dest = self.pool.get('stock.location').get_service_location(cr, uid)
         else:
             sol = pol.linked_sol_id
-            if sol and sol.order_id and not sol.order_id.procurement_request:
-                # source a FO line => go to Cross Dock (set at PO header)
-                pass
+            if sol and sol.order_id:
+                if not sol.order_id.procurement_request or (sol.order_id.procurement_request
+                                                            and sol.order_id.location_requestor_id.usage == 'customer'):
+                    dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+                else:
+                    dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
             elif pol.product_id.type == 'service_recep':
                 dest = self.pool.get('stock.location').get_service_location(cr, uid)
             elif pol.product_id.type == 'consu':
