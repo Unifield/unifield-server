@@ -309,10 +309,8 @@ class product_product(osv.osv):
         for i in ids:
             res[i] = 0.00
             if wiz_id:
-                pplq_ids = pplq_obj.search(cr, uid, [
-                    ('wizard_id', '=', wiz_id),
-                    ('product_id', '=', i),
-                ], order='id desc', context=context)
+                pplq_ids = pplq_obj.search(cr, uid, [('wizard_id', '=', wiz_id), ('product_id', '=', i)],
+                                           order='id desc', context=context)
                 if pplq_ids:
                     res[i] = pplq_obj.read(cr, uid, pplq_ids[0], ['qty'])['qty']
 
@@ -348,22 +346,22 @@ class product_product(osv.osv):
         ),
     }
 
-    def on_change_import_product_qty(self, cr, uid, ids, import_product_qty,
-                                     context=None):
+    def on_change_import_product_qty(self, cr, uid, ids, import_product_qty, context=None):
         res = {}
         if not ids:
             return res
         if import_product_qty and import_product_qty < 0:
             res['value'] = {'import_product_qty': 0.}
-            res['warning'] = {
-                'title': _('Warning'),
-                'message': _('You can not set a negative quantity'),
-            }
+            res['warning'] = {'title': _('Warning'), 'message': _('You can not set a negative quantity')}
             return res
         if import_product_qty:
             uom = self.read(cr, uid, ids, ['uom_id'], context=context)[0]['uom_id'][0]
-            return self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, import_product_qty, ['import_product_qty'], context=context)
-        return {}
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, import_product_qty, ['import_product_qty'], context=context)
+            new_qty = res.get('value') and res['value'].get('import_product_qty') or import_product_qty
+            self._write_imp_product_qty(cr, uid, ids, field_name='import_product_qty', values=new_qty, args=None, context=context)
+            return res
+        return res
+
 
 product_product()
 
