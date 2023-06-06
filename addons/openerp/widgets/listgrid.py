@@ -114,6 +114,7 @@ class List(TinyWidget):
 
         self.rounding_values = view.get('uom_rounding', {})
 
+        self.field_no_sum = []
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
             if terp_params.get('_terp_model'):
@@ -261,7 +262,10 @@ class List(TinyWidget):
 
         for k, v in self.field_total.items():
             if(len([test[0] for test in self.hiddens if test[0] == k])) <= 0:
-                self.field_total[k][1] = self.do_sum(self.data, k)
+                if k in self.field_no_sum:
+                    self.field_total[k][1] = ''
+                else:
+                    self.field_total[k][1] = self.do_sum(self.data, k)
 
         for k, v in self.field_real_total.items():
             if(len([test[0] for test in self.hiddens if test[0] == k])) <= 0:
@@ -423,7 +427,7 @@ class List(TinyWidget):
 
         return super(List, self).display(value, **params)
 
-    def parse(self, root, fields, data=[]):
+    def parse(self, root, fields, data=None):
         """Parse the given node to generate valid list headers.
 
         @param root: the root node of the view
@@ -432,6 +436,8 @@ class List(TinyWidget):
         @return: an instance of List
         """
 
+        if data is None:
+            data = []
         headers = []
         hiddens = []
         buttons = []
@@ -512,6 +518,9 @@ class List(TinyWidget):
 
                     if 'sum' in attrs:
                         field_total[name] = [attrs['sum'], 0.0]
+
+                    if 'sum_selected' in attrs:
+                        self.field_no_sum.append(name)
 
                     if 'real_sum' in attrs:
                         field_real_total[name] = [attrs['real_sum'], 0.0]
