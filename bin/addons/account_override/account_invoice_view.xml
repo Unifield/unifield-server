@@ -50,8 +50,8 @@
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="residual"/>
-                    <field name="amount_total"/>
+                    <field name="residual" sum="Total Residual" sum_selected="1"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -150,7 +150,7 @@
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="amount_total"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -315,7 +315,7 @@
                     <field name="counterpart_inv_number"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="amount_total"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                 </tree>
             </field>
