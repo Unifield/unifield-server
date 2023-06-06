@@ -1120,7 +1120,7 @@ class account_fiscalyear(osv.osv):
                    LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
                    WHERE f.id = %(fy_id)s and number != 0
                    AND p.date_start < NOW()
-                   ORDER BY p.date_stop DESC
+                   ORDER BY p.date_stop DESC, p.number DESC
                    LIMIT 1
                 )
             ) AS x ORDER BY date
