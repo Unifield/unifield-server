@@ -272,6 +272,7 @@ class account_move_line(osv.osv):
         'is_transfer_with_change': fields.boolean(string="Is a line that come from a transfer with change?", readonly=True, required=False),
         'cheque_number': fields.char(string="Cheque Number", size=120, readonly=True),
         'is_downpayment': fields.boolean('Is downpayment'),  # US-738/UC4
+        'counterpart_transfer_st_line_id': fields.many2one('account.bank.statement.line', 'Conterpart transfert register line', readonly=1, ondelete='set null'),
     }
 
     _defaults = {

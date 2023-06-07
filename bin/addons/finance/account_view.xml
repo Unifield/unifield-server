@@ -52,6 +52,7 @@
                                 <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines': [], 'journal':journal_id, 'period_id':period_id, 'move_reference': ref}" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}">
                                     <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
+                                        <field name="counterpart_transfer_st_line_id" invisible="1" />
                                         <field name="status_move" invisible="1"/>
                                         <field name="imported" invisible="1"/>
                                         <field name="name" attrs="{'readonly': ['|', ('status_move', '=', 'sys'), ('imported', '=', True)],
@@ -59,6 +60,7 @@
                                         <field name="reference"/>
                                         <field name="partner_type_mandatory" invisible="1"/>
                                         <field name="account_id" on_change="onchange_account_id(account_id, partner_type)" domain="[('restricted_area', '=', 'account_move_lines')]" context="{'date': parent.date}" />
+                                        <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('counterpart_transfer_st_line_id', '=', False)]}" />
                                         <field name="partner_id" invisible="1"/>
                                         <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)]}"
