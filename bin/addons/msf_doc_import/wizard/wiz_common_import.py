@@ -351,12 +351,16 @@ class product_product(osv.osv):
         if not ids:
             return res
         if import_product_qty and import_product_qty < 0:
-            res['value'] = {'import_product_qty': 0.}
-            res['warning'] = {'title': _('Warning'), 'message': _('You can not set a negative quantity')}
-            return res
-        if import_product_qty:
-            uom = self.read(cr, uid, ids, ['uom_id'], context=context)[0]['uom_id'][0]
-            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, import_product_qty, ['import_product_qty'], context=context)
+            return {
+                'value': {'import_product_qty': 0.},
+                'warning': {'title': _('Warning'), 'message': _('You can not set a negative quantity')}
+            }
+        if import_product_qty >= 0:
+            if import_product_qty > 0:
+                uom = self.read(cr, uid, ids, ['uom_id'], context=context)[0]['uom_id'][0]
+                res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, import_product_qty, ['import_product_qty'], context=context)
+            else:
+                import_product_qty = 0
             new_qty = res.get('value') and res['value'].get('import_product_qty') or import_product_qty
             self._write_imp_product_qty(cr, uid, ids, field_name='import_product_qty', values=new_qty, args=None, context=context)
             return res
