@@ -273,6 +273,8 @@ class account_move_line(osv.osv):
         'cheque_number': fields.char(string="Cheque Number", size=120, readonly=True),
         'is_downpayment': fields.boolean('Is downpayment'),  # US-738/UC4
         'counterpart_transfer_st_line_id': fields.many2one('account.bank.statement.line', 'Conterpart transfert register line', readonly=1, ondelete='set null'),
+        'counterpart_transfer_st_line_sdref': fields.char('St couterpert line sdref', size=128, select=1, readonly=1, help='used by sync, bc draft reg line are not synced'),
+        'has_a_counterpart_transfer': fields.boolean('Has a counterpart_transfer', select=1, readonly=1, help='used by sync, bc draft reg line are not synced'),
     }
 
     _defaults = {
