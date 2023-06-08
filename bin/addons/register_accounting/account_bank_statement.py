@@ -2604,7 +2604,7 @@ class account_bank_statement_line(osv.osv):
                     to_rec_ids = self.pool.get('account.move.line').search(cr, uid, [('counterpart_transfer_st_line_id', 'in', [absl.id, absl.counterpart_transfer_st_line_id.id])])
                     if len(to_rec_ids) < 2:
                         raise osv.except_osv(_('Error'), _('An auto booked transfer JI is missing, cannot reconcile the entries.'))
-                    self.pool.get('account.move.line').reconcile_partial(cr, uid, to_rec_ids)
+                    self.pool.get('account.move.line').reconcile_partial(cr, uid, to_rec_ids, type='manual')
 
                 self._set_register_line_audittrail_post_hard_state_log(cr, uid, absl, direct_hard_post, context=context)
         return True
