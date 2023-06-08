@@ -98,7 +98,7 @@ class account_move_line_reconcile(osv.osv_memory):
         debits = 0
         credits = 0
         statements = []
-        cp_ids = account_move_line_obj.search(cr, uid, [('id', 'in', ids), ('has_a_counterpart_transfer', '=', True)])
+        cp_ids = account_move_line_obj.search(cr, uid, [('id', 'in', ids), ('has_a_counterpart_transfer', '=', True), ('reconcile_partial_id', '=', False), ('reconcile_id', '=', False)])
         if cp_ids:
             raise osv.except_osv(
                 _('Warning'),

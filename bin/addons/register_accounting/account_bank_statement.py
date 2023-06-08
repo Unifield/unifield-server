@@ -2445,6 +2445,15 @@ class account_bank_statement_line(osv.osv):
                     if not absl.auto_counterpart:
                         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
                         cp_reg = self.pool.get('account.bank.statement').search(cr, root_uid, [('journal_id', '=', absl.transfer_journal_id.id), ('state', '=', 'open'), ('period_id', '=', absl.statement_id.period_id.id)], context=context)
+                        am_out = absl.amount_in
+                        am_in = absl.amount_out
+                        if absl.account_id.type_for_register == 'transfer':
+                            curr_obj = self.pool.get('res.currency')
+                            ctx_curr = {'currency_date': currency_date.get_date(self, cr, absl.document_date, absl.date)}
+                            if am_out:
+                                am_out = curr_obj.compute(cr, uid, absl.statement_id.currency.id, absl.transfer_journal_id.currency.id, am_out, round=True, context=ctx_curr)
+                            if am_in:
+                                am_in = curr_obj.compute(cr, uid, absl.statement_id.currency.id, absl.transfer_journal_id.currency.id, am_in, round=True, context=ctx_curr)
                         if cp_reg:
                             cp_line = self.create(cr, root_uid, {
                                 'auto_counterpart': True,
@@ -2457,8 +2466,8 @@ class account_bank_statement_line(osv.osv):
                                 'name': absl.name,
                                 'ref': absl.ref,
                                 'account_id': absl.account_id.id,
-                                'amount_in': absl.amount_out,
-                                'amount_out': absl.amount_in,
+                                'amount_in': am_in,
+                                'amount_out': am_out,
                             }, context=context)
                             cp_line_sdref = self.get_sd_ref(cr, uid, cp_line)
                             to_write.update({'has_a_counterpart_transfer': True, 'auto_counterpart': True, 'counterpart_transfer_st_line_id': cp_line, 'counterpart_transfer_st_line_sdref': cp_line_sdref})
@@ -2604,7 +2613,10 @@ class account_bank_statement_line(osv.osv):
                     to_rec_ids = self.pool.get('account.move.line').search(cr, uid, [('counterpart_transfer_st_line_id', 'in', [absl.id, absl.counterpart_transfer_st_line_id.id])])
                     if len(to_rec_ids) < 2:
                         raise osv.except_osv(_('Error'), _('An auto booked transfer JI is missing, cannot reconcile the entries.'))
-                    self.pool.get('account.move.line').reconcile_partial(cr, uid, to_rec_ids, type='manual')
+                    if absl.account_id.type_for_register == 'transfer_same':
+                        self.pool.get('account.move.line').reconcile_partial(cr, uid, to_rec_ids, type='manual')
+                    elif absl.account_id.type_for_register == 'transfer':
+                        self.pool.get('account.move.line').reconcile(cr, uid, to_rec_ids, type='manual')
 
                 self._set_register_line_audittrail_post_hard_state_log(cr, uid, absl, direct_hard_post, context=context)
         return True
