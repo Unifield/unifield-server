@@ -67,7 +67,7 @@
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state in ('invalid', 'invalid_small_amount'))) or red_on_supplier == True" limit="20">
                                         <field name="red_on_supplier" invisible="1"/>
-                                        <field name="counterpart_transfer_st_line_id" invisible="1" />
+                                        <field name="has_a_counterpart_transfer" invisible="1" />
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="display_analytic_lines_button" invisible="1"/>
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom"
@@ -88,11 +88,11 @@
                                         <field name="ref" attrs="{'readonly': [('number_imported_account_invoices', '!=', 0)]}"/>
                                         <field name="account_id" domain="[('journal_id','=',parent.journal_id), ('restricted_area', '=', 'register_lines')]"
                                             on_change="onchange_account(account_id, parent.virtual_id)"
-                                            attrs="{'readonly': ['|','|', '|', ('counterpart_transfer_st_line_id', '!=', False), ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}" />
+                                            attrs="{'readonly': ['|','|', '|', ('has_a_counterpart_transfer', '!=', False), ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}" />
                                         <field name="type_for_register" invisible="1"/>
-                                        <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('counterpart_transfer_st_line_id', '=', False)]}" />
+                                        <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('has_a_counterpart_transfer', '=', False)]}" />
                                         <field name="partner_type"
-                                            attrs="{'readonly': ['|','|', ('counterpart_transfer_st_line_id', '!=', False), ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
+                                            attrs="{'readonly': ['|','|', ('has_a_counterpart_transfer', '!=', False), ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
                                         <field name="analytic_account_id"
@@ -137,7 +137,7 @@
                                         <field name="from_import_cheque_id" invisible="1"/>
                                     </tree>
                                     <form string="Statement lines">
-                                        <field name="counterpart_transfer_st_line_id" invisible="1" />
+                                        <field name="has_a_counterpart_transfer" invisible="1" />
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
                                         <field name="date"/>
                                         <field name="sequence" invisible="1"/>
@@ -147,10 +147,10 @@
                                         <field name="ref"/>
                                         <field name="account_id" domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'register_lines')]"
                                             on_change="onchange_account(account_id, parent.virtual_id)"
-                                            attrs="{'readonly': ['|', '|', '|', ('counterpart_transfer_st_line_id', '!=', False), ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
+                                            attrs="{'readonly': ['|', '|', '|', ('has_a_counterpart_transfer', '!=', False), ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
                                             />
                                         <field name="partner_type"
-                                            attrs="{'readonly': ['|','|', ('counterpart_transfer_st_line_id', '!=', False),('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
+                                            attrs="{'readonly': ['|','|', ('has_a_counterpart_transfer', '!=', False),('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
                                         <field name="display_analytic_button" invisible="1"/>
@@ -250,7 +250,7 @@
                                                 attrs="{'invisible': [('display_analytic_lines_button', '=', False)]}"
                                         />
                                         <field name="from_cash_return" invisible="1"/>
-                                        <field name="counterpart_transfer_st_line_id" invisible="1" />
+                                        <field name="has_a_counterpart_transfer" invisible="1" />
                                         <button name="button_advance" states="hard" string="Advance return" type="object"
                                             icon="terp-stock_effects-object-colorize" context="context"
                                             attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), '|',
@@ -265,11 +265,11 @@
                                         <field name="ref" attrs="{'readonly': [('number_imported_account_invoices', '!=', 0)]}"/>
                                         <field name="account_id" domain="[('journal_id','=',parent.journal_id), ('restricted_area', '=', 'register_lines')]"
                                             on_change="onchange_account(account_id, parent.virtual_id)"
-                                            attrs="{'readonly': ['|', '|', ('counterpart_transfer_st_line_id', '!=', False), ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}" />
+                                            attrs="{'readonly': ['|', '|', ('has_a_counterpart_transfer', '!=', False), ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}" />
                                         <field name="type_for_register" invisible="1"/>
-                                        <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('counterpart_transfer_st_line_id', '=', False)]}" />
+                                        <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('has_a_counterpart_transfer', '=', False)]}" />
                                         <field name="partner_type"
-                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('counterpart_transfer_st_line_id', '!=', False), ('number_imported_invoice', '>', 0)]}"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('has_a_counterpart_transfer', '!=', False), ('number_imported_invoice', '>', 0)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
                                             />
@@ -315,7 +315,7 @@
                                     </tree>
                                     <form string="Statement lines">
                                         <field name="from_cash_return" invisible="1"/>
-                                        <field name="counterpart_transfer_st_line_id" invisible="1" />
+                                        <field name="has_a_counterpart_transfer" invisible="1" />
                                         <field name="document_date"/>
                                         <field name="date"/>
                                         <field name="sequence_for_reference"/>
@@ -324,9 +324,9 @@
                                         <field name="ref"/>
                                         <field name="account_id" domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'register_lines')]"
                                             on_change="onchange_account(account_id, parent.virtual_id)"
-                                            attrs="{'readonly': ['|', '|', ('counterpart_transfer_st_line_id', '!=', False), ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                            attrs="{'readonly': ['|', '|', ('has_a_counterpart_transfer', '!=', False), ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
                                         <field name="partner_type"
-                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('counterpart_transfer_st_line_id', '!=', False), ('number_imported_invoice', '>', 0)]}"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('has_a_counterpart_transfer', '!=', False), ('number_imported_invoice', '>', 0)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
                                             />
@@ -435,7 +435,7 @@
                             ('employee_id', '=', False),('type_for_register','!=','advance')]}"/>
                     <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                     <field name="from_cash_return" invisible="1"/>
-                    <field name="counterpart_transfer_st_line_id" invisible="1" />
+                    <field name="has_a_counterpart_transfer" invisible="1" />
                     <field name="amount" invisible="1"/>
                     <field name="type_for_register" invisible="1"/>
                     <field name="document_date"/>
@@ -444,13 +444,13 @@
                     <field name="name" string="Description"/>
                     <field name="number_imported_account_invoices" invisible="1"/>
                     <field name="ref" attrs="{'readonly': [('number_imported_account_invoices', '!=', 0)]}"/>
-                    <field name="account_id" domain="[('restricted_area', '=', 'register_lines')]" attrs="{'readonly': [('counterpart_transfer_st_line_id', '!=', False)]}"/>
-                    <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('counterpart_transfer_st_line_id', '=', False)]}" />
+                    <field name="account_id" domain="[('restricted_area', '=', 'register_lines')]" attrs="{'readonly': [('has_a_counterpart_transfer', '!=', False)]}"/>
+                    <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('has_a_counterpart_transfer', '=', False)]}" />
                     <field name="number_imported_invoice" invisible="1"/>
                     <field name="from_import_cheque_id" invisible="1"/>
                     <field name="partner_type_mandatory" invisible="1"/>
                     <field name="partner_type"
-                           attrs="{'readonly': ['|', '|', '|', ('counterpart_transfer_st_line_id', '!=', False), ('number_imported_invoice', '>', 0), ('from_import_cheque_id', '!=', False), ('direct_invoice', '=', True)],
+                           attrs="{'readonly': ['|', '|', '|', ('has_a_counterpart_transfer', '!=', False), ('number_imported_invoice', '>', 0), ('from_import_cheque_id', '!=', False), ('direct_invoice', '=', True)],
                                    'required': [('partner_type_mandatory', '=', True)]}"
                            domain="[('filter_for_third_party', '=', account_id)]"
                            context="{'search_default_active': True, 'from': 'regline_view',}" />
@@ -780,7 +780,7 @@
                                     <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom"
                                             attrs="{'invisible': [('display_analytic_lines_button', '=', False)]}"
                                     />
-                                    <field name="counterpart_transfer_st_line_id" invisible="1" />
+                                    <field name="has_a_counterpart_transfer" invisible="1" />
                                     <field name="document_date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
                                     <field name="red_on_supplier" invisible="1" />
                                     <field name="date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
@@ -791,11 +791,11 @@
                                     <field name="number_imported_account_invoices" invisible="1"/>
                                     <field name="ref" attrs="{'readonly': [('number_imported_account_invoices', '!=', 0)]}"/>
                                     <field name="account_id" domain="[('journal_id','=',parent.journal_id), ('restricted_area', '=', 'register_lines')]"
-                                        on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', '|', ('counterpart_transfer_st_line_id', '!=', False), ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                        on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', '|', ('has_a_counterpart_transfer', '!=', False), ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
                                     <field name="type_for_register" invisible="1"/>
-                                    <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('counterpart_transfer_st_line_id', '=', False)]}" />
+                                    <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('has_a_counterpart_transfer', '=', False)]}" />
                                     <field name="partner_type"
-                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', '|', ('counterpart_transfer_st_line_id', '!=', False), ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', '|', ('has_a_counterpart_transfer', '!=', False), ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
                                         />
@@ -840,15 +840,15 @@
                                     <field name="date"/>
                                     <field name="cheque_number" required="1"/>
                                     <field name="sequence" invisible="1"/>
-                                    <field name="counterpart_transfer_st_line_id" invisible="1" />
+                                    <field name="has_a_counterpart_transfer" invisible="1" />
                                     <field name="sequence_for_reference"/>
                                     <field name="name" string="Description"/>
                                     <field name="partner_type_mandatory" invisible="1"/>
                                     <field name="ref"/>
                                     <field name="account_id" domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'register_lines')]"
-                                        on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', '|', ('counterpart_transfer_st_line_id', '!=', False), ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                        on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', '|', ('has_a_counterpart_transfer', '!=', False), ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
                                     <field name="partner_type"
-                                        attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('counterpart_transfer_st_line_id', '!=', False), ('number_imported_invoice', '>', 0)]}"
+                                        attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('has_a_counterpart_transfer', '!=', False), ('number_imported_invoice', '>', 0)]}"
                                         domain="[('filter_for_third_party', '=', account_id)]"
                                         context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
                                         />

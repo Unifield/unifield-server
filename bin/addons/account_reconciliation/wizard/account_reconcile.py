@@ -98,11 +98,11 @@ class account_move_line_reconcile(osv.osv_memory):
         debits = 0
         credits = 0
         statements = []
-        cp_ids = account_move_line_obj.search(cr, uid, [('id', 'in', ids), ('counterpart_transfer_st_line_id', '!=', False)])
+        cp_ids = account_move_line_obj.search(cr, uid, [('id', 'in', ids), ('has_a_counterpart_transfer', '=', True)])
         if cp_ids:
             raise osv.except_osv(
                 _('Warning'),
-                _('The following lines are linked to an auto booked transfer line and therefor can not be manually reconciled:\n %s') %
+                _('The following lines are linked to an auto booked transfer line and therefore can not be manually reconciled:\n %s') %
                 '\n'.join([x.move_id.name for x in account_move_line_obj.browse(cr, uid, cp_ids, fields_to_fetch=['move_id'])])
             )
         for line in account_move_line_obj.browse(cr, uid, context['active_ids']):

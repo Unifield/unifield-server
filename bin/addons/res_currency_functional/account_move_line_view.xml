@@ -119,14 +119,14 @@
                 <tree string="Account Entry Line" editable="bottom" noteditable="1" hide_new_button="1"> 
                     <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
                     <field name="move_id" readonly="1" string="Entry Sequence"/>
-                    <field name="counterpart_transfer_st_line_id" invisible="1" />
+                    <field name="has_a_counterpart_transfer" invisible="1" />
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="document_date"/>
                     <field name="date"/>
                     <field name="period_id" domain="[('state','=','draft')]"/>
                     <field name="account_id" domain="[('journal_id','=',parent.journal_id)]" on_change="onchange_account_id(account_id)"/>
-                    <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('counterpart_transfer_st_line_id', '=', False)]}" />
+                    <button name="open_counterpart_transfer_line" type="object" string="Linked to a counterpart line" icon="link.png" attrs="{'invisible': [('has_a_counterpart_transfer', '=', False)]}" />
                     <field name="move_state" invisible="1"/>
                     <field name="account_type" invisible="1" />
                     <field name="statement_id" invisible="1" />

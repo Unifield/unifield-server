@@ -585,6 +585,7 @@ class account_move_line(osv.osv):
                 # (manual / auto) instead of the JI one
                 if 'unreconcile_date' in vals and vals['unreconcile_date']:
                     reconciliation = ml.reconcile_id or ml.reconcile_partial_id or False
+
                     if reconciliation and reconciliation.type == 'auto':
                         raise osv.except_osv(_('Warning'), _('Only manually reconciled entries can be unreconciled.'))
                 # prevent from modifying system JIs except for reversing a manual correction

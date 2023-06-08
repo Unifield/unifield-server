@@ -5,7 +5,6 @@
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    All Rigts Reserved
-#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -35,7 +34,7 @@ from register_tools import open_register_view
 from base import currency_date
 import time
 import datetime
-
+from tools.misc import fakeUid
 
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
@@ -2444,9 +2443,10 @@ class account_bank_statement_line(osv.osv):
                 instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
                 if instance_id == absl.instance_id.id:
                     if not absl.auto_counterpart:
-                        cp_reg = self.pool.get('account.bank.statement').search(cr, uid, [('journal_id', '=', absl.transfer_journal_id.id), ('state', '=', 'open'), ('period_id', '=', absl.statement_id.period_id.id)], context=context)
+                        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
+                        cp_reg = self.pool.get('account.bank.statement').search(cr, root_uid, [('journal_id', '=', absl.transfer_journal_id.id), ('state', '=', 'open'), ('period_id', '=', absl.statement_id.period_id.id)], context=context)
                         if cp_reg:
-                            cp_line = self.create(cr, uid, {
+                            cp_line = self.create(cr, root_uid, {
                                 'auto_counterpart': True,
                                 'counterpart_transfer_st_line_id': absl.id,
                                 'has_a_counterpart_transfer': True,
@@ -2785,12 +2785,13 @@ class account_bank_statement_line(osv.osv):
                     'instance_id': st_line.instance_id.id,
                 }
                 self.pool.get('account.bank.statement.line.deleted').create(cr, uid, vals, context=context)
-        cp_move_ids = self.pool.get('account.move.line').search(cr, uid, [('counterpart_transfer_st_line_id', 'in', ids)])
+        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
+        cp_move_ids = self.pool.get('account.move.line').search(cr, root_uid, [('counterpart_transfer_st_line_id', 'in', ids)])
         if cp_move_ids:
-            self.pool.get('account.move.line').write(cr, uid, {'has_a_counterpart_transfer': False}, context=context)
-        cp_st_l_ids = self.search(cr, uid, [('counterpart_transfer_st_line_id', 'in', ids)])
+            self.pool.get('account.move.line').write(cr, root_uid, cp_move_ids, {'has_a_counterpart_transfer': False}, context=context)
+        cp_st_l_ids = self.search(cr, root_uid, [('counterpart_transfer_st_line_id', 'in', ids)])
         if cp_st_l_ids:
-            self.write(cr, uid, {'has_a_counterpart_transfer': False}, context=context)
+            self.write(cr, root_uid, cp_st_l_ids, {'has_a_counterpart_transfer': False}, context=context)
 
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
