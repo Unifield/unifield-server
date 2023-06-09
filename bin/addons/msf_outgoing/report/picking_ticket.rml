@@ -559,7 +559,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="51.0,253.0,253.0,253.0" style="FooterInfo" keepWithNext="1">
+        <blockTable colWidths="90.0,240.0,240.0,240.0" style="FooterInfo" keepWithNext="1">
             <tr>
                 <td>
                     <para style="LFooter"> </para>
@@ -579,13 +579,13 @@
                     <para style="LFooter">Name</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'sr', 'user_name') ]]</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'tr', 'user_name') ]]</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'fr', 'user_name') ]]</para>
                 </td>
             </tr>
             <tr>
@@ -593,13 +593,27 @@
                     <para style="LFooter">Date</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'sr', 'date') ]]</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'tr', 'date') ]]</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'tr', 'date') ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="LFooter">Total Quantities</para>
+                </td>
+                <td>
+                    <para style="LFooter">[[ getSign(objects[0], 'sr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="LFooter">[[ getSign(objects[0], 'tr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="LFooter">[[ getSign(objects[0], 'tr', 'format_value') ]]</para>
                 </td>
             </tr>
             <tr>
@@ -607,13 +621,13 @@
                     <para style="LFooterEnd">Signature</para>
                 </td>
                 <td>
-                    <para style="LFooterEnd"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <para style="LFooterEnd"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <para style="LFooterEnd"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'fr', 'image') or removeParentNode('image') ]]</image>
                 </td>
             </tr>
         </blockTable>

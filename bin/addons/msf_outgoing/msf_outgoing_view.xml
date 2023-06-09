@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE SIGNATURE_TEMPLATE [
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
+]>
+
+
 <openerp>
 	<data>
 
@@ -439,6 +444,7 @@
                                 </script>
                             </html>
                         </page>
+                        &signature_template;
                     </notebook>
                 </form>
             </field>

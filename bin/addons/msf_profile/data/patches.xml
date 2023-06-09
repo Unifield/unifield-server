@@ -942,5 +942,10 @@
         <record id="us_11399_oca_mm_target" model="patch.scripts">
             <field name="method">us_11399_oca_mm_target</field>
         </record>
+
+        <!-- UF30.0 -->
+        <record id="us_11181_update_supply_signature_follow_up" model="patch.scripts">
+            <field name="method">us_11181_update_supply_signature_follow_up</field>
+        </record>
     </data>
 </openerp>

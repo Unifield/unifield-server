@@ -57,6 +57,20 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF30.0
+    def us_11181_update_supply_signature_follow_up(self, cr, uid, *a, **b):
+        '''
+        Update the domain of the existing ir_rule for supply signatures.
+        '''
+        if _get_instance_level(self, cr, uid) == 'hq':
+            rr_obj = self.pool.get('ir.rule')
+            suppl_sign_fup_ids = rr_obj.search(cr, uid, [('name', '=', 'Signatures Follow-up Supply Creator')])
+            if suppl_sign_fup_ids:
+                data = {'domain_force': "[('doc_type', 'in', ['purchase.order', 'sale.order.fo', 'sale.order.ir', 'stock.picking.in', 'stock.picking.out', 'stock.picking.pick'])]"}
+                rr_obj.write(cr, uid, suppl_sign_fup_ids, data)
+
+        return True
+
     # UF29.0
     def us_11399_oca_mm_target(self, cr, uid, *a, **b):
         if self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id:
