@@ -7,8 +7,28 @@
                   <field name='type'>form</field>
                   <field name='arch' type='xml'>
                         <form string="Temp Posting - Wizard">
-                            <separator string="Temp Posting" />
-                            <label string="The selected items will be temp-posted." colspan="4"/>
+                            <field name="has_no_register" invisible="1" />
+                            <group colspan="4" attrs="{'invisible': [('has_no_register', '=', False)]}">
+                                <html colspan="4">
+                                    <h2>
+                                    <translate>The following lines have no counterpart register, please choose an action:</translate>
+                                    </h2>
+                                </html>
+                                <button name="nothing_selection" icon="gtk-no" string="Set Do Not Post on selection" type="object" set_ids="no_register_error_lines" />
+                                <button name="post_selection" icon="gtk-yes" string="Set Post on selection" type="object" set_ids="no_register_error_lines" />
+                                <field name="no_register_error_lines" colspan="4" nolabel="1" o2m_selectable="2">
+                                    <tree string="Counterpart register does not exist" editable="top"  hide_delete_button="1" hide_new_button="1">
+                                        <field name="sequence_for_reference" />
+                                        <field name="name" />
+                                        <field name="ref" />
+                                        <field name="account_id" />
+                                        <field name="amount_in" />
+                                        <field name="amount_out" />
+                                        <field name="third" />
+                                        <field name="action" />
+                                    </tree>
+                                </field>
+                            </group>
                             <group colspan="4">
                                 <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2" />
                                 <button name="action_confirm_temp_posting" string="Temp Post" type="object" icon="gtk-apply" colspan="2" />
@@ -51,22 +71,19 @@
                 </field>
             </record>
             <!-- Temp Post All The Entries - Entry Menu -->
-            <record id="act_wizard_temp_post_all" model="ir.actions.act_window">
+            <record id="action_server_wizard_temp_post_all" model="ir.actions.server">
                 <field name="name">Temp Post All The Entries</field>
-                <field name="res_model">wizard.temp.posting</field>
-                <field name="src_model">account.bank.statement.line</field>
-                <field name="view_type">form</field>
-                <field name="view_mode">form</field>
-                <field name="target">new</field>
-                <field name="view_id" ref="wizard_temp_post_all"/>
-                <field name="empty_ids">1</field>
+                <field name="model_id" ref="model_account_bank_statement_line" />
+                <field name="state">code</field>
+                <field name="code">action = obj.open_mass_temp_post(all_lines=True, context=context)</field>
             </record>
+
             <!-- Add the entry in the Actions section of the menu (with a sequence order) -->
             <record id="ir_wizard_temp_post_all" model="ir.values">
                 <field name="key2">client_action_multi</field>
                 <field name="model">account.bank.statement.line</field>
                 <field name="name">act_wizard_temp_post_all</field>
-                <field eval="'ir.actions.act_window,%d'%ref('act_wizard_temp_post_all')" name="value"/>
+                <field eval="'ir.actions.server,%d'%ref('action_server_wizard_temp_post_all')" name="value"/>
                 <field name="key">action</field>
                 <field name="sequence" eval="110"/>
                 <field eval="True" name="object"/>

@@ -1,32 +1,38 @@
 #!/usr/bin/env python
 #-*- encoding:utf-8 -*-
-##############################################################################
-#
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-##############################################################################
 
 from osv import osv
+from osv import fields
+
 from tools.translate import _
 from ..register_tools import open_register_view
 
 class wizard_temp_posting(osv.osv_memory):
     _name = "wizard.temp.posting"
+    _rec_name = 'register_id'
+
+    _columns = {
+        'regiter_line_ids': fields.many2many('account.bank.statement.line', 'auto_book_statement_rel', 'line_ids', 'wizard_id', 'Lines'),
+        'all_lines': fields.boolean('All lines'),
+        'register_id': fields.many2one('Register'),
+        'no_register_error_lines': fields.one2many('wizard.temp.posting.line', 'wizard_id', 'Lines'),
+        'has_no_register': fields.boolean('Has no register error'),
+    }
+
+    def nothing_selection(self, cr, uid, ids, context=None):
+        return self._do_action(cr, uid, ids, 'nothing', context)
+
+    def post_selection(self, cr, uid, ids, context=None):
+        return self._do_action(cr, uid, ids, 'post', context)
+
+    def _do_action(self, cr, uid, ids, action, context):
+        if context is None:
+            context = {}
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Warning'), _('No line selected, please tick some lines.'))
+        self.pool.get('wizard.temp.posting.line').write(cr, uid, context['button_selected_ids'], {'action': 'do_nothing' if action == 'nothing' else 'post'}, context=context)
+        return True
+
 
     def action_confirm_temp_posting(self, cr, uid, ids, context=None, all_lines=False):
         """
@@ -76,4 +82,23 @@ class wizard_temp_posting(osv.osv_memory):
 
 wizard_temp_posting()
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
+
+class wizard_temp_posting_line(osv.osv_memory):
+    _name = 'wizard.temp.posting.line'
+    _rec_name = 'line_description'
+    _order = 'register_line_id, name'
+    _columns = {
+        'wizard_id': fields.many2one('wizard.temp.posting', 'Wizard'),
+        'register_line_id': fields.many2one('account.bank.statement.line', 'Register Line', readonly=True),
+        'sequence_for_reference': fields.char('Sequence', size=512, readonly=True),
+        'name': fields.char('Description', size=512, readonly=True),
+        'ref': fields.char('Reference', size=512, readonly=True),
+        'account_id': fields.many2one('account.account', 'Account', size=512, readonly=True),
+        'amount_in': fields.float('Amount In', readonly=True),
+        'amount_out': fields.float('Amount Out', readonly=True),
+        'third': fields.char('Third Party', size=512, readonly=True),
+        'action': fields.selection([('do_nothing', 'Do Not Post'), ('post', 'Post')], 'Action', required=True, add_empty=True),
+    }
+
+wizard_temp_posting_line()
