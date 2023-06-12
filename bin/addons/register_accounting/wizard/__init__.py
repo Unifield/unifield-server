@@ -4,7 +4,6 @@
 import cashbox_closing
 import register_reopen
 import temp_posting
-import hard_posting
 import wizard_cash_return
 import direct_invoice
 import import_invoice_on_registers

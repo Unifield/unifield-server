@@ -1708,7 +1708,6 @@ class orm_template(object):
             elif field in fields:
                 fields[field].update(fields_def[field])
             else:
-                print self._name, field
                 cr.execute('select name, model from ir_ui_view where (id=%s or inherit_id=%s) and arch like %s', (view_id, view_id, '%%%s%%' % field))
                 res = cr.fetchall()[:]
                 model = res[0][1]

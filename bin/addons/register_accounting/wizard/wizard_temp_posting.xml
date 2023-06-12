@@ -8,6 +8,9 @@
                   <field name='arch' type='xml'>
                         <form string="Temp Posting - Wizard">
                             <field name="has_no_register" invisible="1" />
+                            <field name="has_amount_error" invisible="1" />
+                            <field name="has_ignored_error" invisible="1" />
+                            <field name="all_lines" invisible="1" />
                             <group colspan="4" attrs="{'invisible': [('has_no_register', '=', False)]}">
                                 <html colspan="4">
                                     <h2>
@@ -29,53 +32,92 @@
                                     </tree>
                                 </field>
                             </group>
+
+                            <group colspan="4" attrs="{'invisible': [('has_amount_error', '=', False)]}">
+                                <html colspan="4">
+                                    <h2>
+                                    <translate>On the following lines, the amount of transfer entry does not match with counter party, please choose an action:</translate>
+                                    </h2>
+                                </html>
+                                <button name="nothing_hard_selection" icon="gtk-no" string="Set Do Not Post on selection" type="object" set_ids="amount_error_lines" />
+                                <button name="post_hard_selection" icon="gtk-yes" string="Set Post on selection" type="object" set_ids="amount_error_lines" />
+                                <field name="amount_error_lines" colspan="4" nolabel="1" o2m_selectable="2">
+                                    <tree string="Amounts mismatch" editable="top"  hide_delete_button="1" hide_new_button="1">
+                                        <field name="sequence_for_reference" />
+                                        <field name="name" />
+                                        <field name="ref" />
+                                        <field name="account_id" />
+                                        <field name="amount_in" />
+                                        <field name="amount_out" />
+                                        <field name="third" />
+                                        <field name="other_ref" />
+                                        <field name="other_in" />
+                                        <field name="other_out" />
+                                        <field name="action" />
+                                    </tree>
+                                </field>
+                            </group>
+
+                            <group colspan="4" attrs="{'invisible': [('has_ignored_error', '=', False)]}">
+                                <html colspan="4">
+                                    <h2>
+                                    <translate>The following lines are ignored because entry and counter party have no credit or no debit:</translate>
+                                    </h2>
+                                </html>
+                                <field name="ignored_lines" colspan="4" nolabel="1" readonly="1">
+                                    <tree string="Ignored Lines" editable="top"  hide_delete_button="1" hide_new_button="1">
+                                        <field name="sequence_for_reference" />
+                                        <field name="name" />
+                                        <field name="ref" />
+                                        <field name="account_id" />
+                                        <field name="amount_in" />
+                                        <field name="amount_out" />
+                                        <field name="third" />
+                                        <field name="other_ref" />
+                                        <field name="other_in" />
+                                        <field name="other_out" />
+                                    </tree>
+                                </field>
+                            </group>
+
+                            <group colspan="4" attrs="{'invisible': [('all_lines', '=', False)]}">
+                                <html>
+                                    <p id="label_temp_post_all" style="text-align:center;">
+                                        <translate>Are you sure you want to post <span style="font-weight: bold; color: red;">ALL</span> the entries?</translate>
+                                    </p>
+                                </html>
+                            </group>
                             <group colspan="4">
                                 <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2" />
-                                <button name="action_confirm_temp_posting" string="Temp Post" type="object" icon="gtk-apply" colspan="2" />
+                                <button name="action_confirm_temp_posting" string="Post" type="object" icon="gtk-apply" colspan="2" />
                             </group>
                         </form>
                   </field>
             </record>
 
-            <!-- Activities -->
-            <act_window name="Temp Posting"
-                        res_model="wizard.temp.posting"
-                        src_model="account.bank.statement.line"
-                        key2="client_action_multi"
-                        view_mode="form"
-                        view_type="form"
-                        target="new"
-                        id="act_wizard_temp_posting" />
-
-            <!-- Temp Post All The Entries - Wizard -->
-            <record model="ir.ui.view" id="wizard_temp_post_all">
-                <field name='name'>wizard.temp.post.all</field>
-                <field name='model'>wizard.temp.posting</field>
-                <field name='type'>form</field>
-                <field name="priority" eval="20"/>
-                <field name='arch' type='xml'>
-                    <form>
-                        <separator string="Temp Posting"/>
-                        <html>
-                            <p id="label_temp_post_all" style="text-align:center;">
-                                <translate>Are you sure you want to temp post <span style="font-weight: bold; color: red;">ALL</span> the entries?</translate>
-                            </p>
-                        </html>
-
-                        <group colspan="6" col="4">
-                            <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2"/>
-                            <button name="temp_post_all" string="Temp Post ALL"
-                                    type="object" icon="gtk-apply" colspan="2"/>
-                        </group>
-                    </form>
-                </field>
+            <record id="action_server_wizard_temp_post_selection" model="ir.actions.server">
+                <field name="name">Temp Posting</field>
+                <field name="model_id" ref="model_account_bank_statement_line" />
+                <field name="state">code</field>
+                <field name="code">action = obj.open_mass_temp_post(all_lines=False, posttype='temp', context=context)</field>
             </record>
+
+            <record id="ir_wizard_temp_post_selection" model="ir.values">
+                <field name="key2">client_action_multi</field>
+                <field name="model">account.bank.statement.line</field>
+                <field name="name">act_wizard_temp_post_selection</field>
+                <field eval="'ir.actions.server,%d'%ref('action_server_wizard_temp_post_selection')" name="value"/>
+                <field name="key">action</field>
+                <field name="sequence" eval="10"/>
+                <field eval="True" name="object"/>
+            </record>
+
             <!-- Temp Post All The Entries - Entry Menu -->
             <record id="action_server_wizard_temp_post_all" model="ir.actions.server">
                 <field name="name">Temp Post All The Entries</field>
                 <field name="model_id" ref="model_account_bank_statement_line" />
                 <field name="state">code</field>
-                <field name="code">action = obj.open_mass_temp_post(all_lines=True, context=context)</field>
+                <field name="code">action = obj.open_mass_temp_post(all_lines=True, posttype='temp', context=context)</field>
             </record>
 
             <!-- Add the entry in the Actions section of the menu (with a sequence order) -->
@@ -84,6 +126,42 @@
                 <field name="model">account.bank.statement.line</field>
                 <field name="name">act_wizard_temp_post_all</field>
                 <field eval="'ir.actions.server,%d'%ref('action_server_wizard_temp_post_all')" name="value"/>
+                <field name="key">action</field>
+                <field name="sequence" eval="110"/>
+                <field eval="True" name="object"/>
+            </record>
+
+            <record id="action_server_wizard_hard_post_selection" model="ir.actions.server">
+                <field name="name">Hard Posting</field>
+                <field name="model_id" ref="model_account_bank_statement_line" />
+                <field name="state">code</field>
+                <field name="code">action = obj.open_mass_temp_post(all_lines=False, posttype='hard', context=context)</field>
+            </record>
+
+            <record id="ir_wizard_hard_post_selection" model="ir.values">
+                <field name="key2">client_action_multi</field>
+                <field name="model">account.bank.statement.line</field>
+                <field name="name">act_wizard_hard_post_selection</field>
+                <field eval="'ir.actions.server,%d'%ref('action_server_wizard_hard_post_selection')" name="value"/>
+                <field name="key">action</field>
+                <field name="sequence" eval="10"/>
+                <field eval="True" name="object"/>
+            </record>
+
+            <!-- Temp Post All The Entries - Entry Menu -->
+            <record id="action_server_wizard_hard_post_all" model="ir.actions.server">
+                <field name="name">Hard Post All The Entries</field>
+                <field name="model_id" ref="model_account_bank_statement_line" />
+                <field name="state">code</field>
+                <field name="code">action = obj.open_mass_temp_post(all_lines=True, posttype='hard', context=context)</field>
+            </record>
+
+            <!-- Add the entry in the Actions section of the menu (with a sequence order) -->
+            <record id="ir_wizard_hard_post_all" model="ir.values">
+                <field name="key2">client_action_multi</field>
+                <field name="model">account.bank.statement.line</field>
+                <field name="name">act_wizard_hard_post_all</field>
+                <field eval="'ir.actions.server,%d'%ref('action_server_wizard_hard_post_all')" name="value"/>
                 <field name="key">action</field>
                 <field name="sequence" eval="110"/>
                 <field eval="True" name="object"/>
