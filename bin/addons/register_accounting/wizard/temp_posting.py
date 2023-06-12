@@ -114,6 +114,14 @@ class wizard_temp_posting_line(osv.osv_memory):
     _name = 'wizard.temp.posting.line'
     _rec_name = 'line_description'
     _order = 'register_line_id, name'
+
+    def _get_hidden_action(self, cr, uid, ids, *a, **b):
+        ret = {}
+        for x in self.read(cr, uid, ids, ['action']):
+            ret[x['id']] = x['action']
+        return ret
+
+
     _columns = {
         'wizard_id': fields.many2one('wizard.temp.posting', 'Wizard'),
         'register_line_id': fields.many2one('account.bank.statement.line', 'Register Line', readonly=True),
@@ -125,7 +133,16 @@ class wizard_temp_posting_line(osv.osv_memory):
         'amount_out': fields.float('Amount Out', readonly=True),
         'third': fields.char('Third Party', size=512, readonly=True),
         'action': fields.selection([('do_nothing', 'Do Not Post'), ('post', 'Post')], 'Action', required=True, add_empty=True),
+        'hidden_action': fields.function(_get_hidden_action, method=1, type='char', string='Action'),
     }
+
+    def do_nothing(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'action': 'do_nothing'}, context=context)
+        return True
+
+    def do_post(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'action': 'post'}, context=context)
+        return True
 
 wizard_temp_posting_line()
 

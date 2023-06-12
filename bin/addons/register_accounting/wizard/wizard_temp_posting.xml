@@ -20,7 +20,7 @@
                                 <button name="nothing_selection" icon="gtk-no" string="Set Do Not Post on selection" type="object" set_ids="no_register_error_lines" />
                                 <button name="post_selection" icon="gtk-yes" string="Set Post on selection" type="object" set_ids="no_register_error_lines" />
                                 <field name="no_register_error_lines" colspan="4" nolabel="1" o2m_selectable="2">
-                                    <tree string="Counterpart register does not exist" editable="top"  hide_delete_button="1" hide_new_button="1">
+                                    <tree string="Counterpart register does not exist" editable="top"  hide_delete_button="1" hide_new_button="1" hide_edit_button="1">
                                         <field name="sequence_for_reference" />
                                         <field name="name" />
                                         <field name="ref" />
@@ -29,6 +29,9 @@
                                         <field name="amount_out" />
                                         <field name="third" />
                                         <field name="action" />
+                                        <field name="hidden_action" invisible="1"/>
+                                        <button name="do_nothing" icon="gtk-no" string="Set Do Not Post" type="object" attrs="{'invisible': [('hidden_action', '=', 'do_nothing')]}" />
+                                        <button name="do_post" icon="gtk-yes" string="Set Post" type="object" attrs="{'invisible': [('hidden_action', '=', 'post')]}" />
                                     </tree>
                                 </field>
                             </group>
@@ -42,7 +45,7 @@
                                 <button name="nothing_hard_selection" icon="gtk-no" string="Set Do Not Post on selection" type="object" set_ids="amount_error_lines" />
                                 <button name="post_hard_selection" icon="gtk-yes" string="Set Post on selection" type="object" set_ids="amount_error_lines" />
                                 <field name="amount_error_lines" colspan="4" nolabel="1" o2m_selectable="2">
-                                    <tree string="Amounts mismatch" editable="top"  hide_delete_button="1" hide_new_button="1">
+                                    <tree string="Amounts mismatch" editable="top"  hide_delete_button="1" hide_new_button="1" hide_edit_button="1">
                                         <field name="sequence_for_reference" />
                                         <field name="name" />
                                         <field name="ref" />
@@ -54,7 +57,11 @@
                                         <field name="other_in" />
                                         <field name="other_out" />
                                         <field name="action" />
+                                        <field name="hidden_action" invisible="1"/>
+                                        <button name="do_nothing" icon="gtk-no" string="Set Do Not Post" type="object" attrs="{'invisible': [('hidden_action', '=', 'do_nothing')]}" />
+                                        <button name="do_post" icon="gtk-yes" string="Set Post" type="object" attrs="{'invisible': [('hidden_action', '=', 'post')]}" />
                                     </tree>
+
                                 </field>
                             </group>
 
