@@ -81,7 +81,7 @@ saved_name = {
 }
 saved_value = {
     'purchase.order': lambda doc: round(doc.amount_total, 2),
-    'sale.order': lambda doc: round(doc.ir_total_amount, 2),
+    'sale.order': lambda doc: doc.procurement_request and round(doc.ir_total_amount, 2) or round(doc.functional_amount_total, 2),
     'account.bank.statement': lambda doc: doc.journal_id.type in ('bank', 'cheque') and round(doc.balance_end, 2) or doc.journal_id.type == 'cash' and round(doc.msf_calculated_balance, 2) or 0,
     'account.invoice': lambda doc: round(doc.amount_total, 2),
     'stock.picking': lambda doc: False,
