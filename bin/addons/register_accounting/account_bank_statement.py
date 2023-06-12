@@ -3276,6 +3276,8 @@ class account_bank_statement_line(osv.osv):
             self.pool.get(_object).create(cr, uid, data, context=context)
 
     def open_mass_temp_post(self, cr, uid, ids, all_lines=False, posttype='temp', context=None):
+        if context is None:
+            context = {}
         data = {'posttype': posttype}
         local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
         wizard_reg_info = ''
@@ -3303,31 +3305,33 @@ class account_bank_statement_line(osv.osv):
                      and absl.statement_id = %(register_id)s
             ''', {'instance_id': local_instance_id, 'register_id': data['register_id']})
         else:
+            ids = context.get('active_ids')
             data['all_lines'] = False
             data['regiter_line_ids'] = [(6, 0, ids)]
             wiz_id = self.pool.get('wizard.temp.posting').create(cr, uid, data, context=context)
-            cr.execute('''
-                select
-                    absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name
-                from account_bank_statement_line absl
-                    left join account_bank_statement register on register.id = absl.statement_id
-                    left join account_journal j on j.id = register.journal_id
-                    left join account_journal other_j on other_j.id = absl.transfer_journal_id
-                    left join account_bank_statement other on other.journal_id = other_j.id and other.period_id = register.period_id
-                    left join account_bank_statement_line_move_rel rel on rel.move_id = absl.id
-                where
-                     rel.statement_id is null -- draft sate
-                     and (other.id is null or other.state != 'open') -- other register does not exist or is not open or not on the same period
-                     and other_j.instance_id = %(instance_id)s -- same local instance
-                     and j.instance_id = %(instance_id)s -- same local instance
-                     and absl.id in %(id)s
-            ''', {'instance_id': local_instance_id, 'id': tuple(ids)})
+            if ids:
+                cr.execute('''
+                    select
+                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name
+                    from account_bank_statement_line absl
+                        left join account_bank_statement register on register.id = absl.statement_id
+                        left join account_journal j on j.id = register.journal_id
+                        left join account_journal other_j on other_j.id = absl.transfer_journal_id
+                        left join account_bank_statement other on other.journal_id = other_j.id and other.period_id = register.period_id
+                        left join account_bank_statement_line_move_rel rel on rel.move_id = absl.id
+                    where
+                         rel.statement_id is null -- draft sate
+                         and (other.id is null or other.state != 'open') -- other register does not exist or is not open or not on the same period
+                         and other_j.instance_id = %(instance_id)s -- same local instance
+                         and j.instance_id = %(instance_id)s -- same local instance
+                         and absl.id in %(id)s
+                ''', {'instance_id': local_instance_id, 'id': tuple(ids)})
 
 
-        wizard_title = '%s%s' % (_('Temp Posting - Wizard'), wizard_reg_info)
         has_no_register = bool(cr.rowcount)
         self._create_wizard_error_line(cr, uid, 'wizard.temp.posting.line', wiz_id, context=context)
 
+        wizard_title = '%s%s' % (_('Temp Posting - Wizard'), wizard_reg_info)
         has_amount_error = False
         has_ignored_error = False
         if posttype == 'hard':
