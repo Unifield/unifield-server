@@ -1008,7 +1008,7 @@ class signature_setup(osv.osv_memory):
                             obj_type, obj_subtype = 'out', 'picking'
                         elif obj.split('.')[-1] == 'out':
                             obj_type = 'out'
-                        cond = "stock_picking o where o.signature_id is not null and o.type=%s and o.subtype=%s" % (obj_type, obj_subtype)
+                        cond = "stock_picking o where o.signature_id is not null and o.type='%s' and o.subtype='%s'" % (obj_type, obj_subtype)
 
                     for role in list_sign[obj]:
                         cr.execute("""
