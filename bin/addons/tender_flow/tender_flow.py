@@ -1682,7 +1682,7 @@ class purchase_order_line(osv.osv):
                 'sale_order_line_id': fields.many2one('sale.order.line', string='FO line', readonly=True),
                 'rfq_line_state_to_display': fields.function(_get_rfq_line_state_to_display, string='State',
                                                              type='selection', selection=RFQ_LINE_STATE_DISPLAY_SELECTION,
-                                                             method=True, readonly=True)
+                                                             method=True, store=True, readonly=True)
                 }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

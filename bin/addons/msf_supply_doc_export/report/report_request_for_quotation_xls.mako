@@ -64,6 +64,7 @@
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 % endfor
 <Column ss:AutoFitWidth="1" ss:Width="250" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
     
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line Number')}</Data></Cell>
@@ -76,6 +77,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Confirmed Delivery Date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('State')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
@@ -101,6 +103,7 @@
         
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.rfq_line_state_to_display and getSel(line, 'rfq_line_state_to_display') or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>
