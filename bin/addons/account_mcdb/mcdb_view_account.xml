@@ -10,11 +10,13 @@
                                     <button name="button_account_add" type="object" string="Add all Accounts" icon="gtk-add" colspan="1"/>
                                 </group>
                                 <field name="rev_account_ids"/>
-                                <field name="account_ids" colspan="2" nolabel="1" domain="[('parent_id', '!=', False)]">
+                                <field name="display_hq_system_accounts" invisible="1" />
+                                <field name="account_ids" colspan="2" nolabel="1" domain="[('parent_id', '!=', False)]" context="{'display_hq_system_accounts': display_hq_system_accounts}">
                                     <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')" editable="top" noteditable="1">
                                         <field name="code"/>
                                         <field name="name"/>
                                         <field name="type" string="Type"/>
+                                        <field name="mapping_value" invisible="not context.get('display_hq_system_accounts', False)"/>
                                     </tree>
                                 </field>
                             </group>
@@ -29,11 +31,7 @@
                                     <button name="button_account_type_clear" type="object" string="Remove all Account Types" icon="gtk-clear" colspan="1"/>
                                     <button name="button_account_type_add" type="object" string="Add all Account Types" icon="gtk-add" colspan="1"/>
                                 </group>
-                                <group col="4" colspan="2">
-                                    <field name="rev_account_type_ids" colspan="2"/>
-                                    <field name="display_hq_system_accounts_buttons" invisible="1"/>
-                                    <field name="display_hq_system_accounts" colspan="2" attrs="{'invisible': [('display_hq_system_accounts_buttons', '!=', True)]}"/>
-                                </group>
+                                <field name="rev_account_type_ids" />
                                 <field name="account_type_ids" colspan="2" nolabel="1">
                                     <tree string="Account types" editable="top" noteditable="1">
                                         <field name="code"/>

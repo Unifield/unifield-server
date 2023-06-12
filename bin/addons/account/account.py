@@ -30,6 +30,7 @@ import pooler
 from osv import fields, osv
 import decimal_precision as dp
 from tools.translate import _
+from lxml import etree
 
 
 def check_cycle(self, cr, uid, ids, context=None):
@@ -525,6 +526,7 @@ class account_account(osv.osv):
         if context is None:
             context = {}
         ir_model_obj = self.pool.get('ir.model.data')
+
         if context.get('from_fp') or context.get('from_grant_management'):
             view = False
             module = 'account'
@@ -535,7 +537,13 @@ class account_account(osv.osv):
                 view = ir_model_obj.get_object_reference(cr, uid, module, 'view_account_fp_tree')
             if view:
                 view_id = view[1]
-        return super(account_account, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        fvg = super(account_account, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'search' and context.get('display_hq_system_accounts'):
+            arch = etree.fromstring(fvg['arch'])
+            for field in arch.xpath('//group[@name="mapping_value"]'):
+                field.set('invisible', '0')
+            fvg['arch'] = etree.tostring(arch)
+        return fvg
 
 
 account_account()

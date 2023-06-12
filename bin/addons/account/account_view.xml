@@ -285,6 +285,9 @@
                         <field name="user_type"/>
                         <field name="type"/>
                         <field name="type_for_register"/>
+                        <group invisible="1" colspan="2" name="mapping_value">
+                            <field name="mapping_value"  />
+                        </group>
 
                     </group>
                     <newline/>
@@ -360,6 +363,7 @@
                     <field name="type"/>
                     <field name="activation_date"/>
                     <field name="inactivation_date"/>
+                    <field name="mapping_value" invisible="not context.get('display_hq_system_accounts', False)"/>
                 </tree>
             </field>
         </record>

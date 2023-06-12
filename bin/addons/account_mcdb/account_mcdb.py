@@ -34,18 +34,6 @@ class account_mcdb(osv.osv):
     _inherit = 'finance.query.method'
     _rec_name = 'description'
 
-    def _get_allow_hq_system_acc(self, cr, uid, ids, field_name, args, context=None):
-        if context is None:
-            context = {}
-        res = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
-        mcdbs = self.browse(cr, uid, ids, context=context)
-        for mcdb in mcdbs:
-            res[mcdb.id] = company.display_hq_system_accounts_buttons or False
-        return res
-
     _columns = {
         'description': fields.char("Query name", required=False, readonly=False, size=255),
         'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code", domain="[('code', '!=', 'IB')]"),  # exclude year closing initial balance journal
@@ -144,8 +132,6 @@ class account_mcdb(osv.osv):
         'display_partner': fields.boolean('Display Partners?'),
         'display_employee': fields.boolean('Display Employees?'),
         'display_transfer_journal': fields.boolean('Display Transfer Journals?'),
-        'display_hq_system_accounts_buttons': fields.function(_get_allow_hq_system_acc, type='boolean', method=True, store=False),
-        'display_hq_system_accounts': fields.boolean('Display HQ System Accounts?'),
         'user': fields.many2one('res.users', "User"),
         'cheque_number': fields.char('Cheque Number', size=120),  # BKLG-7
         'partner_txt': fields.char('Third Party', size=120),  # BKLG-7
@@ -157,11 +143,14 @@ class account_mcdb(osv.osv):
         'create_date': fields.date('Creation Date', readonly=True),
         'write_date': fields.date('Last Edit Date', readonly=True),
         'write_uid': fields.many2one('res.users', "Last Editor", readonly=True),
+
+        'display_hq_system_accounts': fields.boolean('Display HQ System Accounts'),
     }
 
     _defaults = {
         'model': lambda self, cr, uid, c: c.get('from', 'account.move.line'),
         'functional_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
+        'display_hq_system_accounts': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.display_hq_system_accounts_buttons,
         'currency_choice': lambda *a: 'booking',
         'analytic_axis': lambda *a: 'fp',
         'display_journal': lambda *a: False,
@@ -176,8 +165,6 @@ class account_mcdb(osv.osv):
         'display_funding_pool': lambda *a: False,
         'display_cost_center': lambda *a: False,
         'display_destination': lambda *a: False,
-        'display_hq_system_accounts': lambda *a: False,
-        'display_hq_system_accounts_buttons': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.display_hq_system_accounts_buttons,
         'user': lambda self, cr, uid, c: uid or False,
         'display_mcdb_load_button': lambda *a: True,
     }

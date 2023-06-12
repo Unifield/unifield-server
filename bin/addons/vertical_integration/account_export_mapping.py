@@ -11,8 +11,8 @@ class account_export_mapping(osv.osv):
     _rec_name = 'account_id'
 
     _columns = {
-        'account_id': fields.many2one('account.account', string="Unifield Account Code", required=True),
-        'mapping_value': fields.char('HQ System Account Code', required=True, size=64)
+        'account_id': fields.many2one('account.account', string="Unifield Account Code", required=True, select=1),
+        'mapping_value': fields.char('HQ System Account Code', required=True, size=64, select=1)
     }
 
     _sql_constraints = [
@@ -93,7 +93,9 @@ class account_export_mapping(osv.osv):
         for mapping in self.browse(cr, uid, mapping_ids, fields_to_fetch=['account_id'], context=context):
             account_ids.append(mapping.account_id.id)
 
-        if obj._name == 'account.analytic.line':
+        if obj._name == 'account.account':
+            field = 'id'
+        elif obj._name == 'account.analytic.line':
             field = 'general_account_id'
         else:
             field = 'account_id'
@@ -113,4 +115,34 @@ class account_export_mapping(osv.osv):
             view['arch'] = etree.tostring(arch)
 
 account_export_mapping()
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
+class account_account(osv.osv):
+    _name = 'account.account'
+    _inherit = 'account.account'
+
+    def _get_mapping_value(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        cr.execute('''select acc.id, map.mapping_value
+            from account_account acc
+            left join account_export_mapping map on map.account_id = acc.id
+            where
+                acc.id in %s
+        ''', (tuple(ids), ))
+
+        res = {}
+        for x in cr.fetchall():
+            res[x[0]] = x[1]
+
+        return res
+
+
+    def _search_mapping_value(self, cr, uid, ids, name, args, context=None):
+        return self.pool.get('account.export.mapping')._search_hq_acc(cr, uid, ids, name, args, self, context=None)
+
+    _columns = {
+        'mapping_value': fields.function(_get_mapping_value, method=True, type='char', size=64, string='HQ System Account Code', fnct_search=_search_mapping_value),
+    }
+
+account_account()
