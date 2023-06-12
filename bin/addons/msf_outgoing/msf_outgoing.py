@@ -1050,7 +1050,7 @@ class shipment(osv.osv):
 
     def add_packs(self, cr, uid, ids, context=None):
         ship = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id'], context=context)
-        other_ship_ids = self.search(cr, uid, [('state', '=', 'draft'), ('partner_id', '=', ship.partner_id.id)], context=context)
+        other_ship_ids = self.search(cr, uid, [('state', '=', 'draft'), ('partner_id', '=', ship.partner_id.id), ('address_id', '=', ship.address_id.id)], context=context)
         pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('state', '!=', 'done'), ('shipment_id', 'in', other_ship_ids)], context=context)
         if not pack_ids:
             raise osv.except_osv(_('Warning !'), _('No Pack Available'))
