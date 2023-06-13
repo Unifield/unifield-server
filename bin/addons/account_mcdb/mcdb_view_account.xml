@@ -16,7 +16,7 @@
                                         <field name="code"/>
                                         <field name="name"/>
                                         <field name="type" string="Type"/>
-                                        <field name="mapping_value" invisible="not context.get('display_hq_system_accounts', False)"/>
+                                        <field name="mapping_value" invisible="1"/>
                                     </tree>
                                 </field>
                             </group>

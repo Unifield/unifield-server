@@ -208,6 +208,14 @@ class account_mcdb(osv.osv):
         if 'document_code' in view['fields']:
             view['fields']['document_code']['string'] = _('Sequence numbers')
             view['fields']['document_code']['help'] = _('You can set several sequences separated by a comma or semicolon.')
+
+        if view_type == 'form' and self.pool.get('account.export.mapping')._is_mapping_display_active(cr, uid):
+            arch =  view.get('fields', {}).get('account_ids', {}).get('views', {}).get('tree', {}).get('arch')
+            if arch:
+                form = etree.fromstring(arch)
+                for field in form.xpath('//field[@name="mapping_value"]'):
+                    field.set('invisible', "0")
+                view['fields']['account_ids']['views']['tree']['arch'] = etree.tostring(form)
         return view
 
 
