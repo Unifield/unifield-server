@@ -57,6 +57,26 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF30.0
+    def us_11448_update_rfq_line_state(self, cr, uid, *a, **b):
+        '''
+        Update the rfq_line_state of all RFQ lines
+        '''
+        # Non-cancelled
+        cr.execute("""
+            UPDATE purchase_order_line pl SET rfq_line_state = p.rfq_state FROM purchase_order p
+            WHERE pl.order_id = p.id AND pl.state NOT IN ('cancel', 'cancel_r') AND p.rfq_state != 'cancel' 
+                AND p.rfq_ok = 't'
+        """)
+
+        # Cancelled(-r)
+        cr.execute("""
+            UPDATE purchase_order_line pl SET rfq_line_state = pl.state FROM purchase_order p
+            WHERE pl.order_id = p.id AND pl.state IN ('cancel', 'cancel_r') AND p.rfq_ok = 't'
+        """)
+
+        return True
+
     # UF29.0
     def us_11399_oca_mm_target(self, cr, uid, *a, **b):
         if self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id:

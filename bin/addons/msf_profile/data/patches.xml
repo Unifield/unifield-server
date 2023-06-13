@@ -942,5 +942,10 @@
         <record id="us_11399_oca_mm_target" model="patch.scripts">
             <field name="method">us_11399_oca_mm_target</field>
         </record>
+
+        <!-- UF30.0 -->
+        <record id="us_11448_update_rfq_line_state" model="patch.scripts">
+            <field name="method">us_11448_update_rfq_line_state</field>
+        </record>
     </data>
 </openerp>

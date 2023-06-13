@@ -103,7 +103,7 @@
         
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.rfq_line_state_to_display and getSel(line, 'rfq_line_state_to_display') or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.rfq_line_state and getSel(line, 'rfq_line_state') or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>

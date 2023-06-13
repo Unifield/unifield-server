@@ -318,7 +318,7 @@
                             <newline/>
                             <button name="wizard_import_po_line" string="Import RfQ lines" colspan="4" icon="gtk-dnd" type="object" attrs="{'invisible':[('rfq_state', 'not in', ['sent', 'done'])]}"/>
                             <field colspan="4" name="order_line" nolabel="1" mode="tree,form" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" context="{'rfq_ok': 1}"
-                                   filter_selector="[('Show all', []), ('Hide closed', [('rfq_line_state_to_display', 'not in', ['sent', 'done', 'cancel', 'cancel_r'])]), ('Show closed only', [('rfq_line_state_to_display', 'in', ['sent', 'done'])]), ('Hide cancelled', [('rfq_line_state_to_display', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('rfq_line_state_to_display', 'in', ['cancel', 'cancel_r'])])]" default_selector="'3'">
+                                   filter_selector="[('Show all', []), ('Hide closed', [('rfq_line_state', 'not in', ['sent', 'done', 'cancel', 'cancel_r'])]), ('Show closed only', [('rfq_line_state', 'in', ['sent', 'done'])]), ('Hide cancelled', [('rfq_line_state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('rfq_line_state', 'in', ['cancel', 'cancel_r'])])]" default_selector="'3'">
                                 <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
@@ -350,7 +350,7 @@
                                     <field name="old_price_unit" invisible="1"/>
                                     <field name="nomen_manda_0" invisible="1"/>
                                     <field name="fake_state" invisible="1"/>
-                                    <field name="rfq_line_state_to_display"/>
+                                    <field name="rfq_line_state"/>
                                     <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': ['|', ('fake_state', 'in', ['cancel', 'cancel_r', 'done']), ('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" />
                                 </tree>
                             </field>
