@@ -804,7 +804,7 @@ class product_attributes(osv.osv):
         ret = {}
 
         for _id in ids:
-            ret[_id] = False
+            ret[_id] = []
 
         cr.execute('''
             select
