@@ -69,13 +69,18 @@ class hq_product_mml_nonconform(XlsxReportParser):
 
         product_code = {}
 
+        extra_join_cond = ''
+        include_pipe = self.pool.get('non.conform.inpipe').read(self.cr, self.uid, self.ids[0], ['include_pipe'])['include_pipe']
+        if include_pipe:
+            extra_join_cond = 'smrl.in_pipe_qty > 0 or'
+
         # get oc_validation=f prod with stock/pipe
         self.cr.execute('''
             select p.id, p.default_code
             from product_product p
             inner join product_template tmpl on tmpl.id = p.product_tmpl_id
             inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-            inner join stock_mission_report_line smrl on p.id = smrl.product_id and (smrl.in_pipe_qty > 0 or smrl.internal_qty > 0)
+            inner join stock_mission_report_line smrl on p.id = smrl.product_id and (''' + extra_join_cond + ''' smrl.internal_qty > 0)
             inner join stock_mission_report smr on smr.id=smrl.mission_report_id and smr.full_view = 'f'
             inner join product_international_status creator on creator.id = p.international_status
             where
@@ -94,7 +99,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
             from product_product p
             inner join product_template tmpl on tmpl.id = p.product_tmpl_id
             inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-            inner join stock_mission_report_line smrl on p.id = smrl.product_id and (smrl.in_pipe_qty > 0 or smrl.internal_qty > 0)
+            inner join stock_mission_report_line smrl on p.id = smrl.product_id and (''' + extra_join_cond + ''' smrl.internal_qty > 0)
             inner join stock_mission_report smr on smr.id=smrl.mission_report_id and smr.full_view = 'f'
             inner join product_international_status creator on creator.id = p.international_status
             left join product_project_rel p_rel on p.id = p_rel.product_id

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="non_conform_inpipe_form_view" model="ir.ui.view">
+            <field name="name">non.conform.inpipe.form</field>
+            <field name="model">non.conform.inpipe</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Conformity Report">
+                    <separator string="Include or not products with only in-pipe quantity and no stock" colspan="4" />
+                    <field name="include_pipe" />
+                    <group colspan="4">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+                        <button name="print_excel" string="Generate Report" type="object"  icon="gtk-print" colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+
+    </data>
+</openerp>

@@ -226,6 +226,22 @@ class common_non_conform(XlsxReportParser):
 
 class product_mml_nonconform(common_non_conform):
     def get_query(self):
+        extra_join = ''
+        extra_cond = ''
+        if self.pool.get('non.conform.inpipe').read(self.cr, self.uid, self.ids[0], ['include_pipe'])['include_pipe']:
+            extra_join = '''
+            left join purchase_order_line pol on pol.product_id = p.id and pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
+            left join (
+                select m.product_id as product_id
+                from stock_move m, stock_location l2
+                where
+                l2.id = m.location_dest_id
+                and l2.usage = 'internal'
+                and m.state in ('confirmed' ,'assigned')
+                and m.product_qty > 0
+            ) inc on inc.product_id = p.id
+            '''
+            extra_cond = 'or count(pol.id) > 0 or count(inc.product_id) > 0'
         return """
             select p.id
             from product_product p
@@ -243,23 +259,14 @@ class product_mml_nonconform(common_non_conform):
             left join product_project_rel p_rel on p.id = p_rel.product_id
             left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
             left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
-            left join purchase_order_line pol on pol.product_id = p.id and pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
-            left join (
-                select m.product_id as product_id
-                from stock_move m, stock_location l2
-                where
-                l2.id = m.location_dest_id
-                and l2.usage = 'internal'
-                and m.state in ('confirmed' ,'assigned')
-                and m.product_qty > 0
-            ) inc on inc.product_id = p.id
+            """ +  extra_join  + """
             where
                 nom.name='MED'
                 and nom.level = 0
             group by p.id
             HAVING
                 (
-                    (count(smr.product_id) > 0 or count(pol.id) > 0 or count(inc.product_id) > 0)
+                    (count(smr.product_id) > 0 """ + extra_cond + """)
                     and (
                         bool_or(coalesce(oc_validation,'f'))='f'
                         or

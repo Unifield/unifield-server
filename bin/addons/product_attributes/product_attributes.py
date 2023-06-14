@@ -3544,16 +3544,25 @@ class product_attributes(osv.osv):
 
     def open_mml_nonconform_report(self, cr, uid, ids, context=None):
         instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
+
         if instance_level == 'section':
             report = 'report.hq_product_mml_nonconform'
         else:
             report = 'report.product_mml_nonconform'
 
+        wiz_id = self.pool.get('non.conform.inpipe').create(cr, uid, {'name': report}, context=context)
         return {
-            'type': 'ir.actions.report.xml',
-            'report_name': report,
+            'type': 'ir.actions.act_window',
+            'res_model': 'non.conform.inpipe',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': [wiz_id],
             'context': context,
+            'height': '200px',
+            'width': '720px',
         }
+
 
 
     _constraints = [
