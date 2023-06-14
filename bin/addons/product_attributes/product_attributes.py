@@ -3564,6 +3564,20 @@ class product_attributes(osv.osv):
         }
 
 
+    def open_msl_nonconform_report(self, cr, uid, ids, context=None):
+        wiz_id = self.pool.get('non.conform.inpipe').create(cr, uid, {'name': 'report.product_msl_nonconform'}, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'non.conform.inpipe',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': [wiz_id],
+            'context': context,
+            'height': '200px',
+            'width': '720px',
+        }
+
 
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])

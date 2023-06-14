@@ -92,9 +92,23 @@
             report_type="openpyxl"
             header="False"
             auto="False"
-            menu="True"
+            menu="False"
             target_filename="MSL_Non_Conform_%(instance)s_%(year)s_%(month)s_%(day)s"
             run_in_background="True"
          />
+
+        <record id="action_msl_nonconform" model="ir.actions.server">
+          <field name="name">MSL Non-Conform</field>
+          <field name="model_id" ref="model_product_product"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.open_msl_nonconform_report(context=context)</field>
+        </record>
+        <record id="ir_msl_nonconform" model="ir.values">
+          <field name="key2">client_print_multi</field>
+          <field name="model">unidata.project</field>
+          <field name="name">MSL Non-Conform</field>
+          <field eval="'ir.actions.server,%d'%action_msl_nonconform" name="value"/>
+          <field eval="True" name="object"/>
+        </record>
     </data>
 </openerp>

@@ -289,6 +289,24 @@ class product_msl_nonconform(common_non_conform):
         ud_proj = self.pool.get('unidata.project').search(self.cr, self.uid, [('uf_active', '=', 't'), ('instance_id', '=', self.instance_id)])
         if not ud_proj:
             ud_proj = [0]
+        extra_join = ''
+        extra_cond = ''
+        if self.pool.get('non.conform.inpipe').read(self.cr, self.uid, self.ids[0], ['include_pipe'])['include_pipe']:
+            extra_join = '''
+            left join purchase_order_line pol on pol.product_id = p.id and pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
+            left join (
+                select m.product_id as product_id
+                from stock_move m, stock_location l2
+                where
+                l2.id = m.location_dest_id
+                and l2.usage = 'internal'
+                and m.state in ('confirmed' ,'assigned')
+                and m.product_qty > 0
+            ) inc on inc.product_id = p.id
+            '''
+
+            extra_cond = 'or count(pol.id) > 0 or count(inc.product_id) > 0'
+
         return """
             select p.id
             from product_product p
@@ -303,17 +321,8 @@ class product_msl_nonconform(common_non_conform):
                     and location.id = l.location_id
                     and  location.usage = 'internal'
             ) smr on smr.product_id = p.id
-            left join purchase_order_line pol on pol.product_id = p.id and pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
-            left join (
-                select m.product_id as product_id
-                from stock_move m, stock_location l2
-                where
-                l2.id = m.location_dest_id
-                and l2.usage = 'internal'
-                and m.state in ('confirmed' ,'assigned')
-                and m.product_qty > 0
-            ) inc on inc.product_id = p.id
-            left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and msl_rel.msl_id = %s
+            """ + extra_join + """
+            left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and msl_rel.msl_id = """ + str(ud_proj[0]) + """
             left join product_international_status creator on creator.id = p.international_status
             where
                 nom.name='MED'
@@ -323,10 +332,10 @@ class product_msl_nonconform(common_non_conform):
             group by p.id
             HAVING
                 (
-                    count(smr.product_id) > 0 or count(pol.id) > 0 or count(inc.product_id) > 0
+                    count(smr.product_id) > 0 """ + extra_cond + """
                 )
             order by p.default_code
-        """ % ud_proj[0]
+        """
 
     def get_title(self):
         return _('Products not in MSL')
