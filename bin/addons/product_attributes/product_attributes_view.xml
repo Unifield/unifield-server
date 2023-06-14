@@ -530,6 +530,8 @@
                    <group name="batch_attr" invisible="1">
                        <field name="batch_attributes" />
                     </group>
+                   <field name="in_mml_instance" />
+                   <field name="in_msl_instance" widget="many2one"/>
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>

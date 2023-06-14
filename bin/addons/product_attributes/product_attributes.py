@@ -1283,7 +1283,7 @@ class product_attributes(osv.osv):
         'restrictions_txt': fields.function(_get_restrictions_txt, method=True, type='text', string='Restrictions'),
         'is_mml_valid': fields.function(_get_is_mml_valid, method=True, type='selection', selection=[('yes', 'Yes'), ('no', 'No'), ('', '')], string='MML Valid ?'),
         'is_msl_valid': fields.function(_get_is_msl_valid, method=True, type='selection', selection=[('yes', 'Yes'), ('no', 'No'), ('', '')], string='MSL Valid ?'),
-        'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance ?'),
+        'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance'),
         'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unidata.project', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
     }
 
