@@ -156,7 +156,7 @@ if tools.config['db_name']:
                 logger.info('loading test file %s', tools.config["test_file"])
                 tools.convert_yaml_import(cr, 'base', open(tools.config["test_file"]), {}, 'test', True)
                 cr.rollback()
-            pool.get('ir.cron')._poolJobs(db.dbname)
+            pool.get('ir.cron').restart(db.dbname)
         finally:
             cr.close()
 
@@ -189,7 +189,7 @@ if tools.config["translate_in"]:
     cr = pooler.get_db(dbname).cursor()
     try:
         tools.trans_load(cr,
-                         tools.config["translate_in"], 
+                         tools.config["translate_in"],
                          tools.config["language"],
                          context=context)
         tools.trans_update_res_ids(cr)

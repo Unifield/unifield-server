@@ -388,8 +388,6 @@ class Agent(object):
         task = [timestamp, db_name, function, args, kwargs]
         with lock_runner:
             heapq.heappush(cls.__tasks, task)
-            task2 = [time.time(), db_name, function, args, kwargs]
-            heapq.heappush(cls.__tasks, task2)
 
     @classmethod
     def cancel(cls, db_name):
