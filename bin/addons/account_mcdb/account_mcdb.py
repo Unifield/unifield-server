@@ -1145,6 +1145,7 @@ class account_mcdb(osv.osv):
         res = cr.fetchall()
         to_clean = [x[0] for x in res]
         self.unlink(cr, uid, to_clean)
+
         return True
 
     def _get_data_from_field(self, cr, uid, field, value, operator, context):

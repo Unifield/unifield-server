@@ -386,19 +386,22 @@ class Agent(object):
     @classmethod
     def setAlarm(cls, function, timestamp, db_name, *args, **kwargs):
         task = [timestamp, db_name, function, args, kwargs]
-        heapq.heappush(cls.__tasks, task)
-        cls.__tasks_by_db.setdefault(db_name, []).append(task)
+        with lock_runner:
+            heapq.heappush(cls.__tasks, task)
+            task2 = [time.time(), db_name, function, args, kwargs]
+            heapq.heappush(cls.__tasks, task2)
 
     @classmethod
     def cancel(cls, db_name):
         """Cancel all tasks for a given database. If None is passed, all tasks are cancelled"""
         cls._logger.debug("Cancel timers for %s db", db_name or 'all')
-        if db_name is None:
-            cls.__tasks, cls.__tasks_by_db = [], {}
-        else:
-            if db_name in cls.__tasks_by_db:
-                for task in cls.__tasks_by_db[db_name]:
-                    task[0] = 0
+        with lock_runner:
+            if db_name is None:
+                cls.__tasks = []
+            else:
+                for task in cls.__tasks:
+                    if task[1] == db_name:
+                        task[0] = 0
 
     @classmethod
     def quit(cls):
@@ -411,24 +414,25 @@ class Agent(object):
         """
         current_thread = threading.currentThread()
         while True:
-            while cls.__tasks and cls.__tasks[0][0] < time.time():
-                task = heapq.heappop(cls.__tasks)
-                timestamp, dbname, function, args, kwargs = task
-                cls.__tasks_by_db[dbname].remove(task)
-                if not timestamp:
-                    # null timestamp -> cancelled task
-                    continue
-                current_thread.dbname = dbname   # hack hack
-                cls._logger.debug("Run %s.%s(*%s, **%s)", function.__self__.__class__.__name__, function.__name__, args, kwargs)
-                delattr(current_thread, 'dbname')
-                task_thread = threading.Thread(target=function, name='netsvc.Agent.task', args=args, kwargs=kwargs)
-                # force non-daemon task threads (the runner thread must be daemon, and this property is inherited by default)
-                task_thread.setDaemon(False)
-                task_thread.start()
-                time.sleep(1)
+            with lock_runner:
+                while cls.__tasks and cls.__tasks[0][0] < time.time():
+                    task = heapq.heappop(cls.__tasks)
+                    timestamp, dbname, function, args, kwargs = task
+                    if not timestamp:
+                        # null timestamp -> cancelled task
+                        continue
+                    current_thread.dbname = dbname   # hack hack
+                    cls._logger.debug("Run %s.%s(*%s, **%s)", function.__self__.__class__.__name__, function.__name__, args, kwargs)
+                    delattr(current_thread, 'dbname')
+                    task_thread = threading.Thread(target=function, name='netsvc.Agent.task', args=args, kwargs=kwargs)
+                    # force non-daemon task threads (the runner thread must be daemon, and this property is inherited by default)
+                    task_thread.setDaemon(False)
+                    task_thread.start()
+                    time.sleep(1)
             time.sleep(60)
 
 agent_runner = threading.Thread(target=Agent.runner, name="netsvc.Agent.runner")
+lock_runner = threading.Lock()
 # the agent runner is a typical daemon thread, that will never quit and must be
 # terminated when the main process exits - with no consequence (the processing
 # threads it spawns are not marked daemon)
