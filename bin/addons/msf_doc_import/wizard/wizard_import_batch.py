@@ -201,15 +201,13 @@ class wizard_import_batch(osv.osv_memory):
             try:
                 # US-2492: In case we've ended up with a mx.DateTime.DateTime here
                 # make it into the string we were expecting.
-                if life_date and type(life_date) != str:
-                    life_date = str(life_date)
-                    # now we have 2018-12-31 00:00:00.00, remove the .00
-                    life_date = life_date[:-3]
-                if life_date and datetime.strptime(life_date, '%Y-%m-%d %H:%M:%S') < datetime(1900, 0o1, 0o1, 0, 0, 0):
+                if life_date and isinstance(life_date, datetime):
+                    life_date = life_date.strftime('%Y-%m-%d %H:%M:%S')
+                if life_date and datetime.strptime(life_date, '%Y-%m-%d %H:%M:%S') < datetime(1900, 1, 1, 0, 0, 0):
                     date_format = date_tools.get_date_format(cr, uid, context=context)
                     save_error(
                         _('You cannot create a batch number with an expiry date before %s') % (
-                            datetime(1900, 0o1, 0o1, 0, 0, 0).strftime(date_format),
+                            datetime(1900, 1, 1, 0, 0, 0).strftime(date_format),
                         ),
                     )
                     continue
