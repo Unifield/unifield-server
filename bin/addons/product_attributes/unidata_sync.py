@@ -494,9 +494,10 @@ class ud_sync():
 class unidata_sync(osv.osv):
     _name = 'unidata.sync'
     _description = "UniData Sync"
-    _lock = threading.RLock()
+    _lock = {}
 
     def __init__(self, pool, cr):
+        self._lock[cr.dbname] = threading.RLock()
         super(unidata_sync, self).__init__(pool, cr)
         cr.execute('CREATE SEQUENCE IF NOT EXISTS  unidata_sync_msl_seq')
 
@@ -673,7 +674,7 @@ class unidata_sync(osv.osv):
 
     def start_msl_sync(self, cr, nuid, context=None):
 
-        if not self._lock.acquire(blocking=False):
+        if not self._lock[cr.dbname].acquire(blocking=False):
             raise osv.except_osv(_('Error'), _('A sync is already running ...'))
 
         session_obj = self.pool.get('unidata.sync.log')
@@ -719,7 +720,7 @@ class unidata_sync(osv.osv):
             if handler:
                 handler.close()
                 logger.removeHandler(handler)
-            self._lock.release()
+            self._lock[cr.dbname].release()
 
     def ud_start_manual(self, cr, uid, ids, context=None):
         self._error = ''
@@ -737,12 +738,12 @@ class unidata_sync(osv.osv):
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
             raise osv.except_osv(_('Error'), _('UD sync can only be started at HQ level.'))
 
-        if not self._lock.acquire(blocking=False):
+        if not self._lock[cr.dbname].acquire(blocking=False):
             raise osv.except_osv(_('Error'), _('A sync is already running ...'))
         try:
             self._start_ud_sync(cr, uid, context=context)
         finally:
-            self._lock.release()
+            self._lock[cr.dbname].release()
 
     def start_msl_ud_sync(self, cr, uid, context=None):
         self.start_msl_sync(cr, uid, context=context)
