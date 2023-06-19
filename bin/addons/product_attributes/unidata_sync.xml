@@ -509,7 +509,7 @@
             <field name="name">product.msl.rel.search</field>
             <field name="model">product.msl.rel</field>
             <field name="type">search</field>
-            <field name="priority">120</field>
+            <field name="priority">16</field>
             <field name="arch" type="xml">
                 <search string="MSL Lines history">
                     <filter name="added" string="Added" domain="[('deletion_date', '=', False)]" icon="terp-check" />
@@ -528,7 +528,7 @@
             <field name="name">product.msl.rel.tree</field>
             <field name="model">product.msl.rel</field>
             <field name="type">tree</field>
-            <field name="priority">120</field>
+            <field name="priority">16</field>
             <field name="arch" type="xml">
                 <tree string="MSL Line History" hide_new_button="1" hide_delete_button="1" noteditable="1" colors="grey:deletion_date">
                     <field name="msl_id" />
@@ -560,5 +560,13 @@
             res_model="product.msl.rel"
             key2="client_action_multi"
             context="{'search_default_msl_id': active_id}"/>
+
+        <act_window id="action_msl_product_history"
+            name="MSL History"
+            src_model="product.product"
+            res_model="product.msl.rel"
+            key2="client_action_multi"
+            search_view_id="product_msl_rel_search"
+            context="{'search_default_product_id': active_id}"/>
     </data>
 </openerp>
