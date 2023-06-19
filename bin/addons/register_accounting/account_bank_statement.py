@@ -2438,7 +2438,7 @@ class account_bank_statement_line(osv.osv):
 
                 if not force and \
                         absl.account_id.type_for_register == 'transfer_same' and \
-                        abs(absl.amount - absl.counterpart_transfer_st_line_id.amount) > 0.001:
+                        abs(absl.amount + absl.counterpart_transfer_st_line_id.amount) > 0.001:
                     msg = self.pool.get('message.action').create(cr, uid, {
                         'title':  _('The amount of transfer entry %s does not match with counter party %s - are you sure you want to hard post.') % (init_ref, absl.counterpart_transfer_st_line_id.sequence_for_reference),
                         'yes_action': lambda cr, uid, context: self.pool.get('account.bank.statement.line').posting(cr, uid, [absl.id], postype, force=True, context=context),
@@ -3352,7 +3352,7 @@ class account_bank_statement_line(osv.osv):
                     where
                          other_move.state = 'posted' -- counterpart is posted
                          and coalesce(move.state, '') != 'posted' -- reg line is not posted
-                         and abs(absl.amount - other_line.amount) > 0.001
+                         and abs(absl.amount + other_line.amount) > 0.001
                          and absl.amount * other_line.amount <= 0
                          and account.type_for_register = 'transfer_same'
                          and absl.statement_id = %(register_id)s
@@ -3372,7 +3372,7 @@ class account_bank_statement_line(osv.osv):
                     where
                          other_move.state = 'posted' -- counterpart is posted
                          and coalesce(move.state, '') != 'posted' -- reg line is not posted
-                         and abs(absl.amount - other_line.amount) > 0.001
+                         and abs(absl.amount + other_line.amount) > 0.001
                          and absl.amount * other_line.amount <= 0
                          and account.type_for_register = 'transfer_same'
                          and absl.id in %(ids)s
