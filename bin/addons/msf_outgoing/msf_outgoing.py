@@ -1614,8 +1614,9 @@ class shipment(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for ship in self.read(cr, uid, ids, ['shipment_actual_date'], context=context):
-            wiz_data = {'shipment_id': ship['id'], 'shipment_actual_date': ship['shipment_actual_date']}
+        if ids:
+            db_datetime_format = self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context)
+            wiz_data = {'shipment_id': ids[0], 'shipment_actual_date': time.strftime(db_datetime_format)}
             wiz_id = self.pool.get('select.actual.ship.date.wizard').create(cr, uid, wiz_data, context=context)
             return {'type': 'ir.actions.act_window',
                     'res_model': 'select.actual.ship.date.wizard',
