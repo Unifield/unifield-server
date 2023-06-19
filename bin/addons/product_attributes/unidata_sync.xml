@@ -504,5 +504,61 @@
         </record>
 
         <menuitem name="MSL Projects with no link to UF" parent="unidata_main_menu" id="unidata_project_missing_menu" action="unidata_project_missing_action" sequence="30" />
+
+        <record model="ir.ui.view" id="product_msl_rel_search">
+            <field name="name">product.msl.rel.search</field>
+            <field name="model">product.msl.rel</field>
+            <field name="type">search</field>
+            <field name="priority">120</field>
+            <field name="arch" type="xml">
+                <search string="MSL Lines history">
+                    <filter name="added" string="Added" domain="[('deletion_date', '=', False)]" icon="terp-check" />
+                    <filter name="removed" string="Removed" domain="[('deletion_date', '!=', False)]" icon="gtk-dialog-error"/>
+                    <separator orientation="vertical"/>
+
+                    <field name="msl_id" />
+                    <field name="product_id" />
+                    <field name="creation_date" />
+                    <field name="deletion_date" />
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="product_msl_rel_tree">
+            <field name="name">product.msl.rel.tree</field>
+            <field name="model">product.msl.rel</field>
+            <field name="type">tree</field>
+            <field name="priority">120</field>
+            <field name="arch" type="xml">
+                <tree string="MSL Line History" hide_new_button="1" hide_delete_button="1" noteditable="1" colors="grey:deletion_date">
+                    <field name="msl_id" />
+                    <field name="product_id" />
+                    <field name="creation_date" />
+                    <field name="deletion_date" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="product_msl_rel_form">
+            <field name="name">product.msl.rel.form</field>
+            <field name="model">product.msl.rel</field>
+            <field name="type">form</field>
+            <field name="priority">120</field>
+            <field name="arch" type="xml">
+                <form string="MSL Line History" hide_new_button="1" hide_duplicate_button="1">
+                    <field name="msl_id" readonly="1" />
+                    <field name="product_id" readonly="1" />
+                    <field name="creation_date" readonly="1" />
+                    <field name="deletion_date" readonly="1" />
+                </form>
+            </field>
+        </record>
+
+        <act_window id="action_msl_product_history"
+            name="MSL History"
+            src_model="unidata.project"
+            res_model="product.msl.rel"
+            key2="client_action_multi"
+            context="{'search_default_msl_id': active_id}"/>
     </data>
 </openerp>

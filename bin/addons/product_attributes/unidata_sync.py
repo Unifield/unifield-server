@@ -35,12 +35,14 @@ unidata_country()
 class product_msl_rel(osv.osv):
     _name = 'product.msl.rel'
     _table = 'product_msl_rel'
+    _rec_name = 'msl_id'
+    _order = 'product_id'
 
     _columns = {
         'msl_id': fields.many2one('unidata.project', 'MSL', required=1, select=1),
         'product_id': fields.many2one('product.product', 'Product', required=1, select=1),
-        'creation_date': fields.datetime('Date added'),
-        'deletion_date': fields.datetime('Date removed'),
+        'creation_date': fields.datetime('Added date'),
+        'deletion_date': fields.datetime('Removed date'),
         'version': fields.integer('Version number'),
         'to_delete': fields.boolean('to delete'),
     }
