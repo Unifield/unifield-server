@@ -2183,10 +2183,14 @@ class account_bank_statement_line(osv.osv):
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
         if state == 'hard':
-            if values.get('partner_move_ids') or values.get('partner_move_line_ids') or \
-                    values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or \
+            if values.get('partner_move_ids') or \
+                    values.get('partner_move_line_ids') or \
+                    values == {'from_cash_return': True} or \
+                    values.get('analytic_distribution_id', False) or \
                     (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or \
-                    'from_correction' in context or context.get('sync_update_execution', False):
+                    'from_correction' in context or \
+                    context.get('sync_update_execution', False) or \
+                    values.keys() == ['has_a_counterpart_transfer'] :
                 res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
                 self._check_account_partner_compat(cr, uid, ids, context=context)
                 self._check_on_regline_big_amounts(cr, uid, ids, context=context)
@@ -2433,14 +2437,22 @@ class account_bank_statement_line(osv.osv):
                 else:
                     init_ref = '%s - %s' % (absl.name, absl.ref or '')
 
-                if absl.amount * absl.counterpart_transfer_st_line_id.amount >= 0 and (absl.amount or absl.counterpart_transfer_st_line_id.amount):
+                if absl.account_id.type_for_register == 'transfer' and absl.amount * absl.counterpart_transfer_st_line_id.amount >= 0 and (absl.amount or absl.counterpart_transfer_st_line_id.amount):
                     raise osv.except_osv(_('Error'), _('The transfer entry %s and the counter party %s have no debit or credit.' % (init_ref, absl.counterpart_transfer_st_line_id.sequence_for_reference)))
 
                 if not force and \
-                        absl.account_id.type_for_register == 'transfer_same' and \
-                        abs(absl.amount + absl.counterpart_transfer_st_line_id.amount) > 0.001:
+                        ( absl.account_id.type_for_register == 'transfer_same' and abs(absl.amount + absl.counterpart_transfer_st_line_id.amount) > 0.001 \
+                          or \
+                          absl.journal_id.id != absl.counterpart_transfer_st_line_id.transfer_journal_id.id \
+                          or \
+                          absl.transfer_journal_id.id != absl.counterpart_transfer_st_line_id.journal_id.id \
+                          or \
+                          absl.account_id.id != absl.counterpart_transfer_st_line_id.account_id.id \
+                          or \
+                          absl.account_id.type_for_register not in ('transfer_same', 'transfer')
+                          ):
                     msg = self.pool.get('message.action').create(cr, uid, {
-                        'title':  _('The amount of transfer entry %s does not match with counter party %s - are you sure you want to hard post.') % (init_ref, absl.counterpart_transfer_st_line_id.sequence_for_reference),
+                        'title':  _('The amount, the third party or the account of transfer entry %s does not match with counter party %s - are you sure you want to hard post ?') % (init_ref, absl.counterpart_transfer_st_line_id.sequence_for_reference),
                         'yes_action': lambda cr, uid, context: self.pool.get('account.bank.statement.line').posting(cr, uid, [absl.id], postype, force=True, context=context),
                     }, context=context)
                     return self.pool.get('message.action').pop_up(cr, uid, [msg], context=context)
@@ -2637,14 +2649,24 @@ class account_bank_statement_line(osv.osv):
                 else:
                     direct_hard_post = False
 
-                if absl.counterpart_transfer_st_line_id and absl.counterpart_transfer_st_line_id.state == 'hard':
+                if absl.counterpart_transfer_st_line_id and \
+                        absl.counterpart_transfer_st_line_id.state == 'hard':
+
                     to_rec_ids = self.pool.get('account.move.line').search(cr, uid, [('counterpart_transfer_st_line_id', 'in', [absl.id, absl.counterpart_transfer_st_line_id.id])])
-                    if len(to_rec_ids) < 2:
-                        raise osv.except_osv(_('Error'), _('An auto booked transfer JI is missing, cannot reconcile the entries.'))
-                    if absl.account_id.type_for_register == 'transfer_same':
-                        self.pool.get('account.move.line').reconcile_partial(cr, uid, to_rec_ids, type='manual')
-                    elif absl.account_id.type_for_register == 'transfer':
-                        self.pool.get('account.move.line').reconcile(cr, uid, to_rec_ids, type='manual')
+                    if absl.counterpart_transfer_st_line_id.account_id.id == absl.account_id.id and \
+                            absl.counterpart_transfer_st_line_id.journal_id.id == absl.transfer_journal_id.id and \
+                            absl.counterpart_transfer_st_line_id.transfer_journal_id.id == absl.journal_id.id and \
+                            absl.account_id.type_for_register in ('transfer_same', 'transfer'):
+                        if len(to_rec_ids) < 2:
+                            raise osv.except_osv(_('Error'), _('An auto booked transfer JI is missing, cannot reconcile the entries.'))
+                        if absl.account_id.type_for_register == 'transfer_same' and \
+                                abs(absl.amount + absl.counterpart_transfer_st_line_id.amount) < 0.001:
+                            self.pool.get('account.move.line').reconcile_partial(cr, uid, to_rec_ids, type='manual')
+                        elif absl.account_id.type_for_register == 'transfer' and absl.amount * absl.counterpart_transfer_st_line_id.amount < 0:
+                            self.pool.get('account.move.line').reconcile(cr, uid, to_rec_ids, type='manual')
+
+                    if to_rec_ids:
+                        self.pool.get('account.move.line').write(cr, uid, to_rec_ids, {'has_a_counterpart_transfer': False}, context=context)
 
                 self._set_register_line_audittrail_post_hard_state_log(cr, uid, absl, direct_hard_post, context=context)
 
@@ -3268,10 +3290,9 @@ class account_bank_statement_line(osv.osv):
                     'other_ref': x[7],
                     'other_in': x[8] if x[8] > 0 else 0,
                     'other_out': abs(x[8]) if x[8] < 0 else 0,
+                    'other_account_id': x[9],
+                    'other_third_id': x[10],
                 })
-
-                if _object == 'wizard.hard.ignored.posting.line':
-                    data['action'] = 'do_nothing'
 
             self.pool.get(_object).create(cr, uid, data, context=context)
 
@@ -3333,13 +3354,12 @@ class account_bank_statement_line(osv.osv):
 
         wizard_title = '%s%s' % (_('Temp Posting - Wizard'), wizard_reg_info)
         has_amount_error = False
-        has_ignored_error = False
         if posttype == 'hard':
             wizard_title = '%s%s' % (_('Hard Posting - Wizard'), wizard_reg_info)
             if all_lines:
                 cr.execute('''
                     select
-                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name, other_line.sequence_for_reference, other_line.amount
+                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name, other_line.sequence_for_reference, other_line.amount, other_line.account_id, other_line.transfer_journal_id
                     from account_bank_statement_line absl
                         left join account_bank_statement register on register.id = absl.statement_id
                         left join account_account account on account.id = absl.account_id
@@ -3352,15 +3372,25 @@ class account_bank_statement_line(osv.osv):
                     where
                          other_move.state = 'posted' -- counterpart is posted
                          and coalesce(move.state, '') != 'posted' -- reg line is not posted
-                         and abs(absl.amount + other_line.amount) > 0.001
-                         and absl.amount * other_line.amount <= 0
-                         and account.type_for_register = 'transfer_same'
                          and absl.statement_id = %(register_id)s
+                         and ( abs(absl.amount + other_line.amount) > 0.001
+                                 and account.type_for_register = 'transfer_same'
+                               or
+                                  absl.amount * other_line.amount <= 0
+                               or
+                                 absl.account_id != other_line.account_id
+                               or
+                                 absl.transfer_journal_id != other_move.journal_id
+                               or
+                                 move.journal_id != other_line.transfer_journal_id
+                               or
+                                 account.type_for_register not in ('transfer_same', 'transfer')
+                        )
                 ''', {'instance_id': local_instance_id, 'register_id': data['register_id']})
             else:
                 cr.execute('''
                     select
-                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name, other_line.sequence_for_reference, other_line.amount
+                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name, other_line.sequence_for_reference, other_line.amount, other_line.account_id, other_line.transfer_journal_id
                     from account_bank_statement_line absl
                         left join account_account account on account.id = absl.account_id
                         left join account_journal other_j on other_j.id = absl.transfer_journal_id
@@ -3372,59 +3402,27 @@ class account_bank_statement_line(osv.osv):
                     where
                          other_move.state = 'posted' -- counterpart is posted
                          and coalesce(move.state, '') != 'posted' -- reg line is not posted
-                         and abs(absl.amount + other_line.amount) > 0.001
-                         and absl.amount * other_line.amount <= 0
-                         and account.type_for_register = 'transfer_same'
                          and absl.id in %(ids)s
+                         and ( abs(absl.amount + other_line.amount) > 0.001
+                                 and absl.amount * other_line.amount <= 0
+                                 and account.type_for_register = 'transfer_same'
+                               or
+                                   absl.amount * other_line.amount <= 0
+                               or
+                                 absl.account_id != other_line.account_id
+                               or
+                                 absl.transfer_journal_id != other_move.journal_id
+                               or
+                                 move.journal_id != other_line.transfer_journal_id
+                               or
+                                 account.type_for_register in ('transfer_same', 'transfer')
+                        )
                 ''', {'instance_id': local_instance_id, 'ids': tuple(ids)})
 
             has_amount_error = bool(cr.rowcount)
             self._create_wizard_error_line(cr, uid, 'wizard.hard.posting.line', wiz_id, context=context)
 
-            if all_lines:
-                cr.execute('''
-                    select
-                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name, other_line.sequence_for_reference, other_line.amount
-                    from account_bank_statement_line absl
-                        left join account_bank_statement register on register.id = absl.statement_id
-                        left join account_account account on account.id = absl.account_id
-                        left join account_journal other_j on other_j.id = absl.transfer_journal_id
-                        left join account_bank_statement_line other_line on other_line.id = absl.counterpart_transfer_st_line_id
-                        left join account_bank_statement_line_move_rel other_rel on other_rel.move_id = other_line.id
-                        left join account_move other_move on other_move.id = other_rel.statement_id
-                        left join account_bank_statement_line_move_rel rel on rel.move_id = absl.id
-                        left join account_move move on move.id = rel.statement_id
-                    where
-                         other_move.state = 'posted' -- counterpart is posted
-                         and coalesce(move.state, '') != 'posted' -- reg line is not posted
-                         and absl.amount * other_line.amount > 0
-                         and absl.statement_id = %(register_id)s
-                ''', {'instance_id': local_instance_id, 'register_id': data['register_id']})
-            else:
-                cr.execute('''
-                    select
-                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name, other_line.sequence_for_reference, other_line.amount
-                    from account_bank_statement_line absl
-                        left join account_account account on account.id = absl.account_id
-                        left join account_journal other_j on other_j.id = absl.transfer_journal_id
-                        left join account_bank_statement_line other_line on other_line.id = absl.counterpart_transfer_st_line_id
-                        left join account_bank_statement_line_move_rel other_rel on other_rel.move_id = other_line.id
-                        left join account_move other_move on other_move.id = other_rel.statement_id
-                        left join account_bank_statement_line_move_rel rel on rel.move_id = absl.id
-                        left join account_move move on move.id = rel.statement_id
-                    where
-                         other_move.state = 'posted' -- counterpart is posted
-                         and coalesce(move.state, '') != 'posted' -- reg line is not posted
-                         and absl.amount * other_line.amount > 0
-                         and absl.id in %(ids)s
-                ''', {'instance_id': local_instance_id, 'ids': tuple(ids)})
-
-            has_ignored_error = bool(cr.rowcount)
-            self._create_wizard_error_line(cr, uid, 'wizard.hard.ignored.posting.line', wiz_id, context=context)
-
-
-
-        self.pool.get('wizard.temp.posting').write(cr, uid, wiz_id, {'has_no_register': has_no_register,'has_amount_error': has_amount_error, 'has_ignored_error': has_ignored_error}, context=context)
+        self.pool.get('wizard.temp.posting').write(cr, uid, wiz_id, {'has_no_register': has_no_register,'has_amount_error': has_amount_error}, context=context)
 
 
 

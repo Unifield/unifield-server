@@ -9,7 +9,6 @@
                         <form string="Temp Posting - Wizard">
                             <field name="has_no_register" invisible="1" />
                             <field name="has_amount_error" invisible="1" />
-                            <field name="has_ignored_error" invisible="1" />
                             <field name="all_lines" invisible="1" />
                             <group colspan="4" attrs="{'invisible': [('has_no_register', '=', False)]}">
                                 <separator colspan="4" />
@@ -41,7 +40,7 @@
                                 <separator colspan="4" />
                                 <html colspan="4">
                                     <h2>
-                                    <translate>On the following lines, the amount of transfer entry does not match with counter party, please choose an action:</translate>
+                                    <translate>On the following lines, the amount, the third party or the account of transfer entry does not match with counter party, please choose an action:</translate>
                                     </h2>
                                 </html>
                                 <button name="nothing_hard_selection" icon="gtk-no" string="Set Do Not Post on selection" type="object" set_ids="amount_error_lines" />
@@ -56,8 +55,10 @@
                                         <field name="amount_out" />
                                         <field name="third" />
                                         <field name="other_ref" />
+                                        <field name="other_account_id" />
                                         <field name="other_in" />
                                         <field name="other_out" />
+                                        <field name="other_third_id" />
                                         <field name="action" />
                                         <field name="hidden_action" invisible="1"/>
                                         <button name="do_nothing" icon="gtk-no" string="Set Do Not Post" type="object" attrs="{'invisible': [('hidden_action', '=', 'do_nothing')]}" />
@@ -67,28 +68,6 @@
                                 </field>
                             </group>
 
-                            <group colspan="4" attrs="{'invisible': [('has_ignored_error', '=', False)]}">
-                                <separator colspan="4" />
-                                <html colspan="4">
-                                    <h2>
-                                    <translate>The following lines are ignored because entry and counter party have no credit or no debit:</translate>
-                                    </h2>
-                                </html>
-                                <field name="ignored_lines" colspan="4" nolabel="1" readonly="1">
-                                    <tree string="Ignored Lines" editable="top"  hide_delete_button="1" hide_new_button="1">
-                                        <field name="sequence_for_reference" />
-                                        <field name="name" />
-                                        <field name="ref" />
-                                        <field name="account_id" />
-                                        <field name="amount_in" />
-                                        <field name="amount_out" />
-                                        <field name="third" />
-                                        <field name="other_ref" />
-                                        <field name="other_in" />
-                                        <field name="other_out" />
-                                    </tree>
-                                </field>
-                            </group>
 
                             <group colspan="4" attrs="{'invisible': [('all_lines', '=', False)]}">
                                 <html>

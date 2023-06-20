@@ -19,8 +19,6 @@ class wizard_temp_posting(osv.osv_memory):
         'has_no_register': fields.boolean('Has no register error'),
         'amount_error_lines': fields.one2many('wizard.hard.posting.line', 'wizard_id', 'Lines'),
         'has_amount_error': fields.boolean('Has amount error'),
-        'ignored_lines': fields.one2many('wizard.hard.ignored.posting.line', 'wizard_id', 'Lines'),
-        'has_ignored_error': fields.boolean('Has Ignorded error'),
         'posttype': fields.char('PostType', size=16, readonly=1),
     }
 
@@ -80,7 +78,7 @@ class wizard_temp_posting(osv.osv_memory):
         else:
             st_line_ids = set([x.id for x in wiz.regiter_line_ids])
 
-        for x in wiz.no_register_error_lines + wiz.amount_error_lines + wiz.ignored_lines:
+        for x in wiz.no_register_error_lines + wiz.amount_error_lines:
             if x.action == 'do_nothing':
                 st_line_ids.remove(x.register_line_id.id)
 
@@ -154,15 +152,9 @@ class wizard_hard_posting_line(osv.osv_memory):
         'other_ref': fields.char('Counterpart Reference', size=512, readonly=True),
         'other_in': fields.float('Counterpart Amount In', readonly=True),
         'other_out': fields.float('Counterpart Amount Out', readonly=True),
+        'other_account_id': fields.many2one('account.account', 'Counterpart Account', readonly=True),
+        'other_third_id': fields.many2one('account.journal', 'Counterpart Third Party', readonly=True),
     }
 
 wizard_hard_posting_line()
 
-class wizard_hard_ignored_posting_line(osv.osv_memory):
-    _name = 'wizard.hard.ignored.posting.line'
-    _inherit = 'wizard.hard.posting.line'
-
-    _columns = {
-    }
-
-wizard_hard_ignored_posting_line()
