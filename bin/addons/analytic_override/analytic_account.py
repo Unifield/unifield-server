@@ -791,11 +791,14 @@ class analytic_account(osv.osv):
                     vals['fp_account_ids'] = [(6, 0, [])]
         return vals
 
-    def _check_date(self, vals):
+    def _check_data(self, vals):
         if 'date' in vals and vals['date'] is not False \
                 and 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
             raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
+        if 'code' in vals and vals['code'] is not False and ';' in vals['code']:
+            # to prevent issues in the draft FO/PO AD import
+            raise osv.except_osv(_('Warning !'), _('The Code can not contain a semicolon (;)'))
 
     def _check_sub_cc(self, cr, uid, vals, context=None):
         if context is None:
@@ -956,7 +959,7 @@ class analytic_account(osv.osv):
         # Check that instance_id is filled in for FP
         if context.get('from_web', False) or context.get('from_import_menu', False):
             self.check_fp(cr, uid, vals, to_update=True, context=context)
-        self._check_date(vals)
+        self._check_data(vals)
         self._check_sub_cc(cr, uid, vals=vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
@@ -987,7 +990,7 @@ class analytic_account(osv.osv):
         # US-166: Ids needs to always be a list
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self._check_date(vals)
+        self._check_data(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
         self._update_synched_dest_cc_ids(cr, uid, ids, vals, context)
