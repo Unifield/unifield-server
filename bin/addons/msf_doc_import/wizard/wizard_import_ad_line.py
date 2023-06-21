@@ -146,6 +146,7 @@ class wizard_import_ad_line(osv.osv_memory):
                             percentage_vals = [float(percentage_val.strip('%')) for percentage_val in percentage_vals]
                         except ValueError as e:
                             error.append(_('%s line %s %s: Percentage values must be numbers') % (doc_name, key[0], key[1]))
+                            break
 
                         if sum(percentage_vals) == 100:
                             cc_values = False
