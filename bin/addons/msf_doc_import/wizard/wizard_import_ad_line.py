@@ -176,6 +176,7 @@ class wizard_import_ad_line(osv.osv_memory):
                                     for i, percent in enumerate(percentage_vals):
                                         cc_value = cc_values[i]
                                         dest_value = dest_values[i]
+                                        j = 0
                                         for line in current_line_add[key]:
                                             if (i >= len(line[4]) and i >= len(line[5]) and i >= len(line[8])) \
                                                     or (line[4][i] != cc_value or line[5][i] != dest_value or line[8][i] != percent):
@@ -240,11 +241,13 @@ class wizard_import_ad_line(osv.osv_memory):
                                                         distrib_id = ana_obj.create(cr, uid, {'partner_type': partner_type, 'cost_center_lines': [(0, 0, cc_data)]}, context=context)
                                                         ana_obj.create_funding_pool_lines(cr, uid, [distrib_id], context=context)
                                                         if len(percentage_vals) > 1:
-                                                            current_line_add[key] = [(line[0], line[1], line[2], distrib_id, [cc_cache[cc_value]], [dest_cache[dest_value]],
+                                                            current_line_add[key][j] = (
+                                                                line[0], line[1], line[2], distrib_id, [cc_cache[cc_value]], [dest_cache[dest_value]],
                                                                 ana_obj.read(cr, uid, distrib_id, ['cost_center_lines'], context=context)['cost_center_lines'],
                                                                 fp_line_obj.search(cr, uid, [('distribution_id', '=', distrib_id)], context=context),
                                                                 [percent]
-                                                            )]
+                                                            )
+                                                            j += 1
                                                         import_obj.write(cr, uid, [line[0]], {'analytic_distribution_id': distrib_id}, context=context)
                                             else:
                                                 if line[0] not in l_no_change:
