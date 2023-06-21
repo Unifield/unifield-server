@@ -325,7 +325,7 @@
             <field name="res_model">unifield.instance</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[]</field>
+            <field name="domain">[('is_published', '=', True)]</field>
         </record>
 
         <menuitem name="MSL Projects" parent="base.menu_product" id="unifield_instance_menu" action="unifield_instance_action" sequence="15" />
