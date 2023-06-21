@@ -167,17 +167,15 @@
                                     </tree>
                                 </field>
 
-                                <field name="oc_project_restrictions" nolabel="1" colspan="2">
+                                <field name="oc_instance_restrictions" nolabel="1" colspan="2">
                                     <tree string="Project Restrictions">
-                                        <field name="instance_id" string="Code"/>
+                                        <field name="code" />
                                     </tree>
                                 </field>
 
                                 <field name="msl_project_ids" nolabel="1" colspan="2">
                                     <tree string="MSL">
                                         <field name="instance_id" string="Code"/>
-                                        <field name="code" />
-                                        <field name="publication" />
                                         <field name="uf_active" />
                                     </tree>
                                 </field>

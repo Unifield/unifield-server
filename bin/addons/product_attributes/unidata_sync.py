@@ -45,6 +45,7 @@ class product_msl_rel(osv.osv):
         'deletion_date': fields.datetime('Removed date'),
         'version': fields.integer('Version number'),
         'to_delete': fields.boolean('to delete'),
+        'unifield_instance_id': fields.many2one('unifield.instance', 'Instance', select=1)
     }
 
     _sql_constraints = [
@@ -63,6 +64,50 @@ class product_msl_rel(osv.osv):
         return res
 
 product_msl_rel()
+
+class unifield_instance(osv.osv):
+    _name = 'unifield.instance'
+    _description = 'UniField Instance'
+    _rec_name = 'instance_name'
+    _order = 'instance_name'
+
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
+        'instance_name': fields.related('instance_id', 'code', type='char', size=64, string='Instance', store=True, readonly=1),
+        'uf_active': fields.boolean('Active'),
+        'country_id': fields.many2one('unidata.country', 'Country', readonly=1),
+        'msl_product_ids': fields.many2many('product.product', 'product_msl_rel', 'unifield_instance_id', 'product_id', 'Product Code', readonly=1, order_by='default_code', sql_rel_domain="product_msl_rel.creation_date is not null"),
+        'unidata_project_ids': fields.one2many('unidata.project', 'unifield_instance_id', 'UniData Project', readonly=1),
+    }
+
+    def _ud_project_uf_active(self, cr, uid, ids, value, context=None):
+        unidata_project_obj = self.pool.get('unidata.project')
+        proj_ids = unidata_project_obj.search(cr, uid, [('unifield_instance_id', 'in', ids)], context=context)
+        if proj_ids:
+            unidata_project_obj.write(cr, uid, proj_ids, {'uf_active': value}, context=context)
+
+
+    def activate(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'uf_active': True}, context=context)
+        self._ud_project_uf_active(cr, uid, ids, True, context=context)
+        return True
+
+    def de_activate(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'uf_active': False}, context=context)
+        self._ud_project_uf_active(cr, uid, ids, False, context=context)
+        return True
+
+    def wiz_activate(self, cr, uid, fids, state, context=None):
+        ids = context.get('active_ids')
+        self.write(cr, uid, ids, {'uf_active': state=='active'}, context=context)
+        return {'type': 'ir.actions.refresh_o2m', 'o2m_refresh': '_terp_list'}
+
+
+    _sql_constraints = [
+        ('unique_instance_id', 'unique(instance_id)', 'Instance already exists.'),
+    ]
+
+unifield_instance()
 
 class unidata_project(osv.osv):
     _name = 'unidata.project'
@@ -86,10 +131,11 @@ class unidata_project(osv.osv):
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
     _columns = {
-        'code': fields.char('UD Code', size=126, required=1, readonly=1, select=1),
-        'name': fields.char('Name', size=256, readonly=1),
+        'unifield_instance_id': fields.many2one('unifield.instance', 'UniField Instance', readonly=1),
         'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
         'instance_name': fields.related('instance_id', 'code', type='char', size=64, string='Instance', store=True, readonly=1),
+        'code': fields.char('UD Code', size=126, required=1, readonly=1, select=1),
+        'name': fields.char('Name', size=256, readonly=1),
         'msl_active': fields.boolean('MSL Active', readonly=1),
         'uf_active': fields.boolean('Active'),
         'msfid': fields.integer('MSFID', readonly=1, select=1),
@@ -112,6 +158,23 @@ class unidata_project(osv.osv):
         'uf_active': False
     }
 
+    def _set_uf_active_from_parent(self, cr, uid, vals, context=None):
+        if 'uf_active' not in vals and 'unifield_instance_id' in vals:
+            vals['uf_active'] = self.pool.get('unifield.instance').search_exists(cr, uid, [('uf_active', '=', True), ('id', '=', vals['unifield_instance_id'])], context=context)
+
+    def create(self, cr, uid, vals, context=None):
+        self._set_uf_active_from_parent(cr, uid, vals, context=context)
+        super(unidata_project, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self._set_uf_active_from_parent(cr, uid, vals, context=context)
+        if ids and 'unifield_instance_id' in vals:
+            # TODO test NULL
+            cr.execute('update product_msl_rel set unifield_instance_id=%s where msl_id in %s', (vals['unifield_instance_id'], tuple(ids)))
+        return super(unidata_project, self).write(cr, uid, ids, vals, context=context)
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         res = dict.fromkeys(ids, False)
         for proj in self.browse(cr, uid, ids, fields_to_fetch=['instance_id'], context=context):
@@ -124,15 +187,6 @@ class unidata_project(osv.osv):
     def activate(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'uf_active': True}, context=context)
         return True
-
-    def de_activate(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'uf_active': False}, context=context)
-        return True
-
-    def wiz_activate(self, cr, uid, fids, state, context=None):
-        ids = context.get('active_ids')
-        self.write(cr, uid, ids, {'uf_active': state=='active'}, context=context)
-        return {'type': 'ir.actions.refresh_o2m', 'o2m_refresh': '_terp_list'}
 
 unidata_project()
 
@@ -213,6 +267,7 @@ class ud_sync():
         self.country_cache = {}
         self.project_cache = {}
         self.msf_intance_cache = {}
+        self.uf_instance_cache = {}
 
         if self.pool.get('res.company')._get_instance_level(self.cr, self.uid) != 'section':
             raise osv.except_osv(_('Error'), _('UD/MSL sync can only be started at HQ level.'))
@@ -233,7 +288,7 @@ class ud_sync():
         project_obj = self.pool.get('unidata.project')
         instance_obj = self.pool.get('msf.instance')
         prod_obj = self.pool.get('product.product')
-
+        uf_instance_obj = self.pool.get('unifield.instance')
         # TODO
         #prod_cache = {}
         page = 1
@@ -251,6 +306,15 @@ class ud_sync():
                     if x['uniFieldCode'] not in self.msf_intance_cache:
                         msf_ids = instance_obj.search(self.cr, self.uid, [('code', '=', x['uniFieldCode'])], context=self.context)
                         self.msf_intance_cache[x['uniFieldCode']] = msf_ids and msf_ids[0] or False
+                if x.get('uniFieldCode') and self.msf_intance_cache[x['uniFieldCode']]:
+                    if x['uniFieldCode'] not in self.uf_instance_cache:
+                        uf_instance_ids = uf_instance_obj.search(self.cr, self.uid, [('instance_id', '=', self.msf_intance_cache[x['uniFieldCode']])], context=self.context)
+                        if not uf_instance_ids:
+                            self.uf_instance_cache[x['uniFieldCode']] = uf_instance_obj.create(self.cr, self.uid, {
+                                'instance_id': self.msf_intance_cache[x['uniFieldCode']],
+                            }, context=self.context)
+                        else:
+                            self.uf_instance_cache[x['uniFieldCode']] = uf_instance_ids[0]
                 if x.get('country', {}).get('labels', {}).get('english'):
                     if x['country']['labels']['english'] not in self.country_cache:
                         c_ids = country_obj.search(self.cr, self.uid, [('name', '=', x['country']['labels']['english'])], context=self.context)
@@ -258,6 +322,8 @@ class ud_sync():
                             self.country_cache[x['country']['labels']['english']] = c_ids[0]
                         else:
                             self.country_cache[x['country']['labels']['english']] = country_obj.create(self.cr, self.uid, {'name': x['country']['labels']['english']}, context=self.context)
+                    if x.get('uniFieldCode') and x['uniFieldCode'] in self.uf_instance_cache:
+                        uf_instance_obj.write(self.cr, self.uid, self.uf_instance_cache[x['uniFieldCode']], {'country_id': self.country_cache[x['country']['labels']['english']]}, context=self.context)
 
                 project_data = {
                     'instance_id': self.msf_intance_cache.get(x.get('uniFieldCode')),
@@ -270,6 +336,7 @@ class ud_sync():
                     'code': x['code'],
                     'country_id': self.country_cache.get(x.get('country', {}).get('labels', {}).get('english')),
                     'alpa_msfids': '',
+                    'unifield_instance_id': self.uf_instance_cache.get(x.get('uniFieldCode')),
                 }
 
                 if x.get('publicationDate'):
@@ -297,7 +364,7 @@ class ud_sync():
         self.cr.execute("SELECT nextval('unidata_sync_msl_seq')")
         version = self.cr.fetchone()[0]
 
-        for msl in project_obj.browse(self.cr, self.uid, msl_ids, fields_to_fetch=['alpa_msfids'], context=self.context):
+        for msl in project_obj.browse(self.cr, self.uid, msl_ids, fields_to_fetch=['alpa_msfids', 'instance_id'], context=self.context):
             prod_ids = set()
             if msl.alpa_msfids:
                 for list_msfid in msl.alpa_msfids.split(','):
@@ -327,9 +394,9 @@ class ud_sync():
             #project_obj.write(self.cr, self.uid, msl.id, {'msl_sync_date': exec_date}, context=self.context)
             self.cr.execute('update unidata_project set msl_sync_date=publication_date where id=%s', (msl.id,))
 
-            self.cr.execute("update product_msl_rel set to_delete='t' where msl_id=%s", (msl.id,))
+            self.cr.execute("update product_msl_rel set to_delete='t', unifield_instance_id=%s where msl_id=%s", (self.uf_instance_cache.get(msl.instance_id.code), msl.id)) # TODO SET NULL
             for prod_id in prod_ids:
-                self.cr.execute("insert into product_msl_rel (msl_id, product_id, creation_date, version) values (%s, %s, NOW(), %s) ON CONFLICT (msl_id, product_id) DO UPDATE SET to_delete='f'", (msl.id, prod_id, version))
+                self.cr.execute("insert into product_msl_rel (msl_id, product_id, creation_date, version, unifield_instance_id) values (%s, %s, NOW(), %s, %s) ON CONFLICT (msl_id, product_id) DO UPDATE SET to_delete='f'", (msl.id, prod_id, version, self.uf_instance_cache.get(msl.instance_id.code)))
             # update version on resurected links
             self.cr.execute("update product_msl_rel set version=%s, deletion_date=NULL where to_delete='f' and deletion_date is not null and msl_id=%s", (version, msl.id))
             # mark as to delete
@@ -467,6 +534,7 @@ class ud_sync():
                         c_restriction.append(self.country_cache[mr['country']['labels']['english']])
 
                     for pr in mr.get('projectRestrictions', []):
+                        # TODO create UF instance
                         if pr.get('code'):
                             if pr.get('code') not in self.project_cache:
                                 p_id = project_obj.search(self.cr, self.uid, [('code', '=', pr['code'])], context=self.context)

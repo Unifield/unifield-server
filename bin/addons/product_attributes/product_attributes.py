@@ -776,10 +776,10 @@ class product_attributes(osv.osv):
             return {}
         ret = {}
         for _id in ids:
-            ret[_id] = []
+            ret[_id] = {'oc_coordo_restrictions': [], 'oc_instance_restrictions': []}
 
         cr.execute('''select
-                p.id, array_agg(inst.id)
+                p.id, array_agg(distinct(inst.id))
             from
                 product_product p, product_country_rel c_rel, unidata_project up, msf_instance inst
             where
@@ -792,7 +792,23 @@ class product_attributes(osv.osv):
             ''', (tuple(ids), ))
 
         for x in cr.fetchall():
-            ret[x[0]] = x[1]
+            ret[x[0]]['oc_coordo_restrictions'] = x[1]
+
+        cr.execute('''select
+                p.id, array_agg(distinct(inst.id))
+            from
+                product_product p, product_project_rel p_rel, unidata_project up, unifield_instance uf_i, msf_instance inst
+            where
+                p.id in %s
+                and p.id = p_rel.product_id
+                and up.instance_id = p_rel.unidata_project_id
+                and up.unifield_instance_id = uf_i.id
+                and inst.id = uf_i.instance_id
+            group by p.id
+            ''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            ret[x[0]]['oc_instance_restrictions'] = x[1]
         return ret
 
     def _get_valid_msl_instance(self, cr, uid, ids, field_name, args, context=None):
@@ -1276,10 +1292,11 @@ class product_attributes(osv.osv):
         'oc_devalidation_date': fields.datetime('Devalidation Date', readonly=1), #lastDevalidationDate
         'oc_devalidation_reason': fields.text('Devalidation Reason', readonly=1), #devalidationReason
         'oc_comments': fields.text('Use Comments', readonly=1), # comments
-        'oc_project_restrictions': fields.many2many('unidata.project', 'product_project_rel', 'product_id', 'unidata_project_id', 'Project Restrictions', readonly=1, order_by='code'),
-        'oc_country_restrictions': fields.many2many('unidata.country', 'product_country_rel', 'product_id', 'unidata_country_id', 'Country Restrictions', readonly=1, order_by='name'),
-        'oc_coordo_restrictions': fields.function(_get_oc_coordo_restrictions, method=True, type='many2many', relation='msf.instance', string='Mission Restrictions'),
-        'msl_project_ids': fields.many2many('unidata.project', 'product_msl_rel', 'product_id', 'msl_id', 'MSL List', readonly=1, order_by='code', sql_rel_domain="product_msl_rel.creation_date is not null"),
+        'oc_project_restrictions': fields.many2many('unidata.project', 'product_project_rel', 'product_id', 'unidata_project_id', 'UD Project Restrictions', readonly=1, order_by='code'),
+        'oc_country_restrictions': fields.many2many('unidata.country', 'product_country_rel', 'product_id', 'unidata_country_id', 'UD Country Restrictions', readonly=1, order_by='name'),
+        'oc_instance_restrictions': fields.function(_get_oc_coordo_restrictions, method=True, type='many2many', relation='msf.instance', string='Project Restrictions', multi='uf_restrictions'),
+        'oc_coordo_restrictions': fields.function(_get_oc_coordo_restrictions, method=True, type='many2many', relation='msf.instance', string='Mission Restrictions', multi='uf_restrictions'),
+        'msl_project_ids': fields.many2many('unifield.instance', 'product_msl_rel', 'product_id', 'unifield_instance_id', 'MSL List', readonly=1, order_by='instance_name', sql_rel_domain="product_msl_rel.creation_date is not null"),
         'restrictions_txt': fields.function(_get_restrictions_txt, method=True, type='text', string='Restrictions'),
         'is_mml_valid': fields.function(_get_is_mml_valid, method=True, type='selection', selection=[('yes', 'Yes'), ('no', 'No'), ('', '')], string='MML Valid ?'),
         'is_msl_valid': fields.function(_get_is_msl_valid, method=True, type='selection', selection=[('yes', 'Yes'), ('no', 'No'), ('', '')], string='MSL Valid ?'),

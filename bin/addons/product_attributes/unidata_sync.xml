@@ -250,31 +250,27 @@
         />
 
 
-        <record model="ir.ui.view" id="unidata_project_search">
-            <field name="name">unidata.project.search</field>
-            <field name="model">unidata.project</field>
+        <record model="ir.ui.view" id="unifield_instance_search">
+            <field name="name">unifield.instance.search</field>
+            <field name="model">unifield.instance</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="MSL Projects">
-                    <field name="name" />
-                    <field name="code" />
                     <field name="instance_id" />
+                    <field name="uf_active" />
                     <field name="msl_product_ids" />
                 </search>
             </field>
         </record>
 
-        <record model="ir.ui.view" id="unidata_project_tree">
-            <field name="name">unidata.project.tree</field>
-            <field name="model">unidata.project</field>
+        <record model="ir.ui.view" id="unifield_instance_tree">
+            <field name="name">unifield.instance.tree</field>
+            <field name="model">unifield.instance</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="MSL Projects" hide_new_button="1" hide_delete_button="1" colors="red:not instance_id">
-                    <field name="name" />
                     <field name="instance_id" />
-                    <field name="code" />
-                    <field name="publication_date" widget="date" />
-                    <field name="publication" />
+                    <field name="country_id" />
                     <field name="msl_product_ids" />
                     <field name="uf_active" />
                     <button type="object" string="Activate" name="activate" icon="terp-check" attrs="{'invisible': [('uf_active', '=', True)]}"/>
@@ -283,73 +279,84 @@
             </field>
         </record>
 
-        <record model="ir.ui.view" id="unidata_project_form">
-            <field name="name">unidata.project.form</field>
-            <field name="model">unidata.project</field>
+        <record model="ir.ui.view" id="unifield_instance_form">
+            <field name="name">unifield.instance.form</field>
+            <field name="model">unifield.instance</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="MSL List" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
-                    <field name="name" />
-                    <field name="uf_active" />
                     <field name="instance_id" />
-                    <field name="code" />
-                    <field name="publication_date" widget="date" />
-                    <field name="publication" />
-                    <field name="msfid"  />
-                    <field name="msl_product_ids"  colspan="4" nolabel="1">
-                        <tree>
-                            <field name="default_code" />
-                            <field name="name" />
-                            <field name="nomen_manda_2" />
-                            <field name="standard_ok" />
-                            <field name="oc_subscription" />
-                            <field name="state_ud" />
-                            <field name="state" />
-                            <field name="controlled_substance" />
-                            <field name="justification_code_id" />
-                        </tree>
-                    </field>
+                    <field name="uf_active" />
+                    <field name="country_id" />
+                    <notebook colspan="4">
+                        <page string="Products">
+                            <field name="msl_product_ids"  colspan="4" nolabel="1">
+                                <tree>
+                                    <field name="default_code" />
+                                    <field name="name" />
+                                    <field name="nomen_manda_2" />
+                                    <field name="standard_ok" />
+                                    <field name="oc_subscription" />
+                                    <field name="state_ud" />
+                                    <field name="state" />
+                                    <field name="controlled_substance" />
+                                    <field name="justification_code_id" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="UniData Projets">
+                            <field name="unidata_project_ids" colspan="4" nolabel="1">
+                                <tree>
+                                    <field name="code" />
+                                    <field name="name" />
+                                    <field name="msl_status" />
+                                    <field name="publication" />
+                                    <field name="publication_date" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
                 </form>
             </field>
         </record>
 
-        <record id="unidata_project_action" model="ir.actions.act_window">
+        <record id="unifield_instance_action" model="ir.actions.act_window">
             <field name="name">MSL Projects</field>
-            <field name="res_model">unidata.project</field>
+            <field name="res_model">unifield.instance</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('publication_date', '!=', False)]</field>
+            <field name="domain">[]</field>
         </record>
 
-        <menuitem name="MSL Projects" parent="base.menu_product" id="unidata_project_menu" action="unidata_project_action" sequence="15" />
+        <menuitem name="MSL Projects" parent="base.menu_product" id="unifield_instance_menu" action="unifield_instance_action" sequence="15" />
 
-        <record id="unidata_project_mass_activate" model="ir.actions.server">
+        <record id="unifield_instance_mass_activate" model="ir.actions.server">
             <field name="name">Activate Selection</field>
-            <field name="model_id" ref="model_unidata_project"/>
+            <field name="model_id" ref="model_unifield_instance"/>
             <field name="state">code</field>
             <field name="code">action = obj.wiz_activate(state='active', context=context)</field>
         </record>
         <record id="open_msl_activate" model="ir.values">
             <field name="key2">client_action_multi</field>
-            <field name="model">unidata.project</field>
+            <field name="model">unifield.instance</field>
             <field name="name">Activate Selection</field>
-            <field name="view_ids" ref="unidata_project_tree" />
-            <field eval="'ir.actions.server,%d'%unidata_project_mass_activate" name="value"/>
+            <field name="view_ids" ref="unifield_instance_tree" />
+            <field eval="'ir.actions.server,%d'%unifield_instance_mass_activate" name="value"/>
             <field eval="True" name="object"/>
         </record>
 
-        <record id="unidata_project_mass_deactivate" model="ir.actions.server">
+        <record id="unifield_instance_mass_deactivate" model="ir.actions.server">
             <field name="name">De-activate Selection</field>
-            <field name="model_id" ref="model_unidata_project"/>
+            <field name="model_id" ref="model_unifield_instance"/>
             <field name="state">code</field>
             <field name="code">action = obj.wiz_activate(state='inactive', context=context)</field>
         </record>
         <record id="open_msl_deactivate" model="ir.values">
             <field name="key2">client_action_multi</field>
-            <field name="model">unidata.project</field>
+            <field name="model">unifield.instance</field>
             <field name="name">De-activate Selection</field>
-            <field name="view_ids" ref="unidata_project_tree" />
-            <field eval="'ir.actions.server,%d'%unidata_project_mass_deactivate" name="value"/>
+            <field name="view_ids" ref="unifield_instance_tree" />
+            <field eval="'ir.actions.server,%d'%unifield_instance_mass_deactivate" name="value"/>
             <field eval="True" name="object"/>
         </record>
 

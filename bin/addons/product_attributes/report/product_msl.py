@@ -79,7 +79,7 @@ class product_msl(XlsxReportParser):
         bk_id = self.context.get('background_id')
 
         while True:
-            if self.model == 'unidata.project':
+            if self.model == 'unifield.instance':
                 prod_ids = prod_obj.search(self.cr, self.uid, [('msl_project_ids', 'in', self.ids)], limit=page_size, offset=offset, context=context)
             else:
                 prod_ids = prod_obj.search(self.cr, self.uid, [('in_msl_instance', '=', True)], limit=page_size, offset=offset, context=context)
