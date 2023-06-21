@@ -942,5 +942,9 @@
         <record id="us_11399_oca_mm_target" model="patch.scripts">
             <field name="method">us_11399_oca_mm_target</field>
         </record>
+
+        <record id="us_1074_create_unifield_instance" model="patch.scripts">
+            <field name="method">us_1074_create_unifield_instance</field>
+        </record>
     </data>
 </openerp>

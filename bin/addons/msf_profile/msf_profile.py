@@ -57,6 +57,29 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_1074_create_unifield_instance(self, cr, uid, *a, **b):
+        uf_instance = self.pool.get('unifield.instance')
+        unidata_proj =  self.pool.get('unidata.project')
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            cr.execute('''select p.id, p.country_id, instance.code, instance.id, p.uf_active from
+                    unidata_project p, msf_instance instance
+                    where
+                        instance.id = p.instance_id
+                ''')
+            instance_cache = {}
+            for proj in cr.fetchall():
+                if proj[3] not in instance_cache:
+                    inst_ids = uf_instance.search(cr, uid, [('instance_id', '=', proj[3])])
+                    if not inst_ids:
+                        instance_cache[proj[3]] = uf_instance.create(cr, uid, {'instance_id': proj[3],'country_id': proj[1], 'uf_active': proj[4]})
+                    else:
+                        instance_cache[proj[3]] = inst_ids[0]
+
+                unidata_proj.write(cr, uid, proj[0], {'unifield_instance_id': instance_cache[proj[3]]})
+
+        return True
+
     # UF29.0
     def us_11399_oca_mm_target(self, cr, uid, *a, **b):
         if self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id:

@@ -173,6 +173,7 @@ WHITE_LIST_MODEL = [
     'dest.cc.link',
     'unidata.country',
     'unidata.project',
+    'unifield.instance',
     'product.msl.rel',
 ]
 
