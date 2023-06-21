@@ -22,7 +22,8 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from purchase import PURCHASE_ORDER_STATE_SELECTION
+from purchase import PURCHASE_ORDER_STATE_SELECTION, ORDER_TYPES_SELECTION
+from order_types import ORDER_CATEGORY
 
 import time
 from datetime import datetime
@@ -38,6 +39,8 @@ class po_follow_up(osv.osv_memory):
         'po_date_thru': fields.date("PO date to", required="False"),
         'partner_id': fields.many2one('res.partner', 'Supplier', required=False),
         'project_ref': fields.char('Supplier reference', size=64, required=False),
+        'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=False),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=False),
         'background_time': fields.integer('Number of second before background processing'),
         'draft_ok': fields.boolean('Draft'),
         'validated_ok': fields.boolean('Validated'),
@@ -87,7 +90,6 @@ class po_follow_up(osv.osv_memory):
         self.write(cr, uid, ids, {'export_format': 'pdf'}, context=context)
         return self.button_validate(cr, uid, ids, report_name=report_name, context=context)
 
-
     def get_state_list(self, cr, uid, wiz, context=None):
         if context is None:
             context = {}
@@ -114,7 +116,6 @@ class po_follow_up(osv.osv_memory):
 
         return res
 
-
     def get_states_str(self, cr, uid, states, pending_only, context=None):
         if context is None:
             context = {}
@@ -125,7 +126,6 @@ class po_follow_up(osv.osv_memory):
             res = [_(value) for key, value in PURCHASE_ORDER_STATE_SELECTION if key in states]
 
         return ', '.join(res).strip(', ')
-
 
     def getAllLineIN(self, cr, uid, po_line_id):
         cr.execute('''
@@ -147,7 +147,6 @@ class po_follow_up(osv.osv_memory):
             yield res
 
         raise StopIteration
-
 
     def get_qty_backordered(self, cr, uid, pol_id, qty_ordered, qty_received, first_line):
         pol = self.pool.get('purchase.order.line').browse(cr, uid, pol_id)
@@ -177,8 +176,6 @@ class po_follow_up(osv.osv_memory):
             return qty_ordered - total_done
 
         return qty_ordered - qty_received
-
-
 
     def has_pending_lines(self, cr, uid, po_id):
         po_line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id','=',po_id)], order='line_number')
@@ -239,6 +236,7 @@ class po_follow_up(osv.osv_memory):
         if context is None:
             context = {}
 
+        field_sel = self.pool.get('ir.model.fields').get_browse_selection
         wiz = self.browse(cr, uid, ids)[0]
 
         domain = [('rfq_ok', '=', False)]
@@ -252,6 +250,8 @@ class po_follow_up(osv.osv_memory):
             'date_thru': '',
             'state': '',
             'supplier': '',
+            'order_type': '',
+            'categ': '',
             'pending_only_ok': wiz.pending_only_ok,
             'include_notes_ok': wiz.include_notes_ok,
             'export_format': wiz.export_format,
@@ -293,6 +293,16 @@ class po_follow_up(osv.osv_memory):
         # Supplier Reference
         if wiz.project_ref:
             domain.append(('project_ref', 'like', wiz.project_ref))
+
+        # Order Type
+        if wiz.order_type:
+            domain.append(('order_type', '=', wiz.order_type))
+            report_parms['order_type'] = field_sel(cr, uid, wiz, 'order_type', context=context)
+
+        # Order Category
+        if wiz.categ:
+            domain.append(('categ', '=', wiz.categ))
+            report_parms['categ'] = field_sel(cr, uid, wiz, 'categ', context=context)
 
         # get the PO ids based on the selected criteria
         po_obj = self.pool.get('purchase.order')
@@ -357,5 +367,5 @@ class po_follow_up(osv.osv_memory):
             'context': context,
         }
 
-po_follow_up()
 
+po_follow_up()

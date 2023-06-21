@@ -14,6 +14,8 @@
 					<field name="partner_id" />
 					<field name="po_date_thru" />
 					<field name="project_ref" />
+					<field name="order_type" />
+					<field name="categ" />
 				</group>
 
 				<separator string="Order statuses" colspan="4" />

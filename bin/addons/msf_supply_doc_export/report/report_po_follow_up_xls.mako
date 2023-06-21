@@ -217,6 +217,14 @@
    <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
    % endif
 </Row>
+<Row ss:AutoFitHeight="1">
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${_('Order Type')|x}</Data></Cell>
+   <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['order_type']|x}</Data></Cell>
+</Row>
+<Row ss:AutoFitHeight="1">
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${_('Order Category')|x}</Data></Cell>
+   <Cell ss:StyleID="line"><Data ss:Type="String">${getRunParms()['categ']|x}</Data></Cell>
+</Row>
 
     <Row ss:AutoFitHeight="1" > 
       % for header in getPOLineHeaders():
