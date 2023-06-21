@@ -824,7 +824,7 @@ class product_attributes(osv.osv):
 
         cr.execute('''
             select
-                rel.product_id, array_agg(p.id order by p.instance_name)
+                rel.product_id, array_agg(p.unifield_instance_id order by p.instance_name)
             from
                 product_msl_rel rel, unidata_project p
             where
@@ -839,7 +839,7 @@ class product_attributes(osv.osv):
         )
 
         for prod in cr.fetchall():
-            ret[prod[0]] = prod[1]
+            ret[prod[0]] = list(set(prod[1]))
 
         return ret
 
@@ -946,7 +946,7 @@ class product_attributes(osv.osv):
 
         mission_t = _('Missions')
         cr.execute('''select
-                c_rel.product_id, array_agg(inst.code order by inst.code)
+                c_rel.product_id, array_agg(distinct inst.code order by inst.code)
             from
                 product_country_rel c_rel, unidata_project up, msf_instance inst
             where
@@ -964,7 +964,7 @@ class product_attributes(osv.osv):
 
         project_t = _('Projects')
         cr.execute('''select
-                p_rel.product_id, array_agg(inst.code order by inst.code)
+                p_rel.product_id, array_agg(distinct inst.code order by inst.code)
             from
                 product_project_rel p_rel, unidata_project up, msf_instance inst
             where
@@ -1301,7 +1301,7 @@ class product_attributes(osv.osv):
         'is_mml_valid': fields.function(_get_is_mml_valid, method=True, type='selection', selection=[('yes', 'Yes'), ('no', 'No'), ('', '')], string='MML Valid ?'),
         'is_msl_valid': fields.function(_get_is_msl_valid, method=True, type='selection', selection=[('yes', 'Yes'), ('no', 'No'), ('', '')], string='MSL Valid ?'),
         'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance'),
-        'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unidata.project', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
+        'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unifield.instance', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
     }
 
 

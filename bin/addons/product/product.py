@@ -527,7 +527,7 @@ class product_product(osv.osv):
                     if not filter_in_msl_instance:
                         filter_in_msl_instance = [0]
                 else:
-                    filter_in_msl_instance = [x[2]]
+                    filter_in_msl_instance = self.pool.get('unidata.project').search(cr, uid, [('unifield_instance_id', '=', x[2])], context=context)
 
             elif x[0] == 'average':
                 if context.get('history_cons') and context.get('obj_id'):
