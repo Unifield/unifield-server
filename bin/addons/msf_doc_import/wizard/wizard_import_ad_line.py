@@ -176,7 +176,8 @@ class wizard_import_ad_line(osv.osv_memory):
                                         cc_value = cc_values[i]
                                         dest_value = dest_values[i]
                                         for line in current_line_add[key]:
-                                            if line[4][i] != cc_value or line[5][i] != dest_value or line[8][i] != percent:
+                                            if (i >= len(line[4]) and i >= len(line[5]) and i >= len(line[8])) \
+                                                    or (line[4][i] != cc_value or line[5][i] != dest_value or line[8][i] != percent):
                                                 if cc_value not in cc_cache:
                                                     cc_ids = aa_obj.search(cr, uid, [('category', '=', 'OC'), ('type','!=', 'view'), ('code', '=ilike', cc_value)], context=context)
                                                     cc_cache[cc_value] = cc_ids and cc_ids[0] or False
@@ -210,6 +211,7 @@ class wizard_import_ad_line(osv.osv_memory):
                                                             # have cc_id(s) and distrib_id: update instead of delete/create
                                                             cc_line_obj.write(cr, uid, line[6][i], cc_data, context=context)
                                                             if len(line[6]) > len(percentage_vals):
+                                                                delete_ad += (len(line[6]) - len(percentage_vals))
                                                                 cc_line_obj.unlink(cr, uid, line[6][len(percentage_vals):], context=context)
                                                         else:
                                                             cc_data['distribution_id'] = line[3]
