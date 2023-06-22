@@ -151,7 +151,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
                     and creator.code not in ('temp', 'local')
                     and coalesce(oc_validation,'f')='f'
                     and p.id in %(prod_ids)s
-                group by p.id, instance.name, smrl.internal_qty, smrl.in_pipe_qty
+                group by p.id, instance.code, smrl.internal_qty, smrl.in_pipe_qty
 
             UNION ALL
 
@@ -174,7 +174,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
                     and creator.code not in ('temp', 'local')
                     and coalesce(oc_validation,'f')='t'
                     and p.id in %(prod_ids)s
-                group by p.id, smr.instance_id, instance.name, smrl.internal_qty, smrl.in_pipe_qty
+                group by p.id, smr.instance_id, instance.code, smrl.internal_qty, smrl.in_pipe_qty
                 HAVING
                     (
                             not ARRAY[smr.instance_id]<@array_agg(up1.instance_id)
