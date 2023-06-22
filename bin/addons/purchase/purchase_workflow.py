@@ -29,7 +29,7 @@ class purchase_order_line(osv.osv):
                 'no_label': _('Close window'),
             }, context=context)
             return self.pool.get('message.action').pop_up(cr, uid, [msg], context=context)
-        return yes_method(cr, uid, ids, context)
+        return yes_method(cr, uid, context)
 
     def validated(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
