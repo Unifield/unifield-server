@@ -165,6 +165,22 @@ class msf_instance(osv.osv):
         return res
 
 
+    def _search_empty_ud(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=' or not arg[2]:
+                raise osv.except_osv('Error', 'Filter on is_published not implemented')
+
+            cr.execute('''
+                    select distinct(instance.id) from
+                        msf_instance instance
+                    left join unidata_project p on p.instance_id = instance.id
+                    where
+                        p.id is null
+                ''')
+        return [('id', 'in', [x[0] for x in cr.fetchall()])]
+
+
+
     _columns = {
         'level': fields.selection([('section', 'Section'),
                                    ('coordo', 'Coordo'),
@@ -198,6 +214,7 @@ class msf_instance(osv.osv):
                                                    type='many2one',
                                                    relation='msf.instance',
                                                    fnct_search=_search_instance_to_display_ids),
+        'empty_ud': fields.function(misc.get_fake, type='boolean', method=True, string='Search not linked to UD', fnct_search=_search_empty_ud),
 
     }
 

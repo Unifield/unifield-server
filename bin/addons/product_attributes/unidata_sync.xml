@@ -312,6 +312,8 @@
                                     <field name="msl_status" />
                                     <field name="publication" />
                                     <field name="publication_date" />
+                                    <field name="country_id" />
+                                    <field name="uf_active" />
                                 </tree>
                             </field>
                         </page>
@@ -511,6 +513,50 @@
         </record>
 
         <menuitem name="MSL Projects with no link to UF" parent="unidata_main_menu" id="unidata_project_missing_menu" action="unidata_project_missing_action" sequence="30" />
+
+        <record model="ir.ui.view" id="msf_instance_missing_ud_search">
+            <field name="name">msf.instance.missing.ud.search</field>
+            <field name="model">msf.instance</field>
+            <field name="type">search</field>
+            <field name="priority">190</field>
+            <field name="arch" type="xml">
+                <search string="Instances not linked to UD">
+                    <field name="code" />
+                    <field name="mission" />
+                    <field name="level" />
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="msf_instance_missing_ud_tree">
+            <field name="name">msf.instance.missing.ud.tree</field>
+            <field name="model">msf.instance</field>
+            <field name="type">tree</field>
+            <field name="priority">190</field>
+            <field name="arch" type="xml">
+                <tree string="Instances not linked to UD" hide_new_button="1" hide_delete_button="1" noteditable="1">
+                    <field name="code" />
+                    <field name="name" />
+                    <field name="level" />
+                    <field name="mission" />
+                    <field name="instance" />
+                    <field name="parent_id" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record  model="ir.actions.act_window" id="msf_instance_missing_ud_action">
+            <field name="name">Instances not linked to UD</field>
+            <field name="res_model">msf.instance</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="domain">[('empty_ud', '=', True)]</field>
+            <field name="search_view_id" ref="msf_instance_missing_ud_search" />
+            <field name="view_id" ref="msf_instance_missing_ud_tree" />
+        </record>
+
+        <menuitem name="Instances not linked to UD" parent="unidata_main_menu" id="msf_instance_missing_ud_menu" action="msf_instance_missing_ud_action" sequence="35" />
 
         <record model="ir.ui.view" id="product_msl_rel_search">
             <field name="name">product.msl.rel.search</field>
