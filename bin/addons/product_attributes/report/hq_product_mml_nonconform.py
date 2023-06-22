@@ -135,7 +135,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
             offset += page_size
             self.cr.execute('''
             select x.id, x.instance_name, x.internal_qty, x.in_pipe_qty, x.has_msl from (
-                select p.id, instance.name as instance_name, smrl.internal_qty, smrl.in_pipe_qty, count(msl_rel) as has_msl
+                select p.id, instance.code as instance_name, smrl.internal_qty, smrl.in_pipe_qty, count(msl_rel) as has_msl
                 from product_product p
                 inner join product_template tmpl on tmpl.id = p.product_tmpl_id
                 inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
@@ -155,7 +155,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
 
             UNION ALL
 
-                select p.id, instance.name as instance_name, smrl.internal_qty, smrl.in_pipe_qty, count(msl_rel) as has_msl
+                select p.id, instance.code as instance_name, smrl.internal_qty, smrl.in_pipe_qty, count(msl_rel) as has_msl
                 from product_product p
                 inner join product_template tmpl on tmpl.id = p.product_tmpl_id
                 inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
