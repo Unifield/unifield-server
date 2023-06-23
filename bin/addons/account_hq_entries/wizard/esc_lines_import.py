@@ -164,6 +164,7 @@ class esc_line_import_wizard(osv.osv):
         consignee_instances = {}
         try:
             cr = pooler.get_db(dbname).cursor()
+            cr2 = pooler.get_db(dbname).cursor()
 
             target_cc_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('instance_id.state', '!=', 'inactive'), ('is_po_fo_cost_center', '=', True)], context=context)
             for target in self.pool.get('account.target.costcenter').browse(cr, uid, target_cc_ids, fields_to_fetch=['cost_center_id', 'instance_id'], context=context):
@@ -172,7 +173,7 @@ class esc_line_import_wizard(osv.osv):
 
             wiz = self.browse(cr, uid, wiz_id, context=None)
             file_data = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
-            nb_lines = file_data.getRows()
+            nb_lines = file_data.getNbRows()
 
             line = 0
             for row in file_data.getRows():
@@ -312,7 +313,8 @@ class esc_line_import_wizard(osv.osv):
                         manage_error(line, _('Line duplicated in the system'), row)
 
                 if processed%10 == 0:
-                    self.write(cr, uid, wiz_id, {'progress': int(processed/float(nb_lines)*100), 'created': created, 'nberrors': len(errors), 'error': "\n".join(errors)}, context=context)
+                    self.write(cr2, uid, wiz_id, {'progress': int(processed/float(nb_lines)*100), 'created': created, 'nberrors': len(errors), 'error': "\n".join(errors)}, context=context)
+                    cr2.commit()
 
             state = 'done'
             if errors:
@@ -337,6 +339,8 @@ class esc_line_import_wizard(osv.osv):
         finally:
             cr.commit()
             cr.close(True)
+            cr2.commit()
+            cr2.close(True)
 
     def done(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state': 'ack'}, context=context)
