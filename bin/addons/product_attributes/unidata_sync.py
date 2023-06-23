@@ -72,6 +72,24 @@ class unifield_instance(osv.osv):
     _order = 'instance_name'
 
 
+    def _get_is_published(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+        cr.execute('''
+                    select distinct(unifield_instance_id) from
+                        unidata_project p
+                    where
+                        p.publication_date is not null and unifield_instance_id in %s
+                ''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
+
     def _search_is_published(self, cr, uid, obj, name, args, context=None):
         for arg in args:
             if arg[1] != '=' or not arg[2]:
@@ -92,7 +110,7 @@ class unifield_instance(osv.osv):
         'country_id': fields.many2one('unidata.country', 'Country', readonly=1),
         'msl_product_ids': fields.many2many('product.product', 'product_msl_rel', 'unifield_instance_id', 'product_id', 'Product Code', readonly=1, order_by='default_code', sql_rel_domain="product_msl_rel.creation_date is not null"),
         'unidata_project_ids': fields.one2many('unidata.project', 'unifield_instance_id', 'UniData Project', readonly=1),
-        'is_published': fields.function(tools.misc.get_fake, type='boolean', method=True, string='Search is published', fnct_search=_search_is_published),
+        'is_published': fields.function(_get_is_published, type='boolean', method=True, string='Published', fnct_search=_search_is_published),
     }
 
     def _ud_project_uf_active(self, cr, uid, ids, value, context=None):

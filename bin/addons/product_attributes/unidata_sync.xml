@@ -29,6 +29,23 @@
     </data>
     <data>
 
+        <record model="ir.ui.view" id="unidata_country_form">
+            <field name="name">unidata.country.form</field>
+            <field name="model">unidata.country</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="UniData Country" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <field name="name" />
+                    <field name="unidata_project_ids" colspan="4">
+                        <tree>
+                            <field name="instance_name" />
+                            <field name="code" />
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
         <record model="ir.ui.view" id="unidata_sync_form">
             <field name="name">unidata.sync.form</field>
             <field name="model">unidata.sync</field>
@@ -557,6 +574,54 @@
         </record>
 
         <menuitem name="Instances not linked to UD" parent="unidata_main_menu" id="msf_instance_missing_ud_menu" action="msf_instance_missing_ud_action" sequence="35" />
+
+        <record model="ir.ui.view" id="unifield_instance_all_search">
+            <field name="name">unifield.instance.search</field>
+            <field name="model">unifield.instance</field>
+            <field name="type">search</field>
+            <field name="priority" eval="200" />
+            <field name="arch" type="xml">
+                <search string="All Projects">
+                    <filter name="published" string="Published" domain="[('is_published', '=', True)]" icon="terp-check" />
+                    <field name="instance_id" />
+                    <field name="uf_active" />
+                    <field name="country_id" />
+                    <newline />
+                    <group expand="1" string="Group By">
+                        <filter string="Country" icon="terp-folder-yellow" domain="[]" context="{'group_by' : 'country_id'}" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unifield_instance_all_tree">
+            <field name="name">unifield.instance.tree</field>
+            <field name="model">unifield.instance</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="200" />
+            <field name="arch" type="xml">
+                <tree string="All Projects" hide_new_button="1" hide_delete_button="1" colors="red:not instance_id">
+                    <field name="instance_id" />
+                    <field name="country_id" />
+                    <field name="msl_product_ids" />
+                    <field name="uf_active" />
+                    <field name="is_published" />
+                </tree>
+            </field>
+        </record>
+
+
+        <record  model="ir.actions.act_window" id="unifield_instance_all_action">
+            <field name="name">All Projects</field>
+            <field name="res_model">unifield.instance</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="search_view_id" ref="unifield_instance_all_search" />
+            <field name="view_id" ref="unifield_instance_all_tree" />
+        </record>
+
+        <menuitem name="All Projects" parent="unidata_main_menu" id="unifield_instance_all_menu" action="unifield_instance_all_action" sequence="40" />
 
         <record model="ir.ui.view" id="product_msl_rel_search">
             <field name="name">product.msl.rel.search</field>
