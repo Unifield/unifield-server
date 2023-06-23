@@ -795,15 +795,14 @@ class product_attributes(osv.osv):
             ret[x[0]]['oc_coordo_restrictions'] = x[1]
 
         cr.execute('''select
-                p.id, array_agg(distinct(inst.id))
+                p.id, array_agg(distinct(uf_i.instance_id))
             from
-                product_product p, product_project_rel p_rel, unidata_project up, unifield_instance uf_i, msf_instance inst
+                product_product p, product_project_rel p_rel, unidata_project up, unifield_instance uf_i
             where
                 p.id in %s
                 and p.id = p_rel.product_id
-                and up.instance_id = p_rel.unidata_project_id
+                and up.id = p_rel.unidata_project_id
                 and up.unifield_instance_id = uf_i.id
-                and inst.id = uf_i.instance_id
             group by p.id
             ''', (tuple(ids), ))
 
