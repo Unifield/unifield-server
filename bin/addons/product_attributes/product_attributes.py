@@ -2259,7 +2259,7 @@ class product_attributes(osv.osv):
             if ignore_draft:
                 states_to_ignore.append('draft')
             has_tender_line = tender_line_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                               ('tender_id.state', 'not in', states_to_ignore)], context=context)
+                                                               ('line_state', 'not in', states_to_ignore)], context=context)
 
             # Check if the product is in field order lines or in internal request lines
             states_to_ignore = ['done', 'cancel', 'cancel_r']
