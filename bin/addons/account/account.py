@@ -1101,6 +1101,37 @@ class account_fiscalyear(osv.osv):
             ids = self.search(cr, user, [('name', operator, name)]+ args, limit=limit)
         return self.name_get(cr, user, ids, context=context)
 
+    def _get_normal_period_from_to(self, cr, uid, _id, context=None):
+        start_period = False
+        end_period = False
+
+        cr.execute('''
+            SELECT x.id FROM (
+                (SELECT p.id, p.date_start as date
+                   FROM account_period p
+                   LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
+                   WHERE f.id = %(fy_id)s and number != 0
+                   ORDER BY p.date_start ASC
+                   LIMIT 1
+                )
+            UNION ALL
+                (SELECT p.id, p.date_stop as date
+                   FROM account_period p
+                   LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
+                   WHERE f.id = %(fy_id)s and number != 0
+                   AND p.date_start < NOW()
+                   ORDER BY p.date_stop DESC, p.number DESC
+                   LIMIT 1
+                )
+            ) AS x ORDER BY date
+        ''', {'fy_id': _id})
+
+        periods =  [i[0] for i in cr.fetchall()]
+        if periods and len(periods) > 1:
+            start_period = periods[0]
+            end_period = periods[1]
+        return {'period_from': start_period, 'period_to': end_period}
+
 account_fiscalyear()
 
 class account_period(osv.osv):
