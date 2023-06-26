@@ -140,12 +140,21 @@ ListView.prototype = {
 
         var $sum_fields = jQuery('.field_sum', idSelector(this.name));
         if ($sum_fields.length) {
+            var is_empty = !selected_ids.length
             selected_ids = (!selected_ids.length
                     ? (this.ids || '[]')
                     : '[' + selected_ids.join(',') + ']');
 
             var $sum_span_fields = jQuery('td.grid-cell span', $sum_fields);
-
+            if (is_empty) {
+                $sum_span_fields =  $sum_span_fields.map(function() {
+                    if (jQuery(this).attr('sum_selected')) {
+                        jQuery(this).html('');
+                        return null;
+                    }
+                    return this;
+                });
+            }
             var sum_fields = $sum_span_fields.map(function() {
                 return jQuery(this).attr('id');
             }).get();

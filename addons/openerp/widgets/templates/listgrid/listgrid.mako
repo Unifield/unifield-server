@@ -437,7 +437,11 @@ if (auto_field && auto_field.val()){
                                                 % if 'sum' in field_attrs:
                                                     % for key, val in field_total.items():
                                                         % if field == key:
-                                                            <span class="sum_value_field" id="${field}">${val[1]}</span>
+                                                            <span class="sum_value_field" id="${field}"
+                                                            % if field_attrs.get('sum_selected'):
+                                                                sum_selected="1"
+                                                            % endif
+                                                            >${val[1]}</span>
                                                         % endif
                                                     % endfor
                                                 % elif 'real_sum' in field_attrs:
