@@ -167,6 +167,7 @@
                                     domain="[('accrual_type', '=', 'reversing_accrual')]"/>
                             <field name="period_id" domain="[('state', '!=', 'created'), ('is_system', '=', False)]"/>
                             <field name="accrual_account_id"/>
+                            <field name="entry_sequence"/>
                         </group>
                     </search>
                 </field>
