@@ -460,6 +460,7 @@
             <rng:optional><rng:attribute name="password"/></rng:optional>
             <rng:optional><rng:attribute name="comparator"/></rng:optional>
             <rng:optional><rng:attribute name="sum"/></rng:optional>
+            <rng:optional><rng:attribute name="sum_selected"/></rng:optional>
             <rng:optional><rng:attribute name="real_sum"/></rng:optional>
             <rng:optional><rng:attribute name="bold"/></rng:optional>
             <rng:optional><rng:attribute name="italic"/></rng:optional>
