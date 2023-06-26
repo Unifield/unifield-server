@@ -130,6 +130,10 @@
     <Column ss:AutoFitWidth="1" ss:Width="150" />
     # Order Type
     <Column ss:AutoFitWidth="1" ss:Width="65" />
+    # Order Category
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
+    # Priority
+    <Column ss:AutoFitWidth="1" ss:Width="65" />
     # Line
     <Column ss:AutoFitWidth="1" ss:Width="40" />
     # Product Code
@@ -176,6 +180,8 @@
     <Column ss:AutoFitWidth="1" ss:Width="150" />
     # Source document
     <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # Source Creation Date
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
     # Supplier ref
     <Column ss:AutoFitWidth="1" ss:Width="150" />
 <Row>
@@ -239,6 +245,8 @@
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_type'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_category'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['priority'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="Number">${(line['item'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['code'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['description'])|x}</Data></Cell>
@@ -326,6 +334,23 @@
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['customer_ref'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
+      % if line['source_creation_date'] and isDate(line['source_creation_date']):
+        % if line['raw_state'] in ['cancel', 'cancel_r']:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_grey_fr"><Data ss:Type="DateTime">${line['source_creation_date']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date_grey"><Data ss:Type="DateTime">${line['source_creation_date']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % else:
+          % if getLang() == 'fr_MF':
+          <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${line['source_creation_date']|n}T00:00:00.000</Data></Cell>
+          % else:
+          <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${line['source_creation_date']|n}T00:00:00.000</Data></Cell>
+          % endif
+        % endif
+      % else:
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
+      % endif
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
     </Row>
     % endif
