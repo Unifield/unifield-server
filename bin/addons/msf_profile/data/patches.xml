@@ -942,5 +942,9 @@
         <record id="us_11399_oca_mm_target" model="patch.scripts">
             <field name="method">us_11399_oca_mm_target</field>
         </record>
+
+        <record id="us_11130_trigger_down_account_mapping" model="patch.scripts">
+            <field name="method">us_11130_trigger_down_account_mapping</field>
+        </record>
     </data>
 </openerp>

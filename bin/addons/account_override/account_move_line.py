@@ -304,6 +304,12 @@ class account_move_line(osv.osv):
             ret[i] = finance_export.finance_archive._get_hash(cr, uid, [i], 'account.move.line')
         return ret
 
+    def _get_hq_system_acc(self, cr, uid, ids, field_name, args, context=None):
+        return self.pool.get('account.export.mapping')._get_hq_system_acc(cr, uid, ids, field_name, args, self, context=context)
+
+    def _search_hq_acc(self, cr, uid, ids, name, args, context=None):
+        return self.pool.get('account.export.mapping')._search_hq_acc(cr, uid, ids, name, args, self, context=context)
+
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
@@ -364,6 +370,8 @@ class account_move_line(osv.osv):
         'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
                                  store=False, help='DB ID used for Vertical Integration'),
         'product_code': fields.related('product_id', 'default_code', type='char', size=64, string='Product Code', readonly=True),
+        'hq_system_account': fields.function(_get_hq_system_acc, type='char', store=False, fnct_search=_search_hq_acc,
+                                             method=True, string='HQ System Account', size=32),
     }
 
     _defaults = {

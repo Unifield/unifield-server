@@ -174,6 +174,7 @@ WHITE_LIST_MODEL = [
     'unidata.country',
     'unidata.project',
     'product.msl.rel',
+    'account.export.mapping',
 ]
 
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']
