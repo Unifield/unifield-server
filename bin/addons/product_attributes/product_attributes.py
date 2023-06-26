@@ -2255,11 +2255,14 @@ class product_attributes(osv.osv):
             has_po_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product is in some tender lines
-            states_to_ignore = ['done', 'cancel']
+            tender_line_domain = [('product_id', '=', product.id), ('line_state', 'not in', ['done', 'cancel'])]
             if ignore_draft:
-                states_to_ignore.append('draft')
-            has_tender_line = tender_line_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                               ('line_state', 'not in', states_to_ignore)], context=context)
+                tender_line_domain = [
+                    ('product_id', '=', product.id),
+                    '|', ('line_state', 'not in', ['draft', 'done', 'cancel']),
+                    '&', ('tender_id.state', '=', 'comparison'), ('line_state', '=', 'draft')
+                ]
+            has_tender_line = tender_line_obj.search(cr, uid, tender_line_domain, context=context)
 
             # Check if the product is in field order lines or in internal request lines
             states_to_ignore = ['done', 'cancel', 'cancel_r']
