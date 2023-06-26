@@ -197,7 +197,7 @@ class unidata_project(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         self._set_uf_active_from_parent(cr, uid, vals, context=context)
-        super(unidata_project, self).create(cr, uid, vals, context=context)
+        return super(unidata_project, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
