@@ -3358,6 +3358,7 @@ class account_bank_statement_line(osv.osv):
 
         wizard_title = '%s%s' % (_('Temp Posting - Wizard'), wizard_reg_info)
         has_amount_error = False
+        has_ignore = False
         if posttype == 'hard':
             wizard_title = '%s%s' % (_('Hard Posting - Wizard'), wizard_reg_info)
             if all_lines:
