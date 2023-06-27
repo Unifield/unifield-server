@@ -942,5 +942,9 @@
         <record id="us_11399_oca_mm_target" model="patch.scripts">
             <field name="method">us_11399_oca_mm_target</field>
         </record>
+
+        <record id="us_10874_bar_hard_post_wizard" model="patch.scripts">
+            <field name="method">us_10874_bar_hard_post_wizard</field>
+        </record>
     </data>
 </openerp>

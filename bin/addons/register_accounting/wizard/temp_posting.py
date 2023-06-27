@@ -103,6 +103,9 @@ class wizard_temp_posting(osv.osv_memory):
     def temp_post_all(self, cr, uid, ids, context=None):
         return self.action_confirm_temp_posting(cr, uid, ids, context=context, all_lines=True)
 
+    def action_confirm_hard_posting(self, cr, uid, ids, context=None):
+        return self.action_confirm_temp_posting(cr, uid, ids, context=context)
+
 
 wizard_temp_posting()
 
