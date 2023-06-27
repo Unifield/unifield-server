@@ -53,7 +53,7 @@
             model="replenishment.order_calc"
             name="report_replenishment_order_calc_draft_consolidated_xls"
             file="procurement_cycle/report_doc/replenishment_order_calc.mako"
-            target_filename="${_('Export_Draft_Consolidated_OC_Lines')}_%(year)s_%(month)s_%(day)s"
+            target_filename="${_('Export_Draft_Consolidated_OC_Lines')}"
             report_type="webkit"
             menu="False"
             />
@@ -78,7 +78,7 @@
             model="replenishment.order_calc"
             name="report_replenishment_order_calc_consolidated_xls"
             file="procurement_cycle/report_doc/replenishment_order_calc.mako"
-            target_filename="${_('Export_Consolidated_OC_all_status')}_%(year)s_%(month)s_%(day)s"
+            target_filename="${_('Export_Consolidated_OC_all_status')}"
             report_type="webkit"
             menu="True"
             sequence="4"
