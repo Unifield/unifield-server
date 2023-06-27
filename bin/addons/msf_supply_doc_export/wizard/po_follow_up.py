@@ -122,7 +122,7 @@ class po_follow_up(osv.osv_memory):
             res.append('in_kind')
         if wiz.purchase_list_ok:
             res.append('purchase_list')
-        if wiz.regular_ok:
+        if wiz.direct_ok:
             res.append('direct')
 
         if not res:
