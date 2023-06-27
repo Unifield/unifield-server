@@ -346,10 +346,12 @@ class po_follow_up(osv.osv_memory):
 
         # Order Types
         types_list = self.get_types_list(cr, uid, wiz, context=context)
+        domain.append(('order_type', 'in', types_list))
         report_parms['order_type'] = self.get_types_str(cr, uid, types_list, context=context)
 
         # Order Categories
         categ_list = self.get_categ_list(cr, uid, wiz, context=context)
+        domain.append(('categ', 'in', categ_list))
         report_parms['categ'] = self.get_categs_str(cr, uid, categ_list, context=context)
 
         # Status
