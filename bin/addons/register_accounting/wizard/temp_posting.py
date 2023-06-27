@@ -20,6 +20,8 @@ class wizard_temp_posting(osv.osv_memory):
         'amount_error_lines': fields.one2many('wizard.hard.posting.line', 'wizard_id', 'Lines'),
         'has_amount_error': fields.boolean('Has amount error'),
         'posttype': fields.char('PostType', size=16, readonly=1),
+        'has_ignore': fields.boolean('Has ignored lines'),
+        'ignored_lines': fields.one2many('wizard.ignore.posting.line', 'wizard_id', 'Lines'),
     }
 
     def nothing_hard_selection(self, cr, uid, ids, context=None):
@@ -81,6 +83,8 @@ class wizard_temp_posting(osv.osv_memory):
         for x in wiz.no_register_error_lines + wiz.amount_error_lines:
             if x.action == 'do_nothing':
                 st_line_ids.remove(x.register_line_id.id)
+        for x in wiz.ignored_lines:
+            st_line_ids.remove(x.register_line_id.id)
 
         tochange = []
         # Browse statement lines
@@ -132,7 +136,7 @@ class wizard_temp_posting_line(osv.osv_memory):
         'ref': fields.char('Reference', size=512, readonly=True),
         'amount_in': fields.float('Amount In', readonly=True),
         'amount_out': fields.float('Amount Out', readonly=True),
-        'third': fields.char('Third Party', size=512, readonly=True),
+        'third': fields.many2one('account.journal', 'Third Party', readonly=True),
         'action': fields.selection([('do_nothing', 'Do Not Post'), ('post', 'Post')], 'Action', required=True, add_empty=True),
         'hidden_action': fields.function(_get_hidden_action, method=1, type='char', string='Action'),
     }
@@ -160,4 +164,17 @@ class wizard_hard_posting_line(osv.osv_memory):
     }
 
 wizard_hard_posting_line()
+
+class wizard_ignore_posting_line(osv.osv_memory):
+    _name = 'wizard.ignore.posting.line'
+    _inherit = 'wizard.hard.posting.line'
+
+    _columns = {
+    }
+
+    _default = {
+        'action': 'do_nothing',
+    }
+
+wizard_ignore_posting_line()
 

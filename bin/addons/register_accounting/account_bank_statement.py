@@ -3293,6 +3293,10 @@ class account_bank_statement_line(osv.osv):
                     'other_account_id': x[9],
                     'other_third_id': x[10],
                 })
+                if x[11] == 'transfer' and x[8] * x[5] >= 0:
+                    _object = 'wizard.ignore.posting.line'
+                else:
+                    _object = 'wizard.hard.posting.line'
 
             self.pool.get(_object).create(cr, uid, data, context=context)
 
@@ -3311,7 +3315,7 @@ class account_bank_statement_line(osv.osv):
             wiz_id = self.pool.get('wizard.temp.posting').create(cr, uid, data, context=context)
             cr.execute('''
                 select
-                    absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name
+                    absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.id
                 from account_bank_statement_line absl
                     left join account_bank_statement register on register.id = absl.statement_id
                     left join account_journal j on j.id = register.journal_id
@@ -3333,7 +3337,7 @@ class account_bank_statement_line(osv.osv):
             if ids:
                 cr.execute('''
                     select
-                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name
+                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.id
                     from account_bank_statement_line absl
                         left join account_bank_statement register on register.id = absl.statement_id
                         left join account_journal j on j.id = register.journal_id
@@ -3359,7 +3363,7 @@ class account_bank_statement_line(osv.osv):
             if all_lines:
                 cr.execute('''
                     select
-                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name, other_line.sequence_for_reference, other_line.amount, other_line.account_id, other_line.transfer_journal_id
+                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.id, other_line.sequence_for_reference, other_line.amount, other_line.account_id, other_line.transfer_journal_id, account.type_for_register
                     from account_bank_statement_line absl
                         left join account_bank_statement register on register.id = absl.statement_id
                         left join account_account account on account.id = absl.account_id
@@ -3376,7 +3380,8 @@ class account_bank_statement_line(osv.osv):
                          and ( abs(absl.amount + other_line.amount) > 0.001
                                  and account.type_for_register = 'transfer_same'
                                or
-                                  absl.amount * other_line.amount <= 0
+                                    account.type_for_register = 'transfer'
+                                 and absl.amount * other_line.amount >= 0
                                or
                                  absl.account_id != other_line.account_id
                                or
@@ -3390,7 +3395,7 @@ class account_bank_statement_line(osv.osv):
             else:
                 cr.execute('''
                     select
-                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.name, other_line.sequence_for_reference, other_line.amount, other_line.account_id, other_line.transfer_journal_id
+                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.id, other_line.sequence_for_reference, other_line.amount, other_line.account_id, other_line.transfer_journal_id, account.type_for_register
                     from account_bank_statement_line absl
                         left join account_account account on account.id = absl.account_id
                         left join account_journal other_j on other_j.id = absl.transfer_journal_id
@@ -3404,10 +3409,10 @@ class account_bank_statement_line(osv.osv):
                          and coalesce(move.state, '') != 'posted' -- reg line is not posted
                          and absl.id in %(ids)s
                          and ( abs(absl.amount + other_line.amount) > 0.001
-                                 and absl.amount * other_line.amount <= 0
                                  and account.type_for_register = 'transfer_same'
                                or
-                                   absl.amount * other_line.amount <= 0
+                                    account.type_for_register = 'transfer'
+                                 and absl.amount * other_line.amount >= 0
                                or
                                  absl.account_id != other_line.account_id
                                or
@@ -3419,10 +3424,11 @@ class account_bank_statement_line(osv.osv):
                         )
                 ''', {'ids': tuple(ids)})
 
-            has_amount_error = bool(cr.rowcount)
             self._create_wizard_error_line(cr, uid, 'wizard.hard.posting.line', wiz_id, context=context)
+            has_amount_error = self.pool.get('wizard.hard.posting.line').search_exists(cr, uid, [('wizard_id', '=', wiz_id)], context=context)
+            has_ignore = self.pool.get('wizard.ignore.posting.line').search_exists(cr, uid, [('wizard_id', '=', wiz_id)], context=context)
 
-        self.pool.get('wizard.temp.posting').write(cr, uid, wiz_id, {'has_no_register': has_no_register,'has_amount_error': has_amount_error}, context=context)
+        self.pool.get('wizard.temp.posting').write(cr, uid, wiz_id, {'has_no_register': has_no_register,'has_amount_error': has_amount_error, 'has_ignore': has_ignore}, context=context)
 
 
 

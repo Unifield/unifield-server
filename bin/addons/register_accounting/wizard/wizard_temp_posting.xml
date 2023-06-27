@@ -9,6 +9,7 @@
                         <form string="Temp Posting - Wizard">
                             <field name="has_no_register" invisible="1" />
                             <field name="has_amount_error" invisible="1" />
+                            <field name="has_ignore" invisible="1" />
                             <field name="all_lines" invisible="1" />
                             <field name="posttype" invisible="1" />
                             <group colspan="4" attrs="{'invisible': [('has_no_register', '=', False)]}">
@@ -64,6 +65,33 @@
                                         <field name="hidden_action" invisible="1"/>
                                         <button name="do_nothing" icon="gtk-no" string="Set Do Not Post" type="object" attrs="{'invisible': [('hidden_action', '=', 'do_nothing')]}" />
                                         <button name="do_post" icon="gtk-yes" string="Set Post" type="object" attrs="{'invisible': [('hidden_action', '=', 'post')]}" />
+                                    </tree>
+
+                                </field>
+                            </group>
+
+                            <group colspan="4" attrs="{'invisible': [('has_ignore', '=', False)]}">
+                                <separator colspan="4" />
+                                <html colspan="4">
+                                    <h2>
+                                    <translate>The following lines can't be Hard Posted and will be ignored: lines have no Debit or no Credit</translate>
+                                    </h2>
+                                </html>
+                                <field name="ignored_lines" colspan="4" nolabel="1">
+                                    <tree string="No Debit or Credit" noteditable="1"  hide_delete_button="1" hide_new_button="1" hide_edit_button="1">
+                                        <field name="sequence_for_reference" />
+                                        <field name="name" />
+                                        <field name="ref" />
+                                        <field name="account_id" />
+                                        <field name="amount_in" />
+                                        <field name="amount_out" />
+                                        <field name="third" />
+                                        <field name="other_ref" />
+                                        <field name="other_account_id" />
+                                        <field name="other_in" />
+                                        <field name="other_out" />
+                                        <field name="other_third_id" />
+                                        <field name="action" />
                                     </tree>
 
                                 </field>
