@@ -3420,7 +3420,7 @@ class account_bank_statement_line(osv.osv):
                                or
                                  move.journal_id != other_line.transfer_journal_id
                                or
-                                 account.type_for_register in ('transfer_same', 'transfer')
+                                 account.type_for_register not in ('transfer_same', 'transfer')
                         )
                 ''', {'ids': tuple(ids)})
 
