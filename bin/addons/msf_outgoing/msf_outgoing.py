@@ -1940,6 +1940,21 @@ class select_actual_ship_date_wizard(osv.osv_memory):
             context['shipment_actual_date'] = wiz.shipment_actual_date
             ship_obj.validate_bg(cr, uid, [wiz.shipment_id.id], context=context)
 
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
+            view_id = view_id and view_id[1] or False
+
+            return {
+                'name': _("Shipment"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'shipment',
+                'view_mode': 'form,tree',
+                'view_type': 'form',
+                'view_id': [view_id],
+                'res_id': wiz.shipment_id.id,
+                'target': 'crush',
+                'context': context,
+            }
+
         return {'type': 'ir.actions.act_window_close'}
 
     def cancel(self, cr, uid, ids, context=None):
