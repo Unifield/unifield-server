@@ -3386,7 +3386,7 @@ class account_bank_statement_line(osv.osv):
                                or
                                  account.type_for_register not in ('transfer_same', 'transfer')
                         )
-                ''', {'instance_id': local_instance_id, 'register_id': data['register_id']})
+                ''', {'register_id': data['register_id']})
             else:
                 cr.execute('''
                     select
@@ -3417,7 +3417,7 @@ class account_bank_statement_line(osv.osv):
                                or
                                  account.type_for_register in ('transfer_same', 'transfer')
                         )
-                ''', {'instance_id': local_instance_id, 'ids': tuple(ids)})
+                ''', {'ids': tuple(ids)})
 
             has_amount_error = bool(cr.rowcount)
             self._create_wizard_error_line(cr, uid, 'wizard.hard.posting.line', wiz_id, context=context)
