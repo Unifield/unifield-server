@@ -946,5 +946,9 @@
         <record id="us_11130_trigger_down_account_mapping" model="patch.scripts">
             <field name="method">us_11130_trigger_down_account_mapping</field>
         </record>
+
+        <record id="us_9119_employee_uuid" model="patch.scripts">
+            <field name="method">us_9119_employee_uuid</field>
+        </record>
     </data>
 </openerp>
