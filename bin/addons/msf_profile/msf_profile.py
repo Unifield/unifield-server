@@ -59,6 +59,9 @@ class patch_scripts(osv.osv):
 
 
     def us_11130_trigger_down_account_mapping(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
         cr.execute("""UPDATE ir_model_data
         SET last_modification=NOW(), touched='[''account_id'', ''mapping_value'']'
         WHERE model='account.export.mapping'
