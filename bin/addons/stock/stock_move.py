@@ -630,7 +630,6 @@ class stock_move(osv.osv):
         'picking_with_sysint_name': fields.function(_get_picking_with_sysint_name, method=1, string='Picking IN [SYS-INT] name', type='char'),
         'included_in_mission_stock': fields.boolean('Stock move used to compute MSRL', internal=1, select=1),
         'in_forced': fields.boolean('IN line forced'),
-        'parent_name': fields.related('picking_id', 'name', string='Parent Reference', type='char', size=64, readonly=True),
     }
 
     def _check_asset(self, cr, uid, ids, context=None):
