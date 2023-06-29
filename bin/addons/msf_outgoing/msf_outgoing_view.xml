@@ -1276,7 +1276,6 @@
 					<field name="date" />
 					<field name="shipment_expected_date" />
 					<field name="state"/>
-					<button name="do_create_shipment_bg" states="draft" string="Create Shipment" type="object" icon="gtk-add"/>
 					<button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply"/>
 				</tree>
 			</field>
