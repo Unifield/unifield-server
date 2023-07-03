@@ -58,9 +58,10 @@
 ## definition of the columns' size
 <% nb_of_columns = 8 %>
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="55" />
+<Column ss:AutoFitWidth="1" ss:Width="130" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
-% for x in range(2,nb_of_columns - 1):
+% for x in range(1, 7):
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 % endfor
 <Column ss:AutoFitWidth="1" ss:Width="250" />
