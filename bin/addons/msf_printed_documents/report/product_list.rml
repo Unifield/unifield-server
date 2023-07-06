@@ -97,6 +97,7 @@
         <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
 
         <paraStyle name="TextInformation3" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation3red" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" textColor="red" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation3gras" fontName="Helvetica-Bold" fontSize="8.0" alignment="LEFT" leading="10.0" spaceBefore="1.0" spaceAfter="1.0" />
 
         <!-- Lines font style -->
@@ -282,20 +283,28 @@
            [[ repeatIn(get_lines(objects[0]), 'line') ]]
                 <td>
                     <para style="TextInformation3" alignment="LEFT">[[ line.name and line.name.default_code or False ]]</para>
+                    <!-- <para style="TextInformation3" alignment="LEFT">[[ line.mml_status != 'F' and (line.name and line.name.default_code or '') or removeParentNode('para') ]]</para> -->
+                    <!-- <para style="TextInformation3red" alignment="LEFT">[[ line.mml_status == 'F' and (line.name and line.name.default_code or '') or removeParentNode('para') ]]</para> -->
                 </td>
                 <td>
                     <para style="TextInformation3" alignment="LEFT">[[ line.name and line.name.name or False ]]</para>
+                    <!-- <para style="TextInformation3" alignment="LEFT">[[ line.mml_status != 'F' and (line.name and line.name.name or '') or removeParentNode('para') ]]</para> -->
+                    <!-- <para style="TextInformation3red" alignment="LEFT">[[ line.mml_status == 'F' and (line.name and line.name.name or '') or removeParentNode('para') ]]</para> -->
                 </td>
                 <td>
                     <para style="TextInformation3" alignment="LEFT">[[ line.comment or False ]]</para>
+                    <!-- <para style="TextInformation3" alignment="LEFT">[[ line.mml_status != 'F' and (line.comment or '') or removeParentNode('para') ]]</para> -->
+                    <!-- <para style="TextInformation3red" alignment="LEFT">[[ line.mml_status == 'F' and (line.comment or '') or removeParentNode('para') ]]</para> -->
                 </td>
                 <td>
                     <para style="TextInformation3" alignment="LEFT"></para>
-                    <!-- <para style="TextInformation3" alignment="LEFT">[[ getSel(line, 'mml_status') or '' ]]</para> -->
+                    <!-- <para style="TextInformation3" alignment="LEFT">[[ line.mml_status != 'F' and (getSel(line, 'mml_status') or '') or removeParentNode('para') ]]</para> -->
+                    <!-- <para style="TextInformation3red" alignment="LEFT">[[ line.mml_status == 'F' and (getSel(line, 'mml_status') or '') or removeParentNode('para') ]]</para> -->
                 </td>
                 <td>
                     <para style="TextInformation3" alignment="LEFT"></para>
-                    <!-- <para style="TextInformation3" alignment="LEFT">[[ getSel(line, 'msl_status') or '' ]]</para> -->
+                    <!-- <para style="TextInformation3" alignment="LEFT">[[ line.mml_status != 'F' and (getSel(line, 'msl_status') or '') or removeParentNode('para') ]]</para> -->
+                    <!-- <para style="TextInformation3red" alignment="LEFT">[[ line.mml_status == 'F' and (getSel(line, 'msl_status') or '') or removeParentNode('para') ]]</para> -->
                 </td>
             </tr>
         </blockTable>

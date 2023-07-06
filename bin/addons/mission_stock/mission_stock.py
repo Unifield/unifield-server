@@ -395,6 +395,17 @@ class stock_mission_report(osv.osv):
                 """, num_format_str='0.000')
             row_style_price.borders = borders
 
+            row_style_red = easyxf("""
+                    font: height 220, name Calibri, colour red;
+                    align: wrap on, vert center, horiz center;
+                """)
+            row_style_red.borders = borders
+            row_style_red_price = easyxf("""
+                    font: height 220, name Calibri, colour red;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='0.000')
+            row_style_red_price.borders = borders
+
             data_row_style = easyxf("""
                     font: height 220;
                     font: name Calibri;
@@ -444,7 +455,14 @@ class stock_mission_report(osv.osv):
                         continue
 
                 if file_type == 'xls':
-                    self.xls_write_row(sheet, data_list, row_count, row_style, row_style_price, report_data['local_report'])
+                    # Red line for MML alert 2
+                    if report_data['local_report'] and data_list[3] == 'F':
+                        def_row_style = row_style_red
+                        def_row_style_price = row_style_red_price
+                    else:
+                        def_row_style = row_style
+                        def_row_style_price = row_style_price
+                    self.xls_write_row(sheet, data_list, row_count, def_row_style, def_row_style_price, report_data['local_report'])
                 else:
                     writer.writerow(data_list)
                 row_count += 1
@@ -572,13 +590,12 @@ class stock_mission_report(osv.osv):
 
         sheet.set_horz_split_pos(5)
         if report['local_report']:
-            sheet.set_vert_split_pos(7)
+            sheet.set_vert_split_pos(6)
             fixed_data = [
                 (_('Reference'), 'default_code'),
                 (_('Name'), 'pt_name'),
                 (_('Active'), 'product_active'),
                 (_('MML'), 'mml_status'),
-                (_('MSL'), 'msl_status'),
                 (_('UoM'), 'pu_name'),
                 (_('Cost Price'), 'pt_standard_price'),
                 (_('Func. Cur.'), 'rc_name')
@@ -934,7 +951,7 @@ class stock_mission_report(osv.osv):
                         }, context=context)
 
                 if report['local_report']:
-                    # update MML
+                    # update MML, FIXME: slow
                     cr.execute('select id, product_id, product_amc, product_consumption from stock_mission_report_line where mission_report_id = %s', (report['id'],))
                     for x in cr.fetchall():
                         write_vals = {'mml_status': mml_data[x[1]]['mml_status'], 'msl_status': mml_data[x[1]]['msl_status']}

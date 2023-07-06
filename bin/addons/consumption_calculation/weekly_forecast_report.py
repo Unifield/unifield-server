@@ -543,8 +543,8 @@ class weekly_forecast_report(osv.osv):
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(exp_qty)s</Data></Cell>""" % {
                         'product_code': escape(product['default_code']),
                         'product_name': escape(product['name']),
-                        'mml_status': mml_data[product_id]['mml_status'],
-                        'msl_status': mml_data[product_id]['msl_status'],
+                        'mml_status': mml_data[product_id]['mml_status'] or '',
+                        'msl_status': mml_data[product_id]['msl_status'] or '',
                         'unit_price': product['standard_price'],
                         'consumption': cons,
                         'stock_qty': product['qty_available'],

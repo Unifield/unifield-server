@@ -417,8 +417,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                 'sum_value':  cost_price * rounded_qty,
                 'with_zero': with_zero,
                 'moves_in_months': product_id in date_prod_list,
-                'mml_status': products_mml_data[product_id]['mml_status'],
-                'msl_status': products_mml_data[product_id]['msl_status'],
+                'mml_status': products_mml_data[product_id]['mml_status'] or '',
+                'msl_status': products_mml_data[product_id]['msl_status'] or '',
                 'lines': {},
             }
             total_value += final_result[product_code]['sum_value']
@@ -674,8 +674,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                             self.add_cell(prd['product_code'], default_style)
                             self.add_cell(prd['product_name'], default_style)
                             self.add_cell(prd['uom'], default_style)
-                            self.add_cell('', default_style)
-                            self.add_cell('', default_style)
+                            self.add_cell(prd['mml_status'], default_style)
+                            self.add_cell(prd['msl_status'], default_style)
                             self.add_cell(line['batch'], default_style)
                             self.add_cell(self.to_datetime(line['expiry_date']), date_style)
                             self.add_cell(round(line['qty'], 2), default_style)

@@ -47,8 +47,16 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
-    ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" ss:Bold="1"/>
+  </Style>
+  <Style ss:ID="s69red">
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#ff0000" ss:Bold="1"/>
   </Style>
   <Style ss:ID="s70">
    <Borders>
@@ -57,8 +65,17 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
-    ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" ss:Bold="1"/>
+   <Interior/>
+  </Style>
+  <Style ss:ID="s70red">
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#ff0000" ss:Bold="1"/>
    <Interior/>
   </Style>
   <Style ss:ID="s74">
@@ -132,14 +149,23 @@
    </Row>
    % for line in get_prod(list.id):
    <Row>
-    <Cell ss:StyleID="s69"><Data ss:Type="String">${line.default_code|x}</Data></Cell>
-    <Cell ss:StyleID="s69"><Data ss:Type="String">${line.product_id.name|x}</Data></Cell>
-    <Cell ss:StyleID="s69"><Data ss:Type="String">${(line.name_seg or '')|x}</Data></Cell>
-    <Cell ss:StyleID="s70"><Data ss:Type="String">${(line.description_seg or '')|x}</Data></Cell>
-    ## <Cell ss:StyleID="s70"><Data ss:Type="String">${(getSel(line, 'mml_status'))|x}</Data></Cell>
-    ## <Cell ss:StyleID="s70"><Data ss:Type="String">${(getSel(line, 'msl_status'))|x}</Data></Cell>
-    <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+    ## % if line.mml_status == 'F':
+    ##     <Cell ss:StyleID="s69red"><Data ss:Type="String">${line.default_code|x}</Data></Cell>
+    ##     <Cell ss:StyleID="s69red"><Data ss:Type="String">${line.product_id.name|x}</Data></Cell>
+    ##     <Cell ss:StyleID="s69red"><Data ss:Type="String">${(line.name_seg or '')|x}</Data></Cell>
+    ##     <Cell ss:StyleID="s70red"><Data ss:Type="String">${(line.description_seg or '')|x}</Data></Cell>
+    ##     <Cell ss:StyleID="s70red"><Data ss:Type="String">${(getSel(line, 'mml_status'))|x}</Data></Cell>
+    ##     <Cell ss:StyleID="s70red"><Data ss:Type="String">${(getSel(line, 'msl_status'))|x}</Data></Cell>
+    ## % else:
+        <Cell ss:StyleID="s69"><Data ss:Type="String">${line.default_code|x}</Data></Cell>
+        <Cell ss:StyleID="s69"><Data ss:Type="String">${line.product_id.name|x}</Data></Cell>
+        <Cell ss:StyleID="s69"><Data ss:Type="String">${(line.name_seg or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s70"><Data ss:Type="String">${(line.description_seg or '')|x}</Data></Cell>
+        ## <Cell ss:StyleID="s70"><Data ss:Type="String">${(getSel(line, 'mml_status'))|x}</Data></Cell>
+        ## <Cell ss:StyleID="s70"><Data ss:Type="String">${(getSel(line, 'msl_status'))|x}</Data></Cell>
+        <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+    ## % endif
    </Row>
    % endfor
   </Table>

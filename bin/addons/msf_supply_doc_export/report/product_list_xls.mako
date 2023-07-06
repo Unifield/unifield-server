@@ -40,6 +40,16 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="redline">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+        <Font ss:Color="#ff0000"/>
+    </Style>
 </Styles>
 ## ==================================== we loop over the product_list so "objects" == product_list  ====================================================
 % for o in objects:
@@ -56,13 +66,21 @@
     ## we loop over the product_list_line
     % for line in o.product_ids:
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.default_code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
-        ## <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(line, 'mml_status') or '')|x}</Data></Cell>
-        ## <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(line, 'msl_status') or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        ## % if line['mml_status'] == 'F'
+        ##    <Cell ss:StyleID="redline" ><Data ss:Type="String">${(line.name.default_code or '')|x}</Data></Cell>
+        ##    <Cell ss:StyleID="redline" ><Data ss:Type="String">${(line.name.name or '')|x}</Data></Cell>
+        ##    <Cell ss:StyleID="redline" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+        ##    <Cell ss:StyleID="redline" ><Data ss:Type="String">${(getSel(line, 'mml_status') or '')|x}</Data></Cell>
+        ##    <Cell ss:StyleID="redline" ><Data ss:Type="String">${(getSel(line, 'msl_status') or '')|x}</Data></Cell>
+        ## % else:
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.default_code or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+            ## <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(line, 'mml_status') or '')|x}</Data></Cell>
+            ## <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(line, 'msl_status') or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        ## % endif
     </Row>
     % endfor
 </Table>
