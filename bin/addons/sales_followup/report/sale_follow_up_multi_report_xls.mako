@@ -238,6 +238,10 @@
         <Column ss:AutoFitWidth="1" ss:Width="50.0" />
         ## RTS Date
         <Column ss:AutoFitWidth="1" ss:Width="50.0" />
+        ## MML Status
+        <Column ss:AutoFitWidth="1" ss:Width="20.0" />
+        ## MSL Status
+        <Column ss:AutoFitWidth="1" ss:Width="20.0" />
 
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('FIELD ORDER FOLLOW-UP')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
@@ -340,6 +344,8 @@
                 _('CDD'),
                 _('ETA'),
                 _('RTS Date'),
+                _('MML'),
+                _('MSL'),
             ]
         %>
 
@@ -446,6 +452,8 @@
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
                     % endif
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('mml_status', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('msl_status', '-')|x}</Data></Cell>
                 % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.name|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id and o.partner_id.name or ''|x}</Data></Cell>
@@ -548,6 +556,8 @@
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     % endif
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('mml_status', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('msl_status', '-')|x}</Data></Cell>
                 % endif
             </Row>
             % endfor

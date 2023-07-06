@@ -96,6 +96,8 @@
    <Column ss:AutoFitWidth="0" ss:Width="236.25"/>
    <Column ss:AutoFitWidth="0" ss:Width="228"/>
    <Column ss:AutoFitWidth="0" ss:Width="272.25"/>
+   <Column ss:AutoFitWidth="0" ss:Width="40.0"/>
+   <Column ss:AutoFitWidth="0" ss:Width="40.0"/>
    <% list = get_list() %>
    <Row>
     <Cell ss:MergeAcross="3" ss:StyleID="s74"><Data ss:Type="String">${_('Product List Consistency Report')|x}</Data></Cell>
@@ -125,6 +127,8 @@
     <Cell ss:StyleID="s84"><Data ss:Type="String">${_('Product Description')|x}</Data></Cell>
     <Cell ss:StyleID="s84"><Data ss:Type="String">${_('Segment Ref')|x}</Data></Cell>
     <Cell ss:StyleID="s84"><Data ss:Type="String">${_('Segment name')|x}</Data></Cell>
+    <Cell ss:StyleID="s84"><Data ss:Type="String">${_('MML')|x}</Data></Cell>
+    <Cell ss:StyleID="s84"><Data ss:Type="String">${_('MSL')|x}</Data></Cell>
    </Row>
    % for line in get_prod(list.id):
    <Row>
@@ -132,6 +136,10 @@
     <Cell ss:StyleID="s69"><Data ss:Type="String">${line.product_id.name|x}</Data></Cell>
     <Cell ss:StyleID="s69"><Data ss:Type="String">${(line.name_seg or '')|x}</Data></Cell>
     <Cell ss:StyleID="s70"><Data ss:Type="String">${(line.description_seg or '')|x}</Data></Cell>
+    ## <Cell ss:StyleID="s70"><Data ss:Type="String">${(getSel(line, 'mml_status'))|x}</Data></Cell>
+    ## <Cell ss:StyleID="s70"><Data ss:Type="String">${(getSel(line, 'msl_status'))|x}</Data></Cell>
+    <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
    </Row>
    % endfor
   </Table>

@@ -45,9 +45,9 @@ class inventory_parser(XlsxReportParser):
         self.duplicate_row_dimensions(range(1, 16))
         self.duplicate_column_dimensions(default_width=15)
 
-        sheet.column_dimensions.group('AN', get_column_letter(column_index_from_string('AN')+2*inventory.projected_view - 1), hidden=False)
-        sheet.column_dimensions.group('D', 'E', hidden=False)
-        sheet.column_dimensions.group('R', 'U', hidden=False)
+        sheet.column_dimensions.group('AO', get_column_letter(column_index_from_string('AO')+2*inventory.projected_view - 1), hidden=False)
+        sheet.column_dimensions.group('D', 'F', hidden=False)
+        sheet.column_dimensions.group('S', 'V', hidden=False)
         sheet.row_dimensions.group(2, 14, hidden=False)
 
 
@@ -99,7 +99,8 @@ class inventory_parser(XlsxReportParser):
             (_('Product Description'), green_header_style),
             (_('RR Lifecycle'), green_header_style),
             (_('Replaced/Replacing'), green_header_style),
-            (_('Primary Product list'), green_header_style),
+            (_('MML'), green_header_style),
+            (_('MSL'), green_header_style),
             (_('Warnings Recap'), red_header_style),
             (_('Segment Ref/name'), orange_header_style),
             (_('RR Type'), orange_header_style),
@@ -164,7 +165,8 @@ class inventory_parser(XlsxReportParser):
                 self.add_cell(line.product_id.name)
                 self.add_cell(line.segment_ref_name and self.getSel(line, 'status') or _('N/A'))
                 self.add_cell(line.paired_product_id and line.paired_product_id.default_code or None)
-                self.add_cell(line.primay_product_list or None)
+                self.add_cell(None)  # self.getSel(line, 'mml_status')
+                self.add_cell(None)  # self.getSel(line, 'msl_status')
                 self.add_cell(line.warning or None)
                 self.add_cell(line.segment_ref_name or None)
                 self.add_cell(line.segment_ref_name and self.getSel(line, 'rule') or None)

@@ -45,11 +45,13 @@
 % for o in objects:
 <ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
 <Table >
-    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
+    <Column ss:AutoFitWidth="1" ss:Span="5" ss:Width="64.26"/>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('MML')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('MSL')}</Data></Cell>
     </Row>
     ## we loop over the product_list_line
     % for line in o.product_ids:
@@ -57,6 +59,10 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+        ## <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(line, 'mml_status') or '')|x}</Data></Cell>
+        ## <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(line, 'msl_status') or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
     % endfor
 </Table>

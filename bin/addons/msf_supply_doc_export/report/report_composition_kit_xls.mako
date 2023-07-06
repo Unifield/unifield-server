@@ -55,6 +55,8 @@
 <Column ss:AutoFitWidth="1" ss:Width="200" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="40" />
+<Column ss:AutoFitWidth="1" ss:Width="40" />
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Module')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
@@ -64,6 +66,8 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('B.Num mandatory')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Exp. Date mandatory')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('MML')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('MSL')}</Data></Cell>
     </Row>
     ## we loop over the products line
     % for line in o.composition_item_ids:
@@ -82,6 +86,10 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.comment or ''|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_product_id.batch_management and _('Y') or _('N')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.item_product_id.perishable and _('Y') or _('N')|x}</Data></Cell>
+        ## <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(line, 'mml_status')|x}</Data></Cell>
+        ## <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(line, 'msl_status')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
     % endfor
 </Table>

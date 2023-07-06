@@ -57,6 +57,18 @@
   				</para>
   			</td>
   			<td>
+  			    [[ objects[0].mission_report_id.local_report == True or removeParentNode('td') ]]
+  				<para style="linesHead">
+  					MML
+  				</para>
+  			</td>
+  			<td>
+  				[[ objects[0].mission_report_id.local_report == True or removeParentNode('td') ]]
+  				<para style="linesHead">
+  					MSL
+  				</para>
+  			</td>
+  			<td>
   				<para style="linesHead">
   					UoM
   				</para>
@@ -137,6 +149,18 @@
   			<td>
   				<para style="lines">
   					[[ o.product_active and 'Yes' or 'No' ]]
+  				</para>
+  			</td>
+  			<td>
+  			    [[ objects[0].mission_report_id.local_report == True or removeParentNode('td') ]]
+  				<para style="linesHead">
+  					[[ o.mml_status ]]
+  				</para>
+  			</td>
+  			<td>
+  			    [[ objects[0].mission_report_id.local_report == True or removeParentNode('td') ]]
+  				<para style="linesHead">
+  					[[ o.msl_status ]]
   				</para>
   			</td>
   			<td>

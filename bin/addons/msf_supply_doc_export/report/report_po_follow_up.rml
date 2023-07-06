@@ -91,7 +91,7 @@
          <td><para style="P2">Estimated Amount: [[ o.amount_total ]]</para></td>
     </tr>     	  
      </blockTable>
-    <blockTable colWidths="25.0,95.0,180.0,40.0,50.0,50.0,70.0,70.0,70.0,60.0,55.0,80.0,60.0" style="Tableau3" >
+    <blockTable colWidths="25.0,95.0,180.0,40.0,50.0,50.0,50.0,50.0,70.0,60.0,55.0,80.0,60.0,20.0,20.0" style="Tableau3" >
       <tr>
         <td>
           <para style="P3">Item</para>
@@ -131,6 +131,12 @@
         </td>
         <td>
           <para style="P3">Line Status</para>
+        </td>
+        <td>
+          <para style="P3">MML</para>
+        </td>
+        <td>
+          <para style="P3">MSL</para>
         </td>
       </tr>
       <tr>
@@ -182,11 +188,19 @@
         <td>
           <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['cost_centre'] or removeParentNode('para') ]]</para>
           <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['cost_centre'] or removeParentNode('para') ]]</para>
-       </td>
+        </td>
         <td>
           <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['state'] or removeParentNode('para') ]]</para>
           <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['state'] or removeParentNode('para') ]]</para>
-       </td>
+        </td>
+        <td>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['mml_status'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['mml_status'] or removeParentNode('para') ]]</para>
+        </td>
+        <td>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['msl_status'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['msl_status'] or removeParentNode('para') ]]</para>
+        </td>
      </tr>
     
     </blockTable>

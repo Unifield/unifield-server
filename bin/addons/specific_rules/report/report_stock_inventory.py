@@ -404,6 +404,7 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         final_result = {}
         total_value = 0
         nb_items = 0
+        products_mml_data = self.pool.get('product.product').get_products_mml_status(self.cr, self.uid, product_ids_to_fetch)
         for product_id in res:
             product_code = product_data[product_id].default_code
             cost_price = cost_price_at_date.get(product_id, product_data[product_id].standard_price)
@@ -416,6 +417,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                 'sum_value':  cost_price * rounded_qty,
                 'with_zero': with_zero,
                 'moves_in_months': product_id in date_prod_list,
+                'mml_status': products_mml_data[product_id]['mml_status'],
+                'msl_status': products_mml_data[product_id]['msl_status'],
                 'lines': {},
             }
             total_value += final_result[product_code]['sum_value']
@@ -457,9 +460,11 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         sheet.column_dimensions['A'].width = 23.0
         sheet.column_dimensions['B'].width = 60.0
         sheet.column_dimensions['C'].width = 18.0
-        sheet.column_dimensions['D'].width = 20.0
-        sheet.column_dimensions['E'].width = 15.0
-        ite = 6
+        sheet.column_dimensions['D'].width = 10.0
+        sheet.column_dimensions['E'].width = 10.0
+        sheet.column_dimensions['F'].width = 20.0
+        sheet.column_dimensions['G'].width = 15.0
+        ite = 8
         loc_list = []
         locations = self.get_locations(context=context)
         if not report.location_id:
@@ -480,9 +485,9 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         orange_style = self.create_style_from_template('orange_style', 'A1')
         grey_style = self.create_style_from_template('grey_style', 'C1')
         grey_date_style = self.create_style_from_template('grey_date_style', 'C2')
-        dark_grey_style = self.create_style_from_template('dark_grey_style', 'Q13')
+        dark_grey_style = self.create_style_from_template('dark_grey_style', 'S13')
         default_style = self.create_style_from_template('default_style', 'A13')
-        date_style = self.create_style_from_template('date_style', 'E13')
+        date_style = self.create_style_from_template('date_style', 'G13')
 
         # If the title is > 31 chars, it causes a minor error during generation and while using the file
         if loc_list:
@@ -581,7 +586,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         cell_lh_10_d = WriteOnlyCell(sheet, value=_('Currency'))
         cell_lh_10_d.style = orange_style
         orange_row_header = [empty_orange_cell, cell_lh_10_b, cell_lh_10_c, cell_lh_10_d, empty_orange_cell,
-                             empty_orange_cell, empty_orange_cell, empty_orange_cell, empty_orange_cell]
+                             empty_orange_cell, empty_orange_cell, empty_orange_cell, empty_orange_cell,
+                             empty_orange_cell, empty_orange_cell]
         if loc_list:
             or_extend = []
             oi = 1
@@ -597,7 +603,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         cell_lh_11_c.style = default_style
         cell_lh_11_d = WriteOnlyCell(sheet, value=report.company_id.currency_id.name)
         cell_lh_11_d.style = default_style
-        empty_row_header = [empty_cell, cell_lh_11_b, cell_lh_11_c, cell_lh_11_d, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell]
+        empty_row_header = [empty_cell, cell_lh_11_b, cell_lh_11_c, cell_lh_11_d, empty_cell, empty_cell, empty_cell,
+                            empty_cell, empty_cell, empty_cell, empty_cell]
         if loc_list:
             em_extend = []
             ei = 1
@@ -611,6 +618,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             (_('Product Code')),
             (_('Product Description')),
             (_('UoM')),
+            (_('MML')),
+            (_('MSL')),
             (_('Batch')),
             (_('Exp Date')),
         ]
@@ -635,6 +644,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                         self.add_cell(prd['product_code'], default_style)
                         self.add_cell(prd['product_name'], default_style)
                         self.add_cell(prd['uom'], default_style)
+                        self.add_cell(prd['mml_status'], default_style)
+                        self.add_cell(prd['msl_status'], default_style)
                         self.add_cell(line['batch'], default_style)
                         self.add_cell(self.to_datetime(line['expiry_date']), date_style)
                         for loc in locations:
@@ -648,6 +659,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                     self.add_cell(prd['product_code'], dark_grey_style)
                     self.add_cell(prd['product_name'], dark_grey_style)
                     self.add_cell(prd['uom'], dark_grey_style)
+                    self.add_cell(prd['mml_status'], dark_grey_style)
+                    self.add_cell(prd['msl_status'], dark_grey_style)
                     self.add_cell('', dark_grey_style)
                     self.add_cell('', dark_grey_style)
                     self.add_cell('', dark_grey_style)
@@ -661,6 +674,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                             self.add_cell(prd['product_code'], default_style)
                             self.add_cell(prd['product_name'], default_style)
                             self.add_cell(prd['uom'], default_style)
+                            self.add_cell('', default_style)
+                            self.add_cell('', default_style)
                             self.add_cell(line['batch'], default_style)
                             self.add_cell(self.to_datetime(line['expiry_date']), date_style)
                             self.add_cell(round(line['qty'], 2), default_style)

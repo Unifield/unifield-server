@@ -982,6 +982,81 @@ class product_product(osv.osv):
 
         return res
 
+    def get_products_mml_status(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = {'mml_status': 'F', 'msl_status': False}
+
+        local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+
+        # MSL Checks
+        cr.execute('''
+            select
+                p.id, unidata_project.uf_active, msl_rel.product_id
+            from
+                product_product p
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join unidata_project on unidata_project.instance_id = %s
+                left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+            where
+                nom.name='MED'
+                and creator.code = 'unidata'
+                and p.id in %s
+        ''', (local_instance_id, tuple(ids)))
+
+        for x in cr.fetchall():
+            if not x[1]:  # unidata_project.uf_active
+                ret[x[0]]['msl_status'] = False
+            elif x[2]:  # msl_rel.product_id
+                ret[x[0]]['msl_status'] = 'T'
+            else:
+                ret[x[0]]['msl_status'] = 'F'
+
+        cr.execute('''
+            select
+                p.id
+            from
+                product_product p
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            where
+                ( nom.name!='MED' or creator.code != 'unidata' )
+                and p.id in %s
+        ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            ret[x[0]]['mml_status'] = False
+
+        # MML Checks
+        cr.execute('''
+            select
+                p.id
+            from
+                product_product p
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join product_project_rel p_rel on p_rel.product_id = p.id
+                left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+                left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+            where
+                nom.name='MED'
+                and creator.code = 'unidata'
+                and p.oc_validation = 't'
+                and (up1.instance_id = %s or up1 is null)
+                and p.id in %s
+        ''', (local_instance_id, tuple(ids)))
+        for x in cr.fetchall():
+            ret[x[0]]['mml_status'] = 'T'
+        return ret
+
 
 product_product()
 

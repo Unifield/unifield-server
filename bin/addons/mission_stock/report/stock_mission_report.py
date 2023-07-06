@@ -81,14 +81,20 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
                 # if the requeted attachment don't exists, create it
             msr_obj = pool.get('stock.mission.report')
             with_valuation = False
-            if field_name.startswith('s_v_vals'):
+            local_report = False
+            if field_name.startswith('s_v_vals') or field_name.startswith('s_v_mml_vals'):
                 with_valuation = True
+                if field_name.startswith('s_v_mml_vals'):
+                    local_report = True
+            elif field_name.startswith('s_nv_mml_vals'):
+                local_report = True
 
             msr_obj._get_export(cr, uid, report_id, {},
                                 csv=file_format=='csv', xls=file_format=='xls',
                                 with_valuation=with_valuation,
                                 all_products=not display_only_in_stock,
                                 display_only_in_stock=display_only_in_stock,
+                                local_report=local_report,
                                 context=context)
 
         if store_in_db:
