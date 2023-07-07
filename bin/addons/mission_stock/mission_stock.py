@@ -307,9 +307,9 @@ class stock_mission_report(osv.osv):
             sheet.write(3, column_count, _(column), style)
             column_count += 1
 
-    def xls_write_row(self, sheet, cell_list, row_count, style, style_price, local_report=False):
+    def xls_write_row(self, sheet, cell_list, row_count, style, style_price, price_column=4):
         for column_count, column in enumerate(cell_list):
-            if (local_report and column_count == 6) or column_count == 4:  # style for price
+            if column_count == price_column:  # style for price
                 sheet.write(row_count, column_count, column, style_price)
             else:
                 sheet.write(row_count, column_count, _(column), style)
@@ -459,10 +459,12 @@ class stock_mission_report(osv.osv):
                     if report_data['local_report'] and data_list[3] == 'F':
                         def_row_style = row_style_red
                         def_row_style_price = row_style_red_price
+                        price_column = 6
                     else:
                         def_row_style = row_style
                         def_row_style_price = row_style_price
-                    self.xls_write_row(sheet, data_list, row_count, def_row_style, def_row_style_price, report_data['local_report'])
+                        price_column = 4
+                    self.xls_write_row(sheet, data_list, row_count, def_row_style, def_row_style_price, price_column)
                 else:
                     writer.writerow(data_list)
                 row_count += 1
@@ -715,7 +717,12 @@ class stock_mission_report(osv.osv):
                     for x in instance_loc.get(inst_id, []):
                         to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
 
-                self.xls_write_row(sheet, to_write, row_count, row_style, row_style_price, report['local_report'])
+                if report['local_report']:
+                    price_column = 5
+                else:
+                    price_column = 4
+
+                self.xls_write_row(sheet, to_write, row_count, row_style, row_style_price, price_column)
                 row_count += 1
 
 
