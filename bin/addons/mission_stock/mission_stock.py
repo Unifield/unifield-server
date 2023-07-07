@@ -456,13 +456,14 @@ class stock_mission_report(osv.osv):
 
                 if file_type == 'xls':
                     # Red line for MML alert 2
-                    if report_data['local_report'] and data_list[3] == 'F':
-                        def_row_style = row_style_red
-                        def_row_style_price = row_style_red_price
+                    def_row_style = row_style
+                    def_row_style_price = row_style_price
+                    if report_data['local_report']:
                         price_column = 6
+                        if data_list[3] == 'F':
+                            def_row_style = row_style_red
+                            def_row_style_price = row_style_red_price
                     else:
-                        def_row_style = row_style
-                        def_row_style_price = row_style_price
                         price_column = 4
                     self.xls_write_row(sheet, data_list, row_count, def_row_style, def_row_style_price, price_column)
                 else:
