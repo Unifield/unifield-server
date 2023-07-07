@@ -58,6 +58,17 @@ class patch_scripts(osv.osv):
     }
 
 
+    def us_11679_set_iil_oca(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance:
+            return True
+
+        if instance.instance.endswith('OCA'):
+            cr.execute("""UPDATE unifield_setup_configuration
+            SET esc_line='t'
+            """)
+        return True
+
     def us_11130_trigger_down_account_mapping(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity'):
             # exclude new instances

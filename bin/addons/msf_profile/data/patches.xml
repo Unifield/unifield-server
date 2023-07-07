@@ -946,5 +946,9 @@
         <record id="us_11130_trigger_down_account_mapping" model="patch.scripts">
             <field name="method">us_11130_trigger_down_account_mapping</field>
         </record>
+
+        <record id="us_11679_set_iil_oca" model="patch.scripts">
+            <field name="method">us_11679_set_iil_oca</field>
+        </record>
     </data>
 </openerp>
