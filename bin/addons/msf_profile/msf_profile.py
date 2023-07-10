@@ -57,6 +57,16 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
+    def us_11130_trigger_down_account_mapping(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        cr.execute("""UPDATE ir_model_data
+        SET last_modification=NOW(), touched='[''account_id'', ''mapping_value'']'
+        WHERE model='account.export.mapping'
+        """)
+
     # UF29.0
     def us_11399_oca_mm_target(self, cr, uid, *a, **b):
         if self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id:
@@ -218,7 +228,6 @@ class patch_scripts(osv.osv):
         esc_line_install = setup_obj.create(cr, uid, {})
         setup_obj.execute(cr, uid, [esc_line_install])
         return True
-
 
     # UF28.0
     def us_10885_tc_entries(self, cr, uid, *a, **b):

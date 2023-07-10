@@ -186,18 +186,18 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Row>
 <Row>
     % if analytic_axis() in ('f1', 'f2'):
-        <Cell ss:StyleID="ssBorderTopLeftRight" ss:MergeAcross="18">
+        <Cell ss:StyleID="ssBorderTopLeftRight" ss:MergeAcross="19">
     % else:
-        <Cell ss:StyleID="ssBorderTopLeftRight" ss:MergeAcross="20">
+        <Cell ss:StyleID="ssBorderTopLeftRight" ss:MergeAcross="21">
     % endif
         <Data ss:Type="String">${_('SELECTION')}</Data>
     </Cell>
 </Row>
 <Row>
     % if analytic_axis() in ('f1', 'f2'):
-        <Cell ss:StyleID="ssBorderBottomLeftRight" ss:MergeAcross="18">
+        <Cell ss:StyleID="ssBorderBottomLeftRight" ss:MergeAcross="19">
     % else:
-        <Cell ss:StyleID="ssBorderBottomLeftRight" ss:MergeAcross="20">
+        <Cell ss:StyleID="ssBorderBottomLeftRight" ss:MergeAcross="21">
     % endif
         <Data ss:Type="String">${ criteria() |x}</Data>
     </Cell>
@@ -280,6 +280,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Status')}</Data>
     </Cell>
+    % if display_hq_account():
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('HQ System Account')}</Data>
+    </Cell>
+    % endif
 </Row>
 
 % for line in lines():
@@ -354,6 +359,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${getSelValue('account.move', 'state', line['status']) or ''|x}</Data>
     </Cell>
+    % if display_hq_account():
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${line['hq_system_account'] or ''|x}</Data>
+    </Cell>
+    % endif
 </Row>
 % endfor
 
