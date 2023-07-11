@@ -38,6 +38,7 @@ from tools.translate import _
 from mission_stock.mission_stock import UnicodeWriter
 
 from threading import RLock
+from service.web_services import report_spool
 
 
 class automated_import_job(osv.osv):
@@ -347,35 +348,87 @@ class automated_import_job(osv.osv):
                         remote.connection.get(oldest_file, tmp_dest_file)
                         oldest_file = tmp_dest_file
 
-                    processed, rejected, headers = getattr(
+                    import_results = getattr(
                         self.pool.get(import_data.function_id.model_id.model),
                         import_data.function_id.method_to_call
                     )(cr, uid, oldest_file, context=context)
-                    if processed:
-                        nb_processed += self.generate_file_report(cr, uid, job, processed, headers, remote=remote)
 
-                    if rejected:
-                        nb_rejected = nb_processed  # US-7624 If one row is not correct, all processed rows are rejected
-                        self.generate_file_report(cr, uid, job, rejected, headers, remote=remote, rejected=True)
-                        state = 'error'
-                        for resjected_line in rejected:
-                            line_message = ''
-                            if resjected_line[0]:
-                                line_message = _('Line %s: ') % resjected_line[0]
-                            line_message += resjected_line[2]
-                            error_message.append(line_message)
+                    if import_data.function_id.model_id.model == 'esc.line.import':
+                        import_wiz_id, import_state = import_results
+                        import_wiz_obj = self.pool.get('esc.line.import').browse(cr, uid, import_wiz_id, context=context)
+                        nb_processed = import_wiz_obj.created
+                        nb_rejected = import_wiz_obj.nberrors
+                        is_success = import_state == 'done'
 
-                        if import_data.function_id.method_to_call == 'auto_import_destination':
-                            error_message.append(_("no data will be imported until all the error messages are corrected"))
-                            tools.cache.clean_caches_for_db(cr.dbname)
-                            tools.read_cache.clean_caches_for_db(cr.dbname)
+                        # Generate Report
+                        r_filename = '%s_%s_%s.txt' % (
+                            time.strftime('%Y%m%d_%H%M%S'),
+                            import_data.function_id.model_id.model,
+                            is_success and 'rejected' or 'processed'
+                        )
+
+                        report_file_name = remote.get_report_file_name(r_filename)
+                        fp_file = open(report_file_name, 'wb')
+                        fp_file.write("File: %s\r\nStart: %s\r\nEnd: %s\r\nFile lines processed: %s\r\nIIL Created: %s\r\nLines rejected: %s" % (
+                            import_wiz_obj.filename,
+                            import_wiz_obj.start_date,
+                            import_wiz_obj.end_date,
+                            import_wiz_obj.total,
+                            import_wiz_obj.created,
+                            import_wiz_obj.nberrors,
+                        ))
+                        fp_file.close()
+                        remote.push_report(report_file_name, r_filename)
+
+                        if nb_rejected:
+                            # export datas :
+                            report_name = "esc_line_import_template"
+                            rp_spool = report_spool()
+                            res_export = rp_spool.exp_report(cr.dbname, uid, report_name, [import_wiz_id], {}, context)
+                            file_res = {'state': False}
+                            while not file_res.get('state'):
+                                file_res = rp_spool.exp_report_get(cr.dbname, uid, res_export)
+                                time.sleep(0.5)
+
+                            if file_res.get('result'):
+                                tmp_dir = tempfile.mkdtemp()
+                                rejected_filename = os.path.join(tmp_dir, filename)
+                                fp_rejected = open(rejected_filename, 'wb')
+                                fp_rejected.write(base64.decodestring(file_res.get('result')))
+                                fp_rejected.close()
+                                remote.move_to_process_path(filename, success=False, local_src=tmp_dir)
+
+                    else:
+                        processed, rejected, headers = import_results
+
+                        is_success = True
+                        if processed:
+                            nb_processed += self.generate_file_report(cr, uid, job, processed, headers, remote=remote)
+
+                        if rejected:
+                            is_success = False
+                            nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, remote=remote, rejected=True)
+                            if import_data.function_id.model_id.model == 'hr.employee':
+                                nb_rejected = nb_processed # US-7624 If one row is not correct, all processed rows are rejected
+                            state = 'error'
+                            for resjected_line in rejected:
+                                line_message = ''
+                                if resjected_line[0]:
+                                    line_message = _('Line %s: ') % resjected_line[0]
+                                line_message += resjected_line[2]
+                                error_message.append(line_message)
+
+                            if import_data.function_id.method_to_call == 'auto_import_destination':
+                                error_message.append(_("no data will be imported until all the error messages are corrected"))
+                                tools.cache.clean_caches_for_db(cr.dbname)
+                                tools.read_cache.clean_caches_for_db(cr.dbname)
 
 
-                    if context.get('rejected_confirmation'):
-                        nb_rejected += context.get('rejected_confirmation')
-                        state = 'error'
+                        if context.get('rejected_confirmation'):
+                            nb_rejected += context.get('rejected_confirmation')
+                            state = 'error'
 
-                    self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (import_data.name, len(processed), nb_rejected))
+                    self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (import_data.name, nb_processed, nb_rejected))
 
                     if import_data.function_id.model_id.model == 'purchase.order':
                         po_id = context.get('po_id', False) or self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context) or False
@@ -407,7 +460,7 @@ class automated_import_job(osv.osv):
                         'file_to_import': data64,
                         'state': state,
                     }, context=context)
-                    is_success = True if not rejected else False
+
                     remote.move_to_process_path(filename, success=is_success)
                     self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
                     cr.commit()
