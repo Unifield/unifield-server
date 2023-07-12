@@ -177,6 +177,7 @@ class wizard_import_ad_line(osv.osv_memory):
                                         cc_value = cc_values[i]
                                         dest_value = dest_values[i]
                                         j = 0
+                                        has_split = False
                                         for line in current_line_add[key]:
                                             if (i >= len(line[4]) and i >= len(line[5]) and i >= len(line[8])) \
                                                     or (line[4][i] != cc_value or line[5][i] != dest_value or line[8][i] != percent):
@@ -198,9 +199,11 @@ class wizard_import_ad_line(osv.osv_memory):
                                                     break
 
                                                 if not error:
-                                                    updated += 1
-                                                    if line[0] not in l_updated:
-                                                        l_updated.append(line[0])
+                                                    if not has_split:
+                                                        updated += 1
+                                                        if line[0] not in l_updated:
+                                                            l_updated.append(line[0])
+                                                        has_split = True
                                                     cc_data = {
                                                         'partner_type': partner_type,
                                                         'destination_id': dest_cache[dest_value],
