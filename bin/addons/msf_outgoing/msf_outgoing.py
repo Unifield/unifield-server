@@ -215,7 +215,7 @@ class shipment(osv.osv):
                         current_result['num_of_packs'] += int(num_of_packs)
                         # total weight
                         total_weight = memory_family['total_weight']
-                        current_result['total_weight'] += int(total_weight)
+                        current_result['total_weight'] += float(total_weight)
                         # total volume
                         total_volume = memory_family['total_volume']
                         current_result['total_volume'] += float(total_volume)
