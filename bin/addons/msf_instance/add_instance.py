@@ -327,7 +327,7 @@ class account_move(osv.osv):
     _inherit = 'account.move'
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
         'journal_id_fake': fields.function(_get_journal_id_fake, method=True, string='Journal', type='many2one', relation='account.journal.fake', fnct_search=_search_journal_id_fake)
     }
 
