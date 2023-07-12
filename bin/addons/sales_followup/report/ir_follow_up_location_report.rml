@@ -182,7 +182,7 @@
 
     <section>
             [[ repeatIn(getOrders(r, only_bo=r.only_bo), 'o', 'section') ]]
-        <blockTable colWidths="30.0,74.0,120.0,90.0,45.0,40.0,45.0,40.0,45.0,70.0,41.0,44.0,44.0,44.0" style="LinesTable" repeatRows="2">
+        <blockTable colWidths="33.0,74.0,120.0,90.0,45.0,40.0,45.0,40.0,45.0,70.0,41.0,43.0,43.0,43.0" style="LinesTable" repeatRows="2">
 	    	<tr>
 	    		<td colspan="2">
                     <para style="Lines">Order ref:</para>
