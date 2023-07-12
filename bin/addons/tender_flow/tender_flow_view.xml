@@ -337,7 +337,7 @@
                                     <field name="price_subtotal" readonly="1"/>
                                     <field name="currency_id" readonly="1"/>
                                     <field name="date_planned" attrs="{'readonly': [('fake_state', 'not in', ('', 'draft', 'validated_n', 'validated'))]}"/>
-                                    <field name="confirmed_delivery_date" readonly="1"/>
+                                    <field name="confirmed_delivery_date"/>
                                     <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
                                     <field name="tender_line_id" invisible="1" />
                                     <field name="to_correct_ok" invisible="1"/>
