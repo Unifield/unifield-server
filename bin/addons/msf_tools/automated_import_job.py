@@ -360,14 +360,14 @@ class automated_import_job(osv.osv):
                         nb_rejected = import_wiz_obj.nberrors
                         is_success = bool(nb_processed) # if at least one IIL created
                         import_error = ''
-                        if not is_success:
+                        if nb_rejected:
                             import_error = import_wiz_obj.error
 
                         # Generate Report
                         r_filename = '%s_iil_%s_%s.txt' % (
                             time.strftime('%Y%m%d_%H%M%S'),
                             import_wiz_id,
-                            is_success and 'ok' or 'with_rejected_lines'
+                            nb_rejected and 'with_rejected_lines' or 'ok'
                         )
 
                         report_file_name = remote.get_report_file_name(r_filename)
