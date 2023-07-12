@@ -16,14 +16,35 @@
 					<field name="project_ref" />
 				</group>
 
-				<separator string="Order statuses" colspan="4" />
-				<group>
-					<field name="draft_ok" colspan="4" />
-					<field name="validated_ok" colspan="4" />
-					<field name="sourced_ok" colspan="4" />
-					<field name="confirmed_ok" colspan="4" />
-					<field name="closed_ok" colspan="4" />
-					<field name="cancel_ok" colspan="4" />
+				<group colspan="4" col="6">
+					<group colspan="2" col="2">
+						<separator string="Order types" colspan="2" />
+						<field name="regular_ok" colspan="2" />
+						<field name="donation_exp_ok" colspan="2" />
+						<field name="donation_st_ok" colspan="2" />
+						<field name="loan_ok" colspan="2" />
+						<field name="loan_return_ok" colspan="2" />
+						<field name="in_kind_ok" colspan="2" />
+						<field name="purchase_list_ok" colspan="2" />
+						<field name="direct_ok" colspan="2" />
+					</group>
+					<group colspan="2" col="2">
+						<separator string="Order categories" colspan="2" />
+						<field name="medical_ok" colspan="2" />
+						<field name="log_ok" colspan="2" />
+						<field name="service_ok" colspan="2" />
+						<field name="transport_ok" colspan="2" />
+						<field name="other_ok" colspan="2" />
+					</group>
+					<group colspan="2" col="2">
+						<separator string="Order statuses" colspan="2" />
+						<field name="draft_ok" colspan="2" />
+						<field name="validated_ok" colspan="2" />
+						<field name="sourced_ok" colspan="2" />
+						<field name="confirmed_ok" colspan="2" />
+						<field name="closed_ok" colspan="2" />
+						<field name="cancel_ok" colspan="2" />
+					</group>
 				</group>
 
 				<separator string="Report parameters" colspan="4" />
