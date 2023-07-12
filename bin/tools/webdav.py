@@ -123,7 +123,7 @@ class Client(object):
             raise Exception(self.parse_error(result))
         return True
 
-    def upload(self, fileobj, remote_path, buffer_size=None, log=False, progress_obj=False):
+    def upload(self, fileobj, remote_path, buffer_size=None, log=False, progress_obj=False, continuation=False):
         if not self.session_uuid:
             self.session_uuid = uuid.uuid1()
 
@@ -136,6 +136,9 @@ class Client(object):
                 size = os.path.getsize(fileobj.name)
             except:
                 size = None
+
+        if not continuation:
+            self.session_offset = -1
 
         if self.session_offset != -1:
             fileobj.seek(self.session_offset)
@@ -190,6 +193,7 @@ class Client(object):
                         progress_obj.write({'name': percent})
 
                 logger.info('OneDrive: %d bytes sent on %s bytes %s' % (self.session_offset, size or 'unknown', percent_txt))
+        self.session_offset = -1
         return (True, '')
 
     def list(self, remote_path):
