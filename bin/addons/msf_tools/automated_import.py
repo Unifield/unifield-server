@@ -375,8 +375,8 @@ class Remote(object):
     def move_to_process_path(self, filename, success, local_src=False):
         """
         Move the file `file` from `src_path` to `dest_path`
-        src : if empty use the source_path + filename
-        else filename must be the full local path
+        local_src : if empty use the source_path + filename
+                    else local_src + filename
         :return: return True
 
         """

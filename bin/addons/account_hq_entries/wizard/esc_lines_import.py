@@ -349,7 +349,6 @@ class esc_line_import_wizard(osv.osv):
                 error = e.value
             else:
                 error = e
-            raise
             msg = self.read(cr, uid, wiz_id, ['error'])['error'] or ''
             self.write(cr, uid, wiz_id, {'state': 'error', 'progress': 100, 'error': "%s\n%s\n%s" % (msg, tools.ustr(error), tools.get_traceback(e)), 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')})
         finally:

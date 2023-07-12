@@ -359,6 +359,9 @@ class automated_import_job(osv.osv):
                         nb_processed = import_wiz_obj.created
                         nb_rejected = import_wiz_obj.nberrors
                         is_success = import_state == 'done'
+                        import_error = ''
+                        if not is_success:
+                            import_error = import_wiz_obj.error
 
                         # Generate Report
                         r_filename = '%s_%s_%s.txt' % (
@@ -369,13 +372,14 @@ class automated_import_job(osv.osv):
 
                         report_file_name = remote.get_report_file_name(r_filename)
                         fp_file = open(report_file_name, 'wb')
-                        fp_file.write("File: %s\r\nStart: %s\r\nEnd: %s\r\nFile lines processed: %s\r\nIIL Created: %s\r\nLines rejected: %s" % (
+                        fp_file.write("File: %s\r\nStart: %s\r\nEnd: %s\r\nFile lines processed: %s\r\nIIL Created: %s\r\nLines rejected: %s\r\n\r\n%s" % (
                             import_wiz_obj.filename,
                             import_wiz_obj.start_date,
                             import_wiz_obj.end_date,
                             import_wiz_obj.total,
                             import_wiz_obj.created,
                             import_wiz_obj.nberrors,
+                            import_error
                         ))
                         fp_file.close()
                         remote.push_report(report_file_name, r_filename)
