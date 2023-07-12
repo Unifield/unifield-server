@@ -48,6 +48,7 @@ class esc_line_import_wizard(osv.osv):
 
     _defaults = {
         'state': 'draft',
+        'start_date': lambda *x: fields.datetime.now()
     }
 
     def __init__(self, pool, cr):

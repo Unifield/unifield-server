@@ -358,24 +358,25 @@ class automated_import_job(osv.osv):
                         import_wiz_obj = self.pool.get('esc.line.import').browse(cr, uid, import_wiz_id, context=context)
                         nb_processed = import_wiz_obj.created
                         nb_rejected = import_wiz_obj.nberrors
-                        is_success = import_state == 'done'
+                        is_success = bool(nb_processed) # if at least one IIL created
                         import_error = ''
                         if not is_success:
                             import_error = import_wiz_obj.error
 
                         # Generate Report
-                        r_filename = '%s_%s_%s.txt' % (
+                        r_filename = '%s_iil_%s_%s.txt' % (
                             time.strftime('%Y%m%d_%H%M%S'),
-                            import_data.function_id.model_id.model,
-                            is_success and 'rejected' or 'processed'
+                            import_wiz_id,
+                            is_success and 'ok' or 'with_rejected_lines'
                         )
 
                         report_file_name = remote.get_report_file_name(r_filename)
                         fp_file = open(report_file_name, 'wb')
-                        fp_file.write("File: %s\r\nStart: %s\r\nEnd: %s\r\nFile lines processed: %s\r\nIIL Created: %s\r\nLines rejected: %s\r\n\r\n%s" % (
+                        fp_file.write("File: %s\r\nStart: %s\r\nEnd: %s\r\nState: %s\r\nFile lines processed: %s\r\nIIL Created: %s\r\nLines rejected: %s\r\n\r\n%s" % (
                             import_wiz_obj.filename,
                             import_wiz_obj.start_date,
                             import_wiz_obj.end_date,
+                            import_state,
                             import_wiz_obj.total,
                             import_wiz_obj.created,
                             import_wiz_obj.nberrors,
@@ -386,7 +387,7 @@ class automated_import_job(osv.osv):
 
                         if nb_rejected:
                             # export datas :
-                            report_name = "esc_line_import_template"
+                            report_name = "esc_line_import_rejected"
                             rp_spool = report_spool()
                             res_export = rp_spool.exp_report(cr.dbname, uid, report_name, [import_wiz_id], {}, context)
                             file_res = {'state': False}
@@ -396,11 +397,12 @@ class automated_import_job(osv.osv):
 
                             if file_res.get('result'):
                                 tmp_dir = tempfile.mkdtemp()
-                                rejected_filename = os.path.join(tmp_dir, filename)
-                                fp_rejected = open(rejected_filename, 'wb')
+                                rejected_fn = 'rejected_lines_%s' % filename
+                                rejected_full_filename = os.path.join(tmp_dir, rejected_fn)
+                                fp_rejected = open(rejected_full_filename, 'wb')
                                 fp_rejected.write(base64.decodestring(file_res.get('result')))
                                 fp_rejected.close()
-                                remote.move_to_process_path(filename, success=False, local_src=tmp_dir)
+                                remote.move_to_process_path(rejected_fn, success=False, local_src=tmp_dir)
 
                     else:
                         processed, rejected, headers = import_results
