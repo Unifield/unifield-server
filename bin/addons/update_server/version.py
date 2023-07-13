@@ -17,9 +17,12 @@ import time
 import tools
 from zipfile import is_zipfile
 from base64 import decodestring
+import base64
 from cStringIO import StringIO
 import hashlib
 import threading
+import os
+from tools import config
 
 class version(osv.osv):
 
@@ -110,13 +113,30 @@ class version(osv.osv):
                 'message' : message,
                 'revisions' : revisions}
 
-    def _get_zip(self, cr, uid, sum, context=None):
+    def _get_patch_path(self, cr, uid, id):
+        folder = os.path.join(config['root_path'], '..', 'ServerPatches', cr.dbname)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        return os.path.join(folder, '%s.zip'%id)
+
+    def _get_zip(self, cr, uid, sum, offset=None, context=None):
         ids = self.search(cr, uid, [('sum','=',sum)], context=context)
         if not ids:
             return (False, "Cannot find sum %s!" % sum)
-        rec = self.browse(cr, uid, ids, context=context)[0]
+        rec = self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context)[0]
         if rec.state != 'confirmed':
             return (False, "The revision %s is not enabled!" % sum)
+        patch_file = self._get_patch_path(cr, uid, ids[0])
+        if not os.path.exists(patch_file):
+            return (False, "File %s does not exist" % patch_file)
+
+        if offset is None:
+            return (True, base64.b64encode(open(patch_file, 'rb').read()))
+
+        with open(patch_file, 'rb') as fp:
+            fp.seek(offset)
+            return (True, base64.b64encode(fp.read(1024*1024*10))) # 10MB
+
         return (True, rec.patch)
 
     def delete_revision(self, cr, uid, ids, context=None):
@@ -162,9 +182,9 @@ class sync_manager(osv.osv):
         return (True, self.pool.get('sync_server.version')._compare_with_last_rev(cr, 1, entity, rev_sum))
 
     @sync_server.sync_server.check_validated
-    def get_zip(self, cr, uid, entity, revision, context=None):
+    def get_zip(self, cr, uid, entity, revision, offset=None, context=None):
         self._logger.info("::::::::[%s] download patch" % (entity.name, ))
-        return self.pool.get('sync_server.version')._get_zip(cr, 1, revision)
+        return self.pool.get('sync_server.version')._get_zip(cr, 1, revision, offset=offset)
 
 sync_manager()
 

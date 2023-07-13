@@ -298,7 +298,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         if not fy_id or not period_id or not instance_ids or (not instance_id and not all_missions):
             raise osv.except_osv(_('Warning'), _('Some information is missing: either fiscal year or period or instance.'))
         period = period_obj.browse(cr, uid, period_id, context=context,
-                                   fields_to_fetch=['date_start', 'date_stop', 'number'])
+                                   fields_to_fetch=['date_start', 'date_stop', 'number', 'fiscalyear_id'])
         first_day_of_period = period.date_start
         tm = strptime(first_day_of_period, '%Y-%m-%d')
         year_num = tm.tm_year

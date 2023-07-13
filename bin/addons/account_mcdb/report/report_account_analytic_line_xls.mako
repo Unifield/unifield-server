@@ -68,6 +68,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
     % endif
 % endfor
+% if display_hq_account():
+    <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('HQ System Account')}</Data></Cell>
+% endif
 </Row>
 % for o in objects:
 <Row>
@@ -148,6 +151,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.move_state and getSel(o, 'move_state') or '')|x}</Data>
 </Cell>
+% if display_hq_account():
+<Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${(o.hq_system_account or '')|x}</Data>
+</Cell>
+% endif
 </Row>
 % endfor
 </Table>

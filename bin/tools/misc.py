@@ -49,6 +49,7 @@ from lxml import etree
 from which import which
 from threading import local
 import math
+import hashlib
 
 try:
     from html2text import html2text
@@ -1969,6 +1970,15 @@ def get_stack():
     import traceback
     return ustr("".join(traceback.format_list(traceback.extract_stack())))
 
+def _max_amount(amount):
+    if not amount:
+        return False
+    if abs(amount) >= 10**10:
+        if abs(amount) < 10**12 and abs(amount - int(amount)) < 0.001:
+            return False
+        return True
+    return False
+
 class fakeUid(int):
     """
     Emulates the behaviour of an INT while having the ability to store the users real uid in a property called realUid
@@ -1984,3 +1994,17 @@ class fakeUid(int):
     def __reduce__(self):
         res = super(fakeUid, self).__reduce__()
         return (res[0], (res[1][1], res[1][1], self.realUid))
+
+def md5_file(path):
+    if not os.path.exists(path):
+        return False
+
+    md5 = hashlib.md5()
+    block_size = 128 * md5.block_size
+    with open(path, 'rb') as f:
+        while True:
+            chunk = f.read(block_size)
+            if not chunk:
+                break
+            md5.update(chunk)
+    return md5.hexdigest()

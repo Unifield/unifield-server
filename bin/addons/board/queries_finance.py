@@ -108,8 +108,8 @@ order by account_period.date_start, m.name;"""
         'title': _('Unbalanced reconciliations in functional currency'),
         'headers': [_('Reconcile number'), _('Reconcile date'), _('Difference')],
         'query': """SELECT rec.name, 'rec_date', sum(l.credit-l.debit)
-from account_move_line l, account_move_reconcile rec
-where l.reconcile_id=rec.id
+from account_move_line l, account_move_reconcile rec, msf_instance inst, res_company c
+where l.reconcile_id=rec.id and c.instance_id = inst.id and (rec.is_multi_instance= 'f' or inst.level!='project')
 %s
 group by rec.id, rec.name
 having(abs(sum(l.credit-l.debit)) > 0.0001)
@@ -121,8 +121,8 @@ order by rec.name;
         'title': _('Unbalanced reconciliations in booking currency'),
         'headers': [_('Reconcile number'), _('Reconcile date'), _('Difference')],
         'query': """SELECT rec.name, 'rec_date', sum(l.credit_currency-l.debit_currency)
-from account_move_line l, account_move_reconcile rec
-where l.reconcile_id=rec.id
+from account_move_line l, account_move_reconcile rec, msf_instance inst, res_company c
+where l.reconcile_id=rec.id and c.instance_id = inst.id and (rec.is_multi_instance= 'f' or inst.level!='project')
 %s
 group by rec.id, rec.name
 having(abs(sum(l.credit_currency-l.debit_currency)) > 0.0001 and count(distinct(l.currency_id))=1)

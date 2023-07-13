@@ -125,6 +125,7 @@ class composition_kit(osv.osv):
             ids = [ids]
 
         lot_obj = self.pool.get('stock.production.lot')
+        item_obj = self.pool.get('composition.item')
         for obj in self.browse(cr, uid, ids, context=context):
             if not len(obj.composition_item_ids):
                 raise osv.except_osv(_('Warning !'), _('Kit Composition cannot be empty.'))
@@ -134,21 +135,27 @@ class composition_kit(osv.osv):
                 if item.item_qty <= 0:
                     raise osv.except_osv(_('Warning !'), _('Kit Items must have a quantity greater than 0.0.'))
                 if obj.composition_type == 'real':
-                    if item.hidden_batch_management_mandatory and not item.item_lot:
+                    if item.hidden_batch_management_mandatory and not item.item_lot_id:
                         raise osv.except_osv(_('Warning !'), _('Batch NB can not be empty for Kit Items that are Batch mandatory.'))
                     if item.hidden_perishable_mandatory and not item.item_exp:
                         raise osv.except_osv(_('Warning !'), _('Expiry Date can not be empty for Kit Items that are Perishable.'))
                     if item.item_exp:
-                        if item.item_lot:
-                            if not lot_obj.search_exist(cr, uid, [('product_id', '=', item.item_product_id.id), ('name', '=', item.item_lot),
-                                                                  ('life_date', '=', item.item_exp)], context=context):
+                        if item.item_lot_id:
+                            lot_ids = lot_obj.search(cr, uid, [('product_id', '=', item.item_product_id.id), ('name', '=', item.item_lot_id.name),
+                                                               ('life_date', '=', item.item_exp)], context=context)
+                            if not lot_ids:
                                 raise osv.except_osv(_('Warning !'), _('There is no existing batch for %s with the Name %s and the Expiry Date %s.') %
-                                                     (item.item_product_id.default_code, item.item_lot, datetime.strptime(item.item_exp, '%Y-%m-%d').strftime('%d/%m/%Y')))
+                                                     (item.item_product_id.default_code, item.item_lot_id.name, datetime.strptime(item.item_exp, '%Y-%m-%d').strftime('%d/%m/%Y')))
+                            else:
+                                item_obj.write(cr, uid, item.id, {'item_lot_id': lot_ids[0]}, context=context)
                         else:
-                            if not lot_obj.search_exist(cr, uid, [('product_id', '=', item.item_product_id.id),
-                                                                  ('life_date', '=', item.item_exp)], context=context):
+                            lot_ids = lot_obj.search(cr, uid, [('product_id', '=', item.item_product_id.id),
+                                                               ('life_date', '=', item.item_exp)], context=context)
+                            if not lot_ids:
                                 raise osv.except_osv(_('Warning !'), _('There is no existing batch for %s with the Expiry Date %s.') %
                                                      (item.item_product_id.default_code, datetime.strptime(item.item_exp, '%Y-%m-%d').strftime('%d/%m/%Y')))
+                            else:
+                                item_obj.write(cr, uid, item.id, {'item_lot_id': lot_ids[0]}, context=context)
 
                 if item.kcl_id and item.item_qty > 1:
                     raise osv.except_osv(_('Warning !'), _('Kit Items with a KCL Reference must not have a quantity greater than 1.'))
@@ -286,8 +293,8 @@ class composition_kit(osv.osv):
                           'item_product_id': item_v.item_product_id.id,
                           'item_qty': item_v.item_qty,
                           'item_uom_id': item_v.item_uom_id.id,
-                          'item_lot': item_v.item_lot, # is set to False
-                          'item_exp': item_v.item_exp, # is set to False
+                          'item_lot_id': item_v.item_lot_id and item_v.item_lot_id.id,  # is set to False
+                          'item_exp': item_v.item_exp,  # is set to False
                           'item_kit_id': obj.id,
                           'item_description': item_v.item_description,
                           'comment': item_v.comment,
@@ -310,9 +317,6 @@ class composition_kit(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             for item in obj.composition_item_ids:
                 # create a mirror object which can be later selected and modified in the many2many field
-                lot_name = item.item_lot
-                if lot_name and item.item_product_id.perishable and not item.item_product_id.batch_management:
-                    lot_name = False
                 values = {'wizard_id': wizard_data['res_id'],
                           'item_id_mirror': item.id,
                           'kit_id_mirror': item.item_kit_id.id,
@@ -322,7 +326,7 @@ class composition_kit(osv.osv):
                           'uom_id_substitute_item': item.item_uom_id.id,
                           'asset_id_substitute_item': item.item_asset_id.id,
                           'kcl_id_substitute_item': item.kcl_id and item.kcl_id.id or False,
-                          'lot_mirror': lot_name,
+                          'lot_mirror': item.item_lot_id and item.item_lot_id.name or False,
                           'exp_substitute_item': item.item_exp,
                           'comment': item.comment,
                           }
@@ -644,7 +648,7 @@ class composition_kit(osv.osv):
                 # load the xml tree
                 root = etree.fromstring(result['fields']['composition_item_ids']['views']['tree']['arch'])
                 # xpath of fields to be modified
-                list = ['//field[@name="item_lot"]', '//field[@name="item_exp"]', '//field[@name="item_asset_id"]']
+                list = ['//field[@name="item_lot_id"]', '//field[@name="item_exp"]', '//field[@name="item_asset_id"]']
                 for xpath in list:
                     fields = root.xpath(xpath)
                     if not fields:
@@ -683,12 +687,11 @@ class composition_kit(osv.osv):
         res = []
 
         for obj in self.browse(cr, uid, ids, context=context):
-            version = obj.composition_version or 'no_version'
             if obj.composition_type == 'theoretical':
                 date = datetime.strptime(obj.composition_creation_date, db_date_format)
-                name = version + ' - ' + date.strftime(date_format)
+                name = (obj.composition_version or 'no_version') + ' - ' + date.strftime(date_format)
             else:
-                name = obj.composition_product_id.default_code + ' - ' + version
+                name = obj.composition_combined_ref_lot
 
             res += [(obj.id, name)]
         return res
@@ -1025,7 +1028,7 @@ class composition_kit(osv.osv):
                 'item_product_id': item.item_product_id.id,
                 'item_qty': item.item_qty,
                 'item_uom_id': item.item_uom_id.id,
-                'item_lot': item.item_lot,
+                'item_lot_id': item.item_lot_id and item.item_lot_id.id or False,
                 'item_exp': item.item_exp,
                 'item_kit_id': kit.id,
                 'item_description': item.item_description,
@@ -1071,29 +1074,20 @@ class composition_item(osv.osv):
                 type = data['type']
                 subtype = data['subtype']
                 # if management and we have a lot_id, we fill the expiry date
-                if management and vals.get('item_lot'):
-                    prodlot_id = vals.get('item_lot')
-                    prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
-                                                            ('type', '=', 'standard'),
-                                                            ('product_id', '=', product_id)], context=context)
-                    # if it exists, we set the date
-                    if prod_ids:
-                        prodlot_id = prod_ids[0]
-                        data = prodlot_obj.read(cr, uid, [prodlot_id], ['life_date'], context=context)
-                        expired_date = data[0]['life_date']
-                        vals.update({'item_exp': expired_date})
+                if management and vals.get('item_lot_id'):
+                    vals.update({'item_exp': prodlot_obj.read(cr, uid, vals['item_lot_id'], ['life_date'], context=context)['life_date']})
                 elif perishable:
                     # nothing special here
                     pass
                 else:
                     # not perishable nor management, exp and lot are False
-                    vals.update(item_lot=False, item_exp=False)
+                    vals.update(item_lot_id=False, item_exp=False)
                 # if the product is not of type 'product' or type is 'product' but subtype is not 'asset', we set asset to False
                 if (type != 'product') or (type == 'product' and subtype != 'asset'):
                     vals.update(item_asset_id=False)
             else:
                 # product is False, exp and lot are set to False - asset is set to False
-                vals.update(item_lot=False, item_exp=False, item_asset_id=False)
+                vals.update(item_lot_id=False, item_exp=False, item_asset_id=False)
 
         return vals
 
@@ -1128,7 +1122,7 @@ class composition_item(osv.osv):
                             'hidden_batch_management_mandatory': False,
                             'hidden_asset_mandatory': False,
                             'item_exp': False,
-                            'item_lot': False,
+                            'item_lot_id': False,
                             'kcl_id': False,
                             }}
         if product_id:
@@ -1169,9 +1163,7 @@ class composition_item(osv.osv):
 
     def on_lot_change(self, cr, uid, ids, product_id, prodlot_id, context=None):
         '''
-        if lot exists in the system the date is filled in
-
-        prodlot_id is the NAME of the production lot
+        Fill item_exp with the prodlot's expiry date
         '''
         # objects
         prod_obj = self.pool.get('product.product')
@@ -1182,13 +1174,9 @@ class composition_item(osv.osv):
             data = prod_obj.read(cr, uid, [product_id], ['perishable', 'batch_management'], context=context)[0]
             management = data['batch_management']
             if management and prodlot_id:
-                prod_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_id),
-                                                        ('type', '=', 'standard'),
-                                                        ('product_id', '=', product_id)], context=context)
-                # if it exists, we set the date
-                if prod_ids:
-                    prodlot_id = prod_ids[0]
-                    result['value'].update(item_exp=prodlot_obj.browse(cr, uid, prodlot_id, context=context).life_date)
+                result['value'].update(item_exp=prodlot_obj.browse(cr, uid, prodlot_id, context=context).life_date)
+            elif not prodlot_id:
+                result['value'].update(item_exp=False)
 
         return result
 
@@ -1209,7 +1197,7 @@ class composition_item(osv.osv):
                 root = etree.fromstring(result['arch'])
                 # get the original empty separator ref and hide it
                 # fields to be modified
-                list = ['//field[@name="item_lot"]', '//field[@name="item_exp"]', '//field[@name="item_asset_id"]']
+                list = ['//field[@name="item_lot_id"]', '//field[@name="item_exp"]', '//field[@name="item_asset_id"]']
                 fields = []
                 for xpath in list:
                     fields = root.xpath(xpath)
@@ -1313,7 +1301,8 @@ class composition_item(osv.osv):
                 'item_qty': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='item_uom_id'),
                 'item_uom_id': fields.many2one('product.uom', string='UoM', required=True),
                 'item_asset_id': fields.many2one('product.asset', string='Asset'),
-                'item_lot': fields.char(string='Batch Nb', size=1024),
+                'item_lot': fields.char(string='Batch Nb', size=1024, readonly=True),
+                'item_lot_id': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'item_exp': fields.date(string='Expiry Date'),
                 'item_kit_id': fields.many2one('composition.kit', string='Kit/Version', ondelete='cascade', required=True, readonly=True),
                 'item_description': fields.text(string='Item Description'),
@@ -1387,11 +1376,11 @@ class composition_item(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.hidden_perishable_mandatory:
                 # no lot or date management product
-                if obj.item_lot:
-                    # not perishable nor batch management - no item_lot nor item_exp
+                if obj.item_lot_id:
+                    # not perishable nor batch management - no item_lot_id nor item_exp
                     raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory Product can specify Batch Number.'))
                 if obj.item_exp:
-                    # not perishable nor batch management - no item_lot nor item_exp
+                    # not perishable nor batch management - no item_lot_id nor item_exp
                     raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory or Expiry Date Mandatory can specify Expiry Date.'))
 
         return True
@@ -1466,7 +1455,7 @@ class split_composition_item_wizard(osv.osv_memory):
                     'item_qty': split.original_qty - split.new_line_qty}, context=context)
 
                 # Copy the original line
-                ci_copy_data = {'item_qty': split.new_line_qty, 'item_lot': False, 'item_exp': False}
+                ci_copy_data = {'item_qty': split.new_line_qty, 'item_lot_id': False, 'item_exp': False}
                 self.pool.get('composition.item').copy(cr, uid, split.composition_item_id.id, ci_copy_data, context=context)
 
         return {'type': 'ir.actions.act_window_close'}

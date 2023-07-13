@@ -395,7 +395,7 @@
                     <field name="name" />
                     <field name="login" />
                     <field name="address_id" string="Address" />
-                    <field name="company_ids" string="Company" groups="base.group_multi_company" />
+                    <field name="context_department_id" widget="selection" string="Department"/>
                 </search>
             </field>
         </record>

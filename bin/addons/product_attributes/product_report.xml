@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="report_product_mml"
+            string="MML Products"
+            model="product.product"
+            name="report.product_mml"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="True"
+            view_ids="product_product_mml_tree"
+            target_filename="MML_%(instance)s_%(year)s_%(month)s_%(day)s"
+            run_in_background="True"
+         />
+
+    </data>
+</openerp>

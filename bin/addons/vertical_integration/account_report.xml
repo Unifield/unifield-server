@@ -19,14 +19,6 @@
         auto="False"
         menu="False"/>
 
-        <report id="hq_ocba"
-        string="Export to HQ system"
-        model="account.move.line"
-        name="hq.ocba"
-        target_filename="Export to HQ System_${instance_id.code}_%(year)s%(month)s%(day)s"
-        report_type="txt"
-        auto="False"
-        menu="False"/>
 
     <!-- Sequence for Finance export -->
 

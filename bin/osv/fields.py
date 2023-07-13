@@ -603,6 +603,7 @@ class many2many(_column):
         self._order_by = ''
         if 'order_by' in args:
             self._order_by = args['order_by']
+        self._sql_rel_domain =  args.get('sql_rel_domain')
 
     def setup_m2m(self, model):
         if not self._rel or not self._id1 or not self._id2:
@@ -661,6 +662,12 @@ class many2many(_column):
         limit_str = ''
         if self._limit is not None:
             limit_str = ' LIMIT %d' % self._limit
+
+        if self._sql_rel_domain:
+            if where_c:
+                where_c = ' AND %s %s' % (self._sql_rel_domain, where_c)
+            else:
+                where_c = ' AND %s ' % self._sql_rel_domain
 
         query = """
         SELECT %(rel)s.%(id2)s, %(rel)s.%(id1)s

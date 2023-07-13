@@ -33,6 +33,21 @@
                 </form>
             </field>
         </record>
+
+        <record id="physical_inventory_import_wizard_view_fullerror" model="ir.ui.view">
+            <field name="name">Importation Report</field>
+            <field name="model">physical.inventory.import.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">25</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="message" nolabel="1" colspan="4" widget="full_text" />
+                    <separator colspan="4"/>
+                    <button string="Close" icon="gtk-ok" colspan="4" special="cancel"/>
+                </form>
+            </field>
+        </record>
+
         <record id="physical_inventory_action_box_wizard_view" model="ir.ui.view">
             <field name="name">Importation Report</field>
             <field name="model">physical.inventory.import.wizard</field>

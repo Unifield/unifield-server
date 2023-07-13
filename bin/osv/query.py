@@ -102,15 +102,19 @@ class Query(object):
         query_from = ''
         tables_to_process = list(self.tables)
         def add_joins_for_table(table, query_from):
-            for (dest_table, lhs_col, col, join) in self.joins.get(table,[]):
-                tables_to_process.remove(dest_table)
-                dest_table_alias = dest_table.split(' ')
-                join_table = dest_table
-                if len(dest_table_alias) == 2:
-                    join_table = dest_table_alias[1]
-                query_from += ' %s %s ON (%s."%s" = %s."%s")' % \
-                    (join, dest_table, table, lhs_col, join_table, col)
-                query_from = add_joins_for_table(dest_table, query_from)
+            for join_cond in self.joins.get(table,[]):
+                if isinstance(join_cond, (list, tuple)):
+                    (dest_table, lhs_col, col, join) = join_cond
+                    tables_to_process.remove(dest_table)
+                    dest_table_alias = dest_table.split(' ')
+                    join_table = dest_table
+                    if len(dest_table_alias) == 2:
+                        join_table = dest_table_alias[1]
+                    query_from += ' %s %s ON (%s."%s" = %s."%s")' % \
+                        (join, dest_table, table, lhs_col, join_table, col)
+                    query_from = add_joins_for_table(dest_table, query_from)
+                else:
+                    query_from += ' %s ' % (join_cond, )
             return query_from
 
         for table in tables_to_process:

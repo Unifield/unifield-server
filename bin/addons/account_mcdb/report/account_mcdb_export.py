@@ -61,6 +61,7 @@ class account_line_csv_export(osv.osv_memory):
         # Prepare some value
         currency_name = ""
 
+        display_mapping = self.pool.get('account.export.mapping')._is_mapping_display_active(cr, uid)
         # Prepare csv head
         head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third party'), _('Book. Debit'), _('Book. Credit'), _('Book. currency')]
         if not currency_id:
@@ -68,6 +69,9 @@ class account_line_csv_export(osv.osv_memory):
         else:
             head += [_('Output Debit'), _('Output Credit'), _('Output Currency')]
         head += [_('Reconcile'), _('State')]
+
+        if display_mapping:
+            head += [_('HQ System Account')]
         writer.writerow(map(lambda x: x.encode('utf-8'), head))
         # Then write lines
         account_move_line_obj = self.pool.get('account.move.line')
@@ -133,6 +137,8 @@ class account_line_csv_export(osv.osv_memory):
                     csv_line.append(ml.reconcile_txt and ml.reconcile_txt.encode('utf-8') or '')
                     #state
                     csv_line.append(field_sel(cr, uid, ml, 'move_state', context).encode('utf-8'))
+                    if display_mapping:
+                        csv_line.append(ml.hq_system_account and ml.hq_system_account.encode('utf-8') or '')
                     # Write line
                     writer.writerow(csv_line)
 
@@ -176,6 +182,8 @@ class account_line_csv_export(osv.osv_memory):
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.name or ""
+        display_mapping = self.pool.get('account.export.mapping')._is_mapping_display_active(cr, uid)
+
         # Prepare csv head
         head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Document Date'), _('Posting Date'), _('Period'), _('General Account')]
         if display_fp:
@@ -188,6 +196,10 @@ class account_line_csv_export(osv.osv_memory):
         else:
             head += [_('Output Amount'), _('Output Currency')]
         head+= [_('Reversal Origin'), _('Entry status')]
+
+        if display_mapping:
+            head += [_('HQ System Account')]
+
         writer.writerow(map(lambda x: x.encode('utf-8'), head))
         # Sort items
         ids.sort()
@@ -251,6 +263,8 @@ class account_line_csv_export(osv.osv_memory):
                     csv_line.append(currency_name.encode('utf-8') or '')
                 csv_line.append(al.reversal_origin and al.reversal_origin.name and al.reversal_origin.name.encode('utf-8') or '')
                 csv_line.append(al.move_state and field_sel(cr, uid, al, 'move_state', context).encode('utf-8') or '')
+                if display_mapping:
+                    csv_line.append(al.hq_system_account and al.hq_system_account.encode('utf-8') or '')
                 # Write Line
                 writer.writerow(csv_line)
         return True

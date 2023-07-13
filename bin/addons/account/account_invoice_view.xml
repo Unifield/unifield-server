@@ -162,8 +162,8 @@
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="residual" />
-                    <field name="amount_total"/>
+                    <field name="residual" sum="Total Residual" sum_selected="1"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                     <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
                 </tree>
@@ -619,16 +619,18 @@
             </field>
         </record>
 
-        <record id="view_account_invoice_filter" model="ir.ui.view">
+        <record id="view_account_invoice_filter_generic" model="ir.ui.view">
             <field name="name">account.invoice.select</field>
             <field name="model">account.invoice</field>
             <field name="type">search</field>
+            <field name="priority">30</field>
             <field name="arch" type="xml">
                 <search string="Search Invoice">
                    <group col="10" colspan="4">
                         <filter name="draft" icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Invoices"/>
                         <filter name="unpaid" icon="terp-dolar_ok!" string="Open" domain="[('state','=','open')]" help="Open Invoices"/>
                         <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
+                        <filter name="done" icon="terp-dolar" string="Done" domain="[('state', '=', 'done')]" />
                         <filter name="closed" icon="terp-dialog-close" string="Closed" domain="[('state', '=', 'inv_close')]" />
                         <filter name="cancel_state" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
                         <separator orientation="vertical"/>
@@ -651,8 +653,8 @@
 
                     <newline/>
                     <group col="10" colspan="4">
-                        <field name="journal_id" select='1' context="{'search_default_filter_is_active': 1}"/>
-                        <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
+                        <field name="currency_id" string="Booking Currency" />
+                        <field name="period_id" string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="supplier_reference"/>
                         <field name="name"/>
                         <field name="amount_total"/>
@@ -669,6 +671,133 @@
                         <filter string="Due Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_due'}"/>
                     </group>
                </search>
+            </field>
+        </record>
+
+        <record id="view_account_invoice_filter" model="ir.ui.view">
+            <field name="name">account.invoice.select</field>
+            <field name="model">account.invoice</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Invoice">
+                   <group col="10" colspan="4">
+                        <filter name="draft" icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Invoices"/>
+                        <filter name="unpaid" icon="terp-dolar_ok!" string="Open" domain="[('state','=','open')]" help="Open Invoices"/>
+                        <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
+                        <filter name="closed" icon="terp-dialog-close" string="Closed" domain="[('state', '=', 'inv_close')]" />
+                        <filter name="cancel_state" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
+                        <separator orientation="vertical"/>
+                        <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
+                        <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
+                        <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
+
+                        <separator orientation="vertical"/>
+                        <field name="number"/>
+                        <field name="partner_id"/>
+                        <field name="origin"/>
+                    </group>
+
+                    <newline/>
+                    <group col="10" colspan="4">
+                        <field name="currency_id" string="Booking Currency" />
+                        <field name="period_id" string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
+                        <field name="supplier_reference"/>
+                        <field name="name"/>
+                        <field name="amount_total"/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                        <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]"  context="{'group_by':'state'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                        <filter string="Invoice Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_invoice'}"/>
+                        <filter string="Due Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_due'}"/>
+                    </group>
+               </search>
+            </field>
+        </record>
+
+        <record id="view_account_invoice_filter_ivx_stv_isi" model="ir.ui.view">
+            <field name="name">account.invoice.select</field>
+            <field name="model">account.invoice</field>
+            <field name="type">search</field>
+            <field name="priority" eval="77" />
+            <field name="arch" type="xml">
+                <search string="Search Invoice">
+                   <group col="10" colspan="4">
+                        <filter name="draft" icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Invoices"/>
+                        <filter name="unpaid" icon="terp-dolar_ok!" string="Open" domain="[('state','=','open')]" help="Open Invoices"/>
+                        <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
+                        <filter name="closed" icon="terp-dialog-close" string="Closed" domain="[('state', '=', 'inv_close')]" />
+                        <filter name="cancel_state" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
+                        <separator orientation="vertical"/>
+                        <filter name="open_fy" icon="terp-go-year" string="Open FY" domain="[('open_fy', '=', True)]"/>
+                        <separator orientation="vertical"/>
+                        <filter name="draft_cp" icon="terp-document-new" string="Draft Counterparts" domain="[('counterpart_inv_status','=','draft')]" help="Draft Counterparts Invoices"/>
+                        <filter name="open_cp" icon="terp-dolar_ok!" string="Open Counterparts" domain="[('counterpart_inv_status','=','open')]" help="Open Counterparts Invoices"/>
+                        <filter name="paid_cp" icon="terp-dolar" string="Paid Counterparts" domain="[('counterpart_inv_status', '=', 'paid')]"/>
+                        <filter name="closed_cp" icon="terp-dialog-close" string="Closed Counterparts" domain="[('counterpart_inv_status', '=', 'inv_close')]" />
+
+                        <separator orientation="vertical"/>
+                        <field name="number"/>
+                        <field name="partner_id"/>
+                        <field name="origin"/>
+                    </group>
+
+                    <newline/>
+                    <group col="10" colspan="4">
+                        <field name="currency_id" string="Booking Currency" />
+                        <field name="period_id" string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
+                        <field name="supplier_reference"/>
+                        <field name="name"/>
+                        <field name="amount_total"/>
+                        <field name="counterpart_inv_number"/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'journal_id'}"/>
+                        <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]"  context="{'group_by':'state'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                        <filter string="Invoice Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_invoice'}"/>
+                        <filter string="Due Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date_due'}"/>
+                    </group>
+               </search>
+            </field>
+        </record>
+
+        <!-- Tree view for ISI and STV -->
+        <record id="view_stv_isi_tree" model="ir.ui.view">
+            <field name="name">stv.isi.tree</field>
+            <field name="model">account.invoice</field>
+            <field name="type">tree</field>
+            <field name="priority">212</field>
+            <field name="arch" type="xml">
+                <tree string="Invoice" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
+                    <field name="document_date"/>
+                    <field name="supplier_reference"/>
+                    <field name="date_invoice"/>
+                    <field name="number"/>
+                    <field name="partner_id" groups="base.group_user"/>
+                    <field name="name"/>
+                    <field name="journal_id" invisible="1"/>
+                    <field name="period_id" invisible="1" groups="account.group_account_user"/>
+                    <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                    <field name="date_due"/>
+                    <field name="origin"/>
+                    <field name="counterpart_inv_number"/>
+                    <field name="line_count"/>
+                    <field name="currency_id"/>
+                    <field name="residual" sum="1" sum_selected="1"/>
+                    <field name="amount_total" sum="1" sum_selected="1"/>
+                    <field name="state"/>
+                    <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
+                </tree>
             </field>
         </record>
 
@@ -715,7 +844,7 @@
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'stv')]</field>
             <field name="context">{'doc_type': 'stv', 'type': 'out_invoice', 'journal_type': 'sale', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1, 'search_default_open_fy': 1}</field>
-            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="search_view_id" ref="account.view_account_invoice_filter_ivx_stv_isi"/>
             <field name="help">With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers.</field>
         </record>
 
@@ -723,6 +852,7 @@
         <record id="action_invoice_tree1_view1" model="ir.actions.act_window.view">
             <field eval="1" name="sequence"/>
             <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_stv_isi_tree"/>
             <field name="act_window_id" ref="action_invoice_tree1"/>
         </record>
 
@@ -801,7 +931,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="100" />
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" string="Invoice" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
+                <tree colors="blue:state in ('draft');black:state in ('proforma','proforma2','open', 'done');gray:state in ('cancel')" string="Invoice" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <button name="invoice_open_form_view" string="Display Invoice" icon="gtk-go-forward" type="object"/>
                     <field name="doc_type"/>
                     <field name="date_invoice"/>
@@ -812,14 +942,14 @@
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="residual" sum="Residual Amount"/>
-                    <field name="amount_untaxed" sum="Untaxed Amount"/>
-                    <field name="amount_total" sum="Total Amount"/>
+                    <field name="residual" sum="Residual Amount" sum_selected="1"/>
+                    <field name="amount_untaxed" sum="Untaxed Amount" sum_selected="1"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                 </tree>
             </field>
         </record>
-        <act_window context="{'search_default_partner_id': [active_id], 'generic_invoice': True}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner" view_id="generic_invoice_tree" view_mode="tree" search_view_id="view_account_invoice_filter"/>
+        <act_window context="{'search_default_partner_id': [active_id], 'generic_invoice': True}" id="act_res_partner_2_account_invoice_opened" name="Invoices" res_model="account.invoice" src_model="res.partner" view_id="generic_invoice_tree" view_mode="tree" search_view_id="view_account_invoice_filter_generic"/>
 
 
         <act_window
@@ -863,12 +993,12 @@
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'isi')]</field>
             <field name="context">{'doc_type': 'isi', 'type': 'in_invoice', 'from_inv_form': True, 'search_default_open_fy': 1}</field>
-            <field name="search_view_id" ref="view_account_invoice_filter"/> <!-- as for Supplier Invoices -->
+            <field name="search_view_id" ref="view_account_invoice_filter_ivx_stv_isi"/>
         </record>
         <record id="action_isi_tree" model="ir.actions.act_window.view">
             <field eval="40" name="sequence"/>
             <field name="view_mode">tree</field>
-            <field name="view_id" ref="invoice_tree"/> <!-- default tree view -->
+            <field name="view_id" ref="view_stv_isi_tree"/>
             <field name="act_window_id" ref="action_isi"/>
         </record>
         <record id="action_isi_form" model="ir.actions.act_window.view">

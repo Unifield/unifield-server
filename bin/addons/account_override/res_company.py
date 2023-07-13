@@ -76,11 +76,13 @@ class res_company(osv.osv):
                                                   domain=ACCOUNT_RESTRICTED_AREA['journals']),
         'has_move_regular_bs_to_0': fields.boolean("Move regular B/S account to 0"),
         'has_book_pl_results': fields.boolean("Book the P&L results"),
+        'display_hq_system_accounts_buttons': fields.boolean("Display HQ system accounts mapping?", help="Display HQ system accounts on JI and AJI list views"),
     }
 
     _defaults = {
         'has_move_regular_bs_to_0': False,
         'has_book_pl_results': False,
+        'display_hq_system_accounts_buttons': False,
     }
 
 

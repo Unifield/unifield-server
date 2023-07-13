@@ -428,6 +428,7 @@ def do_prepare(cr, revision_ids):
     if not revision_ids:
         return ('failure', 'Nothing to do.', {})
     import pooler
+    from tools import misc
     pool = pooler.get_pool(cr.dbname)
     version = pool.get('sync_client.version')
 
@@ -455,12 +456,18 @@ def do_prepare(cr, revision_ids):
     need_restart = []
     for rev in version.browse(cr, 1, revision_ids):
         # Check presence of the patch
-        if not rev.patch:
+        if rev.need_download:
             missing.append(rev)
             continue
+        patch = False
         # Check if the file match the expected sum
-        patch = b64decode(rev.patch)
-        local_sum = md5(patch).hexdigest()
+        if rev.patch:
+            # former version patch stored in db/memory
+            patch = b64decode(rev.patch)
+            local_sum = md5(patch).hexdigest()
+        else:
+            local_sum = misc.md5_file(rev.patch_path)
+
         if local_sum != rev.sum:
             corrupt.append(rev)
         elif not (corrupt or missing):
@@ -470,7 +477,10 @@ def do_prepare(cr, revision_ids):
             if os.path.exists(delete_file):
                 tmp_del = os.path.join(path, 'delete-%s' % time.time())
                 os.rename(delete_file, tmp_del)
-            f = StringIO(patch)
+            if patch:
+                f = StringIO(patch)
+            else:
+                f = open(rev.patch_path, 'rb')
             try:
                 zip = ZipFile(f, 'r')
                 zip.extractall(path)
@@ -515,6 +525,13 @@ def do_prepare(cr, revision_ids):
                 values += " - %s (check sum: %s)\n" % ((rev.name or 'unknown'), rev.sum)
         logger.error(message % values)
         return ('missing', message, values)
+
+    new_updater_version = os.path.join(path, 'Server', 'updater.py')
+    logger.info('Updater.py status: %s %s'%(new_updater_version, os.path.isfile(new_updater_version)))
+    if os.path.isfile(new_updater_version):
+        logger.info('Copy %s'%new_updater_version)
+        shutil.copy(new_updater_version, '.')
+
     # Fix the flag of the pending patches
     version.write(cr, 1, need_restart, {'state':'need-restart'})
     # Make a lock file to make OpenERP able to detect an update

@@ -50,8 +50,8 @@
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="residual"/>
-                    <field name="amount_total"/>
+                    <field name="residual" sum="Total Residual" sum_selected="1"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -141,7 +141,7 @@
             <field name="type">tree</field>
             <field name="priority">20</field>
             <field name="arch" type="xml">
-                <tree string="In-kind Donation" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
+                <tree string="In-kind Donation" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open','done');gray:state in ('cancel')">
                     <field name="document_date" />
                     <field name="date_invoice"/>
                     <field name="number"/>
@@ -150,7 +150,7 @@
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="amount_total"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -281,8 +281,8 @@
                                 <button name="button_split_invoice" type="object" string="Split Donation"
                                         icon="gtk-cut"
                                         attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                                <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
-                                <group attrs="{'invisible': [('state', 'not in', ['open', 'paid', 'inv_close'])]}" colspan="6" col="4">
+                                <button name="invoice_open" type="object" states="draft" string="Set as done" icon="gtk-go-forward"/>
+                                <group attrs="{'invisible': [('state', 'not in', ['done', 'open', 'paid', 'inv_close'])]}" colspan="6" col="4">
                                     <label string=""/>
                                     <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print"/>
                                 </group>
@@ -312,9 +312,10 @@
                     <field name="partner_id"/>
                     <field name="name"/>
                     <field name="origin"/>
+                    <field name="counterpart_inv_number"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="amount_total"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -611,7 +612,7 @@
                 <search string="Search Donation">
                    <group col="10" colspan="4">
                         <filter name="draft" icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Draft Invoices"/>
-                        <filter name="open" icon="terp-camera_test" string="Open" domain="[('state','=','open')]" help="Open Invoices"/>
+                        <filter name="done" icon="terp-camera_test" string="Done" domain="[('state','=', 'done')]" help="Done Invoices"/>
                         <filter name="cancel_state_donation" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
                         <separator orientation="vertical"/>
                         <field name="number"/>
@@ -620,8 +621,9 @@
                     </group>
                     <newline/>
                     <group col="8" colspan="4">
-                        <field name="fiscalyear_id" select='1'/>
-                        <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
+                        <field name="currency_id" string="Booking Currency" />
+                        <field name="fiscalyear_id" />
+                        <field name="period_id" string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="name"/>
                         <field name="amount_total"/>
                     </group>
@@ -677,7 +679,7 @@
             <field eval="False" name="view_id"/>
             <field name="domain">[('doc_type', '=', 'ivo')]</field>
             <field name="context">{'doc_type': 'ivo', 'type': 'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True, 'search_default_draft': 1, 'search_default_unpaid': 1, 'search_default_paid': 1, 'search_default_closed': 1, 'search_default_open_fy': 1}</field>
-            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="search_view_id" ref="account.view_account_invoice_filter_ivx_stv_isi"/>
         </record>
 
         <!-- Link between previous action and Intermission tree view -->
@@ -705,7 +707,7 @@
             <field name="view_id" ref="view_intermission_form"/>
             <field name="domain">[('doc_type', '=', 'ivi')]</field>
             <field name="context">{'doc_type': 'ivi', 'type': 'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True, 'search_default_open_fy': 1}</field>
-            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="search_view_id" ref="account.view_account_invoice_filter_ivx_stv_isi"/>
         </record>
 
         <!-- Link between previous action and Intermission tree view -->

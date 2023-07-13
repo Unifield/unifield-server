@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="signature_follow_up_search_wizard_form_view" model="ir.ui.view">
+            <field name="name">signature.follow_up.search.wizard.form.view</field>
+            <field name="model">signature.follow_up.search.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Choose the file format to export">
+                    <field name="export_format"/>
+                    <newline/>
+                    <group col="4" colspan="6">
+                        <label string="" colspan="1"/>
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="1"/>
+                        <button name="button_validate" type="object" string="Validate" icon="gtk-ok" colspan="1"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <act_window id="action_signature_follow_up_search_wizard"
+            name="Export search result"
+            res_model="signature.follow_up.search.wizard"
+            src_model="signature.follow_up"
+            view_ids="signature_follow_up_tree"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            context="{'search_domain': search_domain}"/>
+
+        <report id="signature_follow_up_search_pdf"
+            string="Signature Follow Up"
+            target_filename="${_('Signature Follow Up')}"
+            model="signature.follow_up"
+            name="signature.follow_up.search.pdf"
+            rml="useability_dashboard_and_menu/report/signature_follow_up_search_report.rml"
+            header="False"
+            auto="False"
+            menu="False"/>
+
+        <report id="signature_follow_up_search_xlsx"
+            string="Signature Follow Up"
+            target_filename="${_('Signature Follow Up')}"
+            model="signature.follow_up"
+            name="signature.follow_up.search.xlsx"
+            report_type="openpyxl"
+            auto="False"
+            menu="False"/>
+    </data>
+</openerp>

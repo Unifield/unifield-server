@@ -48,14 +48,18 @@ class purchase_order_line(osv.osv):
         if context.get('rfq_ok') and view_type == 'form':
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'rfq_line_form')[1]
         view = super(purchase_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type == 'form' and context.get('from_tab') != 1:
+        if view_type == 'form':
             form = etree.fromstring(view['arch'])
-            for tag in form.xpath('//page[@name="nomenselection"]'):
-                tag.getparent().remove(tag)
-            nb = form.xpath('//notebook')
-            if nb:
-                nb[0].tag = 'empty'
-                view['arch'] = etree.tostring(form)
+            if context.get('partner_type', False) in ['internal', 'intermission', 'section'] and context.get('purchase_id')\
+                    and self.pool.get('purchase.order').read(cr, uid, context['purchase_id'], context=context)['state'] in ['validated', 'validated_p']:
+                form.attrib.update({'hide_new_button': '1'})
+            if context.get('from_tab') != 1:
+                for tag in form.xpath('//page[@name="nomenselection"]'):
+                    tag.getparent().remove(tag)
+                nb = form.xpath('//notebook')
+                if nb:
+                    nb[0].tag = 'empty'
+            view['arch'] = etree.tostring(form)
         return view
 
     def _amount_line(self, cr, uid, ids, prop, arg, context=None):
@@ -666,6 +670,7 @@ class purchase_order_line(osv.osv):
         'max_qty_cancellable': fields.function(_in_qty_remaining, type='float', string='Total PO qty - already processed + assign qty + confirm qty', method=1, multi='in_remain'),
         'from_dpo_line_id': fields.integer('DPO line id on the remote', internal=1),
         'from_dpo_id': fields.integer('DPO id on the remote', internal=1),
+        'from_dpo_esc': fields.boolean('Line sourced to ESC DPO', internal=1),
         'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
         'loan_line_id': fields.many2one('sale.order.line', string='Linked loan line', readonly=True),
 

@@ -106,6 +106,13 @@ class account_analytic_line(osv.osv):
                                                           [('cheque_number', 'ilike', args[0][2])], context=context)
         return [('move_id', 'in', m_ids)] if m_ids else [('id', 'in', [])]
 
+    def _get_hq_system_acc(self, cr, uid, ids, field_name, args, context=None):
+        return self.pool.get('account.export.mapping')._get_hq_system_acc(cr, uid, ids, field_name, args, self, context=context)
+
+    def _search_hq_acc(self, cr, uid, ids, name, args, context=None):
+        return self.pool.get('account.export.mapping')._search_hq_acc(cr, uid, ids, name, args, self, context=context)
+
+
     _columns = {
         'output_amount': fields.function(_get_output, string="Output amount", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_amount_debit': fields.function(_get_output, string="Output debit", type='float', method=True, store=False, multi="analytic_output_currency"),
@@ -114,7 +121,9 @@ class account_analytic_line(osv.osv):
                                            multi="analytic_output_currency"),
         'cheque_number': fields.function(_get_cheque_number, type='char',
                                          method=True, string='Cheque Number',
-                                         fnct_search=_search_cheque_number)  # BKLG-7: move cheque number
+                                         fnct_search=_search_cheque_number),  # BKLG-7: move cheque
+        'hq_system_account': fields.function(_get_hq_system_acc, type='char', store=False, fnct_search=_search_hq_acc,
+                                             method=True, string='HQ System Account', size=32),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -152,6 +161,7 @@ class account_analytic_line(osv.osv):
                         cheque_number_node)
 
             view['arch'] = etree.tostring(tree)
+        self.pool.get('account.export.mapping').update_view_with_mapping_field(cr, uid, view_type, view, context=context)
         return view
 
     def copy(self, cr, uid, id, default=None, context=None):

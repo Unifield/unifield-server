@@ -202,7 +202,10 @@ class ir_actions_report_xml(osv.osv):
 
             error = ''
             try:
-                report_name = self.pool.get('ir.sequence')._process(cr, uid, report.target_filename)
+                if self.pool.get('res.company')._get_instance_record(cr, uid):
+                    report_name = self.pool.get('ir.sequence')._process(cr, uid, report.target_filename)
+                else:
+                    report_name = report.target_filename
             except KeyError as e:
                 # Some %(blabla)s remain, cannot parse them
                 error += _('\'%%(%s)s\' cannot be parsed \n') % e.message

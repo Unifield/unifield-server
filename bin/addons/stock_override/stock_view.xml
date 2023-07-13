@@ -954,8 +954,6 @@
                                 <button name="convert_to_pick" states="draft,confirmed,assigned" string="Convert to Picking Ticket" type="object" icon="gtk-convert" context="{'from_button': True}" />
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" help="Non available quantities will not be moved and will remain in the backorder document (unless you 'force availability' if you are sure goods are available)" context="{'from_button': True}"/>
-                                <field name="certificate_donation" invisible="1"/>
-                                <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                                 <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','not in',['done','delivered']),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
@@ -1084,18 +1082,6 @@
                         <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
                     </group>
                 </form>
-            </field>
-        </record>
-
-        <!-- Remove 'Update' button on product form -->
-        <record id="product_form_remove_update_button" model="ir.ui.view">
-            <field name="name">product.form.remove.update.button</field>
-            <field name="model">product.product</field>
-            <field name="priority">40</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_product_standard_price_form" />
-            <field name="arch" type="xml">
-                <xpath expr="//button[@string='Update']" position="replace" />
             </field>
         </record>
 
