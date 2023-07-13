@@ -114,8 +114,8 @@ class purchase_order_line(osv.osv):
                             LEFT JOIN pricelist_partnerinfo p ON p.suppinfo_id = i.id 
                             WHERE i.id in %s 
                             ORDER BY COALESCE(p.valid_from, '1970-01-01') DESC LIMIT 1
-                        ''', (tuple(sellers),))  # Search for the most recent Supplier/Catalogue
-                        seller_id = cr.fetchone()[0] or sellers[0]
+                        ''', (tuple(sellers),))  # Search for the most recent Supplier
+                        seller_id = cr.fetchone()[0]
                         supplierinfo = supplierinfos_by_id[seller_id]
                         supplier_code = supplierinfo['product_code']
                         supplier_name = supplierinfo['product_name']
