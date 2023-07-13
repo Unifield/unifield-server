@@ -10,20 +10,21 @@
                     hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"
                     hide_new_button="PROP_INSTANCE_HIDE_BUTTON" string="Proprietary Instance">
                     <field
-                        attrs="{'readonly': [('current_instance_level', '!=', 'section')]}" name="code"/>
+                        attrs="{'readonly': ['|', ('has_journal_entries', '=', True), ('current_instance_level', '!=', 'section')]}" name="code"/>
                     <field
                         attrs="{'readonly': [('current_instance_level', '!=', 'section')]}" name="name"/>
                     <field
-                        attrs="{'readonly': [('current_instance_level', '!=', 'section')]}"
+                        attrs="{'readonly': ['|', ('has_journal_entries', '=', True), ('current_instance_level', '!=', 'section')]}"
                         context="{'level':level}" name="level"/>
                     <field invisible="1" name="current_instance_level"/>
+                    <field name="has_journal_entries" invisible="1" />
                     <notebook colspan="4">
                         <page string="General Information">
                             <field
                                 attrs="{'required': [('level', '!=', 'section')], 'readonly': ['|',('level', '=', 'section'), ('current_instance_level', '!=', 'section')]}" name="mission"/>
                             <field name="instance" readonly="1"/>
                             <field
-                                attrs="{'required': [('level', '!=', 'section')], 'readonly': ['|',('level', '=', 'section'), ('current_instance_level', '!=', 'section')]}"
+                                attrs="{'required': [('level', '!=', 'section')], 'readonly': ['|', '|', ('has_journal_entries', '=', True), ('level', '=', 'section'), ('current_instance_level', '!=', 'section')]}"
                                 name="parent_id" on_change="onchange_parent_id(parent_id, level)"/>
                             <field
                                 attrs="{'readonly': [('current_instance_level', '!=', 'section')]}" name="note"/>
