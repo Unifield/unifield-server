@@ -20,7 +20,6 @@
 ##############################################################################
 
 import time
-import types
 import functools
 from osv import osv
 from osv import fields
@@ -113,5 +112,5 @@ class extended_orm_delete_method:
                 deleted_obj_module.create(cr, uid, vals)
         return res
 
-for symbol in [sym for sym in [getattr(extended_orm_delete_method, label) for label in dir(extended_orm_delete_method)] if isinstance(sym, types.MethodType)]:
-    setattr(orm.orm, symbol.__name__, symbol.__func__)
+for symbol in [getattr(extended_orm_delete_method, label) for label in dir(extended_orm_delete_method) if callable(getattr(extended_orm_delete_method, label)) and not label.startswith('__')]:
+    setattr(orm.orm, symbol.__name__, symbol)
