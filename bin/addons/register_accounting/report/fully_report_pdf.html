@@ -82,7 +82,7 @@ else:
   <tbody>
 <% tot_line = len(o.line_ids) %>
 <% nbloop = 0 %>
-% for line in sorted(o.line_ids, key=lambda x: x.sequence_for_reference):
+% for line in sorted(o.line_ids, key=lambda x: x.sequence_for_reference or ''):
       <% nbloop += 1 %>
       <% update_percent(nbloop, tot_line) %>
       <tr class="loop${nbloop%2} mainline">
@@ -331,7 +331,7 @@ endif
 <!-- Note: they are booked on accounts without AD -->
 <% partner_move_line_ids = line.partner_move_line_ids or [] %>
 % if partner_move_line_ids:
-    % for partner_aml in sorted(partner_move_line_ids, key=lambda x: x.partner_txt):
+    % for partner_aml in sorted(partner_move_line_ids, key=lambda x: x.partner_txt or ''):
         <tr class="loop${nbloop%2}">
               <td>${_('Automated Entry')|x}</td>
             % if isDate(partner_aml.document_date):

@@ -608,7 +608,7 @@
       </Row>
 <% tot_line = len(o.line_ids) %>
 <% nbloop = 0 %>
-% for line in sorted(o.line_ids, key=lambda x: x.sequence_for_reference):
+% for line in sorted(o.line_ids, key=lambda x: x.sequence_for_reference or ''):
 
       <% nbloop += 1 %>
       <% update_percent(nbloop, tot_line) %>
@@ -1053,7 +1053,7 @@ endif
 <!-- Note: they are booked on accounts without AD -->
 <% partner_move_line_ids = line.partner_move_line_ids or [] %>
 % if partner_move_line_ids:
-    % for partner_aml in sorted(partner_move_line_ids, key=lambda x: x.partner_txt):
+    % for partner_aml in sorted(partner_move_line_ids, key=lambda x: x.partner_txt or ''):
         <Row ss:Height="14.5134">
             <Cell ss:StyleID="left_bold">
               <Data ss:Type="String">${_('Automated Entry')|x}</Data>
