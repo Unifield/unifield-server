@@ -33,7 +33,7 @@
     if object_ids:
         # Create the rule
         fields = ['partner_ref', 'details', 'delivery_requested_date', 'delivery_confirmed_date', 'partner_id', 'notes',
-        'order_type', 'categ', 'priority', 'shipped', 'state', 'pricelist_id', 'origin', 'transport_type', 'cross_docking_ok', 'location_id', 'unallocation_ok']
+        'order_type', 'categ', 'priority', 'shipped', 'state', 'pricelist_id', 'origin', 'transport_type', 'cross_docking_ok', 'location_names', 'unallocation_ok']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
         vals= {'name': name,
                'object_id': object_ids[0],

@@ -90,6 +90,40 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _get_reception_dest(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Get the location the linked IN move will be sent to during reception
+        '''
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+        srv_id = self.pool.get('stock.location').get_service_location(cr, uid, context=context)
+        input_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        cross_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        n_stock_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+
+        res = {}
+        ftf = ['product_id', 'order_id', 'linked_sol_id']
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            dest = input_id
+            # please also check in delivery_mechanism/delivery_mechanism.py _get_values_from_line to set location_dest_id
+            if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
+                # service with reception are directed to Service Location
+                dest = srv_id
+            else:
+                sol = pol.linked_sol_id
+                if sol and (not sol.order_id.procurement_request or
+                        (sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage == 'customer')):
+                    dest = cross_id
+                elif pol.product_id.type == 'service_recep':
+                    dest = srv_id
+                elif pol.product_id.type == 'consu':
+                    dest = n_stock_id
+            res[pol.id] = dest
+
+        return res
+
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -587,6 +621,7 @@ class purchase_order_line(osv.osv):
                                     ondelete='set null'),
         'move_dest_id': fields.many2one('stock.move', 'Reservation Destination', ondelete='set null', select=True),
         'location_dest_id': fields.many2one('stock.location', 'Final Destination of move', ondelete='set null', select=True),
+        'reception_dest_id': fields.function(_get_reception_dest, method=True, type='many2one', relation='stock.location', string='Line Destination', store=False),
         'price_unit': fields.float('Unit Price', required=True,
                                    digits_compute=dp.get_precision('Purchase Price Computation'), en_thousand_sep=False),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False,
@@ -2303,7 +2338,7 @@ class purchase_order_line(osv.osv):
     def final_location_dest(self, cr, uid, pol_obj, fo_obj=False, context=None):
         data_obj = self.pool.get('ir.model.data')
 
-        dest = pol_obj.order_id.location_id.id
+        dest = pol_obj.reception_dest_id.id
 
         if not pol_obj.product_id:
             return dest
@@ -2319,7 +2354,7 @@ class purchase_order_line(osv.osv):
         if fo and fo.procurement_request and fo.location_requestor_id.usage != 'customer':
             return fo.location_requestor_id.id
 
-        chained = self.pool.get('stock.location').chained_location_get(cr, uid, pol_obj.order_id.location_id, product=pol_obj.product_id, context=context)
+        chained = self.pool.get('stock.location').chained_location_get(cr, uid, pol_obj.reception_dest_id, product=pol_obj.product_id, context=context)
         if chained:
             if chained[0].chained_location_type == 'nomenclature':
                 # 1st round : Input > Stock, 2nd round Stock -> MED/LOG
