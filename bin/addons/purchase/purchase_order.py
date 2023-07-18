@@ -927,7 +927,7 @@ class purchase_order(osv.osv):
         'location_ids': fields.function(_get_location_data, type='many2many', relation='stock.location', string='Destination', method=True, multi='location_data', readonly=True),
         'location_names': fields.function(_get_location_data, type='char', size=256, string='Destination', method=True, multi='location_data',
                                           readonly=True, help="""This location is set according to the origin of the line(s) of the document. 
-        But if the 'Order category' is set to 'Transport' or 'Service', you cannot have an other location than 'Service'"""),
+        It can have 'Input', 'Cross Docking', 'Non-Stockable' and/or 'Service' as data"""),
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
         'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
                                  store={
