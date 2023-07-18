@@ -952,6 +952,10 @@
             <field name="method">us_11448_update_rfq_line_state</field>
         </record>
 
+        <record id="us_10874_bar_hard_post_wizard" model="patch.scripts">
+            <field name="method">us_10874_bar_hard_post_wizard</field>
+        </record>
+
 
     </data>
 </openerp>

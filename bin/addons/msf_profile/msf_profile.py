@@ -87,6 +87,17 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_10874_bar_hard_post_wizard(self, cr, uid, *a, **b):
+        bar = self.pool.get('msf_button_access_rights.button_access_rule')
+        bar_ids = bar.search(cr, uid, [('name', '=', 'action_confirm_hard_posting'), ('model_id.name', '=', 'wizard.temp.posting')])
+        group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Fin_Hard_Posting')])
+        if bar_ids and group_ids:
+            bar.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+
+        return True
+
+
+
     # UF29.0
     def us_11399_oca_mm_target(self, cr, uid, *a, **b):
         if self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id:
