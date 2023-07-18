@@ -2438,7 +2438,7 @@ class account_bank_statement_line(osv.osv):
                     init_ref = '%s - %s' % (absl.name, absl.ref or '')
 
                 if absl.account_id.type_for_register == 'transfer' and absl.amount * absl.counterpart_transfer_st_line_id.amount >= 0 and (absl.amount or absl.counterpart_transfer_st_line_id.amount):
-                    raise osv.except_osv(_('Error'), _('The transfer entry %s and the counter party %s have no debit or credit.' % (init_ref, absl.counterpart_transfer_st_line_id.sequence_for_reference)))
+                    raise osv.except_osv(_('Error'), _('The transfer entry %s and the counter party %s have no debit or credit.') % (init_ref, absl.counterpart_transfer_st_line_id.sequence_for_reference))
 
                 if not force and \
                         ( absl.account_id.type_for_register == 'transfer_same' and abs(absl.amount + absl.counterpart_transfer_st_line_id.amount) > 0.001 \
