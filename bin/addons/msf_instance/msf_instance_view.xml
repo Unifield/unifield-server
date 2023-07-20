@@ -49,10 +49,13 @@
                                     colspan="4"
                                     context="{'level':level}"
                                     name="target_cost_center_ids"
-                                    nolabel="1" widget="one2many_list">
-                                    <tree editable="top"
+                                    nolabel="1" widget="one2many_list"
+                                    filter_selector="[('Hide inactive', [('cost_center_id.filter_active', '=', True)]), ('Show all', [])]"
+                                    default_selector="'0'">
+                                    <tree editable="top" colors="red: cost_center_status != True"
                                     hide_delete_button="PROP_INSTANCE_HIDE_BUTTON or context.get('level')=='project'"
                                     hide_new_button="1" string="Cost Centers">
+                                    <field name="cost_center_status" invisible="1"/>
                                     <field name="cost_center_code"/>
                                     <field name="cost_center_name"/>
                                     <field name="is_target"/>
