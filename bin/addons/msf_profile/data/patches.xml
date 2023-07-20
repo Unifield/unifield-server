@@ -956,6 +956,10 @@
             <field name="method">us_10874_bar_hard_post_wizard</field>
         </record>
 
+        <record id="us_11679_set_iil_oca" model="patch.scripts">
+            <field name="method">us_11679_set_iil_oca</field>
+        </record>
+
 
     </data>
 </openerp>
