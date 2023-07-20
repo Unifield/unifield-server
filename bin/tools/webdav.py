@@ -13,6 +13,7 @@ import logging
 import os
 import posixpath
 import time
+import urlparse
 
 class ConnectionFailed(Exception):
     pass
@@ -33,28 +34,42 @@ class Client(object):
         if not port:
             port = 443 if protocol == 'https' else 80
         self.path = path or ''
-        if not self.path.endswith('/'):
-            self.path = '%s/' % self.path
 
-        # oneDrive: need to split /site/ and path
-        # in our config site is /personal/unifield_xxx_yyy/
-        # path is /Documents/Unifield/
-        self.baseurl = '{0}://{1}:{2}/{3}/'.format(protocol, host, port, '/'.join(self.path.split('/')[0:3]) )
-
-        if len(self.path.split('/')) < 5:
-            self.path = '%sDocuments/' % self.path
+        self.url = '{0}://{1}:{2}'.format(protocol, host, port)
 
         self.login()
 
     def login(self):
-        ctx_auth = AuthenticationContext(self.baseurl)
+        ctx_auth = AuthenticationContext(self.url)
 
         if ctx_auth.acquire_token_for_user(self.username, cgi.escape(self.password)):
             self.request = ClientRequest(ctx_auth)
-            self.request.context = ClientContext(self.baseurl, ctx_auth)
-
+            self.request.context = ClientContext(self.url, ctx_auth)
             if not ctx_auth.provider.FedAuth or not ctx_auth.provider.rtFa:
                 raise ConnectionFailed(ctx_auth.get_last_error())
+
+            if not self.path.startswith('/'):
+                self.path = '/%s' % self.path
+            options = RequestOptions(self.url)
+            options.method = HttpMethod.Get
+            options.set_header("X-HTTP-Method", "GET")
+            options.set_header('accept', 'application/json;odata=verbose')
+            self.request.context.authenticate_request(options)
+            self.request.context.ensure_form_digest(options)
+
+            self.baseurl = self.url
+            result = requests.post(url="%s/%s/_api/contextinfo" % (self.baseurl, self.path), headers=options.headers, auth=options.auth)
+            if result.status_code not in (200, 201):
+                raise requests.exceptions.RequestException("Path %s not found" % self.path)
+            js = result.json()
+            self.baseurl = js.get('d', {}).get('GetContextWebInformation', {}).get('WebFullUrl')
+            if not self.baseurl:
+                raise requests.exceptions.RequestException("Full Url not found %s" % self.path)
+            self.path = self.path[len(urlparse.urlparse(self.baseurl).path):]
+            if self.path.startswith('/'):
+                self.path = self.path[1:]
+            if not self.path.endswith('/'):
+                self.path = '%s/' % (self.path, )
         else:
             raise requests.exceptions.RequestException(ctx_auth.get_last_error())
 
@@ -208,12 +223,14 @@ class Client(object):
         self.request.context.ensure_form_digest(options)
         result = requests.get(url=request_url, headers=options.headers, auth=options.auth)
 
+        if result.status_code not in (200, 201):
+            raise requests.exceptions.RequestException(self.parse_error(result))
+
         result = result.json()
         files=[]
         for i in range(len(result['d']['results'])):
             item = result['d']['results'][i]
             files.append(item)
-
         return files
 
 

@@ -311,10 +311,15 @@ class Cursor(object):
                 ccu.column_name=%s
         """, (table, column))
         return self.fetchall()
+
+    @check
+    def constraint_exists(self, table, constraint):
+        self.execute("SELECT conname FROM pg_constraint WHERE conname = %s", (constraint, ))
+        return self.fetchone()
+
     @check
     def drop_constraint_if_exists(self, table, constraint):
-        self.execute("SELECT conname FROM pg_constraint WHERE conname = %s", (constraint, ))
-        if self.fetchone():
+        if self.constraint_exists(table, constraint):
             self.execute('ALTER table '+table+' DROP CONSTRAINT "%s"' % (constraint,))
 
     @check

@@ -908,16 +908,21 @@ class purchase_order_line(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
 
         # cancel the linked SO line too:
+        is_rfq = False
         for pol in self.browse(cr, uid, ids, context=context):
             self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
+            is_rfq = pol.rfq_ok
             if pol.linked_sol_id:
                 if pol.cancelled_by_sync:
                     sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
         self.update_tax_corner(cr, uid, ids, context=context)
-        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        vals = {'state': 'cancel'}
+        if is_rfq:
+            vals.update({'rfq_line_state': 'cancel'})
+        self.write(cr, uid, ids, vals, context=context)
 
         return True
 
@@ -933,17 +938,22 @@ class purchase_order_line(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
 
         # cancel the linked SO line too:
+        is_rfq = False
         for pol in self.browse(cr, uid, ids, context=context):
             self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
+            is_rfq = pol.rfq_ok
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
                 if pol.cancelled_by_sync:
                     sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True, 'product_uom_qty': pol.product_qty ,'product_uos_qty': pol.product_qty}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
 
         self.update_tax_corner(cr, uid, ids, context=context)
-        self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
+        vals = {'state': 'cancel_r'}
+        if is_rfq:
+            vals.update({'rfq_line_state': 'cancel_r'})
+        self.write(cr, uid, ids, vals, context=context)
 
         return True
 

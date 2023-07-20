@@ -29,10 +29,8 @@ from msf_order_date import TRANSPORT_TYPE
 from msf_partner import PARTNER_TYPE
 
 from dateutil.relativedelta import relativedelta
-import logging
 import tools
 import time
-from os import path
 from lxml import etree
 from tools.sql import drop_view_if_exists
 
@@ -215,7 +213,7 @@ class shipment(osv.osv):
                         current_result['num_of_packs'] += int(num_of_packs)
                         # total weight
                         total_weight = memory_family['total_weight']
-                        current_result['total_weight'] += int(total_weight)
+                        current_result['total_weight'] += float(total_weight)
                         # total volume
                         total_volume = memory_family['total_volume']
                         current_result['total_volume'] += float(total_volume)
@@ -1940,6 +1938,21 @@ class select_actual_ship_date_wizard(osv.osv_memory):
             context['shipment_actual_date'] = wiz.shipment_actual_date
             ship_obj.validate_bg(cr, uid, [wiz.shipment_id.id], context=context)
 
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
+            view_id = view_id and view_id[1] or False
+
+            return {
+                'name': _("Shipment"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'shipment',
+                'view_mode': 'form,tree',
+                'view_type': 'form',
+                'view_id': [view_id],
+                'res_id': wiz.shipment_id.id,
+                'target': 'crush',
+                'context': context,
+            }
+
         return {'type': 'ir.actions.act_window_close'}
 
     def cancel(self, cr, uid, ids, context=None):
@@ -2006,6 +2019,22 @@ class stock_picking(osv.osv):
     # For use only in Remote Warehouse
     CENTRAL_PLATFORM = "central_platform"
     REMOTE_WAREHOUSE = "remote_warehouse"
+
+
+    def _auto_init(self, cr, context=None):
+        res = super(stock_picking, self)._auto_init(cr, context=context)
+        if not cr.index_exists('stock_picking', 'stock_picking_name3_index'):
+            cr.execute('CREATE INDEX stock_picking_name3_index ON stock_picking (substring(name, 1, 3))')
+
+        if not cr.constraint_exists('stock_picking', 'stock_picking_only_ppl_in_ppl_view'):
+            cr.execute("select max(id) from stock_picking where subtype='ppl' and substring(name, 1, 3)!='PPL'")
+            max_id = cr.fetchone()[0]
+            if max_id:
+                cr.execute("alter table stock_picking add constraint stock_picking_only_ppl_in_ppl_view check (id<=%s or subtype!='ppl' or substring(name, 1, 3)='PPL')", (max_id, ))
+            else:
+                cr.execute("alter table stock_picking add constraint stock_picking_only_ppl_in_ppl_view check (subtype!='ppl' or substring(name, 1, 3)='PPL')")
+
+        return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
@@ -2357,25 +2386,6 @@ class stock_picking(osv.osv):
 
         return result
 
-    def init(self, cr):
-        """
-        Load msf_outgoing_data.xml before self
-        """
-        if hasattr(super(stock_picking, self), 'init'):
-            super(stock_picking, self).init(cr)
-
-        mod_obj = self.pool.get('ir.module.module')
-        demo = False
-        mod_id = mod_obj.search(cr, 1, [('name', '=', 'msf_outgoing'), ])
-        if mod_id:
-            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
-
-        if demo:
-            logging.getLogger('init').info('HOOK: module msf_outgoing: loading data/msf_outgoing_data.xml')
-            pathname = path.join('msf_outgoing', 'data/msf_outgoing_data.xml')
-            file_to_open = tools.file_open(pathname)
-            tools.convert_xml_import(cr, 'msf_outgoing', file_to_open, {}, mode='init', noupdate=False)
-
     def _qty_search(self, cr, uid, obj, name, args, context=None):
         """ Searches Ids of stock picking
             @return: Ids of locations
@@ -2478,7 +2488,7 @@ class stock_picking(osv.osv):
 
     _columns = {
         'flow_type': fields.selection([('full', 'Full'), ('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False), ], }, string='Flow Type'),
-        'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing'), ('sysint', 'System Internal')], string='Subtype'),
+        'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing'), ('sysint', 'System Internal')], string='Subtype', select=1),
         'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
         'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
         'previous_step_ids': fields.one2many('stock.picking', 'previous_step_id', string='Previous Step ids',),
@@ -2536,6 +2546,11 @@ class stock_picking(osv.osv):
     }
 
     _order = 'name desc'
+
+    # constraints set in _auto_init due to existing failure
+    #_sql_constraints = [
+    #    ('only_ppl_in_ppl_view', "check(subtype!='ppl' or substring(name, 1, 3)='PPL')", 'Only PPL can be created in PPL view')
+    #]
 
     def onchange_move(self, cr, uid, ids, context=None):
         '''
