@@ -48,6 +48,8 @@ class Client(object):
             if not ctx_auth.provider.FedAuth or not ctx_auth.provider.rtFa:
                 raise ConnectionFailed(ctx_auth.get_last_error())
 
+
+            # get the server_site url
             if not self.path.startswith('/'):
                 self.path = '/%s' % self.path
             options = RequestOptions(self.url)
@@ -57,19 +59,25 @@ class Client(object):
             self.request.context.authenticate_request(options)
             self.request.context.ensure_form_digest(options)
 
-            self.baseurl = self.url
-            result = requests.post(url="%s/%s/_api/contextinfo" % (self.baseurl, self.path), headers=options.headers, auth=options.auth)
+            result = requests.post(url="%s/%s/_api/contextinfo" % (self.url, self.path), headers=options.headers, auth=options.auth)
             if result.status_code not in (200, 201):
                 raise requests.exceptions.RequestException("Path %s not found" % self.path)
             js = result.json()
-            self.baseurl = js.get('d', {}).get('GetContextWebInformation', {}).get('WebFullUrl')
-            if not self.baseurl:
+            baseurl = js.get('d', {}).get('GetContextWebInformation', {}).get('WebFullUrl')
+            if not baseurl.endswith('/'):
+                baseurl = '%s/' % baseurl
+
+            if not baseurl:
                 raise requests.exceptions.RequestException("Full Url not found %s" % self.path)
-            self.path = self.path[len(urlparse.urlparse(self.baseurl).path):]
-            if self.path.startswith('/'):
-                self.path = self.path[1:]
-            if not self.path.endswith('/'):
+            parsed_base = urlparse.urlparse(baseurl).path
+            self.baseurl = '%s%s' % (self.url, parsed_base)
+            if not self.path.startswith('/'):
+                self.path = '/%s' % self.path
+            if not self.path.endswith('/') and len(self.path) > 1:
                 self.path = '%s/' % (self.path, )
+
+            # set auth ctx with the full correct url or move fails
+            self.request.context = ClientContext(self.baseurl, ctx_auth)
         else:
             raise requests.exceptions.RequestException(ctx_auth.get_last_error())
 
@@ -222,7 +230,6 @@ class Client(object):
         self.request.context.authenticate_request(options)
         self.request.context.ensure_form_digest(options)
         result = requests.get(url=request_url, headers=options.headers, auth=options.auth)
-
         if result.status_code not in (200, 201):
             raise requests.exceptions.RequestException(self.parse_error(result))
 
