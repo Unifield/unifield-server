@@ -90,6 +90,7 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Stock transfer refund
     #+ Customer refund
     #+ Debit notes
+    #+ Intermission Voucher IN/OUT
     'invoice_lines': [
         ('type', 'not in', ['view', 'liquidity']), # Do not allow liquidity accounts
         ('is_not_hq_correctible', '!=', True),

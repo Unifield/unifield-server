@@ -457,7 +457,7 @@
                                             <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                             <field name="discount" groups="base.group_extended" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                             <field name="name" colspan="4"/>
-                                            <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]" required="1"/>
+                                            <field name="account_id" domain="[('restricted_area', '=', 'invoice_lines')]" required="1"/>
                                             <group colspan="6">
                                                 <field name="analytic_distribution_state" invisible="1"/>
                                                 <field name="newline" invisible="1" />
