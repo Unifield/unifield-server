@@ -478,6 +478,7 @@ class product_product(osv.osv):
         filter_in_any_product_list = False
         filter_in_product_list = False
         filter_in_mml_instance = False
+        filter_mml_restricted_instance = False
         filter_in_msl_instance = []
         for x in domain:
             if x[0] == 'location_id':
@@ -511,6 +512,16 @@ class product_product(osv.osv):
                         new_dom.append(['id', '=', 0])
                     else:
                         filter_in_mml_instance = instance_ids
+            elif x[0] == 'mml_restricted_instance':
+                instance_ids = [0]
+                if isinstance(x[2], basestring):
+                    instance_ids = self.pool.get('msf.instance').search(cr, uid, [('name', 'ilike', x[2])], context=context)
+                elif isinstance(x[2], (int, long)):
+                    instance_ids = [x[2]]
+                else:
+                    instance_ids = x[2]
+                filter_mml_restricted_instance = instance_ids
+
 
 
             elif x[0] == 'in_msl_instance':
@@ -584,6 +595,14 @@ class product_product(osv.osv):
             ret.joins['"product_product"'] += ['left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id']
             ret.where_clause.append(''' product_product.oc_validation = 't' and ( up1.instance_id in %s or up1 is null) ''')
             ret.where_clause_params.append(tuple(filter_in_mml_instance))
+        if filter_mml_restricted_instance:
+            ret.tables.append('"product_project_rel" p_rel1')
+            ret.joins.setdefault('"product_product"', [])
+            ret.joins['"product_product"'] += [('"product_project_rel" p_rel1', 'id', 'product_id', 'LEFT JOIN')]
+            ret.joins['"product_product"'] += ['left join product_country_rel c_rel1 on p_rel1 is null and c_rel1.product_id = product_product.id']
+            ret.joins['"product_product"'] += ['left join unidata_project up11 on up11.id = p_rel1.unidata_project_id or up11.country_id = c_rel1.unidata_country_id']
+            ret.where_clause.append(''' product_product.oc_validation = 't' and up11.instance_id in %s  ''')
+            ret.where_clause_params.append(tuple(filter_mml_restricted_instance))
         if filter_in_msl_instance:
             ret.tables.append('"product_msl_rel"')
             ret.joins.setdefault('"product_product"', [])

@@ -392,6 +392,9 @@
                     <field name="name"  />
                     <field name="standard_ok" />
                     <field name="in_mml_instance" />
+                    <field name="mml_restricted_instance" />
+                    <newline />
+                    <field name="oc_comments" colspan="4"/>
                     <field name="oc_subscription" />
                     <field name="state_ud" />
                     <field name="state" />
