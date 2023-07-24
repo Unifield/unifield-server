@@ -646,6 +646,83 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             res[id] = False
         return res
 
+    def _get_alert_msl_mml(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = ''
+        local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+
+        not_conform = {}
+        # MSL Checks
+        cr.execute('''
+            select
+                sol.order_id
+            from
+                sale_order_line sol
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join product_product p on p.id = sol.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join res_partner so_partner on so_partner.id = so.partner_id
+                left join msf_instance so_instance on so_instance.instance = so_partner.name
+                left join unidata_project on unidata_project.instance_id = coalesce(so_instance.id, %s)
+                left join product_msl_rel msl_rel on msl_rel.product_id = sol.product_id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+            where
+                nom.name='MED'
+                and creator.code = 'unidata'
+                and sol.state not in ('cancel', 'cancel_r')
+                and sol.order_id in %s
+            group by sol.order_id
+            having
+                count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
+        ''', (local_instance_id, tuple(ids)))
+        for x in cr.fetchall():
+            not_conform[x[0]] = ['MSL']
+
+        # MML Checks
+        cr.execute('''
+            select
+                distinct(sol.order_id)
+            from
+                sale_order_line sol
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join product_product p on p.id = sol.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join res_partner so_partner on so_partner.id = so.partner_id
+                left join msf_instance so_instance on so_instance.instance = so_partner.name
+                left join product_project_rel p_rel on p_rel.product_id = p.id
+                left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+                left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+            where
+                nom.name='MED'
+                and creator.code = 'unidata'
+                and sol.order_id in %s
+                and sol.state not in ('cancel', 'cancel_r')
+            group by sol.order_id, sol.id
+            having
+                    bool_or(coalesce(p.oc_validation,'f'))='f'
+                or
+                    not array_agg(coalesce(so_instance.id, %s))<@array_agg(up1.instance_id)
+                    and count(up1.instance_id)>0
+        ''',(tuple(ids), local_instance_id))
+
+        for x in cr.fetchall():
+            not_conform.setdefault(x[0], []).append('MML')
+
+        for _id in not_conform:
+            if len(not_conform[_id]) == 1:
+                ret[_id] = _('Document has lines that are not included in the %s') % not_conform[_id][0]
+            else:
+                ret[_id] = _('Document has lines that are not in the MSL / MML')
+
+        return ret
+
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}, select=True, sort_column='id'),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
@@ -761,6 +838,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
+        'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {
@@ -2293,6 +2371,93 @@ class sale_order_line(osv.osv):
             ret[x[0]] = x[1]
         return ret
 
+    def _get_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = {
+                'mml_status': 'F',
+                'msl_status': False,
+            }
+
+        local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+
+
+        # MSL Checks
+        cr.execute('''
+            select
+                sol.id, unidata_project.uf_active, msl_rel.product_id --  so.name, so_partner.name, so_instance.name
+            from
+                sale_order_line sol
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join product_product p on p.id = sol.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join res_partner so_partner on so_partner.id = so.partner_id
+                left join msf_instance so_instance on so_instance.instance = so_partner.name
+                left join unidata_project on unidata_project.instance_id = coalesce(so_instance.id, %s)
+                left join product_msl_rel msl_rel on msl_rel.product_id = sol.product_id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+            where
+                nom.name='MED'
+                and creator.code = 'unidata'
+                and sol.id in %s
+        ''', (local_instance_id, tuple(ids)))
+
+        for x in cr.fetchall():
+            if not x[1]: # unidata_project.uf_active
+                ret[x[0]]['msl_status'] = False
+            elif x[2]: # msl_rel.product_id
+                ret[x[0]]['msl_status'] = 'T'
+            else:
+                ret[x[0]]['msl_status'] = 'F'
+
+        cr.execute('''
+            select
+                sol.id
+            from
+                sale_order_line sol
+                left join product_product p on p.id = sol.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            where
+                ( nom.name!='MED' or creator.code != 'unidata' )
+                and sol.id in %s
+        ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            ret[x[0]]['mml_status'] = False
+
+        # MML Checks
+        cr.execute('''
+            select
+                sol.id
+            from
+                sale_order_line sol
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join product_product p on p.id = sol.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join res_partner so_partner on so_partner.id = so.partner_id
+                left join msf_instance so_instance on so_instance.instance = so_partner.name
+                left join product_project_rel p_rel on p_rel.product_id = p.id
+                left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+                left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+            where
+                nom.name='MED'
+                and creator.code = 'unidata'
+                and p.oc_validation = 't'
+                and (coalesce(so_instance.id, %s) = up1.instance_id  or up1 is null)
+                and sol.id in %s
+        ''', (local_instance_id, tuple(ids)))
+        for x in cr.fetchall():
+            ret[x[0]]['mml_status'] = 'T'
+        return ret
+
+
     _max_value = 10**10
     _max_msg = _('The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
     _name = 'sale.order.line'
@@ -2387,6 +2552,9 @@ class sale_order_line(osv.osv):
 
         'original_instance': fields.char('Original Instance', size=128, readonly=1),
         'instance_sync_order_ref_needed': fields.function(_get_instance_sync_order_ref_needed, method=True, type='boolean', store=False, string='Is instance_sync_order_ref needed ?'),
+        'mml_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('', '')], string='MSL', multi='mml'),
+
     }
     _order = 'sequence, id desc'
     _defaults = {
