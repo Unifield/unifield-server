@@ -846,9 +846,10 @@ class purchase_order(osv.osv):
 
         ret = {}
         for _id in ids:
-            ret[_id] = False
+            ret[_id] = ''
         local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
 
+        not_conform = {}
         # MSL Checks
         cr.execute('''
             select
@@ -875,7 +876,7 @@ class purchase_order(osv.osv):
                 count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
         ''', (local_instance_id, tuple(ids)))
         for x in cr.fetchall():
-            ret[x[0]] = True
+            not_conform[x[0]] = ['MSL']
 
         # MML Checks
         cr.execute('''
@@ -908,7 +909,14 @@ class purchase_order(osv.osv):
         ''',(tuple(ids), local_instance_id))
 
         for x in cr.fetchall():
-            ret[x[0]] = True
+            not_conform.setdefault(x[0], []).append('MML')
+
+        for _id in not_conform:
+            if len(not_conform[_id]) == 1:
+                ret[_id] = _('PO has lines that are not included in the %s') % not_conform[_id][0]
+            else:
+                ret[_id] = _('PO has lines that are not in the MSL / MML')
+
         return ret
 
 
@@ -1094,7 +1102,7 @@ class purchase_order(osv.osv):
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
         'ad_lines_message_nr': fields.function(_get_ad_lines_message_nr, type='char', size=1024, method=1, string='Line number of NR message for missing AD'),
         'tax_line': fields.one2many('account.invoice.tax', 'purchase_id', 'Tax Lines'),
-        'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='boolean', string="Contains non-conform MML/MSL"),
+        'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
     _defaults = {
         'po_version': 2,

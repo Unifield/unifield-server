@@ -144,13 +144,12 @@
                                 <p id="nr_ad_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                     <translate>WARNING: Order line(s) not synchronized, please add an AD on line(s): </translate>
                                 </p>
-                                <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em">
-                                    <translate>PO has lines not conform to MSL/MML</translate>
-                                </p>
+                                <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
 
                                 <script language="javascript">
                                     var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
                                     if (alert_msl_mml) {
+                                        $('#msl_mml').html(alert_msl_mml);
                                         $('#msl_mml').show();
                                     }
                                     var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
