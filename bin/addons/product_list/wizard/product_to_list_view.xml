@@ -39,7 +39,7 @@
         </record>
         
         <act_window
-            name="Import to list"
+            name="Import to Product List"
             res_model="product.to.list"
             src_model="product.product"
             view_mode="form"

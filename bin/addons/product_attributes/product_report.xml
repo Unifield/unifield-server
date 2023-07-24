@@ -14,6 +14,7 @@
             view_ids="product_product_mml_tree"
             target_filename="MML_%(instance)s_%(year)s_%(month)s_%(day)s"
             run_in_background="True"
+            sequence="10"
          />
 
         <report
@@ -79,6 +80,7 @@
           <field name="key2">client_print_multi</field>
           <field name="model">product.product</field>
           <field name="name">MML Non-Conform</field>
+          <field name="sequence">14</field>
           <field eval="'ir.actions.server,%d'%action_mml_nonconform" name="value"/>
           <field eval="True" name="object"/>
           <field name="view_ids" ref="product_product_mml_tree" />
