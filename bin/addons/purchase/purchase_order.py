@@ -530,9 +530,12 @@ class purchase_order(osv.osv):
 
     def _get_location_data(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        for po in self.browse(cr, uid, ids, fields_to_fetch=['order_line'], context=context):
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['order_line', 'state'], context=context):
             if po.order_line:
-                location_ids = set([pol.reception_dest_id.id for pol in po.order_line])
+                if po.state == 'cancel':
+                    location_ids = set([pol.reception_dest_id.id for pol in po.order_line])
+                else:
+                    location_ids = set([pol.reception_dest_id.id for pol in po.order_line if pol.state not in ('cancel', 'cancel_r')])
                 locations = self.pool.get('stock.location').read(cr, uid, location_ids, ['name'], context=context)
                 res[po.id] = {
                     'location_ids': location_ids,
@@ -926,7 +929,7 @@ class purchase_order(osv.osv):
         'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse'),
         'location_ids': fields.function(_get_location_data, type='many2many', relation='stock.location', string='Destination', method=True, multi='location_data', readonly=True),
         'location_names': fields.function(_get_location_data, type='char', size=256, string='Destination', method=True, multi='location_data',
-                                          readonly=True, help="""This location is set according to the origin of the line(s) of the document. 
+                                          readonly=True, store=False, help="""This location is set according to the origin of the line(s) of the document. 
         It can have 'Input', 'Cross Docking', 'Non-Stockable' and/or 'Service' as data"""),
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
         'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,

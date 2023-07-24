@@ -67,6 +67,62 @@ class patch_scripts(osv.osv):
         WHERE model='account.export.mapping'
         """)
 
+    # UF30.0
+    def us_10783_11563_po_reception_destination(self, cr, uid, *a, **b):
+        '''
+        For each PO line, look at its origin to set the reception_destination_id. It can be Cross Docking, Service,
+        Non-Stockable or Input
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        srv_id = self.pool.get('stock.location').get_service_location(cr, uid, context={})
+        input_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        cross_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        n_stock_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+
+        # Cross Docking: PO line linked to a FO or an IR to Ext CU
+        cr.execute("""UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
+            SELECT pl.id FROM purchase_order_line pl, sale_order so LEFT JOIN stock_location l ON so.location_requestor_id = l.id
+            WHERE pl.link_so_id = so.id AND (so.procurement_request = 'f' OR 
+                (so.location_requestor_id IS NOT NULL AND l.usage = 'customer')))
+        """, (cross_id,))
+        self.log_info(cr, uid, "US-10783-11563: The Line Destination of %s PO line(s) have been set to 'Cross Docking'" % (cr.rowcount,))
+
+        # Service: PO line from scratch or linked to internal IR and product is Service
+        cr.execute("""UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
+            SELECT pl.id FROM purchase_order_line pl
+                LEFT JOIN product_product pp ON pl.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN sale_order so ON pl.link_so_id = so.id 
+                LEFT JOIN stock_location l ON so.location_requestor_id = l.id
+            WHERE pt.type = 'service_recep' AND (pl.link_so_id IS NULL OR (so.procurement_request = 't' AND l.usage != 'customer')))
+        """, (srv_id,))
+        self.log_info(cr, uid, "US-10783-11563: The Line Destination of %s PO line(s) have been set to 'Service'" % (cr.rowcount,))
+
+        # Non-Stockable: PO line from scratch or linked to internal IR and product is Non-Stockable
+        cr.execute("""UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
+            SELECT pl.id FROM purchase_order_line pl
+                LEFT JOIN product_product pp ON pl.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN sale_order so ON pl.link_so_id = so.id 
+                LEFT JOIN stock_location l ON so.location_requestor_id = l.id
+            WHERE pt.type = 'consu' AND (pl.link_so_id IS NULL OR (so.procurement_request = 't' AND l.usage != 'customer')))
+        """, (n_stock_id,))
+        self.log_info(cr, uid, "US-10783-11563: The Line Destination of %s PO line(s) have been set to 'Non-Stockable'" % (cr.rowcount,))
+
+        # Input: All others
+        cr.execute("""UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
+            SELECT pl.id FROM purchase_order_line pl
+                LEFT JOIN product_product pp ON pl.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN sale_order so ON pl.link_so_id = so.id 
+                LEFT JOIN stock_location l ON so.location_requestor_id = l.id
+            WHERE (pl.product_id IS NULL OR pt.type NOT IN ('service_recep', 'consu')) 
+                AND (pl.link_so_id IS NULL OR (so.procurement_request = 't' AND l.usage != 'customer')))
+        """, (input_id,))
+        self.log_info(cr, uid, "US-10783-11563: The Line Destination of %s PO line(s) have been set to 'Input'" % (cr.rowcount,))
+
+        return True
+
     # UF29.0
     def us_11399_oca_mm_target(self, cr, uid, *a, **b):
         if self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id:

@@ -946,5 +946,10 @@
         <record id="us_11130_trigger_down_account_mapping" model="patch.scripts">
             <field name="method">us_11130_trigger_down_account_mapping</field>
         </record>
+
+        <!-- UF30.0 -->
+        <record id="us_10783_11563_po_reception_destination" model="patch.scripts">
+            <field name="method">us_10783_11563_po_reception_destination</field>
+        </record>
     </data>
 </openerp>
