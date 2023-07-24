@@ -252,8 +252,6 @@ MODEL_DATA_DICT = {
             'justification_code_id.code',
             'controlled_substance',
             'closed_article',
-            'restricted_country',
-            'country_restriction',
             'dangerous_goods',
             'un_code',
             'criticism',
