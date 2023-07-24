@@ -90,7 +90,6 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Stock transfer refund
     #+ Customer refund
     #+ Debit notes
-    #+ Intermission Voucher IN/OUT
     'invoice_lines': [
         ('type', 'not in', ['view', 'liquidity']), # Do not allow liquidity accounts
         ('is_not_hq_correctible', '!=', True),
@@ -121,7 +120,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'intermission_lines': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
-        ('user_type_code', 'in', ['expense', 'income', 'receivables']),
+        '|', ('type', '!=', 'other'), ('user_type_code', 'in', ['expense', 'income', 'receivables', 'payables']), #Allow all regular accounts and for not regular accounts restrict to 'expense', 'income', 'receivables', 'payables'
         ('user_type.report_type', '!=', 'none'), # To only use Expense extra-accounting accounts
         ('type_for_register', 'not in', ['advance', 'transfer', 'transfer_same']),
     ],
