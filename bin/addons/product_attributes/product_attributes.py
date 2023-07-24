@@ -906,7 +906,7 @@ class product_attributes(osv.osv):
                 product_product p, product_project_rel p_rel, unidata_project up
             where
                 p.id in %s
-                and p.oc_validation = 't'
+                and coalesce(p.oc_validation, 'f') = 't'
                 and p_rel.product_id = p.id
                 and up.id = p_rel.unidata_project_id
                 and up.instance_id = %s
@@ -924,7 +924,7 @@ class product_attributes(osv.osv):
                 left join product_project_rel p_rel on p_rel.product_id = p.id
             where
                 p.id in %s
-                and p.oc_validation = 't'
+                and coalesce(p.oc_validation, 'f') = 't'
                 and (up.instance_id = %s or c_rel is null)
                 and p_rel is null
             ''', (tuple(ids), inst.id))

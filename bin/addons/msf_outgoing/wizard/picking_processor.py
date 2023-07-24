@@ -782,6 +782,8 @@ class stock_move_processor(osv.osv):
             ondelete='set null',
         ),
         'change_reason': fields.char(size=256, string='Change reason'),
+        'mml_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('', '')], string='MML', readonly=True),
+        'msl_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('', '')], string='MSL', readonly=True),
     }
 
     _defaults = {
@@ -881,6 +883,8 @@ class stock_move_processor(osv.osv):
             'cost': move.price_unit,
             'currency': move.price_currency_id.id,
             'location_id': move.location_id and move.location_id.id,
+            'mml_status': move.mml_status or '',
+            'msl_status': move.msl_status or '',
         }
         return line_data
 

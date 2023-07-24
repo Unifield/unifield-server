@@ -609,7 +609,7 @@ class purchase_order_line(osv.osv):
             where
                 nom.name='MED'
                 and creator.code = 'unidata'
-                and p.oc_validation = 't'
+                and coalesce(p.oc_validation, 'f') = 't'
                 and (coalesce(so_instance.id, %s) = up1.instance_id  or up1 is null)
                 and pol.id in %s
         ''', (local_instance_id, tuple(ids)))
