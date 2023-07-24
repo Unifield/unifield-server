@@ -275,8 +275,23 @@
                 <search string="MSL Projects">
                     <field name="instance_id" />
                     <field name="uf_active" />
-                    <field name="msl_product_ids" />
+                    <field name="msl_product_ids" string="Product Count"/>
                 </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unifield_instance_tree_std">
+            <field name="name">unifield.instance.tree</field>
+            <field name="model">unifield.instance</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="14" />
+            <field name="arch" type="xml">
+                <tree string="MSL Projects" hide_new_button="1" hide_delete_button="1" colors="red:not instance_id">
+                    <field name="instance_id" />
+                    <field name="country_id" />
+                    <field name="msl_product_ids" string="Product Count"/>
+                    <field name="uf_active" />
+                </tree>
             </field>
         </record>
 
@@ -284,6 +299,7 @@
             <field name="name">unifield.instance.tree</field>
             <field name="model">unifield.instance</field>
             <field name="type">tree</field>
+            <field name="priority" eval="100" />
             <field name="arch" type="xml">
                 <tree string="MSL Projects" hide_new_button="1" hide_delete_button="1" colors="red:not instance_id">
                     <field name="instance_id" />
@@ -345,6 +361,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('is_published', '=', True)]</field>
+            <field name="view_id" ref="unifield_instance_tree" />
         </record>
 
         <menuitem name="MSL Projects" parent="base.menu_product" id="unifield_instance_menu" action="unifield_instance_action" sequence="15" />
@@ -485,7 +502,7 @@
             <field name="res_model">product.product</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('in_msl_instance', '=', True)]</field>
+            <field name="domain">[('in_msl_instance', '=', 'active')]</field>
             <field name="search_view_id" ref="product_product_msl_search" />
             <field name="view_id" ref="product_product_msl_tree" />
         </record>

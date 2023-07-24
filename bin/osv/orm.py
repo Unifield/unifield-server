@@ -5046,7 +5046,7 @@ class orm(orm_template):
         where_str = where_clause and (" WHERE %s" % where_clause) or ''
 
         if count:
-            if not query.having:
+            if not query.having and not query.having_group_by:
                 count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
                                        from_clause, where_str, limit_str, offset_str))
                 cr.execute(count_query, where_clause_params)

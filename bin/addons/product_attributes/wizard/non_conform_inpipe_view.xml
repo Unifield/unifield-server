@@ -8,7 +8,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Conformity Report">
-                    <separator string="Include or not products with only in-pipe quantity and no stock" colspan="4" />
+                    <separator string="Include products in the pipeline that are not currently in stock ?" colspan="4" />
                     <field name="include_pipe" />
                     <group colspan="4">
                         <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
