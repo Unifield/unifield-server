@@ -160,6 +160,8 @@
                             </group>
                         </page>
                         <page string="UD OC Validation" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}">
+                            <field name="is_mml_valid" />
+                            <field name="is_msl_valid" />
                             <group colspan="4" col="6">
                                 <field name="oc_coordo_restrictions" nolabel="1" colspan="2">
                                     <tree string="Mission Restrictions">
