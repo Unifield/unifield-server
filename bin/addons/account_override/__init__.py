@@ -118,10 +118,11 @@ ACCOUNT_RESTRICTED_AREA = {
     ],
     # LINES OF intermission vouchers
     'intermission_lines': [
-        ('type', '!=', 'view'),
-        ('is_not_hq_correctible', '=', False),
-        ('user_type_code', 'in', ['expense', 'income', 'receivables', 'payables']),
-        ('user_type.report_type', '!=', 'none'), # To only use Expense extra-accounting accounts
+        ('type', 'not in', ['view', 'liquidity']),  # Do not allow liquidity accounts
+        ('is_not_hq_correctible', '!=', True),
+        ('type_for_register', '!=', 'donation'),
+        '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'),  # Do not allow Regular / Stock accounts
+        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
         ('type_for_register', 'not in', ['advance', 'transfer', 'transfer_same']),
     ],
     # RECURRING MODELS
