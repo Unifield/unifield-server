@@ -42,6 +42,7 @@ class message_action(osv.osv_memory):
             'context': context,
             'height': '200px',
             'width': '720px',
+            'keep_open': True,
         }
 
 

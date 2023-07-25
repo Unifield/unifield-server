@@ -8,8 +8,19 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Products to Process">
+                    <field name="alert_msl_mml" invisible="1"/>
                     <field name="date" invisible="1" />
                     <field name="picking_id" invisible="1" />
+                    <html colspan="4">
+                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                        <script language="javascript">
+                            var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                            if (alert_msl_mml) {
+                                $('#msl_mml').html(alert_msl_mml);
+                                $('#msl_mml').show();
+                            }
+                        </script>
+                    </html>
                     <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
                     <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
                     <separator colspan="4" string="Move lines" />

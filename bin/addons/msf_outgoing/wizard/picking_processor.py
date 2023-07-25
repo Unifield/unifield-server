@@ -138,6 +138,7 @@ class stock_picking_processor(osv.osv):
             help="Is at least one line contains a cool chain product.",
             multi='kc_dg',
         ),
+        'alert_msl_mml': fields.char(size=512, string="Contains non-conform MML/MSL", readonly=1),
     }
 
     def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
@@ -262,6 +263,10 @@ class stock_picking_processor(osv.osv):
         for wizard in self.browse(cr, uid, ids, context=context):
             line_obj = self.pool.get(wizard._columns['move_ids']._obj)
             wiz_lines_moves_ids = [line.move_id.id for line in wizard.move_ids]
+            mml_alert = False
+            msl_alert = False
+
+            out_wizard_with_l2_alert = wizard.picking_id.type == 'out' and wizard.picking_id.subtype == 'standard' and not wizard.picking_id.sale_id
             for move in wizard.picking_id.move_lines:
                 if move.state in ('draft', 'done', 'cancel', 'confirmed') or move.product_qty == 0.00\
                         or move.id in wiz_lines_moves_ids:
@@ -269,6 +274,14 @@ class stock_picking_processor(osv.osv):
                         line_ids = line_obj.search(cr, uid, [('move_id', '=', move.id)], context=context)
                         line_obj.unlink(cr, uid, line_ids, context=context)
                     continue
+
+                if wizard.picking_id.type == 'in':
+                    if not mml_alert and move.mml_status == 'F':
+                        mml_alert = True
+                    if not msl_alert and move.msl_status == 'F':
+                        msl_alert = True
+                if out_wizard_with_l2_alert and not mml_alert and move.mml_status == 'F':
+                    mml_alert = True
 
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
                 if line_obj._name == 'stock.move.in.processor':
@@ -296,7 +309,15 @@ class stock_picking_processor(osv.osv):
                 if context.get('sync_message_execution') and wizard.picking_id.state == 'shipped':
                     line_data['quantity'] = move.product_qty
                 line_obj.create(cr, uid, line_data, context=context)
-
+            msg = False
+            if mml_alert and msl_alert:
+                msg = _('Document has lines that are not in the MSL / MML')
+            elif mml_alert:
+                msg = _('Document has lines that are not included in the MML')
+            elif msl_alert:
+                msg = _('Document has lines that are not included in the MSL')
+            if msg:
+                self.write(cr, uid, wizard.id, {'alert_msl_mml': msg}, context=context)
         return True
 
 stock_picking_processor()
@@ -963,11 +984,25 @@ class stock_move_processor(osv.osv):
                 _('You must select a new product and specify a reason.'),
             )
 
+        status_map = {
+            'no': 'F',
+            'yes': 'T',
+        }
+
+        prod_data = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['is_mml_valid', 'is_msl_valid', 'international_status', 'nomen_manda_0'], context=context)
+        if prod_data.international_status.code != 'unidata' or prod_data.nomen_manda_0.name != 'MED':
+            mml_status = ''
+            msl_status = ''
+        else:
+            mml_status = status_map.get(prod_data.is_mml_valid, '')
+            msl_status = status_map.get(prod_data.is_msl_valid, '')
         wr_vals = {
             'change_reason': change_reason,
             'product_id': product_id,
             'prodlot_id': False,
             'expiry_date': False,
+            'mml_status': mml_status,
+            'msl_status': msl_status,
         }
         self.write(cr, uid, ids, wr_vals, context=context)
 

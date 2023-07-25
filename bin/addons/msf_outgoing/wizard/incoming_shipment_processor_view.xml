@@ -10,6 +10,7 @@
                 <form string="Products to Process">
                     <field name="date" invisible="1" />
                     <field name="linked_to_out"  invisible="1"/>
+                    <field name="alert_msl_mml" invisible="1"/>
                     <field name="picking_id" invisible="1" />
                     <field name="display_process_to_ship_button" invisible="1" />
                     <field name="sequence_issue" invisible="1" />
@@ -62,6 +63,17 @@
                             </p>
                         </html>
                     </group>
+                    <html colspan="4">
+                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                            <script language="javascript">
+                                var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                                if (alert_msl_mml) {
+                                    $('#msl_mml').html(alert_msl_mml);
+                                    $('#msl_mml').show();
+                                }
+                            </script>
+
+                    </html>
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree" context="{'display_process_to_ship_button': display_process_to_ship_button}"
                         colspan="4" nolabel="1" />

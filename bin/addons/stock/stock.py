@@ -992,7 +992,7 @@ class stock_picking(osv.osv):
         for x in cr.fetchall():
             not_conform[x[0]] = ['MSL']
 
-        # MML Checks
+        # MML Checks: out header only if not FO/IR
         cr.execute('''
             select
                 distinct(move.picking_id)
@@ -1011,7 +1011,7 @@ class stock_picking(osv.osv):
                 and creator.code = 'unidata'
                 and move.picking_id in %s
                 and move.state not in ('cancel', 'cancel_r')
-                and ( pick.type ='in' or  pick.type='out' and pick.subtype='standard' )
+                and ( pick.type ='in' or  pick.type='out' and pick.subtype='standard' and pick.sale_id is null )
             group by move.picking_id, move.id
             having
                     bool_or(coalesce(p.oc_validation,'f'))='f'
