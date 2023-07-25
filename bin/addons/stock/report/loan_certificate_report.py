@@ -128,7 +128,7 @@ class ship_loan_certificate_report(report_sxw.rml_parse):
 
         res = {}
         if company:
-            res['partner'] = company.partner_id and company.partner_id.name or False
+            res['full_name'] = company.instance_id and company.instance_id.name or False
             if company.partner_id and len(company.partner_id.address):
                 res['street'] = company.partner_id.address[0].street
                 res['street2'] = company.partner_id.address[0].street2
