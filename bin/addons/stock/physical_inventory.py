@@ -1390,7 +1390,11 @@ class PhysicalInventoryCounting(osv.osv):
         'discrepancy': fields.boolean('Discrepancy found', readonly=True),
 
         # Actual batch number id, filled after the inventory switches to done
-        'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot', readonly=True)
+        'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot', readonly=True),
+
+        'mml_status': fields.function(tools.misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(tools.misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
     }
 
     _sql_constraints = [

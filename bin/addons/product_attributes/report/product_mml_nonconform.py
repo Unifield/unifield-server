@@ -282,7 +282,7 @@ class product_mml_nonconform(common_non_conform):
         return _('Products not in MML')
 
     def extra_col(self):
-        return {'label': _('In MSL?'), 'field': 'is_msl_valid'}
+        return {'label': _('In MSL?'), 'field': 'msl_status'}
 
 class product_msl_nonconform(common_non_conform):
     def get_query(self):
@@ -341,7 +341,7 @@ class product_msl_nonconform(common_non_conform):
         return _('Products not in MSL')
 
     def extra_col(self):
-        return {'label': _('In MML?'), 'field': 'is_mml_valid'}
+        return {'label': _('In MML?'), 'field': 'mml_status'}
 
 
 XlsxReport('report.report.product_mml_nonconform', parser=product_mml_nonconform, template='addons/product_attributes/report/product_mml_nonconform.xlsx')

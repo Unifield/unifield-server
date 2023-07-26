@@ -2008,3 +2008,98 @@ def md5_file(path):
                 break
             md5.update(chunk)
     return md5.hexdigest()
+
+def _get_std_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=None):
+    if not ids:
+        return {}
+
+    ret = {}
+    local_instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+
+    if local_instance.level == 'section':
+        for _id in ids:
+            ret[_id] = {
+                'mml_status': 'na',
+                'msl_status': 'na',
+            }
+        return ret
+
+    for _id in ids:
+        ret[_id] = {
+            'mml_status': 'F',
+            'msl_status': 'na',
+        }
+
+
+    local_instance_id = local_instance.id
+
+    if self._table == 'product_product':
+        from_query = ''' product_product p '''
+        field_cond = ' p.id '
+    else:
+        from_query = '''%s line
+        left join product_product p on p.id =  line.product_id ''' % (self._table, )
+        field_cond = ' line.id '
+
+    # MSL Checks
+    cr.execute('''
+        select
+            ''' + field_cond + ''', unidata_project.uf_active, msl_rel.product_id
+        from
+            ''' + from_query  + '''
+            left join product_template tmpl on tmpl.id = p.product_tmpl_id
+            left join product_international_status creator on creator.id = p.international_status
+            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            left join unidata_project on unidata_project.instance_id = %s
+            left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+        where
+            nom.name='MED'
+            and creator.code = 'unidata'
+            and ''' + field_cond + ''' in %s
+    ''', (local_instance_id, tuple(ids))) # not_a_user_entry
+
+    for x in cr.fetchall():
+        if not x[1]: # unidata_project.uf_active
+            ret[x[0]]['msl_status'] = 'na'
+        elif x[2]: # msl_rel.product_id
+            ret[x[0]]['msl_status'] = 'T'
+        else:
+            ret[x[0]]['msl_status'] = 'F'
+
+    cr.execute('''
+        select
+            ''' + field_cond + '''
+        from
+            ''' + from_query + '''
+            left join product_template tmpl on tmpl.id = p.product_tmpl_id
+            left join product_international_status creator on creator.id = p.international_status
+            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+        where
+            ( nom.name!='MED' or creator.code != 'unidata' )
+            and ''' + field_cond + ''' in %s
+    ''', (tuple(ids), )) # not_a_user_entry
+    for x in cr.fetchall():
+        ret[x[0]]['mml_status'] = ''
+
+    # MML Checks
+    cr.execute('''
+        select
+            ''' + field_cond + '''
+        from
+            ''' + from_query + '''
+            left join product_template tmpl on tmpl.id = p.product_tmpl_id
+            left join product_international_status creator on creator.id = p.international_status
+            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            left join product_project_rel p_rel on p_rel.product_id = p.id
+            left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+            left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+        where
+            nom.name='MED'
+            and creator.code = 'unidata'
+            and coalesce(p.oc_validation, 'f') = 't'
+            and (up1.instance_id=%s or up1 is null)
+            and ''' + field_cond + ''' in %s
+    ''', (local_instance_id, tuple(ids))) # not_a_user_entry
+    for x in cr.fetchall():
+        ret[x[0]]['mml_status'] = 'T'
+    return ret

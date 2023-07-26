@@ -6,6 +6,7 @@ import time
 
 from osv import fields, osv
 from tools.translate import _
+from tools.misc import _get_std_mml_status
 import netsvc
 import decimal_precision as dp
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
@@ -455,85 +456,6 @@ class stock_move(osv.osv):
                 res[x.id] = x.picking_id.name
         return res
 
-    def _get_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        if not ids:
-            return {}
-
-        ret = {}
-        for _id in ids:
-            ret[_id] = {
-                'mml_status': 'F',
-                'msl_status': False,
-            }
-
-        local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
-
-
-        # MSL Checks
-        cr.execute('''
-            select
-                move.id, unidata_project.uf_active, msl_rel.product_id
-            from
-                stock_move move
-                left join product_product p on p.id =  move.product_id
-                left join product_template tmpl on tmpl.id = p.product_tmpl_id
-                left join product_international_status creator on creator.id = p.international_status
-                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-                left join unidata_project on unidata_project.instance_id = %s
-                left join product_msl_rel msl_rel on msl_rel.product_id = move.product_id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
-            where
-                nom.name='MED'
-                and creator.code = 'unidata'
-                and move.id in %s
-        ''', (local_instance_id, tuple(ids)))
-
-        for x in cr.fetchall():
-            if not x[1]: # unidata_project.uf_active
-                ret[x[0]]['msl_status'] = False
-            elif x[2]: # msl_rel.product_id
-                ret[x[0]]['msl_status'] = 'T'
-            else:
-                ret[x[0]]['msl_status'] = 'F'
-
-        cr.execute('''
-            select
-                move.id
-            from
-                stock_move move
-                left join product_product p on p.id = move.product_id
-                left join product_template tmpl on tmpl.id = p.product_tmpl_id
-                left join product_international_status creator on creator.id = p.international_status
-                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-            where
-                ( nom.name!='MED' or creator.code != 'unidata' )
-                and move.id in %s
-        ''', (tuple(ids), ))
-        for x in cr.fetchall():
-            ret[x[0]]['mml_status'] = False
-
-        # MML Checks
-        cr.execute('''
-            select
-                move.id
-            from
-                stock_move move
-                left join product_product p on p.id = move.product_id
-                left join product_template tmpl on tmpl.id = p.product_tmpl_id
-                left join product_international_status creator on creator.id = p.international_status
-                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-                left join product_project_rel p_rel on p_rel.product_id = p.id
-                left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
-                left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
-            where
-                nom.name='MED'
-                and creator.code = 'unidata'
-                and coalesce(p.oc_validation, 'f') = 't'
-                and (up1.instance_id=%s or up1 is null)
-                and move.id in %s
-        ''', (local_instance_id, tuple(ids)))
-        for x in cr.fetchall():
-            ret[x[0]]['mml_status'] = 'T'
-        return ret
 
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
@@ -711,8 +633,8 @@ class stock_move(osv.osv):
         'included_in_mission_stock': fields.boolean('Stock move used to compute MSRL', internal=1, select=1),
         'in_forced': fields.boolean('IN line forced'),
 
-        'mml_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('', '')], string='MML', multi='mml'),
-        'msl_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('', '')], string='MSL', multi='mml'),
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
 
     }
 

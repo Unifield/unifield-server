@@ -803,8 +803,8 @@ class stock_move_processor(osv.osv):
             ondelete='set null',
         ),
         'change_reason': fields.char(size=256, string='Change reason'),
-        'mml_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('', '')], string='MML', readonly=True),
-        'msl_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('', '')], string='MSL', readonly=True),
+        'mml_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', readonly=True),
+        'msl_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', readonly=True),
     }
 
     _defaults = {
@@ -984,25 +984,15 @@ class stock_move_processor(osv.osv):
                 _('You must select a new product and specify a reason.'),
             )
 
-        status_map = {
-            'no': 'F',
-            'yes': 'T',
-        }
 
-        prod_data = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['is_mml_valid', 'is_msl_valid', 'international_status', 'nomen_manda_0'], context=context)
-        if prod_data.international_status.code != 'unidata' or prod_data.nomen_manda_0.name != 'MED':
-            mml_status = ''
-            msl_status = ''
-        else:
-            mml_status = status_map.get(prod_data.is_mml_valid, '')
-            msl_status = status_map.get(prod_data.is_msl_valid, '')
+        prod_data = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['mml_status', 'msl_status'], context=context)
         wr_vals = {
             'change_reason': change_reason,
             'product_id': product_id,
             'prodlot_id': False,
             'expiry_date': False,
-            'mml_status': mml_status,
-            'msl_status': msl_status,
+            'mml_status': prod_data.mml_status,
+            'msl_status': prod_data.msl_status,
         }
         self.write(cr, uid, ids, wr_vals, context=context)
 

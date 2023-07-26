@@ -2379,7 +2379,7 @@ class sale_order_line(osv.osv):
         for _id in ids:
             ret[_id] = {
                 'mml_status': 'F',
-                'msl_status': False,
+                'msl_status': 'na',
             }
 
         local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
@@ -2408,7 +2408,7 @@ class sale_order_line(osv.osv):
 
         for x in cr.fetchall():
             if not x[1]: # unidata_project.uf_active
-                ret[x[0]]['msl_status'] = False
+                ret[x[0]]['msl_status'] = 'na'
             elif x[2]: # msl_rel.product_id
                 ret[x[0]]['msl_status'] = 'T'
             else:
@@ -2428,7 +2428,7 @@ class sale_order_line(osv.osv):
                 and sol.id in %s
         ''', (tuple(ids), ))
         for x in cr.fetchall():
-            ret[x[0]]['mml_status'] = False
+            ret[x[0]]['mml_status'] = 'na'
 
         # MML Checks
         cr.execute('''
@@ -2552,8 +2552,8 @@ class sale_order_line(osv.osv):
 
         'original_instance': fields.char('Original Instance', size=128, readonly=1),
         'instance_sync_order_ref_needed': fields.function(_get_instance_sync_order_ref_needed, method=True, type='boolean', store=False, string='Is instance_sync_order_ref needed ?'),
-        'mml_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('', '')], string='MML', multi='mml'),
-        'msl_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('', '')], string='MSL', multi='mml'),
+        'mml_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
 
     }
     _order = 'sequence, id desc'

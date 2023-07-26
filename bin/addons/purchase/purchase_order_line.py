@@ -537,7 +537,7 @@ class purchase_order_line(osv.osv):
         for _id in ids:
             ret[_id] = {
                 'mml_status': 'F',
-                'msl_status': False,
+                'msl_status': 'na',
             }
 
         local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
@@ -567,7 +567,7 @@ class purchase_order_line(osv.osv):
 
         for x in cr.fetchall():
             if not x[1]: # unidata_project.uf_active
-                ret[x[0]]['msl_status'] = False
+                ret[x[0]]['msl_status'] = 'na'
             elif x[2]: # msl_rel.product_id
                 ret[x[0]]['msl_status'] = 'T'
             else:
@@ -587,7 +587,7 @@ class purchase_order_line(osv.osv):
                 and pol.id in %s
         ''', (tuple(ids), ))
         for x in cr.fetchall():
-            ret[x[0]]['mml_status'] = False
+            ret[x[0]]['mml_status'] = 'na'
 
         # MML Checks
         cr.execute('''
@@ -762,8 +762,8 @@ class purchase_order_line(osv.osv):
         'loan_line_id': fields.many2one('sale.order.line', string='Linked loan line', readonly=True),
         'original_instance': fields.function(_get_customer_ref, method=True, type='char', string='Original Instance', multi='custo_ref_ir_name'),
 
-        'mml_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('', '')], string='MML', multi='mml'),
-        'msl_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('', '')], string='MSL', multi='mml'),
+        'mml_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
 
     _defaults = {

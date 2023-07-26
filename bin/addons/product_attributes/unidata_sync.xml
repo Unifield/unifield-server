@@ -435,8 +435,8 @@
                     <field name="oc_subscription" />
                     <field name="state_ud"  />
                     <field name="state"  />
-                    <field name="is_msl_valid"  />
-                    <field name="is_mml_valid"  />
+                    <field name="msl_status" string="MSL Valid ?"  />
+                    <field name="mml_status" string="MML Valid ?" />
                 </tree>
             </field>
         </record>
@@ -492,7 +492,7 @@
                     <field name="in_msl_instance" truncate="100" string="MSL project"/>
                     <field name="justification_code_id" />
                     <field name="controlled_substance" />
-                    <field name="is_mml_valid"  />
+                    <field name="mml_status"  string="MML Valid ?" />
                 </tree>
             </field>
         </record>

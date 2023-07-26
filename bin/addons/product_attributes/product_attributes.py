@@ -842,97 +842,6 @@ class product_attributes(osv.osv):
 
         return ret
 
-    def _get_is_msl_valid(self, cr, uid, ids, field_name, args, context=None):
-        """
-            is product MSL valid in the current instance
-
-        """
-        if not ids:
-            return {}
-        inst =  self.pool.get('res.company')._get_instance_record(cr, uid)
-        if inst.level == 'section':
-            return dict.fromkeys(ids, '')
-
-        ret = {}
-
-        for _id in ids:
-            ret[_id] = 'no'
-
-        inst =  self.pool.get('res.company')._get_instance_record(cr, uid)
-        if inst.level == 'section':
-            return ret
-
-        cr.execute('''
-            select
-                rel.product_id
-            from
-                product_msl_rel rel, unidata_project p
-            where
-                rel.msl_id = p.id
-                and rel.product_id in %s
-                and p.uf_active = 't'
-                and rel.creation_date is not null
-                and p.publication_date is not null
-                and instance_id = %s
-            ''', (tuple(ids), inst.id)
-        )
-
-        for prod in cr.fetchall():
-            ret[prod[0]] = 'yes'
-
-        return ret
-
-
-    def _get_is_mml_valid(self, cr, uid, ids, field_name, args, context=None):
-        """
-            is product MML valid in the current instance
-
-        """
-        if not ids:
-            return {}
-
-        inst =  self.pool.get('res.company')._get_instance_record(cr, uid)
-        if inst.level == 'section':
-            return dict.fromkeys(ids, '')
-
-        ret = {}
-        for _id in ids:
-            ret[_id] = 'no'
-
-
-        cr.execute('''select
-                p.id
-            from
-                product_product p, product_project_rel p_rel, unidata_project up
-            where
-                p.id in %s
-                and coalesce(p.oc_validation, 'f') = 't'
-                and p_rel.product_id = p.id
-                and up.id = p_rel.unidata_project_id
-                and up.instance_id = %s
-            ''', (tuple(ids), inst.id))
-
-        for prod in cr.fetchall():
-            ret[prod[0]] = 'yes'
-
-        cr.execute('''select
-                p.id
-            from
-                product_product p
-                left join product_country_rel c_rel on c_rel.product_id = p.id
-                left join unidata_project up on up.country_id = c_rel.unidata_country_id
-                left join product_project_rel p_rel on p_rel.product_id = p.id
-            where
-                p.id in %s
-                and coalesce(p.oc_validation, 'f') = 't'
-                and (up.instance_id = %s or c_rel is null)
-                and p_rel is null
-            ''', (tuple(ids), inst.id))
-
-        for prod in cr.fetchall():
-            ret[prod[0]] = 'yes'
-
-        return ret
 
     def _get_restrictions_txt(self, cr, uid, ids, field_name, args, context=None):
         if not ids:
@@ -1297,8 +1206,11 @@ class product_attributes(osv.osv):
         'oc_coordo_restrictions': fields.function(_get_oc_coordo_restrictions, method=True, type='many2many', relation='msf.instance', string='Mission Restrictions', multi='uf_restrictions'),
         'msl_project_ids': fields.many2many('unifield.instance', 'product_msl_rel', 'product_id', 'unifield_instance_id', 'MSL List', readonly=1, order_by='instance_name', sql_rel_domain="product_msl_rel.creation_date is not null"),
         'restrictions_txt': fields.function(_get_restrictions_txt, method=True, type='text', string='Restrictions'),
-        'is_mml_valid': fields.function(_get_is_mml_valid, method=True, type='selection', selection=[('yes', 'Yes'), ('no', 'No'), ('', '')], string='MML Valid ?'),
-        'is_msl_valid': fields.function(_get_is_msl_valid, method=True, type='selection', selection=[('yes', 'Yes'), ('no', 'No'), ('', '')], string='MSL Valid ?'),
+
+        'mml_status': fields.function(tools.misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(tools.misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
+
         'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance'),
         'mml_restricted_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Restricted to instance'),
         'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unifield.instance', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
