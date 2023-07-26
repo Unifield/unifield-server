@@ -532,14 +532,22 @@ class purchase_order(osv.osv):
         res = {}
         for po in self.browse(cr, uid, ids, fields_to_fetch=['order_line', 'state'], context=context):
             if po.order_line:
-                if po.state == 'cancel':
-                    location_ids = set([pol.reception_dest_id.id for pol in po.order_line])
-                else:
-                    location_ids = set([pol.reception_dest_id.id for pol in po.order_line if pol.state not in ('cancel', 'cancel_r')])
-                locations = self.pool.get('stock.location').read(cr, uid, location_ids, ['name'], context=context)
+                not_cancel = ""
+                if po.state != 'cancel':
+                    not_cancel = " AND pl.state NOT IN ('cancel', 'cancel_r')"
+                cr.execute("""
+                    SELECT DISTINCT(l.id), l.name FROM purchase_order p 
+                        LEFT JOIN purchase_order_line pl ON pl.order_id = p.id
+                        LEFT JOIN stock_location l ON pl.reception_dest_id = l.id
+                    WHERE p.id = %s""" + not_cancel, (po.id,))
+                location_ids = []
+                location_names = []
+                for loc in cr.fetchall():
+                    location_ids.append(loc[0])
+                    location_names.append(loc[1])
                 res[po.id] = {
                     'location_ids': location_ids,
-                    'location_names': "; ".join([loc['name'] for loc in locations])
+                    'location_names': "; ".join(location_names)
                 }
             else:
                 input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
