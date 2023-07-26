@@ -969,6 +969,7 @@ class replenishment_segment(osv.osv):
         'missing_inv_review': fields.function(_missing_instances, type='char', method=1, string='Missing Inv.R data', multi='_missing_instances'),
         'specific_period': fields.boolean('Specific Periods Only'),
         'rr_label': fields.function(_get_rule_alert, method=1, string="Field Label", internal=1, type="char", multi='alert_label'),
+        'alert_msl_mml': fields.function(misc._get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {
@@ -2761,6 +2762,9 @@ class replenishment_segment_line(osv.osv):
         'warning': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
         'warning_html': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
         'fmc_version': fields.char('FMC timestamp', size=64, select=1),
+        'mml_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
     }
 
 
@@ -3602,6 +3606,7 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
         'file_to_import': fields.binary(string='File to import'),
         'ir_id': fields.many2one('sale.order', 'Generated IR', readonly=1),
         'total_value': fields.function(_get_total_value, method=True, type='float', with_null=True, string='Total Value', digits=(16, 2)),
+        'alert_msl_mml': fields.function(misc._get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {
@@ -3839,6 +3844,8 @@ class replenishment_order_calc_line(osv.osv):
         'buffer_ss_qty': fields.char('Buffer / SS Qty', size=128, readonly=1),
         'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id', readonly=1, digits=(16, 2)),
         'min_max': fields.char('Min/Max', size=128, readonly=1),
+        'mml_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
 
     _defaults = {
@@ -3867,6 +3874,7 @@ class replenishment_inventory_review(osv.osv, common_oc_inv):
         'frequence_name': fields.char('Scheduled reviews periodicity', size=512, readonly=1),
         'scheduler_date': fields.datetime('Theoritical scheduler date', readonly=1, internal=1),
         'state': fields.selection([('complete', 'Complete'), ('inprogress', 'In Progress')], 'State', readonly=1),
+        'alert_msl_mml': fields.function(misc._get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {
@@ -3938,6 +3946,9 @@ class replenishment_inventory_review_line(osv.osv):
         'coef_var_hmc': fields.float('Coefficient of Variation of HMC (%)'),
         'std_dev_hmc_fmc': fields.float_null('Standard Deviation of HMC vs FMC'),
         'coef_var_hmc_fmc': fields.float_null('Coefficient of Variation of HMC and FMC (%)'),
+
+        'mml_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
 
 replenishment_inventory_review_line()

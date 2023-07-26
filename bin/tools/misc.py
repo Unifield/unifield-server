@@ -2025,16 +2025,32 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
         join_partner = '''
             sale_order_line line
             left join sale_order doc on doc.id = line.order_id and doc.procurement_request='f'
+            left join res_partner doc_partner on doc_partner.id = doc.partner_id
+            left join msf_instance instance on instance.instance = doc_partner.name
         '''
         line_state_cond = ''' and line.state not in ('cancel', 'cancel_r') '''
+        instance_cond = ' coalesce(instance.id, %s) '
     elif self._table == 'purchase_order':
         main_col = ' line.order_id '
         join_partner = '''
             purchase_order_line line
             left join sale_order_line sol on sol.id = line.linked_sol_id
             left join sale_order doc on doc.id = sol.order_id and doc.procurement_request='f'
+            left join res_partner doc_partner on doc_partner.id = doc.partner_id
+            left join msf_instance instance on instance.instance = doc_partner.name
         '''
         line_state_cond = ''' and line.state not in ('cancel', 'cancel_r') '''
+        instance_cond = ' coalesce(instance.id, %s) '
+    else:
+        join_partner = '%s_line line' % self._table
+        instance_cond = '%s'
+        line_state_cond = ''
+        if self._table == 'replenishment_segment':
+            main_col = ' line.segment_id '
+        elif self._table == 'replenishment_order_calc':
+            main_col = ' line.order_calc_id '
+        elif self._table == 'replenishment_inventory_review':
+            main_col =  ' line.review_id '
     # MSL Checks
     cr.execute('''
         select
@@ -2045,9 +2061,7 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
             left join product_template tmpl on tmpl.id = p.product_tmpl_id
             left join product_international_status creator on creator.id = p.international_status
             left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-            left join res_partner doc_partner on doc_partner.id = doc.partner_id
-            left join msf_instance instance on instance.instance = doc_partner.name
-            left join unidata_project on unidata_project.instance_id = coalesce(instance.id, %s)
+            left join unidata_project on unidata_project.instance_id = ''' + instance_cond + '''
             left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
         where
             nom.name='MED'
@@ -2071,8 +2085,6 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
             left join product_template tmpl on tmpl.id = p.product_tmpl_id
             left join product_international_status creator on creator.id = p.international_status
             left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-            left join res_partner doc_partner on doc_partner.id = doc.partner_id
-            left join msf_instance instance on instance.instance = doc_partner.name
             left join product_project_rel p_rel on p_rel.product_id = p.id
             left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
             left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
@@ -2081,11 +2093,11 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
             and creator.code = 'unidata'
             ''' + line_state_cond + '''
             and ''' + main_col + ''' in %s
-        group by ''' + main_col + ''', doc.id
+        group by ''' + main_col + '''
         having
                 bool_or(coalesce(p.oc_validation,'f'))='f'
             or
-                not array_agg(coalesce(instance.id, %s))<@array_agg(up1.instance_id)
+                not array_agg(''' + instance_cond + ''')<@array_agg(up1.instance_id)
                 and count(up1.instance_id)>0
     ''',(tuple(ids), local_instance_id)) # not_a_user_entry
 
