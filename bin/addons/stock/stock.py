@@ -973,12 +973,17 @@ class stock_picking(osv.osv):
             from
                 stock_move move
                 left join stock_picking pick on pick.id = move.picking_id
+                left join purchase_order_line pol on pol.id = move.purchase_line_id and move.type = 'in'
+                left join sale_order_line sol on sol.id = pol.linked_sol_id
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join res_partner so_partner on so_partner.id = so.partner_id
+                left join msf_instance instance on instance.instance = so_partner.name
                 left join product_product p on p.id = move.product_id
                 left join product_template tmpl on tmpl.id = p.product_tmpl_id
                 left join product_international_status creator on creator.id = p.international_status
                 left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-                left join unidata_project on unidata_project.instance_id = %s
-                left join product_msl_rel msl_rel on msl_rel.product_id = move.product_id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+                left join unidata_project on unidata_project.instance_id = coalesce(instance.id, %s)
+                left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
             where
                 nom.name='MED'
                 and creator.code = 'unidata'
@@ -998,7 +1003,19 @@ class stock_picking(osv.osv):
                 distinct(move.picking_id)
             from
                 stock_move move
-                left join stock_picking pick on pick.id = move.picking_id
+                -- out
+                left join stock_picking pick on pick.id = move.picking_id and pick.type='out'
+                left join res_partner pick_partner on pick_partner.id = pick.partner_id
+                -- in
+                left join purchase_order_line pol on pol.id = move.purchase_line_id and move.type = 'in'
+                left join sale_order_line sol on sol.id = pol.linked_sol_id
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join res_partner so_partner on so_partner.id = so.partner_id
+
+                -- in and out
+                left join msf_instance instance on instance.instance = coalesce(pick_partner.name, so_partner.name)
+
+
                 left join product_product p on p.id = move.product_id
                 left join product_template tmpl on tmpl.id = p.product_tmpl_id
                 left join product_international_status creator on creator.id = p.international_status
@@ -1011,12 +1028,12 @@ class stock_picking(osv.osv):
                 and creator.code = 'unidata'
                 and move.picking_id in %s
                 and move.state not in ('cancel', 'cancel_r')
-                and ( pick.type ='in' or  pick.type='out' and pick.subtype='standard' and pick.sale_id is null )
+                and ( move.type ='in' or  pick.type='out' and pick.subtype='standard' and pick.sale_id is null )
             group by move.picking_id, move.id
             having
                     bool_or(coalesce(p.oc_validation,'f'))='f'
                 or
-                    not ARRAY[%s]<@array_agg(up1.instance_id)
+                    not array_agg(coalesce(instance.id, %s))<@array_agg(up1.instance_id)
                     and count(up1.instance_id)>0
         ''',(tuple(ids), local_instance_id))
 

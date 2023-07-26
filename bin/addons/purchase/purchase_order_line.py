@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 import netsvc
 from osv import osv, fields
 from tools.translate import _
+from tools.misc import _get_std_mml_status
 import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
@@ -529,93 +530,6 @@ class purchase_order_line(osv.osv):
             res[pol.id]['max_qty_cancellable'] = max_qty_cancellable
         return res
 
-    def _get_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        if not ids:
-            return {}
-
-        ret = {}
-        for _id in ids:
-            ret[_id] = {
-                'mml_status': 'F',
-                'msl_status': 'na',
-            }
-
-        local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
-
-
-        # MSL Checks
-        cr.execute('''
-            select
-                pol.id, unidata_project.uf_active, msl_rel.product_id -- , po.name, so.name, so_partner.name, so_instance.name
-            from
-                purchase_order_line pol
-                left join product_product p on p.id = pol.product_id
-                left join product_template tmpl on tmpl.id = p.product_tmpl_id
-                left join product_international_status creator on creator.id = p.international_status
-                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-                left join sale_order_line sol on sol.id = pol.linked_sol_id
-                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
-                left join res_partner so_partner on so_partner.id = so.partner_id
-                left join msf_instance so_instance on so_instance.instance = so_partner.name
-                left join unidata_project on unidata_project.instance_id = coalesce(so_instance.id, %s)
-                left join product_msl_rel msl_rel on msl_rel.product_id = pol.product_id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
-            where
-                nom.name='MED'
-                and creator.code = 'unidata'
-                and pol.id in %s
-        ''', (local_instance_id, tuple(ids)))
-
-        for x in cr.fetchall():
-            if not x[1]: # unidata_project.uf_active
-                ret[x[0]]['msl_status'] = 'na'
-            elif x[2]: # msl_rel.product_id
-                ret[x[0]]['msl_status'] = 'T'
-            else:
-                ret[x[0]]['msl_status'] = 'F'
-
-        cr.execute('''
-            select
-                pol.id
-            from
-                purchase_order_line pol
-                left join product_product p on p.id = pol.product_id
-                left join product_template tmpl on tmpl.id = p.product_tmpl_id
-                left join product_international_status creator on creator.id = p.international_status
-                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-            where
-                ( nom.name!='MED' or creator.code != 'unidata' )
-                and pol.id in %s
-        ''', (tuple(ids), ))
-        for x in cr.fetchall():
-            ret[x[0]]['mml_status'] = 'na'
-
-        # MML Checks
-        cr.execute('''
-            select
-                pol.id
-            from
-                purchase_order_line pol
-                left join product_product p on p.id = pol.product_id
-                left join product_template tmpl on tmpl.id = p.product_tmpl_id
-                left join product_international_status creator on creator.id = p.international_status
-                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-                left join sale_order_line sol on sol.id = pol.linked_sol_id
-                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
-                left join res_partner so_partner on so_partner.id = so.partner_id
-                left join msf_instance so_instance on so_instance.instance = so_partner.name
-                left join product_project_rel p_rel on p_rel.product_id = p.id
-                left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
-                left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
-            where
-                nom.name='MED'
-                and creator.code = 'unidata'
-                and coalesce(p.oc_validation, 'f') = 't'
-                and (coalesce(so_instance.id, %s) = up1.instance_id  or up1 is null)
-                and pol.id in %s
-        ''', (local_instance_id, tuple(ids)))
-        for x in cr.fetchall():
-            ret[x[0]]['mml_status'] = 'T'
-        return ret
 
     _columns = {
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
@@ -762,8 +676,8 @@ class purchase_order_line(osv.osv):
         'loan_line_id': fields.many2one('sale.order.line', string='Linked loan line', readonly=True),
         'original_instance': fields.function(_get_customer_ref, method=True, type='char', string='Original Instance', multi='custo_ref_ir_name'),
 
-        'mml_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
-        'msl_status': fields.function(_get_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
 
     _defaults = {

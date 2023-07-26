@@ -284,6 +284,9 @@ class stock_picking_processor(osv.osv):
                     mml_alert = True
 
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                if line_obj._name == 'outgoing.delivery.processor':
+                    line_data['from_wkf_line'] = wizard.picking_id.from_wkf
+
                 if line_obj._name == 'stock.move.in.processor':
                     if wizard.fields_as_ro:
                         line_data['cost_as_ro'] = True
@@ -805,6 +808,7 @@ class stock_move_processor(osv.osv):
         'change_reason': fields.char(size=256, string='Change reason'),
         'mml_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', readonly=True),
         'msl_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', readonly=True),
+        'from_wkf_line': fields.boolean('From wkf', readonly=True),
     }
 
     _defaults = {

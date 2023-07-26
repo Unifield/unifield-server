@@ -47,7 +47,7 @@
                       editable="top"
                       hide_delete_button="1"
                       hide_new_button="1"
-                      colors="red:integrity_status!='empty'"
+                      colors="red:integrity_status!='empty' or mml_status=='F' and not from_wkf_line"
                       >
                     <!-- Invisible fields -->
                     <field name="type_check" invisible="1" />
@@ -61,6 +61,7 @@
                     <field name="line_number" string="Line" />
                     <field name="product_id" string="Product" />
                     <field name="comment" readonly="1" />
+                    <field name="from_wkf_line" invisible="1" />
                     <button name="open_change_product_wizard"
                             type="object"
                             icon="gtk-convert"
