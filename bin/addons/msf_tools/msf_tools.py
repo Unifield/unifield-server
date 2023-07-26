@@ -348,7 +348,7 @@ class data_tools(osv.osv):
         - replaces special character Control Device 4 by ordinary space
         - removes the line breaks and the spaces at the beginning and at the end
         """
-        if type(string_to_format) == unicode:
+        if isinstance(string_to_format, unicode):
             return re.sub('[\r\n\xc2\xa0\x14]', ' ', string_to_format or '').strip()
         return re.sub('[\r\n\xc2\xa0\x14]', ' ', unicode(string_to_format, 'utf-8') or '').strip()
 
