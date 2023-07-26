@@ -98,7 +98,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="StandardLeft">[[ getCompany().get('zip', '') ]] [[ getCompany.get('city', '') ]]</para>
+                    <para style="StandardLeft">[[ getCompany().get('zip', '') ]] [[ getCompany().get('city', '') ]]</para>
                 </td>
                 <td>
                     <para style="StandardLeft">[[ o.address_id and o.address_id.zip and o.address_id.city and '%s %s' % (o.address_id.zip, o.address_id.city) or '' ]]</para>
