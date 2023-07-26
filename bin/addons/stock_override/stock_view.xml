@@ -825,7 +825,7 @@
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date, 'partner_id': partner_id2}"
                                 on_change="onchange_move()"
                                 >
-                                <tree colors="grey:scrapped==True; red: inactive_product == True or product_tbd == True or (mml_status == 'F' and not from_wkf))" string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel', 'done')" hide_new_button="context.get('from_wkf')" hide_delete_button="True">
+                                <tree colors="grey:scrapped==True;red:inactive_product == True or mml_status == 'F' and not from_wkf_line" string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel', 'done')" hide_new_button="context.get('from_wkf')" hide_delete_button="True">
                                     <field name="line_number"/>
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"/>
                                     <field name="comment" />
@@ -835,6 +835,7 @@
                                     <field name="asset_id"/>
                                     <field name="product_uos" invisible="1"/>
                                     <field name="scrapped" invisible="1"/>
+                                    <field name="from_wkf_line" invisible="1"/>
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
 
@@ -857,11 +858,11 @@
                                     <field name="dg_check" widget="null_boolean" />
                                     <field name="np_check" widget="null_boolean" />
                                     <field name="inactive_product" invisible="1" />
-                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <button name="%(stock.action_partial_move_server)d" string="Process" type="action" states="confirmed,assigned" icon="gtk-go-forward" invisible="1"/>
                                     <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  context="{'from_button': True}" />
-                                     <field name="mml_status" />
-                                     <field name="msl_status" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                                 <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
                                     <group colspan="2" col="4">
