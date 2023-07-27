@@ -100,7 +100,7 @@
 
         <blockTableStyle id="OrderInformations">
             <blockAlignment value="CENTER" />
-            <blockVAlign value="MIDDLE" />
+            <blockValign value="MIDDLE" />
             <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
         </blockTableStyle>
@@ -108,6 +108,8 @@
         <blockTableStyle id="OrderInformations2">
             <blockAlignment value="CENTER" />
             <blockVAlign value="CENTER" />
+            <blockLeftPadding length="0" />
+            <blockRightPadding length="0" />
             <blockBackground colorName="silver" start="0,7" stop="0,7" />
             <lineStyle kind="GRID" colorName="#000000" start="0,6" stop="-1,-1" thickness="0.5"/>
             <blockTopPadding value="0"   />
@@ -117,6 +119,8 @@
         <blockTableStyle id="OrderInformations3">
             <blockAlignment value="CENTER" />
             <blockValign value="MIDDLE" />
+            <blockLeftPadding length="0" />
+            <blockRightPadding length="0" />
             <blockTopPadding value="10" />
             <blockBottomPadding value="0" />
 
@@ -278,11 +282,12 @@
 		<!-- Information font style -->
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformationSpe" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="8.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformationSpeRed" textColor="#990000" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="8.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformationN" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="white"/>
 
         <paraStyle name="TextInformationGROS" fontName="Helvetica" fontSize="11.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
-        <paraStyle name="TextInformation4" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="18.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation4" fontName="Helvetica" fontSize="8.0" alignment="CENTER" leading="18.0" spaceBefore="0" spaceAfter="0" />
 
         <paraStyle name="TextInformation5" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
@@ -546,14 +551,11 @@
 
             <tr>
                 <td>
-                    <blockTable colWidths="30,370,50,40,50,40,75,53,20,18,18,18,18" style="OrderInformations3">
+                    <blockTable colWidths="30,349,45,40,45,40,70,53,20,17,17,17,17,20,20" style="OrderInformations3">
                         <tr>
+                                <td><para style="TextInformation4">Item</para></td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">Item</para> <!-- 30 -->
-                                </td>
-
-                                <td>
-                                <blockTable colWidths="110,260" style="OrderInformations4">
+                                <blockTable colWidths="110,239" style="OrderInformations4">
                                     <tr>
                                         <td>
                                             <para style="TextInformation" alignment="LEFT">Code</para> <!-- 110 -->
@@ -593,20 +595,22 @@
                                     <para style="TextInformation5" alignment="CENTER">Expiry date</para> <!-- 53 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">ED</para> <!-- 20 -->
+                                    <para style="TextInformation4">ED</para> <!-- 20 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">BM</para> <!-- 18 -->
+                                    <para style="TextInformation4">BM</para> <!-- 18 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">CC</para> <!-- 18 -->
+                                    <para style="TextInformation4">CC</para> <!-- 18 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">DG</para> <!-- 18 -->
+                                    <para style="TextInformation4">DG</para> <!-- 18 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">CS</para> <!-- 18 -->
+                                    <para style="TextInformation4">CS</para> <!-- 18 -->
                                 </td>
+                                <td><para style="TextInformation4">MML</para></td>
+                                <td><para style="TextInformation4">MSL</para></td>
                         </tr>
                     </blockTable>
 
@@ -622,20 +626,20 @@
             [[ repeatIn(pack[1], 'line') ]]
             [[ line.state != 'cancel' or removeParentNode('tr') ]]
                 <td>
-                    <blockTable colWidths="30,370,50,40,50,40,75,53,20,18,18,18,18" style="OrderInformations3">
+                    <blockTable colWidths="30,349,45,40,45,40,70,53,20,17,17,17,17,20,20" style="OrderInformations3">
                         <tr>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ line.line_number ]]</para>
+                                    <para style="TextInformation4">[[ line.line_number ]]</para>
                                 </td>
 
                                 <td>
-                                <blockTable colWidths="110,260" style="OrderInformations4">
+                                <blockTable colWidths="110,239" style="OrderInformations4">
                                     <tr>
                                         <td>
-                                            <para style="TextInformationSpe" alignment="LEFT">[[ line.product_id and line.product_id.default_code or False ]]</para>
+                                            <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'TextInformationSpeRed' or 'TextInformationSpe'}" alignment="LEFT">[[ line.product_id and line.product_id.default_code or False ]]</para>
                                         </td>
                                         <td>
-                                            <para style="TextInformationSpe" alignment="LEFT">[[ line.product_id and line.product_id.name or False ]]</para>
+                                            <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'TextInformationSpeRed' or 'TextInformationSpe'}" alignment="LEFT">[[ line.product_id and line.product_id.name or False ]]</para>
                                         </td>
                                     </tr>
                                     <tr>
@@ -650,41 +654,46 @@
                                 </blockTable>
                                 </td>
 
-                                % if :
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ objects[0].purchase_id and formatFloatDigitsToUom(line.purchase_line_id and line.purchase_line_id.product_qty or line.product_qty, line.product_uom.rounding) or removeParentNode('para') ]]</para>
-                                    <para style="TextInformation4" alignment="CENTER">[[ not objects[0].purchase_id and formatFloatDigitsToUom(line.confirmed_qty or getFromScratchQty(line).get('confirmed', 0.00), line.product_uom.rounding) or removeParentNode('para') ]]</para>
+                                    <para style="TextInformation4">[[ objects[0].purchase_id and formatFloatDigitsToUom(line.purchase_line_id and line.purchase_line_id.product_qty or line.product_qty, line.product_uom.rounding) or removeParentNode('para') ]]</para>
+                                    <para style="TextInformation4">[[ not objects[0].purchase_id and formatFloatDigitsToUom(line.confirmed_qty or getFromScratchQty(line).get('confirmed', 0.00), line.product_uom.rounding) or removeParentNode('para') ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ line.product_uom and line.product_uom.name or False ]]</para>
+                                    <para style="TextInformation4">[[ line.product_uom and line.product_uom.name or False ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ objects[0].purchase_id and formatFloatDigitsToUom(getQtyBO(line), line.product_uom.rounding) or removeParentNode('para') ]]</para>
-                                    <para style="TextInformation4" alignment="CENTER">[[ not objects[0].purchase_id and formatFloatDigitsToUom(getFromScratchQty(line).get('backorder', 0.00), line.product_uom.rounding) or removeParentNode('para') ]]</para>
+                                    <para style="TextInformation4">[[ objects[0].purchase_id and formatFloatDigitsToUom(getQtyBO(line), line.product_uom.rounding) or removeParentNode('para') ]]</para>
+                                    <para style="TextInformation4">[[ not objects[0].purchase_id and formatFloatDigitsToUom(getFromScratchQty(line).get('backorder', 0.00), line.product_uom.rounding) or removeParentNode('para') ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyIS(line, objects[0], line.product_uom.rounding) ]]</para>
+                                    <para style="TextInformation4">[[ getQtyIS(line, objects[0], line.product_uom.rounding) ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getBatch(line) ]]</para>
+                                    <para style="TextInformation4">[[ getBatch(line) ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getExpDate(line) ]]</para>
+                                    <para style="TextInformation4">[[ getExpDate(line) ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ check(line,'ed') ]]</para>
+                                    <para style="TextInformation4">[[ check(line,'ed') ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ check(line,'bm') ]]</para>
+                                    <para style="TextInformation4">[[ check(line,'bm') ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ check(line,'kc') ]]</para>
+                                    <para style="TextInformation4">[[ check(line,'kc') ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ check(line,'dg') ]]</para>
+                                    <para style="TextInformation4">[[ check(line,'dg') ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ check(line,'np') ]]</para>
+                                    <para style="TextInformation4">[[ check(line,'np') ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4">[[ getSel(line,'mml_status') ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4">[[ getSel(line,'msl_status') ]]</para>
                                 </td>
                         </tr>
                     </blockTable>
