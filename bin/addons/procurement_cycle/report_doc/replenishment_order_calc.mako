@@ -399,7 +399,7 @@
   </Style>
 
  </Styles>
- <Worksheet ss:Name="Order Calculation" ss:Protected="1">
+ <Worksheet ss:Name="${get_export_title()|x}" ss:Protected="1">
   <Names>
    <NamedRange ss:Name="_FilterDatabase" ss:RefersTo="=Segment!R8C1:R14C4"
     ss:Hidden="1"/>
@@ -446,7 +446,7 @@
    <Column ss:AutoFitWidth="0" ss:Width="300" /> <!-- qty comment -->
    <Column ss:AutoFitWidth="0" ss:Width="300" /> <!-- warning -->
    <Row ss:AutoFitHeight="0" ss:Height="31.5">
-    <Cell ss:MergeAcross="9" ss:StyleID="s64"><Data ss:Type="String">${_('Order Calculation')|x} ${(_('Consolidated') if is_multi() else '')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeAcross="9" ss:StyleID="s64"><Data ss:Type="String">${get_export_title()|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="18.75" ss:StyleID="s65">
     <Cell ss:StyleID="s66"><NamedCell

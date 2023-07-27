@@ -164,6 +164,18 @@ class msf_instance(osv.osv):
                 res.append(arg)
         return res
 
+    def _get_has_journal_entries(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        res = {}
+        for _id in ids:
+            res[_id] = False
+
+        cr.execute("select id from msf_instance i where i.id in %s and exists(select instance_id from account_move where instance_id=i.id)", (tuple(ids), ))
+        for q in cr.fetchall():
+            res[q[0]] = True
+        return res
 
     def _search_empty_ud(self, cr, uid, obj, name, args, context=None):
         for arg in args:
@@ -215,6 +227,7 @@ class msf_instance(osv.osv):
                                                    relation='msf.instance',
                                                    fnct_search=_search_instance_to_display_ids),
         'empty_ud': fields.function(misc.get_fake, type='boolean', method=True, string='Search not linked to UD', fnct_search=_search_empty_ud),
+        'has_journal_entries': fields.function(_get_has_journal_entries, method=True, type='boolean', string='Has Journal Entries'),
 
     }
 

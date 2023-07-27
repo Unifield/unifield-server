@@ -943,8 +943,27 @@
             <field name="method">us_11399_oca_mm_target</field>
         </record>
 
+        <!-- UF30.0 -->
+        <record id="us_11130_trigger_down_account_mapping" model="patch.scripts">
+            <field name="method">us_11130_trigger_down_account_mapping</field>
+        </record>
+
+        <record id="us_11448_update_rfq_line_state" model="patch.scripts">
+            <field name="method">us_11448_update_rfq_line_state</field>
+        </record>
+
+        <record id="us_10874_bar_hard_post_wizard" model="patch.scripts">
+            <field name="method">us_10874_bar_hard_post_wizard</field>
+        </record>
+
+        <record id="us_11679_set_iil_oca" model="patch.scripts">
+            <field name="method">us_11679_set_iil_oca</field>
+        </record>
+
         <record id="us_1074_create_unifield_instance" model="patch.scripts">
             <field name="method">us_1074_create_unifield_instance</field>
         </record>
+
+
     </data>
 </openerp>

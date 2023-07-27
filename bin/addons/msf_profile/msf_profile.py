@@ -57,6 +57,10 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
+
+    # UF30.0
+
     def us_1074_create_unifield_instance(self, cr, uid, *a, **b):
         uf_instance = self.pool.get('unifield.instance')
         unidata_proj =  self.pool.get('unidata.project')
@@ -79,6 +83,57 @@ class patch_scripts(osv.osv):
                 unidata_proj.write(cr, uid, proj[0], {'unifield_instance_id': instance_cache[proj[3]]})
 
         return True
+
+    def us_11679_set_iil_oca(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance:
+            return True
+
+        if instance.instance.endswith('OCA'):
+            cr.execute("""UPDATE unifield_setup_configuration
+            SET esc_line='t'
+            """)
+        return True
+
+    def us_11130_trigger_down_account_mapping(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        cr.execute("""UPDATE ir_model_data
+        SET last_modification=NOW(), touched='[''account_id'', ''mapping_value'']'
+        WHERE model='account.export.mapping'
+        """)
+        return True
+
+    def us_11448_update_rfq_line_state(self, cr, uid, *a, **b):
+        '''
+        Update the rfq_line_state of all RFQ lines
+        '''
+        # Non-cancelled
+        cr.execute("""
+            UPDATE purchase_order_line pl SET rfq_line_state = p.rfq_state FROM purchase_order p
+            WHERE pl.order_id = p.id AND pl.state NOT IN ('cancel', 'cancel_r') AND p.rfq_state != 'cancel' 
+                AND p.rfq_ok = 't'
+        """)
+
+        # Cancelled(-r)
+        cr.execute("""
+            UPDATE purchase_order_line pl SET rfq_line_state = pl.state FROM purchase_order p
+            WHERE pl.order_id = p.id AND pl.state IN ('cancel', 'cancel_r') AND p.rfq_ok = 't'
+        """)
+
+        return True
+
+    def us_10874_bar_hard_post_wizard(self, cr, uid, *a, **b):
+        bar = self.pool.get('msf_button_access_rights.button_access_rule')
+        bar_ids = bar.search(cr, uid, [('name', '=', 'action_confirm_hard_posting'), ('model_id.name', '=', 'wizard.temp.posting')])
+        group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Fin_Hard_Posting')])
+        if bar_ids and group_ids:
+            bar.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+
+        return True
+
+
 
     # UF29.0
     def us_11399_oca_mm_target(self, cr, uid, *a, **b):
@@ -241,7 +296,6 @@ class patch_scripts(osv.osv):
         esc_line_install = setup_obj.create(cr, uid, {})
         setup_obj.execute(cr, uid, [esc_line_install])
         return True
-
 
     # UF28.0
     def us_10885_tc_entries(self, cr, uid, *a, **b):

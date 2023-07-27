@@ -423,7 +423,10 @@ class stock_mission_report(osv.osv):
         # close file
         export_file.close()
 
-    def generate_full_xls(self, cr, uid, report_id, xls_name):
+    def generate_full_xls(self, cr, uid, report_id, xls_name, context=None):
+        if context is None:
+            context = {}
+
         local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         instance_obj = self.pool.get('msf.instance')
         instance_ids = instance_obj.search(cr, uid, [('state', '!=', 'inactive')])
@@ -592,7 +595,7 @@ class stock_mission_report(osv.osv):
         for x in self.read(cr, uid, r_ids, ['instance_id']):
             report_id_by_instance_id[x['instance_id'][0]] = x['id']
 
-        cr.execute(GET_EXPORT_REQUEST, ('en_MF', tuple(r_ids)))
+        cr.execute(GET_EXPORT_REQUEST, (context.get('lang', 'en_MF'), tuple(r_ids)))
 
         cr1 = pooler.get_db(cr.dbname).cursor()
         cr1.execute("""
@@ -906,7 +909,7 @@ class stock_mission_report(osv.osv):
                                  context=context)
 
                 if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
-                    self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls')
+                    self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls', context=context)
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)

@@ -68,11 +68,26 @@
     </blockTable>
     <blockTable colWidths="200.0,150.0,150.0,200.0,200.0" style="Tableau3">
       <tr>
-        <td><para style="P2">Report Run Date: [[getRunParmsRML('run_date')]]</para></td>
-        <td><para style="P2">PO Date From: [[getRunParmsRML('date_from')]]</para></td>
-        <td><para style="P2">PO Date To: [[getRunParmsRML('date_thru')]]</para></td>
-        <td><para style="P2">Doc. Status: [[getRunParmsRML('state')]]</para></td>
-        <td><para style="P2">Supplier: [[getRunParmsRML('supplier')]]</para></td>	      		
+        <td>
+            <para style="P2">Report Run Date: [[getRunParmsRML('run_date')]]</para>
+            <para style="P2"></para>
+        </td>
+        <td>
+            <para style="P2">PO Date From: [[getRunParmsRML('date_from')]]</para>
+            <para style="P2">PO Date To: [[getRunParmsRML('date_thru')]]</para>
+        </td>
+        <td>
+            <para style="P2">Order Type: [[getRunParmsRML('order_type')]]</para>
+            <para style="P2">Order Category: [[getRunParmsRML('categ')]]</para>
+        </td>
+        <td>
+            <para style="P2">Doc. Status: [[getRunParmsRML('state')]]</para>
+            <para style="P2"></para>
+        </td>
+        <td>
+            <para style="P2">Supplier: [[getRunParmsRML('supplier')]]</para>
+            <para style="P2"></para>
+        </td>
       </tr>    
     </blockTable>
 

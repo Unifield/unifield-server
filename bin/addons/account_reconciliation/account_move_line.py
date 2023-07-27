@@ -730,6 +730,13 @@ class account_move_reconcile(osv.osv):
                     lines = rec.line_id or rec.line_partial_ids
                     sdrefs = move_obj.get_sd_ref(cr, uid, [x.id for x in lines], context=context)
                     self.pool.get('account.move.unreconcile').create(cr, 1, {'delete_reconcile_txt': rec.name, 'move_sdref_txt': ','.join(sdrefs.values())}, context=context)
+                    # do not trigger sync
+                    cr.execute('''update account_move_line set
+                            has_a_counterpart_transfer='f', counterpart_transfer_st_line_id=NULL
+                        where
+                            id in %s
+                            and (counterpart_transfer_st_line_id is not null or has_a_counterpart_transfer='t')
+                    ''', (tuple([x.id for x in lines]), ))
         return True
 
     def unlink(self, cr, uid, ids, context=None):
@@ -785,7 +792,7 @@ class account_move_unreconcile(osv.osv):
                         move_lines.append(move_line)
                 if move_lines:
                     invoice_reopen = [line.invoice.id for line in move_lines if line.reconcile_id and line.invoice and line.invoice.state in ['paid','inv_close']]
-                    cr.execute("UPDATE account_move_line SET unreconcile_txt=%s, unreconcile_date=%s, reconcile_txt='', reconcile_date=NULL WHERE id in %s", (vals.get('delete_reconcile_txt'), vals.get('unreconcile_date'), tuple([x.id for x in move_lines])))
+                    cr.execute("UPDATE account_move_line SET unreconcile_txt=%s, unreconcile_date=%s, reconcile_txt='', reconcile_date=NULL, has_a_counterpart_transfer='f' WHERE id in %s", (vals.get('delete_reconcile_txt'), vals.get('unreconcile_date'), tuple([x.id for x in move_lines])))
 
             if vals.get('delete_reconcile_txt'):
                 # do not sync reconcile delete, to prevent any error in case of account_move_unreconcile update is NR

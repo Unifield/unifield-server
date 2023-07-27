@@ -162,8 +162,8 @@
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="residual" />
-                    <field name="amount_total"/>
+                    <field name="residual" sum="Total Residual" sum_selected="1"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                     <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
                 </tree>
@@ -653,8 +653,8 @@
 
                     <newline/>
                     <group col="10" colspan="4">
-                        <field name="journal_id" select='1' context="{'search_default_filter_is_active': 1}"/>
-                        <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
+                        <field name="currency_id" string="Booking Currency" />
+                        <field name="period_id" string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="supplier_reference"/>
                         <field name="name"/>
                         <field name="amount_total"/>
@@ -699,8 +699,8 @@
 
                     <newline/>
                     <group col="10" colspan="4">
-                        <field name="journal_id" select='1' context="{'search_default_filter_is_active': 1}"/>
-                        <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
+                        <field name="currency_id" string="Booking Currency" />
+                        <field name="period_id" string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="supplier_reference"/>
                         <field name="name"/>
                         <field name="amount_total"/>
@@ -749,8 +749,8 @@
 
                     <newline/>
                     <group col="10" colspan="4">
-                        <field name="journal_id" select='1' context="{'search_default_filter_is_active': 1}"/>
-                        <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
+                        <field name="currency_id" string="Booking Currency" />
+                        <field name="period_id" string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                         <field name="supplier_reference"/>
                         <field name="name"/>
                         <field name="amount_total"/>
@@ -793,8 +793,8 @@
                     <field name="counterpart_inv_number"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="residual" />
-                    <field name="amount_total"/>
+                    <field name="residual" sum="1" sum_selected="1"/>
+                    <field name="amount_total" sum="1" sum_selected="1"/>
                     <field name="state"/>
                     <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
                 </tree>
@@ -942,9 +942,9 @@
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="residual" sum="Residual Amount"/>
-                    <field name="amount_untaxed" sum="Untaxed Amount"/>
-                    <field name="amount_total" sum="Total Amount"/>
+                    <field name="residual" sum="Residual Amount" sum_selected="1"/>
+                    <field name="amount_untaxed" sum="Untaxed Amount" sum_selected="1"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                 </tree>
             </field>

@@ -54,7 +54,6 @@
         'wizard/wizard_closing_cashbox.xml',
         'wizard/wizard_register_reopen.xml',
         'wizard/wizard_temp_posting.xml',
-        'wizard/wizard_hard_posting.xml',
         'wizard/wizard_liquidity_position.xml',
         'account_cash_statement_sequence.xml',
         'wizard/wizard_cash_return.xml',
