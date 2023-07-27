@@ -121,9 +121,9 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type', 'not in', ['view', 'liquidity']),  # Do not allow liquidity accounts
         ('is_not_hq_correctible', '!=', True),
         ('type_for_register', '!=', 'donation'),
-        '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'),  # Do not allow Regular / Stock accounts
+        '|', ('type', '!=', 'other'), ('user_type_code', 'not in', ['stock', 'equity']),  # Do not allow Regular / Stock accounts and Regular/Equity accounts
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
-        ('type_for_register', 'not in', ['advance', 'transfer', 'transfer_same']),
+        ('type_for_register', 'not in', ['advance', 'transfer', 'transfer_same', 'down_payment']),
     ],
     # RECURRING MODELS
     'recurring_lines': [
