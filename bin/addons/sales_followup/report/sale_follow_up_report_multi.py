@@ -84,7 +84,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
     def _get_order_line(self, order_id):
         order_line_ids = self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)])
         ftf = ['id', 'line_number', 'state', 'state_to_display', 'order_id', 'product_id', 'product_uom_qty',
-               'product_uom', 'esti_dd', 'confirmed_delivery_date', 'move_ids']
+               'product_uom', 'esti_dd', 'confirmed_delivery_date', 'move_ids', 'mml_status', 'msl_status']
         for order_line_id in order_line_ids:
             yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id,
                                                           fields_to_fetch=ftf, context=self.localcontext)
@@ -173,6 +173,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             data = {
                 'state': line.state,
                 'state_display': line_state_display_dict.get(line.state_to_display),
+                'mml_status': self.getSel(line, 'mml_status') or '-',
+                'msl_status': self.getSel(line, 'msl_status') or '-',
             }
 
             cancelled_move = False
@@ -282,6 +284,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     data = {
                         'state': line.state,
                         'state_display': line_state_display_dict.get(line.state_to_display),
+                        'mml_status': self.getSel(line, 'mml_status') or '-',
+                        'msl_status': self.getSel(line, 'msl_status') or '-',
                     }
                 # If the move is from a cancelled OUT/Pick plus sometimes returned PPL/Ship but not a cancelled FO line
                 cancelled_pps = line.state not in ('cancel', 'cancel_r') and move.type == 'out' and \
@@ -311,6 +315,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'is_delivered': True,
                         'state': line.state,
                         'state_display': line_state_display_dict.get(line.state_to_display),
+                        'mml_status': self.getSel(line, 'mml_status') or '-',
+                        'msl_status': self.getSel(line, 'msl_status') or '-',
                     }
                     bo_qty -= line.product_uom_qty
                     first_line = False
@@ -347,6 +353,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'backordered_qty': bo_qty if line.order_id.state != 'cancel' else 0.00,
                     'state': line.state,
                     'state_display': line_state_display_dict.get(line.state_to_display),
+                    'mml_status': self.getSel(line, 'mml_status') or '-',
+                    'msl_status': self.getSel(line, 'msl_status') or '-',
                 })
             elif only_bo:
                 lines[fl_index].update({

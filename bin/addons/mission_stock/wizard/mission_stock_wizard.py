@@ -288,13 +288,20 @@ report when the last update field will be filled. Thank you for your comprehensi
 
         # add the requested field name and report_id to the datas
         # to be used later on in the stock_mission_report_xls_parser
-        res = self.read(cr, uid, ids, ['with_valuation', 'report_id', 'display_only_in_stock', 'fname'], context=context)
+        ftf = ['with_valuation', 'report_id', 'display_only_in_stock', 'fname', 'local_report']
+        res = self.read(cr, uid, ids, ftf, context=context)
 
         field_name = None
         if res['with_valuation'] == 'true':
-            field_name = 's_v_vals'
+            if res['local_report']:
+                field_name = 's_v_mml_vals'
+            else:
+                field_name = 's_v_vals'
         elif res['with_valuation'] == 'false':
-            field_name = 's_nv_vals'
+            if res['local_report']:
+                field_name = 's_nv_mml_vals'
+            else:
+                field_name = 's_nv_vals'
 
         datas.update({
             'field_name': field_name,

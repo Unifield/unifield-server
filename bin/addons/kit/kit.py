@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
+from tools.misc import _get_std_mml_status
 from datetime import datetime
 from product._common import rounding
 import decimal_precision as dp
@@ -1332,6 +1333,9 @@ class composition_item(osv.osv):
                 'product_subtype': fields.function(_vals_get, method=True, type='selection', string='Product Subtype', selection=[('single', 'Single Item'), ('kit', 'Kit/Module'), ('asset', 'Asset')], multi='get_vals', store=False, readonly=True),
                 'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
                 'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
+                'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+                'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
                 }
 
     _defaults = {'hidden_batch_management_mandatory': False,

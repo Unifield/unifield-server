@@ -84,6 +84,47 @@ HEADER_DICT = {
         (_('AMC'), 'product_amc'),
         (_('FMC'), 'product_consumption'),
         (_('In Pipe Qty'), 'l_in_pipe_qty'),),
+    's_nv_mml_vals': (
+        (_('Reference'), 'default_code'),
+        (_('Name'), 'pt_name'),
+        (_('Active'), 'product_active'),
+        (_('MML'), 'mml_status'),
+        (_('MSL'), 'msl_status'),
+        (_('UoM'), 'pu_name'),
+        (_('Instance stock'), 'l_internal_qty'),
+        (_('Stock Qty.'), 'l_stock_qty'),
+        (_('Cross-Docking Qty.'), 'l_cross_qty'),
+        (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+        (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
+        (_('Eprep Qty.'), 'l_eprep_qty'),
+        (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
+        (_('Input Qty'), 'l_input_qty'),
+        (_('Output/Packing/Dispatch/Distribution Qty'), 'l_opdd_qty'),
+        (_('AMC'), 'product_amc'),
+        (_('FMC'), 'product_consumption'),
+        (_('In Pipe Qty'), 'l_in_pipe_qty'),),
+    's_v_mml_vals': (
+        (_('Reference'), 'default_code'),
+        (_('Name'), 'pt_name'),
+        (_('Active'), 'product_active'),
+        (_('MML'), 'mml_status'),
+        (_('MSL'), 'msl_status'),
+        (_('UoM'), 'pu_name'),
+        (_('Cost Price'), 'pt_standard_price'),
+        (_('Func. Cur.'), 'rc_name'),
+        (_('Instance stock'), 'l_internal_qty'),
+        (_('Instance stock val.'), 'l_internal_qty_pt_price'),
+        (_('Stock Qty.'), 'l_stock_qty'),
+        (_('Cross-Docking Qty.'), 'l_cross_qty'),
+        (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+        (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
+        (_('Eprep Qty.'), 'l_eprep_qty'),
+        (_('Quarantine / For Scrap Qty'), 'l_quarantine_qty'),
+        (_('Input Qty'), 'l_input_qty'),
+        (_('Output/Packing/Dispatch/Distribution Qty'), 'l_opdd_qty'),
+        (_('AMC'), 'product_amc'),
+        (_('FMC'), 'product_consumption'),
+        (_('In Pipe Qty'), 'l_in_pipe_qty'),),
 }
 
 
@@ -111,7 +152,9 @@ GET_EXPORT_REQUEST = '''SELECT
         l.product_amc as product_amc,
         l.product_consumption as product_consumption,
         mission_report_id,
-        l.product_active as product_active
+        l.product_active as product_active,
+        l.mml_status as mml_status,
+        l.msl_status as msl_status
     FROM stock_mission_report_line l
          LEFT JOIN product_product pp ON l.product_id = pp.id
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
@@ -264,9 +307,9 @@ class stock_mission_report(osv.osv):
             sheet.write(3, column_count, _(column), style)
             column_count += 1
 
-    def xls_write_row(self, sheet, cell_list, row_count, style, style_price):
+    def xls_write_row(self, sheet, cell_list, row_count, style, style_price, price_column=4):
         for column_count, column in enumerate(cell_list):
-            if column_count == 4:  # style for price
+            if column_count == price_column:  # style for price
                 sheet.write(row_count, column_count, column, style_price)
             else:
                 sheet.write(row_count, column_count, _(column), style)
@@ -311,7 +354,7 @@ class stock_mission_report(osv.osv):
 
         header_row = [_(column_name) for column_name, colum_property in header]
         instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
-        report_data = self.read(cr, uid, report_id, ['name', 'last_update'])
+        report_data = self.read(cr, uid, report_id, ['name', 'last_update', 'local_report'])
         report_name = report_data['name']
         report_last_updt = report_data['last_update']
 
@@ -351,6 +394,17 @@ class stock_mission_report(osv.osv):
                     align: wrap on, vert center, horiz center;
                 """, num_format_str='0.000')
             row_style_price.borders = borders
+
+            row_style_red = easyxf("""
+                    font: height 220, name Calibri, colour red;
+                    align: wrap on, vert center, horiz center;
+                """)
+            row_style_red.borders = borders
+            row_style_red_price = easyxf("""
+                    font: height 220, name Calibri, colour red;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='0.000')
+            row_style_red_price.borders = borders
 
             data_row_style = easyxf("""
                     font: height 220;
@@ -401,7 +455,17 @@ class stock_mission_report(osv.osv):
                         continue
 
                 if file_type == 'xls':
-                    self.xls_write_row(sheet, data_list, row_count, row_style, row_style_price)
+                    # Red line for MML alert 2
+                    def_row_style = row_style
+                    def_row_style_price = row_style_price
+                    if report_data['local_report']:
+                        price_column = 6
+                        if data_list[3] == 'F':
+                            def_row_style = row_style_red
+                            def_row_style_price = row_style_red_price
+                    else:
+                        price_column = 4
+                    self.xls_write_row(sheet, data_list, row_count, def_row_style, def_row_style_price, price_column)
                 else:
                     writer.writerow(data_list)
                 row_count += 1
@@ -432,7 +496,8 @@ class stock_mission_report(osv.osv):
         instance_ids = instance_obj.search(cr, uid, [('state', '!=', 'inactive')])
         uom_obj = self.pool.get('product.uom')
 
-        report_last_updt = self.read(cr, uid, report_id, ['last_update'])['last_update']
+        report = self.read(cr, uid, report_id, ['last_update', 'local_report'])
+        report_last_updt = report['last_update']
 
         instance_dict = {}
         for x in instance_obj.read(cr, uid, instance_ids, ['name']):
@@ -530,18 +595,30 @@ class stock_mission_report(osv.osv):
         sheet.col(2).width = 5000
 
         sheet.set_horz_split_pos(5)
-        sheet.set_vert_split_pos(5)
+        if report['local_report']:
+            sheet.set_vert_split_pos(6)
+            fixed_data = [
+                (_('Reference'), 'default_code'),
+                (_('Name'), 'pt_name'),
+                (_('Active'), 'product_active'),
+                (_('MML'), 'mml_status'),
+                (_('UoM'), 'pu_name'),
+                (_('Cost Price'), 'pt_standard_price'),
+                (_('Func. Cur.'), 'rc_name')
+            ]
+        else:
+            sheet.set_vert_split_pos(5)
+            fixed_data = [
+                (_('Reference'), 'default_code'),
+                (_('Name'), 'pt_name'),
+                (_('Active'), 'product_active'),
+                (_('UoM'), 'pu_name'),
+                (_('Cost Price'), 'pt_standard_price'),
+                (_('Func. Cur.'), 'rc_name')
+            ]
         sheet.panes_frozen = True
         sheet.remove_splits = True
 
-        fixed_data = [
-            (_('Reference'), 'default_code'),
-            (_('Name'), 'pt_name'),
-            (_('Active'), 'product_active'),
-            (_('UoM'), 'pu_name'),
-            (_('Cost Price'), 'pt_standard_price'),
-            (_('Func. Cur.'), 'rc_name')
-        ]
         repeated_data = [
             (_('Instance stock'), 'l_internal_qty'),
             (_('Instance stock val.'), 'l_internal_qty_pt_price'),
@@ -644,7 +721,12 @@ class stock_mission_report(osv.osv):
                     for x in instance_loc.get(inst_id, []):
                         to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
 
-                self.xls_write_row(sheet, to_write, row_count, row_style, row_style_price)
+                if report['local_report']:
+                    price_column = 5
+                else:
+                    price_column = 4
+
+                self.xls_write_row(sheet, to_write, row_count, row_style, row_style_price, price_column)
                 row_count += 1
 
 
@@ -818,18 +900,18 @@ class stock_mission_report(osv.osv):
             product_values[product_dict['id']]['reviewed_consumption'] = product_dict['reviewed_consumption']
 
         # Check in each report if new products are in the database and not in the report
-        self.check_new_product_and_create_export(cr, uid, report_ids, product_values, all_products=True, display_only_in_stock=True, context=context)
+        self.check_new_product_and_create_export(cr, uid, report_ids, product_values, all_products=True,
+                                                 display_only_in_stock=True, context=context)
 
         # After update of all normal reports, update the full view report
         context.update({'update_full_report': True})
-        self.check_new_product_and_create_export(cr, uid, full_report_ids, product_values, all_products=True, display_only_in_stock=True, context=context)
+        self.check_new_product_and_create_export(cr, uid, full_report_ids, product_values, all_products=True,
+                                                 display_only_in_stock=True, context=context)
 
         return True
 
-    def check_new_product_and_create_export(self, cr, uid, report_ids, product_values,
-                                            csv=True, xls=True, with_valuation=True,
-                                            all_products=True,
-                                            display_only_in_stock=False,
+    def check_new_product_and_create_export(self, cr, uid, report_ids, product_values, csv=True, xls=True,
+                                            with_valuation=True, all_products=True, display_only_in_stock=False,
                                             context=None):
         if context is None:
             context = {}
@@ -839,10 +921,13 @@ class stock_mission_report(osv.osv):
         logger = logging.getLogger('MSR')
 
         line_obj = self.pool.get('stock.mission.report.line')
+        product_obj = self.pool.get('product.product')
         self.write(cr, uid, report_ids, {'export_state': 'in_progress',
                                          'export_error_msg': False}, context=context)
 
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        product_ids = product_obj.search(cr, uid, [('active', 'in', ['t', 'f'])], context=context, order='NO_ORDER')
+        mml_data = product_obj.get_products_mml_status(cr, uid, product_ids, context=context)
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             try:
                 self.write(cr, uid, report['id'], {'report_ok': False},
@@ -870,16 +955,24 @@ class stock_mission_report(osv.osv):
                             'state_ud': prod_state_ud,
                             'international_status_code': prod_creator,
                             'product_state': prod_state or '',
+                            'mml_status': mml_data[product]['mml_status'],
+                            'msl_status': mml_data[product]['msl_status'],
                             #'product_amc': product_values.get(product, {}).get('product_amc', 0),
                             #'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
                         }, context=context)
 
-                if report['local_report'] and not report['full_view']:
-                    # update AMC / FMC
+                if report['local_report']:
+                    # update MML, FIXME: slow
                     cr.execute('select id, product_id, product_amc, product_consumption from stock_mission_report_line where mission_report_id = %s', (report['id'],))
                     for x in cr.fetchall():
-                        if (x[2] or 0) != product_values.get(x[1], {}).get('product_amc', 0) or (x[3] or 0) != product_values.get(x[1], {}).get('reviewed_consumption', 0):
-                            line_obj.write(cr, uid, x[0], {'product_amc': product_values.get(x[1], {}).get('product_amc', 0), 'product_consumption':  product_values.get(x[1], {}).get('reviewed_consumption', 0)}, context=context)
+                        write_vals = {'mml_status': mml_data[x[1]]['mml_status'], 'msl_status': mml_data[x[1]]['msl_status']}
+                        # update AMC / FMC
+                        if not report['full_view'] and ((x[2] or 0) != product_values.get(x[1], {}).get('product_amc', 0) or (x[3] or 0) != product_values.get(x[1], {}).get('reviewed_consumption', 0)):
+                            write_vals.update({
+                                'product_amc': product_values.get(x[1], {}).get('product_amc', 0),
+                                'product_consumption':  product_values.get(x[1], {}).get('reviewed_consumption', 0)
+                            })
+                        line_obj.write(cr, uid, x[0], write_vals, context=context)
 
                 msr_in_progress = self.pool.get('msr_in_progress')
                 #US-1218: If this report is previously processed, then do not redo it again for this transaction!
@@ -906,6 +999,7 @@ class stock_mission_report(osv.osv):
                                  with_valuation=with_valuation,
                                  all_products=all_products,
                                  display_only_in_stock=display_only_in_stock,
+                                 local_report=report['local_report'],
                                  context=context)
 
                 if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
@@ -1241,7 +1335,7 @@ class stock_mission_report(osv.osv):
                     pass
 
     def _get_export(self, cr, uid, ids, product_values, csv=True, xls=True, with_valuation=True, all_products=True,
-                    display_only_in_stock=False, context=None):
+                    display_only_in_stock=False, local_report=False, context=None):
         '''
         Get the CSV files of the stock mission report.
         This method generates 4 files (according to option set) :
@@ -1278,9 +1372,15 @@ class stock_mission_report(osv.osv):
             request_result = cr.dictfetchall()
 
             if with_valuation:
-                report_type = 's_v_vals'
+                if local_report:
+                    report_type = 's_v_mml_vals'
+                else:
+                    report_type = 's_v_vals'
             elif not with_valuation:
-                report_type = 's_nv_vals'
+                if local_report:
+                    report_type = 's_nv_mml_vals'
+                else:
+                    report_type = 's_nv_vals'
 
             report = self.browse(cr, uid, report_id, fields_to_fetch=['full_view'], context=context)
             hide_amc_fmc = report.full_view and (self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.level in ['section', 'coordo'])
@@ -1660,6 +1760,8 @@ class stock_mission_report_line(osv.osv):
                                  },
                                  write_relate=False),
         'product_active': fields.boolean(string='Active'),
+        'mml_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('', '')], string='MML'),
+        'msl_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('', '')], string='MSL'),
         'state_ud': fields.char(size=128, string='UniData status'),
         'international_status_code': fields.char(size=128, string='Product Creator'),
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
@@ -1731,6 +1833,8 @@ class stock_mission_report_line(osv.osv):
         'product_state': '',
         'state_ud': '',
         'international_status_code': '',
+        'mml_status': '',
+        'msl_status': '',
     }
 
     def update_full_view_line(self, cr, uid, context=None):

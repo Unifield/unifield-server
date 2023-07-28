@@ -49,6 +49,10 @@
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Reference')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Name')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Active')}</Data></Cell>
+         if o.local_report:
+                <Cell ss:StyleID="header"><Data ss:Type="String">${_('MML')}</Data></Cell>
+                <Cell ss:StyleID="header"><Data ss:Type="String">${_('MSL')}</Data></Cell>
+         % endif
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('UoM')}</Data></Cell>
          % if o.with_valuation:
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Cost Price')}</Data></Cell>
@@ -71,9 +75,17 @@
             </Row>
 
          % if o.with_valuation:
-            ${o.report_id.s_v_vals}
+            % if o.local_report:
+                ${o.report_id.s_v_mml_vals}
+            % else:
+                ${o.report_id.s_v_vals}
+            % endif
          % else:
-            ${o.report_id.s_nv_vals}
+            % if o.local_report:
+                ${o.report_id.s_nv_mml_vals}
+            % else:
+                ${o.report_id.s_nv_vals}
+            % endif
          % endif
     </Table>
 

@@ -23,7 +23,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-
+from tools.misc import _get_std_mml_status
 from mx.DateTime import DateFrom, now, RelativeDate
 from datetime import date, datetime
 
@@ -1168,6 +1168,8 @@ class supplier_catalogue_line(osv.osv):
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
         'to_correct_ok': fields.boolean('To correct'),
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
 
     _defaults = {

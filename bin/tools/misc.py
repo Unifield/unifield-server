@@ -2020,6 +2020,7 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
 
     not_conform = {}
 
+    product_id = ' line.product_id '
     if self._table == 'sale_order':
         main_col = ' line.order_id '
         join_partner = '''
@@ -2041,6 +2042,12 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
         '''
         line_state_cond = ''' and line.state not in ('cancel', 'cancel_r') '''
         instance_cond = ' coalesce(instance.id, %s) '
+    elif self._table == 'product_list':
+        join_partner = 'product_list_line line'
+        instance_cond = '%s'
+        line_state_cond = ''
+        main_col = ' line.list_id '
+        product_id = ' line.name '
     else:
         join_partner = '%s_line line' % self._table
         instance_cond = '%s'
@@ -2057,7 +2064,7 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
             ''' + main_col + '''
         from
             ''' + join_partner + '''
-            left join product_product p on p.id = line.product_id
+            left join product_product p on p.id = ''' + product_id + '''
             left join product_template tmpl on tmpl.id = p.product_tmpl_id
             left join product_international_status creator on creator.id = p.international_status
             left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
@@ -2081,7 +2088,7 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
             distinct(''' + main_col + ''')
         from
             ''' + join_partner + '''
-            left join product_product p on p.id = line.product_id
+            left join product_product p on p.id = ''' + product_id + '''
             left join product_template tmpl on tmpl.id = p.product_tmpl_id
             left join product_international_status creator on creator.id = p.international_status
             left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
@@ -2140,6 +2147,18 @@ def _get_std_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=N
     if self._table == 'product_product':
         from_query = ''' product_product p '''
         field_cond = ' p.id '
+    elif self._table == 'product_list_line':
+        from_query = ''' product_list_line line
+            left join product_product p on p.id =  line.name '''
+        field_cond = ' line.id '
+    elif self._table == 'composition_item':
+        from_query = ''' composition_item line
+            left join product_product p on p.id =  line.item_product_id '''
+        field_cond = ' line.id '
+    elif self._table == 'kit_creation_to_consume':
+        from_query = ''' kit_creation_to_consume line
+            left join product_product p on p.id =  line.product_id_to_consume '''
+        field_cond = ' line.id '
     else:
         from_query = '''%s line
         left join product_product p on p.id =  line.product_id ''' % (self._table, )

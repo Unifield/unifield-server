@@ -630,6 +630,8 @@ class po_follow_up_mixin(object):
             report_line['total_func_currency'] = ''
             report_line['destination'] = analytic_line.get('destination')
             report_line['cost_centre'] = analytic_line.get('cost_center')
+            report_line['mml_status'] = ''
+            report_line['msl_status'] = ''
             res.append(report_line)
 
         return res
@@ -728,6 +730,17 @@ class po_follow_up_mixin(object):
 
         return qty_ordered - qty_received
 
+    def get_mml_msl_status(self, pol_id):
+        get_sel = self.pool.get('ir.model.fields').get_selection
+        ftf = ['mml_status', 'msl_status']
+        pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id, fields_to_fetch=ftf,
+                                                          context=self.localcontext)
+        return {
+            'mml_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'mml_status', pol.mml_status,
+                                  context=self.localcontext) or '',
+            'msl_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'msl_status', pol.msl_status,
+                                  context=self.localcontext) or '',
+        }
 
     def format_date(self, date):
         if not date:
@@ -781,6 +794,7 @@ class po_follow_up_mixin(object):
             same_product_same_uom = []
             same_product = []
             other_product = []
+            mml_msl_status = self.get_mml_msl_status(line[0])
 
             for inl in self.getAllLineIN(line[0]):
                 if inl.get('date_expected'):
@@ -838,6 +852,8 @@ class po_follow_up_mixin(object):
                     'total_currency': '',
                     'total_func_currency': '',
                     'po_details': po[10] or '',
+                    'mml_status': mml_msl_status['mml_status'],
+                    'msl_status': mml_msl_status['msl_status'],
                 }
                 report_lines.append(report_line)
                 if export_format != 'xls':
@@ -890,6 +906,8 @@ class po_follow_up_mixin(object):
                         spsul.get('state') == 'done' and spsul.get('product_qty', 0.0) or 0.0
                     ),
                     'po_details': po[10] or '',
+                    'mml_status': mml_msl_status['mml_status'],
+                    'msl_status': mml_msl_status['msl_status'],
                 }
 
                 report_lines.append(report_line)
@@ -948,6 +966,8 @@ class po_follow_up_mixin(object):
                         spl.get('state') == 'done' and spl.get('product_qty', 0.0) or 0.0
                     ),
                     'po_details': po[10] or '',
+                    'mml_status': mml_msl_status['mml_status'],
+                    'msl_status': mml_msl_status['msl_status'],
                 }
                 report_lines.append(report_line)
 
@@ -1007,6 +1027,8 @@ class po_follow_up_mixin(object):
                         ol.get('state') == 'done' and ol.get('product_qty', 0.0) or 0.0
                     ),
                     'po_details': po[10] or '',
+                    'mml_status': mml_msl_status['mml_status'],
+                    'msl_status': mml_msl_status['msl_status'],
                 }
                 report_lines.append(report_line)
 
@@ -1098,6 +1120,8 @@ class po_follow_up_mixin(object):
             _('Source Document'),
             _('Source Creation Date'),
             _('Supplier Reference'),
+            _('MML'),
+            _('MSL'),
         ]
 
 

@@ -182,7 +182,7 @@
 
     <section>
             [[ repeatIn(getOrders(r, only_bo=r.only_bo), 'o', 'section') ]]
-        <blockTable colWidths="33.0,74.0,120.0,90.0,45.0,40.0,45.0,40.0,45.0,70.0,41.0,43.0,43.0,43.0" style="LinesTable" repeatRows="2">
+        <blockTable colWidths="33.0,74.0,109.0,80.0,40.0,40.0,40.0,40.0,40.0,70.0,40.0,42.0,42.0,42.0,20.0,20.0" style="LinesTable" repeatRows="2">
 	    	<tr>
 	    		<td colspan="2">
                     <para style="Lines">Order ref:</para>
@@ -216,6 +216,12 @@
                 </td>
                 <td>
                     <para style="Lines">Estimated amount: [[ formatLang(getIrAmountEstimated(o) or 0.00) ]] [[ o.functional_currency_id.name ]]</para>
+                </td>
+                <td>
+                    <para style="Lines"></para>
+                </td>
+                <td>
+                    <para style="Lines"></para>
                 </td>
                 <td>
                     <para style="Lines"></para>
@@ -266,6 +272,12 @@
 	    		</td>
                 <td>
                     <para style="Lines"><i>RTS Date</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>MML</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>MSL</i></para>
 	    		</td>
 	    	</tr>
             <tr>
@@ -325,6 +337,14 @@
                 <td>
 	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and (line.get('rts', '') and formatLang(line['rts'], date=True) or 'N/A') or removeParentNode('para') ]]</para>
 	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and (line.get('rts', '') and formatLang(line['rts'], date=True) or 'N/A') or removeParentNode('para') ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and line.get('mml_status', '-') or removeParentNode('para') ]]</para>
+	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('mml_status', '-') or removeParentNode('para') ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="LinesBlue">[[ line.get('state') not in ['cancel', 'cancel_r'] and line.get('msl_status', '-') or removeParentNode('para') ]]</para>
+	    			<para style="LinesGrey">[[ line.get('state') in ['cancel', 'cancel_r'] and line.get('msl_status', '-') or removeParentNode('para') ]]</para>
 	    		</td>
 	    	</tr>
         </blockTable>

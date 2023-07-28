@@ -101,7 +101,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
     def _get_order_line(self, order_id):
         order_line_ids = self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)])
         ftf = ['id', 'order_id', 'line_number', 'state', 'state_to_display', 'product_id', 'type', 'product_uom_qty',
-               'product_uom', 'esti_dd', 'confirmed_delivery_date', 'move_ids', 'comment']
+               'product_uom', 'esti_dd', 'confirmed_delivery_date', 'move_ids', 'comment', 'mml_status', 'msl_status']
         for order_line_id in order_line_ids:
             yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id,
                                                           fields_to_fetch=ftf, context=self.localcontext)
@@ -209,7 +209,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     data = {
                         'state': line.state,
                         'state_display': line_state_display_dict.get(line.state_to_display),
-                        'cancelled_move': move.state in ('cancel', 'cancel_r')
+                        'cancelled_move': move.state in ('cancel', 'cancel_r'),
+                        'mml_status': self.getSel(line, 'mml_status') or ' ',
+                        'msl_status': self.getSel(line, 'msl_status') or ' ',
                     }
                     m_type = move.state in ('cancel', 'cancel_r') or move.product_qty != 0.00 and move.picking_id.type == 'out'
                     ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
@@ -373,7 +375,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             'first_line': True,
                             'state': line.state,
                             'state_display': line_state_display_dict.get(line.state_to_display),
-                            'cancelled_move': move.state in ('cancel', 'cancel_r')
+                            'cancelled_move': move.state in ('cancel', 'cancel_r'),
+                            'mml_status': self.getSel(line, 'mml_status') or ' ',
+                            'msl_status': self.getSel(line, 'msl_status') or ' ',
                         }
             else:  # No move found
                 cancel_qty = 0
@@ -438,6 +442,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'backordered_qty': line.order_id.state != 'cancel' and max(line.product_uom_qty - received_qty - cancel_qty, 0) or 0.00,
                         'edd': edd,
                         'cdd': cdd,
+                        'mml_status': self.getSel(line, 'mml_status') or ' ',
+                        'msl_status': self.getSel(line, 'msl_status') or ' ',
                     }
                     lines.append(data)
 
@@ -460,6 +466,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     'backordered_qty': bo_qty if line.order_id.state != 'cancel' else 0.00,
                     'state': line.state,
                     'state_display': line_state_display_dict.get(line.state_to_display),
+                    'mml_status': self.getSel(line, 'mml_status') or ' ',
+                    'msl_status': self.getSel(line, 'msl_status') or ' ',
                 })
             elif bo_qty < 0:
                 lines[fl_index]['extra_qty'] = abs(bo_qty) if line.order_id.state != 'cancel' else 0.00

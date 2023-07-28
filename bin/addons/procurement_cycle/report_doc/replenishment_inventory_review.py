@@ -36,18 +36,22 @@ class inventory_parser(XlsxReportParser):
         pink2_header_style = self.create_style_from_template('pink2_header_style', 'AS15')
 
         default_style = self.create_style_from_template('default_style', 'A16')
+        red_default_style = self.create_style_from_template('red_default_style', 'A17')
         grey_style = self.create_style_from_template('grey_style', 'H3')
-        precent_style = self.create_style_from_template('precent_style', 'H4')
+        red_grey_style = self.create_style_from_template('red_grey_style', 'I3')
+        percent_style = self.create_style_from_template('percent_style', 'H4')
+        red_percent_style = self.create_style_from_template('red_percent_style', 'I4')
         float_style = self.create_style_from_template('float_style', 'H5')
+        red_cell_style = self.create_style_from_template('red_cell_style', 'I5')
         date_style = self.create_style_from_template('date_style', 'H6')
-        red_cell_style = self.create_style_from_template('red_cell_style', 'H7')
+        red_date_style = self.create_style_from_template('red_date_style', 'I6')
 
         self.duplicate_row_dimensions(range(1, 16))
         self.duplicate_column_dimensions(default_width=15)
 
-        sheet.column_dimensions.group('AN', get_column_letter(column_index_from_string('AN')+2*inventory.projected_view - 1), hidden=False)
-        sheet.column_dimensions.group('D', 'E', hidden=False)
-        sheet.column_dimensions.group('R', 'U', hidden=False)
+        sheet.column_dimensions.group('AO', get_column_letter(column_index_from_string('AO')+2*inventory.projected_view - 1), hidden=False)
+        sheet.column_dimensions.group('D', 'F', hidden=False)
+        sheet.column_dimensions.group('S', 'V', hidden=False)
         sheet.row_dimensions.group(2, 14, hidden=False)
 
 
@@ -99,7 +103,8 @@ class inventory_parser(XlsxReportParser):
             (_('Product Description'), green_header_style),
             (_('RR Lifecycle'), green_header_style),
             (_('Replaced/Replacing'), green_header_style),
-            (_('Primary Product list'), green_header_style),
+            (_('MML'), green_header_style),
+            (_('MSL'), green_header_style),
             (_('Warnings Recap'), red_header_style),
             (_('Segment Ref/name'), orange_header_style),
             (_('RR Type'), orange_header_style),
@@ -160,114 +165,129 @@ class inventory_parser(XlsxReportParser):
                 self.rows = []
                 sheet.row_dimensions[new_row].height = 40
 
-                self.add_cell(line.product_id.default_code)
-                self.add_cell(line.product_id.name)
-                self.add_cell(line.segment_ref_name and self.getSel(line, 'status') or _('N/A'))
-                self.add_cell(line.paired_product_id and line.paired_product_id.default_code or None)
-                self.add_cell(line.primay_product_list or None)
-                self.add_cell(line.warning or None)
-                self.add_cell(line.segment_ref_name or None)
-                self.add_cell(line.segment_ref_name and self.getSel(line, 'rule') or None)
+                # For MML alert 2
+                # if line.mml_status == 'F':
+                #     def_style = red_default_style
+                #     def_grey_style = red_grey_style
+                #     def_float_style = red_cell_style
+                #     def_percent_style = red_percent_style
+                #     def_date_style = red_date_style
+                # else:
+                def_style = default_style
+                def_grey_style = grey_style
+                def_float_style = float_style
+                def_percent_style = percent_style
+                def_date_style = date_style
+
+                self.add_cell(line.product_id.default_code, def_style)
+                self.add_cell(line.product_id.name, def_style)
+                self.add_cell(line.segment_ref_name and self.getSel(line, 'status') or _('N/A'), def_style)
+                self.add_cell(line.paired_product_id and line.paired_product_id.default_code or None, def_style)
+                self.add_cell('', def_style)  # self.getSel(line, 'mml_status')
+                self.add_cell('', def_style)  # self.getSel(line, 'msl_status')
+                self.add_cell(line.warning or None, def_style)
+                self.add_cell(line.segment_ref_name or None, def_style)
+                self.add_cell(line.segment_ref_name and self.getSel(line, 'rule') or None, def_style)
 
                 if inventory.time_unit == 'd':
-                    lt_style = default_style
+                    lt_style = def_style
                 else:
-                    lt_style = float_style
+                    lt_style = def_float_style
 
                 if line.segment_ref_name:
                     self.add_cell(line.internal_lt or None, lt_style)
                     self.add_cell(line.external_lt or None, lt_style)
                     self.add_cell(line.total_lt or None, lt_style)
                     self.add_cell(line.order_coverage or None, lt_style)
-                    self.add_cell(line.safety_stock_qty or None)
+                    self.add_cell(line.safety_stock_qty or None, def_style)
                 else:
-                    self.add_cell()
-                    self.add_cell()
-                    self.add_cell()
-                    self.add_cell()
-                    self.add_cell()
+                    self.add_cell('', def_style)
+                    self.add_cell('', def_style)
+                    self.add_cell('', def_style)
+                    self.add_cell('', def_style)
+                    self.add_cell('', def_style)
 
                 if line.rule == 'cycle':
-                    self.add_cell(line.buffer_qty or None)
+                    self.add_cell(line.buffer_qty or None, def_style)
                 else:
-                    self.add_cell('', grey_style)
+                    self.add_cell('', def_grey_style)
 
-                self.add_cell(line.valid_rr_fmc and _('Yes') or _('No'))
-                self.add_cell(line.rr_fmc_avg or None, float_style)
-                self.add_cell(line.rr_amc or None, float_style)
-                self.add_cell(line.std_dev_hmc or None, float_style)
-                self.add_cell(line.coef_var_hmc/100. or None, precent_style)
+                self.add_cell(line.valid_rr_fmc and _('Yes') or _('No'), def_style)
+                self.add_cell(line.rr_fmc_avg or None, def_float_style)
+                self.add_cell(line.rr_amc or None, def_float_style)
+                self.add_cell(line.std_dev_hmc or None, def_float_style)
+                self.add_cell(line.coef_var_hmc/100. or None, def_percent_style)
 
                 if line.rule == 'cycle':
-                    self.add_cell(line.std_dev_hmc_fmc or None, float_style)
-                    self.add_cell(line.coef_var_hmc_fmc/100. or None, precent_style)
+                    self.add_cell(line.std_dev_hmc_fmc or None, def_float_style)
+                    self.add_cell(line.coef_var_hmc_fmc/100. or None, def_percent_style)
                 else:
-                    self.add_cell('', grey_style)
-                    self.add_cell('', grey_style)
+                    self.add_cell('', def_grey_style)
+                    self.add_cell('', def_grey_style)
 
-                self.add_cell(line.real_stock or None)
-                self.add_cell(line.pipeline_qty or None)
-                self.add_cell(line.reserved_stock_qty or None)
+                self.add_cell(line.real_stock or None, def_style)
+                self.add_cell(line.pipeline_qty or None, def_style)
+                self.add_cell(line.reserved_stock_qty or None, def_style)
 
                 if line.projected_stock_qty and line.rule == 'cycle':
-                    self.add_cell(line.projected_stock_qty)
+                    self.add_cell(line.projected_stock_qty, def_style)
                 else:
-                    self.add_cell()
+                    self.add_cell('', def_style)
 
                 if line.projected_stock_qty_amc and (line.rule == 'cycle' or not line.segment_ref_name):
-                    self.add_cell(line.projected_stock_qty_amc)
+                    self.add_cell(line.projected_stock_qty_amc, def_style)
                 else:
-                    self.add_cell()
+                    self.add_cell('', def_style)
 
                 if line.expired_qty_before_cons:
-                    self.add_cell(line.expired_qty_before_cons)
+                    self.add_cell(line.expired_qty_before_cons, def_style)
                 else:
-                    self.add_cell()
+                    self.add_cell('', def_style)
 
                 if line.total_expired_qty:
-                    self.add_cell(line.total_expired_qty)
+                    self.add_cell(line.total_expired_qty, def_style)
                 else:
-                    self.add_cell()
+                    self.add_cell('', def_style)
 
-                self.add_cell(line.open_loan and _('Yes') or _('No'))
-                self.add_cell(line.open_donation and _('Yes') or _('No'))
+                self.add_cell(line.open_loan and _('Yes') or _('No'), def_style)
+                self.add_cell(line.open_donation and _('Yes') or _('No'), def_style)
 
-                self.add_cell(line.sleeping_qty or None)
-                self.add_cell(line.unit_of_supply_amc or None, float_style)
+                self.add_cell(line.sleeping_qty or None, def_style)
+                self.add_cell(line.unit_of_supply_amc or None, def_float_style)
 
-                self.add_cell(line.unit_of_supply_fmc or None, float_style)
-                self.add_cell(line.qty_lacking or None)
-                self.add_cell(self.to_datetime(line.qty_lacking_needed_by), date_style)
-                self.add_cell(self.to_datetime(line.eta_for_next_pipeline), date_style)
-                self.add_cell(self.to_datetime(line.date_preparing), date_style)
-                self.add_cell(self.to_datetime(line.date_next_order_validated), date_style)
-                self.add_cell(self.to_datetime(line.date_next_order_rdd), date_style)
+                self.add_cell(line.unit_of_supply_fmc or None, def_float_style)
+                self.add_cell(line.qty_lacking or None, def_style)
+                self.add_cell(self.to_datetime(line.qty_lacking_needed_by), def_date_style)
+                self.add_cell(self.to_datetime(line.eta_for_next_pipeline), def_date_style)
+                self.add_cell(self.to_datetime(line.date_preparing), def_date_style)
+                self.add_cell(self.to_datetime(line.date_next_order_validated), def_date_style)
+                self.add_cell(self.to_datetime(line.date_next_order_rdd), def_date_style)
 
                 nb_pas = 0
                 for detail_pas in line.pas_ids:
                     nb_pas += 1
                     if detail_pas.rr_fmc is not None and detail_pas.rr_fmc is not False:
                         if line.rule != 'minmax':
-                            self.add_cell(detail_pas.rr_fmc)
+                            self.add_cell(detail_pas.rr_fmc, def_style)
                         elif detail_pas.rr_max is not False:
-                            self.add_cell('%g / %g'% (detail_pas.rr_fmc, detail_pas.rr_max))
+                            self.add_cell('%g / %g'% (detail_pas.rr_fmc, detail_pas.rr_max), def_style)
                         else:
-                            self.add_cell(_('Invalid'))
+                            self.add_cell(_('Invalid'), def_style)
                     else:
-                        self.add_cell(_('Invalid'))
+                        self.add_cell(_('Invalid'), def_style)
 
                 for detail_pas in line.pas_ids:
                     if detail_pas.projected is not None and detail_pas.projected is not False:
                         if detail_pas.projected:
-                            self.add_cell(detail_pas.projected, float_style)
+                            self.add_cell(detail_pas.projected, def_float_style)
                         else:
                             self.add_cell(detail_pas.projected, red_cell_style)
                     else:
                         self.add_cell()
 
                 for nb_month in range(nb_pas, inventory.projected_view):
-                    self.add_cell()
-                    self.add_cell()
+                    self.add_cell('', def_style)
+                    self.add_cell('', def_style)
 
                 sheet.append(self.rows)
                 new_row += 1

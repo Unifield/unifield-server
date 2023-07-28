@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
+from tools.misc import _get_std_mml_status
 import netsvc
 import decimal_precision as dp
 import time
@@ -1100,6 +1101,8 @@ class kit_creation_to_consume(osv.osv):
                 'batch_check_kit_creation_to_consume': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
                 'expiry_check_kit_creation_to_consume': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
                 'uom_rounding_is_pce': fields.function(_vals_get, method=True, type='boolean', string="UoM Rounding is PCE", multi='get_vals', store=False, readonly=True),
+                'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+                'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
 
                 }
 
