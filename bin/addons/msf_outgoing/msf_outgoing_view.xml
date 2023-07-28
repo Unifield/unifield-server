@@ -1385,6 +1385,8 @@
                                             <field name="state" />
                                             <field name="inactive_product" invisible="1" />
                                             <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                            <field name="mml_status" />
+                                            <field name="msl_status" />
                                         </tree>
                                     </field>
                                 </form>
