@@ -2344,6 +2344,7 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
 
+        prod_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')
         srv_id = self.pool.get('stock.location').get_service_location(cr, uid, context=context)
         input_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
@@ -2352,7 +2353,10 @@ class purchase_order_line(osv.osv):
 
         product_type, so = False, False
         if pol:
-            product_type = pol.product_id.type
+            if 'product_id' in vals and vals.get('product_id'):
+                product_type = prod_obj.read(cr, uid, vals['product_id'], ['type'], context=context)['type']
+            else:
+                product_type = pol.product_id.type
             if 'link_so_id' in vals and vals.get('link_so_id'):
                 ftf = ['procurement_request', 'location_requestor_id']
                 so = self.pool.get('sale.order').browse(cr, uid, vals['link_so_id'], fields_to_fetch=ftf, context=context)
@@ -2360,17 +2364,20 @@ class purchase_order_line(osv.osv):
                 so = pol.linked_sol_id and pol.linked_sol_id.order_id or pol.link_so_id or False
         else:
             if 'product_id' in vals and vals.get('product_id'):
-                product_type = self.pool.get('product.product').read(cr, uid, vals['product_id'], ['type'], context=context)['type']
+                product_type = prod_obj.read(cr, uid, vals['product_id'], ['type'], context=context)['type']
             if 'linked_sol_id' in vals and vals.get('linked_sol_id'):
                 so = self.pool.get('sale.order.line').browse(cr, uid, vals['linked_sol_id'],
                                                              fields_to_fetch=['order_id'], context=context).order_id
 
         dest = input_id
         # please also check in delivery_mechanism/delivery_mechanism.py _get_values_from_line to set location_dest_id
-        if so and (not so.procurement_request or (so.procurement_request and so.location_requestor_id.usage == 'customer')):
-            dest = cross_id
-        elif product_type == 'service_recep':
+        if product_type == 'service_recep':
             dest = srv_id
+        elif so:
+            if product_type == 'consu' and so.procurement_request:
+                dest = n_stock_id
+            else:
+                dest = cross_id
         elif product_type == 'consu':
             dest = n_stock_id
 
