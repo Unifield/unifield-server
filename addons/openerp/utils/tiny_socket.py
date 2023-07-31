@@ -89,11 +89,11 @@ class TinySocket(object):
 
         size = int(read(self.sock, 8))
         buf = read(self.sock, 1)
-        if buf == '3':
+        if buf == b'3':
             newsize = int(read(self.sock, 16))
             size = newsize*10**8+size
             buf = read(self.sock, 1)
-        exception = buf != '0' and buf or False
+        exception = buf != b'0' and buf or False
         # pickel compat with py2.7
         res = pickle.loads(read(self.sock, size), fix_imports=True, encoding='utf8')
 
