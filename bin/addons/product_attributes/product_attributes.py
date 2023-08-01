@@ -1061,8 +1061,8 @@ class product_attributes(osv.osv):
             string='Dangerous goods',
             required=True,
         ),
-        'restricted_country': fields.boolean('Restricted in the Country (deprecated)'),
-        'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction (deprecated)'),
+        'restricted_country': fields.boolean('Restricted in the Country'),
+        'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),
         'state_ud': fields.selection(
             selection=[
                 ('valid', 'Valid'),

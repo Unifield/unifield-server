@@ -195,6 +195,9 @@
                                 <separator string="Transport" colspan="2"/>
                                 <field name="dangerous_goods" colspan="2"/>
                                 <field name="un_code" colspan="2"/>
+                                <separator string="Import restrictions" colspan="4"/>
+                                <field name="restricted_country" colspan="2"/>
+                                <field name="country_restriction" colspan="2" widget="selection" attrs="{'readonly':[('restricted_country','=',False)]}"/>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>
