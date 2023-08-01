@@ -196,7 +196,7 @@ def execute_report(name, **data):
 
         bg_report = False
         background_id = ctx.get('background_id')
-        max_attempt = ctx.get('background_time', 600)
+        max_attempt = ctx.get('background_time', 1200)
         report_name = 'report'
 
 
