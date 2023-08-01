@@ -184,6 +184,10 @@
     <Column ss:AutoFitWidth="1" ss:Width="80" />
     # Supplier ref
     <Column ss:AutoFitWidth="1" ss:Width="150" />
+    # MML Status
+    <Column ss:AutoFitWidth="1" ss:Width="40" />
+    # MSL Status
+    <Column ss:AutoFitWidth="1" ss:Width="40" />
 <Row>
     <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
 </Row>
@@ -344,6 +348,8 @@
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String"></Data></Cell>
       % endif
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['mml_status'])|x}</Data></Cell>
+      <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['msl_status'])|x}</Data></Cell>
     </Row>
     % endif
   % endfor

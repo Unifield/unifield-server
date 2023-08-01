@@ -50,6 +50,8 @@ class export_report_stock_inventory(osv.osv):
         'product_id': fields.many2one('product.product', string='Specific product', help="If a product is chosen, only quantities of this product will be shown."),
         'prodlot_id': fields.many2one('stock.production.lot', string='Specific Batch number'),
         'product_list_id': fields.many2one('product.list', string='Specific Product list'),
+        'mml_id': fields.many2one('msf.instance', string='MML'),
+        'msl_id': fields.many2one('unifield.instance', domain=[('uf_active', '=', True)], string='MSL'),
         'expiry_date': fields.date(string='Specific expiry date'),
         'location_id': fields.many2one('stock.location', string='Specific location', help="If a location is chosen, only product quantities in this location will be shown.", required=False),
         'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('ready', 'Ready')], string='State', readonly=True,),
@@ -182,6 +184,7 @@ class export_report_stock_inventory(osv.osv):
                     'in_last_x_months': False,
                 },
             }
+        return {}
 
     def onchange_prodlot(self, cr, uid, ids, prodlot_id):
         """
@@ -280,9 +283,14 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             cond.append('product_id in %(product_ids)s')
             full_prod_list = [report.product_id.id]
             values['product_ids'] = (report.product_id.id,)
-        elif report.product_list_id:
+        elif report.mml_id or report.msl_id:
             cond.append('product_id in %(product_ids)s')
-            full_prod_list = self.pool.get('product.product').search(self.cr, self.uid, [('list_ids', '=', report.product_list_id.id)], context=context)
+            dom = []
+            if report.mml_id:
+                dom.append(('in_mml_instance', '=', report.mml_id.id))
+            if report.msl_id:
+                dom.append(('in_msl_instance', '=', report.msl_id.id))
+            full_prod_list = self.pool.get('product.product').search(self.cr, self.uid, dom, context=context)
             values['product_ids'] = tuple(full_prod_list)
             with_zero = True
 
@@ -385,7 +393,7 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             for x in self.cr.fetchall():
                 cost_price_at_date[x[0]] = x[1]
 
-        for product in self.pool.get('product.product').browse(self.cr, self.uid, product_ids_to_fetch, fields_to_fetch=['default_code', 'uom_id', 'name', 'standard_price'], context=context):
+        for product in self.pool.get('product.product').browse(self.cr, self.uid, product_ids_to_fetch, fields_to_fetch=['default_code', 'uom_id', 'name', 'standard_price', 'mml_status', 'msl_status'], context=context):
             product_data[product.id] = product
             if product.id not in res:
                 res[product.id] = {
@@ -404,6 +412,11 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         final_result = {}
         total_value = 0
         nb_items = 0
+        status_map = {
+            'F': _('No'),
+            'T': _('Yes'),
+            'na': '',
+        }
         for product_id in res:
             product_code = product_data[product_id].default_code
             cost_price = cost_price_at_date.get(product_id, product_data[product_id].standard_price)
@@ -416,6 +429,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                 'sum_value':  cost_price * rounded_qty,
                 'with_zero': with_zero,
                 'moves_in_months': product_id in date_prod_list,
+                'mml_status': status_map.get(product_data[product_id].mml_status, ''),
+                'msl_status': status_map.get(product_data[product_id].msl_status, ''),
                 'lines': {},
             }
             total_value += final_result[product_code]['sum_value']
@@ -457,9 +472,11 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         sheet.column_dimensions['A'].width = 23.0
         sheet.column_dimensions['B'].width = 60.0
         sheet.column_dimensions['C'].width = 18.0
-        sheet.column_dimensions['D'].width = 20.0
-        sheet.column_dimensions['E'].width = 15.0
-        ite = 6
+        sheet.column_dimensions['D'].width = 10.0
+        sheet.column_dimensions['E'].width = 10.0
+        sheet.column_dimensions['F'].width = 20.0
+        sheet.column_dimensions['G'].width = 15.0
+        ite = 8
         loc_list = []
         locations = self.get_locations(context=context)
         if not report.location_id:
@@ -480,9 +497,9 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         orange_style = self.create_style_from_template('orange_style', 'A1')
         grey_style = self.create_style_from_template('grey_style', 'C1')
         grey_date_style = self.create_style_from_template('grey_date_style', 'C2')
-        dark_grey_style = self.create_style_from_template('dark_grey_style', 'Q13')
+        dark_grey_style = self.create_style_from_template('dark_grey_style', 'S13')
         default_style = self.create_style_from_template('default_style', 'A13')
-        date_style = self.create_style_from_template('date_style', 'E13')
+        date_style = self.create_style_from_template('date_style', 'G13')
 
         # If the title is > 31 chars, it causes a minor error during generation and while using the file
         if loc_list:
@@ -532,45 +549,53 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         sheet.merged_cells.ranges.append("A4:B4")
         sheet.merged_cells.ranges.append("C4:E4")
 
-        cell_h5 = WriteOnlyCell(sheet, value=_('Specific Product list'))
+        cell_h5 = WriteOnlyCell(sheet, value=_('MML'))
         cell_h5.style = orange_style
-        cell_h5d = WriteOnlyCell(sheet, value=report.product_list_id and report.product_list_id.name or '')
+        cell_h5d = WriteOnlyCell(sheet, value=report.mml_id and report.mml_id.name or '')
         cell_h5d.style = grey_style
         sheet.append([cell_h5, empty_orange_cell, cell_h5d, empty_grey_cell, empty_grey_cell])
         sheet.merged_cells.ranges.append("A5:B5")
         sheet.merged_cells.ranges.append("C5:E5")
+
+        cell_h5b = WriteOnlyCell(sheet, value=_('MSL'))
+        cell_h5b.style = orange_style
+        cell_h5bd = WriteOnlyCell(sheet, value=report.msl_id and report.msl_id.instance_name or '')
+        cell_h5bd.style = grey_style
+        sheet.append([cell_h5b, empty_orange_cell, cell_h5bd, empty_grey_cell, empty_grey_cell])
+        sheet.merged_cells.ranges.append("A6:B6")
+        sheet.merged_cells.ranges.append("C6:E6")
 
         cell_h6 = WriteOnlyCell(sheet, value=_('Specific batch number'))
         cell_h6.style = orange_style
         cell_h6d = WriteOnlyCell(sheet, value=report.prodlot_id and report.prodlot_id.name or '')
         cell_h6d.style = grey_style
         sheet.append([cell_h6, empty_orange_cell, cell_h6d, empty_grey_cell, empty_grey_cell])
-        sheet.merged_cells.ranges.append("A6:B6")
-        sheet.merged_cells.ranges.append("C6:E6")
+        sheet.merged_cells.ranges.append("A7:B7")
+        sheet.merged_cells.ranges.append("C7:E7")
 
         cell_h7 = WriteOnlyCell(sheet, value=_('Specific expiry date'))
         cell_h7.style = orange_style
         cell_h7d = WriteOnlyCell(sheet, value=self.to_datetime(report.expiry_date))
         cell_h7d.style = grey_date_style
         sheet.append([cell_h7, empty_orange_cell, cell_h7d, empty_grey_date_cell, empty_grey_date_cell])
-        sheet.merged_cells.ranges.append("A7:B7")
-        sheet.merged_cells.ranges.append("C7:E7")
+        sheet.merged_cells.ranges.append("A8:B8")
+        sheet.merged_cells.ranges.append("C8:E8")
 
         cell_h8 = WriteOnlyCell(sheet, value=_('Specific location'))
         cell_h8.style = orange_style
         cell_h8d = WriteOnlyCell(sheet, value=report.location_id and report.location_id.name or _('All Locations'))
         cell_h8d.style = grey_style
         sheet.append([cell_h8, empty_orange_cell, cell_h8d, empty_grey_cell, empty_grey_cell])
-        sheet.merged_cells.ranges.append("A8:B8")
-        sheet.merged_cells.ranges.append("C8:E8")
+        sheet.merged_cells.ranges.append("A9:B9")
+        sheet.merged_cells.ranges.append("C9:E9")
 
         cell_h9 = WriteOnlyCell(sheet, value=_('Including products with stock <= 0 with movements in the last months'))
         cell_h9.style = orange_style
         cell_h9d = WriteOnlyCell(sheet, value=report.display_0 and report.in_last_x_months + _(' months') or _('N/A'))
         cell_h9d.style = grey_style
         sheet.append([cell_h9, empty_orange_cell, cell_h9d, empty_grey_cell, empty_grey_cell])
-        sheet.merged_cells.ranges.append("A9:B9")
-        sheet.merged_cells.ranges.append("C9:E9")
+        sheet.merged_cells.ranges.append("A10:B10")
+        sheet.merged_cells.ranges.append("C10:E10")
 
         total_value, nb_items, lines = self.get_lines(report.id, context=context)
         # Lines Header data
@@ -581,7 +606,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         cell_lh_10_d = WriteOnlyCell(sheet, value=_('Currency'))
         cell_lh_10_d.style = orange_style
         orange_row_header = [empty_orange_cell, cell_lh_10_b, cell_lh_10_c, cell_lh_10_d, empty_orange_cell,
-                             empty_orange_cell, empty_orange_cell, empty_orange_cell, empty_orange_cell]
+                             empty_orange_cell, empty_orange_cell, empty_orange_cell, empty_orange_cell,
+                             empty_orange_cell, empty_orange_cell]
         if loc_list:
             or_extend = []
             oi = 1
@@ -597,7 +623,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         cell_lh_11_c.style = default_style
         cell_lh_11_d = WriteOnlyCell(sheet, value=report.company_id.currency_id.name)
         cell_lh_11_d.style = default_style
-        empty_row_header = [empty_cell, cell_lh_11_b, cell_lh_11_c, cell_lh_11_d, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell]
+        empty_row_header = [empty_cell, cell_lh_11_b, cell_lh_11_c, cell_lh_11_d, empty_cell, empty_cell, empty_cell,
+                            empty_cell, empty_cell, empty_cell, empty_cell]
         if loc_list:
             em_extend = []
             ei = 1
@@ -611,6 +638,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             (_('Product Code')),
             (_('Product Description')),
             (_('UoM')),
+            (_('MML')),
+            (_('MSL')),
             (_('Batch')),
             (_('Exp Date')),
         ]
@@ -635,6 +664,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                         self.add_cell(prd['product_code'], default_style)
                         self.add_cell(prd['product_name'], default_style)
                         self.add_cell(prd['uom'], default_style)
+                        self.add_cell(prd['mml_status'], default_style)
+                        self.add_cell(prd['msl_status'], default_style)
                         self.add_cell(line['batch'], default_style)
                         self.add_cell(self.to_datetime(line['expiry_date']), date_style)
                         for loc in locations:
@@ -648,6 +679,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                     self.add_cell(prd['product_code'], dark_grey_style)
                     self.add_cell(prd['product_name'], dark_grey_style)
                     self.add_cell(prd['uom'], dark_grey_style)
+                    self.add_cell(prd['mml_status'], dark_grey_style)
+                    self.add_cell(prd['msl_status'], dark_grey_style)
                     self.add_cell('', dark_grey_style)
                     self.add_cell('', dark_grey_style)
                     self.add_cell('', dark_grey_style)
@@ -661,6 +694,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                             self.add_cell(prd['product_code'], default_style)
                             self.add_cell(prd['product_name'], default_style)
                             self.add_cell(prd['uom'], default_style)
+                            self.add_cell(prd['mml_status'], default_style)
+                            self.add_cell(prd['msl_status'], default_style)
                             self.add_cell(line['batch'], default_style)
                             self.add_cell(self.to_datetime(line['expiry_date']), date_style)
                             self.add_cell(round(line['qty'], 2), default_style)

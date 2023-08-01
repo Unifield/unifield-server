@@ -2896,14 +2896,14 @@ class orm(orm_template):
         query_orderby = ''
         if limited_groupby:
             if gb:
-                gb += ',default_code'
+                gb += ',l_default_code'
             if orderby:
                 split_orderby = orderby.split(' ')
                 query_orderby = ' order by default_code '
                 if len(split_orderby) == 2 and split_orderby[1].strip().lower() in ['asc', 'desc']:
                     query_orderby = '%s %s ' % (query_orderby, split_orderby[1])
             else:
-                query_orderby = ' order by default_code '
+                query_orderby = ' order by l_default_code '
 
         cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + query_orderby + limit_str + offset_str, where_clause_params)  # not_a_user_entry
         alldata = {}

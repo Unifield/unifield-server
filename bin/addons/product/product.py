@@ -527,6 +527,8 @@ class product_product(osv.osv):
             elif x[0] == 'in_msl_instance':
                 if x[2] == 'active' and not filter_in_msl_instance:
                     filter_in_msl_instance = self.pool.get('unidata.project').search(cr, uid, [('uf_active', '=', True)], context=context)
+                    if not filter_in_msl_instance:
+                        filter_in_msl_instance = [0]
                 elif x[2] is True:
                     t_filter_in_msl_instance = -1
                     instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)

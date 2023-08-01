@@ -997,7 +997,8 @@
                             <field name="product_description" filter_selector="1" />
                             <field name="uom_id" invisible="1" />
                             <field name="status" invisible="1" />
-                            <field name="primay_product_list" filter_selector="1" />
+                            <field name="mml_status" />
+                            <field name="msl_status" />
                             <field name="segment_ref_name" />
                             <field name="rule" />
                             <field name="projected_stock_qty_amc" />
@@ -1021,15 +1022,14 @@
                             <field name="date_preparing" />
                             <field name="date_next_order_validated" />
                             <field name="date_next_order_rdd" />
-                            <field name="mml_status" />
-                            <field name="msl_status" />
                         </tree>
                         <form>
                             <field name="product_id"/>
                             <field name="product_description"/>
                             <field name="uom_id" invisible="1" />
                             <field name="status" invisible="1" />
-                            <field name="primay_product_list" />
+                            <field name="mml_status" />
+                            <field name="msl_status" />
                             <field name="segment_ref_name" />
                             <field name="rr_fmc_avg" />
                             <field name="rr_amc" />
@@ -1170,7 +1170,7 @@
                 <tree string="Product List Consistency Report" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" notselectable="1">
                     <field name="product_id" />
                     <field name="name_seg" not_sortable="1"/>
-                    <field name="description_seg" not_sortable="1"/>
+                    <field name="description_seg" not_sortable="1" />
                 </tree>
             </field>
         </record>
@@ -1181,7 +1181,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Product List Consistency Report" hide_new_button="1" hide_duplicate_button="1">
-                    <field name="default_code" />
+                    <field name="l_default_code" />
                     <field name="product_description" />
                     <field name="name_seg" />
                     <field name="description_seg" />
@@ -1198,11 +1198,12 @@
                     <filter string="Segmented" name="segmented" icon="terp-check" domain="[('segment_id', '!=', False)]"/>
                     <filter string="Not Segmented" name="not_segemented" icon="gtk-cancel" domain="[('segment_id', '=', False)]"/>
                     <separator orientation="vertical"/>
-                    <field name="default_code" />
+                    <field name="l_default_code" />
                     <field name="product_id" />
                     <field name="name_seg" />
                     <field name="description_seg" />
-                    <field name="list_ids" />
+                    <field name="in_mml_instance" />
+                    <field name="in_msl_instance" />
                     <newline />
                     <filter string="Group by Product" name="group_product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}" />
                 </search>

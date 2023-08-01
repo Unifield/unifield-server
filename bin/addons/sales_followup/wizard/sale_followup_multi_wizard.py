@@ -99,7 +99,8 @@ class sale_followup_multi_wizard(osv.osv_memory):
         ),
         'include_notes_ok': fields.boolean(
             string='Include order lines note (PDF)',
-        )
+        ),
+        'msl_non_conform': fields.boolean('MSL/MML Non Conforming'),
     }
 
     _defaults = {
@@ -158,6 +159,74 @@ class sale_followup_multi_wizard(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('The requested report is too heavy to generate: requested %d lines, maximum allowed %d. '
                                                'Please apply further filters so that report can be generated.') % (nb_lines, max_line))
 
+    def get_line_ids_non_msl(self, cr, uid, order_id, context=None):
+        sql_param = {
+            'instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),
+            'order_id' : order_id
+        }
+
+        # MML
+        cr.execute('''
+        select
+            sol.id
+        from
+            sale_order_line sol
+            left join sale_order so on so.id = sol.order_id
+            left join res_partner partner on partner.id = so.partner_id
+            left join msf_instance instance on instance.instance = partner.name
+            left join product_product p on p.id = sol.product_id
+            left join product_template tmpl on tmpl.id = p.product_tmpl_id
+            left join product_international_status creator on creator.id = p.international_status
+            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            left join product_project_rel p_rel on p.id = p_rel.product_id
+            left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+            left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+        where
+            sol.order_id = %(order_id)s
+            and nom.name='MED'
+            and nom.level = 0
+            and creator.code = 'unidata'
+            and sol.state not in ('cancel', 'cancel_r')
+        group by sol.id
+        HAVING
+            (
+                bool_or(coalesce(oc_validation,'f'))='f'
+                or
+                not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
+                and
+                count(up1.instance_id)>0
+             )
+        order by sol.line_number
+        ''', sql_param)
+        ids = set([x[0] for x in cr.fetchall()])
+
+        cr.execute('''
+        select
+            sol.id
+        from
+            sale_order_line sol
+            left join sale_order so on so.id = sol.order_id
+            left join res_partner partner on partner.id = so.partner_id
+            left join msf_instance instance on instance.instance = partner.name
+            left join product_product p on p.id = sol.product_id
+            left join product_template tmpl on tmpl.id = p.product_tmpl_id
+            left join product_international_status creator on creator.id = p.international_status
+            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            left join unidata_project on unidata_project.instance_id = coalesce(instance.id, %(instance_id)s)
+            left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+        where
+            sol.order_id = %(order_id)s
+            and nom.name='MED'
+            and nom.level = 0
+            and creator.code = 'unidata'
+            and sol.state not in ('cancel', 'cancel_r')
+        group by sol.id
+        having
+            count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
+        ''', sql_param) # not_a_user_entry
+        ids.update([x[0] for x in cr.fetchall()])
+        return list(ids)
+
     def get_values(self, cr, uid, ids, context=None):
         '''
         Retrieve the data according to values in wizard
@@ -171,7 +240,84 @@ class sale_followup_multi_wizard(osv.osv_memory):
             ids = [ids]
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            if wizard.order_id:
+            if wizard.msl_non_conform:
+                state_domain = self._get_state_domain(wizard)
+                sql_param = {'instance_id': self.pool.get('res.company')._get_instance_id(cr, uid)}
+                sql_cond = ["nom.name='MED'", "nom.level = 0", "so.procurement_request = 'f'", "creator.code = 'unidata'"]
+                if wizard.order_id:
+                    sql_param['order_id'] = wizard.order_id.id
+                    sql_cond.append(' so.id = %(order_id)s ')
+                if wizard.partner_id:
+                    sql_param['partner_id'] = wizard.partner_id.id
+                    sql_cond.append(' so.parner_id = %(partner_id)s ')
+                if wizard.start_date:
+                    sql_param['start_date'] = wizard.start_date
+                    sql_cond.append(' so.date_order >= %(start_date)s ')
+                if wizard.end_date:
+                    sql_param['end_date'] = wizard.end_date
+                    sql_cond.append(' so.date_order <= %(end_date)s ')
+                if state_domain:
+                    sql_param['state'] = tuple(state_domain)
+                    sql_cond.append(' so.state in %(state)s ')
+
+                # MML
+                cr.execute('''
+                select
+                    so.id
+                from
+                    sale_order so
+                    left join sale_order_line sol on sol.order_id = so.id and sol.state not in ('cancel', 'cancel_r')
+                    left join res_partner partner on partner.id = so.partner_id
+                    left join msf_instance instance on instance.instance = partner.name
+                    left join product_product p on p.id = sol.product_id
+                    left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                    left join product_international_status creator on creator.id = p.international_status
+                    left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                    left join product_project_rel p_rel on p.id = p_rel.product_id
+                    left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+                    left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+                where
+                    ''' + ' and '.join(sql_cond) + '''
+                group by so.id
+                HAVING
+                    (
+                        count(sol.id) > 0
+                        and (
+                            bool_or(coalesce(oc_validation,'f'))='f'
+                            or
+                            not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
+                            and
+                            count(up1.instance_id)>0
+                        )
+                     )
+                ''', sql_param) # not_a_user_entry
+                fo_ids = set([x[0] for x in cr.fetchall()])
+
+                # MSL
+                cr.execute('''
+                    select
+                        so.id
+                    from
+                    sale_order so
+                    left join sale_order_line sol on sol.order_id = so.id and sol.state not in ('cancel', 'cancel_r')
+                    left join res_partner partner on partner.id = so.partner_id
+                    left join msf_instance instance on instance.instance = partner.name
+                    left join product_product p on p.id = sol.product_id
+                    left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                    left join product_international_status creator on creator.id = p.international_status
+                    left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                    left join unidata_project on unidata_project.instance_id = coalesce(instance.id, %(instance_id)s)
+                    left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+                    where
+                        ''' +  ' and '.join(sql_cond) + '''
+                    group by so.id
+                    having
+                    count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
+                ''', sql_param) # not_a_user_entry
+                fo_ids.update([x[0] for x in cr.fetchall()])
+                fo_ids = list(fo_ids)
+
+            elif wizard.order_id:
                 fo_ids = [wizard.order_id.id]
             else:
                 fo_domain = []
@@ -191,13 +337,13 @@ class sale_followup_multi_wizard(osv.osv_memory):
 
                 fo_ids = fo_obj.search(cr, uid, fo_domain, context=context)
 
-                if not fo_ids:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('No data found with these parameters'),
-                    )
+            if not fo_ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('No data found with these parameters'),
+                )
 
-                self._check_max_line_number(cr, fo_ids)
+            self._check_max_line_number(cr, fo_ids)
 
             self.write(cr, uid, [wizard.id], {'order_ids': fo_ids}, context=context)
 

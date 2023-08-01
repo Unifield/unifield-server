@@ -2020,6 +2020,7 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
 
     not_conform = {}
 
+    product_id = ' line.product_id '
     if self._table == 'sale_order':
         main_col = ' line.order_id '
         join_partner = '''
@@ -2041,6 +2042,12 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
         '''
         line_state_cond = ''' and line.state not in ('cancel', 'cancel_r') '''
         instance_cond = ' coalesce(instance.id, %s) '
+    elif self._table == 'product_list':
+        join_partner = 'product_list_line line'
+        instance_cond = '%s'
+        line_state_cond = ''
+        main_col = ' line.list_id '
+        product_id = ' line.name '
     else:
         join_partner = '%s_line line' % self._table
         instance_cond = '%s'
@@ -2057,7 +2064,7 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
             ''' + main_col + '''
         from
             ''' + join_partner + '''
-            left join product_product p on p.id = line.product_id
+            left join product_product p on p.id = ''' + product_id + '''
             left join product_template tmpl on tmpl.id = p.product_tmpl_id
             left join product_international_status creator on creator.id = p.international_status
             left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
@@ -2081,7 +2088,7 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
             distinct(''' + main_col + ''')
         from
             ''' + join_partner + '''
-            left join product_product p on p.id = line.product_id
+            left join product_product p on p.id = ''' + product_id + '''
             left join product_template tmpl on tmpl.id = p.product_tmpl_id
             left join product_international_status creator on creator.id = p.international_status
             left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
@@ -2121,17 +2128,18 @@ def _get_std_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=N
 
     if local_instance.level == 'section':
         for _id in ids:
-            ret[_id] = {
-                'mml_status': 'na',
-                'msl_status': 'na',
-            }
+            ret[_id] = {}
+            for f in field_name:
+                ret[_id][f] = 'na'
         return ret
 
     for _id in ids:
-        ret[_id] = {
-            'mml_status': 'F',
-            'msl_status': 'na',
-        }
+        ret[_id] = {}
+        for f in field_name:
+            ret[_id][f] = {
+                'mml_status': 'F',
+                'msl_status': 'na',
+            }.get(f)
 
 
     local_instance_id = local_instance.id
@@ -2140,6 +2148,18 @@ def _get_std_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=N
     if self._table == 'product_product':
         from_query = ''' product_product p '''
         field_cond = ' p.id '
+    elif self._table == 'product_list_line':
+        from_query = ''' product_list_line line
+            left join product_product p on p.id =  line.name '''
+        field_cond = ' line.id '
+    elif self._table == 'composition_item':
+        from_query = ''' composition_item line
+            left join product_product p on p.id =  line.item_product_id '''
+        field_cond = ' line.id '
+    elif self._table == 'kit_creation_to_consume':
+        from_query = ''' kit_creation_to_consume line
+            left join product_product p on p.id =  line.product_id_to_consume '''
+        field_cond = ' line.id '
     else:
         from_query = '''%s line
         left join product_product p on p.id =  line.product_id ''' % (self._table, )
@@ -2182,67 +2202,71 @@ def _get_std_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=N
         instance_cond = '%s'
 
 
-    # MSL Checks
-    cr.execute('''
-        select
-            ''' + field_cond + ''', unidata_project.uf_active, msl_rel.product_id
-        from
-            ''' + from_query  + '''
-            left join product_template tmpl on tmpl.id = p.product_tmpl_id
-            left join product_international_status creator on creator.id = p.international_status
-            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-            ''' + partner_join + '''
-            left join unidata_project on unidata_project.instance_id = ''' + instance_cond + '''
-            left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
-        where
-            nom.name='MED'
-            and creator.code = 'unidata'
-            and ''' + field_cond + ''' in %s
-    ''', (local_instance_id, tuple(ids))) # not_a_user_entry
 
-    for x in cr.fetchall():
-        if not x[1]: # unidata_project.uf_active
-            ret[x[0]]['msl_status'] = 'na'
-        elif x[2]: # msl_rel.product_id
-            ret[x[0]]['msl_status'] = 'T'
-        else:
-            ret[x[0]]['msl_status'] = 'F'
+    if 'msl_status' in field_name:
+        # MSL Checks
+        cr.execute('''
+            select
+                ''' + field_cond + ''', unidata_project.uf_active, msl_rel.product_id
+            from
+                ''' + from_query  + '''
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                ''' + partner_join + '''
+                left join unidata_project on unidata_project.instance_id = ''' + instance_cond + '''
+                left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+            where
+                nom.name='MED'
+                and creator.code = 'unidata'
+                and ''' + field_cond + ''' in %s
+        ''', (local_instance_id, tuple(ids))) # not_a_user_entry
 
-    cr.execute('''
-        select
-            ''' + field_cond + '''
-        from
-            ''' + from_query + '''
-            left join product_template tmpl on tmpl.id = p.product_tmpl_id
-            left join product_international_status creator on creator.id = p.international_status
-            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-        where
-            ( nom.name!='MED' or creator.code != 'unidata' )
-            and ''' + field_cond + ''' in %s
-    ''', (tuple(ids), )) # not_a_user_entry
-    for x in cr.fetchall():
-        ret[x[0]]['mml_status'] = ''
+        for x in cr.fetchall():
+            if not x[1]: # unidata_project.uf_active
+                ret[x[0]]['msl_status'] = 'na'
+            elif x[2]: # msl_rel.product_id
+                ret[x[0]]['msl_status'] = 'T'
+            else:
+                ret[x[0]]['msl_status'] = 'F'
 
-    # MML Checks
-    cr.execute('''
-        select
-            ''' + field_cond + '''
-        from
-            ''' + from_query + '''
-            left join product_template tmpl on tmpl.id = p.product_tmpl_id
-            left join product_international_status creator on creator.id = p.international_status
-            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-            left join product_project_rel p_rel on p_rel.product_id = p.id
-            left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
-            ''' + partner_join + '''
-            left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
-        where
-            nom.name='MED'
-            and creator.code = 'unidata'
-            and coalesce(p.oc_validation, 'f') = 't'
-            and (up1.instance_id= ''' + instance_cond + ''' or up1 is null)
-            and ''' + field_cond + ''' in %s
-    ''', (local_instance_id, tuple(ids))) # not_a_user_entry
-    for x in cr.fetchall():
-        ret[x[0]]['mml_status'] = 'T'
+    if 'mml_status' in field_name:
+        cr.execute('''
+            select
+                ''' + field_cond + '''
+            from
+                ''' + from_query + '''
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            where
+                ( nom.name!='MED' or creator.code != 'unidata' )
+                and ''' + field_cond + ''' in %s
+        ''', (tuple(ids), )) # not_a_user_entry
+        for x in cr.fetchall():
+            ret[x[0]]['mml_status'] = ''
+
+        # MML Checks
+        cr.execute('''
+            select
+                ''' + field_cond + '''
+            from
+                ''' + from_query + '''
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join product_project_rel p_rel on p_rel.product_id = p.id
+                left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+                ''' + partner_join + '''
+                left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+            where
+                nom.name='MED'
+                and creator.code = 'unidata'
+                and coalesce(p.oc_validation, 'f') = 't'
+                and (up1.instance_id= ''' + instance_cond + ''' or up1 is null)
+                and ''' + field_cond + ''' in %s
+        ''', (local_instance_id, tuple(ids))) # not_a_user_entry
+        for x in cr.fetchall():
+            ret[x[0]]['mml_status'] = 'T'
+
     return ret
