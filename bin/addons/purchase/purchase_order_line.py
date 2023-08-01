@@ -2376,7 +2376,7 @@ class purchase_order_line(osv.osv):
         elif so:
             if product_type == 'consu' and so.procurement_request:
                 dest = n_stock_id
-            else:
+            elif not so.procurement_request or (so.procurement_request and so.location_requestor_id.usage == 'customer'):
                 dest = cross_id
         elif product_type == 'consu':
             dest = n_stock_id

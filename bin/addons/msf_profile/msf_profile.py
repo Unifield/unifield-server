@@ -79,7 +79,8 @@ class patch_scripts(osv.osv):
         cross_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         n_stock_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
 
-        # Cross Docking: PO line linked to a FO or an IR to Ext CU
+        # Cross Docking: PO line linked to a FO and product is not Service or an IR to Ext CU and product is neither
+        # Service or Non-Stockable
         cr.execute("""UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
             SELECT pl.id FROM purchase_order_line pl 
                 LEFT JOIN product_product pp ON pl.product_id = pp.id
