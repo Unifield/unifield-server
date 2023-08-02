@@ -2100,9 +2100,9 @@ def _get_header_msl_mml_alert(self, cr, uid, ids, name, arg, context=None):
             and creator.code = 'unidata'
             ''' + line_state_cond + '''
             and ''' + main_col + ''' in %s
-        group by ''' + main_col + '''
+        group by line.id
         having
-                bool_or(coalesce(p.oc_validation,'f'))='f'
+                bool_and(coalesce(p.oc_validation,'f'))='f'
             or
                 not array_agg(''' + instance_cond + ''')<@array_agg(up1.instance_id)
                 and count(up1.instance_id)>0

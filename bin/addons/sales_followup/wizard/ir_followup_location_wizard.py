@@ -131,7 +131,7 @@ class ir_followup_location_wizard(osv.osv_memory):
         group by sol.id
         HAVING
             (
-                bool_or(coalesce(oc_validation,'f'))='f'
+                bool_and(coalesce(oc_validation,'f'))='f'
                 or
                 not ARRAY[%(instance_id)s]<@array_agg(up1.instance_id)
                 and
@@ -164,7 +164,7 @@ class ir_followup_location_wizard(osv.osv_memory):
             count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
         ''', sql_param) # not_a_user_entry
         ids.update([x[0] for x in cr.fetchall()])
-        return list(ids)
+        return sorted(list(ids))
 
     def _get_state_domain(self, wizard):
         '''
@@ -235,7 +235,7 @@ class ir_followup_location_wizard(osv.osv_memory):
                 # MML
                 cr.execute('''
                 select
-                    so.id
+                    distinct(sol.order_id)
                 from
                     sale_order so
                     left join sale_order_line sol on sol.order_id = so.id and sol.state not in ('cancel', 'cancel_r')
@@ -248,17 +248,14 @@ class ir_followup_location_wizard(osv.osv_memory):
                     left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
                 where
                     ''' + ' and '.join(sql_cond) + '''
-                group by so.id
+                group by sol.id
                 HAVING
                     (
-                        count(sol.id) > 0
-                        and (
-                            bool_or(coalesce(oc_validation,'f'))='f'
-                            or
-                            not ARRAY[%(instance_id)s]<@array_agg(up1.instance_id)
-                            and
-                            count(up1.instance_id)>0
-                        )
+                        bool_and(coalesce(oc_validation,'f'))='f'
+                        or
+                        not ARRAY[%(instance_id)s]<@array_agg(up1.instance_id)
+                        and
+                        count(up1.instance_id)>0
                      )
                 ''', sql_param)  # not_a_user_entry
                 ir_ids = set([x[0] for x in cr.fetchall()])
@@ -283,7 +280,7 @@ class ir_followup_location_wizard(osv.osv_memory):
                     count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
                 ''', sql_param) # not_a_user_entry
                 ir_ids.update([x[0] for x in cr.fetchall()])
-                ir_ids = list(ir_ids)
+                ir_ids = sorted(list(ir_ids), reverse=1)
 
             elif wizard.order_id:
                 ir_ids = [wizard.order_id.id]

@@ -415,7 +415,7 @@ class po_follow_up(osv.osv_memory):
             # MML
             cr.execute('''
             select
-                po.id
+                distinct(pol.order_id)
             from
                 purchase_order po
                 left join purchase_order_line pol on pol.order_id = po.id and pol.state not in ('cancel', 'cancel_r')
@@ -432,17 +432,14 @@ class po_follow_up(osv.osv_memory):
                 left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
             where
                 ''' + ' and '.join(sql_cond) + '''
-            group by po.id
+            group by pol.id
             HAVING
                 (
-                    count(pol.id) > 0
-                    and (
-                        bool_or(coalesce(oc_validation,'f'))='f'
-                        or
-                        not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
-                        and
-                        count(up1.instance_id)>0
-                    )
+                    bool_and(coalesce(oc_validation,'f'))='f'
+                    or
+                    not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
+                    and
+                    count(up1.instance_id)>0
                  )
             ''', sql_param) # not_a_user_entry
             po_ids = set([x[0] for x in cr.fetchall()])
@@ -471,7 +468,7 @@ class po_follow_up(osv.osv_memory):
                 count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
             ''', sql_param) # not_a_user_entry
             po_ids.update([x[0] for x in cr.fetchall()])
-            po_ids = list(po_ids)
+            po_ids = sorted(list(po_ids), reverse=1)
 
         else:
             po_ids = po_obj.search(cr, uid, domain)
@@ -568,7 +565,7 @@ class po_follow_up(osv.osv_memory):
         group by pol.id
         HAVING
             (
-                bool_or(coalesce(oc_validation,'f'))='f'
+                bool_and(coalesce(oc_validation,'f'))='f'
                 or
                 not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
                 and
@@ -605,6 +602,6 @@ class po_follow_up(osv.osv_memory):
             count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
         ''', sql_param) # not_a_user_entry
         pol_ids.update([x[0] for x in cr.fetchall()])
-        return list(pol_ids)
+        return sorted(list(pol_ids))
 
 po_follow_up()

@@ -268,7 +268,7 @@ class product_mml_nonconform(common_non_conform):
                 (
                     (count(smr.product_id) > 0 """ + extra_cond + """)
                     and (
-                        bool_or(coalesce(oc_validation,'f'))='f'
+                        bool_and(coalesce(oc_validation,'f'))='f'
                         or
                         not ARRAY[%s]<@array_agg(up1.instance_id)
                         and

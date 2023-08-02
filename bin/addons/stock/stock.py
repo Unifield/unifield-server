@@ -1031,7 +1031,7 @@ class stock_picking(osv.osv):
                 and ( move.type ='in' or  pick.type='out' and pick.subtype='standard' and pick.sale_id is null )
             group by move.picking_id, move.id
             having
-                    bool_or(coalesce(p.oc_validation,'f'))='f'
+                    bool_and(coalesce(p.oc_validation,'f'))='f'
                 or
                     not array_agg(coalesce(instance.id, %s))<@array_agg(up1.instance_id)
                     and count(up1.instance_id)>0

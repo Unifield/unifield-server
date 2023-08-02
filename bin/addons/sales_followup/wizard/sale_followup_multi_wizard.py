@@ -190,7 +190,7 @@ class sale_followup_multi_wizard(osv.osv_memory):
         group by sol.id
         HAVING
             (
-                bool_or(coalesce(oc_validation,'f'))='f'
+                bool_and(coalesce(oc_validation,'f'))='f'
                 or
                 not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
                 and
@@ -225,7 +225,7 @@ class sale_followup_multi_wizard(osv.osv_memory):
             count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
         ''', sql_param) # not_a_user_entry
         ids.update([x[0] for x in cr.fetchall()])
-        return list(ids)
+        return sorted(list(ids))
 
     def get_values(self, cr, uid, ids, context=None):
         '''
@@ -263,7 +263,7 @@ class sale_followup_multi_wizard(osv.osv_memory):
                 # MML
                 cr.execute('''
                 select
-                    so.id
+                    distinct(sol.order_id)
                 from
                     sale_order so
                     left join sale_order_line sol on sol.order_id = so.id and sol.state not in ('cancel', 'cancel_r')
@@ -278,17 +278,14 @@ class sale_followup_multi_wizard(osv.osv_memory):
                     left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
                 where
                     ''' + ' and '.join(sql_cond) + '''
-                group by so.id
+                group by sol.id
                 HAVING
                     (
-                        count(sol.id) > 0
-                        and (
-                            bool_or(coalesce(oc_validation,'f'))='f'
-                            or
-                            not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
-                            and
-                            count(up1.instance_id)>0
-                        )
+                        bool_and(coalesce(oc_validation,'f'))='f'
+                        or
+                        not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
+                        and
+                        count(up1.instance_id)>0
                      )
                 ''', sql_param) # not_a_user_entry
                 fo_ids = set([x[0] for x in cr.fetchall()])
@@ -315,7 +312,7 @@ class sale_followup_multi_wizard(osv.osv_memory):
                     count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
                 ''', sql_param) # not_a_user_entry
                 fo_ids.update([x[0] for x in cr.fetchall()])
-                fo_ids = list(fo_ids)
+                fo_ids = sorted(list(fo_ids), reverse=1)
 
             elif wizard.order_id:
                 fo_ids = [wizard.order_id.id]
