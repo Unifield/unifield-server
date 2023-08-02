@@ -898,6 +898,10 @@
             <field name="method">us_8417_upd_srv_loc</field>
         </record>
 
+        <record id="us_11090_replace_DC4_by_space" model="patch.scripts">
+            <field name="method">us_11090_replace_DC4_by_space</field>
+        </record>
+
         <record id="us_11195_oca_period_nr" model="patch.scripts">
             <field name="method">us_11195_oca_period_nr</field>
         </record>

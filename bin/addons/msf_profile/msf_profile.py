@@ -69,6 +69,24 @@ class patch_scripts(osv.osv):
             """)
         return True
 
+    def us_11090_replace_DC4_by_space(self, cr, uid, *a, **b):
+        cr.execute('''
+        UPDATE account_move_line
+        SET
+            ref = regexp_replace(ref, E'\x14', ' ', 'g'),
+            name = regexp_replace(name, E'\x14', ' ', 'g'),
+            partner_txt = regexp_replace(partner_txt, E'\x14', ' ', 'g')
+        WHERE ref ~ '\x14' OR name ~ '\x14' OR partner_txt ~ '\x14'
+        ''')
+        cr.execute('''
+        UPDATE account_analytic_line
+        SET
+            ref = regexp_replace(ref, E'\x14', ' ', 'g'),
+            name = regexp_replace(name, E'\x14', ' ', 'g'),
+            partner_txt = regexp_replace(partner_txt, E'\x14', ' ', 'g')
+        WHERE ref ~ '\x14' OR name ~ '\x14' OR partner_txt ~ '\x14'
+        ''')
+
     def us_11130_trigger_down_account_mapping(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.entity'):
             # exclude new instances
