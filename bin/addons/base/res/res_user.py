@@ -845,8 +845,15 @@ class users(osv.osv):
         return res
 
     def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         if 1 in ids:
             raise osv.except_osv(_('Can not remove root user!'), _('You can not remove the admin user as it is used internally for resources created by OpenERP (updates, module installation, ...)'))
+
+        if not context.get('sync_update_execution') and self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('synchronize', '=', True), ('active', 'in', ['t', 'f'])], context=context):
+                raise osv.except_osv(_('Warning'), _('Can not remove a synchronized user.'))
+
         db = cr.dbname
         if db in self._uid_cache:
             for id in ids:
