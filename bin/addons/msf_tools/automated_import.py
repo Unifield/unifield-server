@@ -573,6 +573,10 @@ class automated_import(osv.osv):
             string='Active',
             readonly=True,
         ),
+        'disable_checksum': fields.boolean(
+            string='Disable checksum check',
+            help="Prevents the import of a file from failing if two or more identical files are imported during the same job",
+        ),
         'cron_id': fields.many2one(
             'ir.cron',
             string='Associated cron job',
@@ -606,6 +610,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'priority': lambda *a: 10,
         'ftp_protocol': lambda *a: 'ftp',
         'is_admin': lambda obj, cr, uid, c: uid == 1,
+        'disable_checksum': False,
     }
 
     _sql_constraints = [

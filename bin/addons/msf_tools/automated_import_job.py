@@ -306,7 +306,8 @@ class automated_import_job(osv.osv):
                                 job_id = prev_job_id
                                 break
 
-                        elif md5 and self.search_exist(cr, uid, [('import_id', '=', import_data.id), ('file_sum', '=', md5)], context=context):
+                        elif md5 and not import_data.disable_checksum and\
+                                self.search_exist(cr, uid, [('import_id', '=', import_data.id), ('file_sum', '=', md5)], context=context):
                             non_blocking_error = _('A file with same checksum has been already imported !')
                             remote.move_to_process_path(filename, success=False)
                             self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
