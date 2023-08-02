@@ -275,7 +275,7 @@
                 <search string="MSL Projects">
                     <field name="instance_id" />
                     <field name="uf_active" />
-                    <field name="msl_product_ids" string="Product Count"/>
+                    <field name="msl_product_ids" />
                 </search>
             </field>
         </record>
@@ -304,7 +304,7 @@
                 <tree string="MSL Projects" hide_new_button="1" hide_delete_button="1" colors="red:not instance_id">
                     <field name="instance_id" />
                     <field name="country_id" />
-                    <field name="msl_product_ids" />
+                    <field name="msl_product_ids" string="Product Count"/>
                     <field name="uf_active" />
                     <button type="object" string="Activate" name="activate" icon="terp-check" attrs="{'invisible': [('uf_active', '=', True)]}"/>
                     <button type="object" string="De-activate" name="de_activate" icon="gtk-stop" attrs="{'invisible': [('uf_active', '=', False)]}"/>

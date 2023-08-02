@@ -104,7 +104,7 @@ class unifield_instance(osv.osv):
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
+        'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1, domain=[('level', '!=', 'section')]),
         'instance_name': fields.related('instance_id', 'code', type='char', size=64, string='Instance', store=True, readonly=1),
         'uf_active': fields.boolean('Active'),
         'country_id': fields.many2one('unidata.country', 'Country', readonly=1),

@@ -1211,8 +1211,8 @@ class product_attributes(osv.osv):
         'msl_status': fields.function(tools.misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
 
 
-        'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance'),
-        'mml_restricted_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Restricted to instance'),
+        'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance', domain=[('state', '=', 'active'), ('level', '!=', 'section')]),
+        'mml_restricted_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Restricted to instance', domain=[('state', '=', 'active'), ('level', '!=', 'section')]),
         'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unifield.instance', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
     }
 
