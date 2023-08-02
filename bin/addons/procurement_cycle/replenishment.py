@@ -2847,6 +2847,8 @@ class replenishment_segment_line(osv.osv):
         'status': 'active',
         'line_state_parent': 'draft',
         'line_rule_parent': lambda self, cr, uid, c: c and c.get('rule'),
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def _set_merge_minmax(self, cr, uid, vals, context=False):

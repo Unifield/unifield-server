@@ -1338,12 +1338,15 @@ class composition_item(osv.osv):
 
                 }
 
-    _defaults = {'hidden_batch_management_mandatory': False,
-                 'hidden_perishable_mandatory': False,
-                 'hidden_asset_mandatory': False,
-                 'inactive_product': False,
-                 'inactive_error': lambda *a: '',
-                 }
+    _defaults = {
+        'hidden_batch_management_mandatory': False,
+        'hidden_perishable_mandatory': False,
+        'hidden_asset_mandatory': False,
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
+        'mml_status': 'na',
+        'msl_status': 'na',
+    }
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         """

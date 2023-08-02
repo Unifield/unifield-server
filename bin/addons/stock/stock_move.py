@@ -778,6 +778,8 @@ class stock_move(osv.osv):
         'included_in_mission_stock': False,
         'in_forced': False,
         'confirmed_qty': 0.0,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):

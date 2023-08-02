@@ -875,6 +875,8 @@ class real_average_consumption_line(osv.osv):
     _defaults = {
         'inactive_product': False,
         'inactive_error': lambda *a: '',
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def _unique_product(self, cr, uid, ids, context=None):

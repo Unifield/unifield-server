@@ -1397,6 +1397,11 @@ class PhysicalInventoryCounting(osv.osv):
 
     }
 
+    _defaults = {
+        'mml_status': 'na',
+        'msl_status': 'na',
+    }
+
     _sql_constraints = [
     ]
 

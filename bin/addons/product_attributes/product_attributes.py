@@ -1267,6 +1267,8 @@ class product_attributes(osv.osv):
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'oc_subscription': False,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def _check_uom_category(self, cr, uid, ids, context=None):

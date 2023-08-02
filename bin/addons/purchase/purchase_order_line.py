@@ -703,6 +703,8 @@ class purchase_order_line(osv.osv):
         'created_by_vi_import': False,
         'created_by_sync': False,
         'cancelled_by_sync': False,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def _check_max_price(self, cr, uid, ids, context=None):

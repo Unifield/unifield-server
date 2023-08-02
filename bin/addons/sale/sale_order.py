@@ -2417,6 +2417,8 @@ class sale_order_line(osv.osv):
         'cancelled_by_sync': False,
         'ir_name_from_sync': '',
         'instance_sync_order_ref_needed': _defaults_instance_sync_order_ref_needed,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

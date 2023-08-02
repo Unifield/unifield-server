@@ -985,6 +985,8 @@ class initial_stock_inventory_line(osv.osv):
     _defaults = {
         'inactive_product': False,
         'inactive_error': lambda *a: '',
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def create(self, cr, uid, vals, context=None):

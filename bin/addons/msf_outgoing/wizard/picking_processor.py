@@ -814,6 +814,8 @@ class stock_move_processor(osv.osv):
     _defaults = {
         'quantity': 0.00,
         'integrity_status': 'empty',
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def copy(self, cr, uid, id, default=None, context=None):

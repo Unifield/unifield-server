@@ -1174,6 +1174,8 @@ class supplier_catalogue_line(osv.osv):
 
     _defaults = {
         'rounding': 1.00,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
 

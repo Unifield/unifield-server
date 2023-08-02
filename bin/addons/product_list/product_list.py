@@ -320,6 +320,11 @@ class product_list_line(osv.osv):
 
     }
 
+    _defaults = {
+        'mml_status': 'na',
+        'msl_status': 'na',
+    }
+
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}

@@ -1106,11 +1106,14 @@ class kit_creation_to_consume(osv.osv):
 
                 }
 
-    _defaults = {'location_src_id_to_consume': lambda obj, cr, uid, c: c.get('location_src_id_to_consume', False),
-                 'availability_to_consume': 'empty',
-                 'consumed_to_consume': False,
-                 'qty_consumed_to_consume': 0.0,
-                 }
+    _defaults = {
+        'location_src_id_to_consume': lambda obj, cr, uid, c: c.get('location_src_id_to_consume', False),
+        'availability_to_consume': 'empty',
+        'consumed_to_consume': False,
+        'qty_consumed_to_consume': 0.0,
+        'mml_status': 'na',
+        'msl_status': 'na',
+    }
     _order = 'line_number_to_consume'
 
     def _kit_creation_to_consume_constraint(self, cr, uid, ids, context=None):
