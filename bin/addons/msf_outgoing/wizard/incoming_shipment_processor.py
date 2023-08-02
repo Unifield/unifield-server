@@ -284,25 +284,20 @@ class stock_incoming_processor(osv.osv):
             vals['linked_to_out'] = False
 
         if not vals.get('dest_type', False):
-            cd_move = move_obj.search(cr, uid, [
+            cd_move = move_obj.search_exist(cr, uid, [
                 ('picking_id', '=', picking.id),
                 ('location_dest_id.cross_docking_location_ok', '=', True),
-            ], count=True, context=context)
-            in_move = move_obj.search(cr, uid, [
+            ], context=context)
+            in_move = move_obj.search_exist(cr, uid, [
                 ('picking_id', '=', picking.id),
                 ('location_dest_id.input_ok', '=', True),
-            ], count=True, context=context)
+            ], context=context)
 
-            if cd_move and in_move:
+            if (cd_move and in_move) or (not cd_move and not in_move):
                 vals['dest_type'] = 'default'
-            elif not picking.backorder_id:
-                if picking.purchase_id and picking.purchase_id.cross_docking_ok:
-                    vals['dest_type'] = 'to_cross_docking'
-                elif picking.purchase_id:
-                    vals['dest_type'] = 'to_stock'
-            elif picking.cd_from_bo or (cd_move and not in_move):
+            elif cd_move and not in_move:
                 vals['dest_type'] = 'to_cross_docking'
-            elif not picking.cd_from_bo or (in_move and not cd_move):
+            elif not cd_move and in_move:
                 vals['dest_type'] = 'to_stock'
 
         if not vals.get('source_type', False):

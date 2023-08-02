@@ -71321,11 +71321,6 @@ msgstr "Importe paquete:"
 msgid "Theoretical Kit Composition"
 msgstr "Composición de kit teórico "
 
-#. module: order_types
-#: field:stock.picking,cd_from_bo:0
-msgid "CD from BO"
-msgstr "CD de BO"
-
 #. module: product
 #: field:product.price_list,qty1:0
 msgid "Quantity-1"

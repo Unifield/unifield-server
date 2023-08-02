@@ -797,7 +797,7 @@ class purchase_order_line(osv.osv):
                     self.pool.get('stock.move').in_action_confirm(cr, uid, incoming_move_id, context)
 
                 # create internal moves (INT):
-                if pol.order_id.location_id.input_ok and pol.product_id.type not in ('service_recep', 'consu'):
+                if pol.reception_dest_id.input_ok and pol.product_id.type not in ('service_recep', 'consu'):
                     internal_pick = self.pool.get('stock.picking').search(cr, uid, [
                         ('type', '=', 'internal'),
                         ('purchase_id', '=', pol.order_id.id),

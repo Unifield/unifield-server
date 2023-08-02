@@ -827,7 +827,6 @@ class purchase_order_sync(osv.osv):
         original_po = self.browse(cr, uid, po_id, context=context)
         # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
         header_result['cross_docking_ok'] = original_po['cross_docking_ok']
-        header_result['location_id'] = original_po.location_id.id
 
         default = {}
         default.update(header_result)
