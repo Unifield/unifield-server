@@ -67,6 +67,13 @@
             <lineStyle kind="GRID" colorName="#000000" />
         </blockTableStyle>
 
+        <blockTableStyle id="TotalInfo">
+            <blockAlignment value="LEFT" />
+            <blockValign value="MIDDLE" />
+            <lineStyle kind="GRID" start="1,0" stop="-1,-1" colorName="#000000" />
+            <blockBackground colorName="#f2f2f2" start="1,0" stop="-1,-1" />
+        </blockTableStyle>
+
         <blockTableStyle id="FooterInfo">
             <blockAlignment value="CENTER" />
             <blockValign value="MIDDLE" />
@@ -263,6 +270,19 @@
                 </td>
                 <td>
                     <para style="Line">[[ line.location_dest_id.name ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+        <blockTable colWidths="565.0,125.0,65.0" style="TotalInfo">
+            <tr>
+                <td>
+                    <para> </para>
+                </td>
+                <td>
+                    <para style="LHeader">Total Quantities</para>
+                </td>
+                <td>
+                    <para style="LHeader">[[ picking.total_qty_str ]]</para>
                 </td>
             </tr>
         </blockTable>

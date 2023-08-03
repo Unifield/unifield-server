@@ -925,7 +925,7 @@ class stock_picking(osv.osv):
 
         cr.execute('''
             select
-                m.picking_id, sum(m.product_qty), u.name
+                m.picking_id, sum(m.product_qty), sum(m.qty_to_process), u.name
             from
                 stock_move m, product_uom u
             where
@@ -935,11 +935,15 @@ class stock_picking(osv.osv):
             group by
                 m.picking_id, u.name
         ''', (tuple(ids), ))
-        temp = {}
+        temp = {'total_qty_str': {}, 'total_qty_process_str': {}}
         for x in cr.fetchall():
-            temp.setdefault(x[0], []).append('%s %s' % (x[1], x[2]))
+            temp['total_qty_str'].setdefault(x[0], []).append('%s %s' % (x[1], x[3]))
+            temp['total_qty_process_str'].setdefault(x[0], []).append('%s %s' % (x[2], x[3]))
         for _id in ids:
-            ret[_id] = ', '.join(temp.get(_id, []))
+            ret[_id] = {
+                'total_qty_str': ', '.join(temp['total_qty_str'].get(_id, [])),
+                'total_qty_process_str': ', '.join(temp['total_qty_process_str'].get(_id, [])),
+            }
         return ret
 
     def _get_fake(self, cr, uid, ids, name, args, context=None):
@@ -1015,7 +1019,8 @@ class stock_picking(osv.osv):
         'customers': fields.char('Customers', size=1026),
         'customer_ref': fields.char('Customer Ref.', size=1026),
         'sync_dpo_in': fields.boolean('Synced IN for DPO reception', internal=1, help='Used to flag a IN linked to a DPO'),
-        'total_qty_str': fields.function(_get_total_qty_str, method=1, string='Qties', type='char'),
+        'total_qty_str': fields.function(_get_total_qty_str, method=1, string='Qties', type='char', multi='total_qty'),
+        'total_qty_process_str': fields.function(_get_total_qty_str, method=1, string='Qties to Process', type='char', multi='total_qty'),
         'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
     }
 

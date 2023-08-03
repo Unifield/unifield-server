@@ -356,7 +356,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total cost : [[ objects[0].amount_total ]]</para>
+                    <para style="TextInformation">Total cost : [[ objects[0].amount_total ]] [[ objects[0].pricelist_id.currency_id.name ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -385,7 +385,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Currency : [[ objects[0].pricelist_id.currency_id.name ]]</para>
+                    <para style="TextInformation">Functional total cost : [[ objects[0].functional_amount_total ]] [[ objects[0].functional_currency_id.name ]]</para>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
@@ -652,7 +652,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="Standard">Total FO :</para>
+                    <para style="Standard">Indicative Total :</para>
                 </td>
                 <td>
                     <para style="Standard">[[ getSign(objects[0], 'sr', 'format_value') ]]</para>

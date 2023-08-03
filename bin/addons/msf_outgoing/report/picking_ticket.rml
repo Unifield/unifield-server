@@ -202,6 +202,14 @@
                     			<para style="HeaderInfosValue">[[ getNbItems(pt) ]]</para>
 							</td>
 						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Picked quantities:</para>
+							</td>
+							<td>
+                    			<para style="HeaderInfosValue">[[ pt.total_qty_process_str ]]</para>
+							</td>
+						</tr>
 					</blockTable>
 				</td>
                 <td>
@@ -604,7 +612,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="LFooter">Total Quantities</para>
+                    <para style="LFooter">Picked Quantities</para>
                 </td>
                 <td>
                     <para style="LFooter">[[ getSign(objects[0], 'sr', 'format_value') ]]</para>

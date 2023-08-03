@@ -392,7 +392,7 @@
 
             <tr>
                 <td>
-                    <para style="TextInformation"></para>
+                    <para style="TextInformation">Total quantity : [[ objects[0].total_qty_str ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"></para>

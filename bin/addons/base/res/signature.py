@@ -92,7 +92,7 @@ saved_unit = {
     'sale.order': lambda doc: doc.functional_currency_id.name,
     'account.bank.statement': lambda doc: doc.currency.name,
     'account.invoice': lambda doc: doc.currency_id.name,
-    'stock.picking': lambda doc: doc.total_qty_str,
+    'stock.picking': lambda doc: doc.type == 'out' and doc.subtype == 'picking' and doc.total_qty_process_str or doc.total_qty_str,
 }
 
 saved_state = {
