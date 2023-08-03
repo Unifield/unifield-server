@@ -549,7 +549,7 @@ class instance_auto_creation(osv.osv):
                         'customer_commitment': customer_commitment,
                     },
                     'esc_line.setup': {
-                        'esc_line': config.getboolean('reconfigure', 'activate_international_invoices_lines')
+                        'esc_line': config.has_option('reconfigure', 'activate_international_invoices_lines') and config.getboolean('reconfigure', 'activate_international_invoices_lines')
                     }
                 }
                 if country_id:
