@@ -363,13 +363,15 @@ class Database(BaseController):
     def check_boolean(self, config, section, option):
         if not config.has_option(section, option):
             return True
-
         try:
             config.getboolean(section, option)
             return True
-        except:
+        except Exception as e:
+            self.msg = {
+                'message': 'Option: %s, error: %s' % (option, ustr(e)),
+                'title': _('Bad value'),
+            }
             return False
-
 
     def check_date_time(self, config, section, option, time_format):
         if not config.has_option(section, option):
