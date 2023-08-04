@@ -160,12 +160,12 @@
                             </group>
                         </page>
                         <page string="UD OC Validation" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}">
-                             <group colspan="4" col="16">
+                            <group colspan="4" col="14">
                                 <field name="mml_status"/>
                                 <field name="msl_status"/>
-                                <field name="oc_devalidation_reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}"/>
-                                <group colspan="10" />
+                                <group colspan="10"/>
                             </group>
+                            <field name="oc_devalidation_reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}"/>
                             <separator string="Use Comments" colspan="4"/>
                             <field name="oc_comments" colspan="4" nolabel="1"/>
                             <group colspan="4" col="6">
