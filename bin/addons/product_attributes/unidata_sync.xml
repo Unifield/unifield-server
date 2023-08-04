@@ -364,7 +364,8 @@
             <field name="view_id" ref="unifield_instance_tree" />
         </record>
 
-        <menuitem name="MSL Projects" parent="base.menu_product" id="unifield_instance_menu" action="unifield_instance_action" sequence="15" />
+        <menuitem name="MML" parent="product_attributes.menu_main_product" id="product_main_mml_menu" sequence="9" />
+        <menuitem name="MSL Projects" parent="product_main_mml_menu" id="unifield_instance_menu" action="unifield_instance_action" sequence="15" />
 
         <record id="unifield_instance_mass_activate" model="ir.actions.server">
             <field name="name">Activate Selection</field>
@@ -404,18 +405,18 @@
             <field name="priority" eval="198" />
             <field name="arch" type="xml">
                 <search string="MML Products">
-                    <filter string="MML Valid" icon="terp-check" domain="[('in_mml_instance', '=', True)]" />
-                    <field name="default_code" />
-                    <field name="name"  />
-                    <field name="standard_ok" />
-                    <field name="in_mml_instance" />
-                    <field name="mml_restricted_instance" />
-                    <newline />
-                    <field name="oc_comments" colspan="4"/>
-                    <field name="oc_subscription" />
-                    <field name="state_ud" />
-                    <field name="state" />
+                    <filter string="MML Valid" icon="terp-check" domain="[('in_mml_instance', '=', True)]"/>
+                    <field name="default_code"/>
+                    <field name="name"/>
+                    <field name="standard_ok"/>
+                    <field name="in_mml_instance"/>
+                    <field name="mml_restricted_instance"/>
                     <field name="in_msl_instance" widget="many2one"/>
+                    <group colspan="2" />
+                    <field name="oc_comments" />
+                    <field name="oc_subscription"/>
+                    <field name="state_ud"/>
+                    <field name="state"/>
                 </search>
             </field>
         </record>
@@ -451,7 +452,7 @@
             <field name="view_id" ref="product_product_mml_tree" />
         </record>
 
-        <menuitem name="MML Products" parent="base.menu_product" id="product_product_mml_menu" action="product_product_mml_action" sequence="10" />
+        <menuitem name="MML Products" parent="product_main_mml_menu" id="product_product_mml_menu" action="product_product_mml_action" sequence="10" />
 
         <record model="ir.ui.view" id="product_product_msl_search">
             <field name="name">product.product.msl.search</field>
@@ -507,7 +508,7 @@
             <field name="view_id" ref="product_product_msl_tree" />
         </record>
 
-        <menuitem name="MSL Products" parent="base.menu_product" id="product_product_mSl_menu" action="product_product_msl_action" sequence="20" />
+        <menuitem name="MSL Products" parent="product_main_mml_menu" id="product_product_mSl_menu" action="product_product_msl_action" sequence="20" />
 
         <record model="ir.ui.view" id="unidata_project_missing_search">
             <field name="name">unidata.project.missing.search</field>

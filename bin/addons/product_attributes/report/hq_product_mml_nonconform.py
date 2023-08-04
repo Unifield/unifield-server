@@ -13,7 +13,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
         prod_obj = self.pool.get('product.product')
 
         company_record = self.pool.get('res.company')._get_instance_record(self.cr, self.uid)
-        instance_code = company_record.code
+        instance_instance = company_record.instance
         self.instance_id = company_record.id
 
         sheet = self.workbook.active
@@ -29,6 +29,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
 
 
         self.duplicate_column_dimensions(default_width=10.75)
+        sheet.column_dimensions['B'].width = 65
         sheet.freeze_panes = 'A6'
 
 
@@ -40,7 +41,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
 
         sheet.append([
             self.cell_ro(_('Instance'), 'filter_txt'),
-            self.cell_ro(instance_code, 'filter_txt'),
+            self.cell_ro(instance_instance, 'filter_txt'),
         ])
         sheet.append([
             self.cell_ro(_('Date'), 'filter_txt'),
@@ -135,7 +136,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
             offset += page_size
             self.cr.execute('''
             select x.id, x.instance_name, x.internal_qty, x.in_pipe_qty, x.has_msl from (
-                select p.id, instance.code as instance_name, smrl.internal_qty, smrl.in_pipe_qty, count(msl_rel) as has_msl
+                select p.id, instance.instance as instance_name, smrl.internal_qty, smrl.in_pipe_qty, count(msl_rel) as has_msl
                 from product_product p
                 inner join product_template tmpl on tmpl.id = p.product_tmpl_id
                 inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
@@ -151,11 +152,11 @@ class hq_product_mml_nonconform(XlsxReportParser):
                     and creator.code not in ('temp', 'local')
                     and coalesce(oc_validation,'f')='f'
                     and p.id in %(prod_ids)s
-                group by p.id, instance.code, smrl.internal_qty, smrl.in_pipe_qty
+                group by p.id, instance.instance, smrl.internal_qty, smrl.in_pipe_qty
 
             UNION ALL
 
-                select p.id, instance.code as instance_name, smrl.internal_qty, smrl.in_pipe_qty, count(msl_rel) as has_msl
+                select p.id, instance.instance as instance_name, smrl.internal_qty, smrl.in_pipe_qty, count(msl_rel) as has_msl
                 from product_product p
                 inner join product_template tmpl on tmpl.id = p.product_tmpl_id
                 inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
@@ -174,7 +175,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
                     and creator.code not in ('temp', 'local')
                     and coalesce(oc_validation,'f')='t'
                     and p.id in %(prod_ids)s
-                group by p.id, smr.instance_id, instance.code, smrl.internal_qty, smrl.in_pipe_qty
+                group by p.id, smr.instance_id, instance.instance, smrl.internal_qty, smrl.in_pipe_qty
                 HAVING
                     (
                             not ARRAY[smr.instance_id]<@array_agg(up1.instance_id)

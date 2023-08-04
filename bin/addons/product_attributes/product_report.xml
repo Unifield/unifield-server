@@ -89,7 +89,7 @@
         <report
             id="report_product_msl_nonconform"
             string="MSL Non-Conform"
-            model="unidata.project"
+            model="product.product"
             name="report.product_msl_nonconform"
             report_type="openpyxl"
             header="False"
@@ -107,8 +107,10 @@
         </record>
         <record id="ir_msl_nonconform" model="ir.values">
           <field name="key2">client_print_multi</field>
-          <field name="model">unifield.instance</field>
+          <field name="model">product.product</field>
           <field name="name">MSL Non-Conform</field>
+          <field name="empty_ids">1</field>
+          <field name="view_ids">product_attributes.product_product_msl_tree</field>
           <field eval="'ir.actions.server,%d'%action_msl_nonconform" name="value"/>
           <field eval="True" name="object"/>
         </record>

@@ -15,7 +15,7 @@ class common_non_conform(XlsxReportParser):
         location_obj = self.pool.get('stock.location')
 
         company_record = self.pool.get('res.company')._get_instance_record(self.cr, self.uid)
-        instance_code = company_record.code
+        instance_instance = company_record.instance
         self.instance_id = company_record.id
 
         sheet = self.workbook.active
@@ -32,7 +32,7 @@ class common_non_conform(XlsxReportParser):
 
 
         sheet.column_dimensions['A'].width = 20
-        sheet.column_dimensions['B'].width = 27
+        sheet.column_dimensions['B'].width = 65
         sheet.column_dimensions['C'].width = 11
         sheet.column_dimensions['D'].width = 14
         sheet.column_dimensions['E'].width = 10
@@ -54,7 +54,7 @@ class common_non_conform(XlsxReportParser):
 
         sheet.append([
             self.cell_ro(_('Instance'), 'filter_txt'),
-            self.cell_ro(instance_code, 'filter_txt'),
+            self.cell_ro(instance_instance, 'filter_txt'),
         ])
         sheet.append([
             self.cell_ro(_('Date'), 'filter_txt'),
