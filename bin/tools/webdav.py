@@ -136,13 +136,18 @@ class Client(object):
             raise Exception(self.parse_error(result))
         return True
 
-    def move(self, remote_path, dest):
+    def move(self, remote_path, dest, retry=True):
         webUri = '%s%s' % (self.path, remote_path)
         destUri = '%s%s' % (self.path, dest)
         # falgs=1 to overwrite existing file
         request_url = "%s_api/web/getfilebyserverrelativeurl('%s')/moveto(newurl='%s',flags=1)" % (self.baseurl, webUri, destUri)
         result = self.format_request(request_url, 'POST')
         if result.status_code not in (200, 201):
+            error = self.parse_error(result)
+            if retry and ('timed out' in error or '2130575252' in error):
+                logging.getLogger('cloud.backup').info('OneDrive move: session time out')
+                self.login()
+                return self.move(remote_path, dest, retry=False)
             raise Exception(self.parse_error(result))
         return True
 
