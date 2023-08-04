@@ -823,7 +823,7 @@ class msf_instance_cloud(osv.osv):
                         temp_create = True
 
                     if not upload_ok:
-                        upload_ok, error = dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj)
+                        upload_ok, error = dav.upload(temp_fileobj, temp_drive_file, buffer_size=buffer_size, log=True, progress_obj=progress_obj, continuation=True)
 
                     # please don't change the following to else:
                     if upload_ok:

@@ -372,10 +372,13 @@ class Remote(object):
             return self.local_connection.get_file_content(path)
         return self.connection.get_file_content(path)
 
-    def move_to_process_path(self, filename, success):
+    def move_to_process_path(self, filename, success, local_src=False):
         """
         Move the file `file` from `src_path` to `dest_path`
+        local_src : if empty use the source_path + filename
+                    else local_src + filename
         :return: return True
+
         """
 
 
@@ -388,25 +391,32 @@ class Remote(object):
 
         logging.getLogger('automated.import').info(_('Moving %s to %s') % (filename, dest_path))
 
-        if self.source_is_remote and dest_is_remote:
-            # from remote to remote (rename)
-            src_file_name = posixpath.join(self.source, filename)
-            dest_file_name = posixpath.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), filename))
-            self.connection.rename(src_file_name, dest_file_name)
-        elif not self.source_is_remote and dest_is_remote:
-            # from local to remote
-            local_file = os.path.join(self.source, filename)
-            remote_file = posixpath.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), filename))
-            self.connection.push(local_file, remote_file)
-            os.remove(local_file)
-        elif self.source_is_remote and not dest_is_remote:
+        if dest_is_remote:
+            if self.source_is_remote and not local_src:
+                # from remote to remote (rename)
+                src_file_name = posixpath.join(self.source, filename)
+                dest_file_name = posixpath.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), filename))
+                self.connection.rename(src_file_name, dest_file_name)
+            else:
+                # from local to remote
+                if local_src:
+                    local_file = os.path.join(local_src, filename)
+                else:
+                    local_file = os.path.join(self.source, filename)
+                remote_file = posixpath.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), filename))
+                self.connection.push(local_file, remote_file)
+                os.remove(local_file)
+        elif self.source_is_remote and not local_src:
             # from remote to local
             src_file_name = posixpath.join(self.source, filename)
             destfile = os.path.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), self.connection.remove_special_chars(filename)))
             self.connection.get(src_file_name, destfile, delete=True)
         else:
             # from local to local
-            src_file_name = os.path.join(self.source, filename)
+            if local_src:
+                src_file_name = os.path.join(local_src, filename)
+            else:
+                src_file_name = os.path.join(self.source, filename)
             destfile = os.path.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), self.connection.remove_special_chars(filename)))
             shutil.move(src_file_name, destfile)
 
