@@ -230,6 +230,8 @@ class stock_picking_processor(osv.osv):
                 'type': 'ir.actions.refresh_o2m',
                 'o2m_refresh': 'move_ids'
             }
+        elif self._name == 'outgoing.delivery.processor':
+            self.write(cr, uid, ids, {'partial_process_sign': False}, context=context)
 
         for wizard in self.browse(cr, uid, ids, context=context):
             move_obj = wizard.move_ids[0]._name

@@ -451,9 +451,24 @@ class signature_line(osv.osv):
                 else:
                     res[x.id] = {'format_value': x.unit}
 
-                key = '%s-%s' % (x.signature_id.signature_res_model, x.doc_state)
+                doc_state = x.doc_state
+                key = '%s-%s' % (x.signature_id.signature_res_model, doc_state)
                 if key not in cache_state:
-                    cache_state[key] = self.pool.get('ir.model.fields').get_selection(cr, uid, x.signature_id.signature_res_model, 'state', x.doc_state, context=context)
+                    field = 'state'
+                    # To display OUT Delivered/Received states
+                    if x.signature_id.signature_res_model == 'stock.picking':
+                        p_data = self.pool.get('stock.picking').read(cr, uid, x.signature_id.signature_res_id,
+                                                                      ['type', 'subtype', 'delivered'], context=context)
+                        if p_data['type'] == 'out' and p_data['subtype'] == 'standard':
+                            if doc_state == 'done':
+                                if p_data['delivered']:
+                                    doc_state = 'received'
+                                else:
+                                    doc_state = 'dispatched'
+                            elif doc_state == 'delivered':
+                                doc_state = 'received'
+                            field = 'state_hidden'
+                    cache_state[key] = self.pool.get('ir.model.fields').get_selection(cr, uid, x.signature_id.signature_res_model, field, doc_state, context=context)
                 res[x.id]['format_state'] = cache_state[key]
         return res
 
