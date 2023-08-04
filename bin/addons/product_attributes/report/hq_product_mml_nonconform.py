@@ -94,6 +94,10 @@ class hq_product_mml_nonconform(XlsxReportParser):
         for p in self.cr.fetchall():
             product_code[p[1]] = p[0]
 
+        bk_id = self.context.get('background_id')
+        if bk_id:
+            self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': 0.10})
+
         # get restricted prod with stock/pipe
         self.cr.execute('''
                 select distinct p.id, p.default_code
@@ -119,15 +123,17 @@ class hq_product_mml_nonconform(XlsxReportParser):
                         count(up1.instance_id)>0
                  )
         ''')
+
         for p in self.cr.fetchall():
             product_code[p[1]] = p[0]
 
         p_ids = [product_code[x] for x in sorted(product_code.keys())]
         len_p_ids = len(p_ids)
-        page_size = 500
+        page_size = 200
         offset = 0
 
-        bk_id = self.context.get('background_id')
+        if bk_id:
+            self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': 0.20})
 
         while True:
             prod_ids = p_ids[offset:offset+page_size]
@@ -206,7 +212,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
                         self.cell_ro(prod.restrictions_txt, 'row'),
                     ])
             if bk_id:
-                self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': offset/float(len_p_ids)})
+                self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': 0.20 + (0.8 * offset/float(len_p_ids))})
 
 
         sheet.auto_filter.ref = "A5:G5"
