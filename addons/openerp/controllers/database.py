@@ -360,6 +360,19 @@ class Database(BaseController):
             self.msg = {'message': ustr(_('The option \'%s\' from section \'[%s]\' have to be one of those values: %r. (currently it is \'%s\').') % (option, section, possible_values, value)),
                         'title': ustr(_('Wrong option'))}
 
+    def check_boolean(self, config, section, option):
+        if not config.has_option(section, option):
+            return True
+        try:
+            config.getboolean(section, option)
+            return True
+        except Exception as e:
+            self.msg = {
+                'message': 'Option: %s, error: %s' % (option, ustr(e)),
+                'title': _('Bad value'),
+            }
+            return False
+
     def check_date_time(self, config, section, option, time_format):
         if not config.has_option(section, option):
             return True
@@ -470,6 +483,7 @@ class Database(BaseController):
                 ('stockmission', 'next_exec_date', self.check_datetime),
                 ('silentupgrade', 'hour_from', self.check_time),
                 ('silentupgrade', 'hour_to', self.check_time),
+                ('reconfigure', 'activate_international_invoices_lines', self.check_boolean),
 
             ]
             for section, option, check_fct in check_format:
