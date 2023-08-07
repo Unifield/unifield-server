@@ -207,7 +207,7 @@
                     			<para style="HeaderInfosTitle">Picked quantities:</para>
 							</td>
 							<td>
-                    			<para style="HeaderInfosValue">[[ pt.total_qty_process_str ]]</para>
+                    			<para style="HeaderInfosValue">[[ pt.state == 'done' and pt.total_qty_process_str or '0' ]]</para>
 							</td>
 						</tr>
 					</blockTable>
@@ -567,7 +567,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="90.0,240.0,240.0,240.0" style="FooterInfo" keepWithNext="1">
+        <blockTable colWidths="120.0,230.0,230.0,230.0" style="FooterInfo" keepWithNext="1">
             <tr>
                 <td>
                     <para style="LFooter"> </para>
@@ -612,7 +612,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="LFooter">Picked Quantities</para>
+                    <para style="LFooter">[[ pt.state == 'done' and translate('Picked Quantities') or translate('Quantities to be Picked')]]</para>
                 </td>
                 <td>
                     <para style="LFooter">[[ getSign(objects[0], 'sr', 'format_value') ]]</para>

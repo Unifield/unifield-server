@@ -138,6 +138,7 @@ class stock_picking_processor(osv.osv):
             help="Is at least one line contains a cool chain product.",
             multi='kc_dg',
         ),
+        'partial_process_sign': fields.boolean('Partial process warning if signature'),
     }
 
     def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
@@ -226,6 +227,7 @@ class stock_picking_processor(osv.osv):
             lines_ids = line_obj.search(cr, uid, dom, context=context)
             for move in line_obj.browse(cr, uid, lines_ids, context=context):
                 line_obj.write(cr, uid, [move.id], {'quantity': 0}, context=context)
+            self.write(cr, uid, ids, {'partial_process_sign': False}, context=context)
             return {
                 'type': 'ir.actions.refresh_o2m',
                 'o2m_refresh': 'move_ids'

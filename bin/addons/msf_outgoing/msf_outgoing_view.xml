@@ -450,6 +450,29 @@
             </field>
         </record>
 
+        <record id="warning_pick_partial_process_sign_wizard_form_view" model="ir.ui.view">
+            <field name="name">warning.pick.partial.process.sign.wizard.form.view</field>
+            <field name="model">warning.pick.partial.process.sign.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Picking Validation">
+                    <field name="picking_id" invisible="1" />
+					<group colspan="4">
+                        <html>
+                            <p style="font-weight: bold; font-size: 1.2em; color: red; text-align: center; vertical-align: middle">
+                                <translate>Warning: The Picking has already been electronically validated for all quantities. The new Picking will need to be signed again and the signature for the backorder should be reset. Do you want to continue ?</translate>
+                            </p>
+                        </html>
+                    </group>
+					<group colspan="4" col="4">
+						<label string="" colspan="2"/>
+                        <button name="continue_validation" string="Continue" type="object" icon="gtk-apply" colspan="1" />
+                        <button name="cancel" string="Cancel" type="object" icon="gtk-cancel" colspan="1" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
 		<!-- Changed name to 'Picking Tickets' -->
 		<record id="view_picking_ticket_search" model="ir.ui.view">
 			<field name="name">picking.ticket.search</field>

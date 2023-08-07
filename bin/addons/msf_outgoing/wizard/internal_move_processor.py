@@ -86,7 +86,6 @@ class internal_picking_processor(osv.osv):
             readonly=True,
         ),
         'draft': fields.boolean('Draft'),
-        'partial_process_sign': fields.boolean('Partial process warning if signature'),
     }
 
     def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
@@ -368,28 +367,29 @@ class internal_picking_processor(osv.osv):
             # Add the warning if there's a signed signature during partial processing
             if self._name == 'outgoing.delivery.processor' and l_ids and proc.picking_id.signature_id \
                     and not proc.partial_process_sign:
-                has_signed = False
-                for sign_line in proc.picking_id.signature_id.signature_line_ids:
-                    if sign_line.signed:
-                        partial_and_signed = True
-                        has_signed = True
-                        break
-                if has_signed:
-                    cr.execute("""SELECT id FROM outgoing_delivery_move_processor WHERE id IN %s 
-                            AND quantity < ordered_quantity LIMIT 1""", (tuple(l_ids),))
-                    if cr.fetchone():
-                        self.write(cr, uid, proc.id, {'partial_process_sign': True}, context=context)
-                        res = {
-                            'type': 'ir.actions.act_window',
-                            'res_model': self._name,
-                            'res_id': proc.id,
-                            'view_type': 'form',
-                            'view_mode': 'form',
-                            'target': 'new',
-                            'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing',
-                                                                                            'outgoing_delivery_processor_form_view')[1]],
-                            'context': context,
-                        }
+                cr.execute("""
+                    SELECT mp.id FROM outgoing_delivery_move_processor mp 
+                            LEFT JOIN outgoing_delivery_processor op ON mp.wizard_id = op.id 
+                            LEFT JOIN stock_picking p ON op.picking_id = p.id
+                        , signature s LEFT JOIN signature_line sl ON sl.signature_id = s.id
+                    WHERE s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = %s 
+                        AND mp.id IN %s AND sl.signed = 't' AND op.picking_id = %s 
+                        AND mp.quantity < mp.ordered_quantity LIMIT 1
+                """, (proc.picking_id.id, tuple(l_ids), proc.picking_id.id))
+                if cr.fetchone():
+                    partial_and_signed = True
+                    self.write(cr, uid, proc.id, {'partial_process_sign': True}, context=context)
+                    res = {
+                        'type': 'ir.actions.act_window',
+                        'res_model': self._name,
+                        'res_id': proc.id,
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing',
+                                                                                        'outgoing_delivery_processor_form_view')[1]],
+                        'context': context,
+                    }
 
         # Remove non-used lines if the lines are not partially processed when the document is signed
         if to_unlink and not partial_and_signed:

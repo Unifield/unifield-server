@@ -3691,6 +3691,27 @@ class stock_picking(osv.osv):
 
         for picking_id in ids:
             self.check_integrity(cr, uid, picking_id, context)
+            # Check if the processed sub-Pick has at least a non-fully processed line and there is a signature
+            if not context.get('partial_process_sign'):
+                cr.execute("""
+                    SELECT m.id FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id = p.id
+                        , signature s LEFT JOIN signature_line sl ON sl.signature_id = s.id
+                    WHERE s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = %s 
+                        AND sl.signed = 't' AND m.picking_id = %s AND m.qty_to_process < m.product_qty LIMIT 1
+                """, (picking_id, picking_id))
+                if cr.fetchone():
+                    wiz_id = self.pool.get('warning.pick.partial.process.sign.wizard').create(cr, uid, {'picking_id': picking_id}, context=context)
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'warning.pick.partial.process.sign.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'res_id': wiz_id,
+                        'context': context
+                    }
+            else:
+                context.pop('partial_process_sign')
 
         nb_lines = self.pool.get('stock.move').search(cr, uid, [('state', '=', 'assigned'), ('picking_id', 'in', ids)], count=True)
         return self.pool.get('job.in_progress')._prepare_run_bg_job(cr, uid, ids, 'stock.picking', self.do_validate_picking, nb_lines, _('Validate Picking'), context=context)
@@ -4506,7 +4527,46 @@ class stock_picking(osv.osv):
             'width': '220px',
         }
 
+
 stock_picking()
+
+
+class warning_pick_partial_process_sign_wizard(osv.osv_memory):
+    _name = 'warning.pick.partial.process.sign.wizard'
+    _description = 'The Picking Ticket is partially processed and signed'
+
+    _columns = {
+        'picking_id': fields.many2one('stock.picking', string='Picking id', readonly=True),
+    }
+
+    def continue_validation(self, cr, uid, ids, context=None):
+        '''
+        Launch the do_validate_picking_bg method
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pick_obj = self.pool.get('stock.picking')
+        for wiz in self.browse(cr, uid, ids, context=context):
+            context['partial_process_sign'] = True
+            pick_obj.do_validate_picking_bg(cr, uid, [wiz.picking_id.id], context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel(self, cr, uid, ids, context=None):
+        '''
+        Just close the wizard
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {'type': 'ir.actions.act_window_close'}
+
+
+warning_pick_partial_process_sign_wizard()
 
 
 class wizard(osv.osv):

@@ -379,11 +379,11 @@ class stock_incoming_processor(osv.osv):
                         'context': context,
                     }
 
-            self.write(cr, uid, [proc.id], {
-                'already_processed': True,
-            }, context=context)
+            self.write(cr, uid, [proc.id], {'already_processed': True}, context=context)
 
+            l_ids = []
             for line in proc.move_ids:
+                l_ids.append(line.id)
                 # if no quantity, don't process the move
                 if not line.quantity:
                     to_unlink.append(line.id)
@@ -414,6 +414,31 @@ class stock_incoming_processor(osv.osv):
 
             if proc.direct_incoming and not proc.location_dest_active_ok:
                 self.write(cr, uid, [proc.id], {'direct_incoming': False}, context=context)
+
+            # Add the warning if there's a signed signature during partial processing
+            if not context.get('auto_import_ok') and proc.picking_id.signature_id and not proc.partial_process_sign:
+                cr.execute("""
+                    SELECT mp.id FROM stock_move_in_processor mp LEFT JOIN stock_incoming_processor ip ON mp.wizard_id = ip.id 
+                            LEFT JOIN stock_picking p ON ip.picking_id = p.id
+                        , signature s LEFT JOIN signature_line sl ON sl.signature_id = s.id
+                    WHERE s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = %s 
+                        AND mp.id IN %s AND sl.signed = 't' AND ip.picking_id = %s 
+                        AND mp.quantity < mp.ordered_quantity LIMIT 1
+                """, (proc.picking_id.id, tuple(l_ids), proc.picking_id.id))
+                if cr.fetchone():
+                    self.write(cr, uid, proc.id, {'partial_process_sign': True, 'already_processed': False}, context=context)
+                    target = not context.get('from_simu_screen') and 'new' or 'same'
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': self._name,
+                        'res_id': proc.id,
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': target,
+                        'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing',
+                                                                                        'stock_incoming_processor_form_view')[1]],
+                        'context': context,
+                    }
 
         if to_unlink:
             in_proc_obj.unlink(cr, uid, to_unlink, context=context)
@@ -549,7 +574,7 @@ class stock_incoming_processor(osv.osv):
         res_id = []
         for incoming in incoming_ids:
             res_id = incoming['picking_id']['id']
-        incoming_obj.write(cr, uid, ids, {'draft': False}, context=context)
+        incoming_obj.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False}, context=context)
         return stock_p_obj.action_process(cr, uid, res_id, context=context)
 
     def do_save_draft(self, cr, uid, ids, context=None):
