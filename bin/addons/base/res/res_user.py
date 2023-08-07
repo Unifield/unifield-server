@@ -1035,7 +1035,7 @@ class users(osv.osv):
                                     confirm_passwd, context=context)
 
     def change_password(self, db_name, login, old_passwd, new_passwd,
-                        confirm_passwd, context=None):
+                        confirm_passwd, email=None, context=None):
         """Change current user password. Old password must be provided explicitly
         to prevent hijacking an existing user session, or for cases where the cleartext
         password is not used to authenticate requests.
@@ -1069,6 +1069,8 @@ class users(osv.osv):
                     'last_password_change': time.strftime('%Y-%m-%d %H:%M:%S'),
                 }
                 self.check(db_name, uid, tools.ustr(old_passwd))
+                if email is not None:
+                    vals['user_email'] = email
                 result = self.write(cr, 1, uid, vals)
                 cr.commit()
             finally:
