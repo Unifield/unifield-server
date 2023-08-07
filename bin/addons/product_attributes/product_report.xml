@@ -110,7 +110,7 @@
           <field name="model">product.product</field>
           <field name="name">MSL Non-Conform</field>
           <field name="empty_ids">1</field>
-          <field name="view_ids">product_attributes.product_product_msl_tree</field>
+          <field name="view_ids" ref="product_attributes.product_product_msl_tree" />
           <field eval="'ir.actions.server,%d'%action_msl_nonconform" name="value"/>
           <field eval="True" name="object"/>
         </record>

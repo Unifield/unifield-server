@@ -2240,7 +2240,7 @@ def _get_std_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=N
                 left join product_international_status creator on creator.id = p.international_status
                 left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
             where
-                ( nom.name!='MED' or creator.code != 'unidata' )
+                ( nom.name!='MED' or creator.code != 'unidata' or tmpl.id is null)
                 and ''' + field_cond + ''' in %s
         ''', (tuple(ids), )) # not_a_user_entry
         for x in cr.fetchall():
