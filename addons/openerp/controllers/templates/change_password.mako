@@ -85,6 +85,12 @@
 
                                 </tr>
                                 <tr>
+                                    <td class="label"><label for="email">${_("Email address:")}</label></td>
+                                    <td style="padding: 3px;"><input type="input" id="email" name="email" class="db_user_pass" autocomplete="off" value="${email}">
+                                    </td>
+
+                                </tr>
+                                <tr>
                                     <td></td>
                                     <td class="db_login_buttons">
                                         <button type="button" class="static_boxes" onclick="disable_save()">${_("Update password")}</button>
