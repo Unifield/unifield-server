@@ -309,6 +309,42 @@
                 jQuery.fancybox.close();
             }
         </script>
+    % elif email_required:
+        <div id="survey">
+                <div id="survey_title">${_('Please fill your email address')}</div>
+                 <div class="row">
+                  <div class="column" style="width: 50%">Email: <input type="text" id="email" /></div>
+                  <div class="column"><div class="survey_button" onclick="click_email_answer('goto')">${_('Save email')}</div></div>
+                </div>
+                 <div class="row">
+                  % if nb_email_asked < 2:
+                    <div class="column"><div class="survey_button" onclick="click_email_answer('later')">${_('Ask Later')}</div></div>
+                  % else:
+                    <div class="column"><div class="survey_button" onclick="click_email_answer('never')">${_('Do not ask again')}</div></div>
+                  % endif
+                </div>
+        </div>
+        <script type="text/javascript">
+            jQuery('#survey').fancybox({'modal': true, 'height': 250, 'width': 700, 'scrolling': 'no', 'autoDimensions': false, 'autoScale': false});
+
+            jQuery(document).ready(function() {
+                jQuery('#survey').trigger('click');
+                jQuery('#survey').show();
+                jQuery('#survey').unbind('click.fb');
+                jQuery('#email').focus()
+            });
+            function click_email_answer(answer) {
+                if (answer=='goto') {
+                    jQuery.post('/openerp/pref/save_email', {'email': jQuery('#email').val()});
+                } else if (answer=='later') {
+                    jQuery.post('/openerp/pref/email_update_nb');
+                } else if (answer=='never') {
+                    jQuery.post('/openerp/pref/email_dontask');
+                }
+                jQuery('#survey').hide();
+                jQuery.fancybox.close();
+            }
+        </script>
     % endif
 </%def>
 
