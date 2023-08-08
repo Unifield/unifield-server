@@ -956,6 +956,99 @@ class stock_picking(osv.osv):
             res[id] = False
         return res
 
+    def _get_alert_msl_mml(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = ''
+        local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+
+        not_conform = {}
+        # MSL Checks / MSL header alert only on IN
+        cr.execute('''
+            select
+                move.picking_id
+            from
+                stock_move move
+                left join stock_picking pick on pick.id = move.picking_id
+                left join purchase_order_line pol on pol.id = move.purchase_line_id and move.type = 'in'
+                left join sale_order_line sol on sol.id = pol.linked_sol_id
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join res_partner so_partner on so_partner.id = so.partner_id
+                left join msf_instance instance on instance.instance = so_partner.name
+                left join product_product p on p.id = move.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join unidata_project on unidata_project.instance_id = coalesce(instance.id, %s)
+                left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+            where
+                nom.name='MED'
+                and creator.code = 'unidata'
+                and move.state not in ('cancel', 'cancel_r')
+                and move.picking_id in %s
+                and pick.type ='in'
+            group by move.picking_id
+            having
+                count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
+        ''', (local_instance_id, tuple(ids)))
+        for x in cr.fetchall():
+            not_conform[x[0]] = ['MSL']
+
+        # MML Checks: out header only if not FO/IR
+        cr.execute('''
+            select
+                distinct(move.picking_id)
+            from
+                stock_move move
+                -- out
+                left join stock_picking pick on pick.id = move.picking_id and pick.type='out'
+                left join res_partner pick_partner on pick_partner.id = pick.partner_id
+                -- in
+                left join purchase_order_line pol on pol.id = move.purchase_line_id and move.type = 'in'
+                left join sale_order_line sol on sol.id = pol.linked_sol_id
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join res_partner so_partner on so_partner.id = so.partner_id
+
+                -- in and out
+                left join msf_instance instance on instance.instance = coalesce(pick_partner.name, so_partner.name)
+
+
+                left join product_product p on p.id = move.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join product_project_rel p_rel on p_rel.product_id = p.id
+                left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+                left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+            where
+                nom.name='MED'
+                and creator.code = 'unidata'
+                and move.picking_id in %s
+                and move.state not in ('cancel', 'cancel_r')
+                and ( move.type ='in' or  pick.type='out' and pick.subtype='standard' and pick.sale_id is null )
+            group by move.picking_id, move.id
+            having
+                    bool_and(coalesce(p.oc_validation,'f'))='f'
+                or
+                    not array_agg(coalesce(instance.id, %s))<@array_agg(up1.instance_id)
+                    and count(up1.instance_id)>0
+        ''',(tuple(ids), local_instance_id))
+
+        for x in cr.fetchall():
+            not_conform.setdefault(x[0], []).append('MML')
+
+        for _id in not_conform:
+            if len(not_conform[_id]) == 1:
+                ret[_id] = _('Document has lines that are not included in the %s') % not_conform[_id][0]
+            else:
+                ret[_id] = _('Document has lines that are not in the MSL / MML')
+
+        return ret
+
+
     _columns = {
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title'),
         'name': fields.char('Reference', size=64, select=True),
@@ -1017,6 +1110,7 @@ class stock_picking(osv.osv):
         'sync_dpo_in': fields.boolean('Synced IN for DPO reception', internal=1, help='Used to flag a IN linked to a DPO'),
         'total_qty_str': fields.function(_get_total_qty_str, method=1, string='Qties', type='char'),
         'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
+        'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {

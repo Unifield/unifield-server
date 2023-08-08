@@ -78,6 +78,8 @@
             <blockSpan start="11,0" stop="11,-1" />
             <blockSpan start="12,0" stop="12,-1" />
             <blockSpan start="13,0" stop="13,-1" />
+            <blockSpan start="14,0" stop="14,-1" />
+            <blockSpan start="15,0" stop="15,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="FooterInfo">
@@ -109,6 +111,8 @@
             <blockSpan start="11,0" stop="11,-1" />
             <blockSpan start="12,0" stop="12,-1" />
             <blockSpan start="13,0" stop="13,-1" />
+            <blockSpan start="14,0" stop="14,-1" />
+            <blockSpan start="15,0" stop="15,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="NoteTable">
@@ -263,7 +267,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="25.0,100.0,220.0,55.0,50.0,54.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesHeader">
+        <blockTable colWidths="25.0,90.0,200.0,55.0,50.0,54.0,35.0,50.0,50.0,71.0,41.0,17.0,17.0,17.0,19,19" style="LinesHeader">
             <tr>
                 <td>
                     <para style="LineHeader">Item</para>
@@ -307,6 +311,12 @@
                 <td>
                     <para style="LineHeader">CS</para>
                 </td>
+                <td>
+                    <para style="LineHeader">MML</para>
+                </td>
+                <td>
+                    <para style="LineHeader">MSL</para>
+                </td>
             </tr>
             <tr>
                 <td>
@@ -348,12 +358,18 @@
                 <td>
                     <para style="LineHeader"></para>
                 </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
             </tr>
         </blockTable>
 
         <pto>
             <pto_header>
-                <blockTable colWidths="25.0,100.0,220.0,55.0,50.0,54.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesHeader">
+                <blockTable colWidths="25.0,90.0,200.0,55.0,50.0,54.0,35.0,50.0,50.0,71.0,41.0,17.0,17.0,17.0,19,19" style="LinesHeader">
                     <tr>
                         <td>
                             <para style="LineHeader">Item</para>
@@ -397,6 +413,12 @@
                         <td>
                             <para style="LineHeader">CS</para>
                         </td>
+                        <td>
+                            <para style="LineHeader">MML</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">MSL</para>
+                        </td>
                     </tr>
                     <tr>
                         <td>
@@ -438,12 +460,18 @@
                         <td>
                             <para style="LineHeader"></para>
                         </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
                     </tr>
                 </blockTable>
             </pto_header>
 
             <!-- Lines -->
-            <blockTable colWidths="25.0,100.0,220.0,55.0,50.0,54.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesValues">
+            <blockTable colWidths="25.0,90.0,200.0,55.0,50.0,54.0,35.0,50.0,50.0,71.0,41.0,17.0,17.0,17.0,19,19" style="LinesValues">
                 [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>
@@ -490,6 +518,12 @@
                     <td>
                         <para style="LineValue">[[ m.product_id.cs_txt or ' ' ]]</para>
                     </td>
+                    <td>
+                        <para style="LineValue">[[ {'F': translate('No'), 'T': translate('Yes'), 'na': ''}.get(m.mml_status) ]]</para>
+                    </td>
+                    <td>
+                        <para style="LineValue">[[ {'F': translate('No'), 'T': translate('Yes'), 'na': ''}.get(m.mml_status) ]]</para>
+                    </td>
                 </tr>
                 <tr>
                     <td>
@@ -500,6 +534,12 @@
                     </td>
                     <td>
                         <parawrap style="LineValueLeft">[[ m.comment or '' ]]</parawrap>
+                    </td>
+                    <td>
+                        <para style="LineValue"></para>
+                    </td>
+                    <td>
+                        <para style="LineValue"></para>
                     </td>
                     <td>
                         <para style="LineValue"></para>

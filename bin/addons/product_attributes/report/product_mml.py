@@ -56,11 +56,11 @@ class product_mml(XlsxReportParser):
 
         prod_obj = self.pool.get('product.product')
 
-        fields = prod_obj.fields_get(self.cr, self.uid, ['standard_ok', 'state_ud', 'is_msl_valid', 'is_mml_valid'], context=context)
+        fields = prod_obj.fields_get(self.cr, self.uid, ['standard_ok', 'state_ud', 'msl_status', 'mml_status'], context=context)
         label_standard_ok = dict(fields['standard_ok']['selection'])
         label_state_ud = dict(fields['state_ud']['selection'])
-        label_is_msl_valid = dict(fields['is_msl_valid']['selection'])
-        label_is_mml_valid = dict(fields['is_mml_valid']['selection'])
+        label_msl_status = dict(fields['msl_status']['selection'])
+        label_mml_status = dict(fields['mml_status']['selection'])
 
         total = prod_obj.search(self.cr, self.uid, [('oc_validation', '=', True)], count=True, context=context)
 
@@ -77,7 +77,7 @@ class product_mml(XlsxReportParser):
                 self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': min(0.9, max(0.1,offset/float(total)))})
 
 
-            for prod in prod_obj.browse(self.cr, self.uid, prod_ids, fields_to_fetch=['code', 'name', 'standard_ok', 'restrictions_txt', 'oc_comments', 'oc_subscription', 'state_ud', 'state', 'is_msl_valid', 'is_mml_valid'], context=context):
+            for prod in prod_obj.browse(self.cr, self.uid, prod_ids, fields_to_fetch=['code', 'name', 'standard_ok', 'restrictions_txt', 'oc_comments', 'oc_subscription', 'state_ud', 'state', 'msl_status', 'mml_status'], context=context):
                 sheet.append([
                     self.cell_ro(prod.code, 'row'),
                     self.cell_ro(prod.name, 'row'),
@@ -87,8 +87,8 @@ class product_mml(XlsxReportParser):
                     self.cell_ro(prod.oc_subscription and _('Yes') or _('No'), 'row'),
                     self.cell_ro(label_state_ud.get(prod.state_ud), 'row'),
                     self.cell_ro(prod.state.name, 'row'),
-                    self.cell_ro(label_is_msl_valid.get(prod.is_msl_valid), 'row'),
-                    self.cell_ro(label_is_mml_valid.get(prod.is_mml_valid), 'row'),
+                    self.cell_ro(label_msl_status.get(prod.msl_status), 'row'),
+                    self.cell_ro(label_mml_status.get(prod.mml_status), 'row'),
                 ])
             if len(prod_ids) < page_size:
                 break

@@ -83,6 +83,7 @@
         <paraStyle name="HeaderRight" fontName="Helvetica-Bold" fontSize="8.0" alignment="RIGHT" />
         <paraStyle name="LHeader" fontName="Helvetica-Bold" fontSize="7.0" alignement="CENTER" />
         <paraStyle name="Line" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
+        <paraStyle name="LineRed" textColor="#990000" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
         <paraStyle name="LNotes" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="8.0" spaceBefore="1.0" spaceAfter="5.0" />
         <paraStyle name="LFooter" fontName="Helvetica-Bold" fontSize="7.0" alignement="LEFT" />
         <paraStyle name="LFooterEnd" fontName="Helvetica" fontSize="7.0" alignement="LEFT" leading="30" />
@@ -186,7 +187,7 @@
 
 
         <section>
-        <blockTable colWidths="20.0,100.0,100.0,50.0,65.0,45.0,30.0,50.0,70.0,55.0,65.0,65.0,40.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="19.0,85.0,100.0,50.0,51.0,40.0,30.0,50.0,70.0,55.0,65.0,65.0,40.0,20,20" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -227,6 +228,12 @@
                 <td>
                     <para style="LHeader">State</para>
                 </td>
+                <td>
+                    <para style="LHeader">MML</para>
+                </td>
+                <td>
+                    <para style="LHeader">MSL</para>
+                </td>
             </tr>
             <tr>
                 [[ repeatIn(picking.move_lines, 'line', 'tr') ]]
@@ -235,10 +242,10 @@
                     <para style="Line">[[ line.line_number ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.product_id.default_code ]]</para>
+                    <para rml_tag="'para', {'style': line.mml_status=='F' and not line.picking_id.sale_id  and 'LineRed' or 'Line'}">[[ line.product_id.default_code ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.product_id.name ]]</para>
+                    <para rml_tag="'para', {'style': line.mml_status=='F' and not line.picking_id.sale_id  and 'LineRed' or 'Line'}">[[ line.product_id.name ]]</para>
                 </td>
                 <td>
                     <para style="Line">[[ line.comment ]]</para>
@@ -270,6 +277,12 @@
                 <td>
                     <para style="Line">[[ getSel(line, 'state') ]]</para>
                 </td>
+                <td>
+                    <para style="Line">[[ getSel(line, 'mml_status') ]]</para>
+                </td>
+                <td>
+                    <para style="Line">[[ getSel(line, 'msl_status') ]]</para>
+                </td>
             </tr>
         </blockTable>
 
@@ -279,7 +292,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="755.0" style="NotesInfo">
+        <blockTable colWidths="760.0" style="NotesInfo">
             <tr>
                 <td>
                   <para style="LNotes" alignment="LEFT">Notes :</para>
@@ -287,7 +300,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="755.0" style="NotesInfoBas" >
+        <blockTable colWidths="760.0" style="NotesInfoBas" >
             <tr>
                 <td>
                   <para style="LNotes" alignment="LEFT"></para>
@@ -299,7 +312,7 @@
             <font color="white"> </font>
         </para>
         
-        <blockTable colWidths="44.0,169.0,169.0,169.0,169.0" style="FooterInfo" keepWithNext="1">
+        <blockTable colWidths="49.0,169.0,169.0,169.0,169.0" style="FooterInfo" keepWithNext="1">
             <tr>
                 <td>
                     <para style="LFooter"> </para>

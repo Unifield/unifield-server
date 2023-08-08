@@ -49,6 +49,8 @@
 
 				<separator string="Report parameters" colspan="4" />
 				<group>
+                    <field name="msl_non_conform" colspan="2" />
+                    <newline />
 					<field name="pending_only_ok" colspan="2" />
 					<field name="include_notes_ok" colspan="2" />
 				</group>

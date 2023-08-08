@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 import netsvc
 from osv import osv, fields
 from tools.translate import _
+from tools.misc import _get_std_mml_status
 import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
@@ -674,8 +675,10 @@ class purchase_order_line(osv.osv):
         'from_dpo_esc': fields.boolean('Line sourced to ESC DPO', internal=1),
         'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
         'loan_line_id': fields.many2one('sale.order.line', string='Linked loan line', readonly=True),
-
         'original_instance': fields.function(_get_customer_ref, method=True, type='char', string='Original Instance', multi='custo_ref_ir_name'),
+
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
 
     _defaults = {
@@ -701,6 +704,8 @@ class purchase_order_line(osv.osv):
         'created_by_vi_import': False,
         'created_by_sync': False,
         'cancelled_by_sync': False,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def _check_max_price(self, cr, uid, ids, context=None):

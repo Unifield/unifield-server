@@ -265,6 +265,8 @@
                                             confirm="Do you really want to delete selected record ?"
                                             attrs="{'invisible': ['|', ('from_wkf', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}"
                                             context="{'from_int': 1, 'from_button': True}"/>
+                                     <field name="mml_status" />
+                                     <field name="msl_status" />
                                 </tree>
 
                                 <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
@@ -420,6 +422,7 @@
                                style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
                                ERROR: The processing of this incoming shipment has returned an error, please open the processing wizard to show the error.
                             </p>
+                            <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
                             <script language="javascript">
                                 var is_not_done = $('#progress_memory_not_done').val();
                                 var is_error = $('#progress_memory_error').val();
@@ -433,11 +436,17 @@
                                     msg_dom_done = $('#view_incoming_in_progress')
                                     msg_dom_done.hide()
                                 }
+                                var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                                if (alert_msl_mml) {
+                                    $('#msl_mml').html(alert_msl_mml);
+                                    $('#msl_mml').show();
+                                }
                             </script>
                         </html>
                     </group>
                     <field name="sale_id" invisible="1" />
                     <field name="purchase_id" invisible="1" />
+                    <field name="alert_msl_mml" invisible="1" />
                     <field name="ret_from_unit_rt" invisible="1" />
                     <group colspan="4" col="6">
                         <group colspan="4" col="4">
@@ -489,7 +498,7 @@
                                 filter_selector="[('Show available lines', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show all lines', []), ('Show cancelled lines', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 >
                                 <tree
-                                    colors="grey:scrapped==True; red: inactive_product == True or to_correct_ok == True"
+                                    colors="grey:scrapped==True; red: mml_status == 'F' or msl_status == 'F' or inactive_product == True or to_correct_ok == True"
                                     string="Stock Moves"
                                     hide_new_button="context.get('from_wkf')"
                                     hide_delete_button="context.get('purchase_id')"
@@ -523,6 +532,8 @@
                                     <button name="get_price_changed" type="object" string="Price changed" icon="terp-dolar_ok!" attrs="{'invisible': ['|', ('price_changed', '=', False), ('fake_state', '!=', 'done')]}" />
                                     <field name="from_wkf" invisible="1" />
                                     <button name="call_cancel_wizard" type="object" string="Cancel" attrs="{'invisible': ['|', ('purchase_id', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}" icon="gtk-del"  context="{'from_button': True}" />
+                                     <field name="mml_status" />
+                                     <field name="msl_status" />
                                 </tree>
                                 <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
                                     <group colspan="2" col="4">
@@ -753,10 +764,21 @@
             <field name="arch" type="xml">
                 <form string="Delivery Orders">
                     <group col="6" colspan="4">
+                        <html colspan="6">
+                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                            <script language="javascript">
+                                var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                                if (alert_msl_mml) {
+                                    $('#msl_mml').html(alert_msl_mml);
+                                    $('#msl_mml').show();
+                                }
+                            </script>
+                        </html>
                         <group colspan="4" col="4">
                             <field name="partner_type" invisible="True" readonly="True" />
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1" />
+                            <field name="alert_msl_mml" invisible="1" />
                             <field name="partner_id2"
                                 on_change="on_change_partner_out(partner_id2, address_id)"
                                 required="1"
@@ -803,7 +825,7 @@
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date, 'partner_id': partner_id2}"
                                 on_change="onchange_move()"
                                 >
-                                <tree colors="grey:scrapped==True; red: inactive_product == True or product_tbd == True" string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True">
+                                <tree colors="grey:scrapped==True;red:inactive_product == True or mml_status == 'F' and not from_wkf_line" string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel', 'done')" hide_new_button="context.get('from_wkf')" hide_delete_button="True">
                                     <field name="line_number"/>
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"/>
                                     <field name="comment" />
@@ -813,6 +835,7 @@
                                     <field name="asset_id"/>
                                     <field name="product_uos" invisible="1"/>
                                     <field name="scrapped" invisible="1"/>
+                                    <field name="from_wkf_line" invisible="1"/>
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
 
@@ -835,9 +858,11 @@
                                     <field name="dg_check" widget="null_boolean" />
                                     <field name="np_check" widget="null_boolean" />
                                     <field name="inactive_product" invisible="1" />
-                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <button name="%(stock.action_partial_move_server)d" string="Process" type="action" states="confirmed,assigned" icon="gtk-go-forward" invisible="1"/>
                                     <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  context="{'from_button': True}" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                                 <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
                                     <group colspan="2" col="4">

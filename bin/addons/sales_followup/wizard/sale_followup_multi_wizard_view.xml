@@ -24,6 +24,8 @@
                         <field name="cancel_ok" />
                     </group>
                     <separator colspan="4" string="Report parameters" />
+                    <field name="msl_non_conform" />
+                    <newline />
                     <field name="only_bo" />
                     <field name="include_notes_ok" />
                     <separator colspan="4" string="Actions" />

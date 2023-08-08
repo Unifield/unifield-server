@@ -112,6 +112,7 @@
                         <field name="is_validated_and_synced" invisible="1"/>
                         <field name="po_version" invisible="1"/>
                         <field name="msg_big_qty" invisible="1"/>
+                        <field name="alert_msl_mml" invisible="1"/>
                         <group colspan="6">
                             <html>
                                 <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
@@ -143,8 +144,14 @@
                                 <p id="nr_ad_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                     <translate>WARNING: Order line(s) not synchronized, please add an AD on line(s): </translate>
                                 </p>
+                                <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
 
                                 <script language="javascript">
+                                    var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                                    if (alert_msl_mml) {
+                                        $('#msl_mml').html(alert_msl_mml);
+                                        $('#msl_mml').show();
+                                    }
                                     var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
                                     if (is_big_amount) {
                                         $('#big_amount').append('&lt;span&gt;'+is_big_amount+'&lt;/span&gt;&lt;br/&gt;');
@@ -260,7 +267,7 @@
                                 filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="'3'" o2m_selectable="2"
                                 >
-                                <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p'])]}" editable="both">
+                                <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p'])]}" editable="both">
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
@@ -316,6 +323,8 @@
                                     <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated', 'validated_n'])]}" header="True"/>
                                     <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', '|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct'), '&amp;', ('dest_partner_type', 'in', ['internal', 'section', 'intermission']), ('po_version', '!=', 1)]}"/>
                                     <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': ['|', '&amp;', ('fake_state', '!=', 'draft'), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('fake_state', 'not in', ['draft', 'validated', 'validated_n']), ('partner_type', 'in', ['external', 'esc'])]}"/>
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                                 <!-- default form view -->
                             </field>
@@ -627,6 +636,8 @@
                             <field name="created_by_vi_import" invisible="1"/>
                             <field name="to_correct_ok" readonly="1" invisible="1"/>
                             <field name="show_msg_ok" readonly="1" invisible="1"/>
+                            <field name="mml_status" invisible="1" widget="char"/>
+                            <field name="msl_status" invisible="1" widget="char"/>
                             <group colspan="4">
                             <html>
                                     <style>
@@ -662,6 +673,19 @@
                                         padding: 5px;
                                         width: 90%%;
                                     }
+
+                                    #msl_error
+                                    {
+                                        height: 1em;
+                                        min-height: 1em;
+                                        color: red;
+                                        font-weight: bold;
+                                        text-transform: uppercase;
+                                        padding: 5px;
+                                        width: 99%%;
+                                        text-align: center;
+                                        display: none;
+                                    }
                                 </style>
                                 </html>
                             </group>
@@ -671,7 +695,15 @@
                                         <field name="text_error" nolabel="1" readonly="1" colspan="4" attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
                                         <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="4"/>
                                     </div>
+
                             </html>
+                            </group>
+                            <group colspan="4">
+                                <html colspan="4">
+                                <div id="msl_error">
+                                        <translate>Product is not conform to <span id="msl">MSL</span>  <span id="mml">MML</span></translate>
+                                </div>
+                                </html>
                             </group>
                             <separator string="Product" colspan="4" />
                             <field name="product_id" colspan="4" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,state,old_price_unit,nomen_manda_0,comment,context, parent.categ, True, linked_sol_id, po_order_type)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" default_focus="1"/>
@@ -745,6 +777,17 @@
                             $('#order_line\\/select_fo_open').css('display', 'none');
                             $('#order_line\\/select_fo_select').css('right', '-14px').css('top', '2px');
                             $('[for="order_line\\/select_fo"]').css('width', '1%%');
+                            var mml_status = $('#order_line\\/mml_status').val() || $('#order_line\\/mml_status').text();
+                            var msl_status = $('#order_line\\/msl_status').val() || $('#order_line\\/msl_status').text();
+                            if (mml_status != 'F') {
+                                $('#mml').hide();
+                            }
+                            if (msl_status != 'F') {
+                                $('#msl').hide();
+                            }
+                            if (mml_status == 'F'||msl_status=='F') {
+                                $('#msl_error').show();
+                            }
                             setTimeout("$('#error_message_unifield').css('overflow', 'visible').css('border-width', '1px').css('height', 'auto');", 500);
                             </script>
                             </html>

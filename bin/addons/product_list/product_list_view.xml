@@ -60,6 +60,18 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Product list">
+                    <field name="alert_msl_mml" invisible="1" />
+                    <html colspan="4">
+                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                        <script language="javascript">
+                         var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                            if (alert_msl_mml) {
+                                $('#msl_mml').html(alert_msl_mml);
+                                $('#msl_mml').show();
+                            }
+                        </script>
+
+                    </html>
                     <separator colspan="4" string="General Information" />
                     <field name="type" />
                     <field name="ref" />
@@ -89,6 +101,8 @@
                                 <tree string="Products" editable="top">
                                     <field name="name" domain="[('list_ids', '=', parent.parent_id)]" />
                                     <field name="comment" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                             </field>
                         </page>
@@ -128,6 +142,8 @@
                 <tree string="Products" show_add_button="1" hide_new_button="True">
                     <field name="name" />
                     <field name="comment" />
+                    <field name="mml_status" />
+                    <field name="msl_status" />
                 </tree>
             </field>
         </record>

@@ -65,6 +65,7 @@ class po_follow_up(osv.osv_memory):
         'confirmed_ok': fields.boolean('Confirmed'),
         'closed_ok': fields.boolean('Closed'),
         'cancel_ok': fields.boolean('Cancelled'),
+        'msl_non_conform': fields.boolean('MSL/MML Non Conforming'),
     }
 
     _defaults = {
@@ -339,25 +340,37 @@ class po_follow_up(osv.osv_memory):
             'export_format': wiz.export_format,
         }
 
+        sql_cond = ["nom.name='MED'", "nom.level = 0", "creator.code = 'unidata'"]
+        sql_param = {}
         # PO number
         if wiz.po_id:
             domain.append(('id', '=', wiz.po_id.id))
+            sql_cond.append('po.id=%(order_id)s')
+            sql_param['order_id'] = wiz.po_id.id
 
         # Order Types
         types_list = self.get_types_list(cr, uid, wiz, context=context)
         domain.append(('order_type', 'in', types_list))
         report_parms['order_type'] = self.get_types_str(cr, uid, types_list, context=context)
+        sql_cond.append('po.order_type in %(order_type)s')
+        sql_param['order_type'] = tuple(types_list)
 
         # Order Categories
         categ_list = self.get_categ_list(cr, uid, wiz, context=context)
         domain.append(('categ', 'in', categ_list))
         report_parms['categ'] = self.get_categs_str(cr, uid, categ_list, context=context)
+        sql_cond.append('po.categ in %(categ)s')
+        sql_param['categ'] = tuple(categ_list)
+
 
         # Status
         state_list = self.get_state_list(cr, uid, wiz, context=context)
         domain.append(('state', 'in', state_list))
+        sql_cond.append('po.state in %(state)s')
+        sql_param['state'] = tuple(state_list)
         if wiz.pending_only_ok:
             domain.append(('state', 'not in', ['done', 'cancel']))
+            sql_cond.append("po.state not in ('done', 'cancel')")
         report_parms['state'] = self.get_states_str(cr, uid, state_list, wiz.pending_only_ok, context=context)
 
         # Dates
@@ -368,6 +381,9 @@ class po_follow_up(osv.osv_memory):
             else:
                 tmp = datetime.strptime(wiz.po_date_from, "%Y-%m-%d")
                 report_parms['date_from'] = tmp.strftime("%d.%m.%Y")
+            sql_cond.append("po.date_order >= %(from_date)s")
+            sql_param['from_date'] = wiz.po_date_from
+
 
         if wiz.po_date_thru:
             domain.append(('date_order', '<=', wiz.po_date_thru))
@@ -376,19 +392,86 @@ class po_follow_up(osv.osv_memory):
             else:
                 tmp = datetime.strptime(wiz.po_date_thru, "%Y-%m-%d")
                 report_parms['date_thru'] = tmp.strftime("%d.%m.%Y")
+            sql_cond.append("po.date_order <= %(to_date)s")
+            sql_param['to_date'] = wiz.po_date_thru
 
         # Supplier
         if wiz.partner_id:
             domain.append(('partner_id', '=', wiz.partner_id.id))
             report_parms['supplier'] = wiz.partner_id.name
+            sql_cond.append("po.partner_id =  %(partner_id)s")
+            sql_param['partner_id'] = wiz.partner_id.id
 
         # Supplier Reference
         if wiz.project_ref:
             domain.append(('project_ref', 'like', wiz.project_ref))
+            sql_cond.append("po.project_ref like '%%%%%s%%%%'" % wiz.project_ref)
 
-        # get the PO ids based on the selected criteria
         po_obj = self.pool.get('purchase.order')
-        po_ids = po_obj.search(cr, uid, domain)
+        # get the PO ids based on the selected criteria
+        if wiz.msl_non_conform:
+            report_parms['non_conform'] = 1
+            sql_param['instance_id'] = self.pool.get('res.company')._get_instance_id(cr, uid)
+            # MML
+            cr.execute('''
+            select
+                distinct(pol.order_id)
+            from
+                purchase_order po
+                left join purchase_order_line pol on pol.order_id = po.id and pol.state not in ('cancel', 'cancel_r')
+                left join sale_order_line sol on sol.id = pol.linked_sol_id
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join res_partner partner on partner.id = so.partner_id
+                left join msf_instance instance on instance.instance = partner.name
+                left join product_product p on p.id = sol.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join product_project_rel p_rel on p.id = p_rel.product_id
+                left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+                left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+            where
+                ''' + ' and '.join(sql_cond) + '''
+            group by pol.id
+            HAVING
+                (
+                    bool_and(coalesce(oc_validation,'f'))='f'
+                    or
+                    not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
+                    and
+                    count(up1.instance_id)>0
+                 )
+            ''', sql_param) # not_a_user_entry
+            po_ids = set([x[0] for x in cr.fetchall()])
+
+            # MSL
+            cr.execute('''
+                select
+                    po.id
+                from
+                    purchase_order po
+                    left join purchase_order_line pol on pol.order_id = po.id and pol.state not in ('cancel', 'cancel_r')
+                    left join sale_order_line sol on sol.id = pol.linked_sol_id
+                    left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                    left join res_partner partner on partner.id = so.partner_id
+                    left join msf_instance instance on instance.instance = partner.name
+                    left join product_product p on p.id = sol.product_id
+                    left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                    left join product_international_status creator on creator.id = p.international_status
+                    left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                    left join unidata_project on unidata_project.instance_id = coalesce(instance.id, %(instance_id)s)
+                    left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+                where
+                    ''' +  ' and '.join(sql_cond) + '''
+                group by po.id
+                having
+                count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
+            ''', sql_param) # not_a_user_entry
+            po_ids.update([x[0] for x in cr.fetchall()])
+            po_ids = sorted(list(po_ids), reverse=1)
+
+        else:
+            po_ids = po_obj.search(cr, uid, domain)
 
         if not po_ids:
             raise osv.except_osv(_('Warning'), _('No Purchase Orders match the specified criteria.'))
@@ -449,5 +532,76 @@ class po_follow_up(osv.osv_memory):
             'context': context,
         }
 
+    def get_line_ids_non_msl(self, cr, uid, order_id, context=None):
+        sql_param = {
+            'instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),
+            'order_id' : order_id
+        }
+
+        # MML
+        cr.execute('''
+        select
+            pol.id
+        from
+            purchase_order_line pol
+            left join purchase_order po on po.id = pol.order_id
+            left join sale_order_line sol on sol.id = pol.linked_sol_id
+            left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+            left join res_partner partner on partner.id = so.partner_id
+            left join msf_instance instance on instance.instance = partner.name
+            left join product_product p on p.id = sol.product_id
+            left join product_template tmpl on tmpl.id = p.product_tmpl_id
+            left join product_international_status creator on creator.id = p.international_status
+            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            left join product_project_rel p_rel on p.id = p_rel.product_id
+            left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+            left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+        where
+            pol.state not in ('cancel', 'cancel_r')
+            and pol.order_id = %(order_id)s
+            and nom.name='MED'
+            and nom.level = 0
+            and creator.code = 'unidata'
+        group by pol.id
+        HAVING
+            (
+                bool_and(coalesce(oc_validation,'f'))='f'
+                or
+                not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
+                and
+                count(up1.instance_id)>0
+             )
+        ''', sql_param)
+        pol_ids = set([x[0] for x in cr.fetchall()])
+
+        # MSL
+        cr.execute('''
+            select
+                pol.id
+            from
+                purchase_order_line pol
+                left join purchase_order po on po.id = pol.order_id
+                left join sale_order_line sol on sol.id = pol.linked_sol_id
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join res_partner partner on partner.id = so.partner_id
+                left join msf_instance instance on instance.instance = partner.name
+                left join product_product p on p.id = sol.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join unidata_project on unidata_project.instance_id = coalesce(instance.id, %(instance_id)s)
+                left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+            where
+                pol.state not in ('cancel', 'cancel_r')
+                and pol.order_id = %(order_id)s
+                and nom.name='MED'
+                and nom.level = 0
+                and creator.code = 'unidata'
+            group by pol.id
+            having
+            count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
+        ''', sql_param) # not_a_user_entry
+        pol_ids.update([x[0] for x in cr.fetchall()])
+        return sorted(list(pol_ids))
 
 po_follow_up()

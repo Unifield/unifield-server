@@ -243,7 +243,7 @@
 
 
         <section>
-        <blockTable colWidths="100.0,233.0,30.0,37.0,78.0,75.0,70.0,77.0,100.0" style="ItemsTitle0" repeatRows="1">
+        <blockTable colWidths="90.0,213.0,30.0,37.0,78.0,70.0,70.0,77.0,90.0,25,20" style="ItemsTitle0" repeatRows="1">
             <tr>
                 <td>
                     <para style="TextInformation3gras" alignment="LEFT">Ref.</para>
@@ -271,6 +271,12 @@
                 </td>
                 <td>
                     <para style="TextInformation3gras" alignment="LEFT">Remark</para>
+                </td>
+                <td>
+                    <para style="TextInformation3gras" alignment="LEFT">MML</para>
+                </td>
+                <td>
+                    <para style="TextInformation3gras" alignment="LEFT">MSL</para>
                 </td>
             </tr>
 
@@ -302,6 +308,12 @@
                 </td>
                 <td>
                     <para style="TextInformation3" alignment="LEFT">[[ line.remark and line.remark or False ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation3" alignment="CENTER">[[ getSel(line, 'mml_status') ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation3" alignment="CENTER">[[ getSel(line, 'msl_status') ]]</para>
                 </td>
             </tr>
         </blockTable>

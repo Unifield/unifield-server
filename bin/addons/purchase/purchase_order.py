@@ -23,6 +23,7 @@ import time
 from osv import osv, fields
 import netsvc
 from tools.translate import _
+from tools.misc import _get_header_msl_mml_alert
 import decimal_precision as dp
 from osv.orm import browse_record, browse_null
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
@@ -1052,6 +1053,7 @@ class purchase_order(osv.osv):
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
         'ad_lines_message_nr': fields.function(_get_ad_lines_message_nr, type='char', size=1024, method=1, string='Line number of NR message for missing AD'),
         'tax_line': fields.one2many('account.invoice.tax', 'purchase_id', 'Tax Lines'),
+        'alert_msl_mml': fields.function(_get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
     _defaults = {
         'po_version': 2,

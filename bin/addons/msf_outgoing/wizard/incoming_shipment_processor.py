@@ -308,7 +308,7 @@ class stock_incoming_processor(osv.osv):
 
         return super(stock_incoming_processor, self).create(cr, uid, vals, context=context)
 
-    def do_incoming_shipment(self, cr, uid, ids, context=None):
+    def do_incoming_shipment(self, cr, uid, ids, context=None, check_mml=True):
         """
         Made some integrity check on lines and run the do_incoming_shipment of stock.picking
         """
@@ -334,6 +334,10 @@ class stock_incoming_processor(osv.osv):
 
         picking_id = None
         for proc in self.browse(cr, uid, ids, context=context):
+
+            check_proc_mml = check_mml and proc.picking_id.type == 'in' and not proc.picking_id.purchase_id
+            has_mml_error = []
+
             picking_id = proc.picking_id.id
 
             if proc.picking_id.type != 'in':
@@ -373,10 +377,27 @@ class stock_incoming_processor(osv.osv):
                         'target': 'new',
                         'context': context,
                     }
+                if check_proc_mml and line.quantity and line.mml_status == 'F':
+                    has_mml_error.append('L%s %s' % (line.line_number, line.product_id.default_code))
 
             self.write(cr, uid, [proc.id], {
                 'already_processed': True,
             }, context=context)
+
+            if has_mml_error:
+                cr.rollback()
+                msg = self.pool.get('message.action').create(cr, uid, {
+                    'title':  _('Warning'),
+                    'message': '<h2>%s</h2><h3>%s</h3>' % (_('You are about to process  this line(s) containing a product which does not conform to MML:'),
+                                                           ', '.join(has_mml_error)),
+                    'yes_action': lambda cr, uid, context: self.do_incoming_shipment(cr, uid, ids, context=context, check_mml=False),
+                    'yes_label': _('Process Anyway'),
+                    'no_label': _('Close window'),
+                }, context=context)
+                return self.pool.get('message.action').pop_up(cr, uid, [msg], context=context)
+
+
+
 
             for line in proc.move_ids:
                 # if no quantity, don't process the move
