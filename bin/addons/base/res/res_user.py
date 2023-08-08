@@ -736,7 +736,10 @@ class users(osv.osv):
         return True
 
     def set_my_email(self, cr, uid, email, context=None):
-        self.write(cr, 1, uid, {'user_email': email, 'dont_ask_email': True}, context=context)
+        value = {'user_email': email}
+        if email:
+            value['dont_ask_email'] = True
+        self.write(cr, 1, uid, value, context=context)
         return True
 
     def remove_higer_level_groups(self, cr, uid, ids, context=None):
@@ -806,6 +809,8 @@ class users(osv.osv):
                 if 'company_id' in values:
                     if not (values['company_id'] in self.read(cr, 1, uid, ['company_ids'], context=context)['company_ids']):
                         del values['company_id']
+                if values.get('user_email'):
+                    values['dont_ask_email'] = True # disable pop up
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
 
         if values.get('active') and self._get_unidata_pull_user_id(cr) in ids:
@@ -1098,6 +1103,8 @@ class users(osv.osv):
                 self.check(db_name, uid, tools.ustr(old_passwd))
                 if email is not None:
                     vals['user_email'] = email
+                if email:
+                    vals['dont_ask_email'] = True
                 result = self.write(cr, 1, uid, vals)
                 cr.commit()
             finally:
