@@ -36,13 +36,13 @@
         'data/product_section_code.xml',
         'data/product_supply_source.xml',
         'data/product_justification_code.xml',
+        'product_attributes_view.xml',
         'merged_ud_products_report.xml',
         'unidata_sync.xml',
         'product_report.xml',
         'wizard/non_conform_inpipe_view.xml',
     ],
     'update_xml': [
-        'product_attributes_view.xml',
         'product_attributes_data.xml',
     ],
     'demo_xml': [
