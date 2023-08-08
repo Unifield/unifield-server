@@ -972,6 +972,10 @@
             <field name="method">us_1074_create_unifield_instance</field>
         </record>
 
+        <record id="us_11181_update_supply_signature_follow_up" model="patch.scripts">
+            <field name="method">us_11181_update_supply_signature_follow_up</field>
+        </record>
+
 
     </data>
 </openerp>

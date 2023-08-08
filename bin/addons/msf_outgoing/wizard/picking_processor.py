@@ -139,6 +139,7 @@ class stock_picking_processor(osv.osv):
             multi='kc_dg',
         ),
         'alert_msl_mml': fields.char(size=512, string="Contains non-conform MML/MSL", readonly=1),
+        'partial_process_sign': fields.boolean('Partial process warning if signature'),
     }
 
     def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
@@ -227,10 +228,13 @@ class stock_picking_processor(osv.osv):
             lines_ids = line_obj.search(cr, uid, dom, context=context)
             for move in line_obj.browse(cr, uid, lines_ids, context=context):
                 line_obj.write(cr, uid, [move.id], {'quantity': 0}, context=context)
+            self.write(cr, uid, ids, {'partial_process_sign': False}, context=context)
             return {
                 'type': 'ir.actions.refresh_o2m',
                 'o2m_refresh': 'move_ids'
             }
+        elif self._name == 'outgoing.delivery.processor':
+            self.write(cr, uid, ids, {'partial_process_sign': False}, context=context)
 
         for wizard in self.browse(cr, uid, ids, context=context):
             move_obj = wizard.move_ids[0]._name

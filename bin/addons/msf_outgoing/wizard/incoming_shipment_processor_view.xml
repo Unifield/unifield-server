@@ -26,6 +26,7 @@
                     <field name="contains_kc" invisible="1" />
                     <field name="location_dest_active_ok" invisible="1"/>
                     <field name="draft" invisible="1" />
+                    <field name="partial_process_sign" invisible="1" />
                     <field name="forbidden_product" nolabel="1" widget="html_text" colspan="4"/>
                     <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', True), ('contains_kc', '=', False)]}">
                         <html>
@@ -106,6 +107,14 @@
                         </group>
                         <label colspan="4" string=" " />
                         <separator string="Actions" colspan="9" />
+                        <group colspan="9" attrs="{'invisible': [('partial_process_sign', '=', False)]}">
+                            <html>
+                                <p style="font-weight: bold; font-size: 1.2em; color: red; text-align: center;">
+                                    <translate>Warning: The IN has already been electronically validated for all quantities. The new IN will need to be signed again and the signature for the backorder should be reset. Do you want to continue ?</translate>
+                                </p>
+                            </html>
+                        </group>
+                        <newline />
                         <group colspan="2" col="4">
                             <field name="dest_type"
                                 on_change="onchange_dest_type(dest_type, picking_id)"

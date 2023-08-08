@@ -57,8 +57,6 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-
-
     # UF30.0
 
     def us_1074_create_unifield_instance(self, cr, uid, *a, **b):
@@ -151,9 +149,6 @@ class patch_scripts(osv.osv):
 
         return True
 
-
-
-    # UF30.0
     def us_10783_11563_po_reception_destination(self, cr, uid, *a, **b):
         '''
         For each PO line, look at its origin to set the reception_destination_id. It can be Cross Docking, Service,
@@ -209,8 +204,22 @@ class patch_scripts(osv.osv):
                 AND (pl.link_so_id IS NULL OR (so.procurement_request = 't' AND l.usage != 'customer'))
         )""", (input_id,))
         self.log_info(cr, uid, "US-10783-11563: The Line Destination of %s PO line(s) have been set to 'Input'" % (cr.rowcount,))
-
         return True
+
+
+    def us_11181_update_supply_signature_follow_up(self, cr, uid, *a, **b):
+        '''
+        Update the domain of the existing ir_rule for supply signatures.
+        '''
+        if _get_instance_level(self, cr, uid) == 'hq':
+            rr_obj = self.pool.get('ir.rule')
+            suppl_sign_fup_ids = rr_obj.search(cr, uid, [('name', '=', 'Signatures Follow-up Supply Creator')])
+            if suppl_sign_fup_ids:
+                data = {'domain_force': "[('doc_type', 'in', ['purchase.order', 'sale.order.fo', 'sale.order.ir', 'stock.picking.in', 'stock.picking.out', 'stock.picking.pick'])]"}
+                rr_obj.write(cr, uid, suppl_sign_fup_ids, data)
+        return True
+
+
 
     # UF29.0
     def us_11399_oca_mm_target(self, cr, uid, *a, **b):

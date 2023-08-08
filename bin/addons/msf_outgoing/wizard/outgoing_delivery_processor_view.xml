@@ -27,8 +27,17 @@
                     <field name="move_ids" mode="tree"
                            colspan="4" nolabel="1" />
                     <field name="draft" invisible="1"/>
+                    <field name="partial_process_sign" invisible="1" />
                     <group colspan="4" col="6" name="actions">
                         <separator string="Actions" colspan="6" />
+                        <group colspan="6" attrs="{'invisible': [('partial_process_sign', '=', False)]}">
+                            <html>
+                                <p style="font-weight: bold; font-size: 1.2em; color: red; text-align: center;">
+                                    <translate>Warning: The OUT has already been electronically validated for all quantities. The new OUT will need to be signed again and the signature for the backorder should be reset. Do you want to continue ?</translate>
+                                </p>
+                            </html>
+                        </group>
+                        <newline />
                         <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
