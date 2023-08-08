@@ -19,6 +19,15 @@
         auto="False"
         menu="False"/>
 
+        <report id="field_balance"
+        string="FIELD BALANCE SPECIFICATION REPORT FROM UNIFIELD"
+        model="account.move.line"
+        name="report.field_balance"
+        target_filename="${instance_id.instance} ${period_id.name} Field Balance specification report"
+        report_type="openpyxl"
+        auto="False"
+        menu="False"/>
+
 
     <!-- Sequence for Finance export -->
 
