@@ -35,7 +35,7 @@ from service import http_server
 from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from lxml import etree
-
+from datetime import datetime
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -472,6 +472,17 @@ class users(osv.osv):
                 res[u.id]['new_signature_required'] = True
         return res
 
+    def _get_display_email_popup(self, cr, uid, ids, name=None, arg=None, context=None):
+        ret = {}
+        if datetime.now() > datetime(2023, 12, 4):
+            for x in ids:
+                ret[x] = False
+            return ret
+
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['synchronize', 'dont_ask_email'], context=context):
+            ret[x.id] = x.id != 1 and not x['synchronize'] and not x['dont_ask_email']
+        return ret
+
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
                             help="The new user's real name, used for searching"
@@ -537,6 +548,9 @@ class users(osv.osv):
         'nb_shortcut_used': fields.integer('Number of shortcut used', help="Number of time a shortcut has been used by this user", readonly=True),
         'last_password_change': fields.datetime('Last Password Change', readonly=1),
         'never_expire': fields.boolean('Password never expires', help="If unticked, the password must be changed every 6 months"),
+        'dont_ask_email': fields.boolean("Don't ask for email", readonly=1),
+        'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1),
+        'display_email_popup': fields.function(_get_display_email_popup, type='boolean', method=True, string='Display popup at login'),
     }
 
     def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
@@ -710,7 +724,23 @@ class users(osv.osv):
         return self._get_company(cr, uid, context=context, uid2=uid2)
 
     # User can write to a few of her own fields (but not her groups for example)
-    SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email']
+    SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email', 'dont_ask_email', 'nb_email_asked']
+
+    def set_dont_ask_email(self, cr, uid, context=None):
+        self.write(cr, 1, uid, {'dont_ask_email': True}, context=context)
+        return True
+
+    def set_nb_email_asked(self, cr, uid, nb, context=None):
+        if uid:
+            cr.execute('update res_users set nb_email_asked=coalesce(nb_email_asked, 0)+1 where id=%s', (uid, ))
+        return True
+
+    def set_my_email(self, cr, uid, email, context=None):
+        value = {'user_email': email}
+        if email:
+            value['dont_ask_email'] = True
+        self.write(cr, 1, uid, value, context=context)
+        return True
 
     def remove_higer_level_groups(self, cr, uid, ids, context=None):
         '''
@@ -779,6 +809,8 @@ class users(osv.osv):
                 if 'company_id' in values:
                     if not (values['company_id'] in self.read(cr, 1, uid, ['company_ids'], context=context)['company_ids']):
                         del values['company_id']
+                if values.get('user_email'):
+                    values['dont_ask_email'] = True # disable pop up
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
 
         if values.get('active') and self._get_unidata_pull_user_id(cr) in ids:
@@ -1035,7 +1067,7 @@ class users(osv.osv):
                                     confirm_passwd, context=context)
 
     def change_password(self, db_name, login, old_passwd, new_passwd,
-                        confirm_passwd, context=None):
+                        confirm_passwd, email=None, context=None):
         """Change current user password. Old password must be provided explicitly
         to prevent hijacking an existing user session, or for cases where the cleartext
         password is not used to authenticate requests.
@@ -1069,6 +1101,10 @@ class users(osv.osv):
                     'last_password_change': time.strftime('%Y-%m-%d %H:%M:%S'),
                 }
                 self.check(db_name, uid, tools.ustr(old_passwd))
+                if email is not None:
+                    vals['user_email'] = email
+                if email:
+                    vals['dont_ask_email'] = True
                 result = self.write(cr, 1, uid, vals)
                 cr.commit()
             finally:
