@@ -17,10 +17,8 @@
             var ok = true;
             jQuery("span[class=fielderror]").remove();
             jQuery('#view_form').find('input[kind=email]').each(function () {
-                var val = jQuery(this).val();
-
-                if (val && !val.includes('@')) {
-                    jQuery("<span class='fielderror'>${_('An email address must contain a single @')}</span>").insertAfter(jQuery(this));
+                if (!this.checkValidity()) {
+                    jQuery("<span class='fielderror'>${_('Invalid Email address')}</span>").insertAfter(jQuery(this));
                     ok = false;
                 }
             });

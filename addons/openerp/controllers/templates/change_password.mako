@@ -13,9 +13,9 @@
             })
         }
         function disable_save() {
-            email = $('#email').val()
-            if (email && !email.includes('@')) {
-                alert(_('An email address must contain a single @'));
+            email = document.getElementById('email');
+            if (!email.checkValidity()) {
+                alert(_('Invalid Email address'));
                 return false;
             }
             var pass = $("#show_password").val()
@@ -91,7 +91,7 @@
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="email">${_("Email address:")}</label></td>
-                                    <td style="padding: 3px;"><input type="input" id="email" name="email" class="db_user_pass" autocomplete="off" value="${email}">
+                                    <td style="padding: 3px;"><input type="email" id="email" name="email" class="db_user_pass" autocomplete="off" value="${email}">
                                     </td>
 
                                 </tr>

@@ -38,6 +38,9 @@ msgstr "Merci de saisir une adresse de courriel"
 msgid "An email address must contain a single @"
 msgstr "Une adresse de courriel doit contenir un seul @"
 
+msgid "Invalid Email address"
+msgstr "Adresse email invalide"
+
 #: validators.py:249
 #, python-format
 msgid ""

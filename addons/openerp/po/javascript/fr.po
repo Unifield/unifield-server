@@ -135,6 +135,6 @@ msgstr "Voir "
 msgid "Report can not be stopped :"
 msgstr "Impossible d'arrêter le rapport :"
 
-msgid "An email address must contain a single @"
-msgstr "Une adresse email doit contenir le caractère @"
+msgid "Invalid Email address"
+msgstr "Adresse email invalide"
 
