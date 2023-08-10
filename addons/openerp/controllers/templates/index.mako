@@ -335,7 +335,12 @@
             });
             function click_email_answer(answer) {
                 if (answer=='goto') {
-                    jQuery.post('/openerp/pref/save_email', {'email': jQuery('#email').val()});
+                    email_val = jQuery('#email').val();
+                    if (email_val && !email_val.includes('@')) {
+                        alert(_('An email address must contain a single @'));
+                        return false;
+                    }
+                    jQuery.post('/openerp/pref/save_email', {'email': email_val});
                 } else if (answer=='later') {
                     jQuery.post('/openerp/pref/email_update_nb');
                 } else if (answer=='never') {

@@ -1733,6 +1733,9 @@ msgstr "Nouveau mot de passe :"
 msgid "Confirm new password:"
 msgstr "Confirmation nouveau mot de passe :"
 
+msgid "Email address:"
+msgstr "Adresse Email"
+
 msgid "You have to change your password."
 msgstr "Vous devez changer votre mot de passe."
 

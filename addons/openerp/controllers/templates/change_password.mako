@@ -13,6 +13,11 @@
             })
         }
         function disable_save() {
+            email = $('#email').val()
+            if (email && !email.includes('@')) {
+                alert(_('An email address must contain a single @'));
+                return false;
+            }
             var pass = $("#show_password").val()
             $("#password").val(pass);
             $("#show_password").val(false);

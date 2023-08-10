@@ -12,6 +12,22 @@
                 'height': 400
             });
         }
+
+        function validate_email() {
+            var ok = true;
+            jQuery("span[class=fielderror]").remove();
+            jQuery('#view_form').find('input[kind=email]').each(function () {
+                var val = jQuery(this).val();
+
+                if (val && !val.includes('@')) {
+                    jQuery("<span class='fielderror'>${_('An email address must contain a single @')}</span>").insertAfter(jQuery(this));
+                    ok = false;
+                }
+            });
+            if (ok) {
+                submit_form('ok');
+            }
+        }
     </script>
     % if saved:
         <script type="text/javascript">
@@ -36,7 +52,7 @@
                             onclick="open_password(); return false;"
                             >${_("Change Password")}</button>
                     <button type='button' class="static_boxes oe_form_button_cancel" onclick="window.frameElement.close();">${_("Cancel")}</button>
-                    <button type='button' class="static_boxes" onclick="submit_form('ok');">${_("Save")}</button>
+                    <button type='button' class="static_boxes" onclick="validate_email();">${_("Save")}</button>
                 </td>
             </tr>
             </table>
