@@ -58,6 +58,17 @@ class patch_scripts(osv.osv):
     }
 
     # UF30.0
+    def us_11810_fix_company_logo(self, cr, uid, *a, **b):
+        '''
+        Add the default logo to the company if there is none
+        '''
+        company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id
+        if not company.logo:
+            default_logo = tools.file_open(opj('msf_profile', 'data', 'msf.jpg'), 'rb')
+            self.pool.get('res.company').write(cr, uid, company.id, {'logo': base64.encodestring(default_logo.read())})
+            default_logo.close()
+
+        return True
 
     def us_1074_create_unifield_instance(self, cr, uid, *a, **b):
         uf_instance = self.pool.get('unifield.instance')
