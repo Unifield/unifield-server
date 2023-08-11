@@ -419,86 +419,92 @@ class WebKitParser(report_sxw):
             logger.error(error_message)
             return xml_string
 
-        namespaces = {
-            'o': 'urn:schemas-microsoft-com:office:office',
-            'x': 'urn:schemas-microsoft-com:office:excel',
-            'ss': 'urn:schemas-microsoft-com:office:spreadsheet',
-            'html': 'http://www.w3.org/TR/REC-html40'
-        }
+        try:
+            namespaces = {
+                'o': 'urn:schemas-microsoft-com:office:office',
+                'x': 'urn:schemas-microsoft-com:office:excel',
+                'ss': 'urn:schemas-microsoft-com:office:spreadsheet',
+                'html': 'http://www.w3.org/TR/REC-html40'
+            }
 
-        spreadsheet_elements = file_dom.xpath('//ss:Worksheet',
-                                              namespaces=namespaces)
+            spreadsheet_elements = file_dom.xpath('//ss:Worksheet',
+                                                  namespaces=namespaces)
 
-        # Check spreadcheet names
-        xml_modified = False
-        sheet_name_dict = {}
-        count = 0
-        for sheet in spreadsheet_elements:
-            sheet_name = sheet.get('{%(ss)s}Name' % namespaces, _('Sheet 1'))
-            new_name = self.sanitizeWorksheetName(sheet_name)
-            if new_name != sheet_name:
-                # if the sheet name already exists, modify it to add
-                # a counter to the name
-                if new_name in sheet_name_dict:
-                    sheet_name_dict[new_name] += 1
-                    count = sheet_name_dict[new_name]
-                    new_name = '%s_%s' % (new_name[:28], count)
+            # Check spreadcheet names
+            xml_modified = False
+            sheet_name_dict = {}
+            count = 0
+            for sheet in spreadsheet_elements:
+                sheet_name = sheet.get('{%(ss)s}Name' % namespaces, _('Sheet 1'))
+                new_name = self.sanitizeWorksheetName(sheet_name)
+                if new_name != sheet_name:
+                    # if the sheet name already exists, modify it to add
+                    # a counter to the name
+                    if new_name in sheet_name_dict:
+                        sheet_name_dict[new_name] += 1
+                        count = sheet_name_dict[new_name]
+                        new_name = '%s_%s' % (new_name[:28], count)
+                    else:
+                        sheet_name_dict[new_name] = 1
+                    sheet.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Name'] = new_name
+                    xml_modified = True
                 else:
-                    sheet_name_dict[new_name] = 1
-                sheet.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Name'] = new_name
+                    if new_name not in sheet_name_dict:
+                        sheet_name_dict[new_name] = 1
+
+            # Check date cells
+            data_time_elements = file_dom.xpath('//ss:Data[@ss:Type="DateTime"]',
+                                                namespaces=namespaces)
+            element_to_remove = []
+            for element in data_time_elements:
+                if 'False' in element.text:
+                    error_message = 'Line %s of document %s is corrupted, ' \
+                        'DateTime cannot contain \'False\': %s' % \
+                        (element.sourceline, report_name, element.text)
+                    logger.error(error_message)
+                    element_to_remove.append(element)
+            for element in element_to_remove:
+                # if a malformed node exists, replace it with an empty String cell
+                element.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Type'] = 'String'
+                element.text = ''
                 xml_modified = True
-            else:
-                if new_name not in sheet_name_dict:
-                    sheet_name_dict[new_name] = 1
 
-        # Check date cells
-        data_time_elements = file_dom.xpath('//ss:Data[@ss:Type="DateTime"]',
-                                            namespaces=namespaces)
-        element_to_remove = []
-        for element in data_time_elements:
-            if 'False' in element.text:
-                error_message = 'Line %s of document %s is corrupted, ' \
-                    'DateTime cannot contain \'False\': %s' % \
-                    (element.sourceline, report_name, element.text)
-                logger.error(error_message)
-                element_to_remove.append(element)
-        for element in element_to_remove:
-            # if a malformed node exists, replace it with an empty String cell
-            element.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Type'] = 'String'
-            element.text = ''
-            xml_modified = True
+            # Check Number cells
+            number_cells = file_dom.xpath('//ss:Data[@ss:Type="Number"]',
+                                          namespaces=namespaces)
+            for cell in number_cells:
+                # if space in the in Numbers, remove them
+                forbidden_chars = [' ', '\xc2\xa0', '\xa0']
+                for char in forbidden_chars:
+                    if isinstance(cell.text, str) and char in cell.text:
+                        error_message = 'Line %s of document %s is corrupted, a '\
+                            'Number cannot contain characters or spaces: %r' % \
+                            (cell.sourceline, report_name, cell.text)
+                        logger.warning(error_message)
+                        cell.text = cell.text.replace(char, '')
+                        xml_modified = True
 
-        # Check Number cells
-        number_cells = file_dom.xpath('//ss:Data[@ss:Type="Number"]',
-                                      namespaces=namespaces)
-        for cell in number_cells:
-            # if space in the in Numbers, remove them
-            forbidden_chars = [' ', '\xc2\xa0', '\xa0']
-            for char in forbidden_chars:
-                if isinstance(cell.text, str) and char in cell.text:
+                # check the number is really a number, if not, set it to zero
+                try:
+                    if cell.text:
+                        float(cell.text)
+                except (ValueError, TypeError):
                     error_message = 'Line %s of document %s is corrupted, a '\
-                        'Number cannot contain characters or spaces: %r' % \
+                        'Number cell contain other things than number: %r. '\
+                        'It has been replaced by 0.0.' % \
                         (cell.sourceline, report_name, cell.text)
                     logger.warning(error_message)
-                    cell.text = cell.text.replace(char, '')
+                    cell.text = '0.0'
                     xml_modified = True
 
-            # check the number is really a number, if not, set it to zero
-            try:
-                if cell.text:
-                    float(cell.text)
-            except (ValueError, TypeError):
-                error_message = 'Line %s of document %s is corrupted, a '\
-                    'Number cell contain other things than number: %r. '\
-                    'It has been replaced by 0.0.' % \
-                    (cell.sourceline, report_name, cell.text)
-                logger.warning(error_message)
-                cell.text = '0.0'
-                xml_modified = True
+            if xml_modified:
+                # return modified xml
+                return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
+        except Exception as e:
+            # US-2540: in case of xml syntax error, log the error and return
+            # the malformed XML
+            logger.error('Error check_malformed_xml_spreadsheet: %s' % e)
 
-        if xml_modified:
-            # return modified xml
-            return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
         return xml_string
 
 
