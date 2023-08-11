@@ -65,6 +65,21 @@ class Preferences(Form):
         action_data['opened'] = True
         return actions.execute(action_data)
 
+    @expose()
+    def save_email(self, email):
+        proxy = rpc.RPCProxy('res.users')
+        proxy.set_my_email(email, rpc.session.context)
+
+    @expose()
+    def email_dontask(self):
+        proxy = rpc.RPCProxy('res.users')
+        proxy.set_dont_ask_email(rpc.session.context)
+
+    @expose()
+    def email_update_nb(self):
+        proxy = rpc.RPCProxy('res.users')
+        proxy.set_nb_email_asked(rpc.session.context)
+
     @expose(template="/openerp/controllers/templates/preferences/index.mako")
     def create(self, saved=False):
 

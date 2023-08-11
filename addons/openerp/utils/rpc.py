@@ -418,14 +418,14 @@ class RPCSession(object):
         return self.uid and self.open
 
     def change_password(self, db, user, password, new_password,
-                        confirm_password):
+                        confirm_password, email=None):
 
         if not (db and user and password and new_password and confirm_password):
             return _('All fields are required.')
 
         try:
             error_message = self.execute_noauth('common', 'change_password', db, user,
-                                                password, new_password, confirm_password)
+                                                password, new_password, confirm_password, email)
         except Exception as e:
             error_message = e.message
         return error_message

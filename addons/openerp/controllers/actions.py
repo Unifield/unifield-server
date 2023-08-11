@@ -274,7 +274,7 @@ def refresh_popupo2m(action=False, *args, **b):
 def refresh_o2m(action=False, *a, **b):
     cherrypy.response.headers['Content-Type'] = 'text/javascript'
     import json
-    return json.dumps({'reload': 1, 'list_grid': action.get('o2m_refresh')})
+    return json.dumps({'reload': 1, 'list_grid': action.get('o2m_refresh'), 'reset_selection': action.get('reset_selection', 0)})
 
 def act_window(action, data):
     if not action.get('opened'):

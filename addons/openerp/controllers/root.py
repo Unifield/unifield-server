@@ -161,10 +161,12 @@ class Root(SecuredController):
             tools = None
 
         user_info = rpc.RPCProxy("res.users").read([rpc.session.uid],
-                                                   ['force_password_change', 'new_signature_required'],
+                                                   ['force_password_change', 'new_signature_required', 'nb_email_asked', 'display_email_popup'],
                                                    rpc.session.context)[0]
         force_password_change = user_info['force_password_change']
         signature_required = user_info.get('new_signature_required')
+        email_required = user_info.get('display_email_popup')
+        nb_email_asked = user_info['nb_email_asked'] or 0
         widgets= openobject.pooler.get_pool()\
             .get_controller('/openerp/widgets')\
             .user_home_widgets(ctx)
@@ -191,6 +193,7 @@ class Root(SecuredController):
             check_survey = True
         else:
             signature_required = False
+            email_required = False
 
         if check_survey:
             surveys = rpc.RPCProxy('sync_client.survey').get_surveys()
@@ -218,7 +221,9 @@ class Root(SecuredController):
                     display_shortcut=display_shortcut,
                     signature_required=signature_required,
                     display_warning=display_warning,
-                    refresh_timeout=refresh_timeout)
+                    refresh_timeout=refresh_timeout,
+                    email_required=email_required,
+                    nb_email_asked=nb_email_asked)
 
     @expose()
     def do_login(self, *arg, **kw):

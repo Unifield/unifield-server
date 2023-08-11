@@ -1950,3 +1950,15 @@ msgstr "Demander plus tard"
 #: widgets/form/templates/signature.mako:4
 msgid "Clear Signature"
 msgstr "Effacer la Signature"
+
+#: controllers/templates/index.mako:268
+msgid "Please fill your email address"
+msgstr "Veuillez saisir votre adresse email"
+
+#: controllers/templates/index.mako:268
+msgid "Save email"
+msgstr "Enregistrer l'adresse"
+
+#: controllers/templates/index.mako:268
+msgid "Do not ask again"
+msgstr "Ne plus demander"
