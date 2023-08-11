@@ -168,8 +168,6 @@ class res_company(osv.osv):
         self._get_company_children.clear_cache(cr.dbname)
 
     def create(self, cr, uid, vals, context=None):
-        if not vals.get('logo'):
-            vals['logo'] = base64.encodestring(tools.file_open(opj('msf_profile', 'data', 'msf.jpg'), 'rb').read())
         if not vals.get('name', False) or vals.get('partner_id', False):
             self.cache_restart(cr)
             return super(res_company, self).create(cr, uid, vals, context=context)
@@ -278,7 +276,7 @@ class res_company(osv.osv):
         'rml_header': _get_header,
         'rml_header2': _get_header2,
         'rml_header3': _get_header3,
-        'logo': _get_logo
+        # 'logo': _get_logo
     }
 
     _constraints = [
