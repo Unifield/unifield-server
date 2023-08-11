@@ -22,7 +22,8 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from purchase import PURCHASE_ORDER_STATE_SELECTION
+from purchase import PURCHASE_ORDER_STATE_SELECTION, ORDER_TYPES_SELECTION
+from order_types import ORDER_CATEGORY
 
 import time
 from datetime import datetime
@@ -39,15 +40,32 @@ class po_follow_up(osv.osv_memory):
         'partner_id': fields.many2one('res.partner', 'Supplier', required=False),
         'project_ref': fields.char('Supplier reference', size=64, required=False),
         'background_time': fields.integer('Number of second before background processing'),
+        'pending_only_ok': fields.boolean('Pending order lines only'),
+        'include_notes_ok': fields.boolean('Include order lines note (PDF)'),
+        'export_format': fields.char('Export Format', size=16),
+        # Order Types
+        'regular_ok': fields.boolean('Regular'),
+        'donation_exp_ok': fields.boolean('Donation before expiry'),
+        'donation_st_ok': fields.boolean('Standard donation'),
+        'loan_ok': fields.boolean('Loan'),
+        'loan_return_ok': fields.boolean('Loan Return'),
+        'in_kind_ok': fields.boolean('In Kind Donation'),
+        'purchase_list_ok': fields.boolean('Purchase List'),
+        'direct_ok': fields.boolean('Direct Purchase Order'),
+        # Order Categories
+        'medical_ok': fields.boolean('Medical'),
+        'log_ok': fields.boolean('Logistic'),
+        'service_ok': fields.boolean('Service'),
+        'transport_ok': fields.boolean('Transport'),
+        'other_ok': fields.boolean('Other'),
+        # Status
         'draft_ok': fields.boolean('Draft'),
         'validated_ok': fields.boolean('Validated'),
         'sourced_ok': fields.boolean('Sourced'),
         'confirmed_ok': fields.boolean('Confirmed'),
         'closed_ok': fields.boolean('Closed'),
         'cancel_ok': fields.boolean('Cancelled'),
-        'pending_only_ok': fields.boolean('Pending order lines only'),
-        'include_notes_ok': fields.boolean('Include order lines note (PDF)'),
-        'export_format': fields.char('Export Format', size=16),
+        'msl_non_conform': fields.boolean('MSL/MML Non Conforming'),
     }
 
     _defaults = {
@@ -87,6 +105,71 @@ class po_follow_up(osv.osv_memory):
         self.write(cr, uid, ids, {'export_format': 'pdf'}, context=context)
         return self.button_validate(cr, uid, ids, report_name=report_name, context=context)
 
+    def get_types_list(self, cr, uid, wiz, context=None):
+        if context is None:
+            context = {}
+        res = []
+        if wiz.regular_ok:
+            res.append('regular')
+        if wiz.donation_exp_ok:
+            res.append('donation_exp')
+        if wiz.donation_st_ok:
+            res.append('donation_st')
+        if wiz.loan_ok:
+            res.append('loan')
+        if wiz.loan_return_ok:
+            res.append('loan_return')
+        if wiz.in_kind_ok:
+            res.append('in_kind')
+        if wiz.purchase_list_ok:
+            res.append('purchase_list')
+        if wiz.direct_ok:
+            res.append('direct')
+
+        if not res:
+            res = [key for key, value in ORDER_TYPES_SELECTION]
+
+        return res
+
+    def get_types_str(self, cr, uid, types, context=None):
+        if context is None:
+            context = {}
+
+        res = [_(value) for key, value in ORDER_TYPES_SELECTION if key in types]
+        if len(res) == 0 or len(res) == len(ORDER_TYPES_SELECTION):
+            return _('All')
+
+        return ', '.join(res).strip(', ')
+
+    def get_categ_list(self, cr, uid, wiz, context=None):
+        if context is None:
+            context = {}
+        res = []
+        if wiz.medical_ok:
+            res.append('medical')
+        if wiz.log_ok:
+            res.append('log')
+        if wiz.service_ok:
+            res.append('service')
+        if wiz.transport_ok:
+            res.append('transport')
+        if wiz.other_ok:
+            res.append('other')
+
+        if not res:
+            res = [key for key, value in ORDER_CATEGORY]
+
+        return res
+
+    def get_categs_str(self, cr, uid, categs, context=None):
+        if context is None:
+            context = {}
+
+        res = [_(value) for key, value in ORDER_CATEGORY if key in categs]
+        if len(res) == 0 or len(res) == len(ORDER_CATEGORY):
+            return _('All')
+
+        return ', '.join(res).strip(', ')
 
     def get_state_list(self, cr, uid, wiz, context=None):
         if context is None:
@@ -114,7 +197,6 @@ class po_follow_up(osv.osv_memory):
 
         return res
 
-
     def get_states_str(self, cr, uid, states, pending_only, context=None):
         if context is None:
             context = {}
@@ -124,8 +206,10 @@ class po_follow_up(osv.osv_memory):
         else:
             res = [_(value) for key, value in PURCHASE_ORDER_STATE_SELECTION if key in states]
 
-        return ', '.join(res).strip(', ')
+        if len(res) == 0 or len(res) == len(PURCHASE_ORDER_STATE_SELECTION):
+            return _('All')
 
+        return ', '.join(res).strip(', ')
 
     def getAllLineIN(self, cr, uid, po_line_id):
         cr.execute('''
@@ -147,7 +231,6 @@ class po_follow_up(osv.osv_memory):
             yield res
 
         return
-
 
     def get_qty_backordered(self, cr, uid, pol_id, qty_ordered, qty_received, first_line):
         pol = self.pool.get('purchase.order.line').browse(cr, uid, pol_id)
@@ -177,8 +260,6 @@ class po_follow_up(osv.osv_memory):
             return qty_ordered - total_done
 
         return qty_ordered - qty_received
-
-
 
     def has_pending_lines(self, cr, uid, po_id):
         po_line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id','=',po_id)], order='line_number')
@@ -252,20 +333,44 @@ class po_follow_up(osv.osv_memory):
             'date_thru': '',
             'state': '',
             'supplier': '',
+            'order_type': '',
+            'categ': '',
             'pending_only_ok': wiz.pending_only_ok,
             'include_notes_ok': wiz.include_notes_ok,
             'export_format': wiz.export_format,
         }
 
+        sql_cond = ["nom.name='MED'", "nom.level = 0", "creator.code = 'unidata'"]
+        sql_param = {}
         # PO number
         if wiz.po_id:
             domain.append(('id', '=', wiz.po_id.id))
+            sql_cond.append('po.id=%(order_id)s')
+            sql_param['order_id'] = wiz.po_id.id
+
+        # Order Types
+        types_list = self.get_types_list(cr, uid, wiz, context=context)
+        domain.append(('order_type', 'in', types_list))
+        report_parms['order_type'] = self.get_types_str(cr, uid, types_list, context=context)
+        sql_cond.append('po.order_type in %(order_type)s')
+        sql_param['order_type'] = tuple(types_list)
+
+        # Order Categories
+        categ_list = self.get_categ_list(cr, uid, wiz, context=context)
+        domain.append(('categ', 'in', categ_list))
+        report_parms['categ'] = self.get_categs_str(cr, uid, categ_list, context=context)
+        sql_cond.append('po.categ in %(categ)s')
+        sql_param['categ'] = tuple(categ_list)
+
 
         # Status
         state_list = self.get_state_list(cr, uid, wiz, context=context)
         domain.append(('state', 'in', state_list))
+        sql_cond.append('po.state in %(state)s')
+        sql_param['state'] = tuple(state_list)
         if wiz.pending_only_ok:
             domain.append(('state', 'not in', ['done', 'cancel']))
+            sql_cond.append("po.state not in ('done', 'cancel')")
         report_parms['state'] = self.get_states_str(cr, uid, state_list, wiz.pending_only_ok, context=context)
 
         # Dates
@@ -276,6 +381,9 @@ class po_follow_up(osv.osv_memory):
             else:
                 tmp = datetime.strptime(wiz.po_date_from, "%Y-%m-%d")
                 report_parms['date_from'] = tmp.strftime("%d.%m.%Y")
+            sql_cond.append("po.date_order >= %(from_date)s")
+            sql_param['from_date'] = wiz.po_date_from
+
 
         if wiz.po_date_thru:
             domain.append(('date_order', '<=', wiz.po_date_thru))
@@ -284,19 +392,86 @@ class po_follow_up(osv.osv_memory):
             else:
                 tmp = datetime.strptime(wiz.po_date_thru, "%Y-%m-%d")
                 report_parms['date_thru'] = tmp.strftime("%d.%m.%Y")
+            sql_cond.append("po.date_order <= %(to_date)s")
+            sql_param['to_date'] = wiz.po_date_thru
 
         # Supplier
         if wiz.partner_id:
             domain.append(('partner_id', '=', wiz.partner_id.id))
             report_parms['supplier'] = wiz.partner_id.name
+            sql_cond.append("po.partner_id =  %(partner_id)s")
+            sql_param['partner_id'] = wiz.partner_id.id
 
         # Supplier Reference
         if wiz.project_ref:
             domain.append(('project_ref', 'like', wiz.project_ref))
+            sql_cond.append("po.project_ref like '%%%%%s%%%%'" % wiz.project_ref)
 
-        # get the PO ids based on the selected criteria
         po_obj = self.pool.get('purchase.order')
-        po_ids = po_obj.search(cr, uid, domain)
+        # get the PO ids based on the selected criteria
+        if wiz.msl_non_conform:
+            report_parms['non_conform'] = 1
+            sql_param['instance_id'] = self.pool.get('res.company')._get_instance_id(cr, uid)
+            # MML
+            cr.execute('''
+            select
+                distinct(pol.order_id)
+            from
+                purchase_order po
+                left join purchase_order_line pol on pol.order_id = po.id and pol.state not in ('cancel', 'cancel_r')
+                left join sale_order_line sol on sol.id = pol.linked_sol_id
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join res_partner partner on partner.id = so.partner_id
+                left join msf_instance instance on instance.instance = partner.name
+                left join product_product p on p.id = sol.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join product_project_rel p_rel on p.id = p_rel.product_id
+                left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+                left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+            where
+                ''' + ' and '.join(sql_cond) + '''
+            group by pol.id
+            HAVING
+                (
+                    bool_and(coalesce(oc_validation,'f'))='f'
+                    or
+                    not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
+                    and
+                    count(up1.instance_id)>0
+                 )
+            ''', sql_param) # not_a_user_entry
+            po_ids = set([x[0] for x in cr.fetchall()])
+
+            # MSL
+            cr.execute('''
+                select
+                    po.id
+                from
+                    purchase_order po
+                    left join purchase_order_line pol on pol.order_id = po.id and pol.state not in ('cancel', 'cancel_r')
+                    left join sale_order_line sol on sol.id = pol.linked_sol_id
+                    left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                    left join res_partner partner on partner.id = so.partner_id
+                    left join msf_instance instance on instance.instance = partner.name
+                    left join product_product p on p.id = sol.product_id
+                    left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                    left join product_international_status creator on creator.id = p.international_status
+                    left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                    left join unidata_project on unidata_project.instance_id = coalesce(instance.id, %(instance_id)s)
+                    left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+                where
+                    ''' +  ' and '.join(sql_cond) + '''
+                group by po.id
+                having
+                count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
+            ''', sql_param) # not_a_user_entry
+            po_ids.update([x[0] for x in cr.fetchall()])
+            po_ids = sorted(list(po_ids), reverse=1)
+
+        else:
+            po_ids = po_obj.search(cr, uid, domain)
 
         if not po_ids:
             raise osv.except_osv(_('Warning'), _('No Purchase Orders match the specified criteria.'))
@@ -357,5 +532,76 @@ class po_follow_up(osv.osv_memory):
             'context': context,
         }
 
-po_follow_up()
+    def get_line_ids_non_msl(self, cr, uid, order_id, context=None):
+        sql_param = {
+            'instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),
+            'order_id' : order_id
+        }
 
+        # MML
+        cr.execute('''
+        select
+            pol.id
+        from
+            purchase_order_line pol
+            left join purchase_order po on po.id = pol.order_id
+            left join sale_order_line sol on sol.id = pol.linked_sol_id
+            left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+            left join res_partner partner on partner.id = so.partner_id
+            left join msf_instance instance on instance.instance = partner.name
+            left join product_product p on p.id = sol.product_id
+            left join product_template tmpl on tmpl.id = p.product_tmpl_id
+            left join product_international_status creator on creator.id = p.international_status
+            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+            left join product_project_rel p_rel on p.id = p_rel.product_id
+            left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+            left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+        where
+            pol.state not in ('cancel', 'cancel_r')
+            and pol.order_id = %(order_id)s
+            and nom.name='MED'
+            and nom.level = 0
+            and creator.code = 'unidata'
+        group by pol.id
+        HAVING
+            (
+                bool_and(coalesce(oc_validation,'f'))='f'
+                or
+                not array_agg(coalesce(instance.id, %(instance_id)s))<@array_agg(up1.instance_id)
+                and
+                count(up1.instance_id)>0
+             )
+        ''', sql_param)
+        pol_ids = set([x[0] for x in cr.fetchall()])
+
+        # MSL
+        cr.execute('''
+            select
+                pol.id
+            from
+                purchase_order_line pol
+                left join purchase_order po on po.id = pol.order_id
+                left join sale_order_line sol on sol.id = pol.linked_sol_id
+                left join sale_order so on so.id = sol.order_id and so.procurement_request='f'
+                left join res_partner partner on partner.id = so.partner_id
+                left join msf_instance instance on instance.instance = partner.name
+                left join product_product p on p.id = sol.product_id
+                left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                left join product_international_status creator on creator.id = p.international_status
+                left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                left join unidata_project on unidata_project.instance_id = coalesce(instance.id, %(instance_id)s)
+                left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+            where
+                pol.state not in ('cancel', 'cancel_r')
+                and pol.order_id = %(order_id)s
+                and nom.name='MED'
+                and nom.level = 0
+                and creator.code = 'unidata'
+            group by pol.id
+            having
+            count(unidata_project.uf_active ='t' OR NULL)>0 and count(msl_rel.product_id is NULL or NULL)>0
+        ''', sql_param) # not_a_user_entry
+        pol_ids.update([x[0] for x in cr.fetchall()])
+        return sorted(list(pol_ids))
+
+po_follow_up()

@@ -43,27 +43,7 @@ class account_chart(osv.osv_memory):
         res = {}
         res['value'] = {}
         if fiscalyear_id:
-            start_period = end_period = False
-            cr.execute('''
-                SELECT * FROM (SELECT p.id
-                               FROM account_period p
-                               LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
-                               WHERE f.id = %s and number != 0
-                               ORDER BY p.date_start ASC
-                               LIMIT 1) AS period_start
-                UNION
-                SELECT * FROM (SELECT p.id
-                               FROM account_period p
-                               LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
-                               WHERE f.id = %s and number != 0
-                               AND p.date_start < NOW()
-                               ORDER BY p.date_stop DESC
-                               LIMIT 1) AS period_stop''', (fiscalyear_id, fiscalyear_id))
-            periods =  [i[0] for i in cr.fetchall()]
-            if periods and len(periods) > 1:
-                start_period = periods[0]
-                end_period = periods[1]
-            res['value'] = {'period_from': start_period, 'period_to': end_period}
+            res['value'] = self.pool.get('account.fiscalyear')._get_normal_period_from_to(cr, uid, fiscalyear_id, context)
 
         # US-1179
         res['value']['is_initial_balance_available'] = fiscalyear_id or False

@@ -27,6 +27,7 @@ import threading
 
 from osv import fields, osv
 from tools.translate import _
+from tools.misc import _get_std_mml_status, _get_header_msl_mml_alert
 from osv.orm import browse_record
 from lxml import etree
 import decimal_precision as dp
@@ -648,6 +649,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             res[id] = False
         return res
 
+
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}, select=True, sort_column='id'),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
@@ -763,6 +765,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
+        'alert_msl_mml': fields.function(_get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {
@@ -2389,6 +2392,9 @@ class sale_order_line(osv.osv):
 
         'original_instance': fields.char('Original Instance', size=128, readonly=1),
         'instance_sync_order_ref_needed': fields.function(_get_instance_sync_order_ref_needed, method=True, type='boolean', store=False, string='Is instance_sync_order_ref needed ?'),
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2413,6 +2419,8 @@ class sale_order_line(osv.osv):
         'cancelled_by_sync': False,
         'ir_name_from_sync': '',
         'instance_sync_order_ref_needed': _defaults_instance_sync_order_ref_needed,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

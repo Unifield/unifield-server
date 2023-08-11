@@ -10,6 +10,8 @@ import logging
 import os
 import posixpath
 import time
+from urllib.parse import urlparse
+
 
 class ConnectionFailed(Exception):
     pass
@@ -30,16 +32,8 @@ class Client(object):
         if not port:
             port = 443 if protocol == 'https' else 80
         self.path = path or ''
-        if not self.path.endswith('/'):
-            self.path = '%s/' % self.path
 
-        # oneDrive: need to split /site/ and path
-        # in our config site is /personal/unifield_xxx_yyy/
-        # path is /Documents/Unifield/
-        self.baseurl = '{0}://{1}:{2}/{3}/'.format(protocol, host, port, '/'.join(self.path.split('/')[0:3]) )
-
-        if len(self.path.split('/')) < 5:
-            self.path = '%sDocuments/' % self.path
+        self.url = '{0}://{1}:{2}'.format(protocol, host, port)
 
         self.login()
 
@@ -49,6 +43,36 @@ class Client(object):
         if not isinstance(self.request.authentication_context._provider, SamlTokenProvider) or \
                 not self.request.authentication_context._provider.get_authentication_cookie():
             raise requests.exceptions.RequestException(self.request.get_last_error())
+
+        # get the server_site url
+        if not self.path.startswith('/'):
+            self.path = '/%s' % self.path
+        options = RequestOptions(self.url)
+        options.method = HttpMethod.Get
+        options.set_header("X-HTTP-Method", "GET")
+        options.set_header('accept', 'application/json;odata=verbose')
+        self.request.authenticate_request(options)
+        self.request.ensure_form_digest(options)
+
+        result = requests.post(url="%s/%s/_api/contextinfo" % (self.url, self.path), headers=options.headers, auth=options.auth)
+        if result.status_code not in (200, 201):
+            raise requests.exceptions.RequestException("Path %s not found" % self.path)
+        js = result.json()
+        baseurl = js.get('d', {}).get('GetContextWebInformation', {}).get('WebFullUrl')
+        if not baseurl.endswith('/'):
+            baseurl = '%s/' % baseurl
+
+        if not baseurl:
+            raise requests.exceptions.RequestException("Full Url not found %s" % self.path)
+        parsed_base = urlparse(baseurl).path
+        self.baseurl = '%s%s' % (self.url, parsed_base)
+        if not self.path.startswith('/'):
+            self.path = '/%s' % self.path
+        if not self.path.endswith('/') and len(self.path) > 1:
+            self.path = '%s/' % (self.path, )
+
+        # set auth ctx with the full correct url or move fails
+        self.request.context = ClientContext(self.baseurl)
 
     def format_request(self, url, method='POST', data="", session=False):
         assert(method in ['POST', 'DELETE'])
@@ -105,17 +129,22 @@ class Client(object):
             raise Exception(self.parse_error(result))
         return True
 
-    def move(self, remote_path, dest):
+    def move(self, remote_path, dest, retry=True):
         webUri = '%s%s' % (self.path, remote_path)
         destUri = '%s%s' % (self.path, dest)
         # falgs=1 to overwrite existing file
         request_url = "%s_api/web/getfilebyserverrelativeurl('%s')/moveto(newurl='%s',flags=1)" % (self.baseurl, webUri, destUri)
         result = self.format_request(request_url, 'POST')
         if result.status_code not in (200, 201):
+            error = self.parse_error(result)
+            if retry and ('timed out' in error or '2130575252' in error):
+                logging.getLogger('cloud.backup').info('OneDrive move: session time out')
+                self.login()
+                return self.move(remote_path, dest, retry=False)
             raise Exception(self.parse_error(result))
         return True
 
-    def upload(self, fileobj, remote_path, buffer_size=None, log=False, progress_obj=False):
+    def upload(self, fileobj, remote_path, buffer_size=None, log=False, progress_obj=False, continuation=False):
         if not self.session_uuid:
             self.session_uuid = uuid.uuid1()
 
@@ -128,6 +157,9 @@ class Client(object):
                 size = os.path.getsize(fileobj.name)
             except:
                 size = None
+
+        if not continuation:
+            self.session_offset = -1
 
         if self.session_offset != -1:
             fileobj.seek(self.session_offset)
@@ -182,6 +214,7 @@ class Client(object):
                         progress_obj.write({'name': percent})
 
                 logger.info('OneDrive: %d bytes sent on %s bytes %s' % (self.session_offset, size or 'unknown', percent_txt))
+        self.session_offset = -1
         return (True, '')
 
     def list(self, remote_path):
@@ -195,13 +228,14 @@ class Client(object):
         self.request.authenticate_request(options)
         self.request.ensure_form_digest(options)
         result = requests.get(url=request_url, headers=options.headers, auth=options.auth)
+        if result.status_code not in (200, 201):
+            raise requests.exceptions.RequestException(self.parse_error(result))
 
         result = result.json()
         files=[]
         for i in range(len(result['d']['results'])):
             item = result['d']['results'][i]
             files.append(item)
-
         return files
 
 

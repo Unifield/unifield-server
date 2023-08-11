@@ -57,6 +57,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency'), _('Output Debit'), _('Output Credit'), _('Output Currency'), _('Reconcile'), _('State')]:
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
 % endfor
+% if display_hq_account():
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('HQ System Account')}</Data></Cell>
+% endif
 </Row>
 % for o in objects:
 <Row>
@@ -126,6 +129,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.move_state and getSel(o,'move_state') or '')|x}</Data>
 </Cell>
+% if display_hq_account():
+<Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${(o.hq_system_account or '')|x}</Data>
+</Cell>
+% endif
 </Row>
 % endfor
 </Table>

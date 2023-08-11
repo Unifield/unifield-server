@@ -143,11 +143,14 @@ class account_mcdb(osv.osv):
         'create_date': fields.date('Creation Date', readonly=True),
         'write_date': fields.date('Last Edit Date', readonly=True),
         'write_uid': fields.many2one('res.users', "Last Editor", readonly=True),
+
+        'display_hq_system_accounts': fields.boolean('Display HQ System Accounts'),
     }
 
     _defaults = {
         'model': lambda self, cr, uid, c: c.get('from', 'account.move.line'),
         'functional_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
+        'display_hq_system_accounts': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.display_hq_system_accounts_buttons,
         'currency_choice': lambda *a: 'booking',
         'analytic_axis': lambda *a: 'fp',
         'display_journal': lambda *a: False,
@@ -205,6 +208,14 @@ class account_mcdb(osv.osv):
         if 'document_code' in view['fields']:
             view['fields']['document_code']['string'] = _('Sequence numbers')
             view['fields']['document_code']['help'] = _('You can set several sequences separated by a comma or semicolon.')
+
+        if view_type == 'form' and self.pool.get('account.export.mapping')._is_mapping_display_active(cr, uid):
+            arch =  view.get('fields', {}).get('account_ids', {}).get('views', {}).get('tree', {}).get('arch')
+            if arch:
+                form = etree.fromstring(arch)
+                for field in form.xpath('//field[@name="mapping_value"]'):
+                    field.set('invisible', "0")
+                view['fields']['account_ids']['views']['tree']['arch'] = etree.tostring(form, encoding='unicode')
         return view
 
 

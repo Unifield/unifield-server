@@ -202,7 +202,7 @@
             </blockTable>
 
             <!-- Composition items for Theoretical Kit Composition -->
-            <blockTable colWidths="90.0,170.0,165.0,55.0,30.0,40.0,40.0,200.0" style="LineHeader" repeatRows="1">
+            <blockTable colWidths="80.0,160.0,155.0,55.0,30.0,40.0,40.0,180.0,25.0,25.0" style="LineHeader" repeatRows="1">
                 [[ o.composition_type == 'theoretical' or removeParentNode('blockTable') ]]
                 <tr>
                     <td>
@@ -228,6 +228,12 @@
                     </td>
                     <td>
                         <para style="LHeader">System Message</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">MML</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">MSL</para>
                     </td>
                 </tr>
                 <tr>
@@ -255,6 +261,12 @@
                     </td>
                     <td>
                         <para style="Line">[[ item.inactive_error ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ getSel(item, 'mml_status') ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ getSel(item, 'msl_status') ]]</para>
                     </td>
                 </tr>
             </blockTable>

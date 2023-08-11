@@ -85,6 +85,9 @@ class merged_order(report_sxw.rml_parse):
                     'quantity': line.product_qty,
                     'comment': line.comment or '',
                     'product_uom_rounding': line.product_uom.rounding,
+                    'mml_status': self.getSel(line, 'mml_status'),
+                    'msl_status': self.getSel(line, 'msl_status'),
+                    'red': line.mml_status=='F' or line.msl_status=='F',
                 }
             else:
                 all_prod[key]['price_unit'] = ((all_prod[key]['price_unit'] * all_prod[key]['quantity']) + (line.product_qty*line.price_unit)) / (line.product_qty+all_prod[key]['quantity'])

@@ -19,7 +19,6 @@
 
     </pageTemplate>
     </template>
-
     <stylesheet>
         <blockTableStyle id="Origin">
             <blockAlignment value="LEFT" />
@@ -60,7 +59,9 @@
         </blockTableStyle>
         <blockTableStyle id="LinesTable">
             <blockAlignment value="LEFT" />
-            <blockVAlign value="MIDDLE" />
+            <blockValign value="MIDDLE" />
+            <blockLeftPadding length="1" />
+            <blockRightPadding length="1" />
             <lineStyle kind="LINEBEFORE" colorName="black" start="0,0" stop="0,0" thickness="0.5" />
             <lineStyle kind="LINEAFTER" colorName="black" start="-1,0" stop="-1,0" thickness="0.5" />
         </blockTableStyle>
@@ -98,7 +99,9 @@
         <paraStyle name="TextNotes" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
-        <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LinesBlue" textColor="#0000FF" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LinesRed" textColor="#610000" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
+        <!-- grayscale convertion is 0.299R + 0.587G + 0.114B -->
     </stylesheet>
 
     <story>
@@ -641,7 +644,8 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="20.0,62.5,97.5,280.5,90.0,55.5,60.0,51.0,55.0" style="LinesTable">
+        <blockTable colWidths="17.0,58.5,93.5,270.5,86,53.5,57.0,49.0,53.0,17,17" style="LinesTable">
+                         <!-- "20.0,62.5,97.5,280.5,90.0,55.5,60.0,51.0,55.0" -->
             <tr >
                 <td>
                     <para style="Lines"><i>Line</i></para>
@@ -670,40 +674,52 @@
                 <td>
                     <para style="Lines"><i>Total Price</i></para>
                 </td>
+                <td>
+                    <para style="Lines"><i>MML</i></para>
+                </td>
+                <td>
+                    <para style="Lines"><i>MSL</i></para>
+                </td>
             </tr>
         </blockTable>
 
         <section>
-            <blockTable colWidths="20.0,62.5,97.5,280.5,90.0,55.5,60.0,51.0,55.0" style="LinesTable">
+            <blockTable colWidths="17.0,58.5,93.5,270.5,86,53.5,57.0,49.0,53.0,17,17" style="LinesTable">
                 [[ repeatIn(filter_lines(objects[0]), 'line') ]]
                 <tr>
                     <td>
-                        <para style="LinesBlue">[[ line.line_number ]]</para>
+                        <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}">[[ line.line_number ]]</para>
                     </td>
                     <td>
-                    	<para style="LinesBlue">[[ line.supplier_code ]]</para>
+                    	<para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}">[[ line.supplier_code ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line.product_id.default_code ]]</para>
+                        <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}">[[ line.product_id.default_code ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
-                        <para style="LinesBlue">[[ not line.product_id and line.nomen_manda_0 and line.nomen_manda_0.name or removeParentNode('para') ]] [[ line.nomen_manda_1 and '/ %s' % line.nomen_manda_1.name or '' ]] [[ line.nomen_manda_2 and '/ %s' % line.nomen_manda_2.name or '' ]] [[ line.nomen_manda_3 and '/ %s' % line.nomen_manda_3.name or '' ]] [[ line.nomen_sub_0 and '/ %s' % line.nomen_sub_0.name or '' ]] [[ line.nomen_sub_1 and '/ %s' % line.nomen_sub_1.name or '' ]] [[ line.nomen_sub_2 and '/ %s' % line.nomen_sub_2.name or '' ]] [[ line.nomen_sub_3 and '/ %s' % line.nomen_sub_3.name or '' ]] [[ line.nomen_sub_4 and '/ %s' % line.nomen_sub_4.mane or '' ]] [[ line.nomen_sub_5 and '/ %s' % line.nomen_sub_5.name or '' ]]</para>
+                        <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}">[[ line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
+                        <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}">[[ not line.product_id and line.nomen_manda_0 and line.nomen_manda_0.name or removeParentNode('para') ]] [[ line.nomen_manda_1 and '/ %s' % line.nomen_manda_1.name or '' ]] [[ line.nomen_manda_2 and '/ %s' % line.nomen_manda_2.name or '' ]] [[ line.nomen_manda_3 and '/ %s' % line.nomen_manda_3.name or '' ]] [[ line.nomen_sub_0 and '/ %s' % line.nomen_sub_0.name or '' ]] [[ line.nomen_sub_1 and '/ %s' % line.nomen_sub_1.name or '' ]] [[ line.nomen_sub_2 and '/ %s' % line.nomen_sub_2.name or '' ]] [[ line.nomen_sub_3 and '/ %s' % line.nomen_sub_3.name or '' ]] [[ line.nomen_sub_4 and '/ %s' % line.nomen_sub_4.mane or '' ]] [[ line.nomen_sub_5 and '/ %s' % line.nomen_sub_5.name or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line.comment ]]</para>
+                        <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}">[[ line.comment ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ line.product_qty or '0.00' ]]</para>
+                        <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}" alignment="RIGHT">[[ line.product_qty or '0.00' ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="CENTER">[[ line.product_uom.name ]]</para>
+                        <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}" alignment="CENTER">[[ line.product_uom.name ]]</para>
                     </td>
                     <td>
-                        <parawrap style="LinesBlue" alignment="RIGHT">[[ line.price_unit or '0.00' ]]</parawrap>
+                        <parawrap rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}" alignment="RIGHT">[[ line.price_unit or '0.00' ]]</parawrap>
                     </td>
                     <td>
-                         <parawrap style="LinesBlue" alignment="RIGHT">[[ line.price_subtotal or '0.00' ]]</parawrap>
+                         <parawrap rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}" alignment="RIGHT">[[ line.price_subtotal or '0.00' ]]</parawrap>
+                    </td>
+                    <td>
+                         <parawrap rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}" alignment="CENTER">[[ getSel(line, 'mml_status') ]]</parawrap>
+                    </td>
+                    <td>
+                         <parawrap rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F') and 'LinesRed' or 'LinesBlue'}" alignment="CENTER">[[ getSel(line, 'msl_status') ]]</parawrap>
                     </td>
                 </tr>
             </blockTable>

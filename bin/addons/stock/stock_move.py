@@ -6,6 +6,7 @@ import time
 
 from osv import fields, osv
 from tools.translate import _
+from tools.misc import _get_std_mml_status
 import netsvc
 import decimal_precision as dp
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
@@ -455,6 +456,7 @@ class stock_move(osv.osv):
                 res[x.id] = x.picking_id.name
         return res
 
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'priority': fields.selection([('0', 'Not urgent'), ('1', 'Urgent')], 'Priority'),
@@ -630,6 +632,10 @@ class stock_move(osv.osv):
         'picking_with_sysint_name': fields.function(_get_picking_with_sysint_name, method=1, string='Picking IN [SYS-INT] name', type='char'),
         'included_in_mission_stock': fields.boolean('Stock move used to compute MSRL', internal=1, select=1),
         'in_forced': fields.boolean('IN line forced'),
+
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
     }
 
     def _check_asset(self, cr, uid, ids, context=None):
@@ -772,6 +778,8 @@ class stock_move(osv.osv):
         'included_in_mission_stock': False,
         'in_forced': False,
         'confirmed_qty': 0.0,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):

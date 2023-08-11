@@ -54,7 +54,7 @@ NEW_COLUMNS_HEADER = [
 #Important NOTE: I didn't set the fields of type date with the attribute 'date' (2nd part of the tuple) because for Excel, when a date is empty, the field becomes '1899-30-12' as default. So I set 'string' instead for the fields date.
 RFQ_COLUMNS_HEADER_FOR_IMPORT = [
     (_('Line Number'), 'number'), (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'),
-    (_('Requested Delivery Date'), 'date'), (_('Confirmed Delivery Date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string'),
+    (_('Requested Delivery Date'), 'date'), (_('Confirmed Delivery Date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string'), (_('State'), 'string'),
 ]
 RFQ_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in RFQ_COLUMNS_HEADER_FOR_IMPORT]
 

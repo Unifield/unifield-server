@@ -50,7 +50,24 @@ class combined_journals_report(report_sxw.rml_parse):
             'total_func_debit': lambda *a: self.total_func_debit,
             'total_func_credit': lambda *a: self.total_func_credit,
             'update_percent_display': self._update_percent_display,
+            'display_hq_account': self.display_hq_account,
+            'get_col_widths': self.get_col_widths,
         })
+        self._display_hq_account = self.pool.get('account.export.mapping')._is_mapping_display_active(cr, uid)
+
+    def display_hq_account(self):
+        return self._display_hq_account
+
+    def get_col_widths(self):
+        if self._display_hq_account:
+            if self.analytic_axis == 'fp':
+                return {'colWidths': "45.0,33.0,41.0,52.0,38.0,44.0,44.0,30.0,39.0,39.0,35.0,36.0,26.0,40.0,40.0,28.0,40.0,40.0,28.0,31.0,35.0,39.0"}
+            return {'colWidths': "45.0,35.0,43.0,53.0,40.0,48.0,48.0,33.0,42.0,47.0,42.0,38.0,47.0,32.0,42.0,40.0,32.0,37.0,38.0,41.0"}
+
+        if self.analytic_axis == 'fp':
+            return {'colWidths': "45.0,36.0,46.0,52.0,39.0,45.0,45.0,31.0,40.0,40.0,36.0,37.0,33.0,41.0,41.0,31.0,41.0,41.0,31.0,36.0,36.0"}
+
+        return {'colWidths': "45.0,36.0,48.0,55.0,41.0,49.0,49.0,34.0,43.0,48.0,43.0,45.0,45.0,38.0,45.0,45.0,38.0,38.0,38.0"}
 
     def _cmp_sequence_account_type(self, a, b):
         """
@@ -89,6 +106,7 @@ class combined_journals_report(report_sxw.rml_parse):
             bg_id = self.context['background_id']
         company = user_obj.browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=self.context).company_id
         func_currency_name = company.currency_id.name
+        allow_display_hq_accounts = company.display_hq_system_accounts_buttons
         if bg_id:
             self.percent += 0.05  # 5% of the total process
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
@@ -97,7 +115,7 @@ class combined_journals_report(report_sxw.rml_parse):
         amls = []
         aml_fields = ['instance_id', 'journal_id', 'move_id', 'name', 'ref', 'document_date', 'date', 'period_id', 'account_id',
                       'partner_txt', 'debit_currency', 'credit_currency', 'currency_id', 'debit', 'credit', 'reconcile_txt',
-                      'move_state']
+                      'move_state', 'hq_system_account']
         current_line_position = 0
         aml_num = len(aml_ids)
         processed = 0
@@ -133,6 +151,7 @@ class combined_journals_report(report_sxw.rml_parse):
                     'func_currency': func_currency_name,
                     'reconcile': aml.reconcile_txt or '',
                     'status': aml.move_state,
+                    'hq_system_account': allow_display_hq_accounts and aml.hq_system_account or '',
                 }
                 amls.append(aml_dict)
                 self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(aml_ids), before=0.05, after=0.15, context=self.context)
@@ -142,7 +161,7 @@ class combined_journals_report(report_sxw.rml_parse):
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
         aal_fields = ['instance_id', 'journal_id', 'entry_sequence', 'name', 'ref', 'document_date', 'date',
                       'period_id', 'general_account_id', 'partner_txt', 'cost_center_id', 'destination_id', 'account_id',
-                      'amount_currency', 'currency_id', 'amount', 'move_id']
+                      'amount_currency', 'currency_id', 'amount', 'move_id', 'hq_system_account']
         current_line_position = 0
         for ml in amls:
             current_line_position += 1
@@ -190,6 +209,7 @@ class combined_journals_report(report_sxw.rml_parse):
                         'func_currency': func_currency_name,
                         'reconcile': aal.move_id and aal.move_id.reconcile_txt or '',
                         'status': aal.move_id and aal.move_id.move_state or '',
+                        'hq_system_account': allow_display_hq_accounts and aal.hq_system_account or '',
                     }
                     res.append(aal_dict)
                     self.total_booking_debit += aal_dict['booking_debit']
@@ -228,6 +248,7 @@ class combined_journals_report(report_sxw.rml_parse):
                 'func_currency': func_currency_name,
                 'reconcile': '',
                 'status': '',
+                'hq_system_account': al.hq_system_account or '',
             }
             res.append(al_dict)
             self.total_booking_debit += al_dict['booking_debit']

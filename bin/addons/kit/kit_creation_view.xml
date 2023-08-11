@@ -53,6 +53,8 @@
 				            		<field name="fake_state" invisible="True" />
 				            		<field name="batch_check_kit_creation_to_consume" />
 				            		<field name="expiry_check_kit_creation_to_consume" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
 				            		<button name="do_process_to_consume" type="object" string="Process Line" icon="gtk-go-forward" attrs="{'invisible': ['|', ('consumed_to_consume', '=', True), ('fake_state', '!=', 'in_production')]}" />
 				            		<field name="consumed_to_consume" invisible="True" />
 				            		<field name="product_subtype" invisible="True" />
@@ -94,6 +96,8 @@
                     				<field name="state" />
                     				<field name="lot_check" />
                                     <field name="exp_check" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                     <field name="kol_lot_manual" invisible="True" />
 	                   				<field name="hidden_perishable_mandatory" invisible="True" />
 	                   				<field name="hidden_exp_check" invisible="True" />

@@ -436,9 +436,13 @@ class weekly_forecast_report(osv.osv):
                       <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
                       <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
                       <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
                       <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>""" % (
                     _('Product Code'),
                     _('Description'),
+                    _('MML'),
+                    _('MSL'),
                     _('Unit Price'),
                     _('Stock value'),
                     _('AMC/FMC'),
@@ -513,9 +517,15 @@ class weekly_forecast_report(osv.osv):
                     'name',
                     'standard_price',
                     'uom_id',
+                    'mml_status',
+                    'msl_status',
                 ], context=context)
 
                 j = 0
+                mml_map = {
+                    'T': _('Yes'),
+                    'F': _('No'),
+                }
                 for product in stock_products:
                     product_id = product['id']
                     j += 1
@@ -531,6 +541,8 @@ class weekly_forecast_report(osv.osv):
                     line_values += """<Row>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"String\">%(product_code)s</Data></Cell>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"String\">%(product_name)s</Data></Cell>
+                          <Cell ss:StyleID=\"line\"><Data ss:Type=\"String\">%(mml_status)s</Data></Cell>
+                          <Cell ss:StyleID=\"line\"><Data ss:Type=\"String\">%(msl_status)s</Data></Cell>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(unit_price)s</Data></Cell>
                           <Cell ss:StyleID=\"line\" ss:Formula=\"=RC[-1]*RC[2]\"><Data ss:Type=\"Number\"></Data></Cell>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(consumption)s</Data></Cell>
@@ -539,6 +551,8 @@ class weekly_forecast_report(osv.osv):
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(exp_qty)s</Data></Cell>""" % {
                         'product_code': escape(product['default_code']),
                         'product_name': escape(product['name']),
+                        'mml_status': mml_map.get(product['mml_status'], ''),
+                        'msl_status': mml_map.get(product['msl_status'], ''),
                         'unit_price': product['standard_price'],
                         'consumption': cons,
                         'stock_qty': product['qty_available'],

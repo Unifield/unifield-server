@@ -41,6 +41,17 @@ class res_currency_table(osv.osv):
         'state': 'draft',
     }
 
+    def copy(self, cr, uid, _id, default=None, context=None):
+        if default is None:
+            default = {}
+        if not default.get('name') or not default.get('code'):
+            data = self.browse(cr, uid, _id, fields_to_fetch=['name', 'code'], context=context)
+            if not default.get('name'):
+                default['name'] = '%s (copy)' % (data['name'][0:57], )
+            if not default.get('code'):
+                default['code'] = '%s (copy)' % (data['code'][0:9], )
+        return super(res_currency_table, self).copy(cr, uid, _id, default=default, context=context)
+
     def validate(self, cr, uid, ids, context=None):
         if not context:
             context = {}

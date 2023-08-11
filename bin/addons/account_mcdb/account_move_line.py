@@ -156,6 +156,7 @@ class account_move_line(osv.osv):
                 for el in element_fields:
                     el.getparent().remove(el)
                 view['arch'] = etree.tostring(tree, encoding='unicode')
+        self.pool.get('account.export.mapping').update_view_with_mapping_field(cr, uid, view_type, view, context=context)
         return view
 
 account_move_line()

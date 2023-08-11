@@ -111,41 +111,7 @@ class account_common_report(osv.osv_memory):
         if filter == 'filter_period':
             res['value'] = {'date_from': False, 'date_to': False}
             if fiscalyear_id:
-                start_period = end_period = False
-                cr.execute('''
-                    SELECT * FROM (SELECT p.id
-                                   FROM account_period p
-                                   LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
-                                   WHERE f.id = %s
-                                   ORDER BY p.date_start ASC
-                                   LIMIT 1) AS period_start
-                    UNION
-                    SELECT * FROM (SELECT p.id
-                                   FROM account_period p
-                                   LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
-                                   WHERE f.id = %s
-                                   AND p.date_start < NOW()
-                                   ORDER BY p.date_stop DESC
-                                   LIMIT 1) AS period_stop''', (fiscalyear_id, fiscalyear_id))
-                periods = [i[0] for i in cr.fetchall()]
-                if periods and len(periods) > 1:
-                    start_period = periods[0]
-                    end_period = periods[1]
-
-                # UFTP-284
-                # for example on OCBA_ESET101 Jan period id is 5 and Sept of id 3
-                # so from/to period are inversed from above union, check this and fix that
-                period_br = self.pool.get('account.period').browse(cr, uid, periods,
-                                                                   context=context)
-                if period_br and len(period_br) == 2:
-                    effective_start_id = period_br[0].id
-                    if period_br[0].date_start > period_br[1].date_start:
-                        effective_start_id = period_br[1].id
-                    if effective_start_id != start_period:
-                        end_period = start_period
-                        start_period = effective_start_id
-
-                res['value'] = {'period_from': start_period, 'period_to': end_period, 'date_from': False, 'date_to': False}
+                res['value'].update(self.pool.get('account.fiscalyear')._get_normal_period_from_to(cr, uid, fiscalyear_id, context))
         return res
 
     def _build_contexts(self, cr, uid, ids, data, context=None):

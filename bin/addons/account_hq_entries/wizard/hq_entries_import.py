@@ -381,11 +381,16 @@ class hq_entries_import_wizard(osv.osv_memory):
                 errors.append(_('Line %s, %s') % (line_index, _(msg)))
 
         cr = pooler.get_db(dbname).cursor()
+
         cache_data = {}
         cache_data['funding_pool'] = {'private_fund': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]}
         self.write(cr, uid, wiz_id, {'start_date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
         try:
             fileobj = open(filename, 'r')
+            cr.execute("select pg_try_advisory_xact_lock(172023)")
+            if not cr.fetchone()[0]:
+                self.write(cr, uid, wiz_id, {'state': 'error', 'progress': 100, 'error': _('Another import is running. Nothing done'), 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')})
+                return False
             reader = csv.reader(fileobj, delimiter=',', quotechar='"')
             headers = next(reader)
             line_index = 1

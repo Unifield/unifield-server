@@ -49,6 +49,8 @@ HEADER_DICT = {
         (_('Reference'), 'default_code'),
         (_('Name'), 'pt_name'),
         (_('Active'), 'product_active'),
+        (_('MML'), 'mml_status'),
+        (_('MSL'), 'msl_status'),
         (_('UoM'), 'pu_name'),
         (_('Instance stock'), 'l_internal_qty'),
         (_('Stock Qty.'), 'l_stock_qty'),
@@ -66,6 +68,8 @@ HEADER_DICT = {
         (_('Reference'), 'default_code'),
         (_('Name'), 'pt_name'),
         (_('Active'), 'product_active'),
+        (_('MML'), 'mml_status'),
+        (_('MSL'), 'msl_status'),
         (_('UoM'), 'pu_name'),
         (_('Cost Price'), 'pt_standard_price'),
         (_('Func. Cur.'), 'rc_name'),
@@ -109,7 +113,9 @@ GET_EXPORT_REQUEST = '''SELECT
         l.product_amc as product_amc,
         l.product_consumption as product_consumption,
         mission_report_id,
-        l.product_active as product_active
+        l.product_active as product_active,
+        l.mml_status as mml_status,
+        l.msl_status as msl_status
     FROM stock_mission_report_line l
          LEFT JOIN product_product pp ON l.product_id = pp.id
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
@@ -295,7 +301,8 @@ class stock_mission_report(osv.osv):
     def generate_export_file(self, cr, uid, request_result, report_id, report_type,
                              attachments_path, header, write_attachment_in_db,
                              product_values, file_type='xls',
-                             display_only_in_stock=False):
+                             display_only_in_stock=False,
+                             is_local_report=False):
         in_stock = display_only_in_stock and '_only_stock' or ''
         file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + in_stock + '.' + file_type)
 
@@ -357,6 +364,19 @@ class stock_mission_report(osv.osv):
                 """, num_format_str='0.000')
             row_style_price.borders = borders
 
+            row_style_red = easyxf("""
+                    font: height 220, color red;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """)
+            row_style_red.borders = borders
+            row_style_price_red = easyxf("""
+                    font: height 220, color red;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='0.000')
+            row_style_price_red.borders = borders
+
             data_row_style = easyxf("""
                     font: height 220;
                     font: name Calibri;
@@ -404,9 +424,12 @@ class stock_mission_report(osv.osv):
                             break
                     if ignore_line:
                         continue
-
                 if file_type == 'xls':
-                    self.xls_write_row(sheet, data_list, row_count, row_style, row_style_price)
+                    if row.get('mml_status') == 'F' or row.get('msl_status') == 'F':
+                        row_st, price_st = row_style_red, row_style_price_red
+                    else:
+                        row_st, price_st = row_style, row_style_price
+                    self.xls_write_row(sheet, data_list, row_count, row_st, price_st)
                 else:
                     writer.writerow(data_list)
                 row_count += 1
@@ -428,11 +451,18 @@ class stock_mission_report(osv.osv):
         # close file
         export_file.close()
 
-    def generate_full_xls(self, cr, uid, report_id, xls_name):
+    def generate_full_xls(self, cr, uid, report_id, xls_name, context=None):
+        if context is None:
+            context = {}
+
         local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         instance_obj = self.pool.get('msf.instance')
         instance_ids = instance_obj.search(cr, uid, [('state', '!=', 'inactive')])
         uom_obj = self.pool.get('product.uom')
+
+        local_report_id = self.search(cr, uid, [('full_view', '=', 'f'), ('local_report', '=', True)])
+        if not local_report_id:
+            local_report_id = [0]
 
         report_last_updt = self.read(cr, uid, report_id, ['last_update'])['last_update']
 
@@ -536,14 +566,26 @@ class stock_mission_report(osv.osv):
         sheet.panes_frozen = True
         sheet.remove_splits = True
 
-        fixed_data = [
-            (_('Reference'), 'default_code'),
-            (_('Name'), 'pt_name'),
-            (_('Active'), 'product_active'),
-            (_('UoM'), 'pu_name'),
-            (_('Cost Price'), 'pt_standard_price'),
-            (_('Func. Cur.'), 'rc_name')
-        ]
+        if local_instance.level == 'section':
+            fixed_data = [
+                (_('Reference'), 'default_code'),
+                (_('Name'), 'pt_name'),
+                (_('Active'), 'product_active'),
+                (_('UoM'), 'pu_name'),
+                (_('Cost Price'), 'pt_standard_price'),
+                (_('Func. Cur.'), 'rc_name')
+            ]
+        else:
+            fixed_data = [
+                (_('Reference'), 'default_code'),
+                (_('Name'), 'pt_name'),
+                (_('Active'), 'product_active'),
+                (_('MML'), 'mml_status'),
+                (_('MSL'), 'msl_status'),
+                (_('UoM'), 'pu_name'),
+                (_('Cost Price'), 'pt_standard_price'),
+                (_('Func. Cur.'), 'rc_name')
+            ]
         repeated_data = [
             (_('Instance stock'), 'l_internal_qty'),
             (_('Instance stock val.'), 'l_internal_qty_pt_price'),
@@ -597,19 +639,20 @@ class stock_mission_report(osv.osv):
         for x in self.read(cr, uid, r_ids, ['instance_id']):
             report_id_by_instance_id[x['instance_id'][0]] = x['id']
 
-        cr.execute(GET_EXPORT_REQUEST, ('en_MF', tuple(r_ids)))
+        cr.execute(GET_EXPORT_REQUEST, (context.get('lang', 'en_MF'), tuple(r_ids)))
 
         cr1 = pooler.get_db(cr.dbname).cursor()
         cr1.execute("""
-            select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity, l.uom_id as sml_uom, t.uom_id as product_uom 
+            select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity, l.uom_id as sml_uom, t.uom_id as product_uom, msl.mml_status, msl.mml_status
             from stock_mission_report_line_location l
+            left join stock_mission_report_line msl on msl.product_id = l.product_id and msl.mission_report_id = %s
             inner join product_product p on p.id = l.product_id
             inner join product_template t on t.id = p.product_tmpl_id
             left join stock_location location on location.id = l.location_id
             left join msf_instance i on l.remote_instance_id=i.id
             where (location.usage = 'internal' or location.id is null) and coalesce(i.state,'') != 'inactive'
             order by p.default_code
-        """)
+        """, (local_report_id[0], ))
 
         p_code = False
         last_stock_level_line = cr1.dictfetchone()
@@ -903,6 +946,46 @@ class stock_mission_report(osv.osv):
                     # Update the update date on report
                     self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
+                if not report['full_view']:
+                    # generate MML / MSL values
+                    cr.execute("update stock_mission_report_line set mml_status='', msl_status='' where mission_report_id=%s and (coalesce(mml_status, '')!='' or coalesce(msl_status, '')!='') ", (report['id'], ))
+                    # MSL
+                    cr.execute("""
+                        update stock_mission_report_line l set msl_status=(case when not unidata_project.uf_active then '' when msl_rel.product_id is not null then 'T' else 'F' end)
+                        from
+                            product_product p
+                            left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                            left join product_international_status creator on creator.id = p.international_status
+                            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                            left join unidata_project on unidata_project.instance_id = %s
+                            left join product_msl_rel msl_rel on msl_rel.product_id = p.id and msl_rel.creation_date is not null and unidata_project.id = msl_rel.msl_id
+                        where
+                            p.id = l.product_id
+                            and nom.name='MED'
+                            and creator.code = 'unidata'
+                            and l.mission_report_id = %s
+                    """, (instance_id.id, report['id']))
+
+                    # MML
+                    cr.execute("""
+                        update stock_mission_report_line l set mml_status=(case when coalesce(p.oc_validation, 'f') = 't' and (up1.instance_id=%s or up1 is null) then 'T' else 'F' end)
+                        from
+                            product_product p
+                            left join product_template tmpl on tmpl.id = p.product_tmpl_id
+                            left join product_international_status creator on creator.id = p.international_status
+                            left join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
+                            left join product_project_rel p_rel on p_rel.product_id = p.id
+                            left join product_country_rel c_rel on p_rel is null and c_rel.product_id = p.id
+                            left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id
+                        where
+                            p.id = l.product_id
+                            and nom.name='MED'
+                            and creator.code = 'unidata'
+                            and l.mission_report_id = %s
+                        """, (instance_id.id, report['id']))
+
+
+
                 self._get_export(cr, uid, report['id'], product_values,
                                  csv=csv, xls=xls,
                                  with_valuation=with_valuation,
@@ -910,8 +993,11 @@ class stock_mission_report(osv.osv):
                                  display_only_in_stock=display_only_in_stock,
                                  context=context)
 
+
+
+
                 if instance_id.level == 'coordo' and not report['full_view'] and report['local_report']:
-                    self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls')
+                    self.generate_full_xls(cr, uid, report['id'], 'consolidate_mission_stock.xls', context=context)
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
@@ -919,6 +1005,7 @@ class stock_mission_report(osv.osv):
                                                      'export_error_msg': False}, context=context)
 
                 logger.info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+
             except Exception as e:
                 cr.rollback()
                 # in case of error delete previously generated attachments
@@ -1010,7 +1097,7 @@ class stock_mission_report(osv.osv):
                     po.partner_id = p.id and
                     pol.product_id is not null
                 GROUP BY pol.product_id, pol.product_uom, p.name
-                UNION
+                UNION ALL
                 SELECT m.product_id as product_id, sum(m.product_qty) as product_qty, m.product_uom as uom_id, p.name as p_name
                     FROM stock_move m
                     LEFT JOIN stock_picking s ON m.picking_id = s.id
@@ -1284,16 +1371,25 @@ class stock_mission_report(osv.osv):
             elif not with_valuation:
                 report_type = 's_nv_vals'
 
-            report = self.browse(cr, uid, report_id, fields_to_fetch=['full_view'], context=context)
+            report = self.browse(cr, uid, report_id, fields_to_fetch=['full_view', 'local_report'], context=context)
             hide_amc_fmc = report.full_view and (self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.level in ['section', 'coordo'])
+
+            if hide_amc_fmc:
+                headers = [x for x in HEADER_DICT[report_type] if x[0] not in ('AMC', 'FMC')]
+            else:
+                headers = HEADER_DICT[report_type]
+
+            if report['full_view'] or not report.local_report:
+                headers = [x for x in headers if x[1] not in ('mml_status', 'msl_status')]
 
             params = {
                 'report_id': report_id,
                 'report_type': report_type,
                 'attachments_path': attachments_path,
-                'header': tuple(x for x in HEADER_DICT[report_type] if x[0] not in ('AMC', 'FMC')) if hide_amc_fmc else HEADER_DICT[report_type],
+                'header': tuple(headers),
                 'write_attachment_in_db': write_attachment_in_db,
                 'product_values': product_values,
+                'is_local_report': not report['full_view'],
             }
 
             # generate CSV file
@@ -1632,7 +1728,7 @@ class stock_mission_report_line(osv.osv):
         'product_active': fields.boolean(string='Active'),
         'state_ud': fields.char(size=128, string='UniData status'),
         'international_status_code': fields.char(size=128, string='Product Creator'),
-        'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
+        'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True, select=1),
         'internal_qty': fields.float(digits=(16,2), string='Instance Stock', related_uom='uom_id'),
         'internal_val': fields.function(_get_internal_val, method=True, type='float', string='Instance Stock Val.'),
         #'internal_val': fields.float(digits=(16,2), string='Instance Stock Val.'),
@@ -1663,6 +1759,8 @@ class stock_mission_report_line(osv.osv):
         'opdd_qty': fields.float(digits=(16, 2), string='Output/Packing/Dispatch/Distribution Qty.', related_uom='uom_id'),
         'used_in_transaction': fields.boolean('Used in a transaction'),
         'transaction_updated': fields.boolean('Used changed', help='temporary value used to touch ir.model.data'),
+        'mml_status': fields.selection([('T', 'Yes'), ('F', 'No')], string='MML'),
+        'msl_status': fields.selection([('T', 'Yes'), ('F', 'No')], string='MSL'),
     }
 
     @tools.cache(skiparg=2)

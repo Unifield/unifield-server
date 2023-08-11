@@ -231,7 +231,7 @@
                         <font color="white"> </font>
                     </para>
 
-                    <blockTable colWidths="100.0,150.0,150.0,170.0,170.0,70.0" style="ParcelHeaderGrey" keepWithNext="1">
+                    <blockTable colWidths="100.0,150.0,170.0,220.0,100.0,70.0" style="ParcelHeaderGrey" keepWithNext="1">
                         <tr>
                             <td>
                                 <para style="ParcelInfos">Parcel No: [[ pf.from_pack ]] to [[ pf.to_pack ]]</para>
@@ -246,14 +246,14 @@
                                 <para style="ParcelInfos">Total volume [[ formatLang(pf.total_volume or 0.00) ]] dm³</para>
                             </td>
                             <td>
-                                <para style="ParcelInfosRight">Containing</para>
+                                <para style="ParcelInfosRight" alignment="CENTER">Containing</para>
                             </td>
                             <td>
                                 <para style="ParcelInfos">Description</para>
                             </td>
                         </tr>
                     </blockTable>
-                    <blockTable colWidths="20.0,80.0,180.0,175.0,59.0,65.0,60.0,50.0,17.0,17.0,17.0,65.0" style="ParcelLineHeader" keepWithNext="1">
+                    <blockTable colWidths="20.0,80.0,166.0,156.0,54.0,65.0,60.0,50.0,17.0,17.0,17.0,19.0,19.0,65.0" style="ParcelLineHeader" keepWithNext="1">
                         <tr>
                             <td>
                                 <para style="ParcelLineTitle">Item</para>
@@ -287,6 +287,12 @@
                             </td>
                             <td>
                                 <para style="ParcelLineTitle">CS</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">MML</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineTitle">MSL</para>
                             </td>
                             <td>
                                 <para style="ParcelLineTitle">[[ pf.description_ppl or ' ' ]]</para>
@@ -326,6 +332,12 @@
                             </td>
                             <td>
                                 <para style="ParcelLineValue">[[ m.product_id.cs_txt or ' ' ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ getSel(m, 'mml_status') ]]</para>
+                            </td>
+                            <td>
+                                <para style="ParcelLineValue">[[ getSel(m, 'msl_status') ]]</para>
                             </td>
                             <td>
                                 <para style="ParcelLineValue"></para>

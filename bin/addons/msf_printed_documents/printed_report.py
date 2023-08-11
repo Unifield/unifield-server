@@ -24,6 +24,7 @@ from osv import fields
 from tools.translate import _
 from tools.safe_eval import safe_eval
 import re
+import logging
 
 HELP_TARGET = '''
           This field will be parsed by the system to compute the good filename.
@@ -209,7 +210,10 @@ class ir_actions_report_xml(osv.osv):
             except KeyError as e:
                 # Some %(blabla)s remain, cannot parse them
                 error += _('\'%%(%s)s\' cannot be parsed \n') % e
-                raise osv.except_osv(_('Error'), error)
+                logging.getLogger('orm').error(error)
+                break
+            except Exception as e:
+                logging.getLogger('orm').error(e)
                 break
 
             # Check if the fields in ${} are valid

@@ -328,12 +328,16 @@ class internal_picking_processor(osv.osv):
                 _('No data to process !'),
             )
 
+        res = {}
+        partial_and_signed = False
         to_unlink = []
 
         for proc in wizards:
             total_qty = 0.00
 
+            l_ids = []
             for line in proc.move_ids:
+                l_ids.append(line.id)
                 # if no quantity, don't process the move
                 if not line.quantity:
                     to_unlink.append(line.id)
@@ -360,11 +364,38 @@ class internal_picking_processor(osv.osv):
                     _('You have to enter the quantities you want to process before processing the move.'),
                 )
 
-        # Remove non-used lines
-        if to_unlink:
+            # Add the warning if there's a signed signature during partial processing
+            if self._name == 'outgoing.delivery.processor' and l_ids and proc.picking_id.signature_id \
+                    and not proc.partial_process_sign:
+                cr.execute("""
+                    SELECT mp.id FROM outgoing_delivery_move_processor mp 
+                            LEFT JOIN outgoing_delivery_processor op ON mp.wizard_id = op.id 
+                            LEFT JOIN stock_picking p ON op.picking_id = p.id
+                        , signature s LEFT JOIN signature_line sl ON sl.signature_id = s.id
+                    WHERE s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = %s 
+                        AND mp.id IN %s AND sl.signed = 't' AND op.picking_id = %s 
+                        AND mp.quantity < mp.ordered_quantity LIMIT 1
+                """, (proc.picking_id.id, tuple(l_ids), proc.picking_id.id))
+                if cr.fetchone():
+                    partial_and_signed = True
+                    self.write(cr, uid, proc.id, {'partial_process_sign': True}, context=context)
+                    res = {
+                        'type': 'ir.actions.act_window',
+                        'res_model': self._name,
+                        'res_id': proc.id,
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing',
+                                                                                        'outgoing_delivery_processor_form_view')[1]],
+                        'context': context,
+                    }
+
+        # Remove non-used lines if the lines are not partially processed when the document is signed
+        if to_unlink and not partial_and_signed:
             proc_line_obj.unlink(cr, uid, to_unlink, context=context)
 
-        return True
+        return res
 
     def do_reset(self, cr, uid, ids, context=None):
         if context is None:

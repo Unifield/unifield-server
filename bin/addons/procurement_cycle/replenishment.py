@@ -969,6 +969,7 @@ class replenishment_segment(osv.osv):
         'missing_inv_review': fields.function(_missing_instances, type='char', method=1, string='Missing Inv.R data', multi='_missing_instances'),
         'specific_period': fields.boolean('Specific Periods Only'),
         'rr_label': fields.function(_get_rule_alert, method=1, string="Field Label", internal=1, type="char", multi='alert_label'),
+        'alert_msl_mml': fields.function(misc._get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {
@@ -1304,7 +1305,7 @@ class replenishment_segment(osv.osv):
                           location_dest_id in %(location_id)s and
                           coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned) <= %(date)s
                         group by coalesce(pol.confirmed_delivery_date, pol.esti_dd, pol.date_planned)
-                        UNION
+                        UNION ALL
 
                         select date(m.date) as date, sum(product_qty) as product_qty from stock_move m, stock_picking p
                             where
@@ -1744,7 +1745,6 @@ class replenishment_segment(osv.osv):
                         'external_lt': self.convert_time_unit(seg.external_lt, seg.time_unit_lt, inv_unit),
                         'total_lt': self.convert_time_unit(seg.total_lt, seg.time_unit_lt, inv_unit),
                         'order_coverage': self.convert_time_unit(seg.order_coverage, seg.time_unit_lt, inv_unit),
-                        'primay_product_list': line.in_main_list and seg.product_list_id.name,
                         'rule': seg.rule,
                         'min_qty': min_qty,
                         'max_qty': max_qty,
@@ -2761,6 +2761,9 @@ class replenishment_segment_line(osv.osv):
         'warning': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
         'warning_html': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
         'fmc_version': fields.char('FMC timestamp', size=64, select=1),
+        'mml_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
     }
 
 
@@ -2844,6 +2847,8 @@ class replenishment_segment_line(osv.osv):
         'status': 'active',
         'line_state_parent': 'draft',
         'line_rule_parent': lambda self, cr, uid, c: c and c.get('rule'),
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def _set_merge_minmax(self, cr, uid, vals, context=False):
@@ -3602,6 +3607,7 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
         'file_to_import': fields.binary(string='File to import'),
         'ir_id': fields.many2one('sale.order', 'Generated IR', readonly=1),
         'total_value': fields.function(_get_total_value, method=True, type='float', with_null=True, string='Total Value', digits=(16, 2)),
+        'alert_msl_mml': fields.function(misc._get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {
@@ -3839,6 +3845,8 @@ class replenishment_order_calc_line(osv.osv):
         'buffer_ss_qty': fields.char('Buffer / SS Qty', size=128, readonly=1),
         'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id', readonly=1, digits=(16, 2)),
         'min_max': fields.char('Min/Max', size=128, readonly=1),
+        'mml_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
 
     _defaults = {
@@ -3867,6 +3875,7 @@ class replenishment_inventory_review(osv.osv, common_oc_inv):
         'frequence_name': fields.char('Scheduled reviews periodicity', size=512, readonly=1),
         'scheduler_date': fields.datetime('Theoritical scheduler date', readonly=1, internal=1),
         'state': fields.selection([('complete', 'Complete'), ('inprogress', 'In Progress')], 'State', readonly=1),
+        'alert_msl_mml': fields.function(misc._get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {
@@ -3891,7 +3900,6 @@ class replenishment_inventory_review_line(osv.osv):
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False), # OC
         'status': fields.selection(life_cycle_status, string='Life cycle status'), # OC
         'paired_product_id': fields.many2one('product.product', 'Replacing/Replaced product'),
-        'primay_product_list': fields.char('Primary Product List', size=512), # OC
         'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Auto Supply')], string='RR Type', required=1), #Seg
         'min_qty': fields.float_null('Min Qty', related_uom='uom_id', digits=(16, 2)), # Seg line
         'max_qty': fields.float_null('Max Qty', related_uom='uom_id', digits=(16, 2)), # Seg line
@@ -3938,6 +3946,9 @@ class replenishment_inventory_review_line(osv.osv):
         'coef_var_hmc': fields.float('Coefficient of Variation of HMC (%)'),
         'std_dev_hmc_fmc': fields.float_null('Standard Deviation of HMC vs FMC'),
         'coef_var_hmc_fmc': fields.float_null('Coefficient of Variation of HMC and FMC (%)'),
+
+        'mml_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
 
 replenishment_inventory_review_line()
@@ -4096,22 +4107,93 @@ replenishment_inventory_review_line_stock()
 class replenishment_product_list(osv.osv):
     _name = 'replenishment.product.list'
     _description = 'RR Product List'
-    _rec_name = 'product_id'
-    _order = 'default_code'
+    _rec_name = 'l_default_code'
+    _order = 'l_default_code'
     _auto = False
 
     def init(self, cr):
         drop_view_if_exists(cr, 'replenishment_product_list')
 
         cr.execute("""CREATE OR REPLACE VIEW replenishment_product_list AS (
-            select CASE WHEN seg_line.id IS NULL THEN -1*prod.id ELSE seg_line.id END as id, prod.id as product_id, prod.default_code as default_code, segment.name_seg as name_seg, segment.description_seg as description_seg, segment.id as segment_id
+            select CASE WHEN seg_line.id IS NULL THEN -1*prod.id ELSE seg_line.id END as id, prod.id as product_id, prod.default_code as l_default_code, segment.name_seg as name_seg, segment.description_seg as description_seg, segment.id as segment_id
             from
                 product_product prod
                 left join replenishment_segment_line seg_line on seg_line.product_id = prod.id
                 left join replenishment_segment segment on segment.id = seg_line.segment_id and description_seg!='HIDDEN'
             where
-                segment.state != 'cancel' or segment.state is null
+                prod.active = 't'
+                and (segment.state != 'cancel' or segment.state is null)
         )""")
+
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        if context is None:
+            context = {}
+        new_dom = []
+        filter_in_mml_instance = False
+        filter_in_msl_instance = []
+        for x in domain:
+            if x[0] == 'in_mml_instance':
+                if x[2] is True:
+                    local_instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+                    if local_instance.level == 'section':
+                        new_dom.append(['id', '=', 0])
+                    else:
+                        filter_in_mml_instance = [local_instance.id]
+                else:
+                    if isinstance(x[2], str):
+                        instance_ids = self.pool.get('msf.instance').search(cr, uid, [('name', 'ilike', x[2])], context=context)
+                    elif isinstance(x[2], int):
+                        instance_ids = [x[2]]
+                    else:
+                        instance_ids = x[2]
+
+                    if self.pool.get('msf.instance').search_exists(cr, uid, [('id', 'in', instance_ids), ('level', '=', 'section')], context=context):
+                        new_dom.append(['id', '=', 0])
+                    else:
+                        filter_in_mml_instance = instance_ids
+            elif x[0] == 'in_msl_instance':
+                if x[2] == 'active' and not filter_in_msl_instance:
+                    filter_in_msl_instance = self.pool.get('unidata.project').search(cr, uid, [('uf_active', '=', True)], context=context)
+                    if not filter_in_msl_instance:
+                        filter_in_msl_instance = [0]
+                elif x[2] is True:
+                    t_filter_in_msl_instance = -1
+                    instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+                    ud_project_ids = self.pool.get('unidata.project').search(cr, uid, [('instance_id', '=', instance_id)], context=context)
+                    if ud_project_ids:
+                        t_filter_in_msl_instance = ud_project_ids[0]
+                    if not filter_in_msl_instance:
+                        filter_in_msl_instance.append(t_filter_in_msl_instance)
+                elif isinstance(x[2], str):
+                    filter_in_msl_instance = self.pool.get('unidata.project').search(cr, uid, [('instance_id.name', 'ilike', x[2])], context=context)
+                    if not filter_in_msl_instance:
+                        filter_in_msl_instance = [0]
+                else:
+                    filter_in_msl_instance = self.pool.get('unidata.project').search(cr, uid, [('unifield_instance_id', '=', x[2])], context=context)
+            else:
+                new_dom.append(x)
+
+        ret = super(replenishment_product_list, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if filter_in_mml_instance:
+            ret.tables.append('"product_project_rel" p_rel')
+            ret.joins.setdefault('"replenishment_product_list"', [])
+            ret.joins['"replenishment_product_list"'] += ['left join product_product on product_product.id=replenishment_product_list.product_id']
+            ret.joins['"replenishment_product_list"'] += [('"product_project_rel" p_rel', 'id', 'product_id', 'LEFT JOIN')]
+            ret.joins['"replenishment_product_list"'] += ['left join product_country_rel c_rel on p_rel is null and c_rel.product_id = product_product.id']
+            ret.joins['"replenishment_product_list"'] += ['left join unidata_project up1 on up1.id = p_rel.unidata_project_id or up1.country_id = c_rel.unidata_country_id']
+            ret.where_clause.append(''' product_product.oc_validation = 't' and ( up1.instance_id in %s or up1 is null) ''')
+            ret.where_clause_params.append(tuple(filter_in_mml_instance))
+        if filter_in_msl_instance:
+            ret.tables.append('"product_msl_rel"')
+            ret.joins.setdefault('"replenishment_product_list"', [])
+            ret.joins.setdefault('"product_msl_rel"', [])
+            ret.joins['"replenishment_product_list"'] += [('"product_msl_rel"', 'product_id', 'product_id', 'INNER JOIN')]
+            ret.joins['"replenishment_product_list"'] += ["inner join unidata_project on unidata_project.id=product_msl_rel.msl_id"]
+            ret.where_clause.append(''' "product_msl_rel".creation_date is not null and  "unidata_project".uf_active = 't' and "unidata_project".id in %s  ''')
+            ret.where_clause_params.append(tuple(filter_in_msl_instance))
+            ret.having_group_by = ' GROUP BY replenishment_product_list.id, replenishment_product_list.l_default_code '
+
+        return ret
 
     def _search_list_sublist(self, cr, uid, obj, name, args, context=None):
         '''
@@ -4141,11 +4223,16 @@ class replenishment_product_list(osv.osv):
     _columns = {
         'product_id': fields.many2one('product.product', 'Product', select=1, required=1),
         'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', select=1, required=1),
-        'default_code': fields.char('Product Code', size=256, select=1, required=1),
+        'l_default_code': fields.char('Product Code', size=256, select=1, required=1),
         'product_description': fields.related('product_id', 'name',  string='Product Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'name_seg': fields.char('Replenishment Segment Reference', size=64, readonly=1, select=1, group_operator='count'),
         'description_seg': fields.char('Replenishment Segment Description', required=1, size=28, select=1),
+        'mml_status': fields.related('product_id', 'mml_status',  string='MML', type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], readonly=True, select=True, write_relate=False),
+        'msl_status': fields.related('product_id', 'mml_status',  string='MML', type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], readonly=True, select=True, write_relate=False),
+        'in_mml_instance': fields.function(misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance'),
+        'in_msl_instance': fields.function(misc.get_fake, method=True, type='many2one', relation='unifield.instance', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
         'list_ids': fields.function(misc.get_fake, fnct_search=_search_list_sublist, type='many2one', relation='product.list', method=True, string='Lists'),
+
     }
 
 replenishment_product_list()

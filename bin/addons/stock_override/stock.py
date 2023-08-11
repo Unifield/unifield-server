@@ -236,7 +236,7 @@ class stock_picking(osv.osv):
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False),
         'fake_type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
         'shipment_ref': fields.char(string='Ship Reference', size=256, readonly=True),  # UF-1617: indicating the reference to the SHIP object at supplier
-        'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)]}),
+        'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)], 'received': [('readonly', True)], 'delivered': [('readonly', True)]}),
         'state_before_import': fields.char(size=64, string='State before import', readonly=True),
         'is_esc': fields.function(_get_is_esc, method=True, string='ESC Partner ?', type='boolean', store=False),
         'dpo_incoming': fields.boolean(string='DPO Incoming'),

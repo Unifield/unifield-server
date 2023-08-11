@@ -196,6 +196,8 @@
                     <field name="min_order_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty, False)" />
                     <field name="comment" />
                     <field name="to_correct_ok" invisible="1"/>
+                    <field name="mml_status" />
+                    <field name="msl_status" />
                 </tree>
             </field>
         </record>
@@ -218,6 +220,8 @@
                     <field name="rounding" on_change="change_soq_quantity(rounding, line_uom_id)" />
                     <field name="min_order_qty" />
                     <field name="comment" />
+                    <field name="mml_status" />
+                    <field name="msl_status" />
                 </tree>
             </field>
         </record>

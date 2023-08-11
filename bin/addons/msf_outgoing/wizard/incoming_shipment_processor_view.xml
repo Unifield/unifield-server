@@ -10,6 +10,7 @@
                 <form string="Products to Process">
                     <field name="date" invisible="1" />
                     <field name="linked_to_out"  invisible="1"/>
+                    <field name="alert_msl_mml" invisible="1"/>
                     <field name="picking_id" invisible="1" />
                     <field name="display_process_to_ship_button" invisible="1" />
                     <field name="sequence_issue" invisible="1" />
@@ -25,6 +26,7 @@
                     <field name="contains_kc" invisible="1" />
                     <field name="location_dest_active_ok" invisible="1"/>
                     <field name="draft" invisible="1" />
+                    <field name="partial_process_sign" invisible="1" />
                     <field name="forbidden_product" nolabel="1" widget="html_text" colspan="4"/>
                     <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', True), ('contains_kc', '=', False)]}">
                         <html>
@@ -62,6 +64,17 @@
                             </p>
                         </html>
                     </group>
+                    <html colspan="4">
+                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                            <script language="javascript">
+                                var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                                if (alert_msl_mml) {
+                                    $('#msl_mml').html(alert_msl_mml);
+                                    $('#msl_mml').show();
+                                }
+                            </script>
+
+                    </html>
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree" context="{'display_process_to_ship_button': display_process_to_ship_button}"
                         colspan="4" nolabel="1" />
@@ -94,6 +107,14 @@
                         </group>
                         <label colspan="4" string=" " />
                         <separator string="Actions" colspan="9" />
+                        <group colspan="9" attrs="{'invisible': [('partial_process_sign', '=', False)]}">
+                            <html>
+                                <p style="font-weight: bold; font-size: 1.2em; color: red; text-align: center;">
+                                    <translate>Warning: The IN has already been electronically validated for all quantities. The new IN will need to be signed again and the signature for the backorder should be reset. Do you want to continue ?</translate>
+                                </p>
+                            </html>
+                        </group>
+                        <newline />
                         <group colspan="2" col="4">
                             <field name="dest_type"
                                 on_change="onchange_dest_type(dest_type, picking_id)"
@@ -215,6 +236,8 @@
                     <field name="cost" attrs="{'readonly': [('cost_as_ro', '=', True)]}" />
                     <field name="currency" />
                     <field name="integrity_status" string="" />
+                    <field name="mml_status" />
+                    <field name="msl_status" />
                 </tree>
             </field>
         </record>

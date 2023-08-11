@@ -165,8 +165,10 @@ class account_move_line_report_xls(SpreadsheetReport):
 class parser_account_move_line(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(parser_account_move_line, self).__init__(cr, uid, name, context=context)
+        self._display_hq_account = self.pool.get('account.export.mapping')._is_mapping_display_active(cr, uid)
         self.localcontext.update({
-            #'getSub': self.getSub,
+            'display_hq_account': lambda *a: self._display_hq_account,
+
         })
 
     def getObjects(self, cr, uid, ids, context):
@@ -225,7 +227,15 @@ class account_analytic_line_report_xls(SpreadsheetReport):
             context['zipit'] = True
         return super(account_analytic_line_report_xls, self).create(cr, uid, ids, data, context)
 
-account_analytic_line_report_xls('report.account.analytic.line_xls','account.analytic.line','addons/account_mcdb/report/report_account_analytic_line_xls.mako')
+class parser_account_analytic_line_report(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(parser_account_analytic_line_report, self).__init__(cr, uid, name, context=context)
+        self._display_hq_account = self.pool.get('account.export.mapping')._is_mapping_display_active(cr, uid)
+        self.localcontext.update({
+            'display_hq_account': lambda *a: self._display_hq_account,
+        })
+
+account_analytic_line_report_xls('report.account.analytic.line_xls','account.analytic.line','addons/account_mcdb/report/report_account_analytic_line_xls.mako', parser=parser_account_analytic_line_report)
 
 class account_analytic_line_free_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):

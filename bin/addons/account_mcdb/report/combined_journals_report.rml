@@ -47,7 +47,7 @@
       <blockValign value="TOP"/>
       <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
       <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="-1,-1"/>
-      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="20,-1" thickness="0.5"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="21,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
       <blockLeftPadding length="1" start="0,0" stop="-1,-1"/>
       <blockRightPadding length="1" start="0,0" stop="-1,-1"/>
@@ -80,8 +80,8 @@
       </tr>
     </blockTable>
 
-    <blockTable style="Table2" colWidths="45.0,36.0,46.0,52.0,39.0,45.0,45.0,31.0,40.0,40.0,36.0,37.0,33.0,41.0,41.0,31.0,41.0,41.0,31.0,36.0,36.0">
-      [[ analytic_axis() == 'fp' or setTag('blockTable', 'blockTable', {'colWidths': "45.0,36.0,48.0,55.0,41.0,49.0,49.0,34.0,43.0,48.0,43.0,45.0,45.0,38.0,45.0,45.0,38.0,38.0,38.0"}) ]]
+    <blockTable style="Table2" colWidths="">
+      [[ setTag('blockTable', 'blockTable', get_col_widths()) ]]
       <tr>
         <td>
           <parawrap style="P3">Proprietary Instance</parawrap>
@@ -145,6 +145,10 @@
         </td>
         <td>
           <parawrap style="P3">Status</parawrap>
+        </td>
+        <td>
+          [[ display_hq_account() or removeParentNode('td') ]]
+          <parawrap style="P3">HQ System Account</parawrap>
         </td>
       </tr>
       <tr>
@@ -214,6 +218,9 @@
         <td>
           <parawrap style="P3">[[ getSelValue('account.move', 'state', line['status']) or '' ]]</parawrap>
         </td>
+        <td>
+          <parawrap style="P3">[[ line['hq_system_account'] if display_hq_account() else removeParentNode('td') ]]</parawrap>
+        </td>
       </tr>
       <!-- TOTAL -->
       <tr>
@@ -278,6 +285,7 @@
           <para style="P3"></para>
         </td>
         <td>
+        [[ display_hq_account() or removeParentNode('td') ]]
           <para style="P3"></para>
         </td>
       </tr>

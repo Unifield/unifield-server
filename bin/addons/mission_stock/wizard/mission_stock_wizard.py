@@ -186,6 +186,9 @@ class mission_stock_wizard(osv.osv_memory):
             'with_valuation': wiz_id.with_valuation == 'true',
             'hide_amc_fmc': wiz_id.report_id.full_view and (self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.level in ['section', 'coordo']),
         })
+        if not wiz_id.report_id.full_view and wiz_id.report_id.local_report:
+            c['show_mml'] = 1
+
         display_only_in_stock = wiz_id.display_only_in_stock == 'true'
         if display_only_in_stock:
             domain = ['&',

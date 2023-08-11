@@ -200,7 +200,10 @@ class object_query(osv.osv):
                 if filter.state == 'deprecated':
                     continue
                 if filter.id not in forced_values:
-                    search_filters += "<field name='%s' />" % (filter.name)
+                    if filter.name == 'in_msl_instance':
+                        search_filters += "<field name='in_msl_instance' widget='many2one'/>"
+                    else:
+                        search_filters += "<field name='%s' />" % (filter.name)
                     search_filters += "\n"
 
             for result in query.result_ids:
@@ -523,7 +526,7 @@ class ir_fields(osv.osv):
                                 field_ids.append(field.id)
                             elif not isinstance(col, fields.related):
                                 # only allow fnct_search on product.sdref to prevent traceback: "Filter not implemented'
-                                if obj.model != 'product.product' or field.name != 'sdref':
+                                if obj.model != 'product.product' or field.name not in ('in_mml_instance', 'in_msl_instance', 'sdref'):
                                     field_ids.append(field.id)
 
                 if (a[1] == '=' and a[2] == False) or (a[1] == '!=' and a[2] == True):

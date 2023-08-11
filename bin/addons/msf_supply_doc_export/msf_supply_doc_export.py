@@ -619,14 +619,19 @@ class po_follow_up_mixin(object):
             report_line['customer'] = ''
             report_line['customer_ref'] = ''
             report_line['source_doc'] = ''
+            report_line['source_creation_date'] = ''
             report_line['supplier'] = ''
             report_line['supplier_ref'] = ''
             report_line['order_type'] = ''
+            report_line['order_category'] = ''
+            report_line['priority'] = ''
             report_line['currency'] = ''
             report_line['total_currency'] = ''
             report_line['total_func_currency'] = ''
             report_line['destination'] = analytic_line.get('destination')
             report_line['cost_centre'] = analytic_line.get('cost_center')
+            report_line['mml_status'] = ''
+            report_line['msl_status'] = ''
             res.append(report_line)
 
         return res
@@ -636,7 +641,7 @@ class po_follow_up_mixin(object):
             self.cr.execute("""
                 SELECT pl.id, pl.state, pl.line_number, adl.id, ppr.id, ppr.default_code, COALESCE(tr.value, pt.name), 
                     uom.id, uom.name, pl.confirmed_delivery_date, pl.date_planned, pl.product_qty, pl.price_unit, 
-                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin, pl.esti_dd
+                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin, pl.esti_dd, so.date_order
                 FROM purchase_order_line pl
                     LEFT JOIN analytic_distribution adl ON pl.analytic_distribution_id = adl.id
                     LEFT JOIN product_product ppr ON pl.product_id = ppr.id
@@ -725,6 +730,17 @@ class po_follow_up_mixin(object):
 
         return qty_ordered - qty_received
 
+    def get_mml_msl_status(self, pol_id):
+        get_sel = self.pool.get('ir.model.fields').get_selection
+        ftf = ['mml_status', 'msl_status']
+        pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id, fields_to_fetch=ftf,
+                                                          context=self.localcontext)
+        return {
+            'mml_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'mml_status', pol.mml_status,
+                                  context=self.localcontext) or '',
+            'msl_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'msl_status', pol.msl_status,
+                                  context=self.localcontext) or '',
+        }
 
     def format_date(self, date):
         if not date:
@@ -749,7 +765,11 @@ class po_follow_up_mixin(object):
         uom_obj = self.pool.get('product.uom')
         get_sel = self.pool.get('ir.model.fields').get_selection
 
-        po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id', '=', po_id)], order='line_number', context=self.localcontext)
+        if self.datas['report_parms'].get('non_conform'):
+            po_line_ids = self.pool.get('po.follow.up').get_line_ids_non_msl(self.cr, self.uid, po_id, context=self.localcontext)
+        else:
+            po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id', '=', po_id)], order='line_number', context=self.localcontext)
+
         report_lines = []
         if not po_line_ids:
             return report_lines
@@ -757,7 +777,7 @@ class po_follow_up_mixin(object):
         po = []
         self.cr.execute("""
             SELECT p.id, p.state, p.name, p.date_order, ad.id, ppar.name, p.partner_ref, p.order_type, c.name, 
-                p.delivery_confirmed_date, p.details, p.delivery_requested_date_modified
+                p.delivery_confirmed_date, p.details, p.delivery_requested_date_modified, p.categ, p.priority
             FROM purchase_order p
                 LEFT JOIN analytic_distribution ad ON p.analytic_distribution_id = ad.id
                 LEFT JOIN res_partner ppar ON p.partner_id = ppar.id
@@ -778,6 +798,7 @@ class po_follow_up_mixin(object):
             same_product_same_uom = []
             same_product = []
             other_product = []
+            mml_msl_status = self.get_mml_msl_status(line[0])
 
             for inl in self.getAllLineIN(line[0]):
                 if inl.get('date_expected'):
@@ -821,15 +842,22 @@ class po_follow_up_mixin(object):
                     'customer': line[13] and line[14] or '',
                     'customer_ref': line[13] and line[15] and '.' in line[15] and line[15].split('.')[1] or '',
                     'source_doc': line[16] or '',
+                    'source_creation_date': line[18] or '',
                     'supplier': po[5] or '',
                     'supplier_ref': po[6] and '.' in po[6] and po[6].split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7],
                                           context=self.localcontext) or '',
+                    'order_category': get_sel(self.cr, self.uid, 'purchase.order', 'categ', po[12],
+                                              context=self.localcontext) or '',
+                    'priority': get_sel(self.cr, self.uid, 'purchase.order', 'priority', po[13],
+                                        context=self.localcontext) or '',
                     'currency': po[8] or '',
                     'total_currency': '',
                     'total_func_currency': '',
                     'po_details': po[10] or '',
+                    'mml_status': mml_msl_status['mml_status'],
+                    'msl_status': mml_msl_status['msl_status'],
                 }
                 report_lines.append(report_line)
                 if export_format != 'xls':
@@ -864,11 +892,16 @@ class po_follow_up_mixin(object):
                     'customer': line[13] and line[14] or '',
                     'customer_ref': line[13] and line[15] and '.' in line[15] and line[15].split('.')[1] or '',
                     'source_doc': line[16] or '',
+                    'source_creation_date': line[18] or '',
                     'supplier': po[5] or '',
                     'supplier_ref': po[6] and '.' in po[6] and po[6].split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7],
                                           context=self.localcontext) or '',
+                    'order_category': get_sel(self.cr, self.uid, 'purchase.order', 'categ', po[12],
+                                              context=self.localcontext) or '',
+                    'priority': get_sel(self.cr, self.uid, 'purchase.order', 'priority', po[13],
+                                        context=self.localcontext) or '',
                     'currency': po[8] or '',
                     'total_currency': self.get_total_currency(spsul.get('price_unit'), spsul.get('state') == 'done' and spsul.get('product_qty', '') or 0.0),
                     'total_func_currency': self.get_total_func_currency(
@@ -877,6 +910,8 @@ class po_follow_up_mixin(object):
                         spsul.get('state') == 'done' and spsul.get('product_qty', 0.0) or 0.0
                     ),
                     'po_details': po[10] or '',
+                    'mml_status': mml_msl_status['mml_status'],
+                    'msl_status': mml_msl_status['msl_status'],
                 }
 
                 report_lines.append(report_line)
@@ -917,11 +952,16 @@ class po_follow_up_mixin(object):
                     'customer': line[13] and line[14] or '',
                     'customer_ref': line[13] and line[15] and '.' in line[15] and line[15].split('.')[1] or '',
                     'source_doc': line[16] or '',
+                    'source_creation_date': line[18] or '',
                     'supplier': po[5] or '',
                     'supplier_ref': po[6] and '.' in po[6] and po[6].split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7],
                                           context=self.localcontext) or '',
+                    'order_category': get_sel(self.cr, self.uid, 'purchase.order', 'categ', po[12],
+                                              context=self.localcontext) or '',
+                    'priority': get_sel(self.cr, self.uid, 'purchase.order', 'priority', po[13],
+                                        context=self.localcontext) or '',
                     'currency': po[8] or '',
                     'total_currency': self.get_total_currency(spl.get('price_unit'), spl.get('state') == 'done' and spl.get('product_qty', 0.0) or 0.0),
                     'total_func_currency': self.get_total_func_currency(
@@ -930,6 +970,8 @@ class po_follow_up_mixin(object):
                         spl.get('state') == 'done' and spl.get('product_qty', 0.0) or 0.0
                     ),
                     'po_details': po[10] or '',
+                    'mml_status': mml_msl_status['mml_status'],
+                    'msl_status': mml_msl_status['msl_status'],
                 }
                 report_lines.append(report_line)
 
@@ -971,11 +1013,16 @@ class po_follow_up_mixin(object):
                     'customer': line[13] and line[14] or '',
                     'customer_ref': line[13] and line[15] and '.' in line[15] and line[15].split('.')[1] or '',
                     'source_doc': line[16] or '',
+                    'source_creation_date': line[18] or '',
                     'supplier': po[5] or '',
                     'supplier_ref': po[6] and '.' in po[6] and po[6].split('.')[1] or '',
                     # new
                     'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7],
                                           context=self.localcontext) or '',
+                    'order_category': get_sel(self.cr, self.uid, 'purchase.order', 'categ', po[12],
+                                              context=self.localcontext) or '',
+                    'priority': get_sel(self.cr, self.uid, 'purchase.order', 'priority', po[13],
+                                        context=self.localcontext) or '',
                     'currency': po[8] or '',
                     'total_currency': self.get_total_currency(ol.get('price_unit'), ol.get('state') == 'done' and ol.get('product_qty', 0.0) or 0.0),
                     'total_func_currency': self.get_total_func_currency(
@@ -984,6 +1031,8 @@ class po_follow_up_mixin(object):
                         ol.get('state') == 'done' and ol.get('product_qty', 0.0) or 0.0
                     ),
                     'po_details': po[10] or '',
+                    'mml_status': mml_msl_status['mml_status'],
+                    'msl_status': mml_msl_status['msl_status'],
                 }
                 report_lines.append(report_line)
 
@@ -1048,6 +1097,8 @@ class po_follow_up_mixin(object):
             _('Order Reference'),
             _('Supplier'),
             _('Order Type'),
+            _('Order Category'),
+            _('Priority'),
             _('Line'),
             _('Product Code'),
             _('Product Description'),
@@ -1071,7 +1122,10 @@ class po_follow_up_mixin(object):
             _('Customer'),
             _('Customer Reference'),
             _('Source Document'),
+            _('Source Creation Date'),
             _('Supplier Reference'),
+            _('MML'),
+            _('MSL'),
         ]
 
 

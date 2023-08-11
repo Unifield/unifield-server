@@ -40,6 +40,10 @@ class account_move_line_reconcile(osv.osv_memory):
         'different_currencies': lambda *a: False,
     }
 
+    # moved to bin/addons/account/wizard/account_reconcile.py
+    # def default_get(self, cr, uid, fields, context=None, from_web=False):
+    # def trans_rec_get(self, cr, uid, ids, context=None):
+
 
     def total_reconcile(self, cr, uid, ids, context=None):
         """

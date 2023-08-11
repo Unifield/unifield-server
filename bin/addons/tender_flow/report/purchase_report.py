@@ -116,7 +116,7 @@ class purchase_report(osv.osv):
                     s.dest_address_id,
                     s.pricelist_id,
                     s.validator,
-                    s.location_id as location_id,
+                    l.reception_dest_id as location_id,
                     s.warehouse_id as warehouse_id,
                     (case when cc.percentage is not null then
                         cc.analytic_id
@@ -188,7 +188,7 @@ class purchase_report(osv.osv):
                     ccp.percentage,
                     s.partner_id,
                     part.zone,
-                    s.location_id,
+                    l.reception_dest_id,
                     l.price_unit,
                     s.date_approve,
                     l.date_planned,

@@ -117,6 +117,8 @@
                     <field name="cost" invisible="1" />
                     <field name="currency" invisible="1" />
                     <field name="integrity_status" string="" />
+                    <field name="mml_status" />
+                    <field name="msl_status" />
                 </tree>
             </field>
         </record>

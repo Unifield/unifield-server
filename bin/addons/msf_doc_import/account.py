@@ -161,9 +161,11 @@ class msf_doc_import_accounting(osv.osv_memory):
     def _format_special_char(self, line):
         """
         Replaces back the arbitrary strings used for the special characters with their corresponding hexadecimal codes
+        and replace all occurrences of special character  &#20 (DEVICE CONTROL FOUR-DC4) by ordinary spaces
         """
         for i in range(len(line)):
             if line[i] and isinstance(line[i], str) and SPECIAL_CHAR in line[i]:
+                line[i] = re.sub('%s_(20)' % SPECIAL_CHAR, ' ', line[i]) # US-11090 Replaces DC4 by ordinary spaces
                 line[i] = re.sub('%s_([0-9][0-9]{0,1})' % SPECIAL_CHAR, lambda a: chr(int(a.group(1))), line[i])
         return line
 

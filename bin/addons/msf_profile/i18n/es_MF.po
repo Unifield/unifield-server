@@ -11006,7 +11006,7 @@ msgstr "Cancelar la orden de compra"
 
 #. module: product_list
 #: model:ir.actions.act_window,name:product_list.action_open_wizard_product_import_list
-msgid "Import to list"
+msgid "Import to Product List"
 msgstr "Importar a la lista"
 
 #. modules: return_claim, msf_outgoing, stock, stock_override, kit
@@ -71320,11 +71320,6 @@ msgstr "Importe paquete:"
 #: model:ir.ui.menu,name:kit.kit_composition_theoretical_menu
 msgid "Theoretical Kit Composition"
 msgstr "Composición de kit teórico "
-
-#. module: order_types
-#: field:stock.picking,cd_from_bo:0
-msgid "CD from BO"
-msgstr "CD de BO"
 
 #. module: product
 #: field:product.price_list,qty1:0

@@ -265,7 +265,6 @@ class so_po_common(osv.osv_memory):
 
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context=context)
-        location_id = self.get_location(cr, uid, partner_id, context)
         # just roll back what has been modified --- NO MODIF HERE!
         price_list = self.get_price_list_id(cr, uid, partner_id, context)
 
@@ -273,7 +272,6 @@ class so_po_common(osv.osv_memory):
         header_result['partner_id'] = partner_id
         header_result['partner_address_id'] = address_id
         header_result['pricelist_id'] = price_list
-        header_result['location_id'] = location_id
 
         return header_result
 

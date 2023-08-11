@@ -82,6 +82,8 @@
             <blockSpan start="11,0" stop="11,-1" />
             <blockSpan start="12,0" stop="12,-1" />
             <blockSpan start="13,0" stop="13,-1" />
+            <blockSpan start="14,0" stop="14,-1" />
+            <blockSpan start="15,0" stop="15,-1" />
             <blockLeftPadding length="2" start="0,0" stop="-1,-1" />
             <blockRightPadding length="2" start="0,0" stop="-1,-1" />
         </blockTableStyle>
@@ -115,6 +117,8 @@
             <blockSpan start="11,0" stop="11,-1" />
             <blockSpan start="12,0" stop="12,-1" />
             <blockSpan start="13,0" stop="13,-1" />
+            <blockSpan start="14,0" stop="14,-1" />
+            <blockSpan start="15,0" stop="15,-1" />
             <blockLeftPadding length="2" start="0,0" stop="-1,-1" />
             <blockRightPadding length="2" start="0,0" stop="-1,-1" />
         </blockTableStyle>
@@ -211,6 +215,14 @@
                     			<para style="HeaderInfosValue">[[ getNbItems(pt) ]]</para>
 							</td>
 						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Picked quantities:</para>
+							</td>
+							<td>
+                    			<para style="HeaderInfosValue">[[ pt.state == 'done' and pt.total_qty_process_str or '0' ]]</para>
+							</td>
+						</tr>
 					</blockTable>
 				</td>
                 <td>
@@ -272,7 +284,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="25.0,100.0,220.0,55.0,50.0,54.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesHeader">
+        <blockTable colWidths="25.0,90.0,200.0,55.0,50.0,54.0,35.0,50.0,50.0,71.0,41.0,17.0,17.0,17.0,19,19" style="LinesHeader">
             <tr>
                 <td>
                     <para style="LineHeader">Item</para>
@@ -316,6 +328,12 @@
                 <td>
                     <para style="LineHeader">CS</para>
                 </td>
+                <td>
+                    <para style="LineHeader">MML</para>
+                </td>
+                <td>
+                    <para style="LineHeader">MSL</para>
+                </td>
             </tr>
             <tr>
                 <td>
@@ -357,12 +375,18 @@
                 <td>
                     <para style="LineHeader"></para>
                 </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
             </tr>
         </blockTable>
 
         <pto>
             <pto_header>
-                <blockTable colWidths="25.0,100.0,220.0,55.0,50.0,54.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesHeader">
+                <blockTable colWidths="25.0,90.0,200.0,55.0,50.0,54.0,35.0,50.0,50.0,71.0,41.0,17.0,17.0,17.0,19,19" style="LinesHeader">
                     <tr>
                         <td>
                             <para style="LineHeader">Item</para>
@@ -406,6 +430,12 @@
                         <td>
                             <para style="LineHeader">CS</para>
                         </td>
+                        <td>
+                            <para style="LineHeader">MML</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">MSL</para>
+                        </td>
                     </tr>
                     <tr>
                         <td>
@@ -447,12 +477,18 @@
                         <td>
                             <para style="LineHeader"></para>
                         </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
                     </tr>
                 </blockTable>
             </pto_header>
 
             <!-- Lines -->
-            <blockTable colWidths="25.0,100.0,220.0,55.0,50.0,54.0,35.0,50.0,50.0,75.0,45.0,17.0,17.0,17.0" style="LinesValues">
+            <blockTable colWidths="25.0,90.0,200.0,55.0,50.0,54.0,35.0,50.0,50.0,71.0,41.0,17.0,17.0,17.0,19,19" style="LinesValues">
                 [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>
@@ -499,6 +535,12 @@
                     <td>
                         <para style="LineValue">[[ m.product_id.cs_txt or ' ' ]]</para>
                     </td>
+                    <td>
+                        <para style="LineValue">[[ {'F': translate('No'), 'T': translate('Yes'), 'na': ''}.get(m.mml_status) ]]</para>
+                    </td>
+                    <td>
+                        <para style="LineValue">[[ {'F': translate('No'), 'T': translate('Yes'), 'na': ''}.get(m.mml_status) ]]</para>
+                    </td>
                 </tr>
                 <tr>
                     <td>
@@ -509,6 +551,12 @@
                     </td>
                     <td>
                         <parawrap style="LineValueLeft">[[ m.comment or '' ]]</parawrap>
+                    </td>
+                    <td>
+                        <para style="LineValue"></para>
+                    </td>
+                    <td>
+                        <para style="LineValue"></para>
                     </td>
                     <td>
                         <para style="LineValue"></para>
@@ -570,7 +618,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="51.0,253.0,253.0,253.0" style="FooterInfo" keepWithNext="1">
+        <blockTable colWidths="120.0,230.0,230.0,230.0" style="FooterInfo" keepWithNext="1">
             <tr>
                 <td>
                     <para style="LFooter"> </para>
@@ -590,13 +638,13 @@
                     <para style="LFooter">Name</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'sr', 'user_name') ]]</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'tr', 'user_name') ]]</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'fr', 'user_name') ]]</para>
                 </td>
             </tr>
             <tr>
@@ -604,13 +652,27 @@
                     <para style="LFooter">Date</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'sr', 'date') ]]</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'tr', 'date') ]]</para>
                 </td>
                 <td>
-                    <para style="LFooter"> </para>
+                    <para style="LFooter">[[ getSign(objects[0], 'fr', 'date') ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="LFooter">[[ pt.state == 'done' and translate('Picked Quantities') or translate('Quantities to be Picked')]]</para>
+                </td>
+                <td>
+                    <para style="LFooter">[[ getSign(objects[0], 'sr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="LFooter">[[ getSign(objects[0], 'tr', 'format_value') ]]</para>
+                </td>
+                <td>
+                    <para style="LFooter">[[ getSign(objects[0], 'fr', 'format_value') ]]</para>
                 </td>
             </tr>
             <tr>
@@ -618,13 +680,13 @@
                     <para style="LFooterEnd">Signature</para>
                 </td>
                 <td>
-                    <para style="LFooterEnd"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'sr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <para style="LFooterEnd"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'tr', 'image') or removeParentNode('image') ]]</image>
                 </td>
                 <td>
-                    <para style="LFooterEnd"> </para>
+                    <image width="100" height="25" mask="auto">[[ getSign(objects[0], 'fr', 'image') or removeParentNode('image') ]]</image>
                 </td>
             </tr>
         </blockTable>

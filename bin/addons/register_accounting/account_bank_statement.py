@@ -5,7 +5,6 @@
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    All Rigts Reserved
-#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -35,7 +34,7 @@ from .register_tools import open_register_view
 from base import currency_date
 import time
 import datetime
-
+from tools.misc import fakeUid
 
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
@@ -740,7 +739,7 @@ The starting balance will be proposed automatically and the closing balance is t
         if context is None:
             context = {}
         reg = self.browse(cr, uid, reg_id, fields_to_fetch=['period_id', 'journal_id'], context=context)
-        if reg.period_id.state in ['field-closed', 'mission-closed', 'done']:
+        if reg.period_id.state in ['field-closed', 'mission-closed', 'done'] or reg.period_id.special:
             raise osv.except_osv(_('Error'),
                                  _('The associated period is closed.'))
         if reg.journal_id.type == 'cash':
@@ -1217,6 +1216,10 @@ class account_bank_statement_line(osv.osv):
 
     _columns = {
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
+        'auto_counterpart': fields.boolean('Is/Was linked to a counterpart', readonly=1),
+        'counterpart_transfer_st_line_id': fields.many2one('account.bank.statement.line', 'Counterpart line', readonly=1, ondelete='set null'),
+        'counterpart_transfer_st_line_sdref': fields.char('St couterpert line sdref', size=128, select=1, readonly=1, help='used by sync, bc draft reg line are not synced'),
+        'has_a_counterpart_transfer': fields.boolean('Has a counterpart_transfer', select=1, readonly=1, help="used by sync, bc draft reg line are not synced"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_id': fields.many2one('res.partner', 'Partner', ondelete="restrict"),
         'amount_in': fields.function(_get_amount, fnct_search=_search_amount, method=True, string="Amount In", type='float'),
@@ -1411,7 +1414,7 @@ class account_bank_statement_line(osv.osv):
         return True
 
 
-    def create_move_from_st_line(self, cr, uid, st_line, company_currency_id, st_line_number, context=None):
+    def create_move_from_st_line(self, cr, uid, st_line, company_currency_id, st_line_number, counterpart_transfer_st_line=False, context=None):
         """
         Create move from the register line
         """
@@ -1459,6 +1462,9 @@ class account_bank_statement_line(osv.osv):
         amount = res_currency_obj.compute(cr, uid, st.currency.id,
                                           company_currency_id, st_line.amount, context=context)
 
+
+        counter_part_id = counterpart_transfer_st_line and counterpart_transfer_st_line.get('id') or st_line.auto_counterpart and st_line.counterpart_transfer_st_line_id and st_line.counterpart_transfer_st_line_id.id or False
+        counter_part_sdref = counterpart_transfer_st_line and counterpart_transfer_st_line.get('sdref') or False
         val = {
             'name': st_line.name,
             'date': st_line.date,
@@ -1481,6 +1487,9 @@ class account_bank_statement_line(osv.osv):
             'currency_id': st.currency.id,
             'analytic_account_id': st_line.analytic_account_id and st_line.analytic_account_id.id or False,
             'transfer_amount': st_line.transfer_amount or 0.0,
+            'counterpart_transfer_st_line_id': counter_part_id,
+            'counterpart_transfer_st_line_sdref': counter_part_sdref,
+            'has_a_counterpart_transfer': bool(counter_part_id),
         }
 
         if st_line.analytic_distribution_id:
@@ -1719,6 +1728,9 @@ class account_bank_statement_line(osv.osv):
             # Delete analytic distribution from move_line_values because each move line should have its own analytic distribution
             if 'analytic_distribution_id' in move_line_values:
                 del(move_line_values['analytic_distribution_id'])
+            for to_del in ['counterpart_transfer_st_line_id', 'counterpart_transfer_st_line_sdref', 'has_a_counterpart_transfer']:
+                if to_del in move_line_values:
+                    del(move_line_values[to_del])
             if register_line:
                 # Search second move line
                 other_line_id = acc_move_line_obj.search(cr, uid, [('move_id', '=', st_line.move_ids[0].id), ('id', '!=', register_line.id)], context=context)[0]
@@ -2171,10 +2183,14 @@ class account_bank_statement_line(osv.osv):
         state = list(self._get_state(cr, uid, ids, context=context).values())[0]
         # Verify that the statement line isn't in hard state
         if state == 'hard':
-            if values.get('partner_move_ids') or values.get('partner_move_line_ids') or \
-                    values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or \
-                    (values.get('invoice_id', False) and len(list(values.keys())) == 2 and values.get('from_cash_return')) or \
-                    'from_correction' in context or context.get('sync_update_execution', False):
+            if values.get('partner_move_ids') or \
+                    values.get('partner_move_line_ids') or \
+                    values == {'from_cash_return': True} or \
+                    values.get('analytic_distribution_id', False) or \
+                    (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or \
+                    'from_correction' in context or \
+                    context.get('sync_update_execution', False) or \
+                    list(values.keys()) == ['has_a_counterpart_transfer'] :
                 res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
                 self._check_account_partner_compat(cr, uid, ids, context=context)
                 self._check_on_regline_big_amounts(cr, uid, ids, context=context)
@@ -2316,6 +2332,10 @@ class account_bank_statement_line(osv.osv):
             'advance_invoice_move_id': False,
             'direct_invoice_move_id': False,
             'imported_account_invoice_ids': [],
+            'counterpart_transfer_st_line_id': False,
+            'counterpart_transfer_st_line_sdref': False,
+            'auto_counterpart': False,
+            'has_a_counterpart_transfer': False,
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]
@@ -2357,7 +2377,7 @@ class account_bank_statement_line(osv.osv):
         self.pool.get('account.move').validate(cr, uid, move_ids, context=context)
         return True
 
-    def posting(self, cr, uid, ids, postype, context=None):
+    def posting(self, cr, uid, ids, postype, force=False, context=None):
         """
         Write some statement line into some account move lines with a state that depends on postype.
         """
@@ -2385,13 +2405,6 @@ class account_bank_statement_line(osv.osv):
             if absl.account_id.type_for_register == 'advance' and not absl.ref:
                 raise osv.except_osv(_('Warning'), _('Line "%s": Reference is mandatory for operational advance accounts.') % absl.name)
             previous_state = ''.join(absl.state)
-            if absl.state == 'draft':
-                # US-673: temp posted line generates 2 creation updates
-                # if the line is temp posted between the 2 rules, the 1st upd to create the line is not sent
-                # update ir_model_data create_date to now(), so the 2 updates will be generated together at the next sync
-                cr.execute("""update ir_model_data set create_date=NOW() where
-                    model=%s and res_id=%s and module='sd'
-                    """, (self._name, absl.id))
 
             if absl.state == "hard":
                 raise osv.except_osv(_('Warning'), _('You can\'t re-post a hard posted entry !'))
@@ -2416,6 +2429,89 @@ class account_bank_statement_line(osv.osv):
                 if absl.is_down_payment and not absl.down_payment_id:
                     raise osv.except_osv(_('Error'), _('You need to specify a PO before temp posting the Down Payment!'))
 
+            if postype == 'hard' and \
+                    absl.counterpart_transfer_st_line_id and absl.counterpart_transfer_st_line_id.state == 'hard':
+
+                if absl.sequence_for_reference:
+                    init_ref = absl.sequence_for_reference
+                else:
+                    init_ref = '%s - %s' % (absl.name, absl.ref or '')
+
+                if absl.account_id.type_for_register == 'transfer' and absl.amount * absl.counterpart_transfer_st_line_id.amount >= 0 and (absl.amount or absl.counterpart_transfer_st_line_id.amount):
+                    raise osv.except_osv(_('Error'), _('The transfer entry %s and the counter party %s have no debit or credit.') % (init_ref, absl.counterpart_transfer_st_line_id.sequence_for_reference))
+
+                if not force and \
+                        ( absl.account_id.type_for_register == 'transfer_same' and abs(absl.amount + absl.counterpart_transfer_st_line_id.amount) > 0.001 \
+                          or \
+                          absl.journal_id.id != absl.counterpart_transfer_st_line_id.transfer_journal_id.id \
+                          or \
+                          absl.transfer_journal_id.id != absl.counterpart_transfer_st_line_id.journal_id.id \
+                          or \
+                          absl.account_id.id != absl.counterpart_transfer_st_line_id.account_id.id \
+                          or \
+                          absl.account_id.type_for_register not in ('transfer_same', 'transfer')
+                          ):
+                    msg = self.pool.get('message.action').create(cr, uid, {
+                        'title':  _('The amount, the third party or the account of transfer entry %s does not match with counter party %s - are you sure you want to hard post ?') % (init_ref, absl.counterpart_transfer_st_line_id.sequence_for_reference),
+                        'yes_action': lambda cr, uid, context: self.pool.get('account.bank.statement.line').posting(cr, uid, [absl.id], postype, force=True, context=context),
+                    }, context=context)
+                    return self.pool.get('message.action').pop_up(cr, uid, [msg], context=context)
+
+
+            to_write = {}
+            cp_line = False
+            cp_line_sdref = False
+            if absl.account_id.type_for_register in ['transfer', 'transfer_same'] and \
+                    absl.transfer_journal_id and \
+                    absl.transfer_journal_id.instance_id.id == absl.instance_id.id and \
+                    not absl.auto_counterpart \
+                    and absl.state == 'draft':
+                instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+                if instance_id == absl.instance_id.id:
+                    if not absl.auto_counterpart:
+                        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
+                        cp_reg = self.pool.get('account.bank.statement').search(cr, root_uid, [('journal_id', '=', absl.transfer_journal_id.id), ('state', '=', 'open'), ('period_id', '=', absl.statement_id.period_id.id)], context=context)
+                        if not force and not cp_reg:
+                            msg = self.pool.get('message.action').create(cr, uid, {
+                                'title':  _('There is no register to book the counterpart booking. Do you want to book the transfer without counterpart ?'),
+                                'yes_action': lambda cr, uid, context: self.pool.get('account.bank.statement.line').posting(cr, uid, [absl.id], postype, force=True, context=context),
+                            }, context=context)
+                            return self.pool.get('message.action').pop_up(cr, uid, [msg], context=context)
+                        if cp_reg:
+                            am_out = absl.amount_in
+                            am_in = absl.amount_out
+                            if absl.account_id.type_for_register == 'transfer':
+                                curr_obj = self.pool.get('res.currency')
+                                ctx_curr = {'currency_date': currency_date.get_date(self, cr, absl.document_date, absl.date)}
+                                if am_out:
+                                    am_out = curr_obj.compute(cr, uid, absl.statement_id.currency.id, absl.transfer_journal_id.currency.id, am_out, round=True, context=ctx_curr)
+                                if am_in:
+                                    am_in = curr_obj.compute(cr, uid, absl.statement_id.currency.id, absl.transfer_journal_id.currency.id, am_in, round=True, context=ctx_curr)
+                            cp_line = self.create(cr, root_uid, {
+                                'auto_counterpart': True,
+                                'counterpart_transfer_st_line_id': absl.id,
+                                'has_a_counterpart_transfer': True,
+                                'statement_id': cp_reg[0],
+                                'transfer_journal_id': absl.statement_id.journal_id.id,
+                                'document_date': absl.document_date,
+                                'date': absl.date,
+                                'name': absl.name,
+                                'ref': absl.ref,
+                                'account_id': absl.account_id.id,
+                                'amount_in': am_in,
+                                'amount_out': am_out,
+                            }, context=context)
+                            cp_line_sdref = self.get_sd_ref(cr, uid, cp_line)
+                            to_write.update({'has_a_counterpart_transfer': True, 'auto_counterpart': True, 'counterpart_transfer_st_line_id': cp_line, 'counterpart_transfer_st_line_sdref': cp_line_sdref})
+
+            if absl.state == 'draft':
+                # US-673: temp posted line generates 2 creation updates
+                # if the line is temp posted between the 2 rules, the 1st upd to create the line is not sent
+                # update ir_model_data create_date to now(), so the 2 updates will be generated together at the next sync
+                cr.execute("""update ir_model_data set create_date=NOW() where
+                    model=%s and res_id=%s and module='sd'
+                    """, (self._name, absl.id))
+
             # UF-2281 (linked to UTP-917)
             #+ We need to create move from st line in the given use cases:
             #+  FROM  |  TO  | IS DIRECT INVOICE? | Create move from st line ? |
@@ -2429,17 +2525,20 @@ class account_bank_statement_line(osv.osv):
             #+  Note that direct invoice moves though temp state and back to draft via code (not user actions).
             #+  Code is duplicated below for clarifty. TODO: fix during refactoring of dirct invoices
             if absl.state == 'draft' and not absl.direct_invoice:
-                self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
+                self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', counterpart_transfer_st_line={'id': cp_line, 'sdref': cp_line_sdref}, context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                 absl = self.browse(cr, 1, absl.id, context=context)
             if absl.state in ('draft','temp') and absl.direct_invoice and postype != 'hard':
-                self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
+                self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', counterpart_transfer_st_line={'id': cp_line, 'sdref': cp_line_sdref}, context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
                 absl = self.browse(cr, 1, absl.id, context=context)
 
+
+
             if postype == 'temp' and absl.direct_invoice:  #utp-917
                 # Optimization on write() for this field
-                self.write(cr, uid, [absl.id], {'direct_state': 'temp'}, context=context)
+                to_write['direct_state'] = 'temp'
+                self.write(cr, uid, [absl.id], to_write, context=context)
                 # create the accounting entries
                 account_invoice = self.pool.get('account.invoice')
                 account_invoice.action_open_invoice(cr, uid, [absl.invoice_id.id], context=context)
@@ -2471,6 +2570,8 @@ class account_bank_statement_line(osv.osv):
 
                 # Optimization: Do check=True and update_check=True because it was out from previous lines.
                 account_move_line.write(cr, uid, account_move_line_ids, {'state': 'draft'}, context=context, check=True, update_check=True)
+            elif postype == 'temp' and to_write:
+                self.write(cr, uid, [absl.id], to_write, context=context)
 
             if postype == "hard":
                 if absl.imported_invoice_line_ids:
@@ -2503,9 +2604,12 @@ class account_bank_statement_line(osv.osv):
                     self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, absl.id, absl.down_payment_id.id, context=context)
                     self.create_down_payment_link(cr, uid, absl, context=context)
 
-                seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
+
+
+                to_write['sequence_for_reference'] = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 # Optimization on write() for this field
-                self.write(cr, uid, [absl.id], {'sequence_for_reference': seq,}, context=context)
+
+                self.write(cr, uid, [absl.id], to_write, context=context)
                 # Case where this line come from an "Pending Payments" Wizard
                 if absl.imported_invoice_line_ids:
                     self.do_import_invoices_reconciliation(cr, uid, absl, context=context)
@@ -2544,7 +2648,31 @@ class account_bank_statement_line(osv.osv):
                     direct_hard_post = True  # UF-2316
                 else:
                     direct_hard_post = False
+
+                if absl.counterpart_transfer_st_line_id and \
+                        absl.counterpart_transfer_st_line_id.state == 'hard':
+
+                    to_rec_ids = self.pool.get('account.move.line').search(cr, uid, [('counterpart_transfer_st_line_id', 'in', [absl.id, absl.counterpart_transfer_st_line_id.id])])
+                    if absl.counterpart_transfer_st_line_id.account_id.id == absl.account_id.id and \
+                            absl.counterpart_transfer_st_line_id.journal_id.id == absl.transfer_journal_id.id and \
+                            absl.counterpart_transfer_st_line_id.transfer_journal_id.id == absl.journal_id.id and \
+                            absl.account_id.type_for_register in ('transfer_same', 'transfer'):
+                        if len(to_rec_ids) < 2:
+                            raise osv.except_osv(_('Error'), _('An auto booked transfer JI is missing, cannot reconcile the entries.'))
+                        if absl.account_id.type_for_register == 'transfer_same' and \
+                                abs(absl.amount + absl.counterpart_transfer_st_line_id.amount) < 0.001:
+                            self.pool.get('account.move.line').reconcile_partial(cr, uid, to_rec_ids, type='manual')
+                        elif absl.account_id.type_for_register == 'transfer' and absl.amount * absl.counterpart_transfer_st_line_id.amount < 0:
+                            self.pool.get('account.move.line').reconcile(cr, uid, to_rec_ids, type='manual')
+
+                    if to_rec_ids:
+                        self.pool.get('account.move.line').write(cr, uid, to_rec_ids, {'has_a_counterpart_transfer': False}, context=context)
+
                 self._set_register_line_audittrail_post_hard_state_log(cr, uid, absl, direct_hard_post, context=context)
+
+        if force:
+            return {'type': 'ir.actions.act_window_close', 'o2m_refresh': 'line_ids'}
+
         return True
 
     def _set_register_line_audittrail_post_hard_state_log(self, cr, uid, absl, direct_hard_post, context=None):
@@ -2723,6 +2851,14 @@ class account_bank_statement_line(osv.osv):
                     'instance_id': st_line.instance_id.id,
                 }
                 self.pool.get('account.bank.statement.line.deleted').create(cr, uid, vals, context=context)
+        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
+        cp_move_ids = self.pool.get('account.move.line').search(cr, root_uid, [('counterpart_transfer_st_line_id', 'in', ids)])
+        if cp_move_ids:
+            self.pool.get('account.move.line').write(cr, root_uid, cp_move_ids, {'has_a_counterpart_transfer': False}, context=context)
+        cp_st_l_ids = self.search(cr, root_uid, [('counterpart_transfer_st_line_id', 'in', ids)])
+        if cp_st_l_ids:
+            self.write(cr, root_uid, cp_st_l_ids, {'has_a_counterpart_transfer': False}, context=context)
+
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
     def button_advance(self, cr, uid, ids, context=None):
@@ -3118,6 +3254,196 @@ class account_bank_statement_line(osv.osv):
                     transfer_journal_id=transfer_journal_id, partner_id=partner_id, from_vals=True, raise_it=True,
                     context=context)
 
+    def open_counterpart_transfer_line(self, cr, uid, ids, context=None):
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        search_view_id = data_obj.get_object_reference(cr, uid, 'register_accounting', 'account_bank_statement_line_empty_filter')[1]
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.bank.statement.line',
+            'view_type': 'form',
+            'view_mode': 'tree',
+            'view_id': [view_id[1]],
+            'search_view_id': search_view_id,
+            'domain': [('counterpart_transfer_st_line_id', 'in', ids)],
+            'context': context,
+            'target': 'new',
+        }
+
+    def _create_wizard_error_line(self, cr, uid, _object, wiz_id, context=None):
+        for x in cr.fetchall():
+            data = {
+                'wizard_id': wiz_id,
+                'register_line_id': x[0],
+                'sequence_for_reference': x[1],
+                'name': x[2],
+                'ref':  x[3],
+                'account_id': x[4],
+                'amount_in': x[5] if x[5] > 0 else 0,
+                'amount_out': abs(x[5]) if x[5] < 0 else 0,
+                'third': x[6],
+                'action': False,
+            }
+
+            if _object != 'wizard.temp.posting.line':
+                data.update({
+                    'other_ref': x[7],
+                    'other_in': x[8] if x[8] > 0 else 0,
+                    'other_out': abs(x[8]) if x[8] < 0 else 0,
+                    'other_account_id': x[9],
+                    'other_third_id': x[10],
+                })
+                if x[11] == 'transfer' and x[8] * x[5] >= 0:
+                    _object = 'wizard.ignore.posting.line'
+                else:
+                    _object = 'wizard.hard.posting.line'
+
+            self.pool.get(_object).create(cr, uid, data, context=context)
+
+    def open_mass_temp_post(self, cr, uid, ids, all_lines=False, posttype='temp', context=None):
+        if context is None:
+            context = {}
+        data = {'posttype': posttype}
+        local_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+        wizard_reg_info = ''
+        if all_lines:
+            st_info = self.browse(cr, uid, ids[0], fields_to_fetch=['statement_id'], context=context)
+            data['register_id'] = st_info.statement_id.id
+            wizard_reg_info = ' %s %s' % (st_info.statement_id.journal_id.code, st_info.statement_id.period_id.name)
+            data['all_lines'] = True
+
+            wiz_id = self.pool.get('wizard.temp.posting').create(cr, uid, data, context=context)
+            cr.execute('''
+                select
+                    absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.id
+                from account_bank_statement_line absl
+                    left join account_bank_statement register on register.id = absl.statement_id
+                    left join account_journal j on j.id = register.journal_id
+                    left join account_journal other_j on other_j.id = absl.transfer_journal_id
+                    left join account_bank_statement other on other.journal_id = other_j.id and other.period_id = register.period_id
+                    left join account_bank_statement_line_move_rel rel on rel.move_id = absl.id
+                where
+                     rel.statement_id is null -- draft sate
+                     and (other.id is null or other.state != 'open') -- other register does not exist or is not open or not on the same period
+                     and other_j.instance_id = %(instance_id)s -- same local instance
+                     and j.instance_id = %(instance_id)s -- same local instance
+                     and absl.statement_id = %(register_id)s
+            ''', {'instance_id': local_instance_id, 'register_id': data['register_id']})
+        else:
+            ids = context.get('active_ids')
+            data['all_lines'] = False
+            data['regiter_line_ids'] = [(6, 0, ids)]
+            wiz_id = self.pool.get('wizard.temp.posting').create(cr, uid, data, context=context)
+            if ids:
+                cr.execute('''
+                    select
+                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.id
+                    from account_bank_statement_line absl
+                        left join account_bank_statement register on register.id = absl.statement_id
+                        left join account_journal j on j.id = register.journal_id
+                        left join account_journal other_j on other_j.id = absl.transfer_journal_id
+                        left join account_bank_statement other on other.journal_id = other_j.id and other.period_id = register.period_id
+                        left join account_bank_statement_line_move_rel rel on rel.move_id = absl.id
+                    where
+                         rel.statement_id is null -- draft sate
+                         and (other.id is null or other.state != 'open') -- other register does not exist or is not open or not on the same period
+                         and other_j.instance_id = %(instance_id)s -- same local instance
+                         and j.instance_id = %(instance_id)s -- same local instance
+                         and absl.id in %(id)s
+                ''', {'instance_id': local_instance_id, 'id': tuple(ids)})
+
+
+        has_no_register = bool(cr.rowcount)
+        self._create_wizard_error_line(cr, uid, 'wizard.temp.posting.line', wiz_id, context=context)
+
+        wizard_title = '%s%s' % (_('Temp Posting - Wizard'), wizard_reg_info)
+        has_amount_error = False
+        has_ignore = False
+        if posttype == 'hard':
+            wizard_title = '%s%s' % (_('Hard Posting - Wizard'), wizard_reg_info)
+            if all_lines:
+                cr.execute('''
+                    select
+                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.id, other_line.sequence_for_reference, other_line.amount, other_line.account_id, other_line.transfer_journal_id, account.type_for_register
+                    from account_bank_statement_line absl
+                        left join account_bank_statement register on register.id = absl.statement_id
+                        left join account_account account on account.id = absl.account_id
+                        left join account_journal other_j on other_j.id = absl.transfer_journal_id
+                        left join account_bank_statement_line other_line on other_line.id = absl.counterpart_transfer_st_line_id
+                        left join account_bank_statement_line_move_rel other_rel on other_rel.move_id = other_line.id
+                        left join account_move other_move on other_move.id = other_rel.statement_id
+                        left join account_bank_statement_line_move_rel rel on rel.move_id = absl.id
+                        left join account_move move on move.id = rel.statement_id
+                    where
+                         other_move.state = 'posted' -- counterpart is posted
+                         and coalesce(move.state, '') != 'posted' -- reg line is not posted
+                         and absl.statement_id = %(register_id)s
+                         and ( abs(absl.amount + other_line.amount) > 0.001
+                                 and account.type_for_register = 'transfer_same'
+                               or
+                                    account.type_for_register = 'transfer'
+                                 and absl.amount * other_line.amount >= 0
+                               or
+                                 absl.account_id != other_line.account_id
+                               or
+                                 absl.transfer_journal_id != other_move.journal_id
+                               or
+                                 move.journal_id != other_line.transfer_journal_id
+                               or
+                                 account.type_for_register not in ('transfer_same', 'transfer')
+                        )
+                ''', {'register_id': data['register_id']})
+            else:
+                cr.execute('''
+                    select
+                        absl.id, absl.sequence_for_reference, absl.name, absl.ref, absl.account_id, absl.amount, other_j.id, other_line.sequence_for_reference, other_line.amount, other_line.account_id, other_line.transfer_journal_id, account.type_for_register
+                    from account_bank_statement_line absl
+                        left join account_account account on account.id = absl.account_id
+                        left join account_journal other_j on other_j.id = absl.transfer_journal_id
+                        left join account_bank_statement_line other_line on other_line.id = absl.counterpart_transfer_st_line_id
+                        left join account_bank_statement_line_move_rel other_rel on other_rel.move_id = other_line.id
+                        left join account_move other_move on other_move.id = other_rel.statement_id
+                        left join account_bank_statement_line_move_rel rel on rel.move_id = absl.id
+                        left join account_move move on move.id = rel.statement_id
+                    where
+                         other_move.state = 'posted' -- counterpart is posted
+                         and coalesce(move.state, '') != 'posted' -- reg line is not posted
+                         and absl.id in %(ids)s
+                         and ( abs(absl.amount + other_line.amount) > 0.001
+                                 and account.type_for_register = 'transfer_same'
+                               or
+                                    account.type_for_register = 'transfer'
+                                 and absl.amount * other_line.amount >= 0
+                               or
+                                 absl.account_id != other_line.account_id
+                               or
+                                 absl.transfer_journal_id != other_move.journal_id
+                               or
+                                 move.journal_id != other_line.transfer_journal_id
+                               or
+                                 account.type_for_register not in ('transfer_same', 'transfer')
+                        )
+                ''', {'ids': tuple(ids)})
+
+            self._create_wizard_error_line(cr, uid, 'wizard.hard.posting.line', wiz_id, context=context)
+            has_amount_error = self.pool.get('wizard.hard.posting.line').search_exists(cr, uid, [('wizard_id', '=', wiz_id)], context=context)
+            has_ignore = self.pool.get('wizard.ignore.posting.line').search_exists(cr, uid, [('wizard_id', '=', wiz_id)], context=context)
+
+        self.pool.get('wizard.temp.posting').write(cr, uid, wiz_id, {'has_no_register': has_no_register,'has_amount_error': has_amount_error, 'has_ignore': has_ignore}, context=context)
+
+
+
+        return {
+            'name': wizard_title,
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.temp.posting',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': wiz_id,
+            'context': context,
+            'target': 'new',
+        }
+
 account_bank_statement_line()
 
 class ir_values(osv.osv):
@@ -3134,11 +3460,11 @@ class ir_values(osv.osv):
                 display = True
                 if context.get('type_posting', '') == 'hard':
                     # hide Temp Posting options from the Hard Posting page
-                    if v[1] in ('act_wizard_temp_posting', 'act_wizard_temp_post_all'):
+                    if v[1] in ('act_wizard_temp_post_selection', 'act_wizard_temp_post_all'):
                         display = False
                 elif context.get('type_posting', '') == 'temp':
                     # hide Hard Posting options from the Temp Posting page
-                    if v[1] in ('act_wizard_hard_posting', 'act_wizard_hard_post_all'):
+                    if v[1] in ('act_wizard_hard_post_selection', 'act_wizard_hard_post_all'):
                         display = False
                 elif not context.get('type_posting') and not context.get('from_regline_view'):
                     # hide the Hard Post ALL / Temp Post ALL options everywhere else,

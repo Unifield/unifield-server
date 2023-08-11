@@ -338,7 +338,7 @@ class wizard_import_po_line(osv.osv_memory):
                                 # update POL :
                                 purchase_line_obj.write(cr, uid, rfq_line_ids, to_write, context=context)
 
-                        else: # its not RfQ
+                        else:  # it's not RfQ
                             purchase_line_obj.create(cr, uid, to_write, context=context)
 
 
@@ -398,9 +398,8 @@ class wizard_import_po_line(osv.osv_memory):
                         cr.execute("RELEASE SAVEPOINT line_save")
 
                 if not blocker_msg:
-                    categ_log = purchase_obj.onchange_categ(
-                        cr, uid, [wiz.po_id.id], wiz.po_id.categ, wiz.po_id.warehouse_id.id, wiz.po_id.cross_docking_ok,
-                        wiz.po_id.location_id.id, context=context).get('warning', {}).get('message', '').upper()
+                    categ_log = purchase_obj.onchange_categ(cr, uid, [wiz.po_id.id], wiz.po_id.categ,
+                                                            context=context).get('warning', {}).get('message', '').upper()
                     categ_log = categ_log.replace('THIS', 'THE')
 
         wizard_vals = {'percent_completed': 100}
