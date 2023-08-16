@@ -8,7 +8,7 @@
     <script type="text/javascript" src="/openerp/static/javascript/openerp/openerp.ui.textarea.js"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/scripts.js"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/form.js?v=25.0"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/form.js?v=30.0rc2"></script>
     <script type="text/javascript" src="/openerp/static/javascript/form_state.js?v=16.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=30.0rc1"></script>
 

@@ -13,6 +13,15 @@
             })
         }
         function disable_save() {
+            email = document.getElementById('email');
+            if (!email.checkValidity()) {
+                jQuery(email).addClass('errorfield');
+                alert(_('Invalid Email address'));
+                return false;
+            } else {
+                jQuery(email).removeClass('errorfield');
+            }
+
             var pass = $("#show_password").val()
             $("#password").val(pass);
             $("#show_password").val(false);
@@ -86,7 +95,7 @@
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="email">${_("Email address:")}</label></td>
-                                    <td style="padding: 3px;"><input type="input" id="email" name="email" class="db_user_pass" autocomplete="off" value="${email}">
+                                    <td style="padding: 3px;"><input type="email" id="email" name="email" class="db_user_pass" autocomplete="off" value="${email}">
                                     </td>
 
                                 </tr>
