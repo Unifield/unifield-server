@@ -220,7 +220,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
                 self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': min(0.20 + (0.8 * offset/float(len_p_ids)), 1)})
 
 
-        sheet.auto_filter.ref = "A5:G5"
+        sheet.auto_filter.ref = "A6:G6"
 
 
 XlsxReport('report.report.hq_product_mml_nonconform', parser=hq_product_mml_nonconform, template='addons/product_attributes/report/hq_product_mml_nonconform.xlsx')
