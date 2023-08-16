@@ -160,6 +160,7 @@ class hr_employee(osv.osv):
         'resource_id': fields.many2one('resource.resource', 'Resource', ondelete='cascade', required=True, select=True),
         'coach_id': fields.many2one('hr.employee', 'Coach'),
         'job_id': fields.many2one('hr.job', 'Job', select=True),
+        'job_name': fields.text('Job'),
         'photo': fields.binary('Photo'),
         'passport_id': fields.char('Passport No', size=64),
         'contract_start_date': fields.date('Contract Start Date'),
