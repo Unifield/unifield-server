@@ -151,7 +151,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
                 from product_product p
                 inner join product_template tmpl on tmpl.id = p.product_tmpl_id
                 inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-                inner join stock_mission_report_line smrl on p.id = smrl.product_id and (smrl.in_pipe_qty > 0 or smrl.internal_qty > 0)
+                inner join stock_mission_report_line smrl on p.id = smrl.product_id and (''' + extra_join_cond + ''' smrl.internal_qty > 0)
                 inner join stock_mission_report smr on smr.id=smrl.mission_report_id and smr.full_view = 'f'
                 inner join product_international_status creator on creator.id = p.international_status
                 inner join msf_instance instance on instance.id = smr.instance_id
@@ -171,7 +171,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
                 from product_product p
                 inner join product_template tmpl on tmpl.id = p.product_tmpl_id
                 inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-                inner join stock_mission_report_line smrl on p.id = smrl.product_id and (smrl.in_pipe_qty > 0 or smrl.internal_qty > 0)
+                inner join stock_mission_report_line smrl on p.id = smrl.product_id and (''' + extra_join_cond + ''' smrl.internal_qty > 0)
                 inner join stock_mission_report smr on smr.id=smrl.mission_report_id and smr.full_view = 'f'
                 inner join product_international_status creator on creator.id = p.international_status
                 inner join msf_instance instance on instance.id = smr.instance_id
