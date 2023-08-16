@@ -62,7 +62,7 @@
                             </group>
                             <group col="2" colspan="2">
                                 <separator string="Position" colspan="2"/>
-                                <field name="job_id" domain="[('state','!=','old')]"/>
+                                <field name="job_name"/>
                                 <field name="coach_id" />
                             </group>
                         </page>
@@ -89,7 +89,6 @@
                     <field name="work_email"/>
                     <field name="company_id" groups="base.group_multi_company"/>
                     <field name="department_id"/>
-                    <field name="job_id"/>
                     <field name="job_name"/>
                     <field name="coach_id" invisible="1" />
                 </tree>
@@ -111,7 +110,7 @@
                     <separator orientation="vertical" />
                     <field name="name"/>
                     <field name="identification_id"/>
-                    <field name="job_id"/>
+                    <field name="job_name"/>
                     <newline/>
                     <group>
                         <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
@@ -121,7 +120,7 @@
                     <newline />
                     <group expand="0" string="Group By...">
                     <separator orientation="vertical" />
-                    <filter string="Job" icon="terp-gtk-select-all" domain="[]" context="{'group_by':'job_id'}"/>
+                    <filter string="Job" icon="terp-gtk-select-all" domain="[]" context="{'group_by':'job_name'}"/>
                     </group>
                 </search>
              </field>
