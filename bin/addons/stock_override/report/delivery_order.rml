@@ -194,7 +194,7 @@
 
 
         <section>
-        <blockTable colWidths="19.0,85.0,100.0,50.0,51.0,40.0,30.0,50.0,70.0,55.0,65.0,65.0,40.0,20,20" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="19.0,85.0,100.0,50.0,51.0,40.0,30.0,50.0,70.0,55.0,65.0,65.0,40.0,20.0,20.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -292,7 +292,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="240.0,115.0,80.0,320.0" style="TotalInfo">
+        <blockTable colWidths="204.0,101.0,70.0,385.0" style="TotalInfo">
             <tr>
                 <td>
                     <para> </para>
