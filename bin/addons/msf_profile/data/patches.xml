@@ -976,6 +976,10 @@
             <field name="method">us_11181_update_supply_signature_follow_up</field>
         </record>
 
+        <record id="us_11571_new_job_text_field_employee" model="patch.scripts">
+            <field name="method">us_11571_new_job_text_field_employee</field>
+        </record>
+
 
     </data>
 </openerp>
