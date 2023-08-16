@@ -274,6 +274,23 @@ function validate_required(form){
             }
     }
 
+    email_error = false;
+    jQuery('#view_form').find('input[kind=email]').each(function () {
+        if (!this.checkValidity()) {
+            jQuery(this).addClass('errorfield');
+            if (!email_error) {
+                email_error = _('Invalid Email address')
+                if (err_msg) {
+                    err_msg = err_msg + '\n' + email_error;
+                } else {
+                    err_msg = email_error;
+                }
+            }
+            result = false;
+        } else {
+            jQuery(this).removeClass('errorfield');
+        }
+    });
     if (!result) {
         if (err_msg && err_msg != 'False') {
             error_display(err_msg);

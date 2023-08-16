@@ -18,8 +18,11 @@
             jQuery("span[class=fielderror]").remove();
             jQuery('#view_form').find('input[kind=email]').each(function () {
                 if (!this.checkValidity()) {
+                    jQuery(this).addClass('errorfield');
                     jQuery("<span class='fielderror'>${_('Invalid Email address')}</span>").insertAfter(jQuery(this));
                     ok = false;
+                } else {
+                    jQuery(this).removeClass('errorfield');
                 }
             });
             if (ok) {

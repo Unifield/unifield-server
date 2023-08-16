@@ -15,9 +15,13 @@
         function disable_save() {
             email = document.getElementById('email');
             if (!email.checkValidity()) {
+                jQuery(email).addClass('errorfield');
                 alert(_('Invalid Email address'));
                 return false;
+            } else {
+                jQuery(email).removeClass('errorfield');
             }
+
             var pass = $("#show_password").val()
             $("#password").val(pass);
             $("#show_password").val(false);
