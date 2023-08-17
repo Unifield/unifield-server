@@ -174,7 +174,7 @@ def secured(fn):
                 kw.pop(k, None)
         if not keep_email:
             kw.pop('email', None)
-        for k in kw.keys():
+        for k in list(kw.keys()):
             if k.startswith('login_'):
                 del kw[k]
 
