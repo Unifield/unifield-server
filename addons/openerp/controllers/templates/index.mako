@@ -313,7 +313,7 @@
         <div id="survey">
                 <div id="survey_title">${_('Please fill your email address')}</div>
                  <div class="row">
-                  <div class="column" style="width: 50%">Email: <input type="text" id="email" /></div>
+                  <div class="column" style="width: 50%">Email: <input type="email" id="email" /></div>
                   <div class="column"><div class="survey_button" onclick="click_email_answer('goto')">${_('Save email')}</div></div>
                 </div>
                  <div class="row">
@@ -335,7 +335,12 @@
             });
             function click_email_answer(answer) {
                 if (answer=='goto') {
-                    jQuery.post('/openerp/pref/save_email', {'email': jQuery('#email').val()});
+                    email_field = jQuery('#email')
+                    if (!email_field[0].checkValidity()) {
+                        alert(_('Invalid Email address'));
+                        return false;
+                    }
+                    jQuery.post('/openerp/pref/save_email', {'email': email_field.val()});
                 } else if (answer=='later') {
                     jQuery.post('/openerp/pref/email_update_nb');
                 } else if (answer=='never') {

@@ -134,3 +134,7 @@ msgstr "Voir "
 #: addons/openerp/controllers/templates/downloadbg.mako
 msgid "Report can not be stopped :"
 msgstr "Impossible d'arrêter le rapport :"
+
+msgid "Invalid Email address"
+msgstr "Adresse email invalide"
+
