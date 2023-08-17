@@ -84,7 +84,7 @@ class signature_follow_up(osv.osv):
     def open_doc(self, cr, uid, ids, context=None):
         if not ids:
             return True
-        doc = self.browse(cr, uid, ids[0], fields_to_fetch=['doc_type', 'doc_id'], context=context)
+        doc = self.browse(cr, uid, ids[0], fields_to_fetch=['doc_type', 'doc_id', 'doc_name'], context=context)
         action_xml_id = {
             'purchase.order': 'purchase.purchase_form_action',
             'sale.order.fo': 'sale.action_order_form',
@@ -102,11 +102,14 @@ class signature_follow_up(osv.osv):
         else:
             res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, action_xml_id[doc.doc_type], ['form', 'tree'],context=context)
 
-        res['res_id'] = doc.doc_id
-        res['target'] = 'current'
-        res['keep_open'] = True
+        res.update({
+            'name': doc.doc_name,
+            'res_id': doc.doc_id,
+            'target': 'current',
+            'keep_open': True,
+            'domain': [('id', '=', doc.doc_id)]
+        })
         return res
 
+
 signature_follow_up()
-
-
