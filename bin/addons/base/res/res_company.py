@@ -23,8 +23,11 @@ from osv import osv
 from osv import fields
 import os
 import tools
+import base64
 from tools.translate import _
 from tools.safe_eval import safe_eval as eval
+from os.path import join as opj
+
 
 class multi_company_default(osv.osv):
     """
@@ -65,6 +68,7 @@ class multi_company_default(osv.osv):
         default = default.copy()
         default['name'] = company.name + _(' (copy)')
         return super(multi_company_default, self).copy(cr, uid, id, default, context=context)
+
 
 multi_company_default()
 
@@ -186,9 +190,7 @@ class res_company(osv.osv):
             return False
 
     def _get_logo(self, cr, uid, ids):
-        return open(os.path.join(
-            tools.config['root_path'], '..', 'pixmaps', 'openerp-header.png'),
-            'rb') .read().encode('base64')
+        return base64.b64encode(tools.file_open(opj('msf_profile', 'data', 'msf.jpg'), 'rb').read())
 
     def _get_header3(self,cr,uid,ids):
         return """
@@ -207,6 +209,7 @@ class res_company(osv.osv):
     </pageGraphics>
     </pageTemplate>
 </header>"""
+
     def _get_header2(self,cr,uid,ids):
         return """
         <header>
@@ -224,6 +227,7 @@ class res_company(osv.osv):
         </pageGraphics>
         </pageTemplate>
 </header>"""
+
     def _get_header(self,cr,uid,ids):
         try :
             header_file = tools.file_open(os.path.join('base', 'report', 'corporate_rml_header.rml'))
@@ -266,19 +270,19 @@ class res_company(osv.osv):
         </pageGraphics>
     </pageTemplate>
 </header>"""
+
     _defaults = {
         'currency_id': _get_euro,
-        'rml_header':_get_header,
+        'rml_header': _get_header,
         'rml_header2': _get_header2,
         'rml_header3': _get_header3,
-        #'logo':_get_logo
+        'logo': _get_logo,
     }
 
     _constraints = [
         (osv.osv._check_recursion, 'Error! You can not create recursive companies.', ['parent_id'])
     ]
 
+
 res_company()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

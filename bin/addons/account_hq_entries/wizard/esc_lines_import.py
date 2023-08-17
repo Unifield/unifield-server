@@ -285,7 +285,10 @@ class esc_line_import_wizard(osv.osv):
 
                 mapping = ''
                 if len(row.cells) > 7 and row.cells[7].data:
-                    mapping = row.cells[7].data.strip()
+                    if row.cells[7].type == 'str':
+                        mapping = row.cells[7].data.strip()
+                    else:
+                        mapping = '%s' % row.cells[7].data
 
                 cr.execute("SAVEPOINT esc_line")
                 try:
