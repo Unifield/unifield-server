@@ -46,7 +46,7 @@ def get_date(self, cr, document_date, posting_date, source_date=None):
     """
     if source_date:
         currency_date = source_date
-    elif posting_date < BEGINNING:  # returns True if the posting date is False
+    elif not posting_date or posting_date < BEGINNING:  # returns True if the posting date is False
         currency_date = posting_date
     else:
         currency_date = get_date_type(self, cr) == 'posting' and posting_date or document_date  # can return an empty doc date
