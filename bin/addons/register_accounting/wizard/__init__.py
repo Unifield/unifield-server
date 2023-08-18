@@ -16,7 +16,6 @@ import wizard_register_import
 import wizard_liquidity_position
 import register_opening
 import modify_responsible
-import auto_book_transfer_error
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

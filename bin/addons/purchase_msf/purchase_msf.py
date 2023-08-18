@@ -67,15 +67,13 @@ class purchase_order_line(osv.osv):
             for f in field_name:
                 result[i].update({f:False,})
 
-        line_result = self.read(cr, uid, ids, ['product_id', 'order_id'],
-                                context=context)
+        line_result = self.read(cr, uid, ids, ['product_id', 'order_id'], context=context)
         product_list = [x['product_id'][0] for x in line_result if x['product_id']]
         product_dict = dict((x['id'], x) for x in prod_obj.read(cr, uid, product_list,
                                                                 ['default_code', 'name', 'seller_ids'], context=context))
 
         order_ids = set([line['order_id'][0] for line in line_result])
-        results_order = order_obj.read(cr, uid, list(order_ids), ['id', 'partner_id'],
-                                       context=context)
+        results_order = order_obj.read(cr, uid, list(order_ids), ['id', 'partner_id'], context=context)
         order_id_to_partnerid = {}
         for result_order in results_order:
             if result_order['partner_id']:
@@ -109,10 +107,15 @@ class purchase_order_line(osv.osv):
                     order_id = line['order_id'][0]
                     partner_id = order_id_to_partnerid[order_id]
 
-                    sellers = [x for x in prod['seller_ids'] if
-                               supplierinfos_by_id[x]['name'][0] == partner_id]
+                    sellers = [x for x in prod['seller_ids'] if supplierinfos_by_id[x]['name'][0] == partner_id]
                     if sellers:
-                        seller_id = sellers[0]
+                        cr.execute('''
+                            SELECT i.id FROM product_supplierinfo i 
+                            LEFT JOIN pricelist_partnerinfo p ON p.suppinfo_id = i.id 
+                            WHERE i.id in %s 
+                            ORDER BY COALESCE(p.valid_from, '1970-01-01') DESC LIMIT 1
+                        ''', (tuple(sellers),))  # Search for the most recent Supplier
+                        seller_id = cr.fetchone()[0]
                         supplierinfo = supplierinfos_by_id[seller_id]
                         supplier_code = supplierinfo['product_code']
                         supplier_name = supplierinfo['product_name']

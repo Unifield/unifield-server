@@ -9,6 +9,7 @@ import tools
 from tools.translate import _
 import time
 import base64
+import os
 import re
 from psycopg2 import IntegrityError
 
@@ -47,6 +48,7 @@ class esc_line_import_wizard(osv.osv):
 
     _defaults = {
         'state': 'draft',
+        'start_date': lambda *x: fields.datetime.now()
     }
 
     def __init__(self, pool, cr):
@@ -126,7 +128,7 @@ class esc_line_import_wizard(osv.osv):
         if not self.browse(cr, uid, ids[0], context=context).file:
             raise osv.except_osv(_('Warning'), _('No file to import'))
 
-        threading.Thread(target=self.load_bg, args=(cr.dbname, uid, ids[0], context)).start()
+        threading.Thread(target=self.load_bg, args=(cr.dbname, uid, ids[0], False, context)).start()
         self.write(cr, uid, ids[0], {'state': 'inprogress', 'progress': 0}, context=context)
 
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'esc_line_import_progress_wizard')[1]
@@ -142,8 +144,21 @@ class esc_line_import_wizard(osv.osv):
             'context': context,
         }
 
+    def auto_import(self, cr, uid, file_to_import, context=None):
 
-    def load_bg(self, dbname, uid, wiz_id, context=None):
+        import_id = self.create(cr, uid, {
+            'file': base64.encodestring(open(file_to_import, 'r').read()),
+            'filename': os.path.split(file_to_import)[1],
+            'state': 'inprogress',
+        })
+        cr.commit()
+        self.load_bg(cr.dbname, uid, import_id, auto_import=True, context=context)
+        curr_state = self.browse(cr, uid, import_id, fields_to_fetch=['state'], context=context).state
+        self.write(cr, uid, import_id, {'state': 'ack'}, context=context)
+        return import_id, curr_state
+
+
+    def load_bg(self, dbname, uid, wiz_id, auto_import=False, context=None):
         def manage_error(line_index, msg, row):
             errors.append(_('Line %s, %s') % (line_index, _(msg)))
             line_data = []
@@ -162,6 +177,7 @@ class esc_line_import_wizard(osv.osv):
 
         created_ids = {}
         consignee_instances = {}
+
         try:
             cr = pooler.get_db(dbname).cursor()
             cr2 = pooler.get_db(dbname).cursor()
@@ -270,7 +286,10 @@ class esc_line_import_wizard(osv.osv):
 
                 mapping = ''
                 if len(row.cells) > 7 and row.cells[7].data:
-                    mapping = row.cells[7].data.strip()
+                    if row.cells[7].type == 'str':
+                        mapping = row.cells[7].data.strip()
+                    else:
+                        mapping = '%s' % row.cells[7].data
 
                 cr.execute("SAVEPOINT esc_line")
                 try:

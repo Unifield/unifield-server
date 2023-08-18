@@ -52,7 +52,9 @@
         </blockTableStyle>
         <blockTableStyle id="LinesTable">
             <blockAlignment value="LEFT" />
-            <blockVAlign value="MIDDLE" />
+            <blockValign value="MIDDLE" />
+            <blockLeftPadding length="1" />
+            <blockRightPadding length="1" />
             <lineStyle kind="LINEBEFORE" colorName="black" start="0,0" stop="0,0" thickness="0.5" />
             <lineStyle kind="LINEAFTER" colorName="black" start="-1,0" stop="-1,0" thickness="0.5" />
         </blockTableStyle>
@@ -89,7 +91,8 @@
         <paraStyle name="TextNotes" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
-        <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LinesBlue" textColor="#0000FF" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LinesRed" textColor="#610000" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
     </stylesheet>
 
     <story>
@@ -633,7 +636,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="65.0,95.0,295.5,95.0,55.5,60.0,51.0,55.0" style="LinesTable">
+        <blockTable colWidths="60.5,93.5,280.5,88,53.5,57.0,50.0,55.0,17,17" style="LinesTable">
             <tr>
                 <td>
                     <para style="Lines"><i>Supplier Code</i></para>
@@ -659,36 +662,48 @@
                 <td>
                     <para style="Lines"><i>Total Price</i></para>
                 </td>
+                <td>
+                    <para style="Lines"><i>MML</i></para>
+                </td>
+                <td>
+                    <para style="Lines"><i>MSL</i></para>
+                </td>
             </tr>
         </blockTable>
 
         <section>
-            <blockTable colWidths="65.0,95.0,295.5,95.0,55.5,60.0,51.0,55.0" style="LinesTable">
+            <blockTable colWidths="60.5,93.5,280.5,88,53.5,57.0,50.0,55.0,17,17" style="LinesTable">
                 [[repeatIn(get_merged_lines(objects[0]),'line')]]
                 <tr>
                     <td>
-                    	<para style="LinesBlue">[[ line['supplier_code'] ]]</para>
+                    	<para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}">[[ line['supplier_code'] ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line['default_code'] ]]</para>
+                        <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}">[[ line['default_code'] ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line['name'] ]]</para>
+                        <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}">[[ line['name'] ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue">[[ line['comment'] ]]</para>
+                        <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}">[[ line['comment'] ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ line['quantity'] and formatFloatDigitsToUom(line['quantity'], line['product_uom_rounding']) or '0.00' ]]</para>
+                        <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="RIGHT">[[ line['quantity'] and formatFloatDigitsToUom(line['quantity'], line['product_uom_rounding']) or '0.00' ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="CENTER">[[ line['product_uom'] ]]</para>
+                        <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="CENTER">[[ line['product_uom'] ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ round(line['price_unit'], 4) or '0.00' ]]</para>
+                        <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="RIGHT">[[ round(line['price_unit'], 4) or '0.00' ]]</para>
                     </td>
                     <td>
-                         <para style="LinesBlue" alignment="RIGHT">[[ line['price_subtotal'] or '0.00' ]]</para>
+                         <para rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="RIGHT">[[ line['price_subtotal'] or '0.00' ]]</para>
+                    </td>
+                    <td>
+                        <parawrap rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="CENTER">[[ line['mml_status'] ]]</parawrap>
+                    </td>
+                    <td>
+                        <parawrap rml_tag="'para', {'style': line['red'] and 'LinesRed' or 'LinesBlue'}" alignment="CENTER">[[ line['msl_status'] ]]</parawrap>
                     </td>
                 </tr>
             </blockTable>

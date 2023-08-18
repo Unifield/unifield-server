@@ -898,6 +898,10 @@
             <field name="method">us_8417_upd_srv_loc</field>
         </record>
 
+        <record id="us_11090_replace_DC4_by_space" model="patch.scripts">
+            <field name="method">us_11090_replace_DC4_by_space</field>
+        </record>
+
         <record id="us_11195_oca_period_nr" model="patch.scripts">
             <field name="method">us_11195_oca_period_nr</field>
         </record>
@@ -960,6 +964,20 @@
             <field name="method">us_11679_set_iil_oca</field>
         </record>
 
+        <record id="us_10783_11563_po_reception_destination" model="patch.scripts">
+            <field name="method">us_10783_11563_po_reception_destination</field>
+        </record>
 
+        <record id="us_1074_create_unifield_instance" model="patch.scripts">
+            <field name="method">us_1074_create_unifield_instance</field>
+        </record>
+
+        <record id="us_11181_update_supply_signature_follow_up" model="patch.scripts">
+            <field name="method">us_11181_update_supply_signature_follow_up</field>
+        </record>
+
+        <record id="us_11810_fix_company_logo" model="patch.scripts">
+            <field name="method">us_11810_fix_company_logo</field>
+        </record>
     </data>
 </openerp>

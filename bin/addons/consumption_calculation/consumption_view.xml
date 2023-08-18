@@ -78,6 +78,8 @@
                             <field name="product_subtype" invisible="1" />
                             <field name="rac_state" invisible="1" />
                             <field name="inactive_error" readonly="1" />
+                            <field name="mml_status" />
+                            <field name="msl_status" />
                         </tree>
                     </field>
                     <field name="created_ok" invisible="1" />

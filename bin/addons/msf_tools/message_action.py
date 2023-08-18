@@ -17,12 +17,14 @@ class message_action(osv.osv_memory):
         'title': fields.char('Title', size=256),
         'yes_label': fields.char('Yes Label', size=256),
         'no_label': fields.char('No Label', size=256),
+        'refresh_o2m': fields.char('refresh on yes close', size=256),
     }
 
     _defaults = {
         'yes_label': _('Yes'),
         'no_label': _('No'),
         'message': ' ',
+        'refresh_o2m': False
     }
     def pop_up(self, cr, uid, ids, context=None):
         if context is None:
@@ -40,12 +42,17 @@ class message_action(osv.osv_memory):
             'context': context,
             'height': '200px',
             'width': '720px',
+            'keep_open': True,
         }
 
 
     def do_yes(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
-        return wiz.yes_action(cr, uid, context)
+        action_return = wiz.yes_action(cr, uid, context)
+        if wiz.refresh_o2m:
+            return {'type': 'ir.actions.act_window_close', 'o2m_refresh': wiz.refresh_o2m}
+
+        return action_return
 
     def do_no(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)

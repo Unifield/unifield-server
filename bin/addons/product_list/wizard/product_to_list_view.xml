@@ -39,7 +39,7 @@
         </record>
         
         <act_window
-            name="Import to list"
+            name="Import to Product List"
             res_model="product.to.list"
             src_model="product.product"
             view_mode="form"
@@ -47,7 +47,8 @@
             view_id="product_to_list_form_view"
             target="new"
             key2="client_action_multi"
-            id="action_open_wizard_product_import_list" />
+            id="action_open_wizard_product_import_list"
+            view_ids="product.product_product_tree_view,product.product_normal_form_view" />
     
     </data>
 </openerp>

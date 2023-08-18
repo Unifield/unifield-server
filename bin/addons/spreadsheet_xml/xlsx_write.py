@@ -49,7 +49,9 @@ class XlsxReport(report_int):
         else:
             wb = openpyxl.Workbook()
         wb.iso_dates = True
-        self.parser(cr, uid, ids, wb, wb_t, context).generate(context=context)
+        parser = self.parser(cr, uid, ids, wb, wb_t, context)
+        parser.model = datas.get('model')
+        parser.generate(context=context)
         tmp = NamedTemporaryFile(delete=False)
         wb.save(tmp.name)
         wb.close()

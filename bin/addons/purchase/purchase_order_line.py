@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 import netsvc
 from osv import osv, fields
 from tools.translate import _
+from tools.misc import _get_std_mml_status
 import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
@@ -587,6 +588,7 @@ class purchase_order_line(osv.osv):
                                     ondelete='set null'),
         'move_dest_id': fields.many2one('stock.move', 'Reservation Destination', ondelete='set null', select=True),
         'location_dest_id': fields.many2one('stock.location', 'Final Destination of move', ondelete='set null', select=True),
+        'reception_dest_id': fields.many2one('stock.location', string='Line Destination', ondelete='set null', select=True),
         'price_unit': fields.float('Unit Price', required=True,
                                    digits_compute=dp.get_precision('Purchase Price Computation'), en_thousand_sep=False),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False,
@@ -673,8 +675,10 @@ class purchase_order_line(osv.osv):
         'from_dpo_esc': fields.boolean('Line sourced to ESC DPO', internal=1),
         'dates_modified': fields.boolean('EDD/CDD modified on validated line', internal=1),
         'loan_line_id': fields.many2one('sale.order.line', string='Linked loan line', readonly=True),
-
         'original_instance': fields.function(_get_customer_ref, method=True, type='char', string='Original Instance', multi='custo_ref_ir_name'),
+
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
 
     _defaults = {
@@ -700,6 +704,8 @@ class purchase_order_line(osv.osv):
         'created_by_vi_import': False,
         'created_by_sync': False,
         'cancelled_by_sync': False,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def _check_max_price(self, cr, uid, ids, context=None):
@@ -1308,6 +1314,8 @@ class purchase_order_line(osv.osv):
             #if not product_id and not vals.get('name'):  # US-3530
             #    vals.update({'name': 'None'})
 
+        vals['reception_dest_id'] = self.get_reception_dest(cr, uid, vals, context=context)
+
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
         if not vals.get('sync_order_line_db_id', False):  # 'sync_order_line_db_id' not in vals or vals:
@@ -1383,6 +1391,8 @@ class purchase_order_line(osv.osv):
             default.update({'stock_take_date': False, 'loan_line_id': False})
             if 'location_dest_id' not in default:
                 default['location_dest_id'] = False
+            if 'reception_dest_id' not in default:
+                default['reception_dest_id'] = False
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
@@ -1480,6 +1490,8 @@ class purchase_order_line(osv.osv):
 
             if line.state == 'draft' and 'price_unit' in new_vals:
                 new_vals['original_price'] = new_vals.get('price_unit')
+
+            new_vals['reception_dest_id'] = self.get_reception_dest(cr, uid, new_vals, pol=line, context=context)
 
             res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
@@ -2303,7 +2315,7 @@ class purchase_order_line(osv.osv):
     def final_location_dest(self, cr, uid, pol_obj, fo_obj=False, context=None):
         data_obj = self.pool.get('ir.model.data')
 
-        dest = pol_obj.order_id.location_id.id
+        dest = pol_obj.reception_dest_id.id
 
         if not pol_obj.product_id:
             return dest
@@ -2319,7 +2331,7 @@ class purchase_order_line(osv.osv):
         if fo and fo.procurement_request and fo.location_requestor_id.usage != 'customer':
             return fo.location_requestor_id.id
 
-        chained = self.pool.get('stock.location').chained_location_get(cr, uid, pol_obj.order_id.location_id, product=pol_obj.product_id, context=context)
+        chained = self.pool.get('stock.location').chained_location_get(cr, uid, pol_obj.reception_dest_id, product=pol_obj.product_id, context=context)
         if chained:
             if chained[0].chained_location_type == 'nomenclature':
                 # 1st round : Input > Stock, 2nd round Stock -> MED/LOG
@@ -2327,6 +2339,52 @@ class purchase_order_line(osv.osv):
                 if chained2:
                     return chained2[0].id
             return chained[0].id
+
+        return dest
+
+    def get_reception_dest(self, cr, uid, vals, pol=None, context=None):
+        '''
+        Get the location the linked IN move will be sent to during reception
+        '''
+        if context is None:
+            context = {}
+
+        prod_obj = self.pool.get('product.product')
+        data_obj = self.pool.get('ir.model.data')
+        srv_id = self.pool.get('stock.location').get_service_location(cr, uid, context=context)
+        input_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        cross_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        n_stock_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+
+        product_type, so = False, False
+        if pol:
+            if 'product_id' in vals and vals.get('product_id'):
+                product_type = prod_obj.read(cr, uid, vals['product_id'], ['type'], context=context)['type']
+            else:
+                product_type = pol.product_id.type
+            if 'link_so_id' in vals and vals.get('link_so_id'):
+                ftf = ['procurement_request', 'location_requestor_id']
+                so = self.pool.get('sale.order').browse(cr, uid, vals['link_so_id'], fields_to_fetch=ftf, context=context)
+            else:
+                so = pol.linked_sol_id and pol.linked_sol_id.order_id or pol.link_so_id or False
+        else:
+            if 'product_id' in vals and vals.get('product_id'):
+                product_type = prod_obj.read(cr, uid, vals['product_id'], ['type'], context=context)['type']
+            if 'linked_sol_id' in vals and vals.get('linked_sol_id'):
+                so = self.pool.get('sale.order.line').browse(cr, uid, vals['linked_sol_id'],
+                                                             fields_to_fetch=['order_id'], context=context).order_id
+
+        dest = input_id
+        # please also check in delivery_mechanism/delivery_mechanism.py _get_values_from_line to set location_dest_id
+        if product_type == 'service_recep':
+            dest = srv_id
+        elif so:
+            if product_type == 'consu' and so.procurement_request:
+                dest = n_stock_id
+            elif not so.procurement_request or (so.procurement_request and so.location_requestor_id.usage == 'customer'):
+                dest = cross_id
+        elif product_type == 'consu':
+            dest = n_stock_id
 
         return dest
 

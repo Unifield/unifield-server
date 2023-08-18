@@ -68,6 +68,8 @@
 				            		<field name="hidden_asset_mandatory" invisible="True" />
 				            		<field name="hidden_batch_management_mandatory" />
                                     <field name="hidden_perishable_mandatory" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                     <field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" readonly="1" />
 				            	</tree>
@@ -168,6 +170,8 @@
 				            		<field name="hidden_asset_mandatory" invisible="True" />
 				            		<field name="hidden_batch_management_mandatory" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
                                     <field name="hidden_perishable_mandatory" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                     <field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" readonly="1" />
 				            	</tree>
@@ -382,6 +386,8 @@
             		<field name="item_exp" readonly="True" />
             		<field name="hidden_batch_management_mandatory" />
             		<field name="hidden_perishable_mandatory" />
+                    <field name="mml_status" />
+                    <field name="msl_status" />
             		<field name="state" invisible="True" />
             	</tree>
             </field>
@@ -406,6 +412,8 @@
             		<field name="item_exp" readonly="True" />
             		<field name="hidden_batch_management_mandatory" />
             		<field name="hidden_perishable_mandatory" />
+                    <field name="mml_status" />
+                    <field name="msl_status" />
             		<field name="state" string="Status" />
             	</tree>
             </field>

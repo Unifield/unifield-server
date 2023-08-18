@@ -289,7 +289,7 @@
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': [('rfq_state', 'in', ['updated','done','cancel'])]}"/>
                         <field name="priority" attrs="{'readonly': [('rfq_state', 'in', ['updated','done','cancel'])]}"/>
                         <newline />
-                        <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" attrs="{'readonly': [('rfq_state', 'in', ['updated','done','cancel'])]}"/>
+                        <field name="categ" on_change="onchange_categ(categ)" attrs="{'readonly': [('rfq_state', 'in', ['updated','done','cancel'])]}"/>
                         <field name="details" attrs="{'readonly': [('rfq_state', 'in', ['updated','done','cancel'])]}"/>
                         <field name="parent_order_name" readonly="True" attrs="{'invisible': [('parent_order_name', '=', False)]}" />
                         <newline />

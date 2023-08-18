@@ -231,6 +231,10 @@
         <Column ss:AutoFitWidth="1" ss:Width="50.0" />
         ## RTS Date
         <Column ss:AutoFitWidth="1" ss:Width="50.0" />
+        ## MML Status
+        <Column ss:AutoFitWidth="1" ss:Width="20.00" />
+        ## MSL Status
+        <Column ss:AutoFitWidth="1" ss:Width="20.00" />
 
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('INTERNAL REQUEST FOLLOW-UP')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
@@ -330,6 +334,8 @@
                 _('EDD'),
                 _('CDD'),
                 _('RTS Date'),
+                _('MML'),
+                _('MSL'),
             ]
         %>
 
@@ -340,7 +346,7 @@
         </Row>
 
         % for o in getOrders(r):
-            % for line in getLines(o):
+            % for line in getLines(o, report=r):
             <Row ss:Height="11.25">
                 %if line.get('state', '') in ['cancel', 'cancel_r']:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.name|x}</Data></Cell>
@@ -425,6 +431,8 @@
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
                     % endif
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('mml_status', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('msl_status', '-')|x}</Data></Cell>
                 % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.name|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.location_requestor_id.name|x}</Data></Cell>
@@ -512,6 +520,8 @@
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                     % endif
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('mml_status', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('msl_status', '-')|x}</Data></Cell>
                 % endif
             </Row>
             % endfor
