@@ -302,6 +302,12 @@ class hr_employee(osv.osv):
                 ex = True
         if (context.get('from', False) and context.get('from') in ['yaml', 'import']) or context.get('sync_update_execution', False):
             allowed = True
+            # job_obj = self.pool.get('hr.job')
+            # jobs_with_emp_ids = job_obj.search(cr, uid, [('state', '=', 'open')])
+            # for job in job_obj.browse(cr, uid, jobs_with_emp_ids):
+            #     curr_job_emp_ids = job.employee_ids or []
+            #     for emp_id in curr_job_emp_ids:
+            #         self.write(cr, uid, emp_id.id, {'job_name': job.name})
         # Browse all employees
         for emp in self.browse(cr, uid, ids):
             new_vals = dict(vals)
