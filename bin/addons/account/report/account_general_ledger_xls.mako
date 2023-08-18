@@ -5,7 +5,7 @@ xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
 xmlns:html="http://www.w3.org/TR/REC-html40">
 <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-<Title>${get_title()|x}</Title>
+<Title>${_(get_title())|x}</Title>
 </DocumentProperties>
 <Styles>
 <Style ss:ID="ssCell">
@@ -200,10 +200,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <%
     col_count = 10
     if data['model'] == 'account.account':
-        header_company_or_chart_of_account = 'Company'
+        header_company_or_chart_of_account = _('Company')
     else:
-        header_company_or_chart_of_account = 'Chart of Account'
-    display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
+        header_company_or_chart_of_account = _('Chart of Account')
+    display_account = (data['form']['display_account']=='bal_all' and _('All')) or (data['form']['display_account']=='bal_movement' and _('With movements')) or _('With balance is not equal to 0')
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="50" />
@@ -214,19 +214,19 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:Width="90" ss:Span="4" />
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Journals</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Display</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Fiscal Year')}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Journals')}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Display')}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Open Items at')}</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter(data)!='No Filter' and get_filter(data) or '')|x}</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Filter By')} ${(get_filter(data)!=_('No Filter') and get_filter(data) or '')|x}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Target Moves')}</Data></Cell>
 % if get_show_move_lines():
     <Cell ss:StyleID="ssH" ss:MergeAcross="2">
 % else:
     <Cell ss:StyleID="ssH" ss:MergeAcross="1">
 % endif
-<Data ss:Type="String">Proprietary Instances</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
+<Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Currency')}</Data></Cell>
 </Row>
 % for a in objects:
 <Row>
@@ -269,22 +269,22 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Row>
 <Row>
 % if get_show_move_lines():
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Account</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Seq</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Posting Date</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Account')}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Entry Seq')}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Description</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Third Party')}</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Currency')}</Data></Cell>
 % endif
 % if not get_show_move_lines():
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Account</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Account')}</Data></Cell>
 <Cell ss:StyleID="ssH" ss:MergeAcross="3"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Currency')}</Data></Cell>
 % endif
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Debit</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Credit</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Booking Balance</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Balance ${get_output_currency_code(data)}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Debit')}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Credit')}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Booking Balance')}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Balance')} ${get_output_currency_code(data)}</Data></Cell>
 % if get_show_move_lines():
     <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Reconcile Number')}</Data></Cell>
 % endif
@@ -338,7 +338,7 @@ ccy_sub_total_style_right_suffix = 'Right'
         <Data ss:Type="String">${(o.code or '')|x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
-        <Data ss:Type="String">Sub Total</Data>
+        <Data ss:Type="String">${_('Sub Total')}</Data>
     </Cell>
     <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
         <Data ss:Type="String">${(ccy or '')|x}</Data>

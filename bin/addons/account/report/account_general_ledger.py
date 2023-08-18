@@ -45,6 +45,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         # local context AND move line _query_get call
         self.sortby = data['form'].get('sortby', 'sort_date')
         used_context = data['form'].get('used_context',{})
+        if data.get('context', False):
+            used_context['lang'] = data['context'].get('lang', 'en_MF')
         if not data['form'].get('fiscalyear_id', False):
             used_context['all_fiscalyear'] = True
             used_context['report_cross_fy'] = True
