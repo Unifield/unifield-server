@@ -130,7 +130,6 @@ class stock_picking(osv.osv):
     _columns = {
         'certificate_donation': fields.function(_get_certificate, string='Certif ?', type='boolean', method=True),
         'attach_cert': fields.boolean(string='Certificate attached ?', readonly=True),
-        'cd_from_bo':  fields.boolean(string='CD from BO'),
     }
 
     _defaults = {

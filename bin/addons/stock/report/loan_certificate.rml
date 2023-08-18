@@ -54,11 +54,11 @@
             <tr><td><para style="Standard"><font color="white"> </font></para></td></tr>
             <tr><td>
                 [[ o.type == 'out' or removeParentNode('tr') ]]
-                <para style="StandardLeft">The undersigned parties declare that the following listed items are loaned by [[ o.company_id.name ]] to [[ o.partner_id and o.partner_id.name or '' ]]</para>
+                <para style="StandardLeft">The undersigned parties declare that the following listed items are loaned by [[ o.company_id.instance_id.name ]] to [[ o.partner_id and o.partner_id.name or '' ]]</para>
             </td></tr>
             <tr><td>
                 [[ o.type == 'in' or removeParentNode('tr') ]]
-                <para style="StandardLeft">The undersigned parties declare that the following listed items are loaned by [[ o.partner_id and o.partner_id.name or o.ext_cu and o.ext_cu.name or '' ]] to [[ o.company_id.name ]]</para>
+                <para style="StandardLeft">The undersigned parties declare that the following listed items are loaned by [[ o.partner_id and o.partner_id.name or o.ext_cu and o.ext_cu.name or '' ]] to [[ o.company_id.instance_id.name ]]</para>
             </td></tr>
         </blockTable>
 
@@ -126,7 +126,7 @@
         <blockTable colWidths="270.0,270.0">
             <tr>
                 <td>
-                    <para style="StandardBig">[[ o.company_id.name ]]</para>
+                    <para style="StandardBig">[[ o.company_id.instance_id.name ]]</para>
                 </td>
                 <td>
                     <para style="StandardBig">[[ o.partner_id and o.partner_id.name or o.ext_cu and o.ext_cu.name or '' ]]</para>

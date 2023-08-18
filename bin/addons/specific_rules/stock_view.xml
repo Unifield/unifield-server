@@ -60,6 +60,8 @@
                                     <field name="product_uom" required="True" on_change="onchange_uom_qty(product_uom, product_qty)" />
                                     <field name="hidden_batch_management_mandatory" readonly="True" string="B.Num" />
                                     <field name="hidden_perishable_mandatory" readonly="True" string="Exp" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                     <button name="btn_dl" type="object" string="Line is duplicated" icon="gtk-dialog-warning" attrs="{'invisible': [('duplicate_line', '=', False)]}" />
                                     <field name="duplicate_line" invisible="True" />  
                                     <field name="err_msg" readonly="True" invisible="True" />

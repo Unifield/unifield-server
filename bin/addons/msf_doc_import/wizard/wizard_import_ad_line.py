@@ -4,6 +4,7 @@ from osv import osv, fields
 from tools.translate import _
 import time
 import base64
+import tools
 from io import BytesIO
 from openpyxl import load_workbook
 from tools import misc
@@ -81,7 +82,7 @@ class wizard_import_ad_line(osv.osv_memory):
             current_line_add = {}
             cr.execute('''
                 select ol.id, ol.line_number, coalesce(prod.default_code, ol.comment), ol.analytic_distribution_id, array_agg(LOWER(cc.code)), array_agg(LOWER(dest.code)), array_agg(cc_line.id),
-                    (select array_agg(fp_line.id) from funding_pool_distribution_line fp_line where fp_line.distribution_id = ol.analytic_distribution_id) as fp_line_ids
+                    (select array_agg(fp_line.id) from funding_pool_distribution_line fp_line where fp_line.distribution_id = ol.analytic_distribution_id) as fp_line_ids, array_agg(cc_line.percentage)
                 from
                     ''' + import_obj._table + ''' ol
                     left join product_product prod on prod.id = ol.product_id
@@ -106,7 +107,9 @@ class wizard_import_ad_line(osv.osv_memory):
             error = []
 
             no_change = 0
+            l_no_change = []
             updated = 0
+            l_updated = []
             delete_ad = 0
             split_line_ignored = 0
             percentage_col = 7
@@ -135,97 +138,136 @@ class wizard_import_ad_line(osv.osv_memory):
                         continue
 
                     seen[key] = True
-                    if row[percentage_col].value in ('100', 100, '100%', 1): # 100% in excel cell is converted to 1
-                        cc_value = False
-                        dest_value = False
+                    if row[percentage_col].value:
+                        percentage_vals = tools.ustr(row[percentage_col].value).strip().lower().split(';')
+                        if len(percentage_vals) == 1 and percentage_vals[0] == '1':  # 100% in excel cell is converted to 1
+                            percentage_vals = ['100']
                         try:
-                            if row[cc].value:
-                                cc_value = row[cc].value.strip().lower()
-                            if row[dest].value:
-                                dest_value = row[dest].value.strip().lower()
-                        except IndexError:
-                            pass
+                            percentage_vals = [float(percentage_val.strip('%')) for percentage_val in percentage_vals]
+                        except ValueError as e:
+                            error.append(_('%s line %s %s: Percentage values must be numbers') % (doc_name, key[0], key[1]))
+                            break
 
-                        if not cc_value and not dest_value:
-                            to_del = [x[3] for x in current_line_add[key] if x[3]]
-                            if to_del:
-                                delete_ad += len(to_del)
-                                ana_obj.unlink(cr, uid, to_del, context=context)
-                            no_change += len([x[0] for x in current_line_add[key] if not x[3]])
-                        elif not cc_value or not dest_value:
-                            error.append(_('%s line %s %s: please empty or set both Cost Center and Destination') % (doc_name, key[0], key[1]))
-                        else:
+                        if sum(percentage_vals) == 100:
+                            cc_values = False
+                            dest_values = False
+                            try:
+                                if row[cc].value:
+                                    cc_values = row[cc].value.strip().lower().split(';')
+                                if row[dest].value:
+                                    dest_values = row[dest].value.strip().lower().split(';')
+                            except IndexError:
+                                pass
 
-                            for line in current_line_add[key]:
-                                if line[4] != [cc_value] or line[5] != [dest_value]:
-                                    if cc_value not in cc_cache:
-                                        cc_ids = aa_obj.search(cr, uid, [('category', '=', 'OC'), ('type','!=', 'view'), ('code', '=ilike', cc_value)], context=context)
-                                        cc_cache[cc_value] = cc_ids and cc_ids[0] or False
-                                    if dest_value not in dest_cache:
-                                        dest_ids = aa_obj.search(cr, uid, [('category', '=', 'DEST'), ('type','!=', 'view'), ('code', '=ilike', dest_value)], context=context)
-                                        dest_cache[dest_value] = dest_ids and dest_ids[0] or False
-                                    found = True
-                                    if not cc_cache[cc_value]:
-                                        error.append(_('%s line %d: Cost Center %s not found') % (doc_name, row[0].value, cc_value))
-                                        found = False
-                                    if not dest_cache[dest_value]:
-                                        error.append(_('%s line %d: Destination %s not found') % (doc_name, row[0].value, dest_value))
-                                        found = False
+                            if not cc_values and not dest_values:
+                                to_del = [x[3] for x in current_line_add[key] if x[3]]
+                                if to_del:
+                                    delete_ad += len(to_del)
+                                    ana_obj.unlink(cr, uid, to_del, context=context)
+                                for x in current_line_add[key]:
+                                    if not x[3]:
+                                        if key not in l_no_change:
+                                            l_no_change.append(key)
+                                        no_change += 1
+                            elif not cc_values or not dest_values:
+                                error.append(_('%s line %s %s: please empty or set both Cost Center and Destination') % (doc_name, key[0], key[1]))
+                            else:
+                                if len(percentage_vals) == len(cc_values) == len(dest_values):
+                                    for i, percent in enumerate(percentage_vals):
+                                        cc_value = cc_values[i]
+                                        dest_value = dest_values[i]
+                                        j = 0
+                                        has_split = False
+                                        for line in current_line_add[key]:
+                                            if (i >= len(line[4]) and i >= len(line[5]) and i >= len(line[8])) \
+                                                    or (line[4][i] != cc_value or line[5][i] != dest_value or line[8][i] != percent):
+                                                if cc_value not in cc_cache:
+                                                    cc_ids = aa_obj.search(cr, uid, [('category', '=', 'OC'), ('type','!=', 'view'), ('code', '=ilike', cc_value)], context=context)
+                                                    cc_cache[cc_value] = cc_ids and cc_ids[0] or False
+                                                if dest_value not in dest_cache:
+                                                    dest_ids = aa_obj.search(cr, uid, [('category', '=', 'DEST'), ('type','!=', 'view'), ('code', '=ilike', dest_value)], context=context)
+                                                    dest_cache[dest_value] = dest_ids and dest_ids[0] or False
+                                                found = True
+                                                if not cc_cache[cc_value]:
+                                                    error.append(_('%s line %d: Cost Center %s not found') % (doc_name, row[0].value, cc_value))
+                                                    found = False
+                                                if not dest_cache[dest_value]:
+                                                    error.append(_('%s line %d: Destination %s not found') % (doc_name, row[0].value, dest_value))
+                                                    found = False
 
-                                    if not found:
-                                        break
+                                                if not found:
+                                                    break
 
-                                    if not error:
-                                        updated += 1
-                                        cc_data = {
-                                            'partner_type': partner_type,
-                                            'destination_id': dest_cache[dest_value],
-                                            'analytic_id': cc_cache[cc_value],
-                                            'percentage': 100,
-                                            'currency_id': currency_id,
-                                            'partner_type': partner_type,
-                                        }
-                                        if line[3] and line[6]:
-                                            # have cc_id(s) and distrib_id: update instead of delete/create
-                                            cc_line_obj.write(cr, uid, line[6][0], cc_data, context=context)
-                                            if len(line[6]) > 1:
-                                                cc_line_obj.unlink(cr, uid, line[6][1:], context=context)
+                                                if not error:
+                                                    if not has_split:
+                                                        updated += 1
+                                                        if line[0] not in l_updated:
+                                                            l_updated.append(line[0])
+                                                        has_split = True
+                                                    cc_data = {
+                                                        'partner_type': partner_type,
+                                                        'destination_id': dest_cache[dest_value],
+                                                        'analytic_id': cc_cache[cc_value],
+                                                        'percentage': percent,
+                                                        'currency_id': currency_id,
+                                                    }
+                                                    if line[3] and line[6]:
+                                                        if i < len(line[6]):
+                                                            # have cc_id(s) and distrib_id: update instead of delete/create
+                                                            cc_line_obj.write(cr, uid, line[6][i], cc_data, context=context)
+                                                            if len(line[6]) > len(percentage_vals):
+                                                                delete_ad += (len(line[6]) - len(percentage_vals))
+                                                                cc_line_obj.unlink(cr, uid, line[6][len(percentage_vals):], context=context)
+                                                        else:
+                                                            cc_data['distribution_id'] = line[3]
+                                                            cc_line_obj.create(cr, uid, cc_data, context=context)
 
-                                            fp_data = {
-                                                'partner_type': partner_type,
-                                                'destination_id': dest_cache[dest_value],
-                                                'cost_center_id': cc_cache[cc_value],
-                                                'analytic_id': pf_id,
-                                                'percentage': 100,
-                                                'currency_id': currency_id,
-                                                'partner_type': partner_type,
-                                            }
-                                            if line[7]:
-                                                fp_line_obj.write(cr, uid, line[7][0], fp_data, context=context)
-                                                if len(line[7]) > 1:
-                                                    fp_line_obj.unlink(cr, uid, line[7][1:], context=context)
+                                                        fp_data = {
+                                                            'partner_type': partner_type,
+                                                            'destination_id': dest_cache[dest_value],
+                                                            'cost_center_id': cc_cache[cc_value],
+                                                            'analytic_id': pf_id,
+                                                            'percentage': percent,
+                                                            'currency_id': currency_id,
+                                                        }
+                                                        if i < len(line[7]):
+                                                            fp_line_obj.write(cr, uid, line[7][i], fp_data, context=context)
+                                                            if len(line[7]) > len(percentage_vals):
+                                                                fp_line_obj.unlink(cr, uid, line[7][len(percentage_vals):], context=context)
+                                                        else:
+                                                            fp_data['distribution_id'] = line[3]
+                                                            fp_line_obj.create(cr, uid, fp_data, context=context)
+                                                    else:
+                                                        if line[3]:
+                                                            # delete previous empty AD
+                                                            ana_obj.unlink(cr, uid, line[3], context=context)
+                                                        distrib_id = ana_obj.create(cr, uid, {'partner_type': partner_type, 'cost_center_lines': [(0, 0, cc_data)]}, context=context)
+                                                        ana_obj.create_funding_pool_lines(cr, uid, [distrib_id], context=context)
+                                                        if len(percentage_vals) > 1:
+                                                            current_line_add[key][j] = (
+                                                                line[0], line[1], line[2], distrib_id, [cc_cache[cc_value]], [dest_cache[dest_value]],
+                                                                ana_obj.read(cr, uid, distrib_id, ['cost_center_lines'], context=context)['cost_center_lines'],
+                                                                fp_line_obj.search(cr, uid, [('distribution_id', '=', distrib_id)], context=context),
+                                                                [percent]
+                                                            )
+                                                            j += 1
+                                                        import_obj.write(cr, uid, [line[0]], {'analytic_distribution_id': distrib_id}, context=context)
                                             else:
-                                                fp_data['distribution_id'] = line[3]
-                                                fp_line_obj.create(cr, uid, fp_data, context=context)
-                                        else:
-                                            if line[3]:
-                                                # delete previous empty AD
-                                                ana_obj.unlink(cr, uid, line[3], context=context)
-                                            distrib_id = ana_obj.create(cr, uid, {'partner_type': partner_type, 'cost_center_lines': [(0, 0, cc_data)]}, context=context)
-                                            ana_obj.create_funding_pool_lines(cr, uid, [distrib_id], context=context)
-                                            import_obj.write(cr, uid, [line[0]], {'analytic_distribution_id': distrib_id}, context=context)
-
+                                                if line[0] not in l_no_change:
+                                                    l_no_change.append(line[0])
+                                                no_change += 1
                                 else:
-                                    no_change += 1
-
-                    elif row[percentage_col].value and isinstance(row[percentage_col].value, basestring) and row[percentage_col].value.strip().lower() == 'mix':
-                        no_change += 1
+                                    error.append(_('%s line %s %s: There must be the same number of Percentages, Cost Centers and Destinations') % (doc_name, key[0], key[1]))
+                        else:
+                            error.append(_('%s line %s %s: The sum of percentages must be equal to 100') % (doc_name, key[0], key[1]))
                     else:
-                        error.append(_('%s line %s %s: Percentage cannot have number other than 100') % (doc_name, key[0], key[1]))
+                        error.append(_('%s line %s %s: Percentage is mandatory') % (doc_name, key[0], key[1]))
 
                     del current_line_add[key]
 
             for key in current_line_add:
+                if key not in l_no_change:
+                    l_no_change.append(key)
                 no_change += len(current_line_add[key])
 
             if error:
@@ -236,12 +278,14 @@ class wizard_import_ad_line(osv.osv_memory):
                     'state': 'done',
                     'message': _('''Import done.
 
-                    # %(doc_name)s lines updated: %(updated)s
-                    # AD deleted on %(doc_name)s lines: %(delete_ad)s
-                    # %(doc_name)s lines not modified: %(no_change)s
-                    # Split lines ignored in file: %(split_line_ignored)s
+                    # %(updated)s AD updated on %(l_updated)s %(doc_name)s lines
+                    # %(delete_ad)s AD deleted on %(doc_name)s lines
+                    # %(no_change)s AD not modified on %(l_no_change)s %(doc_name)s lines
+                    # %(split_line_ignored)s Split lines ignored in file
 
-                    ''') % {'delete_ad': delete_ad, 'updated': updated, 'no_change': no_change, 'split_line_ignored': split_line_ignored, 'doc_name': doc_name}}, context=context)
+                    ''') % {'delete_ad': delete_ad, 'updated': updated, 'l_updated': len(l_updated),
+                            'no_change': no_change, 'l_no_change': len(l_no_change), 'split_line_ignored': split_line_ignored,
+                            'doc_name': doc_name}}, context=context)
         except MyWizException as e:
             cr.rollback()
             self.write(cr, uid, wiz.id, {'state': 'error', 'message': _('Import stopped.\n%s') % (e.message,)}, context=context)

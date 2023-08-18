@@ -687,6 +687,9 @@ class account_move_line(osv.osv):
             'revaluation_reference': '',
             'accrual': False,
             'accrual_line_id': False,
+            'counterpart_transfer_st_line_id': False,
+            'counterpart_transfer_st_line_sdref': False,
+            'has_a_counterpart_transfer': False,
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 
@@ -720,6 +723,25 @@ class account_move_line(osv.osv):
         if not ids:
             ids = self.search(cr, user, [('name', operator, name)]+ args, limit=limit)
         return self.name_get(cr, user, ids, context=context)
+
+    def open_counterpart_transfer_line(self, cr, uid, ids, context=None):
+        cp_st_line = [
+            x.counterpart_transfer_st_line_id.id
+            for x in self.browse(cr, uid, ids, fields_to_fetch=['counterpart_transfer_st_line_id'])
+        ]
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.bank.statement.line',
+            'view_type': 'form',
+            'view_mode': 'tree',
+            'search_view_id': data_obj.get_object_reference(cr, uid, 'register_accounting', 'account_bank_statement_line_empty_filter')[1],
+            'view_id': [view_id[1]],
+            'domain': [('id', 'in', cp_st_line)],
+            'context': context,
+            'target': 'new',
+        }
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE SIGNATURE_TEMPLATE [
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
+]>
+
+
 <openerp>
     <data>
         <menuitem icon="terp-partner" id="base.menu_base_partner" name="Orders" sequence="0"
@@ -141,6 +146,7 @@
                             <p id="nr_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                 <translate>WARNING: Order line(s) not synchronized, code(s) does not exist</translate>
                             </p>
+                            <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
                             <script language="javascript">
                                 var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
                                 if (is_big_amount) {
@@ -151,6 +157,11 @@
                                 var has_nr = $('#nb_creation_message_nr').val() || $('#nb_creation_message_nr').text();
                                 if (has_nr &amp;&amp; has_nr!= '0') {
                                     $('#nr_lines').show();
+                                }
+                                var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                                if (alert_msl_mml) {
+                                    $('#msl_mml').html(alert_msl_mml);
+                                    $('#msl_mml').show();
                                 }
                             </script>
                         </html>
@@ -168,6 +179,7 @@
                         <field name="internal_type" invisible="1"/>
                         <field name="picked_rate" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
+                        <field name="alert_msl_mml" invisible="1"/>
                         <field name="fo_created_by_po_sync" invisible="1"/>
                         <field name="order_type" attrs="{'readonly': ['|', '|', ('fo_created_by_po_sync', '=', True), ('state', '!=', 'draft'), ('order_type', '=', 'loan_return')]}" on_change="onchange_order_type(order_type, partner_id)"/>
                         <field name="sourcing_trace_ok" invisible="1"/>
@@ -227,7 +239,7 @@
                                 filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="'3'" o2m_selectable="2"
                                 >
-                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or (not default_code and not nomenclature_description) or instance_sync_order_ref_needed == True;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}" editable="both">
+                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or (not default_code and not nomenclature_description) or instance_sync_order_ref_needed == True;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}" editable="both">
                                     <button name="tree_button" string="Add Line" attrs="{'invisible': [('state', '!=', 'validated')]}" />
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
@@ -268,6 +280,8 @@
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', '!=', 'validated')]}"/>
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
                                     <button string="Cancel" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                             </field>
                             <newline/>
@@ -324,6 +338,7 @@
                         <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
                             <field name="sourcing_trace" colspan="4" nolabel="1"/>
                         </page>
+                        &signature_template;
                     </notebook>
                     <field name="vat_ok" invisible="1"/>
                     <group col="13" colspan="10">

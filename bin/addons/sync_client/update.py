@@ -64,6 +64,7 @@ OBJ_TO_RECREATE = [
     'replenishment.segment.line.amc.month_exp',
     'replenishment.segment.date.generation',
     'account.export.mapping',
+    'res.users',
 ]
 
 

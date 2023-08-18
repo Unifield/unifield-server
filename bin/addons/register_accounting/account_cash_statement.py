@@ -244,6 +244,8 @@ class account_cash_statement(osv.osv):
             'type_posting': 'temp',
             'register_id': ids[0],
         })
+        if not self.pool.get('account.bank.statement.line').search_exists(cr, uid, domain, context=context):
+            raise osv.except_osv(_('Warning'), _('There is no line to Temp post'))
         # Prepare view
         view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
         view_id = view and view[1] or False
@@ -276,6 +278,8 @@ class account_cash_statement(osv.osv):
             'type_posting': 'hard',
             'register_id': ids[0],
         })
+        if not self.pool.get('account.bank.statement.line').search_exists(cr, uid, domain, context=context):
+            raise osv.except_osv(_('Warning'), _('There is no line to Hard post'))
         # Prepare view
         view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
         view_id = view and view[1] or False

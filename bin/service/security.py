@@ -62,7 +62,7 @@ def _get_number_modules(cr, testlogin=False):
         return True
     return False
 
-def change_password(db_name, login, password, new_password, confirm_password):
+def change_password(db_name, login, password, new_password, confirm_password, email=None):
     '''
     Call the res.user change_password method
     '''
@@ -71,10 +71,24 @@ def change_password(db_name, login, password, new_password, confirm_password):
     try:
         user_obj = pool.get('res.users')
         result = user_obj.change_password(db_name, login, password, new_password,
-                                          confirm_password)
+                                          confirm_password, email=email)
     finally:
         cr.close()
     return result
+
+def get_user_email(db_name, login, password):
+    db, pool = pooler.get_db_and_pool(db_name)
+    cr = db.cursor()
+    try:
+        user_obj = pool.get('res.users')
+        uid = user_obj.login(db_name, login, password)
+        if not uid:
+            return False
+
+        return user_obj.read(cr, uid, uid, ['user_email'])['user_email'] or ''
+
+    finally:
+        cr.close()
 
 def login(db_name, login, password):
     # it is required here not to get pool but only the db, if the pool it also

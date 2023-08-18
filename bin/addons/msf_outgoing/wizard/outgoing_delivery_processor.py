@@ -68,7 +68,9 @@ class outgoing_delivery_processor(osv.osv):
 
         wizard_brw_list = self.browse(cr, uid, ids, context=context)
 
-        self.integrity_check_quantity(cr, uid, wizard_brw_list, context)
+        qty_check_res = self.integrity_check_quantity(cr, uid, wizard_brw_list, context)
+        if qty_check_res and qty_check_res.get('view_id'):
+            return qty_check_res
         self.integrity_check_prodlot(cr, uid, wizard_brw_list, context=context)
         # call stock_picking method which returns action call
         res = picking_obj.do_partial_out(cr, uid, ids, context=context)
@@ -132,7 +134,7 @@ class outgoing_delivery_processor(osv.osv):
         for proc in self.browse(cr, uid, ids, context=context):
             pick_id = proc['picking_id']['id']
 
-        self.write(cr, uid, ids, {'draft': False}, context=context)
+        self.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False}, context=context)
 
         return self.pool.get('stock.picking').action_process(cr, uid, pick_id, context=context)
 

@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE SIGNATURE_TEMPLATE [
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
+]>
+
+
 <openerp>
 	<data>
 
@@ -305,6 +310,8 @@
                                     <field name="product_uom_rounding_is_pce" invisible="1" />
                                     <field name="backmove_id" invisible="1" />
                                     <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  attrs="{'invisible': [('pt_created', '=', True)]}" context="{'from_button': True}"  />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                                 <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
                                     <group colspan="2" col="4">
@@ -439,7 +446,31 @@
                                 </script>
                             </html>
                         </page>
+                        &signature_template;
                     </notebook>
+                </form>
+            </field>
+        </record>
+
+        <record id="warning_pick_partial_process_sign_wizard_form_view" model="ir.ui.view">
+            <field name="name">warning.pick.partial.process.sign.wizard.form.view</field>
+            <field name="model">warning.pick.partial.process.sign.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Picking Validation">
+                    <field name="picking_id" invisible="1" />
+					<group colspan="4">
+                        <html>
+                            <p style="font-weight: bold; font-size: 1.2em; color: red; text-align: center;">
+                                <translate>Warning: The Picking has already been electronically validated for all quantities. The new Picking will need to be signed again and the signature for the backorder should be reset. Do you want to continue ?</translate>
+                            </p>
+                        </html>
+                    </group>
+					<group colspan="4" col="4">
+						<label string="" colspan="2"/>
+                        <button name="continue_validation" string="Continue" type="object" icon="gtk-apply" colspan="1" />
+                        <button name="cancel" string="Cancel" type="object" icon="gtk-cancel" colspan="1" />
+                    </group>
                 </form>
             </field>
         </record>
@@ -720,6 +751,8 @@
                                     <field name="np_check" widget="null_boolean" />
                                     <field name="fake_state" invisible="1"/>
                                     <field name="integrity_error" string=""/>
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -1277,7 +1310,7 @@
 					<field name="shipment_expected_date" />
 					<field name="state"/>
 					<button name="do_create_shipment_bg" states="draft" string="Create Shipment" type="object" icon="gtk-add"/>
-					<button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply"/>
+					<button name="open_select_actual_ship_date_wizard" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
 				</tree>
 			</field>
 		</record>
@@ -1381,6 +1414,8 @@
                                             <field name="state" />
                                             <field name="inactive_product" invisible="1" />
                                             <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                            <field name="mml_status" />
+                                            <field name="msl_status" />
                                         </tree>
                                     </field>
                                 </form>

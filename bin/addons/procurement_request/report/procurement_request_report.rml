@@ -71,6 +71,7 @@
         <paraStyle name="HeaderRight" fontName="Helvetica-Bold" fontSize="8.0" alignment="RIGHT" />
         <paraStyle name="LHeader" fontName="Helvetica-Bold" fontSize="7.0" alignement="CENTER" />
         <paraStyle name="Line" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
+        <paraStyle name="LinesRed" textColor="#610000" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
         <paraStyle name="LineGrey" textColor="#747474" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
         <paraStyle name="LFooter" fontName="Helvetica-Bold" fontSize="7.0" alignement="LEFT" />
         <paraStyle name="LFooterBig" fontName="Helvetica-Bold" fontSize="7.5" alignement="LEFT" />
@@ -178,7 +179,7 @@
 
         <section>
 
-        <blockTable colWidths="20.0,95.0,210.0,115.0,50.0,50.0,40.0,70.0,70.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="20.0,95.0,210.0,115.0,50.0,50.0,40.0,70.0,70.0,20.0,20.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line No.</para>
@@ -207,51 +208,53 @@
                 <td>
                     <para style="LHeader">Subtotal</para>
                 </td>
+                <td>
+                    <para style="LHeader" alignement="CENTER">MML</para>
+                </td>
+                <td>
+                    <para style="LHeader" alignement="CENTER">MSL</para>
+                </td>
             </tr>
             <tr>
             [[ repeatIn(req.order_line, 'line', 'tr') ]]
                 [[ line.state not in ['cancel', 'cancel_r'] or removeParentNode('tr') ]]
                 <td>
-                    <para style="LineGrey">[[ line.state == 'cancel' and line.line_number or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and line.line_number or removeParentNode('para') ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[line.line_number]]</para>
                 </td>
                 <td>
-                    <para style="LineGrey">[[ line.state == 'cancel' and line.product_id.default_code or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and line.product_id.default_code or removeParentNode('para') ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[line.product_id.default_code]]</para>
                 </td>
                 <td>
-                    <para style="LineGrey">[[ line.state == 'cancel' and line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
-                    <para style="LineGrey">[[ line.state == 'cancel' and not line.product_id and '%s (%s)' % (line.comment, line.nomenclature_description) or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and not line.product_id and '%s (%s)' % (line.comment, line.nomenclature_description) or removeParentNode('para') ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[line.product_id and line.product_id.name or '%s (%s)' % (line.comment, line.nomenclature_description) ]]</para>
                 </td>
                 <td>
-                    <para style="LineGrey">[[ line.state == 'cancel' and line.notes or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and line.notes or removeParentNode('para') ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[ line.notes or '' ]]</para>
                 </td>
                 <td>
-                    <para style="LineGrey">[[ line.state == 'cancel' and line.product_uom_qty or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and line.product_uom_qty or removeParentNode('para') ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[line.product_uom_qty]]</para>
                 </td>
                 <td>
-                    <para style="LineGrey">[[ line.state == 'cancel' and formatLang(line.price_unit) or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and formatLang(line.price_unit) or removeParentNode('para') ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[formatLang(line.price_unit)]]</para>
+
                 </td>
                 <td>
-                    <para style="LineGrey">[[ line.state == 'cancel' and (line.product_uom and get_name('product.uom', line.product_uom.id) or '') or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and (line.product_uom and get_name('product.uom', line.product_uom.id) or '') or removeParentNode('para') ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[line.product_uom and get_name('product.uom', line.product_uom.id) or '']]</para>
                 </td>
                 <td>
-                    <para style="LineGrey">[[ line.state == 'cancel' and getSel(line, 'type') or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and getSel(line, 'type') or removeParentNode('para') ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[getSel(line, 'type')]]</para>
                 </td>
                 <td>
-                    <para style="LineGrey">[[ line.state == 'cancel' and formatLang(line.price_subtotal) or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and formatLang(line.price_subtotal) or removeParentNode('para') ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[ formatLang(line.price_subtotal) ]]</para>
+                </td>
+                <td>
+                    <para alignement="CENTER" rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[ getSel(line, 'mml_status') ]]</para>
+                </td>
+                <td>
+                    <para alignement="CENTER" rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'LinesRed' or 'Line'}">[[ getSel(line, 'msl_status') ]]</para>
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="580.0,70.0,70.0" style="LineFooter">
+        <blockTable colWidths="540.0,70.0,70.0" style="LineFooter">
             <tr>
                 <td>
                     <para style="LFooterBig"> </para>
@@ -302,7 +305,7 @@
             </tr>
             <tr></tr>
         </blockTable>
-        <blockTable colWidths="44.0,281.0,337.0" style="FooterInfo" keepWithNext="1">
+        <blockTable colWidths="82.0,290.0,290.0" style="FooterInfo" keepWithNext="1">
             <tr>
                 <td>
                     <para style="LFooter"> </para>
