@@ -6,6 +6,7 @@ from spreadsheet_xml.xlsx_write import XlsxReport
 from spreadsheet_xml.xlsx_write import XlsxReportParser
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.drawing import image
+from openpyxl.worksheet.header_footer import HeaderFooterItem
 import tools
 from PIL import Image as PILImage
 
@@ -25,8 +26,8 @@ class field_balance_spec_report(osv.osv_memory):
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True, domain=[('level', '=', 'coordo'), ('state', '=', 'active'), ('instance_to_display_ids','=',True)]),
         'period_id': fields.many2one('account.period', 'Period', required=True, domain=[('state', 'in', ['draft', 'field-closed', 'mission-closed', 'done', '!!REMOVE DONE!!!']), ('number', 'not in', [0, 16])]),
-        'selection': fields.selection([('entries_total', 'Total of entries reconciled in later period'),
-                                       ('entries_details', 'Details of entries reconciled in later period')],
+        'selection': fields.selection([('total', 'Total of entries reconciled in later period'),
+                                       ('details', 'Details of entries reconciled in later period')],
                                       string="Select", required=True),
         'eoy': fields.boolean('End of Year'),
         'currency_table': fields.many2one('res.currency.table', 'Currency Table', domain=[('state', '=', 'valid')]),
@@ -85,6 +86,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
         company = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=context).company_id
 
+        date_used = company.currency_date_type == 'Posting Date' and 'date' or 'document_date'
         report = self.pool.get('field.balance.spec.report').browse(self.cr, self.uid, self.ids[0], context=context)
 
         all_instance_ids = [report.instance_id.id] + [x.id for x in report.instance_id.child_ids]
@@ -93,13 +95,18 @@ class field_balance_spec_parser(XlsxReportParser):
             select
                 distinct cur.id, cur.name
             from
-                account_move_line l, account_move m, res_currency cur
+                account_move_line l, account_move m, res_currency cur, account_account a, account_period p
             where
                 cur.id = l.currency_id
+                and a.id = l.account_id
                 and l.date <= %(last_date)s
+                and p.id = l.period_id
+                and p.number not in (0, 16)
                 and m.id = l.move_id
                 and m.state='posted'
                 and m.instance_id in %(instance)s
+                and (a.reconcile = 't' or a.type = 'liquidity')
+                and l.reconcile_id is null
             group by
                 cur.id, cur.name
             order by
@@ -137,6 +144,8 @@ class field_balance_spec_parser(XlsxReportParser):
         for n, cur in enumerate(list_curr[1:]):
             rates[n] = {'name': cur, 'value': fx_rates[cur]}
 
+        page_title = _('Field Balance Specification Report From UniField')
+
         sheet = self.workbook.active
         sheet.sheet_view.zoomScale = 75
         sheet.protection.formatCells = False
@@ -144,6 +153,20 @@ class field_balance_spec_parser(XlsxReportParser):
         sheet.protection.formatColumns = False
         sheet.protection.sheet = True
         sheet.sheet_view.showGridLines = True
+        sheet.page_setup.orientation = 'landscape'
+        sheet.page_setup.fitToPage = True
+        sheet.page_setup.fitToHeight = False
+        sheet.page_setup.paperSize = 9 # A4
+
+        footer = HeaderFooterItem()
+        footer.left.text = "%s, %s, %s, %s &[Page]/&N" % (page_title, report.instance_id.mission, report.period_id.name, _('page'))
+        footer.left.size = 8
+        sheet.oddFooter = footer
+        sheet.evenFooter = footer
+        sheet.page_margins.left = 0.2
+        sheet.page_margins.right = 0.2
+        sheet.page_margins.top = 0.2
+        sheet.page_margins.bottom = 1
 
         self.duplicate_column_dimensions()
         self.duplicate_row_dimensions(range(1, 9))
@@ -156,7 +179,6 @@ class field_balance_spec_parser(XlsxReportParser):
 
         sheet.add_image(img, 'A1')
 
-        # Styles
 
         self.create_style_from_template('logo_style', 'A1')
         self.create_style_from_template('title_cell1_style', 'B1')
@@ -180,7 +202,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
         sheet.append([
             self.cell_ro('', 'logo_style'),
-            self.cell_ro(_('Field Balance Specification Report'), 'title_cell1_style'),
+            self.cell_ro(page_title, 'title_cell1_style'),
             self.cell_ro('', 'title_style'),
             self.cell_ro('', 'title_style'),
             self.cell_ro('', 'title_style'),
@@ -292,12 +314,13 @@ class field_balance_spec_parser(XlsxReportParser):
 
         line += 1
 
+        register_details = {}
         # sum of liquidity accounts
         liq_account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '=', 'liquidity'), ('reconcile', '=', False)], context=context)
         for liq_account in self.pool.get('account.account').browse(self.cr, self.uid, liq_account_ids, fields_to_fetch=['code', 'name'], context=context):
             self.cr.execute('''
                 select
-                    l.currency_id, sum(coalesce(amount_currency,0))
+                    l.currency_id, sum(coalesce(amount_currency,0)), j.id
                 from
                     account_move_line l, account_move m, account_period p, account_journal j
                 where
@@ -308,10 +331,10 @@ class field_balance_spec_parser(XlsxReportParser):
                     -- and m.state = 'posted'
                     and p.number not in (0, 16)
                     and l.account_id = %(account_id)s
-                    and ( p.date_start <= %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
+                    and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
                     and j.type in ('bank', 'cash')
                 group by
-                    l.currency_id
+                    l.currency_id, j.id
                 ''', {
                 'instance': tuple(all_instance_ids),
                 'period_start': report.period_id.date_start,
@@ -322,13 +345,14 @@ class field_balance_spec_parser(XlsxReportParser):
             liq_sum = 0
             # total entry encoding
             for liq in self.cr.fetchall():
+                register_details[liq[2]] = liq[1]
                 liq_sum += liq[1] / fx_rates_by_id[liq[0]]
 
             # initial balance start
 
 
             self.cr.execute('''
-                select j.currency, sum(coalesce(balance_start, 0))
+                select j.currency, sum(coalesce(balance_start, 0)), j.id
                 from account_bank_statement st, account_journal j, account_period p
                 where
                     j.id = st.journal_id
@@ -336,10 +360,10 @@ class field_balance_spec_parser(XlsxReportParser):
                     and j.default_debit_account_id = %(account_id)s
                     and j.instance_id in %(instance)s
                     and st.state != 'draft'
-                    and ( p.date_start <= %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
-                    and st.id in (select min(id) from account_bank_statement group by journal_id)
+                    and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
+                    and st.id in (select min(id) from account_bank_statement group by journal_id)   -- TODO GET 1ST REGISTER
                 group by
-                    j.currency
+                    j.currency, j.id
                 ''', {
                 'instance': tuple(all_instance_ids),
                 'period_start': report.period_id.date_start,
@@ -347,6 +371,7 @@ class field_balance_spec_parser(XlsxReportParser):
                 'account_id': liq_account.id,
             })
             for init_bal in self.cr.fetchall():
+                register_details[liq[2]] = register_details.setdefault(liq[2], 0) + init_bal[1]
                 liq_sum += init_bal[1] / fx_rates_by_id[init_bal[0]]
 
             sheet.append(
@@ -363,7 +388,7 @@ class field_balance_spec_parser(XlsxReportParser):
         for req_account in self.pool.get('account.account').browse(self.cr, self.uid, req_account_ids, fields_to_fetch=['code', 'name'], context=context):
             self.cr.execute('''
                 select
-                    sum(coalesce(l.credit,0) - coalesce(l.debit,0))
+                    sum(coalesce(l.debit,0) - coalesce(l.credit,0))
                 from
                     account_move_line l
                     inner join account_period p on p.id = l.period_id
@@ -371,7 +396,7 @@ class field_balance_spec_parser(XlsxReportParser):
                 where
                     l.account_id = %(account_id)s
                     and p.number not in (0, 16)
-                    and ( p.date_start <= %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
+                    and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
                     and m.state='posted'
                     and m.instance_id in %(instance)s
                     and (
@@ -403,28 +428,368 @@ class field_balance_spec_parser(XlsxReportParser):
                 )
                 line += 1
 
+        sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', 'user_line', unlock=True)] * 2)
+        sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
+        line += 1
 
-        """
+        year = datetime.strptime(report.period_id.date_start, '%Y-%m-%d').year
+        for j_type in ['cash', 'bank']:
+            j_ids = self.pool.get('account.journal').search(self.cr, self.uid, ['&', ('type', '=', j_type), '|', ('is_active', '=', True), ('inactivation_date', '>', '%s-01-31' % (year, ) )], context=context)
+            first_line = True
+            account_sum = 0
+            for journal in self.pool.get('account.journal').browse(self.cr, self.uid, j_ids, context=context):
+                if first_line:
+                    sheet.append(
+                        [
+                            self.cell_ro('%s - %s' % (journal.default_debit_account_id.code, journal.default_debit_account_id.name), copy_style='A18'),
+                            self.cell_ro(_('Journal Name'), copy_style='B18'),
+                            self.cell_ro(_('Proprietary instance'), copy_style='B18'),
+                            self.cell_ro(_('Journal Status'), copy_style='B18'),
+                            self.cell_ro(_('Curr.'), copy_style='B18'),
+                            self.cell_ro(_('Currency Amount'), copy_style='B18'),
+                            self.cell_ro(_('Period Rate'), copy_style='B18'),
+                            self.cell_ro(_('%s Amount with\nCurrent Period Rate') % company.currency_id.name, copy_style='B18'),
+                            self.cell_ro('', copy_style='B18'),
+                            self.cell_ro('', copy_style='B18'),
+                            self.cell_ro(_("Field's Comments"), copy_style='B9'),
+                            self.cell_ro(_("HQ Comments"), copy_style='L9'),
+                        ]
+                    )
+                    line += 1
+                    first_line = False
+                sheet.append([
+                    self.cell_ro(journal.code, copy_style='A19'),
+                    self.cell_ro(journal.name, copy_style='B19'),
+                    self.cell_ro(journal.instance_id.instance, copy_style='B19'),
+                    self.cell_ro(not journal.is_active and _('Inactive') or '', copy_style='B19'),
+                    self.cell_ro(journal.currency.name, copy_style='B19'),
+                    self.cell_ro(register_details.get(journal.id, 0), copy_style='H19'),
+                    self.cell_ro(fx_rates_by_id.get(journal.currency.id, 0), copy_style='G19'),
+                    self.cell_ro(register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), copy_style='H19'),
+                    self.cell_ro('', copy_style='B19'),
+                    self.cell_ro('', copy_style='B19'),
+                    self.cell_ro('', copy_style='K10', unlock=True),
+                    self.cell_ro('', copy_style='L10', unlock=True),
+                ])
+
+                line += 1
+                account_sum += round(register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), 2)
+            sheet.append(
+                [self.cell_ro('', 'header_1st_info_title')] +
+                [self.cell_ro('', 'default_header_style')] * 6  +
+                [self.cell_ro(account_sum, copy_style='H25')] +
+                [self.cell_ro('', 'default_header_style')] * 2  +
+                [self.cell_ro('', copy_style='K10', unlock=True), self.cell_ro('', copy_style='L10', unlock=True)]
+            )
+            line += 1
+
+
+            sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', 'user_line', unlock=True)] * 2)
+            sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
+            line += 1
+
         # details of reconciliable accounts
         for req_account in self.pool.get('account.account').browse(self.cr, self.uid, req_account_ids, fields_to_fetch=['code', 'name'], context=context):
-            sheet.append(
-                self.cell_ro('%s - %s' % (req_account.code, req_account.name), copy_style='A9'),
-                _('Description of the entry'),
-                _('Reference of the entry'),
-                _('Doc Date / Posting Date'), # TODO
-                _('Curr.'),
-                _('Currency Amount'),
-                _('Booking/Posting Rate'),
-                _('EUR/CHF Amount'),
-                _('Reconcile Number'),
-                _('Third Party'),
-                [self.cell_ro('', copy_style='B9')] * 6 +
-                [self.cell_ro(_('UniField Balance in %s') % (company.currency_id.name,) , copy_style='B9')] +
-                [self.cell_ro('', copy_style='B9')] * 2 +
-                [self.cell_ro(_("Field's Comments"), copy_style='B9'), self.cell_ro(_("HQ Comments"), copy_style='L9')]
-            )
-            sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
+            if req_account.code == '15640':
+                sheet.append(
+                    [self.cell_ro('%s - %s' % (req_account.code, req_account.name), copy_style='A18')] +
+                    [self.cell_ro('', copy_style='B18')] * 6 +
+                    [
+                        self.cell_ro(_('%s Amount') % (company.currency_id.name, ), copy_style='B18'),
+                        self.cell_ro(_('Subaccount Number'), copy_style='B18'),
+                        self.cell_ro('', copy_style='B18'),
+                        self.cell_ro(_("Field's Comments"), copy_style='B9'),
+                        self.cell_ro(_("HQ Comments"), copy_style='L9'),
+                    ]
+                )
+                line += 1
+                # unreconciled or partial rec
+                self.cr.execute('''
+                    select
+                        res.name,
+                        sum(coalesce(l.debit, 0) - coalesce(l.credit, 0)),
+                        emp.identification_id
+                    from
+                        hr_employee emp
+                        left join resource_resource res on res.id = emp.resource_id
+                        left join account_move_line l on l.employee_id = emp.id
+                        left join account_account a on a.id = l.account_id
+                        left join account_period p on p.id = l.period_id
+                        left join account_move m on l.move_id = m.id
+                    where
+                        l.account_id = %(account_id)s
+                        and p.number not in (0, 16)
+                        and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
+                        and m.state='posted'
+                        and m.instance_id in %(instance)s
+                    group by emp.id, res.name, emp.identification_id, res.active
+                    having
+                        res.active = 't' or sum(coalesce(l.debit, 0) - coalesce(l.credit, 0)) > 0
+                    order by
+                        emp.identification_id
+                    ''', {
+                    'account_id': req_account.id,
+                    'period_number': report.period_id.number,
+                    'period_start': report.period_id.date_start,
+                    'instance': tuple(all_instance_ids),
+                })
+                for emp in self.cr.fetchall():
+                    sheet.append(
+                        [self.cell_ro(emp[0], copy_style='A19')] +
+                        [self.cell_ro('', copy_style='B19')] * 6 +
+                        [
+                            self.cell_ro(emp[1], copy_style='H19'),
+                            self.cell_ro(emp[2], copy_style='B19'),
+                            self.cell_ro('', copy_style='B19'),
+                            self.cell_ro('', copy_style='K10', unlock=True),
+                            self.cell_ro('', copy_style='L10', unlock=True),
+                        ]
+                    )
+                    line += 1
+                    account_sum += round(emp[1], 2)
 
+                if report.selection == 'details':
+                    title_sum = _('List of entries reconciled in later periods >>>')
+                else:
+                    title_sum = _('Total of entries reconciled in later periods >>>')
+
+                sheet.append(
+                    [self.cell_ro(title_sum, copy_style='A23')] +
+                    [self.cell_ro('', 'default_header_style')] * 9 +
+                    [self.cell_ro('', copy_style='K10', unlock=True), self.cell_ro('', copy_style='L10', unlock=True)]
+                )
+                line += 1
+
+            else:
+                sheet.append([
+                    self.cell_ro('%s - %s' % (req_account.code, req_account.name), copy_style='A18'),
+                    self.cell_ro(_('Description of the entry'), copy_style='B18'),
+                    self.cell_ro(_('Reference of the entry'), copy_style='B18'),
+                    self.cell_ro(_(company.currency_date_type), copy_style='B18'), # TODO
+                    self.cell_ro(_('Curr.'), copy_style='B18'),
+                    self.cell_ro(_('Currency Amount'), copy_style='B18'),
+                    self.cell_ro(_('Booking/Posting Rate'), copy_style='B18'),
+                    self.cell_ro(_('%s Amount') % (company.currency_id.name, ), copy_style='B18'),
+                    self.cell_ro(_('Reconcile Number'), copy_style='B18'),
+                    self.cell_ro(_('Third Party'), copy_style='B18'),
+                    self.cell_ro(_("Field's Comments"), copy_style='B9'),
+                    self.cell_ro(_("HQ Comments"), copy_style='L9'),
+                ])
+
+                line += 1
+
+                # unreconciled or partial rec
+                self.cr.execute('''
+                    select
+                        m.name, l.name, l.ref, l.''' + date_used + ''', cur.name, coalesce(l.amount_currency, 0),
+                        (select
+                            rate.rate
+                        from
+                            res_currency_rate rate
+                        where
+                            rate.currency_id = l.currency_id
+                            and currency_table_id is null
+                            and rate.name < coalesce(l.source_date, l.''' + date_used + ''')
+                        order by
+                            rate.name desc
+                        limit 1
+                        ) as fx_rate,
+                        coalesce(l.debit, 0) - coalesce(l.credit, 0),
+                        partial.name,
+                        coalesce(partner.name, j.code, emp.name_resource||' '||emp.identification_id)
+                    from
+                        account_move_line l
+                        inner join account_account a on a.id = l.account_id
+                        inner join account_period p on p.id = l.period_id
+                        inner join account_move m on l.move_id = m.id
+                        inner join res_currency cur on cur.id = l.currency_id
+                        left join account_move_reconcile partial on partial.id = l.reconcile_partial_id
+                        left join res_partner partner on partner.id = l.partner_id
+                        left join hr_employee emp on emp.id = l.employee_id
+                        left join account_journal j on j.id = l.transfer_journal_id
+                    where
+                        l.account_id = %(account_id)s
+                        and p.number not in (0, 16)
+                        and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
+                        and m.state='posted'
+                        and m.instance_id in %(instance)s
+                        and l.reconcile_id is null
+                    order by
+                        m.name, l.id
+                    ''', {
+                    'account_id': req_account.id,
+                    'period_number': report.period_id.number,
+                    'period_start': report.period_id.date_start,
+                    'instance': tuple(all_instance_ids),
+                })
+                account_sum = 0
+                for account_line in self.cr.fetchall():
+                    sheet.append([
+                        self.cell_ro(account_line[0], copy_style='A19'),
+                        self.cell_ro(account_line[1], copy_style='B19'),
+                        self.cell_ro(account_line[2], copy_style='B19'),
+                        self.cell_ro(self.to_datetime(account_line[3]), copy_style='D19'), # TODO
+                        self.cell_ro(account_line[4], copy_style='B19'),
+                        self.cell_ro(account_line[5], copy_style='F19'),
+                        self.cell_ro(account_line[6], copy_style='G19'),
+                        self.cell_ro(account_line[7], copy_style='H19'),
+                        self.cell_ro(account_line[8], copy_style='B19'),
+                        self.cell_ro(account_line[9], copy_style='B19'),
+                        self.cell_ro('', copy_style='K10', unlock=True),
+                        self.cell_ro('', copy_style='L10', unlock=True),
+                    ])
+                    line += 1
+                    account_sum += round(account_line[7], 2)
+
+                if report.selection == 'details':
+                    sheet.append(
+                        [self.cell_ro(_('List of entries reconciled in later periods >>>'), copy_style='A23')] +
+                        [self.cell_ro('', 'default_header_style')] * 9 +
+                        [self.cell_ro('', copy_style='K10', unlock=True), self.cell_ro('', copy_style='L10', unlock=True)]
+                    )
+                    line += 1
+
+                    # reconciled later
+                    self.cr.execute('''
+                        select
+                            m.name, l.name, l.ref, l.date, cur.name, coalesce(l.amount_currency, 0),
+                            (select
+                                rate.rate
+                            from
+                                res_currency_rate rate
+                            where
+                                rate.currency_id = l.currency_id
+                                and currency_table_id is null
+                                and rate.name < coalesce(l.source_date, l.''' + date_used + ''')
+                            order by
+                                rate.name desc
+                            limit 1
+                            ) as fx_rate,
+                            coalesce(l.debit, 0) - coalesce(l.credit, 0),
+                            rec.name,
+                            coalesce(partner.name, j.code, emp.name_resource||' '||emp.identification_id)
+                        from
+                            account_move_line l
+                            inner join account_account a on a.id = l.account_id
+                            inner join account_period p on p.id = l.period_id
+                            inner join account_move m on l.move_id = m.id
+                            inner join res_currency cur on cur.id = l.currency_id
+                            inner join account_move_reconcile rec on rec.id = l.reconcile_id
+                            left join res_partner partner on partner.id = l.partner_id
+                            left join hr_employee emp on emp.id = l.employee_id
+                            left join account_journal j on j.id = l.transfer_journal_id
+                        where
+                            l.account_id = %(account_id)s
+                            and p.number not in (0, 16)
+                            and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
+                            and m.state='posted'
+                            and m.instance_id in %(instance)s
+                            and
+                                exists(
+                                    select rec_line.id from account_move_line rec_line, account_period rec_p
+                                where
+                                    rec_line.reconcile_id = l.reconcile_id
+                                    and rec_p.id = rec_line.period_id
+                                    and (
+                                        rec_p.date_start > %(period_start)s
+                                        or rec_p.date_start = %(period_start)s and rec_p.number > %(period_number)s
+                                    )
+                                )
+                        order by
+                            m.name, l.id
+                        ''', {
+                        'account_id': req_account.id,
+                        'period_number': report.period_id.number,
+                        'period_start': report.period_id.date_start,
+                        'instance': tuple(all_instance_ids),
+                    })
+                    for account_line in self.cr.fetchall():
+                        sheet.append([
+                            self.cell_ro(account_line[0], copy_style='A19'),
+                            self.cell_ro(account_line[1], copy_style='B19'),
+                            self.cell_ro(account_line[2], copy_style='B19'),
+                            self.cell_ro(self.to_datetime(account_line[3]), copy_style='D19'), # TODO
+                            self.cell_ro(account_line[4], copy_style='B19'),
+                            self.cell_ro(account_line[5], copy_style='F19'),
+                            self.cell_ro(account_line[6], copy_style='G19'),
+                            self.cell_ro(account_line[7], copy_style='H19'),
+                            self.cell_ro(account_line[8], copy_style='B19'),
+                            self.cell_ro(account_line[9], copy_style='B19'),
+                            self.cell_ro('', copy_style='K10', unlock=True),
+                            self.cell_ro('', copy_style='L10', unlock=True),
+                        ])
+                        line += 1
+                        account_sum += round(account_line[7], 2)
+                else:
+                    # sum reconciled later
+                    self.cr.execute('''
+                        select
+                            sum(coalesce(l.debit, 0) - coalesce(l.credit, 0))
+                        from
+                            account_move_line l
+                            inner join account_account a on a.id = l.account_id
+                            inner join account_period p on p.id = l.period_id
+                            inner join account_move m on l.move_id = m.id
+                            inner join res_currency cur on cur.id = l.currency_id
+                            inner join account_move_reconcile rec on rec.id = l.reconcile_id
+                            left join res_partner partner on partner.id = l.partner_id
+                            left join hr_employee emp on emp.id = l.employee_id
+                            left join account_journal j on j.id = l.transfer_journal_id
+                        where
+                            l.account_id = %(account_id)s
+                            and p.number not in (0, 16)
+                            and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
+                            and m.state='posted'
+                            and m.instance_id in %(instance)s
+                            and
+                                exists(
+                                    select rec_line.id from account_move_line rec_line, account_period rec_p
+                                where
+                                    rec_line.reconcile_id = l.reconcile_id
+                                    and rec_p.id = rec_line.period_id
+                                    and (
+                                        rec_p.date_start > %(period_start)s
+                                        or rec_p.date_start = %(period_start)s and rec_p.number > %(period_number)s
+                                    )
+                                )
+                        ''', {
+                        'account_id': req_account.id,
+                        'period_number': report.period_id.number,
+                        'period_start': report.period_id.date_start,
+                        'instance': tuple(all_instance_ids),
+                    })
+                    total_later = self.cr.fetchone()[0] or 0
+                    account_sum += round(total_later, 2)
+                    sheet.append(
+                        [self.cell_ro(_('Total of entries reconciled in later periods >>>'), copy_style='A23')] +
+                        [self.cell_ro('', 'default_header_style')] * 6 +
+                        [self.cell_ro(total_later, copy_style='H19')] +
+                        [self.cell_ro('', 'default_header_style')] * 2 +
+                        [self.cell_ro('', copy_style='K10', unlock=True), self.cell_ro('', copy_style='L10', unlock=True)]
+                    )
+                    line += 1
+
+            sheet.append(
+                [self.cell_ro('', 'header_1st_info_title')] +
+                [self.cell_ro('', 'default_header_style')] * 6  +
+                [self.cell_ro(account_sum, copy_style='H25')] +
+                [self.cell_ro('', 'default_header_style')] * 2  +
+                [self.cell_ro('', copy_style='K10', unlock=True), self.cell_ro('', copy_style='L10', unlock=True)]
+            )
             line += 1
-        """
+
+
+            sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', 'user_line', unlock=True)] * 2)
+            sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
+            line += 1
+
+        sheet.append(
+            [self.cell_ro('', copy_style='A37')] +
+            [self.cell_ro('---END OF FIELD BALANCE SPECIFICATION REPORT---', copy_style='B37')] +
+            [self.cell_ro('', copy_style='B37')] * 9 +
+            [self.cell_ro('', copy_style='L37')]
+        )
+        line += 1
+
+        sheet.print_area = 'A1:L%d' % line
 XlsxReport('report.field_balance_spec_report', parser=field_balance_spec_parser, template='addons/vertical_integration/report/field_balance_spec_report_template.xlsx')
