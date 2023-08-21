@@ -147,7 +147,7 @@
   </stylesheet>
   <story>
     <para style="terp_default_8">[[ repeatIn(objects, 'a') ]]</para>
-    <para style="terp_header_Centre">[[ get_title() ]]</para>
+    <para style="terp_header_Centre">[[ translate(get_title()) ]]</para>
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
