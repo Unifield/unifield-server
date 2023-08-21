@@ -138,10 +138,16 @@ class XlsxReportParser():
             str_date = value
         return datetime.datetime.strptime(str_date, "%Y-%m-%d %H:%M:%S")
 
-    def cell_ro(self, value, style=None, unlock=None):
+    def cell_ro(self, value, style=None, unlock=None, copy_style=None):
         new_cell = WriteOnlyCell(self.workbook.active, value=value)
         if style:
             new_cell.style = style
+        elif copy_style:
+            copied_style_name = '%s_style' % copy_style
+            if copied_style_name in self.workbook.named_styles:
+                new_cell.style = copied_style_name
+            else:
+                new_cell.style = self.create_style_from_template(copied_style_name, copy_style)
         if unlock:
             new_cell.protection = Protection(locked=False)
         return new_cell
