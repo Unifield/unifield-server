@@ -10,7 +10,7 @@
             report_type="openpyxl"
             auto="False"
             target_filename="${_('Field Balance specification report')}"
-            menu="True"
+            menu="False"
             />
 
     </data>

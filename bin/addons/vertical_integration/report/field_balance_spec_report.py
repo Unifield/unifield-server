@@ -62,10 +62,17 @@ class field_balance_spec_report(osv.osv_memory):
 
         report = self.browse(cr, uid, ids[0], context=context)
         filename = '%s %s %s' % (report.instance_id.instance, report.period_id.name, _('Field Balance specification report'))
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': filename,
+            'report_name': 'field_balance_spec_report',
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 3
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'field_balance_spec_report',
-            'datas': {'ids': ids, 'target_filename': filename},
+            'datas': {'ids': ids, 'target_filename': filename, 'context': context},
             'context': context,
         }
 
@@ -83,6 +90,9 @@ class field_balance_spec_parser(XlsxReportParser):
         self.rows.append(new_cell)
 
     def generate(self, context=None):
+
+        bk_id = self.context.get('background_id')
+        bk_obj = self.pool.get('memory.background.report')
 
         company = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=context).company_id
 
@@ -121,6 +131,8 @@ class field_balance_spec_parser(XlsxReportParser):
                 list_curr.append(x[1])
             curr_id[x[0]] = x[1]
 
+        if bk_id:
+            bk_obj.write(self.cr, self.uid, bk_id, {'percent': 0.1})
 
         fx_rates = {}
         fx_rates_by_id = {}
@@ -385,6 +397,9 @@ class field_balance_spec_parser(XlsxReportParser):
             )
             line += 1
 
+        if bk_id:
+            bk_obj.write(self.cr, self.uid, bk_id, {'percent': 0.2})
+
         # sum of reconciliable accounts
         req_account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True)], context=context)
         for req_account in self.pool.get('account.account').browse(self.cr, self.uid, req_account_ids, fields_to_fetch=['code', 'name'], context=context):
@@ -496,7 +511,12 @@ class field_balance_spec_parser(XlsxReportParser):
             sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
             line += 1
 
+        if bk_id:
+            bk_obj.write(self.cr, self.uid, bk_id, {'percent': 0.5})
+
         # details of reconciliable accounts
+        total_account = float(len(req_account_ids))
+        nb_account_done = 0
         for req_account in self.pool.get('account.account').browse(self.cr, self.uid, req_account_ids, fields_to_fetch=['code', 'name'], context=context):
             account_sum = 0
             if req_account.code == '15640':
@@ -806,6 +826,11 @@ class field_balance_spec_parser(XlsxReportParser):
             sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
             line += 1
 
+            nb_account_done += 1
+            if bk_id:
+                bk_obj.write(self.cr, self.uid, bk_id, {'percent': max(0.99, 0.5 + 50 * nb_account_done/total_account/100.)})
+
+
         sheet.append(
             [self.cell_ro('', copy_style='A37')] +
             [self.cell_ro('---%s---' % _('END OF FIELD BALANCE SPECIFICATION REPORT'), copy_style='B37')] +
@@ -815,6 +840,8 @@ class field_balance_spec_parser(XlsxReportParser):
         line += 1
 
         sheet.print_area = 'A1:L%d' % line
+        if bk_id:
+            bk_obj.write(self.cr, self.uid, bk_id, {'percent': 1.})
 
 
 XlsxReport('report.field_balance_spec_report', parser=field_balance_spec_parser, template='addons/vertical_integration/report/field_balance_spec_report_template.xlsx')
