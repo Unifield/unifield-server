@@ -514,28 +514,42 @@ class field_balance_spec_parser(XlsxReportParser):
                 line += 1
                 # unreconciled or partial rec
                 self.cr.execute('''
-                    select
-                        res.name,
-                        sum(coalesce(l.debit, 0) - coalesce(l.credit, 0)),
-                        emp.identification_id
-                    from
-                        hr_employee emp
-                        left join resource_resource res on res.id = emp.resource_id
-                        left join account_move_line l on l.employee_id = emp.id
-                        left join account_account a on a.id = l.account_id
-                        left join account_period p on p.id = l.period_id
-                        left join account_move m on l.move_id = m.id
-                    where
-                        l.account_id = %(account_id)s
-                        and p.number not in (0, 16)
-                        and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
-                        and m.state='posted'
-                        and m.instance_id in %(instance)s
-                    group by emp.id, res.name, emp.identification_id, res.active
-                    having
-                        res.active = 't' or abs(sum(coalesce(l.debit, 0) - coalesce(l.credit, 0))) > 0.001
+                   select name, sum(balance), identification_id from
+                   (
+                        select
+                            res.name as name,
+                            sum(coalesce(l.debit, 0) - coalesce(l.credit, 0)) as balance,
+                            emp.identification_id as identification_id
+                        from
+                            hr_employee emp
+                            inner join resource_resource res on res.id = emp.resource_id
+                            inner join account_move_line l on l.employee_id = emp.id
+                            inner join account_account a on a.id = l.account_id
+                            inner join account_period p on p.id = l.period_id
+                            inner join account_move m on l.move_id = m.id
+                        where
+                            l.account_id = %(account_id)s
+                            and p.number not in (0, 16)
+                            and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
+                            and m.state='posted'
+                            and m.instance_id in %(instance)s
+                        group by emp.id, res.name, emp.identification_id, res.active
+                        having
+                            res.active = 't' or abs(sum(coalesce(l.debit, 0) - coalesce(l.credit, 0))) > 0.001
+
+                    UNION
+                        select res.name as name, 0 as balance, emp.identification_id as identification_id
+                        from
+                            hr_employee emp, resource_resource res
+                        where
+                            res.id = emp.resource_id
+                            and emp.employee_type='ex'
+                            and res.active='t'
+                    ) as EMP_ALL
+                    group by
+                        name, identification_id
                     order by
-                        emp.identification_id
+                        EMP_ALL.identification_id
                     ''', {
                     'account_id': req_account.id,
                     'period_number': report.period_id.number,
