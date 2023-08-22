@@ -427,8 +427,10 @@ class field_balance_spec_parser(XlsxReportParser):
                     account_move_line l
                     inner join account_period p on p.id = l.period_id
                     inner join account_move m on l.move_id = m.id
+                    inner join account_journal j on j.id = l.journal_id
                 where
                     l.account_id = %(account_id)s
+                    and j.type != 'revaluation'
                     and p.number not in (0, 16)
                     and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
                     and m.state='posted'
@@ -547,8 +549,10 @@ class field_balance_spec_parser(XlsxReportParser):
                             inner join account_account a on a.id = l.account_id
                             inner join account_period p on p.id = l.period_id
                             inner join account_move m on l.move_id = m.id
+                            inner join account_journal j on j.id = l.journal_id
                         where
                             l.account_id = %(account_id)s
+                            and j.type != 'revaluation'
                             and p.number not in (0, 16)
                             and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
                             and m.state='posted'
@@ -646,6 +650,7 @@ class field_balance_spec_parser(XlsxReportParser):
                         inner join account_period p on p.id = l.period_id
                         inner join account_move m on l.move_id = m.id
                         inner join res_currency cur on cur.id = l.currency_id
+                        inner join account_journal journal on journal.id = l.journal_id
                         left join account_move_reconcile partial on partial.id = l.reconcile_partial_id
                         left join res_partner partner on partner.id = l.partner_id
                         left join hr_employee emp on emp.id = l.employee_id
@@ -653,6 +658,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     where
                         l.account_id = %(account_id)s
                         and p.number not in (0, 16)
+                        and journal.type != 'revaluation'
                         and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
                         and m.state='posted'
                         and m.instance_id in %(instance)s
@@ -718,11 +724,13 @@ class field_balance_spec_parser(XlsxReportParser):
                             inner join account_move m on l.move_id = m.id
                             inner join res_currency cur on cur.id = l.currency_id
                             inner join account_move_reconcile rec on rec.id = l.reconcile_id
+                            inner join account_journal journal on journal.id = l.journal_id
                             left join res_partner partner on partner.id = l.partner_id
                             left join hr_employee emp on emp.id = l.employee_id
                             left join account_journal j on j.id = l.transfer_journal_id
                         where
                             l.account_id = %(account_id)s
+                            and journal.type != 'revaluation'
                             and p.number not in (0, 16)
                             and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
                             and m.state='posted'
@@ -775,12 +783,11 @@ class field_balance_spec_parser(XlsxReportParser):
                             inner join account_move m on l.move_id = m.id
                             inner join res_currency cur on cur.id = l.currency_id
                             inner join account_move_reconcile rec on rec.id = l.reconcile_id
-                            left join res_partner partner on partner.id = l.partner_id
-                            left join hr_employee emp on emp.id = l.employee_id
-                            left join account_journal j on j.id = l.transfer_journal_id
+                            inner join account_journal journal on journal.id = l.journal_id
                         where
                             l.account_id = %(account_id)s
                             and p.number not in (0, 16)
+                            and journal.type != 'revaluation'
                             and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
                             and m.state='posted'
                             and m.instance_id in %(instance)s
