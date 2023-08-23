@@ -9,7 +9,7 @@ from openpyxl.drawing import image
 from openpyxl.worksheet.header_footer import HeaderFooterItem
 import tools
 from PIL import Image as PILImage
-
+from dateutil.relativedelta import relativedelta
 
 class field_balance_spec_report(osv.osv_memory):
     _name = "field.balance.spec.report"
@@ -396,6 +396,10 @@ class field_balance_spec_parser(XlsxReportParser):
             bk_obj.write(self.cr, self.uid, bk_id, {'percent': 0.2})
 
         # sum of reconciliable accounts
+        ctx_with_date = context.copy()
+        ctx_with_date['date'] = (datetime.strptime(report.period_id.date_stop, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
+        inactive_accounts = {}
+
         req_account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True), ('code', '!=', '15640')], context=context)
         special_account_id = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True), ('code','=', '15640')], context=context)
 
@@ -450,7 +454,11 @@ class field_balance_spec_parser(XlsxReportParser):
             for ssum in self.cr.fetchall():
                 list_sum[ssum[1]] = ssum[0]
 
-        for req_account in self.pool.get('account.account').browse(self.cr, self.uid, all_account_ids, fields_to_fetch=['code', 'name'], context=context):
+        for req_account in self.pool.get('account.account').browse(self.cr, self.uid, all_account_ids, fields_to_fetch=['code', 'name', 'filter_active'], context=ctx_with_date):
+            if not req_account.filter_active and list_sum.get(req_account.id):
+                inactive_accounts[req_account.id] = True
+                continue
+
             sheet.append(
                 [self.cell_ro('%s %s' % (req_account.code, req_account.name), copy_style='A10')] +
                 [self.cell_ro('', copy_style='B10')] * 6 +
@@ -530,6 +538,8 @@ class field_balance_spec_parser(XlsxReportParser):
         total_account = float(len(all_account_ids))
         nb_account_done = 0
         for req_account in self.pool.get('account.account').browse(self.cr, self.uid, all_account_ids, fields_to_fetch=['code', 'name'], context=context):
+            if req_account.id in inactive_accounts:
+                continue
             account_sum = 0
             if req_account.code == '15640':
                 sheet.append(
