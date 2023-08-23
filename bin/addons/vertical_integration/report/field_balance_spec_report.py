@@ -242,7 +242,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
         sheet.append([
             self.cell_ro(_('Country Program'), 'header_1st_info_title'),
-            self.cell_ro(company.instance_id.mission or '', 'default_header_style'),
+            self.cell_ro(report.instance_id.mission or '', 'default_header_style'),
             self.cell_ro(_('Date of the report'), 'header_other_info_title'),
             self.cell_ro(datetime.now(), copy_style='D3')
         ] +
@@ -375,9 +375,16 @@ class field_balance_spec_parser(XlsxReportParser):
             bk_obj.write(self.cr, self.uid, bk_id, {'percent': 0.2})
 
         # sum of reconciliable accounts
-        req_account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True)], context=context)
-        for req_account in self.pool.get('account.account').browse(self.cr, self.uid, req_account_ids, fields_to_fetch=['code', 'name'], context=context):
-            if req_account.code == '15640':
+        req_account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True), ('code', '!=', '15640')], context=context)
+        special_account_id = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True), ('code','=', '15640')], context=context)
+
+        all_account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True)], context=context) # list ordered by code
+
+        list_sum = {}
+        for list_accounts in [req_account_ids, special_account_id]:
+            if not list_accounts:
+                continue
+            if list_accounts == ['15640']:
                 req_cond = 'and l.employee_id is not null'
             else:
                 req_cond = '''        and (
@@ -396,35 +403,41 @@ class field_balance_spec_parser(XlsxReportParser):
                 '''
             self.cr.execute('''
                 select
-                    sum(coalesce(l.debit,0) - coalesce(l.credit,0))
+                    sum(coalesce(l.debit,0) - coalesce(l.credit,0)),
+                    l.account_id
                 from
                     account_move_line l
                     inner join account_period p on p.id = l.period_id
                     inner join account_move m on l.move_id = m.id
                     inner join account_journal j on j.id = l.journal_id
                 where
-                    l.account_id = %(account_id)s
+                    l.account_id in %(account_id)s
                     and j.type != 'revaluation'
                     and p.number not in (0, 16)
                     and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
                     and m.state='posted'
                     and m.instance_id in %(instance)s
                     ''' + req_cond + '''
+                group by
+                    l.account_id
                 ''', {
-                'account_id': req_account.id,
+                'account_id': tuple(list_accounts),
                 'period_number': report.period_id.number,
                 'period_start': report.period_id.date_start,
                 'instance': tuple(all_instance_ids),
             })
             for ssum in self.cr.fetchall():
-                sheet.append(
-                    [self.cell_ro('%s %s' % (req_account.code, req_account.name), copy_style='A10')] +
-                    [self.cell_ro('', copy_style='B10')] * 6 +
-                    [self.cell_ro(round(ssum[0] or 0, 2), copy_style='H10')] +
-                    [self.cell_ro('', copy_style='B10')] * 2 +
-                    [self.cell_ro('', copy_style='K10', unlock=True), self.cell_ro('', copy_style='L10', unlock=True)]
-                )
-                line += 1
+                list_sum[ssum[1]] = ssum[0]
+
+        for req_account in self.pool.get('account.account').browse(self.cr, self.uid, all_account_ids, fields_to_fetch=['code', 'name'], context=context):
+            sheet.append(
+                [self.cell_ro('%s %s' % (req_account.code, req_account.name), copy_style='A10')] +
+                [self.cell_ro('', copy_style='B10')] * 6 +
+                [self.cell_ro(round(list_sum.get(req_account.id) or 0, 2), copy_style='H10')] +
+                [self.cell_ro('', copy_style='B10')] * 2 +
+                [self.cell_ro('', copy_style='K10', unlock=True), self.cell_ro('', copy_style='L10', unlock=True)]
+            )
+            line += 1
 
         sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', 'user_line', unlock=True)] * 2)
         sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
@@ -491,9 +504,9 @@ class field_balance_spec_parser(XlsxReportParser):
             bk_obj.write(self.cr, self.uid, bk_id, {'percent': 0.5})
 
         # details of reconciliable accounts
-        total_account = float(len(req_account_ids))
+        total_account = float(len(all_account_ids))
         nb_account_done = 0
-        for req_account in self.pool.get('account.account').browse(self.cr, self.uid, req_account_ids, fields_to_fetch=['code', 'name'], context=context):
+        for req_account in self.pool.get('account.account').browse(self.cr, self.uid, all_account_ids, fields_to_fetch=['code', 'name'], context=context):
             account_sum = 0
             if req_account.code == '15640':
                 sheet.append(
@@ -809,7 +822,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
             nb_account_done += 1
             if bk_id:
-                bk_obj.write(self.cr, self.uid, bk_id, {'percent': max(0.99, 0.5 + 50 * nb_account_done/total_account/100.)})
+                bk_obj.write(self.cr, self.uid, bk_id, {'percent': max(0.95, 0.5 + 0.45 * nb_account_done/total_account)})
 
 
         sheet.append(
