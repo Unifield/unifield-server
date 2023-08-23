@@ -455,7 +455,7 @@ class field_balance_spec_parser(XlsxReportParser):
                 list_sum[ssum[1]] = ssum[0]
 
         for req_account in self.pool.get('account.account').browse(self.cr, self.uid, all_account_ids, fields_to_fetch=['code', 'name', 'filter_active'], context=ctx_with_date):
-            if not req_account.filter_active and list_sum.get(req_account.id):
+            if not req_account.filter_active and not list_sum.get(req_account.id):
                 inactive_accounts[req_account.id] = True
                 continue
 
