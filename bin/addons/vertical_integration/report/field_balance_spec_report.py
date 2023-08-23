@@ -362,32 +362,6 @@ class field_balance_spec_parser(XlsxReportParser):
                 register_details[liq[2]] = liq[1]
                 liq_sum += liq[1] / fx_rates_by_id[liq[0]]
 
-            # initial balance start
-
-            # TODO: DO NOT WORK AT HQ
-            self.cr.execute('''
-                select j.currency, sum(coalesce(balance_start, 0)), j.id
-                from account_bank_statement st, account_journal j, account_period p
-                where
-                    j.id = st.journal_id
-                    and p.id = st.period_id
-                    and j.default_debit_account_id = %(account_id)s
-                    and j.instance_id in %(instance)s
-                    and st.state != 'draft'
-                    and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
-                    and (st.journal_id, p.date_start) in (select st.journal_id, min(p.date_start) from account_bank_statement st, account_period p where p.id=st.period_id group by st.journal_id)
-                group by
-                    j.currency, j.id
-                ''', {
-                'instance': tuple(all_instance_ids),
-                'period_start': report.period_id.date_start,
-                'period_number': report.period_id.number,
-                'account_id': liq_account.id,
-            })
-            for init_bal in self.cr.fetchall():
-                register_details[init_bal[2]] = register_details.setdefault(init_bal[2], 0) + init_bal[1]
-                liq_sum += init_bal[1] / fx_rates_by_id[init_bal[0]]
-
             sheet.append(
                 [self.cell_ro('%s %s' % (liq_account.code, liq_account.name), copy_style='A10')] +
                 [self.cell_ro('', copy_style='B10')] * 6 +
@@ -458,7 +432,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
         year = datetime.strptime(report.period_id.date_start, '%Y-%m-%d').year
         for j_type in ['cash', 'bank']:
-            j_ids = self.pool.get('account.journal').search(self.cr, self.uid, ['&', ('type', '=', j_type), '|', ('is_active', '=', True), ('inactivation_date', '>', '%s-01-31' % (year, ) )], context=context)
+            j_ids = self.pool.get('account.journal').search(self.cr, self.uid, ['&', ('type', '=', j_type), '|', ('is_active', '=', True), ('inactivation_date', '>', '%s-01-31' % (year, )), ('instance_id', 'in', all_instance_ids)], context=context)
             first_line = True
             account_sum = 0
             for journal in self.pool.get('account.journal').browse(self.cr, self.uid, j_ids, context=context):
