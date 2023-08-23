@@ -25,7 +25,7 @@ class field_balance_spec_report(osv.osv_memory):
 
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True, domain=[('level', '=', 'coordo'), ('state', '=', 'active'), ('instance_to_display_ids','=',True)]),
-        'period_id': fields.many2one('account.period', 'Period', required=True, domain=[('state', 'in', ['draft', 'field-closed', 'mission-closed', 'done', '!!REMOVE DONE!!!']), ('number', 'not in', [0, 16])]),
+        'period_id': fields.many2one('account.period', 'Period', required=True, domain=[('state', 'in', ['draft', 'field-closed', 'mission-closed']), ('number', 'not in', [0, 16])]),
         'selection': fields.selection([('total', 'Total of entries reconciled in later period'),
                                        ('details', 'Details of entries reconciled in later period')],
                                       string="Select", required=True),

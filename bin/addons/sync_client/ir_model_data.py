@@ -101,8 +101,6 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         """
         Gets all records for all not ignored models and calls get_sd_ref, thereby creating sdrefs that dont exist
         """
-        # !!!!!!!!!!!!!!!!!!! TODO/ REMOVE ME !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        return True
         # loop on objects that don't match the models to ignore domain in sync common
         result = set()
         for model in WHITE_LIST_MODEL:
