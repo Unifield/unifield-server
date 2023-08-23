@@ -41,7 +41,7 @@ class field_balance_spec_report(osv.osv_memory):
         return False
 
     _defaults = {
-        'selection': lambda *a: 'entries_total',
+        'selection': lambda *a: 'details',
         'instance_id': lambda self, cr, uid, *a, **b: self._get_instance(cr, uid, *a, **b)
     }
 
@@ -630,7 +630,10 @@ class field_balance_spec_parser(XlsxReportParser):
                         ) as fx_rate,
                         coalesce(l.debit, 0) - coalesce(l.credit, 0),
                         partial.name,
-                        coalesce(partner.name, j.code, emp.name_resource||' '||emp.identification_id)
+                        coalesce(partner.name, j.code, emp.name_resource||' '||emp.identification_id),
+                        (
+                            select sum(amount_currency) from account_move_line where reconcile_partial_id is not null and reconcile_partial_id = partial.id
+                        )
                     from
                         account_move_line l
                         inner join account_account a on a.id = l.account_id
@@ -669,7 +672,7 @@ class field_balance_spec_parser(XlsxReportParser):
                         self.cell_ro(account_line[5], copy_style='F19'),
                         self.cell_ro(account_line[6], copy_style='G19'),
                         self.cell_ro(account_line[7], copy_style='H19'),
-                        self.cell_ro(account_line[8], copy_style='B19'),
+                        self.cell_ro(account_line[8] and '%s (%.02lf)' % (account_line[8], account_line[10]) or '', copy_style='B19'),
                         self.cell_ro(account_line[9], copy_style='B19'),
                         self.cell_ro('', copy_style='K10', unlock=True),
                         self.cell_ro('', copy_style='L10', unlock=True),

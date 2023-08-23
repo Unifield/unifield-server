@@ -124,9 +124,9 @@
             <field name="target">new</field>
         </record>
 
-        <menuitem parent="account.menu_finance_generic_reporting"
+        <menuitem parent="account.final_accounting_reports"
             action="action_field_bal_spec_report"
-            id="menu_action_field_bal_spec_report"  sequence="25"/>
+            id="menu_action_field_bal_spec_report"  sequence="200"/>
 
     <!-- OCB export -->
 
