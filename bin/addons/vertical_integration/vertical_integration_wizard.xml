@@ -101,9 +101,8 @@
                 <field name="period_id" />
                 <field name="selection"/>
                 <group colspan="2" col="4">
-                    <field name="eoy" on_change="change_eoy(eoy)"/>
                     <field name="has_one_table" invisible="1" />
-                    <field name="currency_table" attrs="{'invisible': ['|', ('eoy', '=', False), ('has_one_table', '=', True)], 'required': [('eoy', '=', True)]}" />
+                    <field name="eoy" attrs="{'readonly': [('has_one_table', '=', False)]}"/>
                 </group>
                 <group colspan="6" col="4">
                     <label string="" colspan="2"/>

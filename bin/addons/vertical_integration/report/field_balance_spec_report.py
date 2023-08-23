@@ -29,8 +29,7 @@ class field_balance_spec_report(osv.osv_memory):
         'selection': fields.selection([('total', 'Total of entries reconciled in later period'),
                                        ('details', 'Details of entries reconciled in later period')],
                                       string="Select", required=True),
-        'eoy': fields.boolean('End of Year'),
-        'currency_table': fields.many2one('res.currency.table', 'Currency Table', domain=[('state', '=', 'valid')]),
+        'eoy': fields.boolean('End of Year', help='Field is disabled if no valid currency table'),
         'has_one_table': fields.boolean('Has a single valid currency table', readonly=1),
     }
 
@@ -40,18 +39,14 @@ class field_balance_spec_report(osv.osv_memory):
             return instance.id
         return False
 
+    def _get_has_currency_table(self, cr, uid, *a, **b):
+        return self.pool.get('res.currency.table').search_exists(cr, uid, [('state', '=', 'valid')])
+
     _defaults = {
         'selection': lambda *a: 'details',
-        'instance_id': lambda self, cr, uid, *a, **b: self._get_instance(cr, uid, *a, **b)
+        'instance_id': lambda self, cr, uid, *a, **b: self._get_instance(cr, uid, *a, **b),
+        'has_one_table': lambda self, cr, uid, *a, **b: self._get_has_currency_table(cr, uid, *a, **b),
     }
-
-    def change_eoy(self, cr, uid, ids, eoy, context=None):
-        if eoy:
-            cur_tables = self.pool.get('res.currency.table').search(cr, uid, [('state', '=', 'valid')], limit=2)
-            if len(cur_tables) == 1:
-                return {'value': {'currency_table': cur_tables[0], 'has_one_table': True}}
-            return {'value': {'has_one_table': False}}
-        return {}
 
     def button_create_report(self, cr, uid, ids, context=None):
         if context is None:
@@ -153,9 +148,35 @@ class field_balance_spec_parser(XlsxReportParser):
             fx_rates[x[0]] = x[1]
             fx_rates_by_id[x[2]] = x[1]
 
+        ct_fx_rates = {}
+        ct_fx_rates_by_id = {}
+        if report.eoy:
+            self.cr.execute('''
+                select cur.name,
+                    (select rate.rate
+                        from res_currency_rate rate
+                        where rate.currency_id = cur.id
+                        order by
+                        rate.name desc
+                        limit 1
+                    ) as fx_rate,
+                    cur.reference_currency_id
+                from res_currency cur, res_currency_table t
+                where
+                    cur.currency_table_id = t.id
+                    and t.state = 'valid'
+                    and cur.name in %s
+            ''', (tuple(list_curr), ))
+            for x in self.cr.fetchall():
+                ct_fx_rates[x[0]] = x[1]
+                ct_fx_rates_by_id[x[2]] = x[1]
+
         rates = {}
         for n, cur in enumerate(list_curr[1:]):
-            rates[n] = {'name': cur, 'value': fx_rates[cur]}
+            if report.eoy:
+                rates[n] = {'name': cur, 'value': ct_fx_rates[cur]}
+            else:
+                rates[n] = {'name': cur, 'value': fx_rates[cur]}
 
         page_title = _('Field Balance Specification Report From UniField')
 
@@ -448,6 +469,7 @@ class field_balance_spec_parser(XlsxReportParser):
             j_ids = self.pool.get('account.journal').search(self.cr, self.uid, ['&', ('type', '=', j_type), '|', ('is_active', '=', True), ('inactivation_date', '>', '%s-01-31' % (year, )), ('instance_id', 'in', all_instance_ids)], context=context)
             first_line = True
             account_sum = 0
+            ct_account_sum = 0
             for journal in self.pool.get('account.journal').browse(self.cr, self.uid, j_ids, context=context):
                 if first_line:
                     sheet.append(
@@ -460,8 +482,8 @@ class field_balance_spec_parser(XlsxReportParser):
                             self.cell_ro(_('Currency Amount'), copy_style='F18'),
                             self.cell_ro(_('Period Rate'), copy_style='F18'),
                             self.cell_ro(_('%s Amount with Current Period Rate') % company.currency_id.name, copy_style='F18'),
-                            self.cell_ro('', copy_style='B18'),
-                            self.cell_ro('', copy_style='B18'),
+                            self.cell_ro(report.eoy and _('Year End Rate Currency Table') or '', copy_style='F18'),
+                            self.cell_ro(report.eoy and '%s %s' % (company.currency_id.name, _('Amount with Year End Rate Currency Table')) or '', copy_style='F18'),
                             self.cell_ro(_("Field's Comments"), copy_style='B9'),
                             self.cell_ro(_("HQ Comments"), copy_style='L9'),
                         ]
@@ -477,20 +499,21 @@ class field_balance_spec_parser(XlsxReportParser):
                     self.cell_ro(register_details.get(journal.id, 0), copy_style='H19'),
                     self.cell_ro(fx_rates_by_id.get(journal.currency.id, 0), copy_style='G19'),
                     self.cell_ro(register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), copy_style='H19'),
-                    self.cell_ro('', copy_style='B19'),
-                    self.cell_ro('', copy_style='B19'),
+                    self.cell_ro(ct_fx_rates_by_id.get(journal.currency.id, 0) if report.eoy else '', copy_style='G19'),
+                    self.cell_ro(register_details.get(journal.id,0) / ct_fx_rates_by_id.get(journal.currency.id, 1) if report.eoy else '', copy_style='H19'),
                     self.cell_ro('', copy_style='K10', unlock=True),
                     self.cell_ro('', copy_style='L10', unlock=True),
                 ])
-
                 line += 1
                 account_sum += round(register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), 2)
+                if report.eoy:
+                    ct_account_sum += round(register_details.get(journal.id,0) / ct_fx_rates_by_id.get(journal.currency.id, 1), 2)
 
             sheet.append(
                 [self.cell_ro('', 'header_1st_info_title')] +
                 [self.cell_ro('', 'default_header_style')] * 6  +
                 [self.cell_ro(account_sum, copy_style='H25')] +
-                [self.cell_ro('', 'default_header_style')] * 2  +
+                [self.cell_ro('', 'default_header_style'), self.cell_ro(ct_account_sum if report.eoy else '', copy_style='H25')]  +
                 [self.cell_ro('', copy_style='K10', unlock=True), self.cell_ro('', copy_style='L10', unlock=True)]
             )
             line += 1
