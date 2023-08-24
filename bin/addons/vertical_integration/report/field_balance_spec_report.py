@@ -630,7 +630,7 @@ class field_balance_spec_parser(XlsxReportParser):
                         [self.cell_ro('', style='line_text')] * 6 +
                         [
                             self.cell_ro(round(emp[1], 2), style='line_amount'),
-                            self.cell_ro(emp[2], style='line_text'),
+                            self.cell_ro(emp[2], style='line_info'),
                             self.cell_ro('', style='line_text'),
                             self.cell_ro('', style='field_comment', unlock=True),
                             self.cell_ro('', style='hq_comment', unlock=True),
