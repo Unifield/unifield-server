@@ -244,6 +244,7 @@ class field_balance_spec_parser(XlsxReportParser):
         self.create_style_from_template('title_info', 'I18')
         self.create_style_from_template('title_hq_comment', 'L9')
         self.create_style_from_template('line_account', 'A19')
+        self.create_style_from_template('line_rate', 'G19')
         self.create_style_from_template('line_amount', 'H19')
         self.create_style_from_template('line_text', 'B19')
         self.create_style_from_template('line_date', 'D19')
@@ -529,9 +530,9 @@ class field_balance_spec_parser(XlsxReportParser):
                     self.cell_ro(not journal.is_active and _('Inactive') or '', style='line_text'),
                     self.cell_ro(journal.currency.name, style='line_curr'),
                     self.cell_ro(register_details.get(journal.id, 0), style='line_amount'),
-                    self.cell_ro(fx_rates_by_id.get(journal.currency.id, 0), style='line_amount'),
+                    self.cell_ro(fx_rates_by_id.get(journal.currency.id, 0), style='line_rate'),
                     self.cell_ro(register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), style='line_amount'),
-                    self.cell_ro(ct_fx_rates_by_id.get(journal.currency.id, 0) if report.eoy else '', style='line_amount'),
+                    self.cell_ro(ct_fx_rates_by_id.get(journal.currency.id, 0) if report.eoy else '', style='line_rate'),
                     self.cell_ro(register_details.get(journal.id,0) / ct_fx_rates_by_id.get(journal.currency.id, 1) if report.eoy else '', style='line_amount'),
                     self.cell_ro('', style='field_comment', unlock=True),
                     self.cell_ro('', style='hq_comment', unlock=True),
@@ -680,7 +681,7 @@ class field_balance_spec_parser(XlsxReportParser):
                         where
                             rate.currency_id = l.currency_id
                             and currency_table_id is null
-                            and rate.name < coalesce(l.source_date, l.''' + date_used + ''')
+                            and rate.name <= coalesce(l.source_date, l.''' + date_used + ''')
                         order by
                             rate.name desc
                         limit 1
@@ -727,7 +728,7 @@ class field_balance_spec_parser(XlsxReportParser):
                         self.cell_ro(self.to_datetime(account_line[3]), style='line_date'),
                         self.cell_ro(account_line[4], style='line_curr'),
                         self.cell_ro(account_line[5], style='line_amount'),
-                        self.cell_ro(account_line[6], style='line_amount'),
+                        self.cell_ro(account_line[6], style='line_rate'),
                         self.cell_ro(account_line[7], style='line_amount'),
                         self.cell_ro(account_line[8] and '%s (%.02lf)' % (account_line[8], account_line[10]) or '', style='line_info'),
                         self.cell_ro(account_line[9], style='line_text'),
@@ -756,7 +757,7 @@ class field_balance_spec_parser(XlsxReportParser):
                             where
                                 rate.currency_id = l.currency_id
                                 and currency_table_id is null
-                                and rate.name < coalesce(l.source_date, l.''' + date_used + ''')
+                                and rate.name <= coalesce(l.source_date, l.''' + date_used + ''')
                             order by
                                 rate.name desc
                             limit 1
@@ -809,7 +810,7 @@ class field_balance_spec_parser(XlsxReportParser):
                             self.cell_ro(self.to_datetime(account_line[3]), style='line_date'),
                             self.cell_ro(account_line[4], style='line_curr'),
                             self.cell_ro(account_line[5], style='line_amount'),
-                            self.cell_ro(account_line[6], style='line_amount'),
+                            self.cell_ro(account_line[6], style='line_rate'),
                             self.cell_ro(account_line[7], style='line_amount'),
                             self.cell_ro(account_line[8], style='line_info'),
                             self.cell_ro(account_line[9], style='line_text'),
