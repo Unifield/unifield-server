@@ -478,7 +478,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                         vals.update({'active': False})
                     # Check job
                     if contract.job_id:
-                        vals.update({'job_id': contract.job_id.id})
+                        vals.update({'job_name': contract.job_id.name})
                 # Check the contract dates
                 vals.update({'contract_start_date': contract.date_start or False})
                 vals.update({'contract_end_date': contract.date_end or False})
