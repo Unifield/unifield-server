@@ -184,8 +184,8 @@ class field_balance_spec_parser(XlsxReportParser):
         sheet = self.workbook.active
         sheet.sheet_view.zoomScale = 75
         sheet.protection.formatCells = False
-        sheet.protection.formatRows = False
-        sheet.protection.formatColumns = False
+        #sheet.protection.formatRows = False
+        #sheet.protection.formatColumns = False
         sheet.protection.autoFilter = False
         sheet.protection.sheet = True
         sheet.sheet_view.showGridLines = True
