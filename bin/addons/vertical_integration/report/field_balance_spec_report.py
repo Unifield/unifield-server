@@ -428,7 +428,7 @@ class field_balance_spec_parser(XlsxReportParser):
             [('', 'title_text')] * 6 +
             [(_('UniField Balance in %s') % (company.currency_id.name,) , 'title_amount')] +
             [('', 'title_text')] +
-            [('%s %s' % (company.currency_id.name,_('Amount with Year End Rate Currency Table')), 'title_amount')] +
+            [(_('%s Amount with Year End Rate Currency Table') % (company.currency_id.name, ), 'title_amount')] +
             [('', 'title_text')] * 2 +
             [(_("Field's Comments"), 'title_text'), (_("HQ Comments"), 'title_hq_comment')]
         )
@@ -593,7 +593,7 @@ class field_balance_spec_parser(XlsxReportParser):
                             (_('Period Rate'), 'title_amount'),
                             (_('%s Amount with Current Period Rate') % company.currency_id.name, 'title_amount'),
                             (_('Year End Rate Currency Table'), 'title_amount'),
-                            ( '%s %s' % (company.currency_id.name, _('Amount with Year End Rate Currency Table')), 'title_amount'),
+                            (_('%s Amount with Year End Rate Currency Table') % (company.currency_id.name, ), 'title_amount'),
                             ('', 'title_text'),
                             ('', 'title_text'),
                             (_("Field's Comments"), 'title_text'),
@@ -778,7 +778,7 @@ class field_balance_spec_parser(XlsxReportParser):
                 amount_title = _('%s Amount') % (company.currency_id.name, )
                 if req_account.id in chq_account and company.revaluation_default_account:
                     rate_title = _('Period Rate')
-                    amount_title = '%s %s ' % (company.currency_id.name, _('Amount with Current Period Rate'))
+                    amount_title = _('%s Amount with Current Period Rate') % (company.currency_id.name, )
 
                 self.append_line([
                     ('%s - %s' % (req_account.code, req_account.name), 'title_account'),
@@ -790,7 +790,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     (rate_title, 'title_amount'),
                     (amount_title, 'title_amount'),
                     (_('Year End Rate Currency Table'), 'title_amount'),
-                    ('%s %s' % (company.currency_id.name,_('Amount with Year End Rate Currency Table')), 'title_amount'),
+                    (_('%s Amount with Year End Rate Currency Table') % (company.currency_id.name, ), 'title_amount'),
                     (_('Reconcile Number'), 'title_info'),
                     (_('Third Party'), 'title_info'),
                     (_("Field's Comments"), 'title_text'),
