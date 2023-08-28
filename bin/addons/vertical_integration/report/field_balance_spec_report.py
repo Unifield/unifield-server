@@ -203,6 +203,7 @@ class field_balance_spec_parser(XlsxReportParser):
         sheet.page_margins.right = 0.2
         sheet.page_margins.top = 0.2
         sheet.page_margins.bottom = 1
+        sheet.freeze_panes = 'C9'
 
         self.duplicate_column_dimensions()
         self.duplicate_row_dimensions(range(1, 9))
@@ -637,12 +638,12 @@ class field_balance_spec_parser(XlsxReportParser):
                     'instance': tuple(all_instance_ids),
                 })
                 partner_txt_lines = {}
+                all_lines = []
                 for emp in self.cr.fetchall():
                     line_amount = emp[1]
                     if emp[0] and not emp[2]:
                         # extract identification_id from partner_txt
                         if abs(line_amount) > 0.001:
-                            print emp
                             m = re.search('([0-9]+)\s*$', emp[0])
                             if m:
                                 if m.group(1) not in partner_txt_lines:
@@ -657,36 +658,33 @@ class field_balance_spec_parser(XlsxReportParser):
                         if abs(line_amount) <= 0.001:
                             continue
 
+                    emp_id = emp[2]
+                    if emp_id:
+                        try:
+                            emp_id = int(emp[2])
+                        except:
+                            pass
+                    all_lines.append([emp[0], line_amount, emp_id])
+
+                # partner_txt lines not linked to employee_id line
+                for emp_id in partner_txt_lines:
+                    if abs(partner_txt_lines[emp_id]['amount']) > 0.001:
+                        all_lines.append(partner_txt_lines[emp_id])
+
+                for emp in sorted(all_lines, key=lambda x: x[2]):
                     sheet.append(
                         [self.cell_ro(emp[0], style='line_account')] +
                         [self.cell_ro('', style='line_text')] * 6 +
                         [
-                            self.cell_ro(round(line_amount, 2), style='line_amount'),
-                            self.cell_ro(emp[2], style='line_info'),
+                            self.cell_ro(round(emp[1], 2), style='line_amount'),
+                            self.cell_ro('%s'%emp[2], style='line_info'),
                             self.cell_ro('', style='line_text'),
                             self.cell_ro('', style='field_comment', unlock=True),
                             self.cell_ro('', style='hq_comment', unlock=True),
                         ]
                     )
                     line += 1
-                    account_sum += round(line_amount, 2)
-
-                # partner_txt lines not linked to employee_id line
-                for emp_id in partner_txt_lines:
-                    if abs(partner_txt_lines[emp_id]['amount']) > 0.001:
-                        sheet.append(
-                            [self.cell_ro(partner_txt_lines[emp_id]['name'], style='line_account')] +
-                            [self.cell_ro('', style='line_text')] * 6 +
-                            [
-                                self.cell_ro(round(partner_txt_lines[emp_id]['amount'], 2), style='line_amount'),
-                                self.cell_ro(emp[2], style='line_info'),
-                                self.cell_ro('', style='line_text'),
-                                self.cell_ro('', style='field_comment', unlock=True),
-                                self.cell_ro('', style='hq_comment', unlock=True),
-                            ]
-                        )
-                        line += 1
-                        account_sum += round(partner_txt_lines[emp_id]['amount'], 2)
+                    account_sum += round(emp[1], 2)
 
 
                 if report.selection == 'details':
