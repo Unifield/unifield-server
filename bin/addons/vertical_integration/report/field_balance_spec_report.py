@@ -1054,7 +1054,7 @@ class field_balance_spec_parser(XlsxReportParser):
 
             nb_account_done += 1
             if bk_id:
-                bk_obj.write(self.cr, self.uid, bk_id, {'percent': max(0.95, 0.5 + 0.45 * nb_account_done/total_account)})
+                bk_obj.write(self.cr, self.uid, bk_id, {'percent': min(0.95, 0.5 + 0.45 * nb_account_done/total_account)})
 
 
         self.append_line(
