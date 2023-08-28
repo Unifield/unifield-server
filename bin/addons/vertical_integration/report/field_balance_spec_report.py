@@ -10,6 +10,7 @@ from openpyxl.worksheet.header_footer import HeaderFooterItem
 import tools
 from PIL import Image as PILImage
 from dateutil.relativedelta import relativedelta
+import re
 
 class field_balance_spec_report(osv.osv_memory):
     _name = "field.balance.spec.report"
@@ -434,8 +435,9 @@ class field_balance_spec_parser(XlsxReportParser):
         for list_accounts in [req_account_ids, special_account_id]:
             if not list_accounts:
                 continue
-            if list_accounts == ['15640']:
-                req_cond = 'and l.employee_id is not null'
+            if list_accounts == special_account_id:
+                req_cond = ''
+                #    req_cond = 'and l.employee_id is not null'
             else:
                 req_cond = '''        and (
                             l.reconcile_id is null
@@ -584,17 +586,17 @@ class field_balance_spec_parser(XlsxReportParser):
                    select name, sum(balance), identification_id from
                    (
                         select
-                            res.name as name,
+                            coalesce(res.name, l.partner_txt) as name,
                             sum(coalesce(l.debit, 0) - coalesce(l.credit, 0)) as balance,
                             emp.identification_id as identification_id
                         from
-                            hr_employee emp
-                            inner join resource_resource res on res.id = emp.resource_id
-                            inner join account_move_line l on l.employee_id = emp.id
+                            account_move_line l
                             inner join account_account a on a.id = l.account_id
                             inner join account_period p on p.id = l.period_id
                             inner join account_move m on l.move_id = m.id
                             inner join account_journal j on j.id = l.journal_id
+                            left join hr_employee emp on l.employee_id = emp.id
+                            left join resource_resource res on res.id = emp.resource_id
                         where
                             l.account_id = %(account_id)s
                             and j.type != 'revaluation'
@@ -602,7 +604,7 @@ class field_balance_spec_parser(XlsxReportParser):
                             and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
                             and m.state='posted'
                             and m.instance_id in %(instance)s
-                        group by emp.id, res.name, emp.identification_id, res.active
+                        group by emp.id, coalesce(res.name, partner_txt), emp.identification_id, res.active
                         having
                             res.active = 't' or abs(sum(coalesce(l.debit, 0) - coalesce(l.credit, 0))) > 0.001
 
@@ -618,19 +620,38 @@ class field_balance_spec_parser(XlsxReportParser):
                     group by
                         name, identification_id
                     order by
-                        EMP_ALL.identification_id
+                        EMP_ALL.identification_id NULLS FIRST
                     ''', {
                     'account_id': req_account.id,
                     'period_number': report.period_id.number,
                     'period_start': report.period_id.date_start,
                     'instance': tuple(all_instance_ids),
                 })
+                partner_txt_lines = {}
                 for emp in self.cr.fetchall():
+                    line_amount = emp[1]
+                    if not emp[2]:
+                        # extract identification_id from partner_txt
+                        if abs(line_amount) > 0.001:
+                            m = re.search('([0-9]+)\s*$', emp[0])
+                            if m:
+                                if m.group(1) not in partner_txt_lines:
+                                    partner_txt_lines[m.group(1)] = {'name': emp[0], 'amount': line_amount}
+                                else:
+                                    partner_txt_lines[m.group(1)]['amount'] += line_amount
+                            continue
+                    elif partner_txt_lines.get(emp[2]):
+                        # add amount on partner_txt to existing employee_id line
+                        line_amount += partner_txt_lines[emp[2]]['amount']
+                        del partner_txt_lines[emp[2]]
+                        if abs(line_amount) <= 0.001:
+                            continue
+
                     sheet.append(
                         [self.cell_ro(emp[0], style='line_account')] +
                         [self.cell_ro('', style='line_text')] * 6 +
                         [
-                            self.cell_ro(round(emp[1], 2), style='line_amount'),
+                            self.cell_ro(round(line_amount, 2), style='line_amount'),
                             self.cell_ro(emp[2], style='line_info'),
                             self.cell_ro('', style='line_text'),
                             self.cell_ro('', style='field_comment', unlock=True),
@@ -638,7 +659,25 @@ class field_balance_spec_parser(XlsxReportParser):
                         ]
                     )
                     line += 1
-                    account_sum += round(emp[1], 2)
+                    account_sum += round(line_amount, 2)
+
+                # partner_txt lines not linked to employee_id line
+                for emp_id in partner_txt_lines:
+                    if abs(partner_txt_lines[emp_id]['amount']) > 0.001:
+                        sheet.append(
+                            [self.cell_ro(partner_txt_lines[emp_id]['name'], style='line_account')] +
+                            [self.cell_ro('', style='line_text')] * 6 +
+                            [
+                                self.cell_ro(round(partner_txt_lines[emp_id]['amount'], 2), style='line_amount'),
+                                self.cell_ro(emp[2], style='line_info'),
+                                self.cell_ro('', style='line_text'),
+                                self.cell_ro('', style='field_comment', unlock=True),
+                                self.cell_ro('', style='hq_comment', unlock=True),
+                            ]
+                        )
+                        line += 1
+                        account_sum += round(partner_txt_lines[emp_id]['amount'], 2)
+
 
                 if report.selection == 'details':
                     title_sum = _('List of entries reconciled in later periods >>>')
@@ -688,7 +727,7 @@ class field_balance_spec_parser(XlsxReportParser):
                         ) as fx_rate,
                         coalesce(l.debit, 0) - coalesce(l.credit, 0),
                         partial.name,
-                        coalesce(partner.name, j.code, emp.name_resource||' '||emp.identification_id),
+                        coalesce(partner.name, j.code, case when emp.employee_type='ex' then emp.name_resource when emp.employee_type='local'then emp.name_resource||' '||emp.identification_id else partner_txt end),
                         (
                             select sum(amount_currency) from account_move_line where reconcile_partial_id is not null and reconcile_partial_id = partial.id
                         )
