@@ -654,9 +654,9 @@ class field_balance_spec_parser(XlsxReportParser):
                     [('', 'title_text')] * 6 +
                     [
                         (_('%s Amount') % (company.currency_id.name, ), 'title_amount'),
+                        ('', 'title_text'),
+                        ('', 'title_text'),
                         (_('Subaccount Number'), 'title_info'),
-                        ('', 'title_text'),
-                        ('', 'title_text'),
                         ('', 'title_text'),
                         (_("Field's Comments"), 'title_text'),
                         (_("HQ Comments"), 'title_hq_comment'),
@@ -749,9 +749,9 @@ class field_balance_spec_parser(XlsxReportParser):
                         [('', 'line_text')] * 6 +
                         [
                             (round(emp[1], 2), 'line_amount'),
+                            ('', 'line_text'),
+                            ('', 'line_text'),
                             ('%s'%emp[2], 'line_info'),
-                            ('', 'line_text'),
-                            ('', 'line_text'),
                             ('', 'line_text'),
                             ('', 'field_comment', True),
                             ('', 'hq_comment', True),
