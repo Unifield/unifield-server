@@ -441,7 +441,7 @@ class field_balance_spec_parser(XlsxReportParser):
         for liq_account in self.pool.get('account.account').browse(self.cr, self.uid, liq_account_ids, fields_to_fetch=['code', 'name'], context=context):
             self.cr.execute('''
                 select
-                    l.currency_id, sum(round(coalesce(amount_currency,0), 2)), j.id
+                    l.currency_id, sum(coalesce(amount_currency,0)), j.id
                 from
                     account_move_line l, account_move m, account_period p, account_journal j
                 where
@@ -468,8 +468,8 @@ class field_balance_spec_parser(XlsxReportParser):
             # total entry encoding
             for liq in self.cr.fetchall():
                 register_details[liq[2]] = liq[1]
-                liq_sum += round(liq[1] / fx_rates_by_id.get(liq[0], 1), 2)
-                ct_sum += round(liq[1] / ct_fx_rates_by_id.get(liq[0], 1), 2)
+                liq_sum += liq[1] / fx_rates_by_id.get(liq[0], 1)
+                ct_sum += liq[1] / ct_fx_rates_by_id.get(liq[0], 1)
 
             self.append_line(
                 [('%s %s' % (liq_account.code, liq_account.name), 'line_account')] +
@@ -521,9 +521,9 @@ class field_balance_spec_parser(XlsxReportParser):
                 '''
             self.cr.execute('''
                 select
-                    sum(round(coalesce(l.debit,0) - coalesce(l.credit,0), 2)),
+                    sum(coalesce(l.debit,0) - coalesce(l.credit,0)),
                     l.account_id,
-                    sum(round(coalesce(amount_currency,0), 2)),
+                    sum(coalesce(amount_currency,0)),
                     l.currency_id
                 from
                     account_move_line l
@@ -550,10 +550,10 @@ class field_balance_spec_parser(XlsxReportParser):
                 list_sum.setdefault(ssum[1], 0)
                 ct_list_sum.setdefault(ssum[1], 0)
                 if ssum[1] in chq_account and company.revaluation_default_account:
-                    list_sum[ssum[1]] += round(ssum[2] / fx_rates_by_id.get(ssum[3], 1), 2)
+                    list_sum[ssum[1]] += ssum[2] / fx_rates_by_id.get(ssum[3], 1)
                 else:
-                    list_sum[ssum[1]] += round(ssum[0], 2)
-                ct_list_sum[ssum[1]] += round(ssum[2] / ct_fx_rates_by_id.get(ssum[3], 1), 2)
+                    list_sum[ssum[1]] += ssum[0]
+                ct_list_sum[ssum[1]] += ssum[2] / ct_fx_rates_by_id.get(ssum[3], 1)
 
         for req_account in self.pool.get('account.account').browse(self.cr, self.uid, all_account_ids, fields_to_fetch=['code', 'name', 'filter_active'], context=ctx_with_date):
             if not req_account.filter_active and not list_sum.get(req_account.id):
@@ -610,9 +610,9 @@ class field_balance_spec_parser(XlsxReportParser):
                     (journal.currency.name, 'line_curr'),
                     (register_details.get(journal.id, 0), 'line_amount'),
                     (fx_rates_by_id.get(journal.currency.id, 0), 'line_rate'),
-                    (round(register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), 2), 'line_amount'),
+                    (register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), 'line_amount'),
                     (ct_fx_rates_by_id.get(journal.currency.id, 0), 'line_rate'),
-                    (round(register_details.get(journal.id,0) / ct_fx_rates_by_id.get(journal.currency.id, 1), 2), 'line_amount'),
+                    (register_details.get(journal.id,0) / ct_fx_rates_by_id.get(journal.currency.id, 1), 'line_amount'),
                     ('', 'line_text'),
                     ('', 'line_text'),
                     ('', 'field_comment', True),
@@ -665,11 +665,11 @@ class field_balance_spec_parser(XlsxReportParser):
                 line += 1
                 # unreconciled or partial rec
                 self.cr.execute('''
-                   select name, sum(round(balance, 2)), identification_id from
+                   select name, sum(balance), identification_id from
                    (
                         select
                             coalesce(res.name, l.partner_txt, '') as name,
-                            sum(round(coalesce(l.debit, 0) - coalesce(l.credit, 0), 2)) as balance,
+                            sum(coalesce(l.debit, 0) - coalesce(l.credit, 0)) as balance,
                             emp.identification_id as identification_id
                         from
                             account_move_line l
@@ -819,7 +819,7 @@ class field_balance_spec_parser(XlsxReportParser):
                         partial.name,
                         coalesce(partner.name, j.code, case when emp.employee_type='ex' then emp.name_resource when emp.employee_type='local'then emp.name_resource||' '||emp.identification_id else partner_txt end),
                         (
-                            select sum(round(amount_currency, 2)) from account_move_line where reconcile_partial_id is not null and reconcile_partial_id = partial.id
+                            select sum(amount_currency) from account_move_line where reconcile_partial_id is not null and reconcile_partial_id = partial.id
                         ),
                         cur.id
                     from
@@ -853,13 +853,13 @@ class field_balance_spec_parser(XlsxReportParser):
                 for account_line in self.cr.fetchall():
                     if req_account.id in chq_account and company.revaluation_default_account:
                         line_rate = fx_rates_by_id.get(account_line[11],'')
-                        line_amount = round(account_line[5] / fx_rates_by_id.get(account_line[11], 1), 2)
+                        line_amount = account_line[5] / fx_rates_by_id.get(account_line[11], 1)
                     else:
                         line_rate = account_line[6]
-                        line_amount = round(account_line[7], 2)
+                        line_amount = account_line[7]
 
                     ct_line_rate = ct_fx_rates_by_id.get(account_line[11],'')
-                    ct_line_amount = round(account_line[5] / ct_fx_rates_by_id.get(account_line[11], 1), 2)
+                    ct_line_amount = account_line[5] / ct_fx_rates_by_id.get(account_line[11], 1)
 
                     self.append_line([
                         (account_line[0], 'line_account'),
@@ -963,11 +963,11 @@ class field_balance_spec_parser(XlsxReportParser):
                             (account_line[2], 'line_text'),
                             (self.to_datetime(account_line[3]), 'line_date'),
                             (account_line[4], 'line_curr'),
-                            (round(account_line[5], 2), 'line_amount'),
+                            (account_line[5], 'line_amount'),
                             (line_rate, 'line_rate'),
-                            (round(line_amount, 2), 'line_amount'),
+                            (line_amount, 'line_amount'),
                             (ct_line_rate, 'line_rate'),
-                            (round(ct_line_amount, 2), 'line_amount'),
+                            (ct_line_amount, 'line_amount'),
                             (account_line[8], 'line_info'),
                             (account_line[9], 'line_text'),
                             ('', 'field_comment', True),
@@ -980,8 +980,8 @@ class field_balance_spec_parser(XlsxReportParser):
                     # sum reconciled later
                     self.cr.execute('''
                         select
-                            sum(round(coalesce(l.debit, 0) - coalesce(l.credit, 0), 2)),
-                            sum(round(coalesce(l.amount_currency, 0), 2)),
+                            sum(coalesce(l.debit, 0) - coalesce(l.credit, 0)),
+                            sum(coalesce(l.amount_currency, 0)),
                             l.currency_id
                         from
                             account_move_line l
@@ -1020,10 +1020,10 @@ class field_balance_spec_parser(XlsxReportParser):
                     ct_total_later = 0
                     for later_rec in self.cr.fetchall():
                         if req_account.id in chq_account and company.revaluation_default_account:
-                            total_later += round(later_rec[1] / fx_rates_by_id.get(later_rec[2], 1), 2)
+                            total_later += later_rec[1] / fx_rates_by_id.get(later_rec[2], 1)
                         else:
                             total_later += later_rec[0]
-                        ct_total_later += round(later_rec[1] / ct_fx_rates_by_id.get(later_rec[2], 1), 2)
+                        ct_total_later += later_rec[1] / ct_fx_rates_by_id.get(later_rec[2], 1)
                     account_sum += round(total_later, 2)
                     ct_account_sum += round(ct_total_later, 2)
                     self.append_line(
