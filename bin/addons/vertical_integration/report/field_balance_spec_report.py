@@ -560,12 +560,16 @@ class field_balance_spec_parser(XlsxReportParser):
                 inactive_accounts[req_account.id] = True
                 continue
 
+            if req_account.id in special_account_id:
+                ct_amount = ''
+            else:
+                ct_amount = round(ct_list_sum.get(req_account.id) or 0, 2)
             self.append_line(
                 [('%s %s' % (req_account.code, req_account.name), 'line_account')] +
                 [('', 'line_text')] * 6 +
                 [(round(list_sum.get(req_account.id) or 0, 2), 'line_amount')] +
                 [('', 'line_text')] +
-                [(round(ct_list_sum.get(req_account.id) or 0, 2), 'line_amount')] +
+                [(ct_amount, 'line_amount')] +
                 [('', 'line_text')] * 2 +
                 [('', 'field_comment', True), ('', 'hq_comment', True)]
             )
