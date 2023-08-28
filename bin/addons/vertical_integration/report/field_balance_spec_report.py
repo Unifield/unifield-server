@@ -1041,6 +1041,9 @@ class field_balance_spec_parser(XlsxReportParser):
                     )
                     line += 1
 
+            if req_account.code == '15640':
+                ct_account_sum = ''
+
             self.append_line(
                 [('', 'header_1st_info_title')] +
                 [('', 'default_header_style')] * 6  +
