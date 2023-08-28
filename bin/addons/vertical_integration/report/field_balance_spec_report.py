@@ -219,7 +219,8 @@ class field_balance_spec_parser(XlsxReportParser):
         self.create_style_from_template('logo_style', 'A1')
         self.create_style_from_template('title_cell1_style', 'B1')
         self.create_style_from_template('title_style', 'I1')
-        self.create_style_from_template('user_header', 'K1')
+        self.create_style_from_template('first_field_comment', 'K1')
+        self.create_style_from_template('first_hq_comment', 'L1')
         self.create_style_from_template('rate_style', 'G1')
         self.create_style_from_template('current_period_style', 'H1')
         self.create_style_from_template('func_curr_name', 'G2')
@@ -230,7 +231,6 @@ class field_balance_spec_parser(XlsxReportParser):
         self.create_style_from_template('end_doc_left', 'A37')
         self.create_style_from_template('end_doc_right', 'L37')
 
-        self.create_style_from_template('user_line', 'L2')
         self.create_style_from_template('default_header_style', 'B3')
         self.create_style_from_template('header_1st_info_title', 'A3')
         self.create_style_from_template('header_other_info_title', 'C3')
@@ -272,46 +272,50 @@ class field_balance_spec_parser(XlsxReportParser):
             self.cell_ro(_('Current period'), 'current_period_style'),
             self.cell_ro('', 'title_style'),
             self.cell_ro('', 'title_style'),
-            self.cell_ro('', 'user_header'),
-            self.cell_ro('', 'user_header'),
+            self.cell_ro('', style='first_field_comment', unlock=True),
+            self.cell_ro('', style='first_hq_comment', unlock=True),
         ])
         sheet.merged_cells.ranges.append("B1:F1")
-        sheet.merged_cells.ranges.append("K1:L1")
 
         sheet.append(
             [self.cell_ro('', 'header_1st_info_title')] +
             [self.cell_ro('', 'default_header_style')]*5 +
             [self.cell_ro(company.currency_id.name, 'func_curr_name'), self.cell_ro(1,  'func_curr_value')] +
             [self.cell_ro('', 'default_header_style')] * 2 +
-            [self.cell_ro('', 'user_line')] * 2
+            [
+                self.cell_ro('', style='field_comment', unlock=True),
+                self.cell_ro('', style='hq_comment', unlock=True)
+            ]
         )
-        sheet.merged_cells.ranges.append("K2:L2")
 
         sheet.append([
             self.cell_ro(_('Country Program'), 'header_1st_info_title'),
             self.cell_ro(report.instance_id.mission or '', 'default_header_style'),
             self.cell_ro(_('Date of the report'), 'header_other_info_title'),
-            self.cell_ro(datetime.now(), style='header_full_date')
+            self.cell_ro(datetime.now(), style='header_full_date'),
+            self.cell_ro('', 'default_header_style'),
+            self.cell_ro(_('Report exported from'), 'header_other_info_title'),
         ] +
-            [self.cell_ro('', 'default_header_style')] * 2 +
             [self.cell_ro(rates.get(0, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(0, {}).get('value', ''), 'cur_value')] +
             [self.cell_ro('', 'default_header_style')] * 2 +
-            [self.cell_ro('', 'user_line')] * 2
+            [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)],
         )
-        sheet.merged_cells.ranges.append("K3:L3")
 
         sheet.append([
             self.cell_ro(_('Month:'), 'header_1st_info_title'),
             self.cell_ro(datetime.strptime(report.period_id.date_start, '%Y-%m-%d'), 'header_month_date'),
             self.cell_ro(_('Date of review'), 'header_other_info_title'),
-            self.cell_ro('', style='header_full_date')
+            self.cell_ro('', style='header_full_date'),
+            self.cell_ro('', 'default_header_style'),
+            self.cell_ro(company.instance_id.instance, 'default_header_style'),
         ] +
-            [self.cell_ro('', 'default_header_style')] * 2 +
             [self.cell_ro(rates.get(1, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(1, {}).get('value', ''), 'cur_value')] +
             [self.cell_ro('', 'default_header_style')] * 2 +
-            [self.cell_ro('', 'user_line')] * 2
+            [
+                self.cell_ro('', style='field_comment', unlock=True),
+                self.cell_ro('', style='hq_comment', unlock=True)
+        ]
         )
-        sheet.merged_cells.ranges.append("K4:L4")
 
         sheet.append([
             self.cell_ro(_('Finco Name:'), 'header_1st_info_title'),
@@ -321,9 +325,11 @@ class field_balance_spec_parser(XlsxReportParser):
             [self.cell_ro('', 'default_header_style')] * 3 +
             [self.cell_ro(rates.get(2, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(2, {}).get('value', ''), 'cur_value')] +
             [self.cell_ro('', 'default_header_style')] * 2 +
-            [self.cell_ro('', 'user_line')] * 2
+            [
+                self.cell_ro('', style='field_comment', unlock=True),
+                self.cell_ro('', style='hq_comment', unlock=True)
+        ]
         )
-        sheet.merged_cells.ranges.append("K5:L5")
 
         sheet.append([
             self.cell_ro(_('HoM Name:'), 'header_1st_info_title'),
@@ -333,9 +339,11 @@ class field_balance_spec_parser(XlsxReportParser):
             [self.cell_ro('', 'default_header_style')] * 3 +
             [self.cell_ro(rates.get(3, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(3, {}).get('value', ''), 'cur_value')] +
             [self.cell_ro('', 'default_header_style')] * 2 +
-            [self.cell_ro('', 'user_line')] * 2
+            [
+                self.cell_ro('', style='field_comment', unlock=True),
+                self.cell_ro('', style='hq_comment', unlock=True)
+        ]
         )
-        sheet.merged_cells.ranges.append("K6:L6")
 
         sheet.append([
             self.cell_ro(_('HQ reviewer Name:'), 'header_1st_info_title'),
@@ -345,9 +353,11 @@ class field_balance_spec_parser(XlsxReportParser):
             [self.cell_ro('', 'default_header_style')] * 3 +
             [self.cell_ro(rates.get(4, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(4, {}).get('value', ''), 'cur_value')] +
             [self.cell_ro('', 'default_header_style')] * 2 +
-            [self.cell_ro('', 'user_line')] * 2
+            [
+                self.cell_ro('', style='field_comment', unlock=True),
+                self.cell_ro('', style='hq_comment', unlock=True)
+        ]
         )
-        sheet.merged_cells.ranges.append("K7:L7")
         rate_idx = 5
         line = 8
         while rates.get(rate_idx):
@@ -356,14 +366,15 @@ class field_balance_spec_parser(XlsxReportParser):
                 [self.cell_ro('', 'default_header_style')] * 5 +
                 [self.cell_ro(rates.get(rate_idx, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(rate_idx, {}).get('value', ''), 'cur_value')] +
                 [self.cell_ro('', 'default_header_style')] * 2 +
-                [self.cell_ro('', 'user_line', unlock=True)] * 2
+                [
+                    self.cell_ro('', style='field_comment', unlock=True),
+                    self.cell_ro('', style='hq_comment', unlock=True)
+                ]
             )
-            sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
             rate_idx += 1
             line += 1
 
-        sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', 'user_line', unlock=True)] * 2)
-        sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
+        sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)])
         line += 1
         sheet.append(
             [self.cell_ro(_('Balance accounts'), style='title_account')] +
@@ -495,8 +506,7 @@ class field_balance_spec_parser(XlsxReportParser):
             )
             line += 1
 
-        sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', 'user_line', unlock=True)] * 2)
-        sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
+        sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)])
         line += 1
 
         year = datetime.strptime(report.period_id.date_start, '%Y-%m-%d').year
@@ -554,8 +564,7 @@ class field_balance_spec_parser(XlsxReportParser):
             line += 1
 
 
-            sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', 'user_line', unlock=True)] * 2)
-            sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
+            sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)])
             line += 1
 
         if bk_id:
@@ -586,7 +595,7 @@ class field_balance_spec_parser(XlsxReportParser):
                    select name, sum(balance), identification_id from
                    (
                         select
-                            coalesce(res.name, l.partner_txt) as name,
+                            coalesce(res.name, l.partner_txt, '') as name,
                             sum(coalesce(l.debit, 0) - coalesce(l.credit, 0)) as balance,
                             emp.identification_id as identification_id
                         from
@@ -604,7 +613,7 @@ class field_balance_spec_parser(XlsxReportParser):
                             and ( p.date_start < %(period_start)s or p.date_start = %(period_start)s and p.number <= %(period_number)s)
                             and m.state='posted'
                             and m.instance_id in %(instance)s
-                        group by emp.id, coalesce(res.name, partner_txt), emp.identification_id, res.active
+                        group by emp.id, coalesce(res.name, partner_txt, ''), emp.identification_id, res.active
                         having
                             res.active = 't' or abs(sum(coalesce(l.debit, 0) - coalesce(l.credit, 0))) > 0.001
 
@@ -630,9 +639,10 @@ class field_balance_spec_parser(XlsxReportParser):
                 partner_txt_lines = {}
                 for emp in self.cr.fetchall():
                     line_amount = emp[1]
-                    if not emp[2]:
+                    if emp[0] and not emp[2]:
                         # extract identification_id from partner_txt
                         if abs(line_amount) > 0.001:
+                            print emp
                             m = re.search('([0-9]+)\s*$', emp[0])
                             if m:
                                 if m.group(1) not in partner_txt_lines:
@@ -916,8 +926,7 @@ class field_balance_spec_parser(XlsxReportParser):
             line += 1
 
 
-            sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', 'user_line', unlock=True)] * 2)
-            sheet.merged_cells.ranges.append("K%(line)d:L%(line)d" % {'line': line})
+            sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)])
             line += 1
 
             nb_account_done += 1
