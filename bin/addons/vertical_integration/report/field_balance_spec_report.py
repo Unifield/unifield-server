@@ -442,6 +442,7 @@ class field_balance_spec_parser(XlsxReportParser):
         special_account_id = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True), ('code','=', '15640')], context=context)
 
         all_account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True)], context=context) # list ordered by code
+        chq_account = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True), ('type', '=', 'liquidity')], context=context)
 
         list_sum = {}
         for list_accounts in [req_account_ids, special_account_id]:
@@ -468,7 +469,9 @@ class field_balance_spec_parser(XlsxReportParser):
             self.cr.execute('''
                 select
                     sum(coalesce(l.debit,0) - coalesce(l.credit,0)),
-                    l.account_id
+                    l.account_id,
+                    sum(coalesce(amount_currency,0)),
+                    l.currency_id
                 from
                     account_move_line l
                     inner join account_period p on p.id = l.period_id
@@ -483,7 +486,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     and m.instance_id in %(instance)s
                     ''' + req_cond + '''
                 group by
-                    l.account_id
+                    l.account_id, l.currency_id
                 ''', {
                 'account_id': tuple(list_accounts),
                 'period_number': report.period_id.number,
@@ -491,7 +494,11 @@ class field_balance_spec_parser(XlsxReportParser):
                 'instance': tuple(all_instance_ids),
             })
             for ssum in self.cr.fetchall():
-                list_sum[ssum[1]] = ssum[0]
+                list_sum.setdefault(ssum[1], 0)
+                if ssum[1] in chq_account and company.revaluation_default_account:
+                    list_sum[ssum[1]] += ssum[2] / fx_rates_by_id[ssum[3]]
+                else:
+                    list_sum[ssum[1]] += ssum[0]
 
         for req_account in self.pool.get('account.account').browse(self.cr, self.uid, all_account_ids, fields_to_fetch=['code', 'name', 'filter_active'], context=ctx_with_date):
             if not req_account.filter_active and not list_sum.get(req_account.id):
@@ -700,6 +707,12 @@ class field_balance_spec_parser(XlsxReportParser):
                 line += 1
 
             else:
+                rate_title = '%s %s' % (date_used_label,_('Rate'))
+                amount_title = _('%s Amount') % (company.currency_id.name, )
+                if req_account.id in chq_account and company.revaluation_default_account:
+                    rate_title = _('Period Rate')
+                    amount_title = '%s %s ' % (company.currency_id.name, _('Amount with Current Period Rate'))
+
                 sheet.append([
                     self.cell_ro('%s - %s' % (req_account.code, req_account.name), style='title_account'),
                     self.cell_ro(_('Description of the entry'), style='title_text'),
@@ -707,8 +720,8 @@ class field_balance_spec_parser(XlsxReportParser):
                     self.cell_ro(_(company.currency_date_type), style='title_text'),
                     self.cell_ro(_('Curr'), style='title_info'),
                     self.cell_ro(_('Currency Amount'), style='title_amount'),
-                    self.cell_ro('%s %s' % (date_used_label,_('Rate')), style='title_amount'),
-                    self.cell_ro(_('%s Amount') % (company.currency_id.name, ), style='title_amount'),
+                    self.cell_ro(rate_title, style='title_amount'),
+                    self.cell_ro(amount_title, style='title_amount'),
                     self.cell_ro(_('Reconcile Number'), style='title_info'),
                     self.cell_ro(_('Third Party'), style='title_info'),
                     self.cell_ro(_("Field's Comments"), style='title_text'),
@@ -738,7 +751,8 @@ class field_balance_spec_parser(XlsxReportParser):
                         coalesce(partner.name, j.code, case when emp.employee_type='ex' then emp.name_resource when emp.employee_type='local'then emp.name_resource||' '||emp.identification_id else partner_txt end),
                         (
                             select sum(amount_currency) from account_move_line where reconcile_partial_id is not null and reconcile_partial_id = partial.id
-                        )
+                        ),
+                        cur.id
                     from
                         account_move_line l
                         inner join account_account a on a.id = l.account_id
@@ -768,6 +782,13 @@ class field_balance_spec_parser(XlsxReportParser):
                 })
 
                 for account_line in self.cr.fetchall():
+                    if req_account.id in chq_account and company.revaluation_default_account:
+                        line_rate = fx_rates_by_id.get(account_line[11],'')
+                        line_amount = account_line[5] / fx_rates_by_id.get(account_line[11], 1)
+                    else:
+                        line_rate = account_line[6]
+                        line_amount = account_line[7]
+
                     sheet.append([
                         self.cell_ro(account_line[0], style='line_account'),
                         self.cell_ro(account_line[1], style='line_text'),
@@ -775,15 +796,15 @@ class field_balance_spec_parser(XlsxReportParser):
                         self.cell_ro(self.to_datetime(account_line[3]), style='line_date'),
                         self.cell_ro(account_line[4], style='line_curr'),
                         self.cell_ro(account_line[5], style='line_amount'),
-                        self.cell_ro(account_line[6], style='line_rate'),
-                        self.cell_ro(account_line[7], style='line_amount'),
+                        self.cell_ro(line_rate, style='line_rate'),
+                        self.cell_ro(line_amount, style='line_amount'),
                         self.cell_ro(account_line[8] and '%s (%.02lf)' % (account_line[8], account_line[10]) or '', style='line_info'),
                         self.cell_ro(account_line[9], style='line_text'),
                         self.cell_ro('', style='field_comment', unlock=True),
                         self.cell_ro('', style='hq_comment', unlock=True),
                     ])
                     line += 1
-                    account_sum += round(account_line[7], 2)
+                    account_sum += round(line_amount, 2)
 
                 if report.selection == 'details':
                     sheet.append(
@@ -811,7 +832,8 @@ class field_balance_spec_parser(XlsxReportParser):
                             ) as fx_rate,
                             coalesce(l.debit, 0) - coalesce(l.credit, 0),
                             rec.name,
-                            coalesce(partner.name, j.code, emp.name_resource||' '||emp.identification_id)
+                            coalesce(partner.name, j.code, emp.name_resource||' '||emp.identification_id),
+                            cur.id
                         from
                             account_move_line l
                             inner join account_account a on a.id = l.account_id
@@ -850,6 +872,12 @@ class field_balance_spec_parser(XlsxReportParser):
                         'instance': tuple(all_instance_ids),
                     })
                     for account_line in self.cr.fetchall():
+                        if req_account.id in chq_account and company.revaluation_default_account:
+                            line_rate = fx_rates_by_id.get(account_line[10],'')
+                            line_amount = account_line[5] / fx_rates_by_id.get(account_line[10], 1)
+                        else:
+                            line_rate = account_line[6]
+                            line_amount = account_line[7]
                         sheet.append([
                             self.cell_ro(account_line[0], style='line_account'),
                             self.cell_ro(account_line[1], style='line_text'),
@@ -857,20 +885,22 @@ class field_balance_spec_parser(XlsxReportParser):
                             self.cell_ro(self.to_datetime(account_line[3]), style='line_date'),
                             self.cell_ro(account_line[4], style='line_curr'),
                             self.cell_ro(account_line[5], style='line_amount'),
-                            self.cell_ro(account_line[6], style='line_rate'),
-                            self.cell_ro(account_line[7], style='line_amount'),
+                            self.cell_ro(line_rate, style='line_rate'),
+                            self.cell_ro(line_amount, style='line_amount'),
                             self.cell_ro(account_line[8], style='line_info'),
                             self.cell_ro(account_line[9], style='line_text'),
                             self.cell_ro('', style='field_comment', unlock=True),
                             self.cell_ro('', style='hq_comment', unlock=True),
                         ])
                         line += 1
-                        account_sum += round(account_line[7], 2)
+                        account_sum += round(line_amount, 2)
                 else:
                     # sum reconciled later
                     self.cr.execute('''
                         select
-                            sum(coalesce(l.debit, 0) - coalesce(l.credit, 0))
+                            sum(coalesce(l.debit, 0) - coalesce(l.credit, 0)),
+                            sum(coalesce(l.amount_currency, 0)),
+                            l.currency_id
                         from
                             account_move_line l
                             inner join account_account a on a.id = l.account_id
@@ -897,13 +927,19 @@ class field_balance_spec_parser(XlsxReportParser):
                                         or rec_p.date_start = %(period_start)s and rec_p.number > %(period_number)s
                                     )
                                 )
+                        group by l.currency_id
                         ''', {
                         'account_id': req_account.id,
                         'period_number': report.period_id.number,
                         'period_start': report.period_id.date_start,
                         'instance': tuple(all_instance_ids),
                     })
-                    total_later = self.cr.fetchone()[0] or 0
+                    total_later = 0
+                    for later_rec in self.cr.fetchall():
+                        if req_account.id in chq_account and company.revaluation_default_account:
+                            total_later += later_rec[1] / fx_rates_by_id.get(later_rec[2], 1)
+                        else:
+                            total_later += later_rec[0]
                     account_sum += round(total_later, 2)
                     sheet.append(
                         [self.cell_ro(_('Total of entries reconciled in later periods >>>'), style='line_selection')] +
