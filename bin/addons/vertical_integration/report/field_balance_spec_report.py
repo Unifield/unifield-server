@@ -4,7 +4,6 @@ from tools.translate import _
 from datetime import datetime
 from spreadsheet_xml.xlsx_write import XlsxReport
 from spreadsheet_xml.xlsx_write import XlsxReportParser
-from openpyxl.cell import WriteOnlyCell
 from openpyxl.drawing import image
 from openpyxl.worksheet.header_footer import HeaderFooterItem
 import tools
@@ -78,12 +77,11 @@ field_balance_spec_report()
 class field_balance_spec_parser(XlsxReportParser):
     _name = "field.balance.spec.parser"
 
-    def add_cell(self, value=None, style='default_style'):
-        # None value set an xls empty cell
-        # False value set the xls False()
-        new_cell = WriteOnlyCell(self.workbook.active, value=value)
-        new_cell.style = style
-        self.rows.append(new_cell)
+    def append_line(self, data):
+        if not self.eoy:
+            del(data[9])
+            del(data[8])
+        self.workbook.active.append([self.cell_ro(x[0], x[1], unlock=len(x)>2 and x[2]) for x in data])
 
     def generate(self, context=None):
 
@@ -96,6 +94,8 @@ class field_balance_spec_parser(XlsxReportParser):
         date_used_label = company.currency_date_type == 'Posting Date' and _('Posting') or _('Booking')
         report = self.pool.get('field.balance.spec.report').browse(self.cr, self.uid, self.ids[0], context=context)
 
+
+        self.eoy = report.eoy
         all_instance_ids = [report.instance_id.id] + [x.id for x in report.instance_id.child_ids]
 
         self.cr.execute('''
@@ -173,11 +173,11 @@ class field_balance_spec_parser(XlsxReportParser):
                 ct_fx_rates_by_id[x[2]] = x[1]
 
         rates = {}
+        ct_rates = {}
         for n, cur in enumerate(list_curr[1:]):
+            rates[n] = {'name': cur, 'value': fx_rates[cur]}
             if report.eoy:
-                rates[n] = {'name': cur, 'value': ct_fx_rates[cur]}
-            else:
-                rates[n] = {'name': cur, 'value': fx_rates[cur]}
+                ct_rates[n] = {'name': cur, 'value': ct_fx_rates[cur]}
 
         page_title = _('Field Balance Specification Report From UniField')
 
@@ -207,6 +207,14 @@ class field_balance_spec_parser(XlsxReportParser):
 
         self.duplicate_column_dimensions()
         self.duplicate_row_dimensions(range(1, 9))
+        if self.eoy:
+            sheet.column_dimensions['N'].width = sheet.column_dimensions['L'].width
+            sheet.column_dimensions['M'].width = sheet.column_dimensions['K'].width
+            sheet.column_dimensions['L'].width = sheet.column_dimensions['J'].width
+            sheet.column_dimensions['K'].width = sheet.column_dimensions['I'].width
+            sheet.column_dimensions['J'].width = sheet.column_dimensions['H'].width
+            sheet.column_dimensions['I'].width = sheet.column_dimensions['G'].width
+
         pil_img = PILImage.open(tools.file_open('addons/msf_doc_import/report/images/msf-logo.png', 'rb'))
         img = image.Image(pil_img)
         orig_width = img.width
@@ -262,127 +270,167 @@ class field_balance_spec_parser(XlsxReportParser):
         sheet.title = '%s %s' % (report.period_id.name, report.instance_id.code)
         sheet.row_dimensions[1].height = 25
 
-        sheet.append([
-            self.cell_ro('', 'logo_style'),
-            self.cell_ro(page_title, 'title_cell1_style'),
-            self.cell_ro('', 'title_style'),
-            self.cell_ro('', 'title_style'),
-            self.cell_ro('', 'title_style'),
-            self.cell_ro('', 'title_style'),
-            self.cell_ro(_('Rates'), 'rate_style'),
-            self.cell_ro(_('Current period'), 'current_period_style'),
-            self.cell_ro('', 'title_style'),
-            self.cell_ro('', 'title_style'),
-            self.cell_ro('', style='first_field_comment', unlock=True),
-            self.cell_ro('', style='first_hq_comment', unlock=True),
+
+        self.append_line([
+            ('', 'logo_style'),
+            (page_title, 'title_cell1_style'),
+            ('', 'title_style'),
+            ('', 'title_style'),
+            ('', 'title_style'),
+            ('', 'title_style'),
+            (_('Rates'), 'rate_style'),
+            (_('Current period'), 'current_period_style'),
+            (_('Rates'), 'rate_style'),
+            (_('End of Year'), 'current_period_style'),
+            ('', 'title_style'),
+            ('', 'title_style'),
+            ('', 'first_field_comment', True),
+            ('', 'first_hq_comment', True)
         ])
         sheet.merged_cells.ranges.append("B1:F1")
 
-        sheet.append(
-            [self.cell_ro('', 'header_1st_info_title')] +
-            [self.cell_ro('', 'default_header_style')]*5 +
-            [self.cell_ro(company.currency_id.name, 'func_curr_name'), self.cell_ro(1,  'func_curr_value')] +
-            [self.cell_ro('', 'default_header_style')] * 2 +
+        self.append_line(
+            [('', 'header_1st_info_title')] +
+            [('', 'default_header_style')] * 5 +
             [
-                self.cell_ro('', style='field_comment', unlock=True),
-                self.cell_ro('', style='hq_comment', unlock=True)
+                (company.currency_id.name, 'func_curr_name'),
+                (1,  'func_curr_value'),
+                (company.currency_id.name, 'func_curr_name'),
+                (1,  'func_curr_value'),
+            ] +
+            [('', 'default_header_style')] * 2 +
+            [
+                ('', 'field_comment', True),
+                ('', 'hq_comment', True),
             ]
         )
 
-        sheet.append([
-            self.cell_ro(_('Country Program'), 'header_1st_info_title'),
-            self.cell_ro(report.instance_id.mission or '', 'default_header_style'),
-            self.cell_ro(_('Date of the report'), 'header_other_info_title'),
-            self.cell_ro(datetime.now(), style='header_full_date'),
-            self.cell_ro('', 'default_header_style'),
-            self.cell_ro(_('Report exported from'), 'header_other_info_title'),
+        self.append_line([
+            (_('Country Program'), 'header_1st_info_title'),
+            (report.instance_id.mission or '', 'default_header_style'),
+            (_('Date of the report'), 'header_other_info_title'),
+            (datetime.now(), 'header_full_date'),
+            ('', 'default_header_style'),
+            (_('Report exported from'), 'header_other_info_title'),
+        ] + [
+            (rates.get(0, {}).get('name', ''), 'cur_name'),
+            (rates.get(0, {}).get('value', ''), 'cur_value'),
+            (ct_rates.get(0, {}).get('name', ''), 'cur_name'),
+            (ct_rates.get(0, {}).get('value', ''), 'cur_value')
         ] +
-            [self.cell_ro(rates.get(0, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(0, {}).get('value', ''), 'cur_value')] +
-            [self.cell_ro('', 'default_header_style')] * 2 +
-            [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)],
+            [('', 'default_header_style')] * 2 +
+            [
+            ('', 'field_comment', True),
+            ('', 'hq_comment', True)
+        ],
         )
 
-        sheet.append([
-            self.cell_ro(_('Month:'), 'header_1st_info_title'),
-            self.cell_ro(datetime.strptime(report.period_id.date_start, '%Y-%m-%d'), 'header_month_date'),
-            self.cell_ro(_('Date of review'), 'header_other_info_title'),
-            self.cell_ro('', style='header_full_date'),
-            self.cell_ro('', 'default_header_style'),
-            self.cell_ro(company.instance_id.instance, 'default_header_style'),
-        ] +
-            [self.cell_ro(rates.get(1, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(1, {}).get('value', ''), 'cur_value')] +
-            [self.cell_ro('', 'default_header_style')] * 2 +
+        self.append_line([
+            (_('Month:'), 'header_1st_info_title'),
+            (datetime.strptime(report.period_id.date_start, '%Y-%m-%d'), 'header_month_date'),
+            (_('Date of review'), 'header_other_info_title'),
+            ('', 'header_full_date'),
+            ('', 'default_header_style'),
+            (company.instance_id.instance, 'default_header_style'),
+        ] + [
+            (rates.get(1, {}).get('name', ''), 'cur_name'),
+            (rates.get(1, {}).get('value', ''), 'cur_value'),
+            (ct_rates.get(1, {}).get('name', ''), 'cur_name'),
+            (ct_rates.get(1, {}).get('value', ''), 'cur_value'),
+        ] + [('', 'default_header_style')] * 2 +
             [
-                self.cell_ro('', style='field_comment', unlock=True),
-                self.cell_ro('', style='hq_comment', unlock=True)
+            ('', 'field_comment', True),
+                ('', 'hq_comment', True)
         ]
         )
 
-        sheet.append([
-            self.cell_ro(_('Finco Name:'), 'header_1st_info_title'),
-            self.cell_ro('', 'user_name', unlock=True),
-            self.cell_ro('', 'user_date', unlock=True),
+        self.append_line([
+            (_('Finco Name:'), 'header_1st_info_title'),
+            ('', 'user_name', True),
+            ('', 'user_date', True),
         ] +
-            [self.cell_ro('', 'default_header_style')] * 3 +
-            [self.cell_ro(rates.get(2, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(2, {}).get('value', ''), 'cur_value')] +
-            [self.cell_ro('', 'default_header_style')] * 2 +
+            [('', 'default_header_style')] * 3 +
             [
-                self.cell_ro('', style='field_comment', unlock=True),
-                self.cell_ro('', style='hq_comment', unlock=True)
+            (rates.get(2, {}).get('name', ''), 'cur_name'),
+            (rates.get(2, {}).get('value', ''), 'cur_value'),
+            (ct_rates.get(2, {}).get('name', ''), 'cur_name'),
+            (ct_rates.get(2, {}).get('value', ''), 'cur_value')
+        ] +
+            [('', 'default_header_style')] * 2 +
+            [
+            ('', 'field_comment', True),
+            ('', 'hq_comment', True)
         ]
         )
 
-        sheet.append([
-            self.cell_ro(_('HoM Name:'), 'header_1st_info_title'),
-            self.cell_ro('', 'user_name', unlock=True),
-            self.cell_ro('', 'user_date', unlock=True),
+        self.append_line([
+            (_('HoM Name:'), 'header_1st_info_title'),
+            ('', 'user_name', True),
+            ('', 'user_date', True),
         ] +
-            [self.cell_ro('', 'default_header_style')] * 3 +
-            [self.cell_ro(rates.get(3, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(3, {}).get('value', ''), 'cur_value')] +
-            [self.cell_ro('', 'default_header_style')] * 2 +
+            [('', 'default_header_style')] * 3 +
             [
-                self.cell_ro('', style='field_comment', unlock=True),
-                self.cell_ro('', style='hq_comment', unlock=True)
+            (rates.get(3, {}).get('name', ''), 'cur_name'),
+            (rates.get(3, {}).get('value', ''), 'cur_value'),
+            (ct_rates.get(3, {}).get('name', ''), 'cur_name'),
+            (ct_rates.get(3, {}).get('value', ''), 'cur_value')
+        ] +
+            [('', 'default_header_style')] * 2 +
+            [
+            ('', 'field_comment', True),
+            ('', 'hq_comment', True)
         ]
         )
 
-        sheet.append([
-            self.cell_ro(_('HQ reviewer Name:'), 'header_1st_info_title'),
-            self.cell_ro('', 'user_name', unlock=True),
-            self.cell_ro('', 'user_date', unlock=True),
+        self.append_line([
+            (_('HQ reviewer Name:'), 'header_1st_info_title'),
+            ('', 'user_name', True),
+            ('', 'user_date', True),
         ] +
-            [self.cell_ro('', 'default_header_style')] * 3 +
-            [self.cell_ro(rates.get(4, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(4, {}).get('value', ''), 'cur_value')] +
-            [self.cell_ro('', 'default_header_style')] * 2 +
+            [('', 'default_header_style')] * 3 +
             [
-                self.cell_ro('', style='field_comment', unlock=True),
-                self.cell_ro('', style='hq_comment', unlock=True)
+            (rates.get(4, {}).get('name', ''), 'cur_name'),
+            (rates.get(4, {}).get('value', ''), 'cur_value'),
+            (ct_rates.get(4, {}).get('name', ''), 'cur_name'),
+            (ct_rates.get(4, {}).get('value', ''), 'cur_value')
+        ] +
+            [('', 'default_header_style')] * 2 +
+            [
+            ('', 'field_comment', True),
+            ('', 'hq_comment', True)
         ]
         )
         rate_idx = 5
         line = 8
         while rates.get(rate_idx):
-            sheet.append(
-                [self.cell_ro('', 'header_1st_info_title')] +
-                [self.cell_ro('', 'default_header_style')] * 5 +
-                [self.cell_ro(rates.get(rate_idx, {}).get('name', ''), 'cur_name'), self.cell_ro(rates.get(rate_idx, {}).get('value', ''), 'cur_value')] +
-                [self.cell_ro('', 'default_header_style')] * 2 +
+            self.append_line(
+                [('', 'header_1st_info_title')] +
+                [('', 'default_header_style')] * 5 +
                 [
-                    self.cell_ro('', style='field_comment', unlock=True),
-                    self.cell_ro('', style='hq_comment', unlock=True)
+                    (rates.get(rate_idx, {}).get('name', ''), 'cur_name'),
+                    (rates.get(rate_idx, {}).get('value', ''), 'cur_value'),
+                    (ct_rates.get(rate_idx, {}).get('name', ''), 'cur_name'),
+                    (ct_rates.get(rate_idx, {}).get('value', ''), 'cur_value')
+                ] +
+                [('', 'default_header_style')] * 2 +
+                [
+                    ('', 'field_comment', True),
+                    ('', 'hq_comment', True)
                 ]
             )
             rate_idx += 1
             line += 1
 
-        sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)])
+        self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
         line += 1
-        sheet.append(
-            [self.cell_ro(_('Balance accounts'), style='title_account')] +
-            [self.cell_ro('', style='title_text')] * 6 +
-            [self.cell_ro(_('UniField Balance in %s') % (company.currency_id.name,) , style='title_amount')] +
-            [self.cell_ro('', style='title_text')] * 2 +
-            [self.cell_ro(_("Field's Comments"), style='title_text'), self.cell_ro(_("HQ Comments"), style='title_hq_comment')]
+        self.append_line(
+            [(_('Balance accounts'), 'title_account')] +
+            [('', 'title_text')] * 6 +
+            [(_('UniField Balance in %s') % (company.currency_id.name,) , 'title_amount')] +
+            [('', 'title_text')] +
+            [('%s %s' % (company.currency_id.name,_('Amount with Year End Rate Currency Table')), 'title_amount')] +
+            [('', 'title_text')] * 2 +
+            [(_("Field's Comments"), 'title_text'), (_("HQ Comments"), 'title_hq_comment')]
         )
 
         line += 1
@@ -416,17 +464,21 @@ class field_balance_spec_parser(XlsxReportParser):
             }
             )
             liq_sum = 0
+            ct_sum = 0
             # total entry encoding
             for liq in self.cr.fetchall():
                 register_details[liq[2]] = liq[1]
-                liq_sum += liq[1] / fx_rates_by_id[liq[0]]
+                liq_sum += liq[1] / fx_rates_by_id.get(liq[0], 1)
+                ct_sum += liq[1] / ct_fx_rates_by_id.get(liq[0], 1)
 
-            sheet.append(
-                [self.cell_ro('%s %s' % (liq_account.code, liq_account.name), style='line_account')] +
-                [self.cell_ro('', style='line_text')] * 6 +
-                [self.cell_ro(round(liq_sum, 2), style='line_amount')] +
-                [self.cell_ro('', style='line_text')] * 2 +
-                [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)]
+            self.append_line(
+                [('%s %s' % (liq_account.code, liq_account.name), 'line_account')] +
+                [('', 'line_text')] * 6 +
+                [(round(liq_sum, 2), 'line_amount')] +
+                [('', 'line_text')]  +
+                [(round(ct_sum, 2), 'line_amount')] +
+                [('', 'line_text')] * 2 +
+                [('', 'field_comment', True), ('', 'hq_comment', True)]
             )
             line += 1
 
@@ -445,6 +497,7 @@ class field_balance_spec_parser(XlsxReportParser):
         chq_account = self.pool.get('account.account').search(self.cr, self.uid, [('reconcile', '=', True), ('type', '=', 'liquidity')], context=context)
 
         list_sum = {}
+        ct_list_sum = {}
         for list_accounts in [req_account_ids, special_account_id]:
             if not list_accounts:
                 continue
@@ -495,26 +548,30 @@ class field_balance_spec_parser(XlsxReportParser):
             })
             for ssum in self.cr.fetchall():
                 list_sum.setdefault(ssum[1], 0)
+                ct_list_sum.setdefault(ssum[1], 0)
                 if ssum[1] in chq_account and company.revaluation_default_account:
-                    list_sum[ssum[1]] += ssum[2] / fx_rates_by_id[ssum[3]]
+                    list_sum[ssum[1]] += ssum[2] / fx_rates_by_id.get(ssum[3], 1)
                 else:
                     list_sum[ssum[1]] += ssum[0]
+                ct_list_sum[ssum[1]] += ssum[2] / ct_fx_rates_by_id.get(ssum[3], 1)
 
         for req_account in self.pool.get('account.account').browse(self.cr, self.uid, all_account_ids, fields_to_fetch=['code', 'name', 'filter_active'], context=ctx_with_date):
             if not req_account.filter_active and not list_sum.get(req_account.id):
                 inactive_accounts[req_account.id] = True
                 continue
 
-            sheet.append(
-                [self.cell_ro('%s %s' % (req_account.code, req_account.name), style='line_account')] +
-                [self.cell_ro('', style='line_text')] * 6 +
-                [self.cell_ro(round(list_sum.get(req_account.id) or 0, 2), style='line_amount')] +
-                [self.cell_ro('', style='line_text')] * 2 +
-                [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)]
+            self.append_line(
+                [('%s %s' % (req_account.code, req_account.name), 'line_account')] +
+                [('', 'line_text')] * 6 +
+                [(round(list_sum.get(req_account.id) or 0, 2), 'line_amount')] +
+                [('', 'line_text')] +
+                [(round(ct_list_sum.get(req_account.id) or 0, 2), 'line_amount')] +
+                [('', 'line_text')] * 2 +
+                [('', 'field_comment', True), ('', 'hq_comment', True)]
             )
             line += 1
 
-        sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)])
+        self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
         line += 1
 
         year = datetime.strptime(report.period_id.date_start, '%Y-%m-%d').year
@@ -525,54 +582,59 @@ class field_balance_spec_parser(XlsxReportParser):
             ct_account_sum = 0
             for journal in self.pool.get('account.journal').browse(self.cr, self.uid, j_ids, context=context):
                 if first_line:
-                    sheet.append(
+                    self.append_line(
                         [
-                            self.cell_ro('%s - %s' % (journal.default_debit_account_id.code, journal.default_debit_account_id.name), style='title_account'),
-                            self.cell_ro(_('Journal Name'), style='title_text'),
-                            self.cell_ro(_('Proprietary instance'), style='title_text'),
-                            self.cell_ro(_('Journal Status'), style='title_text'),
-                            self.cell_ro(_('Curr'), style='title_info'),
-                            self.cell_ro(_('Currency Amount'), style='title_amount'),
-                            self.cell_ro(_('Period Rate'), style='title_amount'),
-                            self.cell_ro(_('%s Amount with Current Period Rate') % company.currency_id.name, style='title_amount'),
-                            self.cell_ro(report.eoy and _('Year End Rate Currency Table') or '', style='title_amount'),
-                            self.cell_ro(report.eoy and '%s %s' % (company.currency_id.name, _('Amount with Year End Rate Currency Table')) or '', style='title_amount'),
-                            self.cell_ro(_("Field's Comments"), style='title_text'),
-                            self.cell_ro(_("HQ Comments"), style='title_hq_comment'),
+                            ('%s - %s' % (journal.default_debit_account_id.code, journal.default_debit_account_id.name), 'title_account'),
+                            (_('Journal Name'), 'title_text'),
+                            (_('Proprietary instance'), 'title_text'),
+                            (_('Journal Status'), 'title_text'),
+                            (_('Curr'), 'title_info'),
+                            (_('Currency Amount'), 'title_amount'),
+                            (_('Period Rate'), 'title_amount'),
+                            (_('%s Amount with Current Period Rate') % company.currency_id.name, 'title_amount'),
+                            (_('Year End Rate Currency Table'), 'title_amount'),
+                            ( '%s %s' % (company.currency_id.name, _('Amount with Year End Rate Currency Table')), 'title_amount'),
+                            ('', 'title_text'),
+                            ('', 'title_text'),
+                            (_("Field's Comments"), 'title_text'),
+                            (_("HQ Comments"), 'title_hq_comment'),
                         ]
                     )
                     line += 1
                     first_line = False
-                sheet.append([
-                    self.cell_ro(journal.code, style='line_account'),
-                    self.cell_ro(journal.name, style='line_text'),
-                    self.cell_ro(journal.instance_id.instance, style='line_text'),
-                    self.cell_ro(not journal.is_active and _('Inactive') or '', style='line_text'),
-                    self.cell_ro(journal.currency.name, style='line_curr'),
-                    self.cell_ro(register_details.get(journal.id, 0), style='line_amount'),
-                    self.cell_ro(fx_rates_by_id.get(journal.currency.id, 0), style='line_rate'),
-                    self.cell_ro(register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), style='line_amount'),
-                    self.cell_ro(ct_fx_rates_by_id.get(journal.currency.id, 0) if report.eoy else '', style='line_rate'),
-                    self.cell_ro(register_details.get(journal.id,0) / ct_fx_rates_by_id.get(journal.currency.id, 1) if report.eoy else '', style='line_amount'),
-                    self.cell_ro('', style='field_comment', unlock=True),
-                    self.cell_ro('', style='hq_comment', unlock=True),
+                self.append_line([
+                    (journal.code, 'line_account'),
+                    (journal.name, 'line_text'),
+                    (journal.instance_id.instance, 'line_text'),
+                    (not journal.is_active and _('Inactive') or '', 'line_text'),
+                    (journal.currency.name, 'line_curr'),
+                    (register_details.get(journal.id, 0), 'line_amount'),
+                    (fx_rates_by_id.get(journal.currency.id, 0), 'line_rate'),
+                    (register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), 'line_amount'),
+                    (ct_fx_rates_by_id.get(journal.currency.id, 0), 'line_rate'),
+                    (register_details.get(journal.id,0) / ct_fx_rates_by_id.get(journal.currency.id, 1), 'line_amount'),
+                    ('', 'line_text'),
+                    ('', 'line_text'),
+                    ('', 'field_comment', True),
+                    ('', 'hq_comment', True),
                 ])
                 line += 1
                 account_sum += round(register_details.get(journal.id,0) / fx_rates_by_id.get(journal.currency.id, 1), 2)
                 if report.eoy:
                     ct_account_sum += round(register_details.get(journal.id,0) / ct_fx_rates_by_id.get(journal.currency.id, 1), 2)
 
-            sheet.append(
-                [self.cell_ro('', 'header_1st_info_title')] +
-                [self.cell_ro('', 'default_header_style')] * 6  +
-                [self.cell_ro(account_sum, style='line_total')] +
-                [self.cell_ro('', 'default_header_style'), self.cell_ro(ct_account_sum if report.eoy else '', style='line_total')]  +
-                [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)]
+            self.append_line(
+                [('', 'header_1st_info_title')] +
+                [('', 'default_header_style')] * 6  +
+                [(account_sum, 'line_total')] +
+                [('', 'default_header_style'), (ct_account_sum if report.eoy else '', 'line_total')]  +
+                [('', 'default_header_style')] * 2 +
+                [('', 'field_comment', True), ('', 'hq_comment', True)]
             )
             line += 1
 
 
-            sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)])
+            self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
             line += 1
 
         if bk_id:
@@ -585,16 +647,19 @@ class field_balance_spec_parser(XlsxReportParser):
             if req_account.id in inactive_accounts:
                 continue
             account_sum = 0
+            ct_account_sum = 0
             if req_account.code == '15640':
-                sheet.append(
-                    [self.cell_ro('%s - %s' % (req_account.code, req_account.name), style='title_account')] +
-                    [self.cell_ro('', style='title_text')] * 6 +
+                self.append_line(
+                    [('%s - %s' % (req_account.code, req_account.name), 'title_account')] +
+                    [('', 'title_text')] * 6 +
                     [
-                        self.cell_ro(_('%s Amount') % (company.currency_id.name, ), style='title_amount'),
-                        self.cell_ro(_('Subaccount Number'), style='title_info'),
-                        self.cell_ro('', style='title_text'),
-                        self.cell_ro(_("Field's Comments"), style='title_text'),
-                        self.cell_ro(_("HQ Comments"), style='title_hq_comment'),
+                        (_('%s Amount') % (company.currency_id.name, ), 'title_amount'),
+                        (_('Subaccount Number'), 'title_info'),
+                        ('', 'title_text'),
+                        ('', 'title_text'),
+                        ('', 'title_text'),
+                        (_("Field's Comments"), 'title_text'),
+                        (_("HQ Comments"), 'title_hq_comment'),
                     ]
                 )
                 line += 1
@@ -679,15 +744,17 @@ class field_balance_spec_parser(XlsxReportParser):
                         all_lines.append(partner_txt_lines[emp_id])
 
                 for emp in sorted(all_lines, key=lambda x: x[2]):
-                    sheet.append(
-                        [self.cell_ro(emp[0], style='line_account')] +
-                        [self.cell_ro('', style='line_text')] * 6 +
+                    self.append_line(
+                        [(emp[0], 'line_account')] +
+                        [('', 'line_text')] * 6 +
                         [
-                            self.cell_ro(round(emp[1], 2), style='line_amount'),
-                            self.cell_ro('%s'%emp[2], style='line_info'),
-                            self.cell_ro('', style='line_text'),
-                            self.cell_ro('', style='field_comment', unlock=True),
-                            self.cell_ro('', style='hq_comment', unlock=True),
+                            (round(emp[1], 2), 'line_amount'),
+                            ('%s'%emp[2], 'line_info'),
+                            ('', 'line_text'),
+                            ('', 'line_text'),
+                            ('', 'line_text'),
+                            ('', 'field_comment', True),
+                            ('', 'hq_comment', True),
                         ]
                     )
                     line += 1
@@ -699,10 +766,10 @@ class field_balance_spec_parser(XlsxReportParser):
                 else:
                     title_sum = _('Total of entries reconciled in later periods >>>')
 
-                sheet.append(
-                    [self.cell_ro(title_sum, style='line_selection')] +
-                    [self.cell_ro('', 'default_header_style')] * 9 +
-                    [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)]
+                self.append_line(
+                    [(title_sum, 'line_selection')] +
+                    [('', 'default_header_style')] * 11 +
+                    [('', 'field_comment', True), ('', 'hq_comment', True)]
                 )
                 line += 1
 
@@ -713,19 +780,21 @@ class field_balance_spec_parser(XlsxReportParser):
                     rate_title = _('Period Rate')
                     amount_title = '%s %s ' % (company.currency_id.name, _('Amount with Current Period Rate'))
 
-                sheet.append([
-                    self.cell_ro('%s - %s' % (req_account.code, req_account.name), style='title_account'),
-                    self.cell_ro(_('Description of the entry'), style='title_text'),
-                    self.cell_ro(_('Reference of the entry'), style='title_text'),
-                    self.cell_ro(_(company.currency_date_type), style='title_text'),
-                    self.cell_ro(_('Curr'), style='title_info'),
-                    self.cell_ro(_('Currency Amount'), style='title_amount'),
-                    self.cell_ro(rate_title, style='title_amount'),
-                    self.cell_ro(amount_title, style='title_amount'),
-                    self.cell_ro(_('Reconcile Number'), style='title_info'),
-                    self.cell_ro(_('Third Party'), style='title_info'),
-                    self.cell_ro(_("Field's Comments"), style='title_text'),
-                    self.cell_ro(_("HQ Comments"), style='title_hq_comment'),
+                self.append_line([
+                    ('%s - %s' % (req_account.code, req_account.name), 'title_account'),
+                    (_('Description of the entry'), 'title_text'),
+                    (_('Reference of the entry'), 'title_text'),
+                    (_(company.currency_date_type), 'title_text'),
+                    (_('Curr'), 'title_info'),
+                    (_('Currency Amount'), 'title_amount'),
+                    (rate_title, 'title_amount'),
+                    (amount_title, 'title_amount'),
+                    (_('Year End Rate Currency Table'), 'title_amount'),
+                    ('%s %s' % (company.currency_id.name,_('Amount with Year End Rate Currency Table')), 'title_amount'),
+                    (_('Reconcile Number'), 'title_info'),
+                    (_('Third Party'), 'title_info'),
+                    (_("Field's Comments"), 'title_text'),
+                    (_("HQ Comments"), 'title_hq_comment'),
                 ])
 
                 line += 1
@@ -789,28 +858,34 @@ class field_balance_spec_parser(XlsxReportParser):
                         line_rate = account_line[6]
                         line_amount = account_line[7]
 
-                    sheet.append([
-                        self.cell_ro(account_line[0], style='line_account'),
-                        self.cell_ro(account_line[1], style='line_text'),
-                        self.cell_ro(account_line[2], style='line_text'),
-                        self.cell_ro(self.to_datetime(account_line[3]), style='line_date'),
-                        self.cell_ro(account_line[4], style='line_curr'),
-                        self.cell_ro(account_line[5], style='line_amount'),
-                        self.cell_ro(line_rate, style='line_rate'),
-                        self.cell_ro(line_amount, style='line_amount'),
-                        self.cell_ro(account_line[8] and '%s (%.02lf)' % (account_line[8], account_line[10]) or '', style='line_info'),
-                        self.cell_ro(account_line[9], style='line_text'),
-                        self.cell_ro('', style='field_comment', unlock=True),
-                        self.cell_ro('', style='hq_comment', unlock=True),
+                    ct_line_rate = ct_fx_rates_by_id.get(account_line[11],'')
+                    ct_line_amount = account_line[5] / ct_fx_rates_by_id.get(account_line[11], 1)
+
+                    self.append_line([
+                        (account_line[0], 'line_account'),
+                        (account_line[1], 'line_text'),
+                        (account_line[2], 'line_text'),
+                        (self.to_datetime(account_line[3]), 'line_date'),
+                        (account_line[4], 'line_curr'),
+                        (account_line[5], 'line_amount'),
+                        (line_rate, 'line_rate'),
+                        (line_amount, 'line_amount'),
+                        (ct_line_rate, 'line_rate'),
+                        (ct_line_amount, 'line_amount'),
+                        (account_line[8] and '%s (%.02lf)' % (account_line[8], account_line[10]) or '', 'line_info'),
+                        (account_line[9], 'line_text'),
+                        ('', 'field_comment', True),
+                        ('', 'hq_comment', True),
                     ])
                     line += 1
                     account_sum += round(line_amount, 2)
+                    ct_account_sum += round(ct_line_amount, 2)
 
                 if report.selection == 'details':
-                    sheet.append(
-                        [self.cell_ro(_('List of entries reconciled in later periods >>>'), style='line_selection')] +
-                        [self.cell_ro('', 'default_header_style')] * 9 +
-                        [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)]
+                    self.append_line(
+                        [(_('List of entries reconciled in later periods >>>'), 'line_selection')] +
+                        [('', 'default_header_style')] * 11 +
+                        [('', 'field_comment', True), ('', 'hq_comment', True)]
                     )
                     line += 1
 
@@ -878,22 +953,29 @@ class field_balance_spec_parser(XlsxReportParser):
                         else:
                             line_rate = account_line[6]
                             line_amount = account_line[7]
-                        sheet.append([
-                            self.cell_ro(account_line[0], style='line_account'),
-                            self.cell_ro(account_line[1], style='line_text'),
-                            self.cell_ro(account_line[2], style='line_text'),
-                            self.cell_ro(self.to_datetime(account_line[3]), style='line_date'),
-                            self.cell_ro(account_line[4], style='line_curr'),
-                            self.cell_ro(account_line[5], style='line_amount'),
-                            self.cell_ro(line_rate, style='line_rate'),
-                            self.cell_ro(line_amount, style='line_amount'),
-                            self.cell_ro(account_line[8], style='line_info'),
-                            self.cell_ro(account_line[9], style='line_text'),
-                            self.cell_ro('', style='field_comment', unlock=True),
-                            self.cell_ro('', style='hq_comment', unlock=True),
+
+                        ct_line_rate = ct_fx_rates_by_id.get(account_line[10],'')
+                        ct_line_amount = account_line[5] / ct_fx_rates_by_id.get(account_line[10], 1)
+
+                        self.append_line([
+                            (account_line[0], 'line_account'),
+                            (account_line[1], 'line_text'),
+                            (account_line[2], 'line_text'),
+                            (self.to_datetime(account_line[3]), 'line_date'),
+                            (account_line[4], 'line_curr'),
+                            (account_line[5], 'line_amount'),
+                            (line_rate, 'line_rate'),
+                            (line_amount, 'line_amount'),
+                            (ct_line_rate, 'line_rate'),
+                            (ct_line_amount, 'line_amount'),
+                            (account_line[8], 'line_info'),
+                            (account_line[9], 'line_text'),
+                            ('', 'field_comment', True),
+                            ('', 'hq_comment', True),
                         ])
                         line += 1
                         account_sum += round(line_amount, 2)
+                        ct_account_sum += round(ct_line_amount, 2)
                 else:
                     # sum reconciled later
                     self.cr.execute('''
@@ -935,32 +1017,39 @@ class field_balance_spec_parser(XlsxReportParser):
                         'instance': tuple(all_instance_ids),
                     })
                     total_later = 0
+                    ct_total_later = 0
                     for later_rec in self.cr.fetchall():
                         if req_account.id in chq_account and company.revaluation_default_account:
                             total_later += later_rec[1] / fx_rates_by_id.get(later_rec[2], 1)
                         else:
                             total_later += later_rec[0]
+                        ct_total_later += later_rec[1] / ct_fx_rates_by_id.get(later_rec[2], 1)
                     account_sum += round(total_later, 2)
-                    sheet.append(
-                        [self.cell_ro(_('Total of entries reconciled in later periods >>>'), style='line_selection')] +
-                        [self.cell_ro('', 'default_header_style')] * 6 +
-                        [self.cell_ro(total_later, style='line_amount')] +
-                        [self.cell_ro('', 'default_header_style')] * 2 +
-                        [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)]
+                    ct_account_sum += round(ct_total_later, 2)
+                    self.append_line(
+                        [(_('Total of entries reconciled in later periods >>>'), 'line_selection')] +
+                        [('', 'default_header_style')] * 6 +
+                        [(total_later, 'line_amount')] +
+                        [('', 'default_header_style')] +
+                        [(ct_total_later, 'line_amount')] +
+                        [('', 'default_header_style')] * 2 +
+                        [('', 'field_comment', True), ('', 'hq_comment', True)]
                     )
                     line += 1
 
-            sheet.append(
-                [self.cell_ro('', 'header_1st_info_title')] +
-                [self.cell_ro('', 'default_header_style')] * 6  +
-                [self.cell_ro(account_sum, style='line_total')] +
-                [self.cell_ro('', 'default_header_style')] * 2  +
-                [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)]
+            self.append_line(
+                [('', 'header_1st_info_title')] +
+                [('', 'default_header_style')] * 6  +
+                [(account_sum, 'line_total')] +
+                [('', 'default_header_style')]  +
+                [(ct_account_sum, 'line_total')] +
+                [('', 'default_header_style')] * 2  +
+                [('', 'field_comment', True), ('', 'hq_comment', True)]
             )
             line += 1
 
 
-            sheet.append([self.cell_ro('', 'header_1st_info_title')] + [self.cell_ro('', 'default_header_style')] * 9 + [self.cell_ro('', style='field_comment', unlock=True), self.cell_ro('', style='hq_comment', unlock=True)])
+            self.append_line([('', 'header_1st_info_title')] + [('', 'default_header_style')] * 11 + [('', 'field_comment', True), ('', 'hq_comment', True)])
             line += 1
 
             nb_account_done += 1
@@ -968,15 +1057,18 @@ class field_balance_spec_parser(XlsxReportParser):
                 bk_obj.write(self.cr, self.uid, bk_id, {'percent': max(0.95, 0.5 + 0.45 * nb_account_done/total_account)})
 
 
-        sheet.append(
-            [self.cell_ro('', 'end_doc_left')] +
-            [self.cell_ro('---%s---' % _('END OF FIELD BALANCE SPECIFICATION REPORT'), style='end_doc')] +
-            [self.cell_ro('', style='end_doc')] * 9 +
-            [self.cell_ro('', 'end_doc_right')]
+        self.append_line(
+            [('', 'end_doc_left')] +
+            [('---%s---' % _('END OF FIELD BALANCE SPECIFICATION REPORT'), 'end_doc')] +
+            [('', 'end_doc')] * 11 +
+            [('', 'end_doc_right')]
         )
         line += 1
 
-        sheet.print_area = 'A1:L%d' % line
+        if self.eoy:
+            sheet.print_area = 'A1:N%d' % line
+        else:
+            sheet.print_area = 'A1:L%d' % line
         if bk_id:
             bk_obj.write(self.cr, self.uid, bk_id, {'percent': 1.})
 
