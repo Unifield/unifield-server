@@ -44,6 +44,6 @@ webencodings==0.5.1
 zopfli==0.2.1
 weasyprint==57.1
 msvc-runtime==14.29.30133; sys_platform == 'win32'
-pywin32; sys_platform == 'win32'
-sqlite-bro; sys_platform == 'win32'
-winpython; sys_platform == 'win32'
+pywin32==306; sys_platform == 'win32'
+sqlite-bro==0.12.2; sys_platform == 'win32'
+winpython==6.1.20230527; sys_platform == 'win32'
