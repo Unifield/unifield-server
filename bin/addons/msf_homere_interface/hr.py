@@ -265,7 +265,7 @@ class hr_employee(osv.osv):
                 raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
         if vals.get('job_id', False):
             job_obj = self.pool.get('hr.job')
-            job = job_obj.browse(cr, uid, vals['job_id'].id, fields_to_fetch=['name'])
+            job = job_obj.browse(cr, uid, vals['job_id'], fields_to_fetch=['name'])
             vals['job_name'] = job and job.name
         employee_id = super(hr_employee, self).create(cr, uid, vals, context)
         self._check_employee_cc_compatibility(cr, uid, employee_id, context=context)
@@ -312,7 +312,7 @@ class hr_employee(osv.osv):
             allowed = True
             if vals.get('job_id', False):
                 job_obj = self.pool.get('hr.job')
-                job = job_obj.browse(cr, uid, vals['job_id'].id, fields_to_fetch=['name'])
+                job = job_obj.browse(cr, uid, vals['job_id'], fields_to_fetch=['name'])
                 vals['job_name'] = job and job.name
         # Browse all employees
         for emp in self.browse(cr, uid, ids):
