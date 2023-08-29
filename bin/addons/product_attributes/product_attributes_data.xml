@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="0">
+    <data noupdate="1">
 
         <record model="product.status" id="status_1">
             <field name="code">valid</field>
@@ -246,7 +246,8 @@
             <field name="cold_chain" eval="False" />
             <field name="mapped_to" ref="cold_15" />
         </record>
-
+</data>
+<data noupdate="0">
         <record id="ir_cron_deactivate_ud_products" model="ir.cron">
             <field name="function">hq_cron_deactivate_ud_products</field>
             <field name="user_id">1</field>
