@@ -57,6 +57,16 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
+    def us_11026_oca_liquidity_migration_journal(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'oca':
+            sql_file = opj('msf_profile', 'data', 'us_11026_migration_items_to_liquidity_journals.sql')
+            fp = tools.file_open(sql_file, 'r')
+            cr.execute(fp.read())
+            fp.close()
+        return True
+
     # UF30.0
 
     def us_1074_create_unifield_instance(self, cr, uid, *a, **b):

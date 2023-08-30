@@ -976,6 +976,9 @@
             <field name="method">us_11181_update_supply_signature_follow_up</field>
         </record>
 
+        <record id="us_11026_oca_liquidity_migration_journal" model="patch.scripts">
+            <field name="method">us_11026_oca_liquidity_migration_journal</field>
+        </record>
 
     </data>
 </openerp>
