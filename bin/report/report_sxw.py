@@ -251,6 +251,8 @@ class rml_parse(object):
         self.log_export = False
         self.sheet_name_used = []
         self.total_sheet_number = 0
+        self.cache_lang_obj = False
+        self.cache_decimal_precision = {}
 
     def getSign(self, obj, key, field, d_format=None):
         if not hasattr(obj, 'signature_id'):
@@ -405,10 +407,12 @@ class rml_parse(object):
     def get_digits(self, obj=None, f=None, dp=None):
         d = DEFAULT_DIGITS = 2
         if dp:
-            decimal_precision_obj = self.pool.get('decimal.precision')
-            ids = decimal_precision_obj.search(self.cr, self.uid, [('name', '=', dp)])
-            if ids:
-                d = decimal_precision_obj.browse(self.cr, self.uid, ids)[0].digits
+            if dp not in self.cache_decimal_precision:
+                decimal_precision_obj = self.pool.get('decimal.precision')
+                ids = decimal_precision_obj.search(self.cr, self.uid, [('name', '=', dp)])
+                if ids:
+                    self.cache_decimal_precision[dp] = decimal_precision_obj.browse(self.cr, self.uid, ids)[0].digits
+            d = self.cache_decimal_precision[dp]
         elif obj and f:
             res_digits = getattr(obj._columns[f], 'digits', lambda x: ((16, DEFAULT_DIGITS)))
             if isinstance(res_digits, tuple):
@@ -427,21 +431,24 @@ class rml_parse(object):
             digits = self.get_digits(value)
         if isinstance(value, (str, unicode)) and not value:
             return ''
-        pool_lang = self.pool.get('res.lang')
-        lang = self.localcontext['lang']
 
-        lang_ids = pool_lang.search(self.cr, self.uid, [('code','=',lang)])[0]
-        lang_obj = pool_lang.browse(self.cr, self.uid, lang_ids)
+        if not self.cache_lang_obj:
+            pool_lang = self.pool.get('res.lang')
+            lang = self.localcontext['lang']
+            lang_ids = pool_lang.search(self.cr, self.uid, [('code','=',lang)])[0]
+            self.cache_lang_obj = pool_lang.browse(self.cr, self.uid, lang_ids)
+
+
 
         if date or date_time:
             if not str(value):
                 return ''
 
-            date_format = lang_obj.date_format
+            date_format = self.cache_lang_obj.date_format
             parse_format = '%Y-%m-%d'
             if date_time:
                 value=value.split('.')[0]
-                date_format = date_format + " " + lang_obj.time_format
+                date_format = date_format + " " + self.cache_lang_obj.time_format
                 parse_format = '%Y-%m-%d %H:%M:%S'
             if not isinstance(value, time.struct_time):
                 return time.strftime(date_format, time.strptime(value, parse_format))
@@ -450,7 +457,7 @@ class rml_parse(object):
                 date = datetime(*value.timetuple()[:6])
             return date.strftime(date_format)
 
-        return lang_obj.format('%.' + str(digits) + 'f', value, grouping=grouping, monetary=monetary)
+        return self.cache_lang_obj.format('%.' + str(digits) + 'f', value, grouping=grouping, monetary=monetary)
 
     def formatLang(self, value, digits=None, date=False, date_time=False, grouping=True, monetary=False, dp=False):
         """

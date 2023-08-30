@@ -58,6 +58,7 @@ def xml2str(s):
 
 def _child_get(node, self=None, tagname=None):
     for n in node:
+        print n.get('rml_loop'), n.get('rml_except'), n.get('rml_tag'), n.tag
         if self and self.localcontext and n.get('rml_loop'):
 
             for ctx in eval(n.get('rml_loop'),{}, self.localcontext):

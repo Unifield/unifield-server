@@ -150,7 +150,7 @@ class Cursor(object):
             self.__logger.warn("SQL queries cannot contain %d or %f anymore. "
                                "Use only %s")
 
-        #self.sql_log = False
+        #self.sql_log = True
         if self.sql_log:
             now = mdt.now()
 

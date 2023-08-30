@@ -309,6 +309,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         #if not node.is_move_level:
         #    return res
 
+        print node.obj
+        all_t = time.time()
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
             return res
@@ -365,22 +367,22 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
                 m.name AS move_name, m.id AS mmove_id,per.code as period_code,
                 c.symbol AS currency_code,
-                i.id AS invoice_id, i.type AS invoice_type,
-                i.number AS invoice_number,
                 p.name AS partner_name, c.name as currency_name, l.partner_txt as third_party, l.reconcile_txt
                 FROM account_move_line l
                 JOIN account_move m on (l.move_id=m.id)
                 LEFT JOIN res_currency c on (l.currency_id=c.id)
                 LEFT JOIN res_partner p on (l.partner_id=p.id)
-                LEFT JOIN account_invoice i on (m.id =i.move_id)
                 LEFT JOIN account_period per on (per.id=l.period_id)
                 JOIN account_journal j on (l.journal_id=j.id)
                 JOIN account_account a on (a.id=l.account_id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
             """ %(self.query, move_state_in, sql_sort)
             sql = sql.replace('{{reconcile}}', self.reconciled_filter)
+            print '11',self.cr.mogrify(sql, (account.id, ))
             self.cr.execute(sql, (account.id, ))
+            t = time.time()
             res = self.cr.dictfetchall()
+            print time.time() - t
         else:
             if self.init_balance:
                 # US-822: move lines for period 0 IB journal
@@ -408,8 +410,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                         JOIN account_journal j on (l.journal_id=j.id)
                     WHERE %s AND l.account_id = %%s and per.number = 0 ORDER by %s
                 """ % (self.init_query, sql_sort, )
+                print '22', self.cr.mogrify(sql, (account.id, ))
                 self.cr.execute(sql, (account.id, ))
+                t = time.time()
                 res = self.cr.dictfetchall()
+                print time.time() - t 
 
         if res:
             account_sum = 0.0
@@ -426,6 +431,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                         l['amount_currency'] = abs(l['amount_currency']) * -1
                 if l['amount_currency'] != None:
                     self.tot_currency = self.tot_currency + l['amount_currency']
+        print 'uu', time.time() - all_t, len(res)
         return res
 
     def _get_account(self, data):
@@ -498,6 +504,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not amount or amount == 0.:
             return 0.
         if not self._is_company_currency():
+            print self.currency_id == self.output_currency_id
             amount = self.pool.get('res.currency').compute(self.cr, self.uid,
                                                            self.currency_id, self.output_currency_id, amount)
         if not amount or abs(amount) < 0.001:

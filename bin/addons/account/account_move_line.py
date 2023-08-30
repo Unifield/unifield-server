@@ -78,24 +78,24 @@ class account_move_line(osv.osv):
                 date_where = ''
                 for ft in from_to_contexts:
                     if context.get(ft[0], False):
-                        date_where += "%s%s %s '%s'" % (
-                            ' AND ' if date_where else '',
+                        date_where += "%s%s.%s %s '%s'" % (
+                            ' AND ' if date_where else '',obj,
                             field, ft[1], context[ft[0]])
                 if date_where:
-                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE " + date_where + ")"
+                    where_move_lines_by_date = " AND " + date_where
         else:
             # default behaviour (except US-926 cross FY reporting)
             if context.get('date_from', False) and context.get('date_to', False):
                 if context.get('date_fromto_docdate', False):
                     if initial_bal:
-                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE document_date < '" +context['date_from']+"')"
+                        where_move_lines_by_date = " AND " +obj+".document_date < '" +context['date_from']+"'"
                     else:
-                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE document_date >= '" +context['date_from']+"' AND document_date <= '"+context['date_to']+"')"
+                        where_move_lines_by_date = " AND " +obj+".document_date >= '" +context['date_from']+"' AND " + obj + ".document_date <= '"+context['date_to']+"'"
                 else:
                     if initial_bal:
-                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date < '" +context['date_from']+"')"
+                        where_move_lines_by_date = " AND " +obj+".date < '" +context['date_from']+"'"
                     else:
-                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date >= '" +context['date_from']+"' AND date <= '"+context['date_to']+"')"
+                        where_move_lines_by_date = " AND " +obj+".date >= '" +context['date_from']+"' AND " + obj+ ".date <= '"+context['date_to']+"'"
 
         if state:
             if state.lower() not in ['all']:

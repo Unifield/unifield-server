@@ -42,12 +42,12 @@ class account_common_report(osv.osv_memory):
         return res
 
     _columns = {
-        'chart_account_id': fields.many2one('account.account', 'Chart of account', help='Select Charts of Accounts', required=True, domain = [('parent_id','=',False)]),
+        'chart_account_id': fields.many2one('account.account', 'Chart of account', help='Select Charts of Accounts', domain = [('parent_id','=',False)]),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', help='Keep empty for all open fiscal year'),
         'filter': fields.selection([('filter_no', 'No Filters'), ('filter_date', 'Date'), ('filter_period', 'Periods')], "Filter by", required=True),
         'period_from': fields.many2one('account.period', 'Start period'),
         'period_to': fields.many2one('account.period', 'End period'),
-        'journal_ids': fields.many2many('account.journal', 'account_common_journal_rel', 'account_id', 'journal_id', 'Journals', required=True),
+        'journal_ids': fields.many2many('account.journal', 'account_common_journal_rel', 'account_id', 'journal_id', 'Journals'),
         'date_from': fields.date("Start Date"),
         'date_to': fields.date("End Date"),
         'target_move': fields.selection([('posted', 'All Posted Entries'),
