@@ -21,7 +21,7 @@
 
         <report
             id="field_balance_spec_report"
-            string="FIELD BALANCE SPECIFICIATION REPORT"
+            string="FIELD BALANCE SPECIFICATION REPORT"
             model="field.balance.spec.parser"
             name="field_balance_spec_report"
             report_type="openpyxl"
