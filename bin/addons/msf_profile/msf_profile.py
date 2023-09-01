@@ -58,13 +58,14 @@ class patch_scripts(osv.osv):
     }
 
     def us_11571_new_job_text_field_employee(self, cr, uid, *a, **b):
-        job_obj = self.pool.get('hr.job')
-        emp_obj = self.pool.get('hr.employee')
-        jobs_with_emp_ids = job_obj.search(cr, uid, [('state', '=', 'open')])
-        for job in job_obj.browse(cr, uid, jobs_with_emp_ids):
-            curr_job_emp_ids = job.employee_ids or []
-            for emp_id in curr_job_emp_ids:
-                emp_obj.write(cr, uid, emp_id.id, {'job_name': job.name})
+        cr.execute('''
+        UPDATE hr_employee emp
+        SET job_name = job.name
+        FROM hr_job job
+        WHERE
+            emp.job_id IS NOT NULL AND
+            emp.job_id = job.id
+        ''')
         return True
     # UF30.0
 
