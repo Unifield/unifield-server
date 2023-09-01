@@ -10,6 +10,7 @@ import tools
 from PIL import Image as PILImage
 from dateutil.relativedelta import relativedelta
 import re
+from base import currency_date
 
 class field_balance_spec_report(osv.osv_memory):
     _name = "field.balance.spec.report"
@@ -56,7 +57,7 @@ class field_balance_spec_report(osv.osv_memory):
             ids = [ids]
 
         report = self.browse(cr, uid, ids[0], context=context)
-        filename = '%s %s %s' % (report.instance_id.instance, report.period_id.name, _('Field Balance specification report'))
+        filename = '%s %s %s' % (report.instance_id.instance, report.period_id.name, _('Balance Specification'))
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': filename,
             'report_name': 'field_balance_spec_report',
@@ -90,8 +91,15 @@ class field_balance_spec_parser(XlsxReportParser):
 
         company = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, fields_to_fetch=['company_id'], context=context).company_id
 
-        date_used = company.currency_date_type == 'Posting Date' and 'date' or 'document_date'
-        date_used_label = company.currency_date_type == 'Posting Date' and _('Posting') or _('Booking')
+        if currency_date.get_date_type(self, self.cr) == 'document':
+            date_used = 'document_date'
+            date_used_label = _('Document date')
+            rate_title_main = _('Booking Rate')
+        else:
+            date_used = 'date'
+            date_used_label = _('Posting date')
+            rate_title_main = _('Posting Rate')
+
         report = self.pool.get('field.balance.spec.report').browse(self.cr, self.uid, self.ids[0], context=context)
 
 
@@ -778,7 +786,7 @@ class field_balance_spec_parser(XlsxReportParser):
                 line += 1
 
             else:
-                rate_title = '%s %s' % (date_used_label,_('Rate'))
+                rate_title = rate_title_main
                 amount_title = _('%s Amount') % (company.currency_id.name, )
                 if req_account.id in chq_account and company.revaluation_default_account:
                     rate_title = _('Period Rate')
@@ -788,7 +796,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     ('%s - %s' % (req_account.code, req_account.name), 'title_account'),
                     (_('Description of the entry'), 'title_text'),
                     (_('Reference of the entry'), 'title_text'),
-                    (_(company.currency_date_type), 'title_text'),
+                    (date_used_label, 'title_text'),
                     (_('Curr'), 'title_info'),
                     (_('Currency Amount'), 'title_amount'),
                     (rate_title, 'title_amount'),

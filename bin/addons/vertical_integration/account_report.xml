@@ -19,14 +19,16 @@
         auto="False"
         menu="False"/>
 
-        <report id="field_balance"
-        string="FIELD BALANCE SPECIFICATION REPORT FROM UNIFIELD"
-        model="field.balance.spec.report"
-        name="report.field_balance"
-        target_filename="Field Balance specification report"
-        report_type="openpyxl"
-        auto="False"
-        menu="False"/>
+        <report
+            id="field_balance_spec_report"
+            string="FIELD BALANCE SPECIFICIATION REPORT"
+            model="field.balance.spec.parser"
+            name="field_balance_spec_report"
+            report_type="openpyxl"
+            auto="False"
+            target_filename="${_('Balance Specification')}"
+            menu="False"
+            />
 
 
     <!-- Sequence for Finance export -->
