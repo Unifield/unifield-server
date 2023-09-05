@@ -85,7 +85,7 @@ class weekly_forecast_report(osv.osv):
             string='Requestor',
         ),
         'requestor_date': fields.datetime(
-            string='Date of te demand',
+            string='Date of the demand',
         ),
         'status': fields.selection(
             LIKELY_EXPIRE_STATUS,
