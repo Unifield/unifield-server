@@ -108,7 +108,7 @@ MODEL_DICT = {
         'domain': [('category', '=', 'DEST'), ('parent_id', '!=', False)]
     },
     'cost_centers': {
-        'name': 'Cost Centers',
+        'name': 'Cost Centers Creation Mapping',
         'domain_type': 'finance',
         'model': 'account.analytic.account',
         'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)],
