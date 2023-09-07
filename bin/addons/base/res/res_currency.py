@@ -363,7 +363,7 @@ class res_currency(osv.osv):
 
         if 'active' in values and not values.get('currency_table_id', False) and pricelist_obj:
             if values['active'] == False:
-                self.check_in_use(cr, uid, ids, 'de-activate', context=context)
+                self.check_in_use(cr, uid, ids, _('de-activate'), context=context)
             # Get all pricelists and versions for the given currency
             pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])], context=context)
             if not pricelist_ids:
@@ -556,6 +556,7 @@ class res_currency(osv.osv):
         pricelist_obj = self.pool.get('product.pricelist')
         purchase_obj = self.pool.get('purchase.order')
         sale_obj = self.pool.get('sale.order')
+        partner_obj = self.pool.get('res.partner')
         acc_inv_obj = self.pool.get('account.invoice')
         aml_obj = self.pool.get('account.move.line')
         comm_voucher_obj = self.pool.get('account.commitment')
@@ -564,7 +565,6 @@ class res_currency(osv.osv):
         reg_obj = self.pool.get('account.bank.statement')
         recurring_obj = self.pool.get('account.subscription')
         accrual_line_obj = self.pool.get('msf.accrual.line')
-        keyword = _(keyword)
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -576,25 +576,52 @@ class res_currency(osv.osv):
             # Raise an error if the currency is used in a transaction that isn't closed/paid/posted
 
             # Check on POs
-            if purchase_obj.search_exist(cr, uid, [('pricelist_id', 'in', pricelist_ids), ('state', 'not in', ['done', 'cancel'])],
-                                         context=context):
+            po_domain = [('pricelist_id', 'in', pricelist_ids), ('state', 'not in', ['done', 'cancel']), ('rfq_ok', '=', False)]
+            po_ids = purchase_obj.search(cr, uid, po_domain, limit=10, context=context)
+            if po_ids:
+                pos = purchase_obj.read(cr, uid, po_ids, ['name'], context=context)
                 raise osv.except_osv(_('Currency currently used!'), _(
-                    "The currency you want to %s is used in at least one "
-                    "Purchase Order which isn't Closed.") % keyword)
+                    "The currency you want to %s is used in at least one Purchase Order "
+                    "which isn't Closed or Cancelled: %s") % (keyword, ','.join([po['name'] for po in pos])))
+
+            # Check on RfQs
+            rfq_domain = [('pricelist_id', 'in', pricelist_ids), ('rfq_state', 'not in', ['done', 'cancel']), ('rfq_ok', '=', True)]
+            rfq_ids = purchase_obj.search(cr, uid, rfq_domain, limit=10, context=context)
+            if rfq_ids:
+                rfqs = purchase_obj.read(cr, uid, rfq_ids, ['name'], context=context)
+                raise osv.except_osv(_('Currency currently used!'), _(
+                    "The currency you want to %s is used in at least one Request for Quotation "
+                    "which isn't Closed or Cancelled: %s") % (keyword, ', '.join([rfq['name'] for rfq in rfqs])))
 
             # Check on FOs
-            if sale_obj.search_exist(cr, uid, [('pricelist_id', 'in', pricelist_ids), ('state', 'not in', ['done', 'cancel'])],
-                                     context=context):
+            sale_domain = [('pricelist_id', 'in', pricelist_ids), ('state', 'not in', ['done', 'cancel']),
+                           ('procurement_request', '=', False)]
+            sale_ids = sale_obj.search(cr, uid, sale_domain, limit=10, context=context)
+            if sale_ids:
+                sales = sale_obj.read(cr, uid, sale_ids, ['name'], context=context)
                 raise osv.except_osv(_('Currency currently used!'), _(
-                    "The currency you want to %s is used in at least one "
-                    "Field Order which isn't Closed.") % keyword)
+                    "The currency you want to %s is used in at least one Field Order "
+                    "which isn't Closed or Cancelled: %s") % (keyword, ', '.join([sale['name'] for sale in sales])))
+
+            # Check on IRs
+            ir_domain = [('pricelist_id', 'in', pricelist_ids), ('state', 'not in', ['done', 'cancel']),
+                         ('procurement_request', '=', True)]
+            ir_ids = sale_obj.search(cr, uid, ir_domain, limit=10, context=context)
+            if ir_ids:
+                irs = sale_obj.read(cr, uid, ir_ids, ['name'], context=context)
+                raise osv.except_osv(_('Currency currently used!'), _(
+                    "The currency you want to %s is used in at least one Internal Request "
+                    "which isn't Closed or Cancelled: %s") % (keyword, ', '.join([ir['name'] for ir in irs])))
 
             # Check on Partner (forms)
             partner_domain = [('active', '=', True), '|', ('property_product_pricelist_purchase', 'in', pricelist_ids),
                               ('property_product_pricelist', 'in', pricelist_ids)]
-            if self.pool.get('res.partner').search(cr, uid, partner_domain, context=context):
-                raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used '
-                                                                      'in at least one active partner form.') % keyword)
+            partner_ids = partner_obj.search(cr, uid, partner_domain, limit=10, context=context)
+            if partner_ids:
+                partners = partner_obj.read(cr, uid, partner_ids, ['name'], context=context)
+                raise osv.except_osv(_('Currency currently used!'),
+                                     _('The currency you want to %s is used in at least one active partner form'
+                                       ': %s') % (keyword, ', '.join([partner['name'] for partner in partners])))
 
         # Check on account.invoice
         if acc_inv_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('state', 'not in', ['paid', 'inv_close', 'cancel'])], context=context):
