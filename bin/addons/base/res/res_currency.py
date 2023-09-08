@@ -582,7 +582,7 @@ class res_currency(osv.osv):
                 pos = purchase_obj.read(cr, uid, po_ids, ['name'], context=context)
                 raise osv.except_osv(_('Currency currently used!'), _(
                     "The currency you want to %s is used in at least one Purchase Order "
-                    "which isn't Closed or Cancelled: %s") % (keyword, ','.join([po['name'] for po in pos])))
+                    "which isn't Closed or Cancelled: %s") % (keyword, ', '.join([po['name'] for po in pos])))
 
             # Check on RfQs
             rfq_domain = [('pricelist_id', 'in', pricelist_ids), ('rfq_state', 'not in', ['done', 'cancel']), ('rfq_ok', '=', True)]
