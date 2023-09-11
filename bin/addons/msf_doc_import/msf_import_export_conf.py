@@ -108,7 +108,14 @@ MODEL_DICT = {
         'domain': [('category', '=', 'DEST'), ('parent_id', '!=', False)]
     },
     'cost_centers': {
-        'name': 'Cost Centers Creation Mapping',
+        'name': 'Cost Center Creation Mapping',
+        'domain_type': 'finance',
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)],
+        'partial': False
+    },
+    'cost_centers_update': {
+        'name': 'Cost Center Updates',
         'domain_type': 'finance',
         'model': 'account.analytic.account',
         'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)],
@@ -547,6 +554,23 @@ MODEL_DATA_DICT = {
             'code',
             'parent_id.code',
             'date_start',
+        ],
+    },
+    'cost_centers_update': {
+        'header_list': [
+            'code',
+            'name',
+            'parent_id.code',
+            'type',
+            'date_start',
+            'date',  # "inactive from"
+            'top_prop_instance',
+            'is_target_cc_instance_ids',
+            'top_cc_instance_ids',
+            'po_fo_cc_instance_ids',
+        ],
+        'required_field_list': [
+            'code',
         ],
     },
     'destinations': {

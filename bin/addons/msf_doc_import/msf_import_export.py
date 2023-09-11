@@ -1214,11 +1214,11 @@ class msf_import_export(osv.osv_memory):
                                 if link_ids:
                                     acc_dest_obj.write(cr, uid, link_ids, {'disabled': False}, context=context)
 
-                # Cost Centers
+                # Cost Centers Creation
                 if import_brw.model_list_selection == 'cost_centers':
                     ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'OC')])
                     if ids_to_update:
-                        raise Exception(_('Cost center %s already exists in the system and update of CCs via import is not allowed.') % (data.get('code')))
+                        raise Exception(_('Cost center %s already exists in the system, please use the Cost Center Updates tool instead to update it.') % (data.get('code')))
                     context['from_import_menu'] = True
                     data['category'] = 'OC'
                     # Parent Analytic Account
@@ -1274,6 +1274,23 @@ class msf_import_export(osv.osv_memory):
                             print data
                             raise Exception(_('%s: The instance %s already has a cost center picked for '
                                               'PO/FO reference.') % (data.get('code'), data['po_fo_cc_instance_ids'].code))
+
+                # Cost Centers Update
+                if import_brw.model_list_selection == 'cost_centers_update':
+                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')),
+                                                                      ('category', '=', 'OC')])
+                    if not ids_to_update:
+                        raise Exception(_('Cost center %s doesn\'t exist yet in the system, please use the Cost Center Creation Mapping tool instead to create it.') % (data.get('code')))
+                    context['from_import_menu'] = True
+                    data['category'] = 'OC'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'],
+                                                            fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'OC':
+                            raise Exception(_('The Parent Analytic Account must be a View type Cost Center.'))
 
                 # Free 1
                 if import_brw.model_list_selection == 'free1':
