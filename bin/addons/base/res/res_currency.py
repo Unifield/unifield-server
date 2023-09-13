@@ -559,6 +559,7 @@ class res_currency(osv.osv):
         partner_obj = self.pool.get('res.partner')
         acc_inv_obj = self.pool.get('account.invoice')
         aml_obj = self.pool.get('account.move.line')
+        mv_obj = self.pool.get('account.move')
         comm_voucher_obj = self.pool.get('account.commitment')
         hq_entry_obj = self.pool.get('hq.entries')
         payroll_obj = self.pool.get('hr.payroll.msf')
@@ -624,50 +625,82 @@ class res_currency(osv.osv):
                                        ': %s') % (keyword, ', '.join([partner['name'] for partner in partners])))
 
         # Check on account.invoice
-        if acc_inv_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('state', 'not in', ['paid', 'inv_close', 'cancel'])], context=context):
-            raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used in at least '
-                                                                  'one document in Draft or Open state.') % keyword)
+        inv_domain = [('currency_id', 'in', ids), ('state', 'not in', ['paid', 'inv_close', 'cancel'])]
+        inv_ids = acc_inv_obj.search(cr, uid, inv_domain, limit=10, context=context)
+        if inv_ids:
+            invoices = acc_inv_obj.read(cr, uid, inv_ids, ['number'], context=context)
+            raise osv.except_osv(_('Currency currently used!'),
+                                 _('The currency you want to %s is used in at least one document in Draft '
+                                   'or Open state: %s') %
+                                 (keyword, ', '.join([invoice['number'] for invoice in invoices])))
 
         # Check on Journal Items
-        if aml_obj.search_exist(cr, uid, ['|',
-                                          ('currency_id', 'in', ids),
-                                          ('functional_currency_id', 'in', ids),
-                                          ('move_state', '=', 'draft')], context=context):
-            raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used in at least '
-                                                                  'one Journal Item in Unposted state.') % keyword)
+        aml_domain = ['|', ('currency_id', 'in', ids), ('functional_currency_id', 'in', ids), ('move_state', '=', 'draft')]
+        aml_ids = aml_obj.search(cr, uid, aml_domain, limit=10, context=context)
+        if aml_ids:
+            amls = aml_obj.read(cr, uid, aml_ids, ['move_id'], context=context)
+            mv_ids = [aml['move_id'][0] for aml in amls]
+            mvs = mv_obj.read(cr, uid, mv_ids, ['name'], context=context)
+            raise osv.except_osv(_('Currency currently used!'),
+                                 _('The currency you want to %s is used in at least one Journal Item '
+                                   'in Unposted state: %s') %
+                                 (keyword, ', '.join([mv['name'] for mv in mvs])))
+
         # Check on Commitment Vouchers
-        if comm_voucher_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('state', '!=', 'done')], context=context):
-            raise osv.except_osv(_('Currency currently used!'), _("The currency you want to %s is used in at least "
-                                                                  "one Commitment Voucher which isn't Done.") % keyword)
+        cv_domain = [('currency_id', 'in', ids), ('state', '!=', 'done')]
+        cv_ids = comm_voucher_obj.search(cr, uid, cv_domain, limit=10, context=context)
+        if cv_ids:
+            cvs = comm_voucher_obj.read(cr, uid, cv_ids, ['name'], context=context)
+            raise osv.except_osv(_('Currency currently used!'),
+                                 _("The currency you want to %s is used in at least one Commitment Voucher which isn't Done: %s") %
+                                 (keyword, ', '.join([cv['name'] for cv in cvs])))
         # Check on HQ Entries
-        if hq_entry_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('user_validated', '=', False)], context=context):
-            raise osv.except_osv(_('Currency currently used!'), _("The currency you want to %s is used in at least "
-                                                                  "one HQ Entry which isn't validated.") % keyword)
+        hq_entry_dom = [('currency_id', 'in', ids), ('user_validated', '=', False)]
+        hq_entry_ids = hq_entry_obj.search(cr, uid, hq_entry_dom, limit=10, context=context)
+        if hq_entry_ids:
+            hq_entries = hq_entry_obj.read(cr, uid, hq_entry_ids, ['ref'], context=context)
+            raise osv.except_osv(_('Currency currently used!'),
+                                 _("The currency you want to %s is used in at least one HQ Entry which isn't validated: %s") %
+                                 (keyword, ', '.join([hq_entry['ref'] for hq_entry in hq_entries])))
 
         # Check on HR Payrolls
-        if payroll_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('state', '=', 'draft')], context=context):
-            raise osv.except_osv(_('Currency currently used!'), _("The currency you want to %s is used in at least "
-                                                                  "one Payroll Entry which isn't validated.") % keyword)
+        payroll_dom = [('currency_id', 'in', ids), ('state', '=', 'draft')]
+        payroll_ids = payroll_obj.search(cr, uid, payroll_dom, limit=10, context=context)
+        if payroll_ids:
+            payrolls = payroll_obj.read(cr, uid, payroll_ids, ['name'], context=context)
+            raise osv.except_osv(_('Currency currently used!'),
+                                 _("The currency you want to %s is used in at least one Payroll Entry which isn't validated: %s") %
+                                 (keyword, ', '.join([payroll['name'] for payroll in payrolls])))
 
         # Check on Registers
-        if reg_obj.search_exist(cr, uid, [('journal_id.currency', 'in', ids), ('state', 'in', ['draft', 'open'])], context=context):
+        reg_dom = [('journal_id.currency', 'in', ids), ('state', 'in', ['draft', 'open'])]
+        reg_ids = reg_obj.search(cr, uid, reg_dom, limit=10, context=context)
+        if reg_ids:
+            regs = reg_obj.read(cr, uid, reg_ids, ['name'], context=context)
             raise osv.except_osv(_('Currency currently used!'),
                                  _("The currency you want to %s is used in at least "
-                                   "one Register in Draft or Open state.") % keyword)
+                                   "one Register in Draft or Open state: %s") %
+                                 (keyword, ', '.join([reg['name'] for reg in regs])))
 
         # Check on Recurring Entries
-        if recurring_obj.search_exist(cr, uid, [('model_id.currency_id', 'in', ids), ('state', '!=', 'done')], context=context):
+        recurring_dom = [('model_id.currency_id', 'in', ids), ('state', '!=', 'done')]
+        recurring_ids = recurring_obj.search(cr, uid, recurring_dom, limit=10, context=context)
+        if recurring_ids:
+            recs = recurring_obj.read(cr, uid, recurring_ids, ['name'], context=context)
             raise osv.except_osv(_('Currency currently used!'),
                                  _("The currency you want to %s is used in at least "
-                                   "one Recurring Entry having a state not Done.") % keyword)
+                                   "one Recurring Entry having a state not Done: %s") %
+                                 (keyword, '; '.join([rec['name'] for rec in recs])))
 
         # Check on Accrual Lines
-        if accrual_line_obj.search_exist(cr, uid,
-                                         ['|', ('currency_id', 'in', ids), ('functional_currency_id', 'in', ids),
-                                          ('state', 'in', ['draft', 'running'])], context=context):
+        accrual_dom = ['|', ('currency_id', 'in', ids), ('functional_currency_id', 'in', ids), ('state', 'in', ['draft', 'running'])]
+        accrual_ids = accrual_line_obj.search(cr, uid, accrual_dom, limit=10, context=context)
+        if accrual_ids:
+            accs = accrual_line_obj.read(cr, uid, accrual_ids, ['entry_sequence'], context=context)
             raise osv.except_osv(_('Currency currently used!'),
                                  _("The currency you want to %s is used in at least "
-                                   "one Draft or Running Accrual.") % keyword)
+                                   "one Draft or Running Accrual: %s") %
+                                 (keyword, ', '.join([acc['entry_sequence'] for acc in accs])))
 
         return pricelist_ids
 
