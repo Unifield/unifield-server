@@ -19,6 +19,9 @@
 #
 ##############################################################################
 
+import tools
+from tools.translate import _
+
 MODEL_DICT = {
     # SUPPLY
     'products': {
@@ -108,14 +111,14 @@ MODEL_DICT = {
         'domain': [('category', '=', 'DEST'), ('parent_id', '!=', False)]
     },
     'cost_centers': {
-        'name': 'Cost Center Creation Mapping',
+        'name': _('Cost Center Creation Mapping'),
         'domain_type': 'finance',
         'model': 'account.analytic.account',
         'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)],
         'partial': False
     },
     'cost_centers_update': {
-        'name': 'Cost Center Updates',
+        'name': _('Cost Center Updates'),
         'domain_type': 'finance',
         'model': 'account.analytic.account',
         'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)],
