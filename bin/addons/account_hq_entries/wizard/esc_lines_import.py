@@ -53,9 +53,9 @@ class esc_line_import_wizard(osv.osv):
 
     def __init__(self, pool, cr):
         super(esc_line_import_wizard, self).__init__(pool, cr)
-        if cr.column_exists('esc_line_import_wizard', 'state'):
+        if cr.column_exists('esc_line_import', 'state'):
             cr.execute("update esc_line_import_wizard set state='error' where state='inprogress'")
-        if cr.column_exists('esc_line_import_wizard', 'file'):
+        if cr.column_exists('esc_line_import', 'file'):
             cr.execute("update esc_line_import_wizard set file=null where file is not null")
 
     def write(self, cr, uid, ids, vals, context=None):
