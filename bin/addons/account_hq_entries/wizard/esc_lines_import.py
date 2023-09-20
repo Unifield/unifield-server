@@ -53,10 +53,10 @@ class esc_line_import_wizard(osv.osv):
 
     def __init__(self, pool, cr):
         super(esc_line_import_wizard, self).__init__(pool, cr)
-        if cr.column_exists('esc_line_import_wizard', 'state'):
-            cr.execute("update esc_line_import_wizard set state='error' where state='inprogress'")
-        if cr.column_exists('esc_line_import_wizard', 'file'):
-            cr.execute("update esc_line_import_wizard set file=null where file is not null")
+        if cr.column_exists('esc_line_import', 'state'):
+            cr.execute("update esc_line_import set state='error', created=0, error='Server restarted, import cancelled.', nberrors=0, total=0 where state='inprogress'")
+        if cr.column_exists('esc_line_import', 'file'):
+            cr.execute("update esc_line_import set file=null where file is not null")
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -184,8 +184,9 @@ class esc_line_import_wizard(osv.osv):
 
             target_cc_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('instance_id.state', '!=', 'inactive'), ('is_po_fo_cost_center', '=', True)], context=context)
             for target in self.pool.get('account.target.costcenter').browse(cr, uid, target_cc_ids, fields_to_fetch=['cost_center_id', 'instance_id'], context=context):
-                cost_center[target.cost_center_id.code.lower()] = target.cost_center_id.id
-                consignee_instances[target.instance_id.instance.lower()] = target.cost_center_id.id
+                if target.cost_center_id and target.instance_id.instance:
+                    cost_center[target.cost_center_id.code.lower()] = target.cost_center_id.id
+                    consignee_instances[target.instance_id.instance.lower()] = target.cost_center_id.id
 
             wiz = self.browse(cr, uid, wiz_id, context=None)
             file_data = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
