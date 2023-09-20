@@ -139,7 +139,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="${_('PO lines allocation report')}">
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="57" ss:Span="16"/>
+<Column ss:AutoFitWidth="1" ss:Width="65" ss:Span="18"/>
 
 <!-- TABLE HEADER -->
 <Row>
@@ -189,10 +189,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${_('Source Doc')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
-        <Data ss:Type="String">${_('Partner')}</Data>
+        <Data ss:Type="String">${_('Requestor')}</Data>
     </Cell>
     <Cell ss:StyleID="ssHeader">
         <Data ss:Type="String">${_('Partner Doc')}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssHeader">
+        <Data ss:Type="String">${_('Comment')}</Data>
     </Cell>
 </Row>
 
@@ -244,10 +247,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String">${ o.source_doc or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${ o.partner_id.name or '' |x}</Data>
+        <Data ss:Type="String">${ o.requestor or '' |x}</Data>
     </Cell>
     <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${ o.partner_doc or '' |x}</Data>
+    </Cell>
+    <Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${ o.comment or '' |x}</Data>
     </Cell>
 </Row>
 
@@ -271,7 +277,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
    <Panes>
     <Pane>
      <Number>3</Number>
-     <ActiveRow>17</ActiveRow>
+     <ActiveRow>18</ActiveRow>
     </Pane>
    </Panes>
    <ProtectObjects>False</ProtectObjects>

@@ -83,17 +83,19 @@
                         <page string="Information">
                             <group colspan="2" col="2">
                                 <separator string="Procurement" colspan="2"/>
-                                <field name="type"/>
+                                <field name="type" on_change="on_change_type(type)"/>
                                 <field name="procure_method" />
                                 <field name="supply_method"/>
                             </group>
                             <group colspan="2" col="3">
                                 <separator string="Base Prices" colspan="3"/>
-                                <field name="cost_method" colspan="3"/>
-                                <field name="standard_price" string="Cost Price " attrs="{'readonly':[('cost_method','=','average')]}"/>
+                                <field name="cost_method" colspan="3" readonly="1"/>
+                                <field name="standard_price" string="Cost Price " readonly="1"/>
                                 <field name="currency_id" nolabel="1" />
                                 <field name="list_price" colspan="2"/>
                                 <field name="field_currency_id" nolabel="1" />
+                                <field name="finance_price" colspan="2" invisible="1" />
+                                <field name="finance_price_currency_id" nolabel="1" invisible="1" />
                                 <newline/>
                             </group>
 
@@ -117,6 +119,11 @@
                                 <field name="state" colspan="3" widget="selection" />
                                 <field name="state_ud" colspan="3" />
                                 <field name="oc_subscription" colspan="3" readonly="1" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}"/>
+                                <group colspan="3" col="6">
+                                    <field name="oc_validation" readonly="1" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}" />
+                                    <field name="oc_validation_date" readonly="1" attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('oc_validation', '!=', True)]}" widget="date"/>
+                                    <field name="oc_devalidation_date" readonly="1" attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('oc_validation', '=', True)]}" widget="date"/>
+                                </group>
                                 <group colspan="2" col="4">
                                     <field name="active" readonly="1"/>
                                     <field name="nsl_merged" attrs="{'invisible': [('int_status_code', '!=', 'local')]}" />
@@ -129,6 +136,8 @@
                                    <button name="reactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': ['|', '|', ('active', '=', True), ('nsl_merged', '=', True), ('unidata_merged', '=', True)]}" />
                                    <button name="open_merge_product_wizard" icon="gtk-convert" string="Merge product" type="object"  attrs="{'invisible': ['|', '|', '|', ('int_status_code', '!=', 'local'), ('nsl_merged', '=', True), ('active', '=', False), ('instance_level', '!=', 'coordo')]}"/>
                                    <button name="open_merge_hq_product_wizard" icon="gtk-convert" string="HQ Merge product" type="object"  attrs="{'invisible': [('can_be_hq_merged', '!=', 'True')]}"/>
+                                   <button name="pull_ud" icon="unidata.png" string="Pull UD OC Validation" type="object"  attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('instance_level', '!=', 'section')]}" />
+                                   <button name="debug_ud" icon="debug.png" string="Display MML API result" type="object"  attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('instance_level', '!=', 'section')]}" invisible="1"/>
                                 </group>
                             </group>
                             <group colspan="2" col="3" name="quality">
@@ -148,6 +157,36 @@
                                 <field name="soq_quantity" on_change="change_soq_quantity(soq_quantity, uom_id)" colspan="3"/>
                                 <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)" domain="[('compatible_product_id', '=', active_id)]" colspan="3"/>
                                 <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" colspan="3"/>
+                            </group>
+                        </page>
+                        <page string="UD OC Validation" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}">
+                            <group colspan="4" col="14">
+                                <field name="mml_status"/>
+                                <field name="msl_status"/>
+                                <group colspan="10"/>
+                            </group>
+                            <field name="oc_devalidation_reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}"/>
+                            <separator string="Use Comments" colspan="4"/>
+                            <field name="oc_comments" colspan="4" nolabel="1"/>
+                            <group colspan="4" col="6">
+                                <field name="oc_coordo_restrictions" nolabel="1" colspan="2">
+                                    <tree string="Mission Restrictions">
+                                        <field name="code" />
+                                    </tree>
+                                </field>
+
+                                <field name="oc_instance_restrictions" nolabel="1" colspan="2">
+                                    <tree string="Project Restrictions">
+                                        <field name="code" />
+                                    </tree>
+                                </field>
+
+                                <field name="msl_project_ids" nolabel="1" colspan="2">
+                                    <tree string="MSL">
+                                        <field name="instance_id" string="Code"/>
+                                        <field name="uf_active" />
+                                    </tree>
+                                </field>
                             </group>
                         </page>
                         <page string="Specific info">
@@ -490,6 +529,8 @@
                    <group name="batch_attr" invisible="1">
                        <field name="batch_attributes" />
                     </group>
+                   <field name="in_mml_instance" />
+                   <field name="in_msl_instance" widget="many2one"/>
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>

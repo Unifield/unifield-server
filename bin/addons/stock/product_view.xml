@@ -56,21 +56,6 @@
             </field>
         </record>
 
-        <record id="view_product_standard_price_form" model="ir.ui.view">
-            <field name="name">product.product.standard.price.form.inherit</field>
-            <field name="model">product.product</field>
-            <field name="type">form</field>
-            <field name="priority">35</field>
-            <field name="inherit_id" ref="product.product_normal_form_view"/>
-            <field name="arch" type="xml">
-                <field name="standard_price" position="replace">
-                    <field name="standard_price" attrs="{'readonly':[('cost_method','=','average')]}"/>
-                    <button name="%(action_view_change_standard_price)d" string="Update"
-                        type="action" icon="gtk-execute" attrs="{'invisible':[('cost_method','&lt;&gt;','average')]}"/>
-                </field>
-            </field>
-        </record>
-
         <record id="view_normal_property_acc_form" model="ir.ui.view">
             <field name="name">product.normal.stock.acc.property.form.inherit</field>
             <field name="model">product.product</field>
@@ -139,18 +124,6 @@
                 </group>
             </field>
         </record>
-
-<!--        <record id="view_product_valuation_form" model="ir.ui.view">
-            <field name="name">product.valuation.stock.form.inherit</field>
-            <field name="model">product.product</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="product.product_normal_form_view"/>
-            <field name="arch" type="xml">
-                <field name="cost_method" position="after">
-                    <field name="valuation"/>
-                </field>
-            </field>
-        </record>-->
 
     </data>
 </openerp>

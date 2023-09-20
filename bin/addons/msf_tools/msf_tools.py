@@ -345,9 +345,12 @@ class data_tools(osv.osv):
         Modifies the string in parameter:
         - replaces the line breaks by spaces if they are in the middle of the string
         - replaces non-breakable spaces by ordinary spaces
+        - replaces special character Control Device 4 by ordinary space
         - removes the line breaks and the spaces at the beginning and at the end
         """
-        return re.sub('[\r\n\xc2\xa0]', ' ', string_to_format or '').strip()
+        if isinstance(string_to_format, unicode):
+            return re.sub('[\r\n\xc2\xa0\x14]', ' ', string_to_format or '').strip()
+        return re.sub('[\r\n\xc2\xa0\x14]', ' ', unicode(string_to_format, 'utf-8') or '').strip()
 
     def replace_line_breaks_from_vals(self, vals, fields, replace=None):
         """
@@ -720,6 +723,17 @@ class ir_translation(osv.osv):
         if context is None:
             context = {}
         if context.get('sync_update_execution') and vals.get('name') in fields and vals.get('lang'):
+            if vals.get('name') == 'account.analytic.account,name' and vals.get('lang') == 'en_MF' and vals['value']:
+                # translations removed on anaylitc account name, but still in (init) sync
+                obj_id = False
+                if vals.get('res_id'):
+                    obj_id = vals['res_id']
+                elif vals.get('xml_id'):
+                    obj_id = self._get_res_id(cr, uid, vals['name'], vals['xml_id'], context=context)
+                if obj_id:
+                    self.pool.get('account.analytic.account').write(cr, uid, obj_id, {'name': vals['value']}, context=context)
+                return True
+
             obj_name = vals['name'].split(',')[0]
             obj = self.pool.get(obj_name)
             audit_rule_ids = obj.check_audit(cr, uid, 'write')
@@ -1167,7 +1181,7 @@ class job_in_progress(osv.osv_memory):
         job_id = self.create(cr, uid, {'res_id': object_id, 'model': model, 'name': name, 'total': nb_lines, 'src_name': src_name})
         th = threading.Thread(
             target=self._run_bg_job,
-            args=(cr, uid, job_id,  method_to_call),
+            args=(cr.dbname, uid, job_id,  method_to_call),
             kwargs={'src_ids': src_ids, 'context': context}
         )
         th.start()
@@ -1183,9 +1197,9 @@ class job_in_progress(osv.osv_memory):
         return return_success
 
 
-    def _run_bg_job(self, cr, uid, job_id, method, src_ids, context=None):
+    def _run_bg_job(self, crname, uid, job_id, method, src_ids, context=None):
 
-        new_cr = pooler.get_db(cr.dbname).cursor()
+        new_cr = pooler.get_db(crname).cursor()
         try:
             res = False
             process_error = False

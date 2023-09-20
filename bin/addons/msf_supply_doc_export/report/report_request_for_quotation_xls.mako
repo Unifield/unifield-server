@@ -58,12 +58,14 @@
 ## definition of the columns' size
 <% nb_of_columns = 8 %>
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="55" />
+<Column ss:AutoFitWidth="1" ss:Width="130" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
-% for x in range(2,nb_of_columns - 1):
+% for x in range(1, 7):
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 % endfor
 <Column ss:AutoFitWidth="1" ss:Width="250" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
     
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line Number')}</Data></Cell>
@@ -76,6 +78,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Confirmed Delivery Date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('State')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
@@ -101,6 +104,7 @@
         
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.rfq_line_state and getSel(line, 'rfq_line_state') or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>

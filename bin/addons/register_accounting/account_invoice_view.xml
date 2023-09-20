@@ -254,9 +254,9 @@
                     <field name="origin"/>
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="residual" sum="Residual Amount"/>
-                    <field name="amount_untaxed" sum="Untaxed Amount" invisible="1"/>
-                    <field name="amount_total" sum="Total Amount"/>
+                    <field name="residual" sum="Residual Amount" sum_selected="1"/>
+                    <field name="amount_untaxed" sum="Untaxed Amount" invisible="1" sum_selected="1"/>
+                    <field name="amount_total" sum="Total Amount" sum_selected="1"/>
                     <field name="state"/>
                 </tree>
             </field>

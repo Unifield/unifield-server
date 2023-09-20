@@ -1,0 +1,203 @@
+<?xml version="1.0" ?>
+<document filename="test.pdf">
+
+    <template pageSize="(595.0,842.0)" title="Loan Certificate" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="30.0" y1="10.0" width="530" height="720" />
+
+        <pageGraphics>
+            <setFont name="Helvetica-Bold" size="20"/>
+            <drawCentredString x="300" y="750.0">LOAN CERTIFICATE</drawCentredString>
+            <image x="30" y="765.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+            <drawString x="520.0" y="30.0">Page : <pageNumber /> / </drawString>
+            <drawString x="557.0" y="30.0"><pageCount /></drawString>
+        </pageGraphics>
+
+    </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="ItemsLineHeader">
+            <blockAlignment value="LEFT" />
+            <blockValign value="MIDDLE" />
+            <lineStyle kind="LINEBELOW" colorName="black" start="0,0" stop="-1,0" />
+            <lineStyle kind="LINEBELOW" colorName="#c0c0c0" start="0,1" stop="-1,-1" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="0,0" stop="-1,0" />
+        </blockTableStyle>
+
+        <initialize>
+            <paraStyle name="all" alignment="justify"/>
+        </initialize>
+
+        <paraStyle name="StandardBig" fontName="Helvetica" fontSize="12.0" leading="12" alignment="LEFT" spaceBefore="1.0" spaceAfter="1.0"/>
+        <paraStyle name="StandardBigBold" fontName="Helvetica-Bold" fontSize="12.0" leading="12" alignment="LEFT" spaceBefore="1.0" spaceAfter="1.0"/>
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="9.0" leading="9.0" alignment="CENTER" spaceBefore="1.0" spaceAfter="1.0"/>
+        <paraStyle name="StandardLeft" fontName="Helvetica" fontSize="9.0" leading="9.0" alignment="LEFT" spaceBefore="1.0" spaceAfter="1.0"/>
+        <paraStyle name="StandardBold" fontName="Helvetica-Bold" fontSize="9.0" leading="9.0" alignment="CENTER" spaceBefore="1.0" spaceAfter="1.0"/>
+        <paraStyle name="StandardMini" fontName="Helvetica" fontSize="5.0" leading="5.0" alignment="CENTER" spaceBefore="1.0" spaceAfter="1.0"/>
+
+        <paraStyle name="ItemsLineTitle" fontName="Helvetica-Oblique" fontSize="9.0" leading="10.0" />
+        <paraStyle name="ItemsLineValue" fontName="Helvetica" fontSize="8.5" leading="9.0" textColor="blue" />
+    </stylesheet>
+
+    <story>
+        <para style="Standard">[[ repeatIn(objects,'o') ]]</para>
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="540.0" >
+            <tr><td>
+                <para style="StandardBigBold">Loan Reference(s) for [[ o.name ]] :</para>
+            </td></tr>
+            <tr><td>
+                <para style="StandardBig">[[ ', '.join([loan['loan_ref'] for loan in getLoansData(o.pack_family_memory_ids, o.shipment_actual_date, False)]) ]]</para>
+            </td></tr>
+            <tr><td><para style="Standard"><font color="white"> </font></para></td></tr>
+            <tr><td>
+                <para style="StandardLeft">The undersigned parties declare that the following listed items are loaned by [[ getCompany().get('full_name', '') ]] to [[ o.partner_id and o.partner_id.name or '' ]]</para>
+            </td></tr>
+        </blockTable>
+
+        <para style="Standard"><font color="white"> </font></para>
+        <para style="Standard"><font color="white"> </font></para>
+
+        <blockTable colWidths="270.0,270.0">
+            <tr>
+                <td>
+                    <para style="StandardBold">
+                        <para>
+                        Value : [[ displayValue() and formatLang(getTotalValue()) or removeParentNode('para') ]] [[ o.currency_id.name ]]
+                        </para>
+                    </para>
+                </td>
+                <td>
+                    <para style="StandardBold">Estimated date(s) of return :</para>
+                </td>
+            </tr>
+            <tr>
+                [[ repeatIn(getLoansData(o.pack_family_memory_ids, o.shipment_actual_date, False), 'loan') ]]
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td>
+                    <para style="StandardLeft">[[ loan['loan_ref'] ]] : [[ formatLang(loan['loan_esti_date'], date_time=True)[:-6] ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Standard"><font color="white"> </font></para>
+
+        <blockTable colWidths="110.0,220.0,50.0,90.0,70.0" repeatRows="1" style="ItemsLineHeader">
+            <tr>
+                <td>
+                    <para style="ItemsLineTitle">Code</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitle">Product Description</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitle">Quantity</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitle">Batch Number</para>
+                </td>
+                <td>
+                    <para style="ItemsLineTitle">Expiry Date</para>
+                </td>
+            </tr>
+            <tr>
+                [[ repeatIn(getLines(o.pack_family_memory_ids, False), 'line') ]]
+                <td>
+                    <para style="ItemsLineValue">[[ line.get('product_code', '') ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValue">[[ line.get('product_name', '') ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValue">[[ line.get('qty', 0.00) ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValue">[[ line.get('prodlot_name', '') ]]</para>
+                </td>
+                <td>
+                    <para style="ItemsLineValue">[[ line.get('expiry_date') and formatLang(line['expiry_date'], date=True) or '' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Standard"><font color="white"> </font></para>
+        <para style="Standard"><font color="white"> </font></para>
+
+        <blockTable colWidths="270.0,270.0">
+            <tr>
+                <td>
+                    <para style="StandardBig">[[ getCompany().get('full_name', '') ]]</para>
+                </td>
+                <td>
+                    <para style="StandardBig">[[ o.partner_id and o.partner_id.name or '' ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">The representative</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">The representative</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">Name :</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">Name :</para>
+                </td>
+            </tr>
+            <tr>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">Signature :</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">Signature :</para>
+                </td>
+            </tr>
+            <tr>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+            </tr>
+            <tr>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+            </tr>
+            <tr>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">Date :</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">Date :</para>
+                </td>
+            </tr>
+            <tr>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+                <td><para style="Standard"><font color="white"> </font></para></td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="StandardLeft">Place :</para>
+                </td>
+                <td>
+                    <para style="StandardLeft">Place :</para>
+                </td>
+            </tr>
+        </blockTable>
+    </story>
+</document>

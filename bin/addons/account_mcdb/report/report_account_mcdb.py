@@ -28,14 +28,22 @@ class report_gl_selector(report_sxw.rml_parse):
         self.total = {}
         self.current_line_position = 0
         self.nb_lines = 0
+        self._display_hq_account = self.pool.get('account.export.mapping')._is_mapping_display_active(cr, uid)
         self.localcontext.update({
             'total_booking_debit': self._get_total_booking_debit,
             'total_booking_credit': self._get_total_booking_credit,
             'total_output_debit': self._get_total_output_debit,
             'total_output_credit': self._get_total_output_credit,
             'update_percent': self._update_percent,
+            'display_hq_account': lambda *a: self._display_hq_account,
+            'get_col_widths': self.get_col_widths,
         })
         self.log_export = True
+
+    def get_col_widths(self):
+        if not self._display_hq_account:
+            return {'colWidths': "45.0,45.0,58.0,52.0,45.0,48.0,48.0,43.0,45.0,45.0,45.0,45.0,40.0,45.0,42.0,43.0,42.0,40.0"}
+        return {'colWidths': "45.0,45.0,58.0,50.0,43.0,46.0,46.0,41.0,43.0,43.0,43.0,43.0,38.0,43.0,41.0,41.0,40.0,38.0,30.0"}
 
     def _update_percent(self, data, objects):
         """
@@ -92,13 +100,26 @@ class report_analytic_selector(report_sxw.rml_parse):
         self.total = {}
         self.current_line_position = 0
         self.nb_lines = 0
+        self._display_hq_account = self.pool.get('account.export.mapping')._is_mapping_display_active(cr, uid)
         self.localcontext.update({
             'total_booking': self._get_total_booking,
             'total_functional': self._get_total_functional,
             'total_output': self._get_total_output,
             'update_percent': self._update_percent,
+            'display_hq_account': lambda *a: self._display_hq_account,
+            'get_col_widths': self.get_col_widths,
         })
         self.log_export = True
+
+    def get_col_widths(self):
+        if self.localcontext.get('data', {}).get('context', {}).get('display_fp'):
+            if self._display_hq_account:
+                return {'colWidths': "40.0,33.0,45.0,49.0,38.0,46.0,46.0,31.0,39.0,38.0,33.0,31.0,43.0,40.0,32.0,40.0,32.0,40.0,30.0,36.0,34.0,30.0"}
+            return {'colWidths': "40.0,33.0,45.0,49.0,38.0,48.0,48.0,31.0,40.0,40.0,35.0,33.0,45.0,42.0,34.0,42.0,34.0,42.0,32.0,38.0,36.0"}
+
+        if self._display_hq_account:
+            return {'colWidths': "42.0,37.0,49.0,53.0,40.0,50.0,50.0,32.0,43.0,35.0,49.0,44.0,36.0,44.0,36.0,44.0,34.0,40.0,38.0,30.0"}
+        return {'colWidths': "44.0,37.0,49.0,53.0,42.0,52.0,52.0,34.0,45.0,37.0,49.0,46.0,38.0,46.0,38.0,46.0,36.0,42.0,40.0"}
 
     def _update_percent(self, data, objects):
         """

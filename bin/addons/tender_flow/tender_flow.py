@@ -31,7 +31,7 @@ import tools
 
 from purchase import PURCHASE_ORDER_STATE_SELECTION
 from . import RFQ_STATE_SELECTION
-from . import RFQ_LINE_STATE_DISPLAY_SELECTION
+from . import RFQ_LINE_STATE_SELECTION
 
 class tender(osv.osv):
     '''
@@ -521,13 +521,14 @@ class tender(osv.osv):
             # close linked RfQ:
             for rfq in tender.rfq_ids:
                 if rfq.rfq_state in ('updated', 'cancel'):
+                    pol_obj = self.pool.get('purchase.order.line')
+                    non_cancel_rfq_line_ids = pol_obj.search(cr, uid, [('order_id', '=', rfq.id), ('state', 'not in', ['cancel', 'cancel_r']),
+                                                                       ('rfq_line_state', 'not in', ['cancel', 'cancel_r'])], context=context)
+                    pol_obj.write(cr, uid, non_cancel_rfq_line_ids, {'rfq_line_state': 'done'}, context=context)
                     self.pool.get('purchase.order').write(cr, uid, [rfq.id], {'rfq_state': 'done'}, context=context)
 
             self.write(cr, uid, [tender.id], {'state': 'done'}, context=context)
-            self.infolog(cr, uid, "The tender id:%s (%s) has been closed" % (
-                tender.id,
-                tender.name,
-            ))
+            self.infolog(cr, uid, "The tender id:%s (%s) has been closed" % (tender.id, tender.name))
 
         return True
 
@@ -1515,23 +1516,10 @@ class purchase_order(osv.osv):
             )
         return res
 
-    def action_sent(self, cr, uid, ids, context=None):
+    def rfq_sent(self, cr, uid, ids, context=None):
         '''
         Method called when calling button Sent RfQ
         '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        self.write(cr, uid, ids, {
-            'rfq_state': 'sent',
-            'date_confirm': time.strftime('%Y-%m-%d'),
-        }, context=context)
-
-        return True
-
-    def rfq_sent(self, cr, uid, ids, context=None):
         if not ids:
             return {}
         if isinstance(ids, (int, long)):
@@ -1539,21 +1527,17 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
+        pol_obj = self.pool.get('purchase.order.line')
+
         self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
-        for rfq in self.browse(cr, uid, ids, context=context):
-            self.action_sent(cr, uid, [rfq.id], context=context)
-            self.infolog(cr, uid, "The RfQ id:%s (%s) has been sent." % (
-                rfq.id, rfq.name,
-            ))
+        for rfq in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
+            non_cancel_rfq_line_ids = pol_obj.search(cr, uid, [('order_id', '=', rfq.id), ('state', 'not in', ['cancel', 'cancel_r']),
+                                                               ('rfq_line_state', 'not in', ['cancel', 'cancel_r'])], context=context)
+            pol_obj.write(cr, uid, non_cancel_rfq_line_ids, {'rfq_line_state': 'sent'}, context=context)
+            self.write(cr, uid, rfq.id, {'rfq_state': 'sent', 'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
+            self.infolog(cr, uid, "The RfQ id:%s (%s) has been sent." % (rfq.id, rfq.name,))
 
-        datas = {'ids': ids}
-        if len(ids) == 1:
-            # UFTP-92: give a name to report when generated from RfQ worklow sent_rfq stage
-            datas['target_filename'] = 'RFQ_' + rfq.name
-
-        return {'type': 'ir.actions.report.xml',
-                'report_name': 'msf.purchase.quotation',
-                'datas': datas}
+        return True
 
     def action_updated(self, cr, uid, ids, context=None):
         '''
@@ -1563,6 +1547,11 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        pol_obj = self.pool.get('purchase.order.line')
+        non_cancel_rfq_line_ids = pol_obj.search(cr, uid, [('order_id', 'in', ids), ('state', 'not in', ['cancel', 'cancel_r']),
+                                                           ('rfq_line_state', 'not in', ['cancel', 'cancel_r'])], context=context)
+        pol_obj.write(cr, uid, non_cancel_rfq_line_ids, {'rfq_line_state': 'updated'}, context=context)
 
         self.write(cr, uid, ids, {'rfq_state': 'updated'}, context=context)
 
@@ -1669,7 +1658,13 @@ price. Please set unit price on these lines or cancel them'''),
         for rfq in self.browse(cr, uid, ids, context=context):
             self.infolog(cr, uid, "The RfQ id:%s (%s) has been closed" % (rfq.id, rfq.name))
 
+        pol_obj = self.pool.get('purchase.order.line')
+        non_cancel_rfq_line_ids = pol_obj.search(cr, uid, [('order_id', 'in', ids), ('state', 'not in', ['cancel', 'cancel_r']),
+                                                           ('rfq_line_state', 'not in', ['cancel', 'cancel_r'])], context=context)
+        pol_obj.write(cr, uid, non_cancel_rfq_line_ids, {'rfq_line_state': 'done'}, context=context)
+
         return self.write(cr, uid, ids, {'rfq_state': 'done', 'state': 'done'}, context=context)
+
 
 purchase_order()
 
@@ -1680,32 +1675,17 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
 
-    def _get_rfq_line_state_to_display(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        return the state to display for RfQ lines
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int,long)):
-            ids = [ids]
+    _columns = {
+        'tender_id': fields.related('order_id', 'tender_id', type='many2one', relation='tender', string='Tender', write_relate=False),
+        'tender_line_id': fields.many2one('tender.line', string='Tender Line'),
+        'rfq_ok': fields.related('order_id', 'rfq_ok', type='boolean', string='RfQ ?', write_relate=False),
+        'sale_order_line_id': fields.many2one('sale.order.line', string='FO line', readonly=True),
+        'rfq_line_state': fields.selection(string='State', selection=RFQ_LINE_STATE_SELECTION, readonly=True)
+    }
 
-        res = {}
-        for pol in self.browse(cr, uid, ids, context=context):
-            if pol.order_id.rfq_ok and pol.state not in ['cancel', 'cancel_r']:
-                res[pol.id] = pol.order_id.rfq_state
-            else:
-                res[pol.id] = pol.state_to_display
-
-        return res
-
-    _columns = {'tender_id': fields.related('order_id', 'tender_id', type='many2one', relation='tender', string='Tender', write_relate=False),
-                'tender_line_id': fields.many2one('tender.line', string='Tender Line'),
-                'rfq_ok': fields.related('order_id', 'rfq_ok', type='boolean', string='RfQ ?', write_relate=False),
-                'sale_order_line_id': fields.many2one('sale.order.line', string='FO line', readonly=True),
-                'rfq_line_state_to_display': fields.function(_get_rfq_line_state_to_display, string='State',
-                                                             type='selection', selection=RFQ_LINE_STATE_DISPLAY_SELECTION,
-                                                             method=True, readonly=True)
-                }
+    _defaults = {
+        'rfq_line_state': 'draft',
+    }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -1726,6 +1706,7 @@ class purchase_order_line(osv.osv):
                 result['arch'] = etree.tostring(form)
 
         return result
+
 
 purchase_order_line()
 

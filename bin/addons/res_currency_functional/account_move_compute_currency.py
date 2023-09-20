@@ -174,25 +174,7 @@ class account_move_compute_currency(osv.osv):
 
             if move.period_id and not move.period_id.is_system \
                     and len(sorted_line_ids) > 2:
-                if not all_line_zero_func and abs(amount_currency) > 10 ** -4 and abs(amount) < 10 ** -4:
-                    # The move is func. balanced, but there is a difference in the converted amounts;
-                    # the second-biggest move line is modified accordingly
-                    line_to_be_balanced = self._sub_sort_by_xmlid(cr, uid, sorted_line_ids)
-                    amount_currency = line_to_be_balanced.amount_currency - amount_currency
-                    debit_currency = 0.0
-                    credit_currency = 0.0
-                    if amount_currency > 0:
-                        debit_currency = amount_currency
-                    else:
-                        credit_currency = -amount_currency
-                    # write() is not called to avoid a loop and a refresh of the rates
-                    cr.execute('update account_move_line set amount_currency=%s, \
-                                                             debit_currency=%s, \
-                                                             credit_currency=%s where id=%s',
-                               (amount_currency, debit_currency, credit_currency, line_to_be_balanced.id))
-                    if line_to_be_balanced.reconcile_id:
-                        reconcile[line_to_be_balanced.reconcile_id.id] = 1
-                elif abs(amount) > 10 ** -4 and abs(amount_currency) < 10 ** -4:
+                if abs(amount) > 10 ** -4 and abs(amount_currency) < 10 ** -4:
                     # The move is book. balanced, but there is a difference in the converted amounts;
                     # the second-biggest move line is modified accordingly
                     line_to_be_balanced = self._sub_sort_by_xmlid(cr, uid, sorted_line_ids)

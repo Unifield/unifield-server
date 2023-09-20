@@ -29,10 +29,8 @@ from msf_order_date import TRANSPORT_TYPE
 from msf_partner import PARTNER_TYPE
 
 from dateutil.relativedelta import relativedelta
-import logging
 import tools
 import time
-from os import path
 from lxml import etree
 from tools.sql import drop_view_if_exists
 
@@ -133,6 +131,7 @@ class shipment(osv.osv):
         '''
         picking_obj = self.pool.get('stock.picking')
         pack_family_obj = self.pool.get('pack.family.memory')
+        curr_obj = self.pool.get('res.currency')
 
         result = {}
         shipment_result = self.read(cr, uid, ids, ['pack_family_memory_ids', 'state'], context=context)
@@ -167,11 +166,8 @@ class shipment(osv.osv):
             # delivery validated
             delivery_validated = None
             # browse the corresponding packings
-            for packing in picking_obj.browse(cr, uid, packing_ids,
-                                              fields_to_fetch=[
-                                                  'state',
-                                                  'delivered',
-                                                  'backorder_id'], context=context):
+            for packing in picking_obj.browse(cr, uid, packing_ids, fields_to_fetch=['state', 'delivered',
+                                                                                     'backorder_id'], context=context):
                 # state check
                 # because when the packings are validated one after the other, it triggers the compute of state, and if we have multiple packing for this shipment, it will fail
                 # if one packing is draft, even if other packing have been shipped, the shipment must stay draft until all packing are done
@@ -199,38 +195,67 @@ class shipment(osv.osv):
                     # special state corresponding to delivery validated
                     state = 'delivered'
 
-            current_result['state'] = state
             current_result['backshipment_id'] = backshipment_id
+            has_non_ret_sub_ship = self.search_exist(cr, uid, [('state', '!=', 'cancel'),
+                                                               ('backshipment_id', '=', shipment['id'])], context=context)
 
+            all_returned = True
             pack_fam_ids = shipment['pack_family_memory_ids']
             for pack_fam_id in pack_fam_ids:
                 memory_family = pack_family_dict.get(pack_fam_id)
                 # taken only into account if not done (done means returned packs)
-                if memory_family and not memory_family['not_shipped'] and (shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',)):
-                    # num of packs
-                    num_of_packs = memory_family['num_of_packs']
-                    current_result['num_of_packs'] += int(num_of_packs)
-                    # total weight
-                    total_weight = memory_family['total_weight']
-                    current_result['total_weight'] += int(total_weight)
-                    # total volume
-                    total_volume = memory_family['total_volume']
-                    current_result['total_volume'] += float(total_volume)
-                    # total amount
-                    total_amount = memory_family['total_amount']
-                    current_result['total_amount'] += total_amount
-                    # currency
-                    currency_id = memory_family['currency_id'] or False
-                    current_result['currency_id'] = currency_id
+                if memory_family and not memory_family['not_shipped']:
+                    # The state will not be changed to Returned if all packs are not returned
+                    all_returned = False
+                    if shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',):
+                        # num of packs
+                        num_of_packs = memory_family['num_of_packs']
+                        current_result['num_of_packs'] += int(num_of_packs)
+                        # total weight
+                        total_weight = memory_family['total_weight']
+                        current_result['total_weight'] += float(total_weight)
+                        # total volume
+                        total_volume = memory_family['total_volume']
+                        current_result['total_volume'] += float(total_volume)
+                        # total amount and currency
+                        currency_id = memory_family['currency_id'] or False
+                        total_amount = memory_family['total_amount']
+                        if current_result.get('currency_id') and current_result['currency_id'][0] != currency_id[0]:
+                            current_result['total_amount'] = curr_obj.compute(cr, uid, current_result['currency_id'][0],
+                                                                              currency_id[0], current_result.get('total_amount', 0.00),
+                                                                              round=False, context=context)
+                        current_result['total_amount'] += total_amount
+                        current_result['currency_id'] = currency_id
 
+            if pack_fam_ids and all_returned and not has_non_ret_sub_ship:
+                state = 'cancel'
+
+            current_result['state'] = state
+
+        comp_curr_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
         for ship in self.browse(cr, uid, ids, fields_to_fetch=['additional_items_ids'], context=context):
             for add in ship.additional_items_ids:
                 result[ship.id]['num_of_packs'] += add.nb_parcels or 0
                 result[ship.id]['total_weight'] += add.weight or 0
                 result[ship.id]['total_volume'] += add.volume or 0
-                result[ship.id]['total_amount'] += add.value or 0
+                add_value = add.value or 0
+                if add_value and result.get(ship.id) and result[ship.id].get('currency_id') \
+                        and result[ship.id]['currency_id'][0] != comp_curr_id:
+                    add_value = curr_obj.compute(cr, uid, comp_curr_id, result[ship.id]['currency_id'][0], add_value,
+                                                 round=False, context=context)
+                result[ship.id]['total_amount'] += add_value
 
         return result
+
+    def _search_backshipment_id(self, cr, uid, ids, fields, arg, context=None):
+        if not arg or not arg[0][2]:
+            return []
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ship_ids = self.search(cr, uid, [('parent_id', arg[0][1], arg[0][2])], context=context)
+        return [('id', 'in', ship_ids)]
 
     def _get_shipment_ids(self, cr, uid, ids, context=None):
         '''
@@ -306,11 +331,36 @@ class shipment(osv.osv):
             ret[x] = _('Shipment List')
         return ret
 
+    def _check_loan(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if the Shipment contains Pack(s) with the Loan or Loan Return Reason Type
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        data_obj = self.pool.get('ir.model.data')
+        loan_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        loan_return_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
+
+        res = {}
+        for ship in self.browse(cr, uid, ids, fields_to_fetch=['pack_family_memory_ids'], context=context):
+            has_loan, has_ret_loan = False, False
+            for pack in ship.pack_family_memory_ids:
+                if pack.ppl_id and pack.ppl_id.reason_type_id.id == loan_id:
+                    has_loan = True
+                if pack.ppl_id and pack.ppl_id.reason_type_id.id == loan_return_id:
+                    has_ret_loan = True
+            res[ship.id] = {'has_loan': has_loan, 'has_ret_loan': has_ret_loan}
+
+        return res
+
     _columns = {
         'name': fields.char(string='Reference', size=1024),
         'date': fields.datetime(string='Creation Date'),
         'shipment_expected_date': fields.datetime(string='Expected Ship Date'),
-        'shipment_actual_date': fields.datetime(string='Actual Ship Date', readonly=True,),
+        'shipment_actual_date': fields.datetime(string='Actual Ship Date'),
         'transport_type': fields.selection(TRANSPORT_TYPE,
                                            string="Transport Type", readonly=False),
         'address_id': fields.many2one('res.partner.address', 'Address', help="Address of customer", required=1),
@@ -362,11 +412,11 @@ class shipment(osv.osv):
                                                                                       ('shipped', 'Ready to ship'),
                                                                                       ('done', 'Dispatched'),
                                                                                       ('delivered', 'Received'),
-                                                                                      ('cancel', 'Cancelled')], string='State', multi='get_vals',
+                                                                                      ('cancel', 'Returned')], string='State', multi='get_vals',
                                  store={
                                      'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
         }),
-        'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
+        'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals', fnct_search=_search_backshipment_id),
         'parent_id': fields.many2one('shipment', string='Parent shipment'),
         # TODO check if really deprecated ?
         'invoice_id': fields.many2one('account.invoice', string='Related invoice (deprecated)'),
@@ -388,6 +438,8 @@ class shipment(osv.osv):
             }
         ),
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title', internal="1"),
+        'has_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Pack(s)'),
+        'has_ret_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Return Pack(s)'),
     }
 
     def _get_sequence(self, cr, uid, context=None):
@@ -750,14 +802,8 @@ class shipment(osv.osv):
         # Objects
         data_obj = self.pool.get('ir.model.data')
 
-        date_tools = self.pool.get('date.tools')
         if context is None:
             context = {}
-
-        db_datetime_format = date_tools.get_db_datetime_format(cr, uid, context=context)
-        today = time.strftime(db_datetime_format)
-
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -784,7 +830,7 @@ class shipment(osv.osv):
                 'parent_id': shipment.id,
                 'transport_type': shipment.transport_type,
                 'carrier_id': shipment.carrier_id and shipment.carrier_id.id or False,
-                'shipment_actual_date': today,
+                'shipment_actual_date': shipment.shipment_actual_date,
             }
             for cpf in cp_fields:
                 ship_val[cpf] = shipment[cpf]
@@ -1002,7 +1048,7 @@ class shipment(osv.osv):
 
     def add_packs(self, cr, uid, ids, context=None):
         ship = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id'], context=context)
-        other_ship_ids = self.search(cr, uid, [('state', '=', 'draft'), ('partner_id', '=', ship.partner_id.id)], context=context)
+        other_ship_ids = self.search(cr, uid, [('state', '=', 'draft'), ('partner_id', '=', ship.partner_id.id), ('address_id', '=', ship.address_id.id)], context=context)
         pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('state', '!=', 'done'), ('shipment_id', 'in', other_ship_ids)], context=context)
         if not pack_ids:
             raise osv.except_osv(_('Warning !'), _('No Pack Available'))
@@ -1557,6 +1603,29 @@ class shipment(osv.osv):
 
         return True
 
+    def open_select_actual_ship_date_wizard(self, cr, uid, ids, context=None):
+        """
+        Open the split line wizard: the user can confirm the Actual Ship Date
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if ids:
+            db_datetime_format = self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context)
+            wiz_data = {'shipment_id': ids[0], 'shipment_actual_date': time.strftime(db_datetime_format)}
+            wiz_id = self.pool.get('select.actual.ship.date.wizard').create(cr, uid, wiz_data, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'select.actual.ship.date.wizard',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': wiz_id,
+                    'context': context}
+
+        return True
+
     def validate_bg(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -1589,7 +1658,13 @@ class shipment(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
 
+        if context is None:
+            context = {}
+
+        if context.get('shipment_actual_date'):
+            self.write(cr, uid, ids, {'shipment_actual_date': context['shipment_actual_date']}, context=context)
         for shipment in self.browse(cr, uid, ids, context=context):
+
             # validate should only be called on shipped shipments
             if shipment.state != 'shipped':
                 raise osv.except_osv(
@@ -1836,7 +1911,62 @@ class shipment2(osv.osv):
         'pack_family_memory_ids': fields.one2many('pack.family.memory', 'shipment_id', string='Memory Families'),
     }
 
+
 shipment2()
+
+
+class select_actual_ship_date_wizard(osv.osv_memory):
+    _name = 'select.actual.ship.date.wizard'
+    _description = 'Confirm the Actual Ship Date'
+
+    _columns = {
+        'shipment_id': fields.many2one('shipment', string='Shipment id', readonly=True),
+        'shipment_actual_date': fields.datetime(string='Actual Ship Date'),
+    }
+
+    def validate_ship(self, cr, uid, ids, context=None):
+        '''
+        Launch the validate_bg method
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        ship_obj = self.pool.get('shipment')
+        for wiz in self.browse(cr, uid, ids, context=context):
+            context['shipment_actual_date'] = wiz.shipment_actual_date
+            ship_obj.validate_bg(cr, uid, [wiz.shipment_id.id], context=context)
+
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
+            view_id = view_id and view_id[1] or False
+
+            return {
+                'name': _("Shipment"),
+                'type': 'ir.actions.act_window',
+                'res_model': 'shipment',
+                'view_mode': 'form,tree',
+                'view_type': 'form',
+                'view_id': [view_id],
+                'res_id': wiz.shipment_id.id,
+                'target': 'crush',
+                'context': context,
+            }
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel(self, cr, uid, ids, context=None):
+        '''
+        Just close the wizard
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {'type': 'ir.actions.act_window_close'}
+
+
+select_actual_ship_date_wizard()
 
 
 class ppl_customize_label(osv.osv):
@@ -1889,6 +2019,22 @@ class stock_picking(osv.osv):
     # For use only in Remote Warehouse
     CENTRAL_PLATFORM = "central_platform"
     REMOTE_WAREHOUSE = "remote_warehouse"
+
+
+    def _auto_init(self, cr, context=None):
+        res = super(stock_picking, self)._auto_init(cr, context=context)
+        if not cr.index_exists('stock_picking', 'stock_picking_name3_index'):
+            cr.execute('CREATE INDEX stock_picking_name3_index ON stock_picking (substring(name, 1, 3))')
+
+        if not cr.constraint_exists('stock_picking', 'stock_picking_only_ppl_in_ppl_view'):
+            cr.execute("select max(id) from stock_picking where subtype='ppl' and substring(name, 1, 3)!='PPL'")
+            max_id = cr.fetchone()[0]
+            if max_id:
+                cr.execute("alter table stock_picking add constraint stock_picking_only_ppl_in_ppl_view check (id<=%s or subtype!='ppl' or substring(name, 1, 3)='PPL')", (max_id, ))
+            else:
+                cr.execute("alter table stock_picking add constraint stock_picking_only_ppl_in_ppl_view check (subtype!='ppl' or substring(name, 1, 3)='PPL')")
+
+        return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
@@ -2240,25 +2386,6 @@ class stock_picking(osv.osv):
 
         return result
 
-    def init(self, cr):
-        """
-        Load msf_outgoing_data.xml before self
-        """
-        if hasattr(super(stock_picking, self), 'init'):
-            super(stock_picking, self).init(cr)
-
-        mod_obj = self.pool.get('ir.module.module')
-        demo = False
-        mod_id = mod_obj.search(cr, 1, [('name', '=', 'msf_outgoing'), ])
-        if mod_id:
-            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
-
-        if demo:
-            logging.getLogger('init').info('HOOK: module msf_outgoing: loading data/msf_outgoing_data.xml')
-            pathname = path.join('msf_outgoing', 'data/msf_outgoing_data.xml')
-            file_to_open = tools.file_open(pathname)
-            tools.convert_xml_import(cr, 'msf_outgoing', file_to_open, {}, mode='init', noupdate=False)
-
     def _qty_search(self, cr, uid, obj, name, args, context=None):
         """ Searches Ids of stock picking
             @return: Ids of locations
@@ -2361,7 +2488,7 @@ class stock_picking(osv.osv):
 
     _columns = {
         'flow_type': fields.selection([('full', 'Full'), ('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False), ], }, string='Flow Type'),
-        'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing'), ('sysint', 'System Internal')], string='Subtype'),
+        'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing'), ('sysint', 'System Internal')], string='Subtype', select=1),
         'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
         'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
         'previous_step_ids': fields.one2many('stock.picking', 'previous_step_id', string='Previous Step ids',),
@@ -2419,6 +2546,11 @@ class stock_picking(osv.osv):
     }
 
     _order = 'name desc'
+
+    # constraints set in _auto_init due to existing failure
+    #_sql_constraints = [
+    #    ('only_ppl_in_ppl_view', "check(subtype!='ppl' or substring(name, 1, 3)='PPL')", 'Only PPL can be created in PPL view')
+    #]
 
     def onchange_move(self, cr, uid, ids, context=None):
         '''
@@ -2711,9 +2843,9 @@ class stock_picking(osv.osv):
                 sale_id = sale_id[0]['sale_id']
                 if sale_id:
                     sale_id = sale_id[0]
-                    # today
                     rts = sale_order_obj.read(cr, uid, sale_id, ['ready_to_ship_date'], context=context)['ready_to_ship_date']
                 else:
+                    # today
                     rts = date.today().strftime(db_date_format)
                 # rts + shipment lt
                 shipment_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
@@ -2732,7 +2864,7 @@ class stock_picking(osv.osv):
                                   'address_id': vals['address_id'],
                                   'partner_id2': partner_id,
                                   'shipment_expected_date': rts,
-                                  'shipment_actual_date': rts,
+                                  'shipment_actual_date': time.strftime(db_datetime_format),
                                   'sale_id': vals.get('sale_id', False),
                                   'transport_type': sale_id and sale_order_obj.read(cr, uid, sale_id, ['transport_type'], context=context)['transport_type'] or False,
                                   'sequence_id': self.create_sequence(cr, uid, {'name': name,
@@ -3587,6 +3719,27 @@ class stock_picking(osv.osv):
 
         for picking_id in ids:
             self.check_integrity(cr, uid, picking_id, context)
+            # Check if the processed sub-Pick has at least a non-fully processed line and there is a signature
+            if not context.get('partial_process_sign'):
+                cr.execute("""
+                    SELECT m.id FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id = p.id
+                        , signature s LEFT JOIN signature_line sl ON sl.signature_id = s.id
+                    WHERE s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = %s 
+                        AND sl.signed = 't' AND m.picking_id = %s AND m.qty_to_process < m.product_qty LIMIT 1
+                """, (picking_id, picking_id))
+                if cr.fetchone():
+                    wiz_id = self.pool.get('warning.pick.partial.process.sign.wizard').create(cr, uid, {'picking_id': picking_id}, context=context)
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'warning.pick.partial.process.sign.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'res_id': wiz_id,
+                        'context': context
+                    }
+            else:
+                context.pop('partial_process_sign')
 
         nb_lines = self.pool.get('stock.move').search(cr, uid, [('state', '=', 'assigned'), ('picking_id', 'in', ids)], count=True)
         return self.pool.get('job.in_progress')._prepare_run_bg_job(cr, uid, ids, 'stock.picking', self.do_validate_picking, nb_lines, _('Validate Picking'), context=context)
@@ -4402,7 +4555,46 @@ class stock_picking(osv.osv):
             'width': '220px',
         }
 
+
 stock_picking()
+
+
+class warning_pick_partial_process_sign_wizard(osv.osv_memory):
+    _name = 'warning.pick.partial.process.sign.wizard'
+    _description = 'The Picking Ticket is partially processed and signed'
+
+    _columns = {
+        'picking_id': fields.many2one('stock.picking', string='Picking id', readonly=True),
+    }
+
+    def continue_validation(self, cr, uid, ids, context=None):
+        '''
+        Launch the do_validate_picking_bg method
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pick_obj = self.pool.get('stock.picking')
+        for wiz in self.browse(cr, uid, ids, context=context):
+            context['partial_process_sign'] = True
+            pick_obj.do_validate_picking_bg(cr, uid, [wiz.picking_id.id], context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel(self, cr, uid, ids, context=None):
+        '''
+        Just close the wizard
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {'type': 'ir.actions.act_window_close'}
+
+
+warning_pick_partial_process_sign_wizard()
 
 
 class wizard(osv.osv):
@@ -4522,7 +4714,7 @@ class pack_family_memory(osv.osv):
                 min(m.width) as width,
                 min(m.height) as height,
                 min(m.weight) as weight,
-                min(m.state) as state,
+                case when bool_and(m.not_shipped) = 't' then 'returned' else min(m.state) end as state,
                 min(m.location_id) as location_id,
                 min(m.location_dest_id) as location_dest_id,
                 min(m.pack_type) as pack_type,
@@ -4607,8 +4799,7 @@ class pack_family_memory(osv.osv):
         'state': fields.selection(selection=[
             ('draft', 'Draft'),
             ('assigned', 'Available'),
-            ('stock_return', 'Returned to Stock'),
-            ('ship_return', 'Returned from Shipment'),
+            ('returned', 'Returned'),
             ('cancel', 'Cancelled'),
             ('done', 'Closed'), ], string='State'),
         'pack_state': fields.char('Pack State', size=64),

@@ -30,6 +30,7 @@ import pooler
 from osv import fields, osv
 import decimal_precision as dp
 from tools.translate import _
+from lxml import etree
 
 
 def check_cycle(self, cr, uid, ids, context=None):
@@ -525,6 +526,7 @@ class account_account(osv.osv):
         if context is None:
             context = {}
         ir_model_obj = self.pool.get('ir.model.data')
+
         if context.get('from_fp') or context.get('from_grant_management'):
             view = False
             module = 'account'
@@ -535,7 +537,13 @@ class account_account(osv.osv):
                 view = ir_model_obj.get_object_reference(cr, uid, module, 'view_account_fp_tree')
             if view:
                 view_id = view[1]
-        return super(account_account, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        fvg = super(account_account, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'search' and context.get('display_hq_system_accounts'):
+            arch = etree.fromstring(fvg['arch'])
+            for field in arch.xpath('//group[@name="mapping_value"]'):
+                field.set('invisible', '0')
+            fvg['arch'] = etree.tostring(arch)
+        return fvg
 
 
 account_account()
@@ -1100,6 +1108,37 @@ class account_fiscalyear(osv.osv):
         if not ids:
             ids = self.search(cr, user, [('name', operator, name)]+ args, limit=limit)
         return self.name_get(cr, user, ids, context=context)
+
+    def _get_normal_period_from_to(self, cr, uid, _id, context=None):
+        start_period = False
+        end_period = False
+
+        cr.execute('''
+            SELECT x.id FROM (
+                (SELECT p.id, p.date_start as date
+                   FROM account_period p
+                   LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
+                   WHERE f.id = %(fy_id)s and number != 0
+                   ORDER BY p.date_start ASC
+                   LIMIT 1
+                )
+            UNION ALL
+                (SELECT p.id, p.date_stop as date
+                   FROM account_period p
+                   LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
+                   WHERE f.id = %(fy_id)s and number != 0
+                   AND p.date_start < NOW()
+                   ORDER BY p.date_stop DESC, p.number DESC
+                   LIMIT 1
+                )
+            ) AS x ORDER BY date
+        ''', {'fy_id': _id})
+
+        periods =  [i[0] for i in cr.fetchall()]
+        if periods and len(periods) > 1:
+            start_period = periods[0]
+            end_period = periods[1]
+        return {'period_from': start_period, 'period_to': end_period}
 
 account_fiscalyear()
 

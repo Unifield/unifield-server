@@ -6,6 +6,7 @@ import time
 
 from osv import fields, osv
 from tools.translate import _
+from tools.misc import _get_std_mml_status
 import netsvc
 import decimal_precision as dp
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
@@ -38,8 +39,14 @@ class stock_move(osv.osv):
 
     def name_get(self, cr, uid, ids, context=None):
         res = []
-        for line in self.browse(cr, uid, ids, context=context):
-            res.append((line.id, (line.product_id.code or '/')+': '+line.location_id.name+' > '+line.location_dest_id.name))
+        if context is None:
+            context = {}
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['product_id', 'line_number', 'location_id', 'location_dest_id'], context=context):
+            if context.get('display_move_line'):
+                prefix = '#%s %s' % (line.line_number, line.product_id.code or '/')
+            else:
+                prefix = line.product_id.code or '/'
+            res.append((line.id, '%s: %s > %s' % (prefix, line.location_id.name, line.location_dest_id.name)))
         return res
 
     def _get_picking_ids(self, cr, uid, ids, context=None):
@@ -449,6 +456,7 @@ class stock_move(osv.osv):
                 res[x.id] = x.picking_id.name
         return res
 
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'priority': fields.selection([('0', 'Not urgent'), ('1', 'Urgent')], 'Priority'),
@@ -494,6 +502,7 @@ class stock_move(osv.osv):
 
         'qty_to_process': fields.float('Qty to Process', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
         'qty_processed': fields.float('Qty Processed', help="Main pick, resgister sum of qties processed"),
+        'confirmed_qty': fields.float('Confirmed Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom', help="Quantity saved during the IN move's confirmation"),
         'type': fields.related('picking_id', 'type', string='Type', type='selection',
                                selection = [('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], readonly=True,
                                store = {
@@ -623,6 +632,10 @@ class stock_move(osv.osv):
         'picking_with_sysint_name': fields.function(_get_picking_with_sysint_name, method=1, string='Picking IN [SYS-INT] name', type='char'),
         'included_in_mission_stock': fields.boolean('Stock move used to compute MSRL', internal=1, select=1),
         'in_forced': fields.boolean('IN line forced'),
+
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
     }
 
     def _check_asset(self, cr, uid, ids, context=None):
@@ -764,6 +777,9 @@ class stock_move(osv.osv):
         'integrity_error': 'empty',
         'included_in_mission_stock': False,
         'in_forced': False,
+        'confirmed_qty': 0.0,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):
@@ -982,6 +998,9 @@ class stock_move(osv.osv):
 
         if 'pack_info_id' not in defaults:
             defaults['pack_info_id'] = False
+
+        if context.get('subtype') != 'in' or (context.get('from_button') and context.get('web_copy')):
+            defaults['confirmed_qty'] = 0
 
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
@@ -1359,8 +1378,13 @@ class stock_move(osv.osv):
         # check qty > 0 or raise
         self.check_product_quantity(cr, uid, ids, context=context)
 
-        vals.update({'state': 'confirmed', 'already_confirmed': True})
-        self.write(cr, uid, ids, vals)
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['picking_id', 'product_qty', 'confirmed_qty'], context=context):
+            l_vals = vals
+            l_vals.update({'state': 'confirmed', 'already_confirmed': True})
+            if move.picking_id.type == 'in' and not move.picking_id.purchase_id and move.product_qty and \
+                    not move.confirmed_qty:
+                l_vals.update({'confirmed_qty': move.product_qty})
+            self.write(cr, uid, move.id, vals)
         self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
 

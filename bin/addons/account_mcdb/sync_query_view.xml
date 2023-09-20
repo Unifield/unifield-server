@@ -9,7 +9,9 @@
                 <form string="Finance HQ Query">
                     <field name="name" />
                     <field name="model" attrs="{'readonly': [('template_id', '!=', 0)]}"/>
+                    <field name="creation_date" />
                     <field name="last_modification" />
+                    <field name="last_editor" />
                     <field name="synced" />
                     <field name="template_id" invisible="1" />
                     <separator colspan="4" />
@@ -49,7 +51,9 @@
                     <button type="object" icon="gtk-go-forward" name="open_template" string="Open Template" />
                     <button type="object" icon="gtk-connect" name="deactivate_sync" string="Deactivate Sync" attrs="{'invisible': [('synced', '=', False)]}"/>
                     <button type="object" icon="gtk-disconnect" name="activate_sync" string="Activate Sync" attrs="{'invisible': [('synced', '=', True)]}"/>
+                    <field name="creation_date" />
                     <field name="last_modification" />
+                    <field name="last_editor" />
                     <field name="synced" />
                 </tree>
             </field>
@@ -67,6 +71,8 @@
                   action="finance_sync_query_action"
                   parent="object_query.menu_preferences"
                   sequence="2" />
+
+        <menuitem id="menu_finance_fin_queries" action="finance_sync_query_action" parent="account.menu_finance_reporting" sequence="101"/>
 
         <!-- Actions -->
         <act_window name="Activate Sync"

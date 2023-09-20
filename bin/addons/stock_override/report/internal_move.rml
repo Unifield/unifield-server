@@ -181,7 +181,7 @@
         <setNextTemplate name="second" />
 
         <section>
-        <blockTable colWidths="20.0,100.0,120.0,50.0,45.0,45.0,40.0,55.0,70.0,70.0,65.0,65.0,65.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="20.0,90.0,110.0,50.0,45.0,45.0,40.0,55.0,60.0,60.0,65.0,65.0,65.0,20.0,20.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -221,6 +221,12 @@
                 </td>
                 <td>
                     <para style="LHeader">Actual Move Date</para>
+                </td>
+                <td>
+                    <para style="LHeader">MML</para>
+                </td>
+                <td>
+                    <para style="LHeader">MSL</para>
                 </td>
             </tr>
             <tr>
@@ -264,6 +270,12 @@
                 </td>
                 <td>
                     <para style="Line">[[ formatLang(line.date[:10], date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="Line">[[ getSel(line, 'mml_status') ]]</para>
+                </td>
+                <td>
+                    <para style="Line">[[ getSel(line, 'msl_status') ]]</para>
                 </td>
             </tr>
         </blockTable>

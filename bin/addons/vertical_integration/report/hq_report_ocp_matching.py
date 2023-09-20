@@ -158,6 +158,14 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         else:
             # OCP VI
             excluded_journal_types = ['hq', 'migration']
+        ocb_numbering = ''
+
+        if context.get('poc_export'):
+            ocb_numbering = """,
+                ocb_vi.move_number AS "JE ID",
+                ocb_vi.line_number AS "Line Number",
+                mapping.mapping_value AS "HQ system account code"
+            """
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -175,9 +183,25 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
             # - that have either been reconciled OR unreconciled within the period or after
             # Partial reconciliations are excluded.
             'reconcilable': """
-                SELECT aml.id, m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code,
-                aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", ROUND(aml.debit, 2),
-                ROUND(aml.credit, 2), cc.name AS "functional_currency", aml.reconcile_id, %s AS "date_stop", aml.unreconcile_txt
+                SELECT 
+                aml.id,
+                m.name AS "entry_sequence",
+                aml.name,
+                aml.ref,
+                aml.document_date,
+                aml.date,
+                a.code,
+                aml.partner_txt,
+                debit_currency,
+                credit_currency,
+                c.name AS "Booking Currency",
+                ROUND(aml.debit, 2),
+                ROUND(aml.credit, 2),
+                cc.name AS "functional_currency",
+                aml.reconcile_id,
+                %s AS "date_stop",
+                aml.unreconcile_txt
+            """ + ocb_numbering + """
                 FROM account_move_line AS aml
                 LEFT JOIN account_move_reconcile amr ON aml.reconcile_id = amr.id
                 INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -187,6 +211,8 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 INNER JOIN res_currency AS cc ON e.currency_id = cc.id
                 INNER JOIN account_journal AS j ON aml.journal_id = j.id
                 INNER JOIN account_period AS p ON p.id = aml.period_id
+                LEFT JOIN ocb_vi_export_number ocb_vi ON ocb_vi.move_line_id = aml.id AND ocb_vi.move_id=aml.move_id
+                LEFT JOIN account_export_mapping mapping ON mapping.account_id = a.id
                 WHERE j.type not in %s
                 AND p.number not in (0, 16)
                 AND aml.instance_id in %s
@@ -196,7 +222,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                     (aml.reconcile_id IS NOT NULL AND aml.reconcile_date >= %s) OR
                     (COALESCE(aml.unreconcile_txt, '') != '' AND aml.unreconcile_date >= %s)
                 )
-                ORDER BY aml.reconcile_id, aml.unreconcile_txt;
+                ORDER BY aml.reconcile_id, aml.unreconcile_txt
                 """,
         }
 
@@ -225,6 +251,8 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 'delete_columns': [15],
             },
         ]
+        if context.get('poc_export'):
+            processrequests[0]['headers'] += ['JE ID', 'Line Number', 'HQ system account code']
         # Launch finance archive object
         fe = finance_archive(sqlrequests, processrequests, context=context)
         # Use archive method to create the archive

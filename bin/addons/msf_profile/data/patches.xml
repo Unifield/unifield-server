@@ -897,8 +897,87 @@
         <record id="us_8417_upd_srv_loc" model="patch.scripts">
             <field name="method">us_8417_upd_srv_loc</field>
         </record>
+
+        <record id="us_11090_replace_DC4_by_space" model="patch.scripts">
+            <field name="method">us_11090_replace_DC4_by_space</field>
+        </record>
+
         <record id="us_11195_oca_period_nr" model="patch.scripts">
             <field name="method">us_11195_oca_period_nr</field>
+        </record>
+
+        <!-- UF29.0 -->
+        <record id="us_11177_bn_for_kcl_items" model="patch.scripts">
+            <field name="method">us_11177_bn_for_kcl_items</field>
+        </record>
+
+        <record id="us_11046_fix_standard_price_products" model="patch.scripts">
+            <field name="method">us_11046_fix_standard_price_products</field>
+        </record>
+
+        <record id="us_8968_shipments_returned" model="patch.scripts">
+            <field name="method">us_8968_shipments_returned</field>
+        </record>
+
+        <record id="us_10629_fix_partner_fo_pricelist" model="patch.scripts">
+            <field name="method">us_10629_fix_partner_fo_pricelist</field>
+        </record>
+
+        <record id="us_11022_accrual_third_party" model="patch.scripts">
+            <field name="method">us_11022_accrual_third_party</field>
+        </record>
+
+        <record id="us_10904_donations_done_state" model="patch.scripts">
+            <field name="method">us_10904_donations_done_state</field>
+        </record>
+
+        <record id="us_6976_analytic_translations" model="patch.scripts">
+            <field name="method">us_6976_analytic_translations</field>
+        </record>
+
+        <record id="us_10885_tc_entries" model="patch.scripts">
+            <field name="method">us_10885_tc_entries</field>
+        </record>
+
+        <record id="us_10835_disable_iil_menu" model="patch.scripts">
+            <field name="method">us_10835_disable_iil_menu</field>
+        </record>
+
+        <record id="us_11399_oca_mm_target" model="patch.scripts">
+            <field name="method">us_11399_oca_mm_target</field>
+        </record>
+
+        <!-- UF30.0 -->
+        <record id="us_11130_trigger_down_account_mapping" model="patch.scripts">
+            <field name="method">us_11130_trigger_down_account_mapping</field>
+        </record>
+
+        <record id="us_11448_update_rfq_line_state" model="patch.scripts">
+            <field name="method">us_11448_update_rfq_line_state</field>
+        </record>
+
+        <record id="us_10874_bar_hard_post_wizard" model="patch.scripts">
+            <field name="method">us_10874_bar_hard_post_wizard</field>
+        </record>
+
+        <record id="us_11679_set_iil_oca" model="patch.scripts">
+            <field name="method">us_11679_set_iil_oca</field>
+        </record>
+
+        <record id="us_10783_11563_po_reception_destination" model="patch.scripts">
+            <field name="method">us_10783_11563_po_reception_destination</field>
+        </record>
+
+        <record id="us_1074_create_unifield_instance" model="patch.scripts">
+            <field name="method">us_1074_create_unifield_instance</field>
+        </record>
+
+        <record id="us_11181_update_supply_signature_follow_up" model="patch.scripts">
+            <field name="method">us_11181_update_supply_signature_follow_up</field>
+        </record>
+
+        <record id="us_11810_fix_company_logo" model="patch.scripts">
+            <field name="method">us_11810_fix_company_logo</field>
         </record>
     </data>
 </openerp>

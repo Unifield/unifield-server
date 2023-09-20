@@ -47,6 +47,8 @@
                                         <field name="is_kc" string="CC"/>
                                         <field name="is_dg" string="DG"/>
                                         <field name="is_cs" string="CS"/>
+                                        <field name="mml_status" />
+                                        <field name="msl_status" />
                                     </tree>
                                 </field>
                             </group>
@@ -76,6 +78,8 @@
                                     <field name="is_kc" string="CC"/>
                                     <field name="is_dg" string="DG"/>
                                     <field name="is_cs" string="CS"/>
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                                 <form string="Counting line">
                                     <field name="line_no"/>

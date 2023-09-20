@@ -144,6 +144,7 @@ class purchase_order_line_sync(osv.osv):
         pol_values['modification_comment'] = sol_dict.get('modification_comment', False)
         pol_values['from_dpo_line_id'] = sol_dict.get('dpo_line_id') and sol_dict.get('dpo_line_id', {}).get('.id', False) or False
         pol_values['from_dpo_id'] = sol_dict.get('dpo_id') and sol_dict.get('dpo_id', {}).get('.id', False) or False
+        pol_values['from_dpo_esc'] = sol_dict.get('dpo_id') and sol_dict.get('dpo_id', {}).get('partner_type', False) == 'esc' or False
         pol_values['esti_dd'] = sol_dict.get('esti_dd', False)
         if 'line_number' in pol_values:
             del(pol_values['line_number'])
@@ -826,7 +827,6 @@ class purchase_order_sync(osv.osv):
         original_po = self.browse(cr, uid, po_id, context=context)
         # UTP-661: Get the 'Cross Docking' value of the original PO, and add it into the split PO
         header_result['cross_docking_ok'] = original_po['cross_docking_ok']
-        header_result['location_id'] = original_po.location_id.id
 
         default = {}
         default.update(header_result)

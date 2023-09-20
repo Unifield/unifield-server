@@ -68,11 +68,26 @@
     </blockTable>
     <blockTable colWidths="200.0,150.0,150.0,200.0,200.0" style="Tableau3">
       <tr>
-        <td><para style="P2">Report Run Date: [[getRunParmsRML('run_date')]]</para></td>
-        <td><para style="P2">PO Date From: [[getRunParmsRML('date_from')]]</para></td>
-        <td><para style="P2">PO Date To: [[getRunParmsRML('date_thru')]]</para></td>
-        <td><para style="P2">Doc. Status: [[getRunParmsRML('state')]]</para></td>
-        <td><para style="P2">Supplier: [[getRunParmsRML('supplier')]]</para></td>	      		
+        <td>
+            <para style="P2">Report Run Date: [[getRunParmsRML('run_date')]]</para>
+            <para style="P2"></para>
+        </td>
+        <td>
+            <para style="P2">PO Date From: [[getRunParmsRML('date_from')]]</para>
+            <para style="P2">PO Date To: [[getRunParmsRML('date_thru')]]</para>
+        </td>
+        <td>
+            <para style="P2">Order Type: [[getRunParmsRML('order_type')]]</para>
+            <para style="P2">Order Category: [[getRunParmsRML('categ')]]</para>
+        </td>
+        <td>
+            <para style="P2">Doc. Status: [[getRunParmsRML('state')]]</para>
+            <para style="P2"></para>
+        </td>
+        <td>
+            <para style="P2">Supplier: [[getRunParmsRML('supplier')]]</para>
+            <para style="P2"></para>
+        </td>
       </tr>    
     </blockTable>
 
@@ -91,7 +106,7 @@
          <td><para style="P2">Estimated Amount: [[ o.amount_total ]]</para></td>
     </tr>     	  
      </blockTable>
-    <blockTable colWidths="25.0,95.0,180.0,40.0,50.0,50.0,70.0,70.0,70.0,60.0,55.0,80.0,60.0" style="Tableau3" >
+    <blockTable colWidths="25.0,95.0,180.0,40.0,50.0,50.0,50.0,50.0,70.0,60.0,55.0,80.0,60.0,20.0,20.0" style="Tableau3" >
       <tr>
         <td>
           <para style="P3">Item</para>
@@ -131,6 +146,12 @@
         </td>
         <td>
           <para style="P3">Line Status</para>
+        </td>
+        <td>
+          <para style="P3">MML</para>
+        </td>
+        <td>
+          <para style="P3">MSL</para>
         </td>
       </tr>
       <tr>
@@ -182,11 +203,19 @@
         <td>
           <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['cost_centre'] or removeParentNode('para') ]]</para>
           <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['cost_centre'] or removeParentNode('para') ]]</para>
-       </td>
+        </td>
         <td>
           <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['state'] or removeParentNode('para') ]]</para>
           <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['state'] or removeParentNode('para') ]]</para>
-       </td>
+        </td>
+        <td>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['mml_status'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['mml_status'] or removeParentNode('para') ]]</para>
+        </td>
+        <td>
+          <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['msl_status'] or removeParentNode('para') ]]</para>
+          <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['msl_status'] or removeParentNode('para') ]]</para>
+        </td>
      </tr>
     
     </blockTable>

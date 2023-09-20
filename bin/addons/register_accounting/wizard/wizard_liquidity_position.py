@@ -5,7 +5,6 @@
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) TeMPO Consulting (<http://www.tempo-consulting.fr/>), MSF.
 #    All Rigts Reserved
-#    Developer: Stéphane Codazzi
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as

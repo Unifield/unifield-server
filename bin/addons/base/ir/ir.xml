@@ -801,6 +801,8 @@
             </field>
         </record>
 
+        <menuitem id="signature_menu" name="Signature" parent="base.menu_users" sequence="40"/>
+
         <record id="signature_image_action" model="ir.actions.act_window">
             <field name="name">List of Signatures</field>
             <field name="type">ir.actions.act_window</field>
@@ -812,7 +814,7 @@
             <field name="context">{'search_default_active': True}</field>
         </record>
 
-        <menuitem id="signature_image_menu" action="signature_image_action" parent="base.menu_users" sequence="15"/>
+        <menuitem id="signature_image_menu" action="signature_image_action" parent="base.signature_menu" sequence="1"/>
 
         <record id="view_users_white_list_tree" model="ir.ui.view">
             <field name="name">res.users.tree</field>

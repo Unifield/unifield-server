@@ -124,19 +124,18 @@
             action="action_hq_export_ocb"
             id="menu_action_hq_export_ocb"  sequence="30"/>
 
-    <!-- OCBA export -->
-
-        <record id="ocba_export_wizard" model="ir.ui.view">
-            <field name="name">Export to HQ system (OCBA)</field>
-            <field name="model">ocba.export.wizard</field>
-            <field name="type">form</field>
+    <!-- OCB-New export -->
+        <record id="ocb_export_wizard_new" model="ir.ui.view">
+            <field name="name">Export to HQ system (OCB-New)</field>
+            <field name="model">ocb.export.wizard</field>
+	    <field name="type">form</field>
+            <field name="priority" eval="20" />
             <field name="arch" type="xml">
-            <form string="Export to HQ system">
-                <field name="instance_id" domain="['&amp;', ('level', 'in', ['coordo','section']), ('instance_to_display_ids','=',True)]"/>
+            <form string="Export to HQ system (OCB-New)">
+                <field name="instance_id" domain="['&amp;', ('level', 'in', ['coordo','section']), ('instance_to_display_ids','=',True)]" on_change="onchange_instance_id()"/>
                 <field name="fiscalyear_id"/>
-                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '&lt;', 16)]"/>
+                <field name="period_id" domain="[('child_mission_hq_closed', '=', [instance_id, fiscalyear_id]), ('number', '&lt;', 16)]"/>
                 <field name="selection"/>
-
                 <group colspan="6" col="4">
                     <label string="" colspan="2"/>
                     <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
@@ -146,19 +145,21 @@
             </field>
         </record>
 
-        <record id="action_hq_export_ocba" model="ir.actions.act_window">
-            <field name="name">Export to HQ system (OCBA)</field>
+
+        <record id="action_hq_export_ocb_new" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCB-New)</field>
             <field name="type">ir.actions.act_window</field>
-            <field name="res_model">ocba.export.wizard</field>
+            <field name="res_model">ocb.export.wizard</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="ocba_export_wizard"/>
+            <field name="view_id" ref="ocb_export_wizard_new"/>
+            <field name="context">{'poc_export': True}</field>
             <field name="target">new</field>
         </record>
 
         <menuitem parent="account.menu_finance_generic_reporting"
-            action="action_hq_export_ocba"
-            id="menu_action_hq_export_ocba" sequence="50"/>
+            action="action_hq_export_ocb_new"
+            id="menu_action_hq_export_ocb_new"  sequence="50"/>
 
     <!-- OCP export -->
 
@@ -268,6 +269,20 @@
         <menuitem parent="account.menu_finance_generic_reporting"
                   action="action_hq_ocb_matching_export"
                   id="menu_action_hq_ocb_matching_export" sequence="40"/>
+
+        <record id="action_hq_ocb_matching_export_new" model="ir.actions.act_window">
+            <field name="name">OCB matching export (new)</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ocp.matching.export.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="ocp_matching_export_wizard"/>
+            <field name="context">{'ocb_matching': True, 'poc_export': True}</field>
+            <field name="target">new</field>
+        </record>
+        <menuitem parent="account.menu_finance_generic_reporting"
+                  action="action_hq_ocb_matching_export_new"
+                  id="menu_action_hq_ocb_matching_export_new" sequence="53"/>
 
     </data>
 </openerp>

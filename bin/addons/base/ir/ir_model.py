@@ -586,7 +586,7 @@ class ir_model_access(osv.osv):
             # TODO: exclude xml-rpc requests
             return True
 
-        if uid== self.pool.get('res.users')._get_sync_user_id(cr):
+        if uid in self.pool.get('res.users')._get_ignore_ur_ids(cr):
             # User for sync have all accesses
             return True
 
@@ -885,10 +885,15 @@ class ir_model_data(osv.osv):
                         'res_id': res_id,
                         'noupdate': noupdate,
                     }
-                    if context.get('sync_update_execution') and model == 'account.move.reconcile' and module == 'sd':
-                        if self.search_exist(cr, uid, [('model', '=', 'account.move.reconcile'), ('res_id', '=', res_id), ('module', '=', 'sd'), ('resend', '=', True)], context=context):
-                            xmlid_data['resend'] = True
-                            xmlid_data['touched'] = "['line_id']"
+                    if context.get('sync_update_execution') and module == 'sd':
+                        if model == 'account.move.reconcile' and module == 'sd':
+                            if self.search_exist(cr, uid, [('model', '=', 'account.move.reconcile'), ('res_id', '=', res_id), ('module', '=', 'sd'), ('resend', '=', True)], context=context):
+                                xmlid_data['resend'] = True
+                                xmlid_data['touched'] = "['line_id']"
+                        if model == 'account.bank.statement.line':
+                            cr.execute("update account_bank_statement_line set counterpart_transfer_st_line_id=%s where counterpart_transfer_st_line_sdref=%s and has_a_counterpart_transfer='t'" , (res_id, xml_id))
+                            cr.execute("update account_move_line set counterpart_transfer_st_line_id=%s where counterpart_transfer_st_line_sdref=%s and has_a_counterpart_transfer='t'" , (res_id, xml_id))
+
                     self.create(cr, uid, xmlid_data, context=context)
                     if model_obj._inherits and not context.get('sync_update_execution', False):
                         for table in model_obj._inherits:

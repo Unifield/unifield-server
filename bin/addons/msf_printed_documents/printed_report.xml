@@ -30,6 +30,8 @@
             header="False"
             auto="False"
             menu="True"
+            sequence="150"
+            view_ids="product.product_product_tree_view,product.product_normal_form_view"
         />
 
         <report

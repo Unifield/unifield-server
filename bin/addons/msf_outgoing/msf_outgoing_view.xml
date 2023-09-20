@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE SIGNATURE_TEMPLATE [
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
+]>
+
+
 <openerp>
 	<data>
 
@@ -305,6 +310,8 @@
                                     <field name="product_uom_rounding_is_pce" invisible="1" />
                                     <field name="backmove_id" invisible="1" />
                                     <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  attrs="{'invisible': [('pt_created', '=', True)]}" context="{'from_button': True}"  />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                                 <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
                                     <group colspan="2" col="4">
@@ -439,7 +446,31 @@
                                 </script>
                             </html>
                         </page>
+                        &signature_template;
                     </notebook>
+                </form>
+            </field>
+        </record>
+
+        <record id="warning_pick_partial_process_sign_wizard_form_view" model="ir.ui.view">
+            <field name="name">warning.pick.partial.process.sign.wizard.form.view</field>
+            <field name="model">warning.pick.partial.process.sign.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Picking Validation">
+                    <field name="picking_id" invisible="1" />
+					<group colspan="4">
+                        <html>
+                            <p style="font-weight: bold; font-size: 1.2em; color: red; text-align: center;">
+                                <translate>Warning: The Picking has already been electronically validated for all quantities. The new Picking will need to be signed again and the signature for the backorder should be reset. Do you want to continue ?</translate>
+                            </p>
+                        </html>
+                    </group>
+					<group colspan="4" col="4">
+						<label string="" colspan="2"/>
+                        <button name="continue_validation" string="Continue" type="object" icon="gtk-apply" colspan="1" />
+                        <button name="cancel" string="Cancel" type="object" icon="gtk-cancel" colspan="1" />
+                    </group>
                 </form>
             </field>
         </record>
@@ -720,6 +751,8 @@
                                     <field name="np_check" widget="null_boolean" />
                                     <field name="fake_state" invisible="1"/>
                                     <field name="integrity_error" string=""/>
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -1277,7 +1310,7 @@
 					<field name="shipment_expected_date" />
 					<field name="state"/>
 					<button name="do_create_shipment_bg" states="draft" string="Create Shipment" type="object" icon="gtk-add"/>
-					<button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply"/>
+					<button name="open_select_actual_ship_date_wizard" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
 				</tree>
 			</field>
 		</record>
@@ -1294,8 +1327,8 @@
                             <field name="object_name" invisible="1" />
                             <field name="name" readonly="1"/>
                             <field name="date" readonly="True" />
-                            <field name="shipment_actual_date" />
-                            <field name="shipment_expected_date" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="shipment_actual_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'shipped'])]}" />
+                            <field name="shipment_expected_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'shipped'])]}" />
                             <field name="transport_type" attrs="{'readonly': [('state', 'in', ('done', 'delivered', 'cancel'))]}" />
                             <field name="backshipment_id" readonly="True" />
                             <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
@@ -1313,7 +1346,9 @@
 
                     <notebook colspan="4">
                         <page string="Pack Families">
-                            <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])], 'notselectable': [('state', '!=', 'draft')]}" o2m_selectable="2">
+                            <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])], 'notselectable': [('state', '!=', 'draft')]}"
+                            filter_selector="[('Show all', []), ('Hide closed', [('state', '!=', 'done')]), ('Show closed only', [('state', '=', 'done')]), ('Hide returned', [('state', 'not in', ['returned', 'cancel'])]), ('Show returned only', [('state', 'in', ['returned', 'cancel'])])]"
+                            default_selector="'3'" o2m_selectable="2">
                                 <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1" editable_style="new" noteditable="fake_state not in ['draft','assigned']">
                                     <field name="fake_state" invisible="True" />
                                     <field name="sale_order_id" readonly="1"/>
@@ -1334,7 +1369,7 @@
                                     <field name="currency_id" readonly="1" />
                                     <field name="state" readonly="1" />
                                     <field name="pack_state" readonly="1" invisible="1"/>
-                                    <field name="not_shipped"  string="Returned" readonly="1" />
+                                    <field name="not_shipped" string="Returned" invisible="1" />
                                     <field name="volume_set" invisible="1" />
                                     <field name="weight_set" invisible="1" />
                                     <field name="quick_flow" invisible="1" />
@@ -1379,6 +1414,8 @@
                                             <field name="state" />
                                             <field name="inactive_product" invisible="1" />
                                             <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                            <field name="mml_status" />
+                                            <field name="msl_status" />
                                         </tree>
                                     </field>
                                 </form>
@@ -1441,7 +1478,7 @@
                         <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                         <button name="do_create_shipment_bg" states="draft" string="Create Shipment" type="object" icon="gtk-add" context="{'from_button': True}" />
                         <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
-                        <button name="validate_bg" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
+                        <button name="open_select_actual_ship_date_wizard" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
                         <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Reception"
                                 attrs="{'invisible': ['|','|', '&amp;', ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done'), ('num_of_packs', '=', 0)]}" />
                         <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Reception"
@@ -1471,6 +1508,28 @@
             </field>
         </record>
 
+        <record id="select_actual_ship_date_wizard_form_view" model="ir.ui.view">
+            <field name="name">select.actual.ship.date.wizard.form.view</field>
+            <field name="model">select.actual.ship.date.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Confirm the Actual Ship Date">
+                    <field name="shipment_id" invisible="1" />
+					<group colspan="4" col="2">
+                        <html colspan="2">
+                            <translate>Please select the date the Shipment was actually dispatched:</translate>
+                        </html>
+                        <field name="shipment_actual_date" nolabel="1" required="1" colspan="2" />
+                    </group>
+					<group colspan="4" col="4">
+						<label string="" colspan="2"/>
+                        <button name="validate_ship" string="Validate" type="object" icon="gtk-apply" colspan="1" />
+                        <button name="cancel" string="Cancel" type="object" icon="gtk-cancel" colspan="1" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
 		<!-- Changed name to 'Shipment' -->
 		<record id="view_shipment_search" model="ir.ui.view">
 			<field name="name">shipment.search</field>
@@ -1483,7 +1542,7 @@
 						<filter icon="terp-check" name="shipped" string="Ready to ship" domain="[('state','=','shipped')]" />
 						<filter icon="terp-dialog-close" name="closed" string="Dispatched" domain="[('state','=','done')]" />
 						<filter icon="gtk-yes" name="delivered" string="Received" domain="[('state','=','delivered')]" />
-                        <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
+                        <filter icon="gtk-undo" name="returned" string="Returned" domain="[('state','=','cancel')]" />
 						<separator orientation="vertical"/>
 						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('num_of_packs','=', 0)]" />
 						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('num_of_packs','!=', 0)]" />

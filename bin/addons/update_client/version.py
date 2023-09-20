@@ -12,7 +12,8 @@ from updater import base_version, server_version, isset_lock
 import calendar
 import time
 import logging
-
+from tools import config
+import os
 import hashlib
 from StringIO import StringIO
 import tarfile
@@ -30,7 +31,7 @@ class version(osv.osv):
 
     def _patch_needs_to_be_downloaded(self, cr, uid, ids, name, args, context=None):
         cr.execute("""\
-            SELECT id, patch IS NULL FROM %s WHERE id IN %%s""" % self._table, [tuple(ids)])  # not_a_user_entry
+            SELECT id, patch IS NULL and coalesce(patch_path, '')='' FROM %s WHERE id IN %%s""" % self._table, [tuple(ids)])  # not_a_user_entry
         return dict(cr.fetchall())
 
     _columns = {
@@ -44,6 +45,7 @@ class version(osv.osv):
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag", readonly=True),
         'need_download' : fields.function(_patch_needs_to_be_downloaded,
                                           type='boolean', method=True, readonly=True),
+        'patch_path': fields.char('Patch stored on filesystem', size=256),
     }
 
     _defaults = {
@@ -57,6 +59,7 @@ class version(osv.osv):
     ]
 
     _logger = logging.getLogger('update_client')
+
 
     def init(self, cr):
         try:
@@ -87,6 +90,15 @@ class version(osv.osv):
                 self.write(cr, 1, [versions_id[server_version_keys[-1]]], {'applied':fields.datetime.now()})
         except BaseException:
             self._logger.exception("version init failure!")
+
+    def get_patch_folder(self, cr):
+        folder = os.path.join(config['root_path'], '..', 'Patches', cr.dbname)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        return folder
+
+    def get_patch_file(self, cr, uid, id, context=None):
+        return os.path.join(self.get_patch_folder(cr), '%s.zip' % id)
 
     def _need_restart(self, cr, uid, context=None):
         return isset_lock()
@@ -123,7 +135,8 @@ class version(osv.osv):
 
     def _is_update_available(self, cr, uid, ids, context=None):
         for id in ids if isinstance(ids, list) else [ids]:
-            if not self.browse(cr, uid, id, context=context).patch:
+            rev = self.browse(cr, uid, id, context=context)
+            if not rev.patch and not rev.patch_path:
                 return False
         return True
 
@@ -214,7 +227,7 @@ class entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         try:
             res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), self._hardware_id, current_revision)
-        except osv.except_osv, e:
+        except osv.except_osv as e:
             if all(substr in e.value
                    for substr in
                    ('sync_manager', 'object has no attribute', 'get_next_revisions')):
