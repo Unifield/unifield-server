@@ -628,11 +628,15 @@ class res_currency(osv.osv):
         inv_domain = [('currency_id', 'in', ids), ('state', 'not in', ['paid', 'inv_close', 'cancel'])]
         inv_ids = acc_inv_obj.search(cr, uid, inv_domain, limit=10, context=context)
         if inv_ids:
-            invoices = acc_inv_obj.read(cr, uid, inv_ids, ['number'], context=context)
+            invoices = acc_inv_obj.read(cr, uid, inv_ids, ['number', 'doc_type', 'date_invoice'], context=context)
+            doc_types_dict = dict(acc_inv_obj._get_invoice_type_list(cr, uid, context=context))
             raise osv.except_osv(_('Currency currently used!'),
                                  _('The currency you want to %s is used in at least one document in Draft '
                                    'or Open state: %s') %
-                                 (keyword, ', '.join([invoice['number'] for invoice in invoices])))
+                                 (keyword, ', '.join(['\nType: ' + doc_types_dict[invoice['doc_type']] + ', ' +
+                                                      _('Posting Date') + ': ' + (invoice['date_invoice'] or '_ ') + ', ' +
+                                                      _('Number') + ': ' + (invoice['number'] or '_ ')
+                                                      for invoice in invoices])))
 
         # Check on Journal Items
         aml_domain = ['|', ('currency_id', 'in', ids), ('functional_currency_id', 'in', ids), ('move_state', '=', 'draft')]
