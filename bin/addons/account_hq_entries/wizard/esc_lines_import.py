@@ -184,8 +184,9 @@ class esc_line_import_wizard(osv.osv):
 
             target_cc_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('instance_id.state', '!=', 'inactive'), ('is_po_fo_cost_center', '=', True)], context=context)
             for target in self.pool.get('account.target.costcenter').browse(cr, uid, target_cc_ids, fields_to_fetch=['cost_center_id', 'instance_id'], context=context):
-                cost_center[target.cost_center_id.code.lower()] = target.cost_center_id.id
-                consignee_instances[target.instance_id.instance.lower()] = target.cost_center_id.id
+                if target.cost_center_id and target.instance_id.instance:
+                    cost_center[target.cost_center_id.code.lower()] = target.cost_center_id.id
+                    consignee_instances[target.instance_id.instance.lower()] = target.cost_center_id.id
 
             wiz = self.browse(cr, uid, wiz_id, context=None)
             file_data = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
