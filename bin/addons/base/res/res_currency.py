@@ -700,11 +700,11 @@ class res_currency(osv.osv):
         accrual_dom = ['|', ('currency_id', 'in', ids), ('functional_currency_id', 'in', ids), ('state', 'in', ['draft', 'running'])]
         accrual_ids = accrual_line_obj.search(cr, uid, accrual_dom, limit=10, context=context)
         if accrual_ids:
-            accs = accrual_line_obj.read(cr, uid, accrual_ids, ['entry_sequence'], context=context)
+            accs = accrual_line_obj.read(cr, uid, accrual_ids, ['description'], context=context)
             raise osv.except_osv(_('Currency currently used!'),
                                  _("The currency you want to %s is used in at least "
                                    "one Draft or Running Accrual: %s") %
-                                 (keyword, ', '.join([acc['entry_sequence'] for acc in accs])))
+                                 (keyword, ', '.join([acc['description'] for acc in accs])))
 
         return pricelist_ids
 
