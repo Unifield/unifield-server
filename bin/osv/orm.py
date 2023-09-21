@@ -2695,7 +2695,7 @@ class orm_memory(orm_template):
                             if dest_ids_has_false:
                                 ordered_ids.insert(0, 0) # false is always first
                             order_info[order_field] = ordered_ids
-                            getter = lambda d, i, o_field: i.get(o_field) and len(d) > 1 and d[1].get(o_field) and i.get(o_field).index(d[1].get(o_field)) or ''
+                            getter = lambda d, i, o_field: i.get(o_field) and len(d) > 1 and d[1].get(o_field) and i.get(o_field).index(d[1].get(o_field)) or 0
                 else:
                     raise NotImplementedError()
                 order_parts_getters.append((order_field, getter, order_direction == 'desc'))
