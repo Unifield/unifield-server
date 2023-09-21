@@ -131,7 +131,7 @@ class purchase_order_line(osv.osv):
     def _generate_order_by(self, order_spec, query, context=None):
         if order_spec and 'supplier_code' in order_spec:
             order_specs = order_spec.split(',')
-            if order_specs > 1 and not order_specs[1].strip().startswith('id'):
+            if len(order_specs) > 1 and not order_specs[1].strip().startswith('id'):
                 raise osv.except_osv(_('Warning !'), _("You can't combine order by supplier_code with other order fields"))
             order_split = order_specs[0].split(' ')
             direction = order_split[1].strip() if len(order_split) > 1 else ''
