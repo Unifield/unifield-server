@@ -22,7 +22,7 @@
                                 <span class="process-field-name">${k}:</span>
                             </td>
                             <td valign="top">
-                            % for l, m in v.iteritems():
+                            % for l, m in v.items():
                                 % if m:
                                     <span class="process-field-attribute-name">
                                         ${l}${m is not True and ':' or ''}
