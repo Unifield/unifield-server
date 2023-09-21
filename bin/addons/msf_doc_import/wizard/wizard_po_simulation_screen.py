@@ -35,6 +35,7 @@ from datetime import datetime
 
 # Server imports
 from osv import osv
+from osv import orm
 from osv import fields
 from tools.translate import _
 import tools
@@ -278,8 +279,8 @@ class wizard_import_po_simulation_screen(osv.osv):
 
         try:
             return super(wizard_import_po_simulation_screen, self).write(cr, uid, ids, vals, context=context)
-        except Exception as e:
-            if e[0] == 'ConcurrencyException':
+        except orm.except_orm as e:
+            if e.name == 'ConcurrencyException':
                 return True
             else:
                 raise e
