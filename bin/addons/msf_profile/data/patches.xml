@@ -981,6 +981,11 @@
             <field name="method">us_11810_fix_company_logo</field>
         </record>
 
+        <!-- UF30.1 -->
+        <record id="us_11956_fix_po_line_reception_destination" model="patch.scripts">
+            <field name="method">us_11956_fix_po_line_reception_destination</field>
+        </record>
+
         <!-- py3 -->
         <record id="py3_migrate_pickle_ir_values" model="patch.scripts">
             <field name="method">py3_migrate_pickle_ir_values</field>
@@ -989,8 +994,6 @@
         <record id="us_9321_2_remove_location_colors" model="patch.scripts">
             <field name="method">us_9321_2_remove_location_colors</field>
         </record>
-
-
 
     </data>
 </openerp>

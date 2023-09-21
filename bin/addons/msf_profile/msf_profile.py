@@ -57,6 +57,7 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
     # python 3
     def us_9321_2_remove_location_colors(self, cr, uid, *a, **b):
         '''
@@ -99,6 +100,26 @@ class patch_scripts(osv.osv):
         self.log_info(cr, uid, 'Pickle ir_values conversion: ok: %d , fail: %d' % (ok, fail))
         return True
 
+    # UF30.1
+    def us_11956_fix_po_line_reception_destination(self, cr, uid, *a, **b):
+        '''
+        Set the Reception Destination to Cross Docking for all PO line by Nomenclature (no product) if they are linked
+        to a FO or an External IR
+        '''
+        cross_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
+                                                                       'stock_location_cross_docking')[1]
+
+        cr.execute('''
+            UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
+                SELECT pl.id FROM purchase_order_line pl 
+                    LEFT JOIN sale_order so ON pl.link_so_id = so.id 
+                    LEFT JOIN stock_location l ON so.location_requestor_id = l.id 
+                WHERE pl.link_so_id = so.id AND pl.product_id IS NULL AND 
+                    (so.procurement_request = 'f' OR (so.location_requestor_id IS NOT NULL AND l.usage = 'customer'))
+        )''', (cross_id,))
+        self.log_info(cr, uid, "US-11956: The Line Destination of %s PO line(s) by Nomenclature have been set to 'Cross Docking'" % (cr.rowcount,))
+
+        return True
 
     # UF30.0
     def us_11810_fix_company_logo(self, cr, uid, *a, **b):
