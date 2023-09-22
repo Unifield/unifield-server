@@ -979,5 +979,10 @@
         <record id="us_11810_fix_company_logo" model="patch.scripts">
             <field name="method">us_11810_fix_company_logo</field>
         </record>
+
+        <!-- UF31.0 -->
+        <record id="us_7168_7169_10518_fix_docs_reason_type" model="patch.scripts">
+            <field name="method">us_7168_7169_10518_fix_docs_reason_type</field>
+        </record>
     </data>
 </openerp>

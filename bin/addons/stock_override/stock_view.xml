@@ -458,7 +458,8 @@
                             <field name="backorder_id" readonly="1"/>
                             <field name="customer_ref" readonly="1" />
                             <field name="reason_type_id" widget="selection"
-                                   domain="[('incoming_ok', '=', True)]" on_change="on_change_reason_type_id(reason_type_id)"
+                                   domain="[('incoming_ok', '=', True), ('is_fs_in', '=', True)]" get_selection="list_reason_type_incoming"
+                                   on_change="on_change_reason_type_id(reason_type_id)"
                                    attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="customers" readonly="1" />
                             <field name="change_reason"/>
@@ -599,7 +600,7 @@
                                             <field name="np_check" widget="null_boolean" />
                                         </group>
                                         <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
-                                            domain="[('incoming_ok', '=', True)]" />
+                                            domain="[('incoming_ok', '=', True), ('is_fs_in', '=', True)]" get_selection="list_move_reason_type_incoming" />
                                     </group>
 
                                     <group colspan="2" col="2">
@@ -794,7 +795,7 @@
                                 />
                             <field name="order_category"/>
                             <field name="reason_type_id"
-                                domain="[('outgoing_ok', '=', True), ('is_fs', '=', True)]"
+                                domain="[('outgoing_ok', '=', True), ('is_fs_out', '=', True)]"
                                 get_selection="list_reason_type_outgoing"
                                 widget="selection"
                                 attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"

@@ -2104,14 +2104,11 @@ class stock_picking(osv.osv):
 
         context['web_copy'] = True
         default.update({'partner_id': False, 'partner_id2': False, 'address_id': False, 'ext_cu': False, 'sale_id': False})
-        loan_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
-        og_pick_ids = self.search(cr, uid, [('id', '=', id), ('reason_type_id', '=', loan_ret_rt_id)], context=context)
-        if og_pick_ids:
-            og_pick_type = self.read(cr, uid, og_pick_ids[0], ['type'], context=context)['type']
-            if og_pick_type == 'out':
-                default['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
-            else:
-                default['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        pick_type = self.read(cr, uid, id, ['type'], context=context)['type']
+        if pick_type == 'out':
+            default['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        else:
+            default['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
 
         return self.copy(cr, uid, id, default, context=context)
 

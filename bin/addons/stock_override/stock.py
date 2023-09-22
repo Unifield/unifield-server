@@ -205,9 +205,28 @@ class stock_picking(osv.osv):
 
             is_not_fs, current_rt_id = cr.fetchone()
             if not is_not_fs:
-                dom = ['&', ('is_fs', '=', True)] + dom
+                dom = ['&', ('is_fs_out', '=', True)] + dom
             if current_rt_id:
                 dom = ['|',('id', '=', current_rt_id)] + dom
+        rt_obj = self.pool.get('stock.reason.type')
+        if context is None:
+            lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
+            if lang_dict.get('context_lang'):
+                context = {'lang': lang_dict.get('context_lang')}
+        ret = rt_obj._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
+        return ret
+
+    def list_reason_type_incoming(self, cr, uid, id, name, context=None):
+        dom = [('incoming_ok', '=', True)]
+        if id:
+            cr.execute("""SELECT bool(coalesce(purchase_id, 0)) OR from_wkf OR claim, reason_type_id
+                FROM stock_picking WHERE id = %s""", (id, ))
+
+            is_not_fs, current_rt_id = cr.fetchone()
+            if not is_not_fs:
+                dom = ['&', ('is_fs_in', '=', True)] + dom
+            if current_rt_id:
+                dom = ['|', ('id', '=', current_rt_id)] + dom
         rt_obj = self.pool.get('stock.reason.type')
         if context is None:
             lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
@@ -1375,7 +1394,7 @@ class stock_move(osv.osv):
         sync_dpo_in = False
         if vals.get('picking_id', False):
             picking = pick_obj.read(cr, uid, vals['picking_id'], ['move_sequence_id', 'type', 'reason_type_id',
-                                                                  'sync_dpo_in', 'sale_id'], context=context)
+                                                                  'sync_dpo_in', 'sale_id', 'purchase_id'], context=context)
             if not vals.get('line_number', False):
                 # new number need - gather the line number form the sequence
                 sequence_id = picking['move_sequence_id'][0]
@@ -1387,20 +1406,8 @@ class stock_move(osv.osv):
                 val_type = picking['type']
             sync_dpo_in = picking['sync_dpo_in']
 
-            # Remove the Loan Return Reason Type
-            loan_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
-            if picking and context.get('web_copy') and vals.get('reason_type_id', False) == loan_ret_rt_id:
-                if picking['type'] == 'out':
-                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
-                else:
-                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
-
         if vals.get('product_id', False):
-            product = prod_obj.read(cr, uid, vals['product_id'],
-                                    ['subtype',
-                                     'type',
-                                     'batch_management',
-                                     'perishable',],
+            product = prod_obj.read(cr, uid, vals['product_id'], ['subtype', 'type', 'batch_management', 'perishable',],
                                     context=context)
             vals['subtype'] = product['subtype']
 
@@ -1454,20 +1461,13 @@ class stock_move(osv.osv):
                     elif loc_dest_id['usage'] == 'inventory':
                         vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
-            # If the source location and teh destination location are the same, the state should be 'Closed'
+            # If the source location and the destination location are the same, the state should be 'Closed'
             if vals.get('location_id', False) == vals.get('location_dest_id', False) and vals.get('state') != 'cancel':
                 vals['state'] = 'done'
 
-        # Change the reason type of the picking if it is not the same
-        rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-        if picking and picking['type'] == 'out':
-            if not vals.get('reason_type_id'):
-                vals['reason_type_id'] = picking['reason_type_id'][0]
-
-        if picking and not context.get('from_claim') and not context.get('from_chaining') \
-                and picking['reason_type_id'][0] != rt_id \
-                and vals.get('reason_type_id', False) != picking['reason_type_id'][0]:
-            pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': rt_id}, context=context)
+        # Change the reason type if needed
+        if picking and picking['type'] in ('in', 'out') and not vals.get('reason_type_id'):
+            vals['reason_type_id'] = picking['reason_type_id'][0]
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
 
@@ -1569,11 +1569,6 @@ class stock_move(osv.osv):
             if self.search_exist(cr, uid, [('id', 'in', ids), ('address_id', '!=', vals['address_id'])], context=context):
                 addr = addr_obj.read(cr, uid, vals.get('address_id'), ['partner_id'], context=context)
                 vals['partner_id2'] = addr['partner_id'] and addr['partner_id'][0] or False
-        if 'reason_type_id' in vals:
-            pick_ids = pick_obj.search(cr, uid, [('reason_type_id', '!=', vals['reason_type_id']), ('move_lines', 'in', ids)], order='NO_ORDER', context=context)
-            if pick_ids:
-                other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-                pick_obj.write(cr, uid, pick_ids, {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
@@ -1788,6 +1783,26 @@ class stock_move(osv.osv):
             'from_wkf': picking.from_wkf,
         }
         return picking_obj.create(cr, uid, pick_values, context=context)
+
+    def list_move_reason_type_incoming(self, cr, uid, id, name, context=None):
+        dom = [('incoming_ok', '=', True)]
+        if id:
+            cr.execute("""SELECT bool(coalesce(m.purchase_line_id, 0)) OR p.from_wkf OR p.claim, m.reason_type_id
+                FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id = p.id WHERE m.id = %s""", (id, ))
+
+            is_not_fs, current_rt_id = cr.fetchone()
+            if not is_not_fs:
+                dom = ['&', ('is_fs_in', '=', True)] + dom
+            if current_rt_id:
+                dom = ['|', ('id', '=', current_rt_id)] + dom
+        rt_obj = self.pool.get('stock.reason.type')
+        if context is None:
+            lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
+            if lang_dict.get('context_lang'):
+                context = {'lang': lang_dict.get('context_lang')}
+        ret = rt_obj._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
+        return ret
+
 
 stock_move()
 

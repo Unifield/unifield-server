@@ -722,29 +722,48 @@ class stock_move(osv.osv):
          - GOODS RETURN UNIT
          - GOODS REPLACEMENT
          - OTHER
+        Only permet user to create/write an IN from scratch with some reason types:
+         - EXTERNAL SUPPLY
+         - INTERNAL SUPPLY
+         - RETURN FROM UNIT
         """
         data_obj = self.pool.get('ir.model.data')
         res = True
         try:
             rt_replacement_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+            rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+            ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
         except ValueError:
             rt_replacement_id = 0
-        try:
-            rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
-        except ValueError:
-            rt_return_unit_id = 0
-        try:
-            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-        except ValueError:
             rt_other_id = 0
+            rt_return_unit_id = 0
+            int_rt_id = 0
+            ext_rt_id = 0
 
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
-                if sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id]:
-                    pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
-                    if not pick['purchase_id'] and not pick['sale_id'] and pick['type'] == 'out':
-                        return False
+                pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
+                if not pick['purchase_id'] and not pick['sale_id'] \
+                        and ((pick['type'] == 'in' and sm['reason_type_id'][0] not in [int_rt_id, ext_rt_id, rt_return_unit_id])
+                             or (pick['type'] == 'out' and sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id])):
+                    return False
         return res
+
+    def _invalid_reason_type_msg(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        doc = _('a document')
+        if context.get('picking_type'):
+            if context['picking_type'] == 'incoming_shipment':
+                doc = _('an IN')
+            elif context['picking_type'] == 'delivery_order':
+                doc = _('an OUT')
+        msg = _('Wrong reason type for %s created from scratch.') % (doc,)
+
+        return msg
 
 
     _constraints = [
@@ -753,7 +772,7 @@ class stock_move(osv.osv):
             ['asset_id']),
         (_check_constaints_service, 'You cannot select Service Location as Source Location.', []),
         (_check_tracking, 'You must assign a batch number for this product.', ['prodlot_id']),
-        (_check_reason_type, "Wrong reason type for an OUT created from scratch.", ['reason_type_id', ]),
+        (_check_reason_type, _invalid_reason_type_msg, ['reason_type_id', ]),
     ]
 
     _defaults = {
