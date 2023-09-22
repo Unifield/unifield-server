@@ -15,6 +15,9 @@ class common_non_conform(XlsxReportParser):
         location_obj = self.pool.get('stock.location')
 
         company_record = self.pool.get('res.company')._get_instance_record(self.cr, self.uid)
+
+        self.include_pipe = self.pool.get('non.conform.inpipe').read(self.cr, self.uid, self.ids[0], ['include_pipe'])['include_pipe']
+
         instance_instance = company_record.instance
         self.instance_id = company_record.id
 
@@ -43,7 +46,7 @@ class common_non_conform(XlsxReportParser):
         sheet.column_dimensions['J'].width = 10
 
         #self.duplicate_column_dimensions(default_width=10.75)
-        sheet.freeze_panes = 'C6'
+        sheet.freeze_panes = 'C7'
 
 
         title = self.get_title()
@@ -59,6 +62,10 @@ class common_non_conform(XlsxReportParser):
         sheet.append([
             self.cell_ro(_('Date'), 'filter_txt'),
             self.cell_ro(datetime.now(), 'filter_date'),
+        ])
+        sheet.append([
+            self.cell_ro(_('In-Pipe Quantity included'), 'filter_txt'),
+            self.cell_ro(self.include_pipe and _('Yes') or _('No'), 'filter_txt'),
         ])
         sheet.append([])
         extra_col = self.extra_col()
@@ -222,13 +229,13 @@ class common_non_conform(XlsxReportParser):
             if len(p_ids) < page_size:
                 break
 
-        sheet.auto_filter.ref = "A5:G5"
+        sheet.auto_filter.ref = "A6:G6"
 
 class product_mml_nonconform(common_non_conform):
     def get_query(self):
         extra_join = ''
         extra_cond = ''
-        if self.pool.get('non.conform.inpipe').read(self.cr, self.uid, self.ids[0], ['include_pipe'])['include_pipe']:
+        if self.include_pipe:
             extra_join = '''
             left join purchase_order_line pol on pol.product_id = p.id and pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
             left join (
@@ -242,6 +249,7 @@ class product_mml_nonconform(common_non_conform):
             ) inc on inc.product_id = p.id
             '''
             extra_cond = 'or count(pol.id) > 0 or count(inc.product_id) > 0'
+
         return """
             select p.id
             from product_product p
@@ -291,7 +299,7 @@ class product_msl_nonconform(common_non_conform):
             ud_proj = [0]
         extra_join = ''
         extra_cond = ''
-        if self.pool.get('non.conform.inpipe').read(self.cr, self.uid, self.ids[0], ['include_pipe'])['include_pipe']:
+        if self.include_pipe:
             extra_join = '''
             left join purchase_order_line pol on pol.product_id = p.id and pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
             left join (

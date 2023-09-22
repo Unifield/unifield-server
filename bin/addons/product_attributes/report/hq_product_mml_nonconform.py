@@ -16,6 +16,8 @@ class hq_product_mml_nonconform(XlsxReportParser):
         instance_instance = company_record.instance
         self.instance_id = company_record.id
 
+        include_pipe = self.pool.get('non.conform.inpipe').read(self.cr, self.uid, self.ids[0], ['include_pipe'])['include_pipe']
+
         sheet = self.workbook.active
 
         self.create_style_from_template('title_style', 'A1')
@@ -30,7 +32,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
 
         self.duplicate_column_dimensions(default_width=10.75)
         sheet.column_dimensions['B'].width = 65
-        sheet.freeze_panes = 'A6'
+        sheet.freeze_panes = 'A7'
 
 
         title = _('Products not in MML')
@@ -46,6 +48,10 @@ class hq_product_mml_nonconform(XlsxReportParser):
         sheet.append([
             self.cell_ro(_('Date'), 'filter_txt'),
             self.cell_ro(datetime.now(), 'filter_date'),
+        ])
+        sheet.append([
+            self.cell_ro(_('In-Pipe Quantity included'), 'filter_txt'),
+            self.cell_ro(include_pipe and _('Yes') or _('No'), 'filter_txt'),
         ])
         sheet.append([])
 
@@ -71,7 +77,6 @@ class hq_product_mml_nonconform(XlsxReportParser):
         product_code = {}
 
         extra_join_cond = ''
-        include_pipe = self.pool.get('non.conform.inpipe').read(self.cr, self.uid, self.ids[0], ['include_pipe'])['include_pipe']
         if include_pipe:
             extra_join_cond = 'smrl.in_pipe_qty > 0 or'
 
@@ -146,7 +151,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
                 from product_product p
                 inner join product_template tmpl on tmpl.id = p.product_tmpl_id
                 inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-                inner join stock_mission_report_line smrl on p.id = smrl.product_id and (smrl.in_pipe_qty > 0 or smrl.internal_qty > 0)
+                inner join stock_mission_report_line smrl on p.id = smrl.product_id and (''' + extra_join_cond + ''' smrl.internal_qty > 0)
                 inner join stock_mission_report smr on smr.id=smrl.mission_report_id and smr.full_view = 'f'
                 inner join product_international_status creator on creator.id = p.international_status
                 inner join msf_instance instance on instance.id = smr.instance_id
@@ -166,7 +171,7 @@ class hq_product_mml_nonconform(XlsxReportParser):
                 from product_product p
                 inner join product_template tmpl on tmpl.id = p.product_tmpl_id
                 inner join product_nomenclature nom on tmpl.nomen_manda_0 = nom.id
-                inner join stock_mission_report_line smrl on p.id = smrl.product_id and (smrl.in_pipe_qty > 0 or smrl.internal_qty > 0)
+                inner join stock_mission_report_line smrl on p.id = smrl.product_id and (''' + extra_join_cond + ''' smrl.internal_qty > 0)
                 inner join stock_mission_report smr on smr.id=smrl.mission_report_id and smr.full_view = 'f'
                 inner join product_international_status creator on creator.id = p.international_status
                 inner join msf_instance instance on instance.id = smr.instance_id
@@ -212,10 +217,10 @@ class hq_product_mml_nonconform(XlsxReportParser):
                         self.cell_ro(prod.restrictions_txt, 'row'),
                     ])
             if bk_id:
-                self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': 0.20 + (0.8 * offset/float(len_p_ids))})
+                self.pool.get('memory.background.report').write(self.cr, self.uid, bk_id, {'percent': min(0.20 + (0.8 * offset/float(len_p_ids)), 1)})
 
 
-        sheet.auto_filter.ref = "A5:G5"
+        sheet.auto_filter.ref = "A6:G6"
 
 
 XlsxReport('report.report.hq_product_mml_nonconform', parser=hq_product_mml_nonconform, template='addons/product_attributes/report/hq_product_mml_nonconform.xlsx')

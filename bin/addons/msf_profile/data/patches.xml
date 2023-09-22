@@ -976,9 +976,20 @@
             <field name="method">us_11181_update_supply_signature_follow_up</field>
         </record>
 
+        <record id="us_11810_fix_company_logo" model="patch.scripts">
+            <field name="method">us_11810_fix_company_logo</field>
+        </record>
+
+        <!-- UF30.1 -->
+        <record id="us_11956_fix_po_line_reception_destination" model="patch.scripts">
+            <field name="method">us_11956_fix_po_line_reception_destination</field>
+        </record>
+
+        <!-- UF31.0 -->
         <record id="us_11026_oca_liquidity_migration_journal" model="patch.scripts">
             <field name="method">us_11026_oca_liquidity_migration_journal</field>
         </record>
+
 
     </data>
 </openerp>
