@@ -57,7 +57,7 @@ class field_balance_spec_report(osv.osv_memory):
             ids = [ids]
 
         report = self.browse(cr, uid, ids[0], context=context)
-        filename = '%s %s %s' % (report.instance_id.instance, report.period_id.name, _('Balance Specification'))
+        filename = '%s %s %s' % (report.instance_id.instance, report.period_id.name, 'Balance Specification')
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': filename,
             'report_name': 'field_balance_spec_report',
