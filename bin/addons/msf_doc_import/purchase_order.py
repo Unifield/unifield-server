@@ -370,7 +370,7 @@ class purchase_order(osv.osv):
             for pol in pol_obj.browse(cr, uid, pol_ids_to_confirm, fields_to_fetch=['order_id', 'line_number'], context=context):
                 nb_pol_total += 1
                 try:
-                    self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
+                    self.pool.get('purchase.order.line').button_confirmed_no_mml_check(cr, uid, [pol.id], context=context)
                     cr.commit()
                     nb_pol_confirmed += 1
                     po_name = pol.order_id.name
