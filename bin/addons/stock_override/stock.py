@@ -312,8 +312,8 @@ class stock_picking(osv.osv):
                 return {}
             if ext_cu:
                 self.pool.get('stock.move').write(cr, uid, [move.id for move in pick.move_lines], {'location_id': ext_cu}, context=context)
-                message =  _('The source location of lines has been changed to the same as header value')
-            else: # not ext_cu set defualt location because source location of stock.move is a mandatory field:
+                message = _('The source location of lines has been changed to the same as header value')
+            else:  # not ext_cu set default location because source location of stock.move is a mandatory field:
                 other_supplier_location = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')
                 self.pool.get('stock.move').write(cr, uid, [move.id for move in pick.move_lines], {'location_id': other_supplier_location[1]}, context=context)
                 message = _("Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!")
