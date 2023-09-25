@@ -807,13 +807,20 @@ class stock_picking(osv.osv):
                 inv_type = 'out_invoice'
         return inv_type
 
-
     def draft_force_assign(self, cr, uid, ids, context=None):
         '''
         Confirm all stock moves
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        for pick in self.read(cr, uid, ids, ['partner_id', 'ext_cu'], context=context):
+            if context.get('picking_type') == 'incoming_shipment' and not pick['partner_id'] and not pick['ext_cu']:
+                raise osv.except_osv(_('Error'), _('You can not process an IN with neither Partner or Ext. C.U.'))
+            if context.get('picking_type') == 'delivery_order' and not pick['partner_id']:
+                raise osv.except_osv(_('Error'), _('You can not process an OUT without a Partner'))
         res = super(stock_picking, self).draft_force_assign(cr, uid, ids)
 
         move_obj = self.pool.get('stock.move')

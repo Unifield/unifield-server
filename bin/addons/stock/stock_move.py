@@ -1005,6 +1005,8 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
 
+        data_obj = self.pool.get('ir.model.data')
+
         defaults['procurements'] = []
         defaults['original_from_process_stock_move'] = False
         defaults['included_in_mission_stock'] = False
@@ -1021,6 +1023,12 @@ class stock_move(osv.osv):
         if context.get('subtype') != 'in' or (context.get('from_button') and context.get('web_copy')):
             defaults['confirmed_qty'] = 0
 
+        if context.get('from_button') and context.get('web_copy'):
+            if context.get('picking_type') == 'delivery_order':
+                defaults['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+            elif context.get('picking_type') == 'incoming_shipment':
+                defaults['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
             # UF-1797: when we duplicate a doc we delete the link with the poline
@@ -1032,10 +1040,11 @@ class stock_move(osv.osv):
                 defaults['composition_list_id'] = False
             if context.get('subtype', False) == 'incoming':
                 # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
-                input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+                input_loc = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
                 defaults.update(location_dest_id=input_loc)
         else:
             defaults['composition_list_id'] = False
+
         return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
 
     def onchange_lot_processor(self, cr, uid, ids, lot_id, qty, location_id, uom_id, context=None):
@@ -1398,6 +1407,11 @@ class stock_move(osv.osv):
         self.check_product_quantity(cr, uid, ids, context=context)
 
         for move in self.browse(cr, uid, ids, fields_to_fetch=['picking_id', 'product_qty', 'confirmed_qty'], context=context):
+            if context.get('picking_type') == 'incoming_shipment' and not move.picking_id.partner_id and \
+                    not move.picking_id.ext_cu:
+                raise osv.except_osv(_('Error'), _('You can not process an IN with neither Partner or Ext. C.U.'))
+            if context.get('picking_type') == 'delivery_order' and not move.picking_id.partner_id:
+                raise osv.except_osv(_('Error'), _('You can not process an OUT without a Partner'))
             l_vals = vals
             l_vals.update({'state': 'confirmed', 'already_confirmed': True})
             if move.picking_id.type == 'in' and not move.picking_id.purchase_id and move.product_qty and \
