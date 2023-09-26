@@ -440,15 +440,17 @@ class stock_picking(osv.osv):
     def write_web(self, cr, uid, ids, vals, context=None, ignore_access_error=False):
         if ids:
             doc_type = self.browse(cr, uid, ids[0], fields_to_fetch=['type'], context=context).type
-            if vals and 'reason_type_id' in vals:
-                data_obj = self.pool.get('ir.model.data')
-                other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-                if other_type_id != vals['reason_type_id']:
-                    if isinstance(ids, (int, long)):
-                        ids = [ids]
-                    # INT only: any RT != other set on picking must be written to all moves
-                    # use sql query to prevent loops: write picking -> write move -> write picking ...
-                    cr.execute("update stock_move set reason_type_id=%s where picking_id in %s and type='internal' and state not in ('cancel', 'done')", (vals['reason_type_id'], tuple(ids)))
+            # Ensure the moves have the same RT as the IN or INT if the change is necessary
+            if vals and vals.get('reason_type_id') and doc_type in ('in', 'internal'):
+                for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines'], context=context):
+                    moves_to_update_rt = []
+                    for move in pick.move_lines:
+                        if move.location_dest_id and not (not move.location_dest_id.virtual_location and
+                              (move.location_dest_id.usage == 'inventory' or move.location_dest_id.scrap_location)):
+                            moves_to_update_rt.append(move.id)
+                    if moves_to_update_rt:
+                        self.pool.get('stock.move').write(cr, uid, moves_to_update_rt,
+                                                          {'reason_type_id': vals['reason_type_id']}, context=context)
             if doc_type == 'in':
                 if vals.get('partner_id2'):
                     vals['ext_cu'] = False
@@ -1555,6 +1557,8 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
             if dest_dict['scrap_location'] and not dest_dict['virtual_location']:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            if vals.get('picking_id') and not vals.get('reason_type_id'):  # Header RT
+                vals['reason_type_id'] = pick_obj.read(cr, uid, vals['picking_id'], ['reason_type_id'], context=context)['reason_type_id'][0]
             # if the source location and the destination location are the same, the state is done
             if 'location_id' in vals and vals['location_dest_id'] == vals['location_id'] and vals.get('state') != 'cancel':
                 vals['state'] = 'done'
@@ -1790,25 +1794,6 @@ class stock_move(osv.osv):
             'from_wkf': picking.from_wkf,
         }
         return picking_obj.create(cr, uid, pick_values, context=context)
-
-    def list_move_reason_type_incoming(self, cr, uid, id, name, context=None):
-        dom = [('incoming_ok', '=', True)]
-        if id:
-            cr.execute("""SELECT bool(coalesce(m.purchase_line_id, 0)) OR p.from_wkf OR p.claim, m.reason_type_id
-                FROM stock_move m LEFT JOIN stock_picking p ON m.picking_id = p.id WHERE m.id = %s""", (id, ))
-
-            is_not_fs, current_rt_id = cr.fetchone()
-            if not is_not_fs:
-                dom = ['&', ('is_fs_in', '=', True)] + dom
-            if current_rt_id:
-                dom = ['|', ('id', '=', current_rt_id)] + dom
-        rt_obj = self.pool.get('stock.reason.type')
-        if context is None:
-            lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
-            if lang_dict.get('context_lang'):
-                context = {'lang': lang_dict.get('context_lang')}
-        ret = rt_obj._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
-        return ret
 
 
 stock_move()

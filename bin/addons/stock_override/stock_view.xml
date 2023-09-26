@@ -307,6 +307,7 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
+                                        <field name="picking_id" invisible="1" />
                                         <field name="location_id" 
                                             attrs="{'readonly': [('state', '=', 'assigned')]}"
                                             domain="[('internal_src', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_dest_id), ('virtual_ok', '!=', 't')]"
@@ -314,7 +315,7 @@
                                             />
                                        <field name="location_dest_id"
                                             domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id), ('output_ok', '=', False), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')]"
-                                            on_change="location_dest_change(location_dest_id, location_id, product_id)"
+                                            on_change="location_dest_change(location_dest_id, picking_id, product_id)"
                                             />
                                     </group>
 
@@ -569,6 +570,7 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
+                                        <field name="picking_id" invisible="1" />
                                         <field name="location_id"
                                             domain="[('filter_partner_ext_cu', 'in', [parent.partner_id2, parent.ext_cu]), ('usage', '!=', 'view'), ('id', '!=', location_dest_id), '|', '&amp;', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit'), ('usage', '=', 'supplier')]"
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
@@ -577,7 +579,7 @@
                                         <field name="product_type" invisible="1"/>
                                         <field name="location_dest_id"
                                             domain="[('usage', '!=', 'view'), ('incoming_dest', '=', product_id), ('id', '!=', location_id)]"
-                                            on_change="location_dest_change(location_dest_id, location_id)"
+                                            on_change="location_dest_change(location_dest_id, picking_id)"
                                             />
                                     <field name="move_cross_docking_ok" invisible="1"/>
                                     </group>
@@ -599,8 +601,7 @@
                                             <field name="dg_check" widget="null_boolean" />
                                             <field name="np_check" widget="null_boolean" />
                                         </group>
-                                        <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
-                                            domain="[('incoming_ok', '=', True), ('is_fs_in', '=', True)]" get_selection="list_move_reason_type_incoming" />
+                                        <field name="reason_type_id" widget="selection" readonly="1" />
                                     </group>
 
                                     <group colspan="2" col="2">
@@ -899,6 +900,7 @@
                                         <separator string="Locations" colspan="2"/>
                                         <field name="location_virtual_id" invisible="1"/>
                                         <field name="location_output_id" invisible="1"/>
+                                        <field name="picking_id" invisible="1" />
                                         <field name="location_id"
                                             domain="[('outgoing_src', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_dest_id)]"
                                             attrs="{'readonly': [('state', '=', 'assigned')]}"
@@ -906,7 +908,7 @@
                                         <field name="move_cross_docking_ok" invisible="1"/>
                                         <field name="location_dest_id"
                                             domain="[('outgoing_dest', '=', parent.partner_id2)]"
-                                        	on_change="location_dest_change(location_dest_id, location_id)"
+                                        	on_change="location_dest_change(location_dest_id, picking_id)"
                                             attrs="{'readonly': [('from_wkf_line', '=', True)]}"
                                             context="partner_id=parent.partner_id2"
                                         	 />

@@ -735,18 +735,22 @@ class stock_move(osv.osv):
             rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
             int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
             ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+            loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            scrp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
         except ValueError:
             rt_replacement_id = 0
             rt_other_id = 0
             rt_return_unit_id = 0
             int_rt_id = 0
             ext_rt_id = 0
+            loss_rt_id = 0
+            scrp_rt_id = 0
 
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
                 pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
                 if not pick['purchase_id'] and not pick['sale_id'] \
-                        and ((pick['type'] == 'in' and sm['reason_type_id'][0] not in [int_rt_id, ext_rt_id, rt_return_unit_id])
+                        and ((pick['type'] == 'in' and sm['reason_type_id'][0] not in [int_rt_id, ext_rt_id, rt_return_unit_id, loss_rt_id, scrp_rt_id])
                              or (pick['type'] == 'out' and sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id])):
                     return False
         return res
@@ -2444,24 +2448,28 @@ class stock_move(osv.osv):
 
         return {'value': vals}
 
-    def location_dest_change(self, cr, uid, ids, location_dest_id, location_id, product_id=False, context=None):
+    def location_dest_change(self, cr, uid, ids, location_dest_id, picking_id, product_id=False, context=None):
         '''
         Tries to define a reason type for the move according to the destination location
         '''
+        data_obj = self.pool.get('ir.model.data')
         vals = {}
 
         if location_dest_id:
             dest_id = self.pool.get('stock.location').browse(cr, uid, location_dest_id, context=context)
             if dest_id.usage == 'inventory':
-                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_id.scrap_location:
-                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            elif dest_id.scrap_location:
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            elif picking_id:  # Header RT
+                vals['reason_type_id'] = self.pool.get('stock.picking').read(cr, uid, picking_id, ['reason_type_id'],
+                                                                             context=context)['reason_type_id'][0]
 
             if product_id:
                 # Test the compatibility of the product with the location
                 vals, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, product_id, field_name='location_dest_id', values={'value': vals}, vals={'location_id': location_dest_id})
                 if test:
-                    return  vals
+                    return vals
 
         return {'value': vals}
 
