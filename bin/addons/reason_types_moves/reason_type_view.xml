@@ -192,7 +192,7 @@
                 <data>
                 	<xpath expr="/search//filter[@name='to_invoice']" position="replace" />
                     <xpath expr="/search/group/field[@name='stock_journal_id']" position="replace">
-                        <field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
+                        <field name="reason_type_id" widget="selection" />
                         <newline />
                         <field name="date" />
                         <field name="min_date" />
@@ -240,7 +240,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/search/group/field[@name='origin']" position="after">
-                        <field name="reason_type_id" widget="selection" domain="[('internal_ok', '=', True)]" />
+                        <field name="reason_type_id" widget="selection" />
                     </xpath>
                     <xpath expr="/search//field[@name='stock_journal_id']" position="replace">
                     	<field name="date" />
