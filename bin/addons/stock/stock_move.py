@@ -722,10 +722,12 @@ class stock_move(osv.osv):
          - GOODS RETURN UNIT
          - GOODS REPLACEMENT
          - OTHER
-        Only permet user to create/write an IN from scratch with some reason types:
+        Only permet user to create/write a non-claim IN move from scratch with some reason types:
          - EXTERNAL SUPPLY
          - INTERNAL SUPPLY
          - RETURN FROM UNIT
+         - LOSS
+         - SCRAP
         """
         data_obj = self.pool.get('ir.model.data')
         res = True
@@ -748,9 +750,10 @@ class stock_move(osv.osv):
 
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
-                pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
+                pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type', 'claim'], context=context)
                 if not pick['purchase_id'] and not pick['sale_id'] \
-                        and ((pick['type'] == 'in' and sm['reason_type_id'][0] not in [int_rt_id, ext_rt_id, rt_return_unit_id, loss_rt_id, scrp_rt_id])
+                        and ((pick['type'] == 'in' and not pick['claim']
+                              and sm['reason_type_id'][0] not in [int_rt_id, ext_rt_id, rt_return_unit_id, loss_rt_id, scrp_rt_id])
                              or (pick['type'] == 'out' and sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id])):
                     return False
         return res

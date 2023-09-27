@@ -309,7 +309,7 @@ class stock_picking(osv.osv):
          - GOODS RETURN UNIT
          - GOODS REPLACEMENT
          - OTHER
-        Only permet user to create/write an IN from scratch with some reason types:
+        Only permet user to create/write a non-claim IN from scratch with some reason types:
          - EXTERNAL SUPPLY
          - INTERNAL SUPPLY
          - RETURN FROM UNIT
@@ -329,9 +329,10 @@ class stock_picking(osv.osv):
             int_rt_id = 0
             ext_rt_id = 0
 
-        for sp in self.read(cr, uid, ids, ['purchase_id', 'sale_id', 'type', 'reason_type_id'], context=context):
+        for sp in self.read(cr, uid, ids, ['purchase_id', 'sale_id', 'type', 'reason_type_id', 'claim'], context=context):
             if not sp['purchase_id'] and not sp['sale_id'] and sp['reason_type_id']:
-                if (sp['type'] == 'in' and sp['reason_type_id'][0] not in [rt_return_unit_id, int_rt_id, ext_rt_id]) or \
+                if (sp['type'] == 'in' and not sp['claim'] and
+                        sp['reason_type_id'][0] not in [rt_return_unit_id, int_rt_id, ext_rt_id]) or \
                         (sp['type'] == 'out' and sp['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id]):
                     return False
         return res
