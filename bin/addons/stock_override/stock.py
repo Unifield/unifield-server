@@ -2058,27 +2058,14 @@ class stock_move_cancel_wizard(osv.osv_memory):
         'display_warning': False,
     }
 
-    def ask_cancel(self, cr, uid, ids, context=None, *args, **kw):
-        if context is None:
-            context = {}
-
-        move_id = self.pool.get('stock.move.cancel.wizard').read(cr, uid, ids[0], ['move_id'], context=context)['move_id']
-        wiz_id = self.pool.get('stock.move.cancel.more.wizard').create(cr, uid, {'move_id': move_id}, context=context)
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.move.cancel.more.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': wiz_id,
-                'context': context}
+    def no_cancel(self, uid, ids, context=None, *args, **kw):
+        return {'type': 'ir.actions.act_window_close'}
 
     def is_in_forced(self, cr, uid, picking_browse, context=None):
         return picking_browse.state == 'assigned' and \
             picking_browse.purchase_id and \
             picking_browse.purchase_id.partner_type in ('internal', 'section', 'intermission') and \
             picking_browse.purchase_id.order_type != 'direct'
-
 
     def just_cancel(self, cr, uid, ids, context=None):
         '''
@@ -2135,62 +2122,6 @@ class stock_move_cancel_wizard(osv.osv_memory):
         move_obj.write(cr, uid, move_ids, {'has_to_be_resourced': True}, context=context)
 
         return self.just_cancel(cr, uid, ids, context=context)
-
-
-stock_move_cancel_wizard()
-
-
-class stock_move_cancel_more_wizard(osv.osv_memory):
-    _name = 'stock.move.cancel.more.wizard'
-
-    _columns = {
-        'move_id': fields.many2one('stock.move', string='Move', required=True),
-    }
-
-    _defaults = {
-        'move_id': lambda self, cr, uid, c: c.get('active_id'),
-    }
-
-    def no_cancel(self, uid, ids, context=None, *args, **kw):
-        return {'type': 'ir.actions.act_window_close'}
-
-    def just_cancel(self, cr, uid, ids, context=None):
-        '''
-        Just call the cancel of stock.move (re-sourcing flag not set)
-        '''
-        # Objects
-        move_obj = self.pool.get('stock.move')
-        pick_obj = self.pool.get('stock.picking')
-
-        wf_service = netsvc.LocalService("workflow")
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            move_id = wiz.move_id.id
-            picking_id = wiz.move_id.picking_id.id
-            move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
-            move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)],
-                                       limit=1, order='NO_ORDER', context=context)
-            if move_ids and  wiz.move_id.has_to_be_resourced:
-                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s (%s) has been canceled and resourced" % (
-                    move_id,
-                    picking_id,
-                    pick_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
-                ))
-            else:
-                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s (%s) has been canceled" % (
-                    move_id,
-                    picking_id,
-                    pick_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
-                ))
-
-            if move_ids and wiz.move_id.picking_id:
-                lines = wiz.move_id.picking_id.move_lines
-                if all(l.state == 'cancel' for l in lines):
-                    wf_service.trg_validate(uid, 'stock.picking', wiz.move_id.picking_id.id, 'button_cancel', cr)
-
-        return {'type': 'ir.actions.act_window_close'}
 
     def cancel_and_create_int(self, cr, uid, ids, context=None):
         """
@@ -2285,11 +2216,20 @@ class stock_move_cancel_more_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 
-stock_move_cancel_more_wizard()
+stock_move_cancel_wizard()
 
 
 class stock_picking_cancel_wizard(osv.osv_memory):
     _name = 'stock.picking.cancel.wizard'
+
+    def _get_object_name(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        for wiz in self.read(cr, uid, ids, ['doc_type'], context=context):
+            if wiz['doc_type'] == 'pick':
+                ret[wiz['id']] = _('Cancel Picking')
+            else:
+                ret[wiz['id']] = _('Cancel OUT')
+        return ret
 
     def _get_allow_cr(self, cr, uid, context=None):
         """
@@ -2321,32 +2261,35 @@ class stock_picking_cancel_wizard(osv.osv_memory):
 
         return False
 
+    def _get_doc_type(self, cr, uid, context=None):
+        """
+        Is the document an OUT, a Pick or something else ?
+        """
+        if context is None:
+            context = {}
+
+        picking_id = context.get('active_id')
+        pick = self.pool.get('stock.picking').read(cr, uid, picking_id, ['type', 'subtype'], context=context)
+
+        return pick['type'] == 'out' and (pick['subtype'] == 'standard' and 'out' or pick['subtype'] == 'picking' and 'pick') or 'other'
+
     _columns = {
+        'object_name': fields.function(_get_object_name, type='char', method=True, string='Title'),
         'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
         'allow_cr': fields.boolean(string='Allow Cancel and resource'),
         'has_moves_from_cross_docking': fields.boolean(string='Is one of the moves from the Cross docking Location ?'),
+        'doc_type': fields.selection(string="Document Type", selection=[('out', 'OUT'), ('pick', 'Picking'), ('other', 'Other')]),
     }
 
     _defaults = {
         'picking_id': lambda self, cr, uid, c: c.get('active_id'),
         'allow_cr': _get_allow_cr,
         'has_moves_from_cross_docking': _check_from_cross_docking,
+        'doc_type': _get_doc_type,
     }
 
-    def ask_cancel(self, cr, uid, ids, context=None, *args, **kw):
-        if context is None:
-            context = {}
-
-        picking_id = self.pool.get('stock.picking.cancel.wizard').read(cr, uid, ids[0], ['picking_id'], context=context)['picking_id']
-        wiz_id = self.pool.get('stock.picking.cancel.more.wizard').create(cr, uid, {'picking_id': picking_id}, context=context)
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking.cancel.more.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': wiz_id,
-                'context': context}
+    def no_cancel(self, uid, ids, context=None, *args, **kw):
+        return {'type': 'ir.actions.act_window_close'}
 
     def just_cancel(self, cr, uid, ids, context=None):
         '''
@@ -2395,50 +2338,6 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         pick_obj.write(cr, uid, pick_ids, vals, context=context)
 
         return self.just_cancel(cr, uid, ids, context=context)
-
-
-stock_picking_cancel_wizard()
-
-
-class stock_picking_cancel_more_wizard(osv.osv_memory):
-    _name = 'stock.picking.cancel.more.wizard'
-
-    _columns = {
-        'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
-    }
-
-    _defaults = {
-        'picking_id': lambda self, cr, uid, c: c.get('active_id'),
-    }
-
-    def no_cancel(self, uid, ids, context=None, *args, **kw):
-        return {'type': 'ir.actions.act_window_close'}
-
-    def just_cancel(self, cr, uid, ids, context=None):
-        '''
-        Just call the cancel of the stock.picking
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        msg_type = {
-            'in': 'Incoming Shipment',
-            'internal': 'Internal Picking',
-            'out': {
-                'standard': 'Delivery Order',
-                'picking': 'Picking Ticket',
-            }
-        }
-
-        wf_service = netsvc.LocalService("workflow")
-        for wiz in self.browse(cr, uid, ids, context=context):
-            wf_service.trg_validate(uid, 'stock.picking', wiz.picking_id.id, 'button_cancel', cr)
-            self.infolog(cr, uid, "The %s id:%s (%s) has been canceled." % (
-                wiz.picking_id.type == 'out' and msg_type.get('out', {}).get(wiz.picking_id.subtype, '') or msg_type.get(wiz.picking_id.type),
-                wiz.picking_id.id,
-                wiz.picking_id.name,
-            ))
-
-        return {'type': 'ir.actions.act_window_close'}
 
     def cancel_and_create_int(self, cr, uid, ids, context=None):
         """
@@ -2541,4 +2440,4 @@ class stock_picking_cancel_more_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 
-stock_picking_cancel_more_wizard()
+stock_picking_cancel_wizard()
