@@ -710,7 +710,7 @@ class stock_picking(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for pick_data in self.read(cr, uid, ids, ['sale_id', 'purchase_id', 'subtype', 'state'], context=context):
+        for pick_data in self.read(cr, uid, ids, ['sale_id', 'purchase_id', 'type', 'subtype', 'state'], context=context):
             # if draft and shipment is in progress, we cannot cancel
             if pick_data['subtype'] == 'picking' and pick_data['state'] in ('draft',):
                 if self.has_picking_ticket_in_progress(cr, uid, [pick_data['id']], context=context)[pick_data['id']]:
@@ -720,8 +720,12 @@ class stock_picking(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('The shipment process is completed and cannot be canceled!'))
 
             if pick_data['sale_id'] or pick_data['purchase_id']:
+                wiz_title = _('Cancel Picking')
+                if pick_data['type'] == 'out' and pick_data['subtype'] == 'standard':
+                    wiz_title = _('Cancel OUT')
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'stock.picking.cancel.wizard',
+                        'name': wiz_title,
                         'view_type': 'form',
                         'view_mode': 'form',
                         'target': 'new',
@@ -2222,15 +2226,6 @@ stock_move_cancel_wizard()
 class stock_picking_cancel_wizard(osv.osv_memory):
     _name = 'stock.picking.cancel.wizard'
 
-    def _get_object_name(self, cr, uid, ids, field_name, args, context=None):
-        ret = {}
-        for wiz in self.read(cr, uid, ids, ['doc_type'], context=context):
-            if wiz['doc_type'] == 'pick':
-                ret[wiz['id']] = _('Cancel Picking')
-            else:
-                ret[wiz['id']] = _('Cancel OUT')
-        return ret
-
     def _get_allow_cr(self, cr, uid, context=None):
         """
         Define if the C&R are allowed on the wizard
@@ -2274,7 +2269,6 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         return pick['type'] == 'out' and (pick['subtype'] == 'standard' and 'out' or pick['subtype'] == 'picking' and 'pick') or 'other'
 
     _columns = {
-        'object_name': fields.function(_get_object_name, type='char', method=True, string='Title'),
         'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
         'allow_cr': fields.boolean(string='Allow Cancel and resource'),
         'has_moves_from_cross_docking': fields.boolean(string='Is one of the moves from the Cross docking Location ?'),

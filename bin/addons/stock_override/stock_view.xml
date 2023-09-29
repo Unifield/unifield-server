@@ -1115,10 +1115,8 @@
             <field name="name">stock.picking.cancel.wizard</field>
             <field name="model">stock.picking.cancel.wizard</field>
             <field name="type">form</field>
-            <field name="title_field">object_name</field>
             <field name="arch" type="xml">
                 <form string="Cancel Picking">
-                    <field name="object_name" invisible="1" />
                     <field name="allow_cr" invisible="1" />
                     <field name="has_moves_from_cross_docking" invisible="1" />
                     <field name="doc_type" invisible="1" />
