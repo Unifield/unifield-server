@@ -146,6 +146,18 @@ class import_data(osv.osv_memory):
                     row[col[manda]] = ' | '.join([row[col[manda-1]], row[col[manda]]])
         return col
 
+    def _set_end_date_optionnal(self, cr, uid, headers, row, col):
+        if row and 'contract_end_date' in headers:
+            end_date_idx = headers.index('contract_end_date')
+            if len(row) >= end_date_idx and row[end_date_idx]:
+                if isinstance(row[end_date_idx], datetime):
+                    row[end_date_idx] = row[end_date_idx].strftime('%Y-%m-%d')
+                elif isinstance(row[end_date_idx], str) and ',' in row[end_date_idx]:
+                    # YYYY-MM-DD expected, 2023-01-01 00:00:00,00 found, because of server locale
+                    row[end_date_idx] = row[end_date_idx].split(' ')[0]
+
+        return col
+
     def _set_default_value(self, cr, uid, data, row, headers):
         # Create new list of headers with the name of each fields (without dots)
         new_headers = []
@@ -171,6 +183,7 @@ class import_data(osv.osv_memory):
 
     pre_hook = {
         'product.product': _set_full_path_nomen,
+        'hr.employee': _set_end_date_optionnal,
     }
 
     post_load_hook = {
