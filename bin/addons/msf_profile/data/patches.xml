@@ -984,5 +984,9 @@
         <record id="us_11956_fix_po_line_reception_destination" model="patch.scripts">
             <field name="method">us_11956_fix_po_line_reception_destination</field>
         </record>
+
+        <record id="us_11781_remove_product_country_restriction" model="patch.scripts">
+            <field name="method">us_11781_remove_product_country_restriction</field>
+        </record>
     </data>
 </openerp>

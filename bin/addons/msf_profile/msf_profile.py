@@ -58,6 +58,16 @@ class patch_scripts(osv.osv):
     }
 
     # UF31.0
+    def us_11781_remove_product_country_restriction(self, cr, uid, *a, **b):
+        '''
+        Remove the country restrictions from the products who have some
+        '''
+        cr.execute("""UPDATE product_product SET restricted_country = 'f', country_restriction = NULL 
+            WHERE restricted_country = 't'""")
+        self.log_info(cr, uid, "US-11781: The Product Restrictions have been removed on %s Product(s)" % (cr.rowcount,))
+
+        return True
+
     def us_11956_fix_po_line_reception_destination(self, cr, uid, *a, **b):
         '''
         Set the Reception Destination to Cross Docking for all PO line by Nomenclature (no product) if they are linked
