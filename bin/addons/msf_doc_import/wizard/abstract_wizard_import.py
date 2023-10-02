@@ -442,7 +442,7 @@ class abstract_wizard_import(osv.osv_memory):
         if len(line_content) > len(headers):
             return (-1, _('Number of columns (%s) in the line are larger than expected (%s).') % (
                 len(line_content), len(headers)
-            ))
+            ), [])
 
         # if the last comlumn(s) is(are) empty, line_content do not contain
         # this column: len(line_content) is equal to len(headers) - number of

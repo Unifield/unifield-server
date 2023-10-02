@@ -621,6 +621,7 @@ MODEL_DATA_DICT = {
             'name',
             'identification_id',
             'active',
+            'contract_end_date',
         ],
         'required_field_list': [
             'name',

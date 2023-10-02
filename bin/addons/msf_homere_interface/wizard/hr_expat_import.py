@@ -111,7 +111,9 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                             continue  # inserting an invalid date format in the DB would fail
                         else:
                             contract_end_date_str = contract_end_date and contract_end_date.strftime('%Y-%m-%d') or ''
-                code = get_xml_spreadheet_cell_value(1) and get_xml_spreadheet_cell_value(1).strip()
+                code = get_xml_spreadheet_cell_value(1)
+                if isinstance(code, basestring):
+                    code = code.strip()
                 if not code:
                     msg = _('THE EMPLOYEE DOES NOT HAVE AN ID NUMBER AT LINE %d.') % line_index
                     manage_error(line_index, msg, name, contract_end_date=contract_end_date_str)
@@ -139,7 +141,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                     'active': active,
                 }
                 if handle_contract_end_date:
-                    vals.update({'contract_end_date': contract_end_date})
+                    vals.update({'contract_end_date': contract_end_date_str})
                 if ids:
                     # Store name of Expat employee to update
                     to_update_vals.append(([ids[0]], vals))
