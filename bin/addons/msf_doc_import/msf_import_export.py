@@ -1440,7 +1440,7 @@ class msf_import_export(osv.osv_memory):
                                                                                 [('dest_id', '=', dest_id), ('cc_id', 'in', cc_to_be_deleted)],
                                                                                 order='NO_ORDER', context=context)
                                     dest_cc_link_obj.unlink(cr, uid, dcl_to_be_deleted, context=context)
-            except (osv.except_osv, orm.except_orm) , e:
+            except (osv.except_osv, orm.except_orm) as e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 if raise_on_error:
                     raise Exception('Line %s, %s' % (row_index+2, e.value))
@@ -1448,7 +1448,7 @@ class msf_import_export(osv.osv_memory):
                 save_error(e.value, row_index)
                 nb_error += 1
                 rejected.append((row_index+1, line_data, e.value))
-            except Exception, e:
+            except Exception as e:
                 logging.getLogger('import data').info('Error %s' % tools.ustr(e))
                 if raise_on_error:
                     raise Exception('Line %s: %s' % (row_index+2, tools.ustr(e)))
@@ -1484,6 +1484,7 @@ class msf_import_export(osv.osv_memory):
         if err_msg and not allow_partial:
             cr.rollback()
             nb_succes = 0
+            nb_update_success = 0
 
         info_msg = _('''Processing of file completed in %s second(s)!
 - Total lines to import: %s
