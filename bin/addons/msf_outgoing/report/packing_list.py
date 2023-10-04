@@ -66,6 +66,7 @@ class packing_list(report_sxw.rml_parse):
                 'total_volume': 0.00,
                 'total_weight': 0.00,
                 'nb_parcel': 0,
+                'notes': pf.ppl_id.note,
             })
             if not pf.not_shipped:
                 res[pf.ppl_id.name]['pf'].append(pf)
@@ -79,7 +80,7 @@ class packing_list(report_sxw.rml_parse):
         for key in sort_keys:
             result.append(res.get(key))
 
-        filtered_result = [] # remove empty PPL
+        filtered_result = []  # remove empty PPL
         for data in result:
             if data.get('pf'):
                 filtered_result.append(data)

@@ -4,7 +4,7 @@
     <!-- Templating -->
     <template pageSize="(842.0,595.0)" title="Packing-List" author="Unifield,MSF" allowSplitting="20">
         <pageTemplate id="first">
-            <frame id="first" x1="0.0" y1="0.0" width="842" height="520" />
+            <frame id="first" x1="0.0" y1="0.0" width="842" height="505" />
 
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
@@ -12,11 +12,13 @@
                 <fill color="blue"/>
                 <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>
                 <image x="705.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
-                <setFont name="Helvetica" size="8" />
+                <setFont name="Helvetica" size="9" />
                 <fill color="black" />
-                <drawString x="20.0" y="525.0">Page : <pageNumber /> / </drawString>
-                <drawString x="62.0" y="525.0"><pageCount /></drawString>
-                <drawString x="20.0" y="510.0">Date [[ formatLang(time.strftime('%Y-%m-%d'), date=True) ]]</drawString>
+                <drawString x="20.0" y="525.0">Details : [[ objects[0].details ]]</drawString>
+                <setFont name="Helvetica" size="8" />
+                <drawString x="20.0" y="510.0">Page : <pageNumber /> / </drawString>
+                <drawString x="62.0" y="510.0"><pageCount /></drawString>
+                <drawString x="20.0" y="495.0">Date [[ formatLang(time.strftime('%Y-%m-%d'), date=True) ]]</drawString>
             </pageGraphics>
         </pageTemplate>
 

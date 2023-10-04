@@ -17,21 +17,6 @@
         </record>
 
         <!-- OUT -->
-        <record id="view_picking_out_tree" model="ir.ui.view">
-            <field name="name">stock.picking.out.tree</field>
-            <field name="model">stock.picking</field>
-            <field name="type">tree</field>
-            <field name="priority">25</field>
-            <field name="inherit_id" ref="stock.view_picking_out_tree" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//field[@name='origin']" position="after">
-                        <field name="order_category" />
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
         <record id="view_picking_out_search" model="ir.ui.view">
             <field name="name">stock.picking.out.search</field>
             <field name="model">stock.picking</field>
@@ -40,9 +25,6 @@
             <field name="inherit_id" ref="stock.view_picking_out_search" />
             <field name="arch" type="xml">
                 <data>
-                    <field name="origin" position="after">
-                        <field name="order_category" />
-                    </field>
                     <filter string="Partner" position="after">
                         <separator orientation="vertical" />
                         <filter string="Order Category" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'order_category'}" />
@@ -58,21 +40,6 @@
        <!-- INTERNAL -->
 
        <!-- id: view_picking_form, name: stock.picking.form, inherit_id:stock.view_picking_form was here -->
-
-       <record id="view_picking_internal_search" model="ir.ui.view">
-            <field name="name">stock.picking.internal.search</field>
-            <field name="model">stock.picking</field>
-            <field name="type">search</field>
-            <field name="priority">20</field>
-            <field name="inherit_id" ref="stock.view_picking_internal_search" />
-            <field name="arch" type="xml">
-                <data>
-                    <field name="origin" position="after">
-                        <field name="order_category" />
-                    </field>
-                </data>
-            </field>
-       </record>
 
        <record id="view_stock_picking_filter" model="ir.ui.view">
             <field name="name">stock.picking.list.select</field>
