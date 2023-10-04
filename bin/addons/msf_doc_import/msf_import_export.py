@@ -967,6 +967,8 @@ class msf_import_export(osv.osv_memory):
                         value = process_data(h, line_data[n], fields_def)
                         if value is not None:
                             data[h] = value
+                        elif value is None and h == 'date':
+                            data[h] = False
                     else:
                         points = h.split('.')
                         if row[n] and fields_def[points[0]]['type'] == 'one2many':
