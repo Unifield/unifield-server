@@ -480,8 +480,10 @@ class stock_picking(osv.osv):
             rt = 'reason_type_deliver_partner'
         return  self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', rt)[1]
 
-    def on_change_partner_out(self, cr, uid, ids, partner_id, address_id, context=None):
-        res = self.on_change_partner(cr, uid, ids, partner_id, address_id, context=context)
+    def on_change_partner_out(self, cr, uid, ids, partner_id, address_id, type, context=None):
+        if context is None:
+            context = {}
+        res = self.on_change_partner(cr, uid, ids, partner_id, address_id, type, context=context)
         if partner_id and not res.get('warning'):
             res['value']['reason_type_id'] = self._get_rt_for_fs_out(cr, uid, partner_id)
         return res
@@ -500,8 +502,7 @@ class stock_picking(osv.osv):
             }
         return {}
 
-
-    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
+    def on_change_partner(self, cr, uid, ids, partner_id, address_id, type, context=None):
         '''
         Change the delivery address when the partner change.
         '''
@@ -534,22 +535,22 @@ class stock_picking(osv.osv):
             v.update({'address_id': addr})
 
         if partner_id:
-            if not ids and partner.partner_type in ('internal', 'intermission', 'section'):
+            if not ids and type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
                 return {
                     'value': {'partner_id2': False, 'partner_id': False,},
                     'warning': {
                         'title': _('Error'),
-                        'message': _("In an OUT from scratch, your are not allowed to choose this type of partner."),
+                        'message': _("You are not allowed to choose this type of partner in this document from scratch."),
                     },
                 }
             elif ids:
                 picking = self.browse(cr, uid, ids[0], context=context)
-                if not picking.from_wkf and partner.partner_type in ('internal', 'intermission', 'section'):
+                if not picking.from_wkf and type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
                     return {
                         'value': {'partner_id2': False, 'partner_id': False,},
                         'warning': {
                             'title': _('Error'),
-                            'message': _("In a PICK from scratch, your are not allowed to choose this type of partner."),
+                            'message': _("You are not allowed to choose this type of partner in this document from scratch."),
                         },
                     }
                 default_loc = partner.property_stock_supplier.id
