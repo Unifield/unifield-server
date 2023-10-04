@@ -533,28 +533,37 @@ class stock_picking(osv.osv):
 
             v.update({'address_id': addr})
 
-        if partner_id and ids:
-            picking = self.browse(cr, uid, ids[0], context=context)
-            if not picking.from_wkf and partner.partner_type in ('internal', 'intermission', 'section'):
+        if partner_id:
+            if not ids and partner.partner_type in ('internal', 'intermission', 'section'):
                 return {
                     'value': {'partner_id2': False, 'partner_id': False,},
                     'warning': {
                         'title': _('Error'),
-                        'message': _("In a PICK from scratch, your are not allowed to choose this type of partner."),
+                        'message': _("In an OUT from scratch, your are not allowed to choose this type of partner."),
                     },
                 }
-            default_loc = partner.property_stock_supplier.id
-            move_ids = move_obj.search(cr, uid, [('picking_id', '=', ids[0]), ('location_id', '!=', default_loc)], context=context)
-            if not picking.from_wkf and move_ids and picking.type == 'in':
-                move_obj.write(cr, uid, move_ids, {'location_id': default_loc}, context=context)
-                return {
-                    'value': v,
-                    'domain': d,
-                    'warning': {
-                        'title': _('Warning'),
-                        'message': _('The source location of lines has been changed according to the new partner'),
+            elif ids:
+                picking = self.browse(cr, uid, ids[0], context=context)
+                if not picking.from_wkf and partner.partner_type in ('internal', 'intermission', 'section'):
+                    return {
+                        'value': {'partner_id2': False, 'partner_id': False,},
+                        'warning': {
+                            'title': _('Error'),
+                            'message': _("In a PICK from scratch, your are not allowed to choose this type of partner."),
+                        },
                     }
-                }
+                default_loc = partner.property_stock_supplier.id
+                move_ids = move_obj.search(cr, uid, [('picking_id', '=', ids[0]), ('location_id', '!=', default_loc)], context=context)
+                if not picking.from_wkf and move_ids and picking.type == 'in':
+                    move_obj.write(cr, uid, move_ids, {'location_id': default_loc}, context=context)
+                    return {
+                        'value': v,
+                        'domain': d,
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('The source location of lines has been changed according to the new partner'),
+                        }
+                    }
 
         return {'value': v,
                 'domain': d}
