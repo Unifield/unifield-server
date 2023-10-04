@@ -96,7 +96,7 @@
                 % for row in rows:
                 <Row>
                     % for index, cell in enumerate(row):
-                    % if data['selection'] == 'cost_centers_update' and index < 4:
+                    % if data['selection'] == 'cost_centers_update' and index < 4 and index != 1:
                     <Cell ss:StyleID="StringProtected">
                     % if headers[index][1] == 'String' and not cell:
                             <Data ss:Type="String"></Data>
