@@ -66,7 +66,7 @@ class packing_list(report_sxw.rml_parse):
                 'total_volume': 0.00,
                 'total_weight': 0.00,
                 'nb_parcel': 0,
-                'notes': pf.ppl_id.note,
+                'pf_description_ppl': pf.description_ppl
             })
             if not pf.not_shipped:
                 res[pf.ppl_id.name]['pf'].append(pf)
