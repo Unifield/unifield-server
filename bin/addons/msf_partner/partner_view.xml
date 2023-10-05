@@ -86,6 +86,7 @@
                             <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="['&amp;', ('name', '!=', 'To be defined'), ('active', '=', False)]" separator="1" />
                             <newline />
                             <field name="name" select="1"/>
+                            <field name="ref" select="1"/>
                             <field name="address" select="1"/>
                             <field name="country" select="1"/>
                             <field name="category_id" select="1" />
