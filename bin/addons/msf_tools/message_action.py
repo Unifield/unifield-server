@@ -49,7 +49,8 @@ class message_action(osv.osv_memory):
     def do_yes(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
         action_return = wiz.yes_action(cr, uid, context)
-        if wiz.refresh_o2m:
+        if wiz.refresh_o2m and not isinstance(action_return, dict):
+            # on PO Validation / Confirmation refresh o2m lines
             return {'type': 'ir.actions.act_window_close', 'o2m_refresh': wiz.refresh_o2m}
 
         return action_return
