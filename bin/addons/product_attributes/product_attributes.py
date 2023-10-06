@@ -3273,8 +3273,11 @@ class product_attributes(osv.osv):
         self.write(cr, uid, kept_id, new_write_data, context=write_context)
         self.write(cr, uid, old_prod_id, {'active': False, 'unidata_merged': True, 'unidata_merge_date': fields.datetime.now(), 'kept_product_id': kept_id, 'kept_initial_product_id': kept_id, 'new_code': kept_data['default_code']}, context=context)
 
-        _register_log(self, cr, uid, kept_id, self._name, _('Merge Product non-kept product'), '', old_prod_data['default_code'], 'write', context)
-        _register_log(self, cr, uid, old_prod_id, self._name, _('Merge Product kept product'), '', kept_data['default_code'], 'write', context)
+        # US-11877: To have those translations in the audittrail without putting mandatory lang at the creation
+        log_translations = [_('Merge Product non-kept product'), _('Merge Product kept product')]
+
+        _register_log(self, cr, uid, kept_id, self._name, 'Merge Product non-kept product', '', old_prod_data['default_code'], 'write', context)
+        _register_log(self, cr, uid, old_prod_id, self._name, 'Merge Product kept product', '', kept_data['default_code'], 'write', context)
 
         if not context.get('sync_update_execution') or instance_level == 'coordo':
             merge_data = {'new_product_id': kept_id, 'old_product_id': old_prod_id, 'level': 'section'}
@@ -3282,7 +3285,7 @@ class product_attributes(osv.osv):
             if instance_level == 'coordo':
                 merge_data['created_on_coo'] = True
                 if context.get('sync_update_execution'):
-                    del(new_ctx['sync_update_execution']) # otherwise product.merged record does not have an xmlid
+                    del(new_ctx['sync_update_execution'])  # otherwise product.merged record does not have an xmlid
             self.pool.get('product.merged').create(cr, 1, merge_data, context=new_ctx)
 
         # reset mission stock on nsl + old to 0, will be computed on next mission stock update
