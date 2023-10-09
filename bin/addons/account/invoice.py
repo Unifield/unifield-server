@@ -1104,10 +1104,36 @@ class account_invoice(osv.osv):
             new_move_name = self.pool.get('account.move').browse(cr, uid, move_id).name
             # make the invoice point to that move
             self.write(cr, uid, [inv.id], {'move_id': move_id,'period_id':period_id, 'move_name':new_move_name})
+            if inv.doc_type == 'si': # TODO
+                self._create_asset_form(cr, uid, inv.id, context)
             # Pass invoice in context in method post: used if you want to get the same
             # account move reference when creating the same invoice after a cancelled one:
             self.pool.get('account.move').post(cr, uid, [move_id], context={'invoice':inv})
         self._log_event(cr, uid, ids)
+        return True
+
+
+    def _create_asset_form(self, cr, uid, inv_id, context=None):
+        inv_line_obj = self.pool.get('account.invoice.line')
+        asset_obj = self.pool.get('product.asset')
+        line_ids = inv_line_obj.search(cr, uid, [('invoice_id', '=', inv_id), ('is_asset', '=', True)], context=context)
+        for line in inv_line_obj.browse(cr, uid,  line_ids, context=None):
+            for idx in range(0, int(line.quantity)):
+                asset_id = asset_obj.create(cr, uid, {
+                    'product_id': line.product_id.id or False,
+                    'description': line.name,
+                    'invoice_id': inv_id,
+                    'invo_num': line.invoice_id.number,
+                    'invoice_line_id': line.id,
+                    'invo_date': line.invoice_id.date_invoice,
+                    'invo_value': line.price_unit,
+                    'invo_currency': line.invoice_id.currency_id.id,
+                    'invo_supplier_id': line.invoice_id.partner_id.id,
+                    'from_invoice': True,
+                    'move_line_id': line.move_lines[0].id,
+                }, context=context)
+                number = asset_obj.read(cr, uid, asset_id, ['name'], context=context)['name']
+                asset_obj.log(cr, uid, asset_id, _('Asset %s created from %s') % (number, line.invoice_id.number), context=context)
         return True
 
     def line_get_convert(self, cr, uid, x, part, date, context=None):
@@ -1661,13 +1687,31 @@ class account_invoice_line(osv.osv):
         'note': fields.text('Notes'),
         'account_analytic_id':  fields.many2one('account.analytic.account', 'Analytic Account'),
         'company_id': fields.related('invoice_id','company_id',type='many2one',relation='res.company',string='Company', store=True, readonly=True),
-        'partner_id': fields.related('invoice_id','partner_id',type='many2one',relation='res.partner',string='Partner',store=True, write_relate=False)
+        'partner_id': fields.related('invoice_id','partner_id',type='many2one',relation='res.partner',string='Partner',store=True, write_relate=False),
+        'is_asset': fields.boolean('Asset'),
     }
     _defaults = {
         'quantity': 1,
         'discount': 0.0,
         'price_unit': _price_unit_default,
     }
+
+    def change_is_asset(self, cr, uid, ids, is_asset, product_id, context=None):
+        if not is_asset or not product_id:
+            return {}
+
+        prod = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['categ_id', 'default_code'], context=context)
+        if not prod.categ_id:
+            return {'warning': {'message': _('Product %s has no category') % (prod.default_code, )}, 'value': {'is_asset': False}}
+        if not prod.categ_id.asset_bs_account_id:
+            return {'warning': {'message': _('Product Category %s has no Asset Balance Sheet Account') % (prod.categ_id.name, )}, 'value': {'is_asset': False}}
+        return {
+            'value': {
+                'account_id': prod.categ_id.asset_bs_account_id.id
+            }
+        }
+
+
 
     def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, context=None):
         if context is None:

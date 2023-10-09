@@ -274,6 +274,7 @@
                                     <field name="price_unit"
                                            attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"
                                     />
+                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" /> <!-- TODO ? attrs="{'readonly': [('product_id', '=', False)]}"/> -->
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
                                     <field name="name"/>

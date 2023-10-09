@@ -300,6 +300,9 @@ MODEL_DATA_DICT = {
             'name',
             'property_stock_journal',
             'donation_expense_account',
+            'asset_bs_account_id',
+            'asset_bs_depreciation_account_id',
+            'asset_pl_account_id',
             'family_id.msfid',
         ],
         'required_field_list': [

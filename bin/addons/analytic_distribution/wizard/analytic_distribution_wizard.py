@@ -230,6 +230,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) \
                             or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                             or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
+                            or (context.get('from_asset', False) and isinstance(context.get('from_asset'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)) \
                             or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
@@ -251,6 +252,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) \
                             or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
                             or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
+                            or (context.get('from_asset', False) and isinstance(context.get('from_asset'), int)) \
                             or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)) \
@@ -508,6 +510,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[el.id] = False
             if el.model_line_id and el.model_line_id.model_id.state == 'done':
                 res[el.id] = False
+            if el.asset_id and el.asset_id.state == 'done':
+                res[el.id] = False
+            if el.asset_line_id and el.asset_line_id.move_id:
+                res[el.id] = False
         return res
 
     def _have_header(self, cr, uid, ids, name, args, context=None):
@@ -539,6 +545,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wiz.cash_return_line_id and wiz.cash_return_line_id.wizard_id and wiz.cash_return_line_id.wizard_id.analytic_distribution_id:
                 res[wiz.id] = True
             if wiz.model_line_id and wiz.model_line_id.model_id and wiz.model_line_id.model_id.analytic_distribution_id:
+                res[wiz.id] = True
+            if wiz.asset_line_id and wiz.asset_line_id.asset_id and wiz.asset_line_id.asset_id.analytic_distribution_id:
                 res[wiz.id] = True
         return res
 
@@ -586,6 +594,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         'commitment_line_id': fields.many2one('account.commitment.line', string="Commitment Voucher Line"),
         'model_id': fields.many2one('account.model', string="Account Model"),
         'model_line_id': fields.many2one('account.model.line', string="Account Model Line"),
+        'asset_id': fields.many2one('product.asset', string="Asset Form"),
+        'asset_line_id': fields.many2one('product.asset.line', string="Asset Form Line"),
         'accrual_line_id': fields.many2one('msf.accrual.line', string="Accrual Line"),
         'accrual_expense_line_id': fields.many2one('msf.accrual.line.expense', string="Accrual Expense Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
@@ -719,6 +729,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             ('account.bank.statement.line', 'register_line_id', False),
             ('account.model', 'model_id', 'lines_id'),
             ('account.model.line', 'model_line_id', False),
+            ('product.asset', 'asset_id', 'line_ids'),
+            ('product.asset.line', 'asset_line_id', False),
             ('msf.accrual.line', 'accrual_line_id', 'expense_line_ids'),
             ('msf.accrual.line.expense', 'accrual_expense_line_id', False),
         ]
@@ -1094,6 +1106,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                            ('direct_invoice_line_id', 'wizard.account.invoice.line'),
                            ('commitment_id', 'account.commitment'), ('commitment_line_id', 'account.commitment.line'),
                            ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
+                           ('asset_id', 'product.asset'), ('asset_line_id', 'product.asset.line'),
                            ('accrual_line_id', 'msf.accrual.line'), ('accrual_expense_line_id', 'msf.accrual.line.expense'),
                            ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move'),
                            ('cash_return_id', 'wizard.cash.return'), ('cash_return_line_id', 'wizard.advance.line'),
@@ -1360,6 +1373,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wiz.model_line_id:
                 pl = wiz.model_line_id
                 distrib = pl.model_id and pl.model_id.analytic_distribution_id or False
+            elif wiz.asset_line_id:
+                pl = wiz.asset_line_id
+                distrib = pl.asset_id and pl.asset_id.analytic_distribution_id or False
             elif wiz.direct_invoice_line_id:
                 il = wiz.direct_invoice_line_id
                 distrib = il.invoice_id and il.invoice_id.analytic_distribution_id or False

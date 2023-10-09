@@ -372,6 +372,30 @@ class account_invoice(osv.osv):
                     raise osv.except_osv(_('Error'), _('The account is missing on the line No. %s.') % invl.line_number)
         return True
 
+    def _check_asset_line(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for invoice in self.browse(cr, uid, ids, fields_to_fetch=['doc_type'], context=context):
+            if invoice.doc_type == 'si': # TODO
+                cr.execute("""
+                    select
+                        l.line_number
+                    from
+                        account_invoice_line l, account_account a, account_account_type t
+                    where
+                        a.id = l.account_id
+                        and a.user_type = t.id
+                        and ( t.code != 'asset' or a.type != 'other' )
+                        and l.is_asset='t'
+                        and l.invoice_id in %s
+                        limit 5
+                """, (tuple(ids) ,))
+                lines = ['%s'%x[0] for x in cr.fetchall()]
+                if lines:
+                    raise osv.except_osv(_('Error'), _('Asset line(s) %s must have an asset account.') % ', '.join(lines))
+        return True
+
+
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
         Add down payment check after others verifications
@@ -383,6 +407,7 @@ class account_invoice(osv.osv):
             ids = [ids]
         # Browse invoice and all invoice lines to detect a non-valid line
         self._check_empty_account(cr, uid, ids, context=context)
+        self._check_asset_line(cr, uid, ids, context=context)
         self._check_analytic_distribution_state(cr, uid, ids)
         # Default behaviour
         res = super(account_invoice, self).action_open_invoice(cr, uid, ids, context)
