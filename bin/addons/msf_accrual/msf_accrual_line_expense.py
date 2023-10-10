@@ -60,14 +60,24 @@ class msf_accrual_line_expense(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
+        inactive_invalid = False
         for expense_line in self.browse(cr, uid, ids,
                                         fields_to_fetch=['analytic_distribution_id', 'accrual_line_id', 'expense_account_id', 'accrual_amount'],
                                         context=context):
-            res[expense_line.id] = self.pool.get('analytic.distribution').\
-                _get_distribution_state(cr, uid, expense_line.analytic_distribution_id.id,
-                                        expense_line.accrual_line_id.analytic_distribution_id.id,
-                                        expense_line.expense_account_id.id, context=context,
-                                        amount=expense_line.accrual_amount or 0.0)
+            fp_lines = expense_line.analytic_distribution_id.funding_pool_lines or\
+                       expense_line.accrual_line_id.analytic_distribution_id.funding_pool_lines
+            for fp_line in fp_lines:
+                if not fp_line.destination_id.filter_active or not fp_line.cost_center_id.filter_active or\
+                        not fp_line.analytic_id.filter_active:
+                    res[expense_line.id] = 'invalid'
+                    inactive_invalid = True
+            # US-11577 Add code for CC and FP
+            if not inactive_invalid:
+                res[expense_line.id] = self.pool.get('analytic.distribution').\
+                    _get_distribution_state(cr, uid, expense_line.analytic_distribution_id.id,
+                                            expense_line.accrual_line_id.analytic_distribution_id.id,
+                                            expense_line.expense_account_id.id, context=context,
+                                            amount=expense_line.accrual_amount or 0.0)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
