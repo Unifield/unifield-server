@@ -1216,11 +1216,8 @@ class msf_import_export(osv.osv_memory):
                                 if link_ids:
                                     acc_dest_obj.write(cr, uid, link_ids, {'disabled': False}, context=context)
 
-                # Cost Centers Creation
-                if import_brw.model_list_selection == 'cost_centers':
-                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'OC')])
-                    if ids_to_update:
-                        raise Exception(_('Cost center %s already exists in the system, please use the Cost Center Updates tool instead to update it.') % (data.get('code')))
+                # Check on Instances for Cost Centers Creation and Update
+                if import_brw.model_list_selection in ('cost_centers', 'cost_centers_update'):
                     context['from_import_menu'] = True
                     data['category'] = 'OC'
                     # Parent Analytic Account
@@ -1237,12 +1234,17 @@ class msf_import_export(osv.osv_memory):
                         if data.get(inst_key):
                             data[inst_key] = data[inst_key].strip()
                             if data[inst_key] not in instances_cache:
-                                instance_id = inst_obj.search(cr, uid, [('code', '=ilike', data[inst_key]), ('state', '!=', 'inactive')])
+                                instance_id = inst_obj.search(cr, uid, [('code', '=ilike', data[inst_key]),
+                                                                        ('state', '!=', 'inactive')])
                                 if not instance_id:
                                     if ',' in data[inst_key]:
                                         raise Exception(_('Value %s : list of instances is not allowed') % data[inst_key])
                                     raise Exception(_('Instance %s not found') % data[inst_key])
-                                instances_cache[data[inst_key]] = inst_obj.browse(cr, uid, instance_id[0], fields_to_fetch=['code', 'state', 'level', 'parent_id'], context=context)
+                                instances_cache[data[inst_key]] = inst_obj.browse(cr, uid, instance_id[0],
+                                                                                  fields_to_fetch=['code', 'state',
+                                                                                                   'level',
+                                                                                                   'parent_id'],
+                                                                                  context=context)
                             data[inst_key] = instances_cache[data[inst_key]]
 
                     if data.get('top_prop_instance'):
@@ -1251,19 +1253,31 @@ class msf_import_export(osv.osv_memory):
                         if not data.get('is_target_cc_instance_ids'):
                             raise Exception(_('Cost centers with a "Top proprietary instance" to be tied with must '
                                               'have a target instance.'))
-                        if data.get('is_target_cc_instance_ids').id != data.get('top_prop_instance').id and data.get('is_target_cc_instance_ids').parent_id.id != data.get('top_prop_instance').id:
-                            raise Exception(_('%s: %s and %s must be in the same mission') % (data.get('code'), data.get('top_prop_instance').code, data.get('is_target_cc_instance_ids').code))
+                        if data.get('is_target_cc_instance_ids').id != data.get('top_prop_instance').id and data.get(
+                                'is_target_cc_instance_ids').parent_id.id != data.get('top_prop_instance').id:
+                            raise Exception(_('%s: %s and %s must be in the same mission') % (
+                            data.get('code'), data.get('top_prop_instance').code,
+                            data.get('is_target_cc_instance_ids').code))
 
-                        if data.get('top_cc_instance_ids') and data.get('top_cc_instance_ids').id != data.get('top_prop_instance').id and data.get('top_cc_instance_ids').parent_id.id != data.get('top_prop_instance').id:
-                            raise Exception(_('%s: %s and %s must be in the same mission') % (data.get('code'), data.get('top_prop_instance').code, data.get('top_cc_instance_ids').code))
+                        if data.get('top_cc_instance_ids') and data.get('top_cc_instance_ids').id != data.get(
+                                'top_prop_instance').id and data.get('top_cc_instance_ids').parent_id.id != data.get(
+                                'top_prop_instance').id:
+                            raise Exception(_('%s: %s and %s must be in the same mission') % (
+                            data.get('code'), data.get('top_prop_instance').code, data.get('top_cc_instance_ids').code))
 
-                        if data.get('po_fo_cc_instance_ids') and data.get('po_fo_cc_instance_ids').id != data.get('top_prop_instance').id and data.get('po_fo_cc_instance_ids').parent_id.id != data.get('top_prop_instance').id:
-                            raise Exception(_('%s: %s and %s must be in the same mission') % (data.get('code'), data.get('top_prop_instance').code, data.get('po_fo_cc_instance_ids').code))
-                    elif data.get('is_target_cc_instance_ids') or data.get('top_cc_instance_ids') or data.get('po_fo_cc_instance_ids'):
+                        if data.get('po_fo_cc_instance_ids') and data.get('po_fo_cc_instance_ids').id != data.get(
+                                'top_prop_instance').id and data.get('po_fo_cc_instance_ids').parent_id.id != data.get(
+                                'top_prop_instance').id:
+                            raise Exception(_('%s: %s and %s must be in the same mission') % (
+                            data.get('code'), data.get('top_prop_instance').code,
+                            data.get('po_fo_cc_instance_ids').code))
+                    elif data.get('is_target_cc_instance_ids') or data.get('top_cc_instance_ids') or data.get(
+                            'po_fo_cc_instance_ids'):
                         raise Exception(_('%s The columns "Instance having the CC as Top CC / Code" '
                                           'or "Instance having the CC as CC picked for PO/FO ref / Code" or '
                                           '"Instance having the CC as Target CC / Code" should be empty as '
-                                          'the Top proprietary instance column is not filled in.') % (data.get('code'), ))
+                                          'the Top proprietary instance column is not filled in.') %
+                                        (data.get('code'),))
 
                     if data.get('top_cc_instance_ids'):
                         if cc_target_obj.search_exists(cr, uid, [('instance_id', '=', data['top_cc_instance_ids'].id),
@@ -1271,11 +1285,15 @@ class msf_import_export(osv.osv_memory):
                             raise Exception(_('%s: The instance %s already has a top cost center for '
                                               'budget consolidation.') % (data.get('code'), data['top_cc_instance_ids'].code))
                     if data.get('po_fo_cc_instance_ids'):
-                        if cc_target_obj.search_exists(cr, uid, [('instance_id', '=', data['po_fo_cc_instance_ids'].id),
-                                                                 ('is_po_fo_cost_center', '=', True)]):
-                            print data
-                            raise Exception(_('%s: The instance %s already has a cost center picked for '
-                                              'PO/FO reference.') % (data.get('code'), data['po_fo_cc_instance_ids'].code))
+                        if cc_target_obj.search_exists(cr, uid, [('instance_id', '=', data['po_fo_cc_instance_ids'].id), ('is_po_fo_cost_center', '=', True)]):
+                            raise Exception(_('%s: The instance %s already has a cost center picked for PO/FO reference.') %
+                                            (data.get('code'), data['po_fo_cc_instance_ids'].code))
+
+                # Cost Centers Creation
+                if import_brw.model_list_selection == 'cost_centers':
+                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'OC')])
+                    if ids_to_update:
+                        raise Exception(_('Cost center %s already exists in the system, please use the Cost Center Updates tool instead to update it.') % (data.get('code')))
 
                 # Cost Centers Update
                 if import_brw.model_list_selection == 'cost_centers_update':
@@ -1283,16 +1301,6 @@ class msf_import_export(osv.osv_memory):
                                                                       ('category', '=', 'OC')])
                     if not ids_to_update:
                         raise Exception(_('Cost center %s doesn\'t exist yet in the system, please use the Cost Center Creation Mapping tool instead to create it.') % (data.get('code')))
-                    context['from_import_menu'] = True
-                    data['category'] = 'OC'
-                    # Parent Analytic Account
-                    if data.get('parent_id'):
-                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'],
-                                                            fields_to_fetch=['type', 'category'], context=context)
-                        parent_type = parent_id.type or ''
-                        parent_category = parent_id.category or ''
-                        if parent_type != 'view' or parent_category != 'OC':
-                            raise Exception(_('The Parent Analytic Account must be a View type Cost Center.'))
 
                 # Free 1
                 if import_brw.model_list_selection == 'free1':
@@ -1343,11 +1351,53 @@ class msf_import_export(osv.osv_memory):
                     impobj.unlink(cr, uid, ids_to_update, context=context)
                     nb_lines_deleted += len(ids_to_update)
                 elif ids_to_update:
-                    if 'standard_price' in data:
-                        del data['standard_price']
-                    if import_brw.model_list_selection == 'product_list_update' and 'name' in data:
-                        del data['name']
-                    impobj.write(cr, uid, ids_to_update, data, context=context)
+                    if import_brw.model_list_selection == 'cost_centers_update':
+                        keys_to_extract = ['category', 'date_start', 'date', 'parent_id', 'type']
+                        data_subset = {
+                            'code': data['code'].strip(),
+                            'name': data['name'].strip(),
+                        }
+                        data_subset.update({key: data[key] for key in keys_to_extract if key in data.keys()})
+
+                        impobj.write(cr, uid, ids_to_update, data_subset, context=context)
+
+                        if data.get('top_prop_instance'):
+                            target_data = {
+                                'instance_id': data['top_prop_instance'].id,
+                                'is_top_cost_center': data.get('top_cc_instance_ids') and data[
+                                    'top_cc_instance_ids'].id == data['top_prop_instance'].id,
+                                'is_target': data['is_target_cc_instance_ids'].id == data['top_prop_instance'].id,
+                                'is_po_fo_cost_center': data.get('po_fo_cc_instance_ids') and data[
+                                    'po_fo_cc_instance_ids'].id == data['top_prop_instance'].id,
+                            }
+
+                            target_ids = cc_target_obj.search(cr, uid, [('instance_id', '=', target_data.get('instance_id')),
+                                                                        ('cost_center_id', '=', ids_to_update)],
+                                                              context=context)
+                            if not target_ids:
+                                raise Exception(
+                                    _('Target CC line not found for %s / %s') % (data['code'], data['top_prop_instance'].code))
+                            cc_target_obj.write(cr, uid, target_ids, target_data, context=context)
+                            for target_field, import_field in [('is_top_cost_center', 'top_cc_instance_ids'),
+                                                               ('is_target', 'is_target_cc_instance_ids'),
+                                                               ('is_po_fo_cost_center', 'po_fo_cc_instance_ids')]:
+                                if data.get(import_field) and data['top_prop_instance'].id != data[import_field].id:
+                                    target_ids = cc_target_obj.search(cr, uid,
+                                                                      [('instance_id', '=', data[import_field].id),
+                                                                       ('cost_center_id', '=', ids_to_update[0])],
+                                                                      context=context)
+                                    if not target_ids:
+                                        raise Exception(_('Target CC line not found for %s / %s') % (
+                                        data['code'], data[import_field].code))
+                                    cc_target_obj.write(cr, uid, target_ids[0], {target_field: True}, context=context)
+                    else:
+                        if 'standard_price' in data:
+                            del data['standard_price']
+                        if import_brw.model_list_selection == 'product_list_update' and 'name' in data:
+                            del data['name']
+
+                        impobj.write(cr, uid, ids_to_update, data, context=context)
+
                     nb_update_success += 1
                     processed.append((row_index+1, line_data))
                 else:
