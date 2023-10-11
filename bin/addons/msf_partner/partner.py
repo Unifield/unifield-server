@@ -563,9 +563,8 @@ class res_partner(osv.osv):
         }))
         tender_ids = [tend for tend in tender_obj.search(cr, uid, [('state', '=', 'comparison')]) if ids[0] in tender_obj.read(cr, uid, tend, ['supplier_ids'])['supplier_ids']]
         com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')], context=context)
-        ship_ids = ship_obj.search(cr, uid,
-                                   [('state', 'not in', ['done', 'delivered']), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])],
-                                   context=context)
+        ship_ids = ship_obj.search(cr, uid, [('state', 'not in', ['done', 'delivered', 'cancel']),
+                                             '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])], context=context)
         absl_ids = absl_obj.search(cr, uid, [('state', 'in', ['draft', 'temp']), ('partner_id', '=', ids[0])], context=context)
         aml_ids = aml_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('reconcile_id', '=', False), ('account_id.reconcile', '=', True)])
 

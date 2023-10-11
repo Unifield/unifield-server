@@ -10,7 +10,7 @@
             <field name="inherit_id" ref="specific_rules.stock_initial_inventory_form_view" />
             <field name="arch" type="xml">
                 <data>
-                <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='hidden_perishable_mandatory']" position="after">
+                <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='msl_status']" position="after">
                     <field name="to_correct_ok" invisible="1"/>
                     <field name="inactive_product" invisible="1" />
                     <!-- <field name="comment" attrs="{'invisible': [('inactive_product', '=', False), ('to_correct_ok', '=', False)]'}" />-->

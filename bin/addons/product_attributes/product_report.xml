@@ -14,7 +14,105 @@
             view_ids="product_product_mml_tree"
             target_filename="MML_%(instance)s_%(year)s_%(month)s_%(day)s"
             run_in_background="True"
+            sequence="10"
          />
 
+        <report
+            id="report_project_product_msl"
+            string="Products"
+            model="unifield.instance"
+            name="report.project_product_msl"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="True"
+            target_filename="MSL_%(instance)s_%(year)s_%(month)s_%(day)s"
+            run_in_background="True"
+         />
+
+        <report
+            id="report_product_msl"
+            string="MSL Products"
+            model="product.product"
+            name="report.product_msl"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="True"
+            view_ids="product_product_msl_tree"
+            target_filename="MSL_%(instance)s_%(year)s_%(month)s_%(day)s"
+            run_in_background="True"
+         />
+
+        <report
+            id="report_product_mml_nonconform"
+            string="MML Non-Conform"
+            model="product.product"
+            name="report.product_mml_nonconform"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="False"
+            target_filename="MML_Non_Conform_%(instance)s_%(year)s_%(month)s_%(day)s"
+            run_in_background="True"
+         />
+
+        <report
+            id="report_hq_product_mml_nonconform"
+            string="MML Non-Conform"
+            model="product.product"
+            name="report.hq_product_mml_nonconform"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="False"
+            target_filename="MML_Non_Conform_%(instance)s_%(year)s_%(month)s_%(day)s"
+            run_in_background="True"
+         />
+
+        <record id="action_mml_nonconform" model="ir.actions.server">
+          <field name="name">MML Non-Conform</field>
+          <field name="model_id" ref="model_product_product"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.open_mml_nonconform_report(context=context)</field>
+        </record>
+        <record id="ir_mml_nonconform" model="ir.values">
+          <field name="key2">client_print_multi</field>
+          <field name="model">product.product</field>
+          <field name="name">MML Non-Conform</field>
+          <field name="sequence">14</field>
+          <field eval="'ir.actions.server,%d'%action_mml_nonconform" name="value"/>
+          <field eval="True" name="object"/>
+          <field name="view_ids" ref="product_product_mml_tree" />
+        </record>
+
+        <report
+            id="report_product_msl_nonconform"
+            string="MSL Non-Conform"
+            model="product.product"
+            name="report.product_msl_nonconform"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="False"
+            target_filename="MSL_Non_Conform_%(instance)s_%(year)s_%(month)s_%(day)s"
+            run_in_background="True"
+         />
+
+        <record id="action_msl_nonconform" model="ir.actions.server">
+          <field name="name">MSL Non-Conform</field>
+          <field name="model_id" ref="model_product_product"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.open_msl_nonconform_report(context=context)</field>
+        </record>
+        <record id="ir_msl_nonconform" model="ir.values">
+          <field name="key2">client_print_multi</field>
+          <field name="model">product.product</field>
+          <field name="name">MSL Non-Conform</field>
+          <field name="empty_ids">1</field>
+          <field name="view_ids" ref="product_attributes.product_product_msl_tree" />
+          <field eval="'ir.actions.server,%d'%action_msl_nonconform" name="value"/>
+          <field eval="True" name="object"/>
+        </record>
     </data>
 </openerp>

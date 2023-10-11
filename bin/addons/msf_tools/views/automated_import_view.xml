@@ -71,8 +71,10 @@
                     <field name="name" />
                     <field name="function_id" widget="selection" on_change="change_function_id(function_id)" />
                     <field name="active" />
+                    <field name="disable_checksum" />
                     <field name="partner_id" attrs="{'invisible': [('multiple', '=', False)], 'required': [('multiple', '=', True)]}"/>
                     <field name="is_admin" invisible="1"/>
+                    <newline />
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
                     <button name="local_autoconfig" string="Local Auto Configuration" colspan="2" type="object" icon="terp-dialog-close" confirm="This action should only be executed on a Sandbox, it will override the current configuration. Do you confirm ?" attrs="{'invisible': [('is_admin', '=', False)]}"/>
 

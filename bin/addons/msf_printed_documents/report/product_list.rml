@@ -97,6 +97,7 @@
         <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
 
         <paraStyle name="TextInformation3" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation3red" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" textColor="red" spaceBefore="1.0" spaceAfter="1.0" />
         <paraStyle name="TextInformation3gras" fontName="Helvetica-Bold" fontSize="8.0" alignment="LEFT" leading="10.0" spaceBefore="1.0" spaceAfter="1.0" />
 
         <!-- Lines font style -->
@@ -257,7 +258,7 @@
 
 
         <section>
-        <blockTable colWidths="100.0,350.0,350.0" style="ItemsTitle0" repeatRows="1">
+        <blockTable colWidths="100.0,340.0,310.0,25.0,25.0" style="ItemsTitle0" repeatRows="1">
 
             <tr>
                 <td>
@@ -269,19 +270,31 @@
                 <td>
                     <para style="TextInformation3gras" alignment="LEFT">Comment</para>
                 </td>
+                <td>
+                    <para style="TextInformation3gras" alignment="LEFT">MML</para>
+                </td>
+                <td>
+                    <para style="TextInformation3gras" alignment="LEFT">MSL</para>
+                </td>
             </tr>
 
 
             <tr>
            [[ repeatIn(get_lines(objects[0]), 'line') ]]
                 <td>
-                    <para style="TextInformation3" alignment="LEFT">[[ line.name and line.name.default_code or False ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'TextInformation3red' or 'TextInformation3'}"  alignment="LEFT">[[ line.name and line.name.default_code or False ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation3" alignment="LEFT">[[ line.name and line.name.name or False ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'TextInformation3red' or 'TextInformation3'}" alignment="LEFT">[[ line.name and line.name.name or False ]]</para>
                 </td>
                 <td>
-                    <para style="TextInformation3" alignment="LEFT">[[ line.comment or False ]]</para>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'TextInformation3red' or 'TextInformation3'}" alignment="LEFT">[[ line.comment or False ]]</para>
+                </td>
+                <td>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'TextInformation3red' or 'TextInformation3'}" alignment="LEFT">[[ getSel(line, 'mml_status') ]]</para>
+                </td>
+                <td>
+                    <para rml_tag="'para', {'style': (line.mml_status=='F' or line.msl_status=='F')  and 'TextInformation3red' or 'TextInformation3'}" alignment="LEFT">[[ getSel(line, 'msl_status') ]]</para>
                 </td>
             </tr>
         </blockTable>

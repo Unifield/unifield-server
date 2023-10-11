@@ -675,7 +675,6 @@ class stock_picking(osv.osv):
             values['location_dest_id'] = db_data.get('cd_loc')
         elif wizard.picking_id and wizard.picking_id.type == 'in' and line.product_id.type == 'service_recep':
             values['location_dest_id'] = db_data.get('service_loc')
-            values['cd_from_bo'] = False
         elif wizard.dest_type == 'to_cross_docking' and not service_non_stock_ok:
             if db_data.get('setup').allocation_setup == 'unallocated':
                 raise osv.except_osv(
@@ -685,10 +684,7 @@ class stock_picking(osv.osv):
             # Below, "source_type" is only used for the outgoing shipment. We set it to "None" because by default it is
             # "default" and we do not want that info on INCOMING shipment
             wizard.source_type = None
-            values.update({
-                'location_dest_id': db_data.get('cd_loc'),
-                'cd_from_bo': False,
-            })
+            values.update({'location_dest_id': db_data.get('cd_loc')})
         elif wizard.dest_type == 'to_stock' or service_non_stock_ok:
             # Below, "source_type" is only used for the outgoing shipment. We set it to "None because by default it is
             # "default" and we do not want that info on INCOMING shipment
@@ -699,8 +695,6 @@ class stock_picking(osv.osv):
             else:
                 # treat moves towards STOCK if NOT SERVICE
                 values['location_dest_id'] = db_data.get('input_loc')
-
-            values['cd_from_bo'] = False
 
         if wizard.dest_type != 'to_cross_docking':
             values['direct_incoming'] = wizard.direct_incoming
@@ -1273,8 +1267,7 @@ class stock_picking(osv.osv):
                     }, context=context)
                     return backorder_id
 
-                self.write(cr, uid, [picking_id], {'backorder_id': backorder_id, 'cd_from_bo': values.get('cd_from_bo', False)},
-                           context=context)
+                self.write(cr, uid, [picking_id], {'backorder_id': backorder_id}, context=context)
 
                 # Claim specific code
                 current_backorder = picking_obj.read(cr, uid, backorder_id, ['backorder_id'], context=context)

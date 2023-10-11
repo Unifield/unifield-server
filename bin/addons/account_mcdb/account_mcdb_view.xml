@@ -168,11 +168,13 @@
                                     <button name="button_account_add" type="object" string="Add all Accounts" icon="gtk-add" colspan="1"/>
                                 </group>
                                 <field name="rev_account_ids"/>
-                                <field name="account_ids" colspan="2" nolabel="1" domain="[('parent_id', '!=', False)]">
+                                <field name="display_hq_system_accounts" invisible="1" />
+                                <field name="account_ids" colspan="2" nolabel="1" domain="[('parent_id', '!=', False)]" context="{'display_hq_system_accounts': display_hq_system_accounts}">
                                     <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')" editable="top" noteditable="1">
                                         <field name="code"/>
                                         <field name="name"/>
                                         <field name="type" string="Type"/>
+                                        <field name="mapping_value" invisible="1"/>
                                     </tree>
                                 </field>
                             </group>

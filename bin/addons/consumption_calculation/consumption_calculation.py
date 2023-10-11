@@ -24,7 +24,7 @@ from osv import fields
 from mx.DateTime import DateFrom, RelativeDate, RelativeDateTime, Age, strptime, now
 
 from tools.translate import _
-
+from tools.misc import _get_std_mml_status
 import time
 import netsvc
 
@@ -836,6 +836,8 @@ class real_average_consumption_line(osv.osv):
 
         return res
 
+
+
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True, select=1),
         'ref': fields.related('product_id', 'default_code', type='char', size=64, readonly=True,
@@ -865,11 +867,16 @@ class real_average_consumption_line(osv.osv):
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
         'kcl_id': fields.many2one('composition.kit', 'Kit', domain="[('composition_product_id', '=', product_id), ('composition_type', '=', 'real'), ('state', '=', 'completed'), ('kcl_used_by', '=', False)]"),
         'product_subtype': fields.function(_get_checks_all, method=True, type='selection', string='Product Subtype', selection=[('single', 'Single Item'), ('kit', 'Kit/Module'), ('asset', 'Asset')], store=False, readonly=True, multi="m"),
+
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
     }
 
     _defaults = {
         'inactive_product': False,
         'inactive_error': lambda *a: '',
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def _unique_product(self, cr, uid, ids, context=None):

@@ -13,6 +13,7 @@
             header="False"
             auto="False"
             menu="True"
+            view_ids="product.product_product_tree_view,product.product_normal_form_view"
          />
 
     </data>

@@ -66,11 +66,12 @@ class base_setup_company(osv.osv_memory):
             return defaults
         company = companies.browse(cr, uid, company_id[0], context=context)
         defaults['company_id'] = company.id
+        defaults['logo'] = company['logo']
 
         if not self._show_company_data(cr, uid, context=context):
             return defaults
 
-        for field in ['name','logo','rml_header1','rml_footer1','rml_footer2']:
+        for field in ['name','rml_header1','rml_footer1','rml_footer2']:
             defaults[field] = company[field]
 
         if company.partner_id.address:

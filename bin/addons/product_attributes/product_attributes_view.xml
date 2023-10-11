@@ -160,6 +160,14 @@
                             </group>
                         </page>
                         <page string="UD OC Validation" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}">
+                            <group colspan="4" col="14">
+                                <field name="mml_status"/>
+                                <field name="msl_status"/>
+                                <group colspan="10"/>
+                            </group>
+                            <field name="oc_devalidation_reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}"/>
+                            <separator string="Use Comments" colspan="4"/>
+                            <field name="oc_comments" colspan="4" nolabel="1"/>
                             <group colspan="4" col="6">
                                 <field name="oc_coordo_restrictions" nolabel="1" colspan="2">
                                     <tree string="Mission Restrictions">
@@ -167,17 +175,15 @@
                                     </tree>
                                 </field>
 
-                                <field name="oc_project_restrictions" nolabel="1" colspan="2">
+                                <field name="oc_instance_restrictions" nolabel="1" colspan="2">
                                     <tree string="Project Restrictions">
-                                        <field name="instance_id" string="Code"/>
+                                        <field name="code" />
                                     </tree>
                                 </field>
 
                                 <field name="msl_project_ids" nolabel="1" colspan="2">
                                     <tree string="MSL">
                                         <field name="instance_id" string="Code"/>
-                                        <field name="code" />
-                                        <field name="publication" />
                                         <field name="uf_active" />
                                     </tree>
                                 </field>
@@ -205,13 +211,6 @@
                                 <field name="closed_article" colspan="2"/>
                                 <field name="manufacturer_ref" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
                                 <field name="manufacturer_txt" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
-                                <group colspan="2" col="2" attrs="{'invisible':[('int_status_code', '!=', 'unidata')]}">
-                                    <separator string="MML Info" colspan="2"/>
-                                    <separator string="Use Comments" colspan="2" />
-                                    <field name="oc_comments" colspan="2" nolabel="1" />
-                                    <separator string="Devalidation Reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}" />
-                                    <field name="oc_devalidation_reason" colspan="2" attrs="{'invisible': [('oc_validation', '=', True)]}" nolabel="1"/>
-                                </group>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Form" colspan="2" />
@@ -530,6 +529,8 @@
                    <group name="batch_attr" invisible="1">
                        <field name="batch_attributes" />
                     </group>
+                   <field name="in_mml_instance" />
+                   <field name="in_msl_instance" widget="many2one"/>
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>

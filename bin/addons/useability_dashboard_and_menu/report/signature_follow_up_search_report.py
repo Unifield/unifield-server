@@ -20,13 +20,16 @@ def _get_filters_info(self, fields, search_domain, source, context=None):
 
     DOC_TYPES = {
         'purchase.order': _('PO'),
-        'sale.order': _('IR'),
+        'sale.order.fo': _('FO'),
+        'sale.order.ir': _('IR'),
         'account.bank.statement.cash': _('Cash Register'),
         'account.bank.statement.bank': _('Bank Register'),
         'account.bank.statement.cheque': _('Cheque Register'),
         'account.invoice.si': _('Supplier Invoice'),
         'account.invoice.donation': _('Donation'),
-        'stock.picking': _('IN'),
+        'stock.picking.in': _('IN'),
+        'stock.picking.out': _('OUT'),
+        'stock.picking.pick': _('Pick'),
     }
 
     data = []

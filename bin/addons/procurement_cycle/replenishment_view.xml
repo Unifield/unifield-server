@@ -251,6 +251,8 @@
                             $(document).ready(function() {
                                 set_unit_label(true);
                             });
+
+
                         </script>
 
 
@@ -444,6 +446,7 @@
                     <field name="safety_and_buffer_warn" invisible="1" />
                     <field name="active" invisible="1" readonly="1" />
                     <field name="review_active" invisible="1" readonly="1" />
+                    <field name="alert_msl_mml" invisible="1" />
                     <html colspan="4">
                         <p id="safety_and_buffer" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                             <translate>Product line has Safety Stock AND Buffer value: Warning could be duplicate!</translate>
@@ -454,6 +457,7 @@
                         <p id="review_active_warn" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                             <translate>Warning: Inventory Review Configuration is inactive</translate>
                         </p>
+                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
                         <script language="javascript">
                             var safety_and_buffer = $('#safety_and_buffer_warn').val();
                             if (safety_and_buffer == "1") {
@@ -504,6 +508,11 @@
                             $(document).ready(function() {
                                 set_unit_label(true);
                             });
+                            var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                            if (alert_msl_mml) {
+                                $('#msl_mml').html(alert_msl_mml);
+                                $('#msl_mml').show();
+                            }
                         </script>
 
                     </html>
@@ -702,7 +711,7 @@
             <field name="model">replenishment.segment.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="top" editable_style="new" colors="red: not status or (display_paired_icon and not status_tooltip and status!='phasingout')">
+                <tree editable="top" editable_style="new" colors="red:mml_status=='F' or msl_status=='F' or not status or (display_paired_icon and not status_tooltip and status!='phasingout')">
                     <field name="line_state_parent" invisible="1" />
                     <field name="line_rule_parent" invisible="1" />
                     <field name="product_id" filter_selector="1" attrs="{'readonly':[('line_state_parent', '!=', 'draft')]}"/>
@@ -723,6 +732,8 @@
                     <field name= "list_fmc" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" displayon="noteditable"/>
                     <button name="openform" special="openform" string="Edit 18 periods" invisible="context.get('rule')!='cycle' and not context.get('specific_period')" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"  icon="terp-go-week" context="{'active_id': active_id}"/>
                     <field name="warning_html" widget="html_text" displayon="noteditable"/>
+                    <field name="mml_status" />
+                    <field name="msl_status" />
 
                 </tree>
             </field>
@@ -786,9 +797,20 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Order Calculation" hide_duplicate_button="1" hide_new_button="1" hide_delete_button="1" force_string="1">
+                    <html colspan="4">
+                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                        <script language="javascript">
+                            var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                            if (alert_msl_mml) {
+                                $('#msl_mml').html(alert_msl_mml);
+                                $('#msl_mml').show();
+                            }
+                        </script>
+                    </html>
                     <field name="name" />
                     <field name="parent_segment_id" />
                     <field name="description_seg" />
+                    <field name="alert_msl_mml" invisible="1" />
                     <notebook colspan="4">
                         <page string="Parameters">
                             <group colspan="4" col="6">
@@ -818,7 +840,7 @@
                             </group>
                             <button colspan="4" string="Round Agreed Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" scroll="1" o2m_selectable="2">
-                                <tree editable="top" editable_style="new" colors="blue:rounded_qty;red:expired_qty_before_cons or (status!='new' and qty_lacking) or not valid_rr_fmc;orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc" hide_new_button="0" hide_delete_button="1">
+                                <tree editable="top" editable_style="new" colors="blue:rounded_qty;red:mml_status=='F' or msl_status=='F' or expired_qty_before_cons or (status!='new' and qty_lacking) or not valid_rr_fmc;orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc" hide_new_button="0" hide_delete_button="1">
                                     <field name="product_id" filter_selector="1" />
                                     <field name="product_description" displayon="noteditable" filter_selector="1" />
                                     <field name="uom_id" invisible="1" />
@@ -846,6 +868,8 @@
                                     <field name="line_value" />
                                     <field name="order_qty_comment" />
                                     <field name="warning_html" widget="html_text"/>
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                             </field>
                         </page>
@@ -940,6 +964,16 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Inventory Review" hide_duplicate_button="1" hide_new_button="1" hide_delete_button="1" force_string="1">
+                    <html colspan="4">
+                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                        <script language="javascript">
+                            var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                            if (alert_msl_mml) {
+                                $('#msl_mml').html(alert_msl_mml);
+                                $('#msl_mml').show();
+                            }
+                        </script>
+                    </html>
                     <field name="location_config_id" />
                     <field name="frequence_name" />
                     <field name="generation_date" />
@@ -949,6 +983,7 @@
                     <field name="final_date_projection" />
                     <field name="sleeping" />
                     <field name="time_unit" />
+                    <field name="alert_msl_mml" invisible="1" />
                     <newline />
                     <group colspan="4">
                         <button colspan="1" name="pipeline" string="Pipeline (Stock Moves)" type="object" icon="icons/pipe.png" set_ids="line_ids" />
@@ -957,12 +992,13 @@
                         <button colspan="1" name="reserved" string="Reserved Qty" type="object" icon="gtk-indent" set_ids="line_ids" />
                     </group>
                     <field name="line_ids" colspan="4" nolabel="1" o2m_selectable="2" scroll="1">
-                        <tree colors="red:expired_qty_before_cons or (status!='new' and qty_lacking) or (not valid_rr_fmc and segment_ref_name);orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc">
+                        <tree colors="red:mml_status=='F' or msl_status=='F' or expired_qty_before_cons or (status!='new' and qty_lacking) or (not valid_rr_fmc and segment_ref_name);orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc">
                             <field name="product_id" filter_selector="1" />
                             <field name="product_description" filter_selector="1" />
                             <field name="uom_id" invisible="1" />
                             <field name="status" invisible="1" />
-                            <field name="primay_product_list" filter_selector="1" />
+                            <field name="mml_status" />
+                            <field name="msl_status" />
                             <field name="segment_ref_name" />
                             <field name="rule" />
                             <field name="projected_stock_qty_amc" />
@@ -992,7 +1028,8 @@
                             <field name="product_description"/>
                             <field name="uom_id" invisible="1" />
                             <field name="status" invisible="1" />
-                            <field name="primay_product_list" />
+                            <field name="mml_status" />
+                            <field name="msl_status" />
                             <field name="segment_ref_name" />
                             <field name="rr_fmc_avg" />
                             <field name="rr_amc" />
@@ -1133,7 +1170,7 @@
                 <tree string="Product List Consistency Report" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" notselectable="1">
                     <field name="product_id" />
                     <field name="name_seg" not_sortable="1"/>
-                    <field name="description_seg" not_sortable="1"/>
+                    <field name="description_seg" not_sortable="1" />
                 </tree>
             </field>
         </record>
@@ -1144,7 +1181,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Product List Consistency Report" hide_new_button="1" hide_duplicate_button="1">
-                    <field name="default_code" />
+                    <field name="l_default_code" />
                     <field name="product_description" />
                     <field name="name_seg" />
                     <field name="description_seg" />
@@ -1161,11 +1198,12 @@
                     <filter string="Segmented" name="segmented" icon="terp-check" domain="[('segment_id', '!=', False)]"/>
                     <filter string="Not Segmented" name="not_segemented" icon="gtk-cancel" domain="[('segment_id', '=', False)]"/>
                     <separator orientation="vertical"/>
-                    <field name="default_code" />
+                    <field name="l_default_code" />
                     <field name="product_id" />
                     <field name="name_seg" />
                     <field name="description_seg" />
-                    <field name="list_ids" />
+                    <field name="in_mml_instance" />
+                    <field name="in_msl_instance" />
                     <newline />
                     <filter string="Group by Product" name="group_product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}" />
                 </search>
