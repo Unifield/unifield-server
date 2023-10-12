@@ -24,8 +24,12 @@ class shipment_donation_certificate(report_sxw.rml_parse):
         curr_obj = self.pool.get('res.currency')
 
         lines = []
+        if ship.state == 'cancel':
+            return lines
         keys = []
         for pack in ship.pack_family_memory_ids:
+            if pack.state == 'returned':
+                continue
             for move in pack.move_lines:
                 key = (move.product_id.id, move.prodlot_id and move.prodlot_id.id or False)
                 move_price = move.price_unit
