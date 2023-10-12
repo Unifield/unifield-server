@@ -72,6 +72,7 @@ class expression(object):
         self.__field_tables = {}  # used to store the table to use for the sql generation. key = index of the leaf
         self.__all_tables = []
         self.__joins = []
+        self.__leftjoins = {}
         self.__main_table = None # 'root' table. set by parse()
         self.__DUMMY_LEAF = (1, '=', 1) # a dummy leaf that must not be parsed or sql generated
 
@@ -128,9 +129,13 @@ class expression(object):
                 field = working_table._columns.get(fargs[0], False)
                 if field and field._type == 'many2one' and field._obj and field._join:
                     new_working_table = working_table.pool.get(field._obj)
-                    if new_working_table not in self.__all_tables:
-                        self.__joins.append('%s.%s=%s.%s' % (new_working_table._table, 'id', main_table._table, fargs[0]))
-                        self.__all_tables.append(new_working_table)
+                    if field._join == 'LEFT':
+                        # experimental condition used on product.asser.line
+                        self.__leftjoins.setdefault('"%s"'%main_table._table, []).append([new_working_table._table, fargs[0], 'id', 'LEFT JOIN'])
+                    else:
+                        if new_working_table not in self.__all_tables:
+                            self.__joins.append('%s.%s=%s.%s' % (new_working_table._table, 'id', main_table._table, fargs[0]))
+                            self.__all_tables.append(new_working_table)
                     working_table = new_working_table
                     self.__field_tables[i] = working_table
                     left = fargs[1]
@@ -542,7 +547,7 @@ class expression(object):
         joins = ' AND '.join(self.__joins)
         if joins:
             query = '(%s) AND (%s)' % (joins, query)
-        return (query, flatten(params))
+        return (query, flatten(params), self.__leftjoins)
 
     def get_tables(self):
         return ['"%s"' % t._table for t in self.__all_tables]

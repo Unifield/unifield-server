@@ -512,7 +512,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[el.id] = False
             if el.asset_id and el.asset_id.state == 'done':
                 res[el.id] = False
-            if el.asset_line_id and el.asset_line_id.move_id:
+            if el.asset_line_id and el.asset_line_id.move_id and el.asset_line_id.move_id.state != 'draft':
                 res[el.id] = False
         return res
 
@@ -1198,6 +1198,16 @@ class analytic_distribution_wizard(osv.osv_memory):
         wizard_account_invoice = self._check_open_wizard_account_invoice(cr, uid, wiz, context)
         if wizard_account_invoice:
             return wizard_account_invoice
+
+        if wiz.asset_line_id and new_distrib and wiz.asset_line_id.move_id:
+            aml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id.state', '=', 'draft'), ('asset_line_id', '=', wiz.asset_line_id.id)], context=context)
+            if aml_ids:
+                self.pool.get('account.move.line').write(cr, uid, aml_ids, {'analytic_distribution_id': distrib_id}, context=context)
+                self.pool.get('account.move').validate(cr, uid, [wiz.asset_line_id.move_id.id])
+        elif wiz.asset_id and new_distrib:
+            move_ids = self.pool.get('account.move').search(cr, uid, [('state', '=', 'draft'), ('asset_id', '=', wiz.asset_id.id)], context=context)
+            if move_ids:
+                self.pool.get('account.move').write(cr, uid, move_ids, {'analytic_distribution_id': distrib_id}, context=context)
         # Validate account_move if we come from a Journal Entry or a Journal Item
         if wiz and (wiz.move_id or wiz.move_line_id) and new_distrib:
             move_id = False

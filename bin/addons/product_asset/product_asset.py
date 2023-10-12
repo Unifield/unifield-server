@@ -352,7 +352,7 @@ class product_asset(osv.osv):
 
         alreary_posted_ids = line_obj.search(cr, uid, [('asset_id', 'in', ids), ('move_id', '!=', False)], context=context)
         if alreary_posted_ids:
-            raise osv.except_osv(_('Error !'), _('Entries already created on %s, cannot replace entries') % (self.browse(cr, uid, alreary_posted_ids[0], fields_to_fetch=['name']).name, ))
+            raise osv.except_osv(_('Error !'), _('%d Entries already created on %s, cannot replace entries') % (len(alreary_posted_ids), asset.name))
 
         to_del = []
         for line in asset.line_ids:
@@ -410,6 +410,7 @@ class product_asset(osv.osv):
                 'last_dep_day': line[3],
             }, context=context)
 
+        self.write(cr, uid, ids[0], {'state': 'running'}, context=context)
         return True
 
 
@@ -427,6 +428,32 @@ class product_asset(osv.osv):
             'width': '720px',
         }
 
+    def open_asset_account_move_line(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        asset_ids = context.get('active_ids', [])
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'account.action_account_moves_all_a', ['tree', 'form'],context=context)
+        ji_with_ad_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_asset', 'view_account_move_line_asset_tree')
+        views = []
+        for x in res['views']:
+            if x[1] == 'tree':
+                views.append((ji_with_ad_view_id[1], 'tree'))
+            else:
+                views.append(x)
+        res['name'] = _('Asset lines')
+        res['views'] = views
+        res['domain'] = [('move_id.asset_id', 'in', asset_ids)]
+        res['target'] = 'current'
+        return res
+
+    def open_asset_account_move(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        asset_ids = context.get('active_ids', [])
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'account.action_move_journal_line', ['tree', 'form'],context=context)
+        res['domain'] = [('asset_id', 'in', asset_ids)]
+        res['target'] = 'current'
+        return res
 product_asset()
 
 
@@ -648,13 +675,13 @@ class product_asset_line(osv.osv):
 
 
     _columns = {
-        'date': fields.date('Date', readonly=1),
+        'date': fields.date('Date', readonly=1, select=1),
         'amount': fields.float('Depreciation', readonly=1),
-        'move_id': fields.many2one('account.move', 'Entry', readonly=1),
+        'move_id': fields.many2one('account.move', 'Entry', readonly=1, join='LEFT', select=1),
         'move_state': fields.related('move_id', 'state', type='selection', selection=[('posted', 'Posted'), ('draft', 'Unposted')], string="Entry State"),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
-        'asset_id': fields.many2one('product.asset', 'Asset', required=1),
+        'asset_id': fields.many2one('product.asset', 'Asset', required=1, select=1),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'),
@@ -675,10 +702,10 @@ class product_asset_line(osv.osv):
         'is_disposal': False,
     }
 
-    def post_entries(self, cr, uid, ids, context=None):
+    def button_post_entries(self, cr, uid, ids, context=None):
         to_create = self.search(cr, uid, [('id', 'in', ids), ('move_id', '=', False)], context=context)
         if to_create:
-            self.generate_unposted_entries(cr, uid, to_create, context=context)
+            self.button_generate_unposted_entries(cr, uid, to_create, context=context)
 
         move_obj = self.pool.get('account.move')
         to_post = []
@@ -688,30 +715,34 @@ class product_asset_line(osv.osv):
             move_obj.button_validate(cr, uid, to_post, context=context)
         return True
 
-    def generate_unposted_entries(self, cr, uid, ids, context=None):
+    def button_generate_unposted_entries(self, cr, uid, ids, context=None):
         account_move_obj = self.pool.get('account.move')
         period_obj = self.pool.get('account.period')
 
         if context is None:
             context = {}
 
+        period_cache = {}
         for line in self.browse(cr, uid, ids, context=context):
             update_data = {}
             context.update({'date': line.date})
 
-            period_domain = [('date_start', '<=', context.get('date')), ('date_stop', '>=', context.get('date')), ('special', '=', False), ('state', 'in', ['draft', 'field-closed'])]
-            period_ids = period_obj.search(cr, uid, period_domain, context=context)
+            if line.date not in period_cache:
+                period_domain = [('date_start', '<=', line.date), ('date_stop', '>=', line.date), ('special', '=', False), ('state', 'in', ['draft', 'field-closed'])]
+                period_ids = period_obj.search(cr, uid, period_domain, context=context)
 
-            if not period_ids:
-                raise osv.except_osv(_('No period found !'), _('Unable to find a valid period for %s!') % (line.date, ))
+                if not period_ids:
+                    raise osv.except_osv(_('No period found !'), _('Unable to find a valid period for %s!') % (line.date, ))
+                period_cache[line.date] = period_ids[0]
 
-            if not line.analytic_distribution_id and line.asset_id.analytic_distribution_id:
-                analytic_line_id = self.pool.get('analytic.distribution').copy(cr, uid, line.asset_id.analytic_distribution_id.id, {}, context=context)
-                update_data['analytic_distribution_id'] = analytic_line_id
-            else:
-                analytic_line_id = line.analytic_distribution_id.id
+            period_id = period_cache[line.date]
 
-            period_id = period_ids[0]
+            #if not line.analytic_distribution_id and line.asset_id.analytic_distribution_id:
+            #    analytic_line_id = self.pool.get('analytic.distribution').copy(cr, uid, line.asset_id.analytic_distribution_id.id, {}, context=context)
+            #    update_data['analytic_distribution_id'] = analytic_line_id
+            #else:
+            #    analytic_line_id = line.analytic_distribution_id.id
+
             if line.is_disposal:
                 entry_name = _('Disposal Asset %s') % line.asset_id.name
             else:
@@ -722,7 +753,8 @@ class product_asset_line(osv.osv):
                     'debit_currency': line.amount,
                     'credit_currency': 0,
                     'account_id': line.asset_pl_account_id.id,
-                    'analytic_distribution_id': analytic_line_id,
+                    'analytic_distribution_id': line.analytic_distribution_id.id or False,
+                    'asset_line_id': line.id,
                 }
             ]
             if not line.is_disposal:
@@ -752,6 +784,8 @@ class product_asset_line(osv.osv):
                 'journal_id': line.asset_id.journal_id.id,
                 'currency_id': line.asset_id.invo_currency.id,
                 'ref': line.asset_id.move_line_id.move_id.name,
+                'analytic_distribution_id': line.asset_id.analytic_distribution_id.id or False,
+                'asset_id': line.asset_id.id,
                 'line_id':[
                     (0, 0, {
                         'name': entry_name,
@@ -764,6 +798,7 @@ class product_asset_line(osv.osv):
                         'analytic_distribution_id': x['analytic_distribution_id'],
                         'document_date': line.date,
                         'date': line.date,
+                        'asset_line_id': x.get('asset_line_id', False),
                     }) for x in entries]
             }, context=context)
 
@@ -778,7 +813,7 @@ class product_asset_disposal(osv.osv_memory):
     _columns = {
         'asset_id': fields.many2one('product.asset', 'Asset', required=1),
         'disposal_expense_account': fields.many2one('account.account', 'Disposal P&L account', required=1, domain=[('user_type_code', 'in', ['expense', 'income'])]), # TODO domain
-        'disposal_date': fields.date('Date', requied=1),
+        'disposal_date': fields.date('Date', required=1),
     }
 
     def button_generate_disposal_entry(self, cr, uid, ids, context=None):
@@ -788,11 +823,11 @@ class product_asset_disposal(osv.osv_memory):
         if self.pool.get('product.asset').search_exists(cr, uid, [('id', '=', wiz.asset_id.id), ('start_date', '>=', wiz.disposal_date)], context=context):
             raise osv.except_osv(_('Error !'), _('Date of disposal %s is before the depreciation date !'))
 
-        nb_posted = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>=', wiz.disposal_date), ('move_state', '=', 'posted')], count=True, context=context)
+        nb_posted = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>=', wiz.disposal_date), ('move_id.state', '=', 'posted')], count=True, context=context)
         if nb_posted:
             raise osv.except_osv(_('Error !'), _('Date of disposal %s does not match: there are %d posted entries') % (wiz.disposal_date, nb_posted))
 
-        nb_draft = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>=', wiz.disposal_date), ('move_state', '=', 'draft')], count=True, context=context)
+        nb_draft = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>=', wiz.disposal_date), ('move_id.state', '=', 'draft')], count=True, context=context)
         if nb_draft > 1:
             raise osv.except_osv(_('Error !'), _('Date of disposal %s does not match: there are %d draft entries') % (wiz.disposal_date, nb_draft))
 
@@ -804,7 +839,7 @@ class product_asset_disposal(osv.osv_memory):
 
         to_draft_post = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('move_id', '=', False)], context=context)
         if to_draft_post:
-            asset_line_obj.generate_unposted_entries(cr, uid, to_draft_post, context=context)
+            asset_line_obj.button_generate_unposted_entries(cr, uid, to_draft_post, context=context)
 
         line_to_update_id =  asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '=', end_of_month)], context=context)
         if line_to_update_id:
@@ -812,7 +847,7 @@ class product_asset_disposal(osv.osv_memory):
             if wiz.disposal_date < line_to_update.last_dep_day:
                 start_entry_dt = datetime.strptime(line_to_update.first_dep_day, '%Y-%m-%d')
                 last_entry_dt = datetime.strptime(line_to_update.last_dep_day, '%Y-%m-%d')
-                new_value = round(line_to_update.amount / (last_entry_dt - start_entry_dt).days * (disposale_dt - start_entry_dt).days, 2)
+                new_value = round(line_to_update.amount / ((last_entry_dt - start_entry_dt).days + 1) * ((disposale_dt - start_entry_dt).days + 1), 2)
                 asset_line_obj.write(cr, uid, line_to_update_id, {'amount': new_value, 'date': wiz.disposal_date}, context=context)
                 for ji in line_to_update.move_id.line_id:
                     if ji.debit_currency:
@@ -832,11 +867,48 @@ class product_asset_disposal(osv.osv_memory):
             'asset_id': wiz.asset_id.id
 
         })
-        asset_line_obj.generate_unposted_entries(cr, uid, [new_line_id], context=context)
+        asset_line_obj.button_generate_unposted_entries(cr, uid, [new_line_id], context=context)
 
-        return True
+        return {'type': 'ir.actions.act_window_close'}
 
 product_asset_disposal()
+
+
+class product_asset_generate_entries(osv.osv_memory):
+    _name = 'product.asset.generate.entries'
+    _description = 'Asset Generate Entries'
+    _rec_name = 'date'
+    _columns = {
+        'date': fields.date('Date', required=1),
+    }
+
+    def button_generate_all(self, cr, uid, ids, context=None):
+        asset_line_obj = self.pool.get('product.asset.line')
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        end_date = (datetime.strptime(wiz.date, '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+        asset_line_ids = asset_line_obj.search(cr, uid, [('asset_id.state', '=', 'running'), ('move_id', '=', False), ('date', '<=', end_date)], context=context)
+        if asset_line_ids:
+            asset_line_obj.button_generate_unposted_entries(cr, uid, asset_line_ids, context=context)
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'account.action_account_moves_all_a', ['tree', 'form'],context=context)
+        ji_with_ad_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_asset', 'view_account_move_line_asset_tree')
+        views = []
+        for x in res['views']:
+            if x[1] == 'tree':
+                views.append((ji_with_ad_view_id[1], 'tree'))
+            else:
+                views.append(x)
+        res['name'] = _('Asset lines')
+        res['views'] = views
+        res['domain'] = ['&', ('move_id.asset_id', '!=', False), ('date', '<=', end_date)]
+        return res
+
+
+        return
+
+
+
+
+product_asset_generate_entries()
 
 #----------------------------------------------------------
 # Products

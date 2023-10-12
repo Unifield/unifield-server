@@ -105,7 +105,8 @@ class Query(object):
             for join_cond in self.joins.get(table,[]):
                 if isinstance(join_cond, (list, tuple)):
                     (dest_table, lhs_col, col, join) = join_cond
-                    tables_to_process.remove(dest_table)
+                    if dest_table in tables_to_process:
+                        tables_to_process.remove(dest_table)
                     dest_table_alias = dest_table.split(' ')
                     join_table = dest_table
                     if len(dest_table_alias) == 2:

@@ -1329,7 +1329,7 @@ class account_move(osv.osv):
                 raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
-                if m.status == 'sys' and not context.get('from_recurring_entries'):
+                if m.status == 'sys' and not context.get('from_recurring_entries') and not m.asset_id:
                     raise osv.except_osv(_('Warning'), _("You can't approve a Journal Entry that comes from the system!"))
                 # UFTP-105: Do not permit to validate a journal entry on a period that is not open
                 if m.period_id and m.period_id.state != 'draft':

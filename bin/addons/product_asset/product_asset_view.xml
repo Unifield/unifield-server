@@ -146,7 +146,7 @@
                             </group>
                             <field name="analytic_distribution_id" invisible="1"/>
                         </group>
-                        <field colspan="4" name="line_ids" nolabel="1" mode="tree" readonly="1">
+                        <field colspan="4" name="line_ids" nolabel="1" mode="tree" readonly="1" filter_selector="[('Show all', []), ('Hide Posted', ['|', ('move_id', '=', False), ('move_id.state', '!=', 'posted')])]">
                             <tree string="Depreciation Lines" editable="top" hide_delete_button="1" hide_new_button="1">
                                 <field name="date" />
                                 <field name="amount" />
@@ -159,8 +159,8 @@
                                 <field name="is_allocatable" invisible="1"/>
                                 <field name="move_id" />
                                 <field name="move_state" />
-                                <button name="generate_unposted_entries" type="object" icon="terp-gtk-jump-to-ltr" attrs="{'invisible': [('move_id', '!=', False)]}"/>
-                                <button name="post_entries" type="object" icon="gtk-apply" attrs="{'invisible': [('move_state', '=', 'posted')]}"/>
+                                <button name="button_generate_unposted_entries" type="object" icon="terp-gtk-jump-to-ltr" attrs="{'invisible': [('move_id', '!=', False)]}"/>
+                                <button name="button_post_entries" type="object" icon="gtk-apply" attrs="{'invisible': [('move_state', '=', 'posted')]}"/>
                             </tree>
                         </field>
                     </page>
@@ -187,6 +187,12 @@
                 <field name="brand" />
                 <field name="type" />
                 <field name="year" />
+                <field name="useful_life_id" />
+                <field name="invo_value" sum="sum" sum_selected="1" />
+                <field name="invo_currency" />
+                <field name="depreciation_amount" sum="sum" sum_selected="1"/>
+                <field name="disposal_amount" sum="sum" sum_selected="1"/>
+                <field name="state" />
             </tree>
         </field>
     </record>
@@ -205,6 +211,8 @@
                 <field name="brand" />
                 <field name="type" />
                 <field name="model" />
+                <field name="invo_currency" />
+                <field name="state" />
                 <newline />
                 <group expand="0" string="Group By..." colspan="11" col="11">
                     <filter string="Product" icon="terp-product" domain="[]"
@@ -372,6 +380,101 @@
     <!-- Asset Types in SALES>Products>Asssets -->
     <menuitem action="asset_type_normal_action" id="menu_asset_type_sales"
         parent="product_attributes.menu_product_config" sequence="1000" />
+
+
+    <record id="action_open_asset_account_move_line" model="ir.actions.server">
+        <field name="name">Asset Journal Items</field>
+        <field name="model_id" ref="product_asset.model_product_asset"/>
+        <field name="state">code</field>
+        <field name="code">
+action = self.open_asset_account_move_line(cr, uid, ids, context=context)
+        </field>
+    </record>
+
+    <record id="relate_open_asset_account_move_line" model="ir.values">
+        <field name="key2">client_action_relate</field>
+        <field name="model">product.asset</field>
+        <field name="name">Asset Journal Items</field>
+        <field name="value" eval="'ir.actions.server,%d'%action_open_asset_account_move_line"/>
+        <field name="object" eval="True"/>
+        <field name="sequence" eval="10"/>
+    </record>
+
+    <record id="action_open_asset_account_move" model="ir.actions.server">
+        <field name="name">Asset Journal Entries</field>
+        <field name="model_id" ref="product_asset.model_product_asset"/>
+        <field name="state">code</field>
+        <field name="code">
+action = self.open_asset_account_move(cr, uid, ids, context=context)
+        </field>
+    </record>
+
+    <record id="relate_open_asset_account_move" model="ir.values">
+        <field name="key2">client_action_relate</field>
+        <field name="model">product.asset</field>
+        <field name="name">Asset Journal Entries</field>
+        <field name="value" eval="'ir.actions.server,%d'%action_open_asset_account_move"/>
+        <field name="object" eval="True"/>
+        <field name="sequence" eval="10"/>
+    </record>
+
+
+   <!-- duplicate reccuring line to post view (AD is editable) -->
+    <record model="ir.ui.view" id="view_account_move_line_asset_tree">
+        <field name="name">account.move.line.asset.tree</field>
+        <field name="model">account.move.line</field>
+        <field name="type">tree</field>
+        <field name="priority" eval="150" />
+        <field name="duplicate_view_id" ref="account_subscription.account_move_line_recurring_entries_to_validate" />
+        <field name="arch" type="xml">
+            <tree />
+        </field>
+    </record>
+    <record model="ir.ui.view" id="view_account_move_line_asset_2tree">
+        <field name="name">account.move.line.asset.tree.inherit</field>
+        <field name="model">account.move.line</field>
+        <field name="type">tree</field>
+        <field name="priority" eval="160" />
+        <field name="inherit_id" ref="view_account_move_line_asset_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="string">Asset Journal Items</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_product_asset_generate_entries" model="ir.ui.view">
+        <field name="name">product.asset.generate.entries.form</field>
+        <field name="model">product.asset.generate.entries</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Asset Generate Entries">
+                <group colspan="4" col="10">
+                    <separator string="Generate Entries until:" colspan="4"/>
+                    <newline/>
+                    <label string="Automatically generate entries based on what has been entered in the system until a specific date." colspan="4" nolabel="1"/>
+                    <newline/>
+                    <field name="date" colspan="2"/>
+                    <group colspan="8" />
+                    <button icon="gtk-cancel" special="cancel" string="Cancel" colspan="2"/>
+                    <button icon="gtk-execute" string="Generate Entries" name="button_generate_all" type="object"  colspan="2"/> 
+                    <group colspan="6" />
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_product_asset_generate_entries" model="ir.actions.act_window">
+        <field name="name">Generate Asset Entries</field>
+        <field name="res_model">product.asset.generate.entries</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem sequence="200" action="action_product_asset_generate_entries" id="menu_product_asset_generate_entries" parent="product_asset.menu_asset_sales" />
+
+
 
 </data>
 </openerp>

@@ -1496,6 +1496,7 @@ class account_move(osv.osv):
         'date': fields.date('Date', required=True, states={'posted':[('readonly',True)]}, select=True),
         'narration':fields.text('Narration'),
         'company_id': fields.related('journal_id','company_id',type='many2one',relation='res.company',string='Company', store=True, readonly=True),
+        'asset_id': fields.many2one('product.asset', 'Asset', readonly=1),
     }
     _defaults = {
         'name': '/',
@@ -1651,6 +1652,7 @@ class account_move(osv.osv):
         default.update({
             'state':'draft',
             'name':'/',
+            'asset_id': False,
         })
         context.update({
             'copy':True
@@ -1946,6 +1948,18 @@ class account_move(osv.osv):
             obj_move_line.create_analytic_lines(cr, uid, [line.id for line in record.line_id], context)
 
         valid_moves = [move.id for move in valid_moves]
+        if valid_moves:
+            # copy ad from account_move_line to asset line
+            # case of AD copied from header to line on posting
+            cr.execute('''update product_asset_line al
+                set analytic_distribution_id = ml.analytic_distribution_id
+                from account_move_line ml
+                where
+                    ml.asset_line_id = al.id
+                    and (al.analytic_distribution_id!=ml.analytic_distribution_id or al.analytic_distribution_id is null)
+                    and ml.analytic_distribution_id is not null
+                    and ml.move_id in %s
+            ''', (tuple(valid_moves),))
         return len(valid_moves) > 0 and valid_moves or False
 
     # US-852: At the end of each sync execution of the create move line, make a quick check if any other move lines of the same move were invalid
