@@ -1131,6 +1131,7 @@ class account_invoice(osv.osv):
                     'invo_supplier_id': line.invoice_id.partner_id.id,
                     'from_invoice': True,
                     'move_line_id': line.move_lines[0].id,
+                    'start_date': line.invoice_id.date_invoice,
                 }, context=context)
                 number = asset_obj.read(cr, uid, asset_id, ['name'], context=context)['name']
                 asset_obj.log(cr, uid, asset_id, _('Asset %s created from %s') % (number, line.invoice_id.number), context=context)

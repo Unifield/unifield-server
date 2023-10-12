@@ -116,6 +116,8 @@ class product_asset(osv.osv):
         default.update({
             'partner_name': False,
             'analytic_distribution_id': False,
+            'line_ids': False,
+            'has_lines': False,
         })
         # call to super
         return super(product_asset, self).copy(cr, uid, id, default, context=context)
@@ -247,6 +249,10 @@ class product_asset(osv.osv):
 
         return result
 
+    def change_invo_date(self, cr, uid, ids, date, context=None):
+        if date:
+            return {'value': {'start_date': date}}
+        return {}
 
     def _get_book_value(self, cr, uid, ids, field_name, args, context=None):
         if not ids:
@@ -270,6 +276,15 @@ class product_asset(osv.osv):
             if x[2]:
                 ret[x[0]]['disposal_amount'] = x[2] - x[1]
 
+        return ret
+
+    def _get_has_posted_lines(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+        cr.execute("select asset_id from product_asset_line where move_id is not null and asset_id in %s group by asset_id", (tuple(ids), ))
+        for x in cr.fetchall():
+            ret[x[0]] = True
         return ret
 
     _columns = {
@@ -322,12 +337,14 @@ class product_asset(osv.osv):
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
         'useful_life_id': fields.many2one('product.asset.useful.life', 'Useful Life (years)'),
-        'start_date': fields.date('Start Date'),
+        'start_date': fields.date('Start Date', required=1),
         'line_ids': fields.one2many('product.asset.line', 'asset_id', 'Depreciation Lines'),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'depreciation_amount': fields.function(_get_book_value, string='Depreciation', type='float', method=True, help="Sum off all Asset journal item lines", multi='get_book', with_null=True),
         'disposal_amount': fields.function(_get_book_value, string='Remaining net value', type='float', method=True, multi='get_book', with_null=True),
         'journal_id': fields.many2one('account.journal', readonly=1), # TODO CREATE IF MISSING
+        'has_lines': fields.boolean('Has Line', readonly='1'),
+        'has_posted_lines': fields.function(_get_has_posted_lines, string='Has at least one posted line', type='boolean', method=True),
     }
 
     _defaults = {
@@ -340,6 +357,32 @@ class product_asset(osv.osv):
     _sql_constraints = [('asset_name_uniq', 'unique(name, product_id, partner_name)', 'Asset Code must be unique per instance and per product!'),
                         ]
     _order = 'name desc'
+
+    def button_set_as_draft(self, cr, uid, ids, context=None):
+        draft_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'running')], context=context)
+        if draft_ids:
+            to_change = []
+            for asset in self.browse(cr, uid, draft_ids, fields_to_fetch=['has_posted_lines'], context=context):
+                if not asset.has_posted_lines:
+                    to_change.append(asset.id)
+            if to_change:
+                self.write(cr, uid, draft_ids, {'state': 'draft'}, context=context)
+        return True
+
+    def button_start_depreciation(self, cr, uid, ids, context=None):
+        draft_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context)
+        if draft_ids:
+            self.write(cr, uid, draft_ids, {'state': 'running'}, context=context)
+        return True
+
+    def button_delete_draft_entries(self, cr, uid, ids, context=None):
+        draft_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context)
+        line_ids = self.pool.get('product.asset.line').search(cr, uid, [('asset_id', 'in', draft_ids)], context=context)
+        if line_ids:
+            self.pool.get('product.asset.line').unlink(cr, uid, line_ids, context=context)
+        if draft_ids:
+            self.write(cr, uid, draft_ids, {'has_lines': False}, context=context)
+        return True
 
     def button_generate_draft_entries(self, cr, uid, ids, context=None):
         line_obj = self.pool.get('product.asset.line')
@@ -410,7 +453,8 @@ class product_asset(osv.osv):
                 'last_dep_day': line[3],
             }, context=context)
 
-        self.write(cr, uid, ids[0], {'state': 'running'}, context=context)
+        if to_create:
+            self.write(cr, uid, ids[0], {'has_lines': True}, context=context)
         return True
 
 
@@ -454,6 +498,37 @@ class product_asset(osv.osv):
         res['domain'] = [('asset_id', 'in', asset_ids)]
         res['target'] = 'current'
         return res
+
+    def change_line(self, cr , uid, ids, context=None):
+        if ids:
+            d = self.read(cr, uid, ids[0], ['depreciation_amount', 'disposal_amount', 'state', 'has_posted_lines'], context=context)
+            return {'value': {'depreciation_amount': d['depreciation_amount'], 'disposal_amount': d['disposal_amount'], 'state': d['state'], 'has_posted_lines': d['has_posted_lines']}}
+        return {}
+
+    def test_and_set_done(self, cr , uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cr.execute('''
+            select
+                a.id
+            from
+                product_asset a
+                left join product_asset_line l on l.asset_id = a.id
+                left join account_move m on m.asset_id = a.id and m.state = 'draft'
+            where
+                a.id in %s and
+                a.state = 'running'
+            group by a.id
+            having  (
+                count(l.id) = 0 or count(m.id) = 0
+            )
+        ''', (tuple(ids), ))
+        to_close = [x[0] for x in cr.fetchall()]
+        if to_close:
+            self.write(cr, uid, to_close, {'state': 'done'}, context=context)
+            return True
+        return False
+
 product_asset()
 
 
@@ -461,12 +536,6 @@ class product_asset_event(osv.osv):
     _name = "product.asset.event"
     _rec_name = 'asset_id'
     _description = "Event for asset follow up"
-
-    stateSelection = [('blank', ' '),
-                      ('inUse', 'In Use'),
-                      ('stock', 'Stock'),
-                      ('repair', 'Repair'),
-                      ]
 
     eventTypeSelection = [('reception', 'Reception'),
                           ('startUse', 'Start Use'),
@@ -561,9 +630,8 @@ class product_asset_event(osv.osv):
         # event information
         'date': fields.date('Date', required=True),
         'location': fields.char('Location', size=128, required=True),
-        'proj_code': fields.char('Project Code', size=128, required=True),
+        'proj_code': fields.char('Project Code', size=128),
         'event_type': fields.selection(eventTypeSelection, 'Event Type', required=True),
-        'state': fields.selection(stateSelection, 'Current Status'),
         # selection
         'asset_id': fields.many2one('product.asset', 'Asset Code', required=True, ondelete='cascade'),
         'product_id': fields.many2one('product.product', 'Product', readonly=True, ondelete='cascade'),
@@ -577,7 +645,6 @@ class product_asset_event(osv.osv):
 
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d'),
-        'state': 'blank',
     }
 
 product_asset_event()
@@ -673,6 +740,28 @@ class product_asset_line(osv.osv):
 
         return res
 
+    def _get_dep(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+
+        if ids:
+            for _id in ids:
+                res[_id] = {'depreciation_amount': False, 'remaining_amount': False}
+            cr.execute("""
+                select
+                    l1.id, sum(l2.amount), a.invo_value - sum(l2.amount)
+                from
+                    product_asset_line l1, product_asset a, product_asset_line l2
+                where
+                    l1.asset_id = a.id and
+                    l2.asset_id = l1.asset_id and
+                    l2.date <= l1.date and
+                    l1.id in %s
+                group by l1.id, a.invo_value
+            """, (tuple(ids), ))
+            for x in cr.fetchall():
+                res[x[0]] = {'depreciation_amount': round(x[1], 2) , 'remaining_amount': max(round(x[2], 2), 0)}
+        return res
+
 
     _columns = {
         'date': fields.date('Date', readonly=1, select=1),
@@ -681,7 +770,7 @@ class product_asset_line(osv.osv):
         'move_state': fields.related('move_id', 'state', type='selection', selection=[('posted', 'Posted'), ('draft', 'Unposted')], string="Entry State"),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
-        'asset_id': fields.many2one('product.asset', 'Asset', required=1, select=1),
+        'asset_id': fields.many2one('product.asset', 'Asset', required=1, select=1, join=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'),
@@ -696,20 +785,24 @@ class product_asset_line(osv.osv):
         'first_dep_day': fields.date('1st depreciation day', readonly=1),
         'last_dep_day': fields.date('Last depreciation day', readonly=1),
         'is_disposal': fields.boolean('Disposal'),
+        'depreciation_amount': fields.function(_get_dep, type='float', method=1, string="Cumulative Amount", multi='get_dep'),
+        'remaining_amount': fields.function(_get_dep, type='float', method=1, string="Remaining Amount", multi='get_dep'),
     }
 
     _defaults = {
         'is_disposal': False,
     }
 
+
     def button_post_entries(self, cr, uid, ids, context=None):
-        to_create = self.search(cr, uid, [('id', 'in', ids), ('move_id', '=', False)], context=context)
+        to_create = self.search(cr, uid, [('id', 'in', ids), ('move_id', '=', False), ('asset_id.state', '=', 'running')], context=context)
         if to_create:
             self.button_generate_unposted_entries(cr, uid, to_create, context=context)
 
         move_obj = self.pool.get('account.move')
+        line_to_post = self.search(cr, uid, [('id', 'in', ids), ('move_id.state', '=', 'draft'), ('asset_id.state', '=', 'running')], context=context)
         to_post = []
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self.browse(cr, uid, line_to_post, fields_to_fetch=['move_id'], context=context):
             to_post.append(line.move_id.id)
         if to_post:
             move_obj.button_validate(cr, uid, to_post, context=context)
@@ -724,6 +817,8 @@ class product_asset_line(osv.osv):
 
         period_cache = {}
         for line in self.browse(cr, uid, ids, context=context):
+            if line.asset_id.state != 'running':
+                continue
             update_data = {}
             context.update({'date': line.date})
 
@@ -829,7 +924,7 @@ class product_asset_disposal(osv.osv_memory):
 
         nb_draft = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>=', wiz.disposal_date), ('move_id.state', '=', 'draft')], count=True, context=context)
         if nb_draft > 1:
-            raise osv.except_osv(_('Error !'), _('Date of disposal %s does not match: there are %d draft entries') % (wiz.disposal_date, nb_draft))
+            raise osv.except_osv(_('Error !'), _('Date of disposal %s does not match: there are %d unposted entries') % (wiz.disposal_date, nb_draft))
 
         disposale_dt = datetime.strptime(wiz.disposal_date, '%Y-%m-%d')
         end_of_month = disposale_dt + relativedelta(months=1, day=1, days=-1)

@@ -1546,7 +1546,8 @@ class account_move(osv.osv):
             #            raise osv.except_osv(_('Integrity Error !'), _('You cannot validate a non-balanced entry !\nMake sure you have configured Payment Term properly !\nIt should contain atleast one Payment Term Line with type "Balance" !'))
             raise osv.except_osv(_('Integrity Error!'), _('You cannot validate a non-balanced entry ! All lines should have a “Valid” state to validate the entry.'))
         obj_sequence = self.pool.get('ir.sequence')
-        for move in self.browse(cr, uid, valid_moves, context=context):
+        asset_ids_to_check = []
+        for move in self.browse(cr, uid, valid_moves, fields_to_fetch=['name', 'journal_id', 'period_id', 'asset_id'], context=context):
             if move.name =='/':
                 new_name = False
                 journal = move.journal_id
@@ -1563,8 +1564,15 @@ class account_move(osv.osv):
                 if new_name:
                     self.write(cr, uid, [move.id], {'name':new_name})
 
-        return super(account_move, self).write(cr, uid, valid_moves,
-                                               {'state':'posted'})
+            if move.asset_id:
+                asset_ids_to_check.append(move.asset_id.id)
+
+        a = super(account_move, self).write(cr, uid, valid_moves,
+                                            {'state':'posted'})
+
+        if asset_ids_to_check:
+            self.pool.get('product.asset').test_and_set_done(cr, uid, asset_ids_to_check, context=context)
+        return a
 
     def button_validate(self, cursor, user, ids, context=None):
         for move in self.browse(cursor, user, ids, context=context):
