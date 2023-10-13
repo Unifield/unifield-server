@@ -143,7 +143,7 @@
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Description')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Notes')}</Data></Cell>
-      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Analytic Distribution')}</Data></Cell>
+      <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Percentage')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Destination')}</Data></Cell>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Funding Pool')}</Data></Cell>
@@ -184,10 +184,10 @@
             <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].destination_id.code or ''|x}</Data></Cell>
             <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].analytic_id.code or ''|x}</Data></Cell>
         % elif ad_obj and len(ad_obj.funding_pool_lines) > 1:
-            <Cell ss:StyleID="editable_red_bold"><Data ss:Type="String">${'SPLIT'|x}</Data></Cell>
-            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
-            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
-            <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${o._get_ad(ad_obj)[0] or ''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${o._get_ad(ad_obj)[1] or ''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${o._get_ad(ad_obj)[2] or ''|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${o._get_ad(ad_obj)[3] or ''|x}</Data></Cell>
         % else:
             <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
             <Cell ss:StyleID="editable"><Data ss:Type="String">${''|x}</Data></Cell>
