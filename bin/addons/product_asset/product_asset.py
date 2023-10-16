@@ -179,6 +179,15 @@ class product_asset(osv.osv):
         '''
         if not ids:
             return True
+
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution'):
+            for f in  ['asset_type_id', 'useful_life_id', 'asset_bs_depreciation_account_id', 'asset_pl_account_id', 'start_date', 'move_line_id']:
+                if f in vals:
+                    del(vals[f])
+
         # fetch the product
         if 'product_id' in vals:
             productId = vals['product_id']
