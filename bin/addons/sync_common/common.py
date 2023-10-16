@@ -86,6 +86,7 @@ WHITE_LIST_MODEL = [
     'pack.type',
     'product.asset',
     'product.asset.type',
+    'product.asset.useful.life',
     'product.category',
     'product.cold_chain',
     'product.heat_sensitive',
