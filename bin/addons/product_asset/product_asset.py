@@ -624,13 +624,14 @@ class product_asset(osv.osv):
             from
                 product_asset a
                 left join product_asset_line l on l.asset_id = a.id
-                left join account_move m on m.asset_id = a.id and m.state = 'draft'
+                left join account_move_line ml on ml.asset_line_id = l.id
+                left join account_move m on m.id = ml.move_id and m.state = 'posted'
             where
                 a.id in %s and
                 a.state = 'running'
             group by a.id
             having  (
-                count(l.id) = 0 or count(m.id) = 0
+                count(l.id) = count(m.id)
             )
         ''', (tuple(ids), ))
         to_close = [x[0] for x in cr.fetchall()]
