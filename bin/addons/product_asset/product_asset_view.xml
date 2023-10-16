@@ -258,7 +258,7 @@
     </record>
 
     <!-- Assets in SALES>Products -->
-    <menuitem id="menu_asset_sales" name="Assets" parent="base.menu_product" sequence="100" />
+    <menuitem id="menu_asset_sales" name="Assets" parent="account.menu_finance_periodical_processing" sequence="20" />
     <menuitem action="asset_normal_action" id="menu_assets_sales"
         parent="menu_asset_sales" sequence="1" />
 
@@ -404,7 +404,7 @@
     </record>
 
     <menuitem action="asset_event_type_action" id="menu_asset_event_type"
-        parent="menu_asset_sales" sequence="1001" />
+        parent="account.menu_configuration_misc" sequence="60" />
 
     <!-- Asset Events in SALES>Products>Assets -->
     <menuitem action="asset_event_normal_action" id="menu_asset_event_sales"
@@ -469,7 +469,7 @@
 
     <!-- Asset Types in SALES>Products>Asssets -->
     <menuitem action="asset_type_normal_action" id="menu_asset_type_sales"
-        parent="product_attributes.menu_product_config" sequence="1000" />
+        parent="account.menu_configuration_misc" sequence="50" />
 
 
     <record id="action_open_asset_account_move_line" model="ir.actions.server">
