@@ -961,8 +961,6 @@ class finance_tools(osv.osv):
                 else:
                     msg = _(
                         'Posting date should be later than Document Date.')
-            import traceback
-            traceback.print_stack()
             raise osv.except_osv(_('Error'), msg)
 
         # if the system doesn't allow doc dates from previous FY, check that this condition is met
