@@ -106,7 +106,7 @@ class account_invoice_import(osv.osv_memory):
         def _is_ad_diff(current_ad, cc_ids, dest_ids, fp_ids, percentages):
             ad_diff = False
             if len(current_ad.funding_pool_lines) != len(percentages):
-                return False
+                return True
             for i, percent in enumerate(percentages):
                 if current_ad.funding_pool_lines[i].analytic_id.id != fp_ids[i] or \
                         current_ad.funding_pool_lines[i].cost_center_id.id != cc_ids[i] or \
