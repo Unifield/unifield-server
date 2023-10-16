@@ -117,7 +117,7 @@ class product_asset(osv.osv):
             line_obj.write(cr, uid, to_reset_asset_line_ids, {'analytic_distribution_id': False})
         return True
 
-    def _getRelatedProductFields(self, cr, uid, productId, write=False):
+    def _getRelatedProductFields(self, cr, uid, productId, update_account=True):
         '''
         get related fields from product
         '''
@@ -133,7 +133,7 @@ class product_asset(osv.osv):
             'prod_int_name': product.name,
             'nomenclature_description': product.nomenclature_description,
         }
-        if not write:
+        if update_account:
             result.update({
                 'asset_bs_depreciation_account_id': product.categ_id.asset_bs_depreciation_account_id.id or False,
                 'asset_pl_account_id': product.categ_id.asset_pl_account_id.id or product.property_account_expense.id or product.categ_id.property_account_expense_categ.id or False,
@@ -182,7 +182,7 @@ class product_asset(osv.osv):
         if 'product_id' in vals:
             productId = vals['product_id']
             # add readonly fields to vals
-            vals.update(self._getRelatedProductFields(cr, uid, productId, write=True))
+            vals.update(self._getRelatedProductFields(cr, uid, productId, update_account=False))
 
         if 'move_line_id' in vals:
             vals.update(self._getRelatedMoveLineFields(cr, uid, vals['move_line_id'], context=context))
@@ -194,13 +194,19 @@ class product_asset(osv.osv):
         override create method to force readonly fields to be saved to db
         on data creation
         '''
+
+        if not context:
+            context = {}
+
+        from_sync = context.get('sync_update_execution')
+
         # fetch the product
         if 'product_id' in vals:
             productId = vals['product_id']
             # add readonly fields to vals
-            vals.update(self._getRelatedProductFields(cr, uid, productId))
+            vals.update(self._getRelatedProductFields(cr, uid, productId, update_account=not from_sync))
 
-        if 'move_line_id' in vals:
+        if not from_sync and 'move_line_id' in vals:
             vals.update(self._getRelatedMoveLineFields(cr, uid, vals['move_line_id'], context=context))
 
         # UF-1617: set the current instance into the new object if it has not been sent from the sync
