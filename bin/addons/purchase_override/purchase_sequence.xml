@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="1">
+    <data noupdate="0">
         <record id="purchase.seq_purchase_order" model="ir.sequence">
             <field name="name">Purchase Order</field>
             <field name="code">purchase.order</field>

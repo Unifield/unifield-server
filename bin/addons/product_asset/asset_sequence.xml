@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
-	<data>
+    <data>
 
         <!-- Sequences for product.asset -->
         <record id="seq_type_product_asset" model="ir.sequence.type">
@@ -11,10 +11,10 @@
         <record id="seq_product_asset" model="ir.sequence">
             <field name="name">Product Asset</field>
             <field name="code">product.asset</field>
-            <field name="prefix">AF/</field>
+            <field name="prefix">AF-%(instance)s-</field>
             <field name="padding">5</field>
         </record>
 
-	</data>
+    </data>
 </openerp>
 

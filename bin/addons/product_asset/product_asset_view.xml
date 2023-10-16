@@ -39,8 +39,15 @@
             <form string="Disposal">
                 <field name="disposal_date" />
                 <newline />
+                <field name="event_type_id" on_change="change_event_type_id(event_type_id)" />
+                <newline />
                 <field name="disposal_expense_account" />
                 <newline />
+                <field name="register_event" />
+                <newline />
+                <field name="location" attrs="{'invisible': [('register_event','=', False)], 'required': [('register_event','!=', False)]}" />
+                <field name="proj_code" attrs="{'invisible': [('register_event','=', False)]}" />
+                <field name="comment" attrs="{'invisible': [('register_event','=', False)]}" colspan="4"/>
                 <group colspan="4" col="4">
                     <button name="button_generate_disposal_entry" type="object" string="Dispose" icon="gtk-ok"/>
                     <button name="cancel"  type="special" special="cancel" string="Cancel" icon="gtk-cancel" />
@@ -59,8 +66,11 @@
             <form string="Asset">
                     <field name="name" />
                     <field name="partner_name" readonly='1'/>
-                    <field name="asset_type_id" on_change="change_asset_type_id(asset_type_id, useful_life_id)" required="1" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
-                    <field name="useful_life_id" widget="selection" get_selection="get_selection_useful_life_id" required="1" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
+                    <field name="journal_id" />
+                    <group colspan="2" col="4">
+                        <field name="asset_type_id" on_change="change_asset_type_id(asset_type_id, useful_life_id)" required="1" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
+                        <field name="useful_life_id" widget="selection" get_selection="get_selection_useful_life_id" required="1" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
+                    </group>
                     <field name="product_id" on_change="onChangeProductId(product_id)" attrs="{'readonly': ['|', '|', ('from_invoice', '=', True), ('state', '!=', 'draft'), ('has_lines', '!=', False)]}"/>
                     <field name="description" attrs="{'readonly': ['|', '|', ('from_invoice', '=', True), ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
                     <notebook colspan="4">
@@ -100,10 +110,10 @@
 
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
-                            <field name="invo_num" colspan="4" attrs="{'readonly': [('from_invoice', '=', True)]}" />
-                            <field name="invo_date" colspan="4" attrs="{'readonly': [('from_invoice', '=', True)]}" on_change="change_invo_date(invo_date)"/>
-                            <field name="invo_value" attrs="{'readonly': [('from_invoice', '=', True)]}" />
-                            <field name="invo_currency" attrs="{'readonly': [('from_invoice', '=', True)]}" />
+                            <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('has_lines', '!=', False)]}" on_change="change_invo_date(move_line_id)" domain="[('journal_id.type', '=', 'purchase'), ('account_id.user_type_code', '=', 'asset')]" />
+                            <field name="invo_date" />
+                            <field name="invo_value" />
+                            <field name="invo_currency"  />
                             <field name="invo_supplier_id" colspan="4" attrs="{'readonly': [('from_invoice', '=', True)]}" />
                             <field name="invo_donator_code" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}"/>
                             <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}"/>
@@ -119,7 +129,7 @@
                             <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [('state', '!=', 'running')]}">
                                 <tree string="Events" editable="top">
                                     <field name="date" />
-                                    <field name="event_type" />
+                                    <field name="event_type_id" />
                                     <field name="location" />
                                     <field name="proj_code" />
                                     <field name="comment" />
@@ -148,7 +158,7 @@
                                 on_change="change_line()"
                                 filter_selector="[('Show all', []), ('Hide Posted', ['|', ('move_id', '=', False), ('move_id.state', '!=', 'posted')])]"
                                 o2m_selectable="2">
-                            <tree string="Depreciation Lines" editable="top" hide_delete_button="1" hide_new_button="1">
+                            <tree string="Depreciation Lines" editable="top" hide_delete_button="1" hide_new_button="1" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount')">
                                 <field name="date" />
                                 <field name="amount" />
                                 <field name="depreciation_amount" />
@@ -171,13 +181,14 @@
                 <group colspan="4" col="10">
                     <field name="has_lines" invisible="1" />
                     <field name="has_posted_lines" invisible="1" />
+                    <field name="can_be_disposed" invisible="1" />
                     <field name="state" />
                     <field name="from_invoice"  />
                     <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|', ('has_lines', '!=', False), ('state', '!=', 'draft')]}" />
                     <button type="object" name="button_delete_draft_entries" string="Delete Lines" icon="terp-gtk-stop" attrs="{'invisible': ['|', ('has_lines', '=', False), ('state', '!=', 'draft')]}" />
                     <button type="object" name="button_start_depreciation" string="Start Depreciation" icon="terp-camera_test" attrs="{'invisible': ['|', ('has_lines', '=', False), ('state', '!=', 'draft')]}" />
                     <button type="object" name="button_set_as_draft" string="Set as Draft" icon="gtk-goto-first" attrs="{'invisible': ['|', ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
-                    <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': [('state', '!=', 'running')]}"/>
+                    <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', ('state', '!=', 'running'), ('can_be_disposed', '=', False)]}"/>
                 </group>
             </form>
         </field>
@@ -267,7 +278,7 @@
                     <field name="date" />
                     <field name="location" />
                     <field name="proj_code" />
-                    <field name="event_type" />
+                    <field name="event_type_id" />
                 </group>
 
                 <group colspan="2" col="2">
@@ -299,7 +310,7 @@
                 <field name="asset_id" />
                 <field name="product_id" />
                 <field name="asset_type_id" />
-                <field name="event_type" />
+                <field name="event_type_id" />
                 <field name="location" />
                 <field name="proj_code" />
             </tree>
@@ -315,7 +326,7 @@
                 <field name="date" />
                 <field name="asset_id" />
                 <field name="product_id" domain="[('subtype', '=', 'asset')]" />
-                <field name="event_type" />
+                <field name="event_type_id" />
                 <newline />
                 <group expand="0" string="Group By..." colspan="11" col="11">
                     <filter string="Asset Form" icon="terp-accessories-archiver"
@@ -327,7 +338,7 @@
                     <filter string="Project Code" icon="gtk-bold" domain="[]"
                         context="{'group_by':'proj_code'}" />
                     <filter string="Event Type" icon="gtk-select-color" domain="[]"
-                        context="{'group_by':'event_type'}" />
+                        context="{'group_by':'event_type_id'}" />
                 </group>
             </search>
         </field>
@@ -341,6 +352,59 @@
         <field name="search_view_id" ref="asset_event_search_form_view" />
     </record>
 
+    <record id="asset_event_type_form_view" model="ir.ui.view">
+        <field name="name">product.asset.event.type.form</field>
+        <field name="model">product.asset.event.type</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Asset Event Type" hide_delete_button="True">
+                <field name="name" />
+                <field name="active" />
+                <newline />
+                <field name="is_disposal" />
+                <field name="expense_account_id" attrs="{'invisible': [('is_disposal', '=', False)], 'required': [('is_disposal', '!=', False)]}" />
+            </form>
+        </field>
+    </record>
+
+    <record id="asset_event_type_tree_view" model="ir.ui.view">
+        <field name="name">product.asset.event.type.tree</field>
+        <field name="model">product.asset.event.type</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Asset Event Types" colors="grey: not is_active" hide_delete_button="True" editable="top">
+                <field name="name" />
+                <field name="active" />
+                <field name="is_disposal" />
+                <field name="expense_account_id" attrs="{'invisible': [('is_disposal', '=', False)], 'required': [('is_disposal', '!=', False)]}" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="asset_event_type_search_view" model="ir.ui.view">
+        <field name="name">product.asset.event.type.search</field>
+        <field name="model">product.asset.event.type</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Asset Event Types">
+                <filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
+                <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('active','=', False)]" />
+                <field name="name" />
+                <field name="is_disposal" />
+                <field name="expense_account_id" />
+            </search>
+        </field>
+    </record>
+
+    <record id="asset_event_type_action" model="ir.actions.act_window">
+        <field name="name">Asset Event Types</field>
+        <field name="res_model">product.asset.event.type</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem action="asset_event_type_action" id="menu_asset_event_type"
+        parent="menu_asset_sales" sequence="1001" />
 
     <!-- Asset Events in SALES>Products>Assets -->
     <menuitem action="asset_event_normal_action" id="menu_asset_event_sales"
@@ -351,18 +415,20 @@
         <field name="model">product.asset.type</field>
         <field name="type">form</field>
         <field name="arch" type="xml">
-            <form string="Asset Type">
-                <group colspan="2" col="2">
-                    <separator string="Asset Type Information" colspan="2" />
-                    <field name="name" />
-                    <field name="description" />
-                    <field name="active" />
-                    <field name="useful_life_id">
-                        <tree editable="top">
-                            <field name="year" />
-                        </tree>
-                    </field>
-                </group>
+            <form string="Asset Type" hide_delete_button="True">
+                <separator string="Asset Type Information" colspan="4" />
+                <field name="name" />
+                <field name="description" />
+                <field name="active" />
+                <newline />
+                <field name="useful_life_id"
+                    filter_selector="[('Show Active', [('is_active', '=', True)]), ('Show Inactive', [('is_active', '=', False)]), ('Show all', [])]"
+                    >
+                    <tree editable="top" colors="grey: not is_active" hide_delete_button="True">
+                        <field name="year" />
+                        <field name="is_active" />
+                    </tree>
+                </field>
             </form>
         </field>
     </record>
@@ -372,10 +438,25 @@
         <field name="model">product.asset.type</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Asset Types">
+            <tree string="Asset Types" colors="grey: not is_active" hide_delete_button="True">
                 <field name="name" />
                 <field name="description" />
+                <field name="active" />
             </tree>
+        </field>
+    </record>
+
+    <record id="asset_type_normal_search_view" model="ir.ui.view">
+        <field name="name">asset.type.normal.search</field>
+        <field name="model">product.asset.type</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Asset Types">
+                <filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
+                <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('active','=', False)]" />
+                <field name="name" />
+                <field name="description" />
+            </search>
         </field>
     </record>
 

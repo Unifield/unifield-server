@@ -518,7 +518,7 @@ class expression(object):
                     if params and operator in ('like', 'ilike', 'not like', 'not ilike', '=like', '=ilike'):
                         params = params.replace('\\', '\\\\').replace('_', '\\_')
                     if add_null:
-                        query = '(%s OR %s IS NULL)' % (query, left)
+                        query = '(%s OR %s.%s IS NULL)' % (query, table._table, left)
 
         if isinstance(params, basestring):
             params = [params]
