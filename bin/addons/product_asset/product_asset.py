@@ -149,7 +149,7 @@ class product_asset(osv.osv):
         if not default:
             default = {}
         default.update({
-            'partner_name': False,
+            'instance_id': False,
             'analytic_distribution_id': False,
             'line_ids': False,
             'has_lines': False,
@@ -167,7 +167,7 @@ class product_asset(osv.osv):
             'name': False,
             'from_invoice': False,
             'event_ids': [],
-            'partner_name': False,
+            'instance_id': False,
         })
         return super(product_asset, self).copy_data(cr, uid, id, default, context=context)
 
@@ -210,10 +210,8 @@ class product_asset(osv.osv):
             vals.update(self._getRelatedMoveLineFields(cr, uid, vals['move_line_id'], context=context))
 
         # UF-1617: set the current instance into the new object if it has not been sent from the sync
-        if 'partner_name' not in vals or not vals['partner_name']:
-            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            if company and company.partner_id:
-                vals['partner_name'] = company.partner_id.name
+        if 'instance_id' not in vals or not vals['instance_id']:
+            vals['instance_id'] = self.pool.get('res.company')._get_instance_id(cr, uid)
 
         if not vals.get('name'):
             vals['name'] = self.pool.get('ir.sequence').get(cr, uid, 'product.asset')
@@ -420,8 +418,7 @@ class product_asset(osv.osv):
         # event history
         'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
         # UF-1617: field only used for sync purpose
-        'partner_id': fields.many2one('res.partner', string="Instance/id", readonly=True, required=False),
-        'partner_name': fields.char('Instance', size=128, required=True),
+        'instance_id': fields.many2one('msf.instance', string="Instance/id", readonly=True, required=False),
         'xmlid_name': fields.char('XML Code, hidden field', size=128),
         'from_invoice': fields.boolean('From Invoice', readonly=1),
         'state': fields.selection([('draft', 'Draft'), ('running', 'Running'), ('done', 'Done')], 'State', readonly=1),
@@ -448,8 +445,7 @@ class product_asset(osv.osv):
         'instance_level': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_level(cr, uid)
     }
     # UF-2148: use this constraint with 3 attrs: name, prod and instance
-    _sql_constraints = [('asset_name_uniq', 'unique(name, product_id, partner_name)', 'Asset Code must be unique per instance and per product!'),
-                        ]
+    _sql_constraints = [('asset_name_uniq', 'unique(name)', 'Asset Code must be unique.')]
     _order = 'name desc'
 
     def button_set_as_draft(self, cr, uid, ids, context=None):
