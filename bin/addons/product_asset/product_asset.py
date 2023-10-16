@@ -166,6 +166,7 @@ class product_asset(osv.osv):
         default.update({
             'name': False,
             'from_invoice': False,
+            'from_sync': False,
             'event_ids': [],
             'instance_id': False,
         })
@@ -199,6 +200,9 @@ class product_asset(osv.osv):
             context = {}
 
         from_sync = context.get('sync_update_execution')
+
+        if from_sync:
+            vals['from_sync'] = True
 
         # fetch the product
         if 'product_id' in vals:
@@ -421,6 +425,7 @@ class product_asset(osv.osv):
         'instance_id': fields.many2one('msf.instance', string="Instance/id", readonly=True, required=False),
         'xmlid_name': fields.char('XML Code, hidden field', size=128),
         'from_invoice': fields.boolean('From Invoice', readonly=1),
+        'from_sync': fields.boolean('From Sync', readonly=1),
         'state': fields.selection([('draft', 'Draft'), ('running', 'Running'), ('done', 'Done')], 'State', readonly=1),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),

@@ -71,11 +71,11 @@
                         <field name="asset_type_id" on_change="change_asset_type_id(asset_type_id, useful_life_id)" required="1" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
                         <field name="useful_life_id" widget="selection" get_selection="get_selection_useful_life_id" required="1" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
                     </group>
-                    <field name="product_id" on_change="onChangeProductId(product_id)" attrs="{'readonly': ['|', '|', ('from_invoice', '=', True), ('state', '!=', 'draft'), ('has_lines', '!=', False)]}"/>
-                    <field name="description" attrs="{'readonly': ['|', '|', ('from_invoice', '=', True), ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
+                    <field name="product_id" on_change="onChangeProductId(product_id)" attrs="{'readonly': ['|', '|', '|',  ('from_sync', '=', True), ('from_invoice', '=', True), ('state', '!=', 'draft'), ('has_lines', '!=', False)]}"/>
+                    <field name="description" attrs="{'readonly': ['|', '|', '|', ('from_sync', '=', True), ('from_invoice', '=', True), ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
                     <notebook colspan="4">
                     <page string="Asset Form">
-                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}">
+                        <group colspan="2" col="2" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('has_lines', '!=', False), ('from_sync', '=', True)]}">
                             <separator string="MSF Codification" colspan="2" />
                             <field name="prod_int_code" />
                             <field name="prod_int_name" />
@@ -84,7 +84,7 @@
                             <field name="local_ref" />
                         </group>
 
-                        <group colspan="2" col="8" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}">
+                        <group colspan="2" col="8" attrs="{'readonly': ['|', '|', ('from_sync', '=', True), ('state', '!=', 'draft'), ('has_lines', '!=', False)]}">
                             <separator string="Asset Reference" colspan="2" />
                             <field name="serial_nb" colspan="8" />
                             <field name="brand" colspan="8" />
@@ -96,10 +96,10 @@
                         <group colspan="2" col="4">
                             <separator string="Comment" colspan="4" />
                             <!-- display hack -->
-                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', '=', 'done')]}"/>
                         </group>
 
-                        <group colspan="2" col="2" attrs="{'readonly': [('state', '=', 'done')]}">
+                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '=', 'done')]}">
                             <separator string="Traceability" colspan="2" />
                             <field name="project_po" />
                             <field name="orig_mission_code" />
@@ -110,13 +110,13 @@
 
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
-                            <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('has_lines', '!=', False)]}" on_change="change_invo_date(move_line_id)" domain="[('journal_id.type', '=', 'purchase'), ('account_id.user_type_code', '=', 'asset')]" />
+                            <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', '|', ('from_sync', '=', True), ('from_invoice', '=', True), ('has_lines', '!=', False)]}" on_change="change_invo_date(move_line_id)" domain="[('journal_id.type', '=', 'purchase'), ('account_id.user_type_code', '=', 'asset')]" />
                             <field name="invo_value" />
                             <field name="invo_currency"  />
                             <field name="invo_date" />
-                            <field name="invo_supplier_id" colspan="4" attrs="{'readonly': [('from_invoice', '=', True)]}" />
-                            <field name="invo_donator_code" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                            <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                            <field name="invo_supplier_id" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('from_invoice', '=', True)]}" />
+                            <field name="invo_donator_code" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', '=', 'done')]}"/>
+                            <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', '=', 'done')]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Accounts" colspan="2" />
@@ -183,6 +183,7 @@
                     <field name="has_posted_lines" invisible="1" />
                     <field name="can_be_disposed" invisible="1" />
                     <field name="instance_level" invisible="1" />
+                    <field name="from_sync" invisible="1" />
                     <field name="state" />
                     <field name="from_invoice"  />
                     <group colspan="2" col="4" attrs="{'invisible': [('instance_level', '=', 'project')]}">
