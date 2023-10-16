@@ -208,16 +208,16 @@ class account_invoice_import(osv.osv_memory):
                     description = line[cols['description']] and tools.ustr(line[cols['description']])
                     notes = line[cols['notes']] and tools.ustr(line[cols['notes']])
                     percentage_vals = line[cols['percentage']] and \
-                                      (len(tools.ustr(line[cols['percentage']]).split(';')) > 1 and
+                                      (len(tools.ustr(line[cols['percentage']]).split(';')) > 0 and
                                        tools.ustr(line[cols['percentage']]).split(';'))
                     cost_center_vals = line[cols['cost_center']] and \
-                                       (len(tools.ustr(line[cols['cost_center']]).split(';')) > 1 and
+                                       (len(tools.ustr(line[cols['cost_center']]).split(';')) > 0 and
                                         tools.ustr(line[cols['cost_center']]).split(';'))
                     destination_vals = line[cols['destination']] and \
-                                       (len(tools.ustr(line[cols['destination']]).split(';')) > 1 and
+                                       (len(tools.ustr(line[cols['destination']]).split(';')) > 0 and
                                         tools.ustr(line[cols['destination']]).split(';'))
                     funding_pool_vals = line[cols['funding_pool']] and \
-                                        (len(tools.ustr(line[cols['funding_pool']]).split(';')) > 1 and
+                                        (len(tools.ustr(line[cols['funding_pool']]).split(';')) > 0 and
                                          tools.ustr(line[cols['funding_pool']]).split(';'))
 
                     if not line_number:
