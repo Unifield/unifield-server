@@ -111,9 +111,9 @@
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
                             <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('has_lines', '!=', False)]}" on_change="change_invo_date(move_line_id)" domain="[('journal_id.type', '=', 'purchase'), ('account_id.user_type_code', '=', 'asset')]" />
-                            <field name="invo_date" />
                             <field name="invo_value" />
                             <field name="invo_currency"  />
+                            <field name="invo_date" />
                             <field name="invo_supplier_id" colspan="4" attrs="{'readonly': [('from_invoice', '=', True)]}" />
                             <field name="invo_donator_code" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}"/>
                             <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}"/>
@@ -178,17 +178,23 @@
                         </field>
                     </page>
                 </notebook>
-                <group colspan="4" col="10">
+                <group colspan="4" col="8">
                     <field name="has_lines" invisible="1" />
                     <field name="has_posted_lines" invisible="1" />
                     <field name="can_be_disposed" invisible="1" />
+                    <field name="instance_level" invisible="1" />
                     <field name="state" />
                     <field name="from_invoice"  />
-                    <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|', ('has_lines', '!=', False), ('state', '!=', 'draft')]}" />
-                    <button type="object" name="button_delete_draft_entries" string="Delete Lines" icon="terp-gtk-stop" attrs="{'invisible': ['|', ('has_lines', '=', False), ('state', '!=', 'draft')]}" />
-                    <button type="object" name="button_start_depreciation" string="Start Depreciation" icon="terp-camera_test" attrs="{'invisible': ['|', ('has_lines', '=', False), ('state', '!=', 'draft')]}" />
-                    <button type="object" name="button_set_as_draft" string="Set as Draft" icon="gtk-goto-first" attrs="{'invisible': ['|', ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
-                    <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', ('state', '!=', 'running'), ('can_be_disposed', '=', False)]}"/>
+                    <group colspan="2" col="4" attrs="{'invisible': [('instance_level', '=', 'project')]}">
+                        <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|', ('has_lines', '!=', False), ('state', '!=', 'draft')]}" />
+                        <button type="object" name="button_delete_draft_entries" string="Delete Lines" icon="terp-gtk-stop" attrs="{'invisible': ['|', ('has_lines', '=', False), ('state', '!=', 'draft')]}" />
+                        <button type="object" name="button_start_depreciation" string="Start Depreciation" icon="terp-camera_test" attrs="{'invisible': ['|', ('has_lines', '=', False), ('state', '!=', 'draft')]}" />
+                        <button type="object" name="button_set_as_draft" string="Set as Draft" icon="gtk-goto-first" attrs="{'invisible': ['|', ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
+                        <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', ('state', '!=', 'running'), ('can_be_disposed', '=', False)]}"/>
+                    </group>
+                    <group colspan="2" col="2" attrs="{'invisible': [('instance_level', '=', 'coordo')]}">
+                        <button type="object" name="button_project_depreciation" string="Start Depreciation" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                    </group>
                 </group>
             </form>
         </field>
@@ -362,6 +368,7 @@
                 <field name="active" />
                 <newline />
                 <field name="is_disposal" />
+                <newline />
                 <field name="expense_account_id" attrs="{'invisible': [('is_disposal', '=', False)], 'required': [('is_disposal', '!=', False)]}" />
             </form>
         </field>

@@ -24,6 +24,10 @@ class product_asset_type(osv.osv):
     _defaults = {
         'active': True,
     }
+
+    _sql_constraints = [
+        ('unique_name', 'unique(name)', 'Name already exists.'),
+    ]
 product_asset_type()
 
 class product_asset_event_type(osv.osv):
@@ -362,6 +366,13 @@ class product_asset(osv.osv):
             ret[x[0]] = True
         return ret
 
+    def _get_instance_level(self, cr, uid, ids, field_name, args, context=None):
+        level = self.pool.get('res.company')._get_instance_level(cr, uid)
+        res = {}
+        for _id in ids:
+            res[_id] = level
+        return res
+
     _columns = {
         # asset
         'name': fields.char('Asset Code', size=128, readonly=True),
@@ -420,6 +431,7 @@ class product_asset(osv.osv):
         'has_lines': fields.boolean('Has Line', readonly='1'),
         'has_posted_lines': fields.function(_get_has_posted_lines, string='Has at least one posted line', type='boolean', method=True),
         'can_be_disposed': fields.function(_get_can_be_disposed, string='Can be diposed', type='boolean', method=True),
+        'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', method=True),
     }
 
     _defaults = {
@@ -427,6 +439,7 @@ class product_asset(osv.osv):
         'receipt_place': 'Country/Project/Activity',
         'state': 'draft',
         'journal_id': lambda self, cr, uid, context: self.pool.get('account.journal').search(cr, uid, [('type', '=', 'depreciation'), ('is_current_instance', '=', True)], context=context)[0],
+        'instance_level': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_level(cr, uid)
     }
     # UF-2148: use this constraint with 3 attrs: name, prod and instance
     _sql_constraints = [('asset_name_uniq', 'unique(name, product_id, partner_name)', 'Asset Code must be unique per instance and per product!'),
@@ -442,6 +455,12 @@ class product_asset(osv.osv):
                     to_change.append(asset.id)
             if to_change:
                 self.write(cr, uid, draft_ids, {'state': 'draft'}, context=context)
+        return True
+
+    def button_project_depreciation(self, cr, uid, ids, context=None):
+        draft_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context)
+        if draft_ids:
+            self.write(cr, uid, draft_ids, {'state': 'running'}, context=context)
         return True
 
     def button_start_depreciation(self, cr, uid, ids, context=None):
