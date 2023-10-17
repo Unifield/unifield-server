@@ -35,7 +35,7 @@ from service import http_server
 from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from lxml import etree
-
+from datetime import datetime
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -114,6 +114,7 @@ class groups(osv.osv):
             context = {}
         if not ids:
             return True
+
         if 'name' in vals:
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
@@ -245,6 +246,8 @@ def _tz_get(self,cr,uid, context=None):
 class users(osv.osv):
     __admin_ids = {}
     __sync_user_ids = {}
+    __unidata_pull_ids = {}
+    __ignore_ur_ids = {}
     _uid_cache = {}
     _name = "res.users"
     _order = 'name'
@@ -469,6 +472,17 @@ class users(osv.osv):
                 res[u.id]['new_signature_required'] = True
         return res
 
+    def _get_display_email_popup(self, cr, uid, ids, name=None, arg=None, context=None):
+        ret = {}
+        if datetime.now() > datetime(2023, 12, 4):
+            for x in ids:
+                ret[x] = False
+            return ret
+
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['synchronize', 'dont_ask_email'], context=context):
+            ret[x.id] = x.id != 1 and not x['synchronize'] and not x['dont_ask_email']
+        return ret
+
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
                             help="The new user's real name, used for searching"
@@ -534,6 +548,9 @@ class users(osv.osv):
         'nb_shortcut_used': fields.integer('Number of shortcut used', help="Number of time a shortcut has been used by this user", readonly=True),
         'last_password_change': fields.datetime('Last Password Change', readonly=1),
         'never_expire': fields.boolean('Password never expires', help="If unticked, the password must be changed every 6 months"),
+        'dont_ask_email': fields.boolean("Don't ask for email", readonly=1),
+        'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1),
+        'display_email_popup': fields.function(_get_display_email_popup, type='boolean', method=True, string='Display popup at login'),
     }
 
     def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
@@ -638,6 +655,16 @@ class users(osv.osv):
             self.__sync_user_ids[cr.dbname] = ir_model_data_obj.read(cr, 1, [mdid], ['res_id'])[0]['res_id']
         return self.__sync_user_ids[cr.dbname]
 
+    def _get_unidata_pull_user_id(self, cr):
+        if self.__unidata_pull_ids.get(cr.dbname) is None:
+            self.__unidata_pull_ids[cr.dbname] = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_unidata_pull')[1]
+        return self.__unidata_pull_ids[cr.dbname]
+
+    def _get_ignore_ur_ids(self, cr):
+        if self.__ignore_ur_ids.get(cr.dbname) is None:
+            self.__ignore_ur_ids[cr.dbname] = [self._get_unidata_pull_user_id(cr), self._get_sync_user_id(cr)]
+        return self.__ignore_ur_ids[cr.dbname]
+
     def _get_company(self,cr, uid, context=None, uid2=False):
         if not uid2:
             uid2 = uid
@@ -697,7 +724,23 @@ class users(osv.osv):
         return self._get_company(cr, uid, context=context, uid2=uid2)
 
     # User can write to a few of her own fields (but not her groups for example)
-    SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email']
+    SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email', 'dont_ask_email', 'nb_email_asked']
+
+    def set_dont_ask_email(self, cr, uid, context=None):
+        self.write(cr, 1, uid, {'dont_ask_email': True}, context=context)
+        return True
+
+    def set_nb_email_asked(self, cr, uid, nb, context=None):
+        if uid:
+            cr.execute('update res_users set nb_email_asked=coalesce(nb_email_asked, 0)+1 where id=%s', (uid, ))
+        return True
+
+    def set_my_email(self, cr, uid, email, context=None):
+        value = {'user_email': email}
+        if email:
+            value['dont_ask_email'] = True
+        self.write(cr, 1, uid, value, context=context)
+        return True
 
     def remove_higer_level_groups(self, cr, uid, ids, context=None):
         '''
@@ -766,7 +809,12 @@ class users(osv.osv):
                 if 'company_id' in values:
                     if not (values['company_id'] in self.read(cr, 1, uid, ['company_ids'], context=context)['company_ids']):
                         del values['company_id']
+                if values.get('user_email'):
+                    values['dont_ask_email'] = True # disable pop up
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
+
+        if values.get('active') and self._get_unidata_pull_user_id(cr) in ids:
+            raise osv.except_osv(_('Error'), _('Activation of UniData_pull user is not allowed.'))
 
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
@@ -791,8 +839,7 @@ class users(osv.osv):
                 raise osv.except_osv(_('Warning'), _('You can not deactivate this user, %d documents have to be signed\n%s') % (len(open_sign_ids), ', '.join(list_of_doc)))
             for xuser in self.browse(cr, uid, ids, fields_to_fetch=['name', 'has_valid_signature'], context=context):
                 if xuser.has_valid_signature:
-                    raise osv.except_osv(_('Warning'), _('You can not deactivate %s: the signature is active') % (xuser['name'], ))
-
+                    values.update(self.reset_signature(cr, uid, ids, context=context, from_write_user=True))
 
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
@@ -830,8 +877,15 @@ class users(osv.osv):
         return res
 
     def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         if 1 in ids:
             raise osv.except_osv(_('Can not remove root user!'), _('You can not remove the admin user as it is used internally for resources created by OpenERP (updates, module installation, ...)'))
+
+        if not context.get('sync_update_execution') and self.pool.get('msf.instance') and self.pool.get('res.company')._get_instance_level(cr, uid) in ('coordo', 'project'):
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('synchronize', '=', True), ('active', 'in', ['t', 'f'])], context=context):
+                raise osv.except_osv(_('Warning'), _('Can not remove a synchronized user.'))
+
         db = cr.dbname
         if db in self._uid_cache:
             for id in ids:
@@ -1013,7 +1067,7 @@ class users(osv.osv):
                                     confirm_passwd, context=context)
 
     def change_password(self, db_name, login, old_passwd, new_passwd,
-                        confirm_passwd, context=None):
+                        confirm_passwd, email=None, context=None):
         """Change current user password. Old password must be provided explicitly
         to prevent hijacking an existing user session, or for cases where the cleartext
         password is not used to authenticate requests.
@@ -1047,6 +1101,10 @@ class users(osv.osv):
                     'last_password_change': time.strftime('%Y-%m-%d %H:%M:%S'),
                 }
                 self.check(db_name, uid, tools.ustr(old_passwd))
+                if email is not None:
+                    vals['user_email'] = email
+                if email:
+                    vals['dont_ask_email'] = True
                 result = self.write(cr, 1, uid, vals)
                 cr.commit()
             finally:
@@ -1057,7 +1115,7 @@ class users(osv.osv):
     def get_admin_profile(self, cr, uid, context=None):
         return uid == 1
 
-    def _archive_signature(self, cr, uid, ids, new_from=None, new_to=None, context=None):
+    def _archive_signature(self, cr, uid, ids, new_from=None, new_to=None, from_write_user=None, context=None):
         sign_line_obj = self.pool.get('signature.line')
         for user in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to', 'name'] , context=context):
             if user.esignature_id:
@@ -1080,14 +1138,17 @@ class users(osv.osv):
                 new_data['signature_from'] = new_from
                 if user.signature_to and new_from >= user.signature_to:
                     new_data['signature_to'] = False
-            self.write(cr, uid, [user.id], new_data, context=context)
+            if from_write_user:
+                return new_data
+            else:
+                self.write(cr, uid, [user.id], new_data, context=context)
         return True
 
     def delete_signature(self, cr, uid, ids, context=None):
         return self._archive_signature(cr, uid, ids, context=context)
 
-    def reset_signature(self, cr, uid, ids, context=None):
-        return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), context=context)
+    def reset_signature(self, cr, uid, ids, context=None, from_write_user=False):
+        return self._archive_signature(cr, uid, ids, new_from=fields.date.today(), from_write_user=from_write_user, context=context)
 
     def add_signature(self, cr, uid, ids, context=None):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid

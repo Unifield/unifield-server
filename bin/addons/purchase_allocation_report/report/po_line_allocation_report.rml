@@ -139,7 +139,7 @@
     
     
     <!-- LINES LIST -->
-    <blockTable colWidths="33.0,128.0,49.0,41.0,41.0,41.0,49.0,49.0,112.0,65.0,65.0,49.0,49.0,49.0" style="ProductList">
+    <blockTable colWidths="31.0,113.0,49.0,30.0,41.0,31.0,49.0,49.0,87.0,65.0,65.0,49.0,53.0,49.0,59.0" style="ProductList">
         <tr>
             <td>
                 <para style="InformationHeader">O. l.</para>
@@ -181,10 +181,13 @@
                 <para style="InformationHeader">Source Doc</para>
             </td>
             <td>
-                <para style="InformationHeader">Partner</para>
+                <para style="InformationHeader">Requestor</para>
             </td>
             <td>
                 <para style="InformationHeader">Partner Doc</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Comment</para>
             </td>
         </tr>
    </blockTable>
@@ -192,7 +195,7 @@
    
    <section>
    [[ repeatIn(o.allocation_report_lines, 'line') ]]
-   <blockTable colWidths="33.0,128.0,49.0,41.0,41.0,41.0,49.0,49.0,112.0,65.0,65.0,49.0,49.0,49.0" style="ProductList">
+   <blockTable colWidths="31.0,113.0,49.0,30.0,41.0,31.0,49.0,49.0,87.0,65.0,65.0,49.0,53.0,49.0,59.0" style="ProductList">
         <tr>
             <td>
                 <para style="Information">[[ line.line_number ]]</para>
@@ -234,17 +237,20 @@
                 <parawrap style="Information">[[ line.source_doc ]]</parawrap>
             </td>
             <td>
-                <parawrap style="Information">[[ line.partner_id.name ]]</parawrap>
+                <parawrap style="Information">[[ line.requestor ]]</parawrap>
             </td>
             <td>
                 <parawrap style="Information">[[ line.partner_doc ]]</parawrap>
+            </td>
+            <td>
+                <parawrap style="Information">[[ line.comment ]]</parawrap>
             </td>
         </tr>
    </blockTable>
    </section>
 
    <!-- TOTAL -->
-   <blockTable colWidths="33.0,128.0,49.0,41.0,41.0,41.0,49.0,49.0,112.0,65.0,65.0,49.0,49.0,49.0" style="ProductList">
+   <blockTable colWidths="31.0,113.0,49.0,30.0,41.0,31.0,49.0,49.0,87.0,65.0,65.0,49.0,53.0,49.0,59.0" style="ProductList">
         <tr>
             <td>
                 <para style="Information"></para>
@@ -282,6 +288,9 @@
                 <para style="Information"></para>
             </td>
 
+            <td>
+                <para style="Information"></para>
+            </td>
             <td>
                 <para style="Information"></para>
             </td>

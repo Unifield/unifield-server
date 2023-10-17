@@ -563,9 +563,8 @@ class res_partner(osv.osv):
         }))
         tender_ids = [tend for tend in tender_obj.search(cr, uid, [('state', '=', 'comparison')]) if ids[0] in tender_obj.read(cr, uid, tend, ['supplier_ids'])['supplier_ids']]
         com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')], context=context)
-        ship_ids = ship_obj.search(cr, uid,
-                                   [('state', 'not in', ['done', 'delivered']), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])],
-                                   context=context)
+        ship_ids = ship_obj.search(cr, uid, [('state', 'not in', ['done', 'delivered', 'cancel']),
+                                             '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])], context=context)
         absl_ids = absl_obj.search(cr, uid, [('state', 'in', ['draft', 'temp']), ('partner_id', '=', ids[0])], context=context)
         aml_ids = aml_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('reconcile_id', '=', False), ('account_id.reconcile', '=', True)])
 
@@ -968,6 +967,39 @@ class res_partner(osv.osv):
 
         return {'value': r}
 
+    def on_change_po_pricelist(self, cr, uid, ids, po_pricelist_id, context=None):
+        """
+        Set the data of property_product_pricelist to match property_product_pricelist_purchase's currency
+        """
+        if context is None:
+            context = {}
+
+        pricel_obj = self.pool.get('product.pricelist')
+        fo_pricelist_ids = False
+        if po_pricelist_id:
+            po_pricel_curr_id = pricel_obj.browse(cr, uid, po_pricelist_id, fields_to_fetch=['currency_id'],
+                                                  context=context).currency_id.id
+            fo_pricelist_ids = pricel_obj.search(cr, uid, [('currency_id', '=', po_pricel_curr_id), ('type', '=', 'sale')], context=context)
+        return {'value': {'property_product_pricelist': fo_pricelist_ids and fo_pricelist_ids[0] or False}}
+
+    def on_change_fo_pricelist(self, cr, uid, ids, po_pricelist_id, context=None):
+        """
+        Prevent the manual modification of property_product_pricelist
+        """
+        if context is None:
+            context = {}
+
+        pricel_obj = self.pool.get('product.pricelist')
+        fo_pricelist_ids = False
+        if po_pricelist_id:
+            po_pricel_curr_id = pricel_obj.browse(cr, uid, po_pricelist_id, fields_to_fetch=['currency_id'],
+                                                  context=context).currency_id.id
+            fo_pricelist_ids = pricel_obj.search(cr, uid, [('currency_id', '=', po_pricel_curr_id), ('type', '=', 'sale')], context=context)
+        return {
+            'warning': {'title': _('Warning'), 'message': _('You can not change the Field Orders Default Currency manually. It will automatically match the currency of Purchase Default Currency when it is changed.')},
+            'value': {'property_product_pricelist': fo_pricelist_ids and fo_pricelist_ids[0] or False}
+        }
+
     def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
         '''
         Sort suppliers to have all suppliers in product form at the top of the list
@@ -978,34 +1010,46 @@ class res_partner(osv.osv):
         if args is None:
             args = []
 
+
         # Get all supplier
-        tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit,
-                                                  order, context=context, count=count)
         if not context.get('product_id', False) or 'choose_supplier' not in context or count:
-            return tmp_res
-        else:
-            # Get all supplier in product form
-            args.append(('in_product', '=', True))
-            res_in_prod = super(res_partner, self).search(cr, uid, args,
-                                                          offset, limit, order, context=context, count=count)
-            new_res = []
+            return super(res_partner, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
-            # Sort suppliers by sequence in product form
-            if 'product_id' in context:
-                supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id'))], order='sequence')
+        # To get the correct offset
+        args_in_product = args[:]  # copy the list by slicing
+        args_in_product.append(('in_product', '=', True))
+        if offset > 0:
+            nb_res_in_prod = super(res_partner, self).search(cr, uid, args_in_product, None, limit, order,
+                                                             context=context, count=True)
+            offset -= nb_res_in_prod
+            offset = offset > 0 and offset or 0
+        tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
 
-                for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name']):
+        # Get all supplier in product form
+        res_in_prod = super(res_partner, self).search(cr, uid, args_in_product, offset, limit, order,
+                                                      context=context, count=count)
+        new_res = []
+
+        # Sort suppliers by sequence in product form
+        if 'product_id' in context:
+            supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id'))], order='sequence')
+
+            for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name']):
+                try:
+                    tmp_res.remove(result['name'][0])
+                except:
                     try:
-                        tmp_res.remove(result['name'][0])
-                        new_res.append(result['name'][0])
+                        tmp_res.pop()
                     except:
                         pass
+                finally:
+                    new_res.append(result['name'][0])
 
-            #return new_res  # comment this line to have all suppliers (with suppliers in product form at the top of the list)
+        #return new_res  # comment this line to have all suppliers (with suppliers in product form at the top of the list)
 
-            new_res.extend(tmp_res)
+        new_res.extend(tmp_res)
 
-            return new_res
+        return new_res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """

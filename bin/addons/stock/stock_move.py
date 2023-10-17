@@ -6,6 +6,7 @@ import time
 
 from osv import fields, osv
 from tools.translate import _
+from tools.misc import _get_std_mml_status
 import netsvc
 import decimal_precision as dp
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
@@ -38,8 +39,14 @@ class stock_move(osv.osv):
 
     def name_get(self, cr, uid, ids, context=None):
         res = []
-        for line in self.browse(cr, uid, ids, context=context):
-            res.append((line.id, (line.product_id.code or '/')+': '+line.location_id.name+' > '+line.location_dest_id.name))
+        if context is None:
+            context = {}
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['product_id', 'line_number', 'location_id', 'location_dest_id'], context=context):
+            if context.get('display_move_line'):
+                prefix = '#%s %s' % (line.line_number, line.product_id.code or '/')
+            else:
+                prefix = line.product_id.code or '/'
+            res.append((line.id, '%s: %s > %s' % (prefix, line.location_id.name, line.location_dest_id.name)))
         return res
 
     def _get_picking_ids(self, cr, uid, ids, context=None):
@@ -296,7 +303,7 @@ class stock_move(osv.osv):
     def _get_product_type(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        for move in self.browse(cr, uid, ids, context=context):
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['product_id'], context=context):
             res[move.id] = move.product_id.type
 
         return res
@@ -404,9 +411,7 @@ class stock_move(osv.osv):
         '''
         result = {}
         uom_obj = self.pool.get('product.uom')
-        for move in self.read(cr, uid, ids,
-                              ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'],
-                              context=context):
+        for move in self.read(cr, uid, ids, ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'], context=context):
             default_values = {
                 'total_amount': 0.0,
                 'amount': 0.0,
@@ -437,8 +442,10 @@ class stock_move(osv.osv):
                 amount = 0
             result[move['id']]['amount'] = amount
             result[move['id']]['currency_id'] = move['sale_line_id'] and sale_line['currency_id'] and sale_line['currency_id'][0] or False
+            if move['product_uom']:
+                uom_rounding = uom_obj.read(cr, uid, move['product_uom'][0], ['rounding'], context=context)['rounding']
+                result[move['id']]['product_uom_rounding_is_pce'] = uom_rounding == 1
         return result
-
 
     def _get_picking_with_sysint_name(self, cr, uid, ids, fields, arg, context=None):
         res = {}
@@ -448,6 +455,7 @@ class stock_move(osv.osv):
             else:
                 res[x.id] = x.picking_id.name
         return res
+
 
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
@@ -462,6 +470,8 @@ class stock_move(osv.osv):
         'product_uos_qty': fields.float('Quantity (UOS)', digits_compute=dp.get_precision('Product UoM'), states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, related_uom='product_uos_qty'),
         'product_uos': fields.many2one('product.uom', 'Product UOS', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
         'product_packaging': fields.many2one('product.packaging', 'Packaging', help="It specifies attributes of packaging like type, quantity of packaging,etc."),
+        'product_uom_rounding': fields.related('product_uom', 'rounding', type='float', string="UoM Rounding", digits_compute=dp.get_precision('Product UoM'), store=False, write_relate=False),
+        'product_uom_rounding_is_pce': fields.function(_vals_get, method=True, type='boolean', string="UoM Rounding is PCE", multi='get_vals', store=False, readonly=True),
 
         'location_id': fields.many2one('stock.location', 'Source Location', required=True, select=True,states={'done': [('readonly', True)]}, help="Sets a location if you produce at a fixed location. This can be a partner location if you subcontract the manufacturing operations."),
         'location_dest_id': fields.many2one('stock.location', 'Destination Location', required=True,states={'done': [('readonly', True)]}, select=True, help="Location where the system will stock the finished products."),
@@ -492,6 +502,7 @@ class stock_move(osv.osv):
 
         'qty_to_process': fields.float('Qty to Process', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),
         'qty_processed': fields.float('Qty Processed', help="Main pick, resgister sum of qties processed"),
+        'confirmed_qty': fields.float('Confirmed Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom', help="Quantity saved during the IN move's confirmation"),
         'type': fields.related('picking_id', 'type', string='Type', type='selection',
                                selection = [('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], readonly=True,
                                store = {
@@ -561,7 +572,7 @@ class stock_move(osv.osv):
         'exp_check': fields.function(_get_checks_all, method=True, string='ED', type='boolean', readonly=True, multi="m"),
         'kit_check': fields.function(_get_checks_all, method=True, string='Kit', type='boolean', readonly=True, multi="m"),
 
-        # reson types
+        # reason types
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=300, string='Comment'),
         'product_type': fields.function(_get_product_type, method=True, type='selection', selection=_get_product_type_selection, string='Product type',
@@ -621,6 +632,10 @@ class stock_move(osv.osv):
         'picking_with_sysint_name': fields.function(_get_picking_with_sysint_name, method=1, string='Picking IN [SYS-INT] name', type='char'),
         'included_in_mission_stock': fields.boolean('Stock move used to compute MSRL', internal=1, select=1),
         'in_forced': fields.boolean('IN line forced'),
+
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
     }
 
     def _check_asset(self, cr, uid, ids, context=None):
@@ -762,6 +777,9 @@ class stock_move(osv.osv):
         'integrity_error': 'empty',
         'included_in_mission_stock': False,
         'in_forced': False,
+        'confirmed_qty': 0.0,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):
@@ -925,6 +943,8 @@ class stock_move(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
+        if context is None:
+            context = {}
         prod_obj = self.pool.get('product.product')
 
         default = default.copy()
@@ -939,6 +959,8 @@ class stock_move(osv.osv):
             default['pt_created'] = False
         if 'integrity_error' not in default:
             default['integrity_error'] = 'empty'
+        if not context.get('from_button'):
+            default['composition_list_id'] = False
         default['included_in_mission_stock'] = False
 
         new_id = super(stock_move, self).copy(cr, uid, id, default, context=context)
@@ -977,17 +999,24 @@ class stock_move(osv.osv):
         if 'pack_info_id' not in defaults:
             defaults['pack_info_id'] = False
 
+        if context.get('subtype') != 'in' or (context.get('from_button') and context.get('web_copy')):
+            defaults['confirmed_qty'] = 0
+
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
             # UF-1797: when we duplicate a doc we delete the link with the poline
             if 'purchase_line_id' not in defaults and not context.get('keepPoLine', False):
                 defaults.update(purchase_line_id=False)
-            if context.get('web_copy', False) and 'sale_line_id' not in defaults:
-                defaults.update(sale_line_id=False)
+            if context.get('web_copy', False):
+                if 'sale_line_id' not in defaults:
+                    defaults.update(sale_line_id=False)
+                defaults['composition_list_id'] = False
             if context.get('subtype', False) == 'incoming':
                 # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
                 input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
                 defaults.update(location_dest_id=input_loc)
+        else:
+            defaults['composition_list_id'] = False
         return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
 
     def onchange_lot_processor(self, cr, uid, ids, lot_id, qty, location_id, uom_id, context=None):
@@ -1349,8 +1378,13 @@ class stock_move(osv.osv):
         # check qty > 0 or raise
         self.check_product_quantity(cr, uid, ids, context=context)
 
-        vals.update({'state': 'confirmed', 'already_confirmed': True})
-        self.write(cr, uid, ids, vals)
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['picking_id', 'product_qty', 'confirmed_qty'], context=context):
+            l_vals = vals
+            l_vals.update({'state': 'confirmed', 'already_confirmed': True})
+            if move.picking_id.type == 'in' and not move.picking_id.purchase_id and move.product_qty and \
+                    not move.confirmed_qty:
+                l_vals.update({'confirmed_qty': move.product_qty})
+            self.write(cr, uid, move.id, vals)
         self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
 
@@ -1741,6 +1775,13 @@ class stock_move(osv.osv):
                         if has_linked_pol:
                             context.pop('sol_done_instead_of_cancel')
 
+            # Remove all KCL references from the OUT process wizard lines linked to the move
+            if move.product_id.subtype == 'kit':
+                out_m_proc_obj = self.pool.get('outgoing.delivery.move.processor')
+                out_m_proc_ids = out_m_proc_obj.search(cr, uid, [('move_id', '=', move.id), ('composition_list_id', '!=', False)], context=context)
+                if out_m_proc_ids:
+                    out_m_proc_obj.write(cr, uid, out_m_proc_ids, {'composition_list_id': False}, context=context)
+
         self.action_done(cr, uid, move_to_done, context=context)
 
         # Search only non unlink move
@@ -1891,6 +1932,9 @@ class stock_move(osv.osv):
                 picking_ids.append(move.picking_id.id)
                 if move.type == 'out':
                     vals.update({'reason_type_id': move.picking_id.reason_type_id.id})
+                    # Close the linked KCL when the Shipment processes the PACK
+                    if move.picking_subtype == 'packing' and move.subtype == 'kit' and move.composition_list_id:
+                        self.pool.get('composition.kit').close_kit(cr, uid, [move.composition_list_id.id], self._name, context=context)
             if self._hook_action_done_update_out_move_check(cr, uid, ids, context=context, move=move,):
                 vals.update({'move_history_ids': [(4, move.move_dest_id.id)]})
                 #cr.execute('insert into stock_move_history_ids (parent_id,child_id) values (%s,%s)', (move.id, move.move_dest_id.id))

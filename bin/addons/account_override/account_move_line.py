@@ -28,6 +28,7 @@ import decimal_precision as dp
 from tools.translate import _
 from time import strftime
 import finance_export
+import tools
 
 
 class account_move_line(osv.osv):
@@ -104,7 +105,7 @@ class account_move_line(osv.osv):
         """
         if name and value:
             sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s" # not_a_user_entry
-            cr.execute(sql, (value, aml_id))
+            cr.execute(sql, (tools.ustr(value), aml_id))
         return True
 
     def _search_reference(self, cr, uid, obj, name, args, context):
@@ -303,6 +304,12 @@ class account_move_line(osv.osv):
             ret[i] = finance_export.finance_archive._get_hash(cr, uid, [i], 'account.move.line')
         return ret
 
+    def _get_hq_system_acc(self, cr, uid, ids, field_name, args, context=None):
+        return self.pool.get('account.export.mapping')._get_hq_system_acc(cr, uid, ids, field_name, args, self, context=context)
+
+    def _search_hq_acc(self, cr, uid, ids, name, args, context=None):
+        return self.pool.get('account.export.mapping')._search_hq_acc(cr, uid, ids, name, args, self, context=context)
+
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
@@ -363,6 +370,8 @@ class account_move_line(osv.osv):
         'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
                                  store=False, help='DB ID used for Vertical Integration'),
         'product_code': fields.related('product_id', 'default_code', type='char', size=64, string='Product Code', readonly=True),
+        'hq_system_account': fields.function(_get_hq_system_acc, type='char', store=False, fnct_search=_search_hq_acc,
+                                             method=True, string='HQ System Account', size=32),
     }
 
     _defaults = {
@@ -678,6 +687,9 @@ class account_move_line(osv.osv):
             'revaluation_reference': '',
             'accrual': False,
             'accrual_line_id': False,
+            'counterpart_transfer_st_line_id': False,
+            'counterpart_transfer_st_line_sdref': False,
+            'has_a_counterpart_transfer': False,
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 
@@ -711,6 +723,25 @@ class account_move_line(osv.osv):
         if not ids:
             ids = self.search(cr, user, [('name', operator, name)]+ args, limit=limit)
         return self.name_get(cr, user, ids, context=context)
+
+    def open_counterpart_transfer_line(self, cr, uid, ids, context=None):
+        cp_st_line = [
+            x.counterpart_transfer_st_line_id.id
+            for x in self.browse(cr, uid, ids, fields_to_fetch=['counterpart_transfer_st_line_id'])
+        ]
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.bank.statement.line',
+            'view_type': 'form',
+            'view_mode': 'tree',
+            'search_view_id': data_obj.get_object_reference(cr, uid, 'register_accounting', 'account_bank_statement_line_empty_filter')[1],
+            'view_id': [view_id[1]],
+            'domain': [('id', 'in', cp_st_line)],
+            'context': context,
+            'target': 'new',
+        }
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

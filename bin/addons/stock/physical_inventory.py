@@ -97,7 +97,7 @@ class PhysicalInventory(osv.osv):
                 'discrepancy_lines_absvalue':discrepancy_lines_absvalue
             }
 
-            total['discrepancy_lines_percent'] = 100 * total['discrepancy_lines_number'] / total['inventory_lines_number'] if total['inventory_lines_number'] else 0.0
+            total['discrepancy_lines_percent'] = 100.0 * total['discrepancy_lines_number'] / total['inventory_lines_number'] if total['inventory_lines_number'] else 0.0
             total['discrepancy_lines_percent_value'] = 100 * total['discrepancy_lines_value'] / total['inventory_lines_value'] if total['inventory_lines_value'] else 0.0
             total['discrepancy_lines_percent_absvalue'] = 100 * total['discrepancy_lines_absvalue'] / total['inventory_lines_absvalue'] if total['inventory_lines_absvalue'] else 0.0
 
@@ -127,7 +127,7 @@ class PhysicalInventory(osv.osv):
 
     _columns = {
         'ref': fields.char('Reference', size=64, readonly=True, sort_column='id'),
-        'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'name': fields.char('Details', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
         'date_done': fields.datetime('Date done', readonly=True),
@@ -1390,7 +1390,16 @@ class PhysicalInventoryCounting(osv.osv):
         'discrepancy': fields.boolean('Discrepancy found', readonly=True),
 
         # Actual batch number id, filled after the inventory switches to done
-        'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot', readonly=True)
+        'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot', readonly=True),
+
+        'mml_status': fields.function(tools.misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(tools.misc._get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
+    }
+
+    _defaults = {
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     _sql_constraints = [

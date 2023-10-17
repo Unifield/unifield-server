@@ -21,6 +21,7 @@
 
 import time
 from report import report_sxw
+from osv import osv
 from tools.translate import _
 
 
@@ -34,7 +35,6 @@ class report_reception(report_sxw.rml_parse):
             'enumerate': enumerate,
             'get_lines_by_packing': self.get_lines_by_packing,
             'getDateCreation': self.getDateCreation,
-            'getNbItem': self.getNbItem,
             'check': self.check,
             'getTotItems': self.getTotItems,
             'getConfirmedDeliveryDate': self.getConfirmedDeliveryDate,
@@ -47,7 +47,6 @@ class report_reception(report_sxw.rml_parse):
             'getPOref': self.getPOref,
             'getDetail': self.getDetail,
             'getProject': self.getProject,
-            'getQtyPO': self.getQtyPO,
             'getQtyIS': self.getQtyIS,
             'getWarning': self.getWarning,
             'getOriginRef': self.getOriginRef,
@@ -55,6 +54,7 @@ class report_reception(report_sxw.rml_parse):
             'getExpDate': self.getExpDate,
             'getActualReceiptDate': self.getActualReceiptDate,
             'getQtyBO': self.getQtyBO,
+            'getFromScratchQty': self.getFromScratchQty,
         })
 
     def getState(self, o):
@@ -88,39 +88,86 @@ class report_reception(report_sxw.rml_parse):
             elif len(tab) == 2:
                 warn += tab[0] + _(' and') + tab[1]
             elif len(tab) == 3:
-                warn += tab[0] + ', ' + tab[1] + _(' and') +  tab[2]
+                warn += tab[0] + ', ' + tab[1] + _(' and') + tab[2]
         if warn:
             warn += _(' goods products, please refer to the appropriate procedures')
         return warn
 
-    def getQtyPO(self,line):
-        # line amount from the PO, always the same on all INs for a given PO
-        val = 0
-        if line.state in ('assigned', 'confirmed', 'done'):
-            val = line.product_qty
-        return val
+    def getQtyBO(self, line):
+        '''
+        Get the remaining qty to receive, comparing the sum of the qty of all done IN moves linked to the PO line, to
+        the confirmed qty of the linked PO line
+        '''
+        bo_qty = line.state != 'done' and line.product_qty or 0
+        if line.purchase_line_id:
+            self.cr.execute("""SELECT SUM(product_qty) FROM stock_move WHERE purchase_line_id = %s AND state = 'done'
+                AND type = 'in'""", (line.purchase_line_id.id,))
+            sum_data = self.cr.fetchone()
+            bo_qty = line.purchase_line_id.product_qty - (sum_data and sum_data[0] or 0)
 
-    def getQtyBO(self,line,o):
-        bo_qty = 0
-        if line.state in ('assigned', 'shipped', 'confirmed'):
-            bo_qty = line.product_qty
+        return bo_qty >= 0 and bo_qty or 0
 
-        return bo_qty
-
-    def getQtyIS(self, line, o):
+    def getQtyIS(self, line, o, rounding):
         # Amount received in this IN only
         # REF-96: Don't count the shipped available IN
 
         val = 0
         if line.state == 'done':
             val = line.product_qty
-        elif line.state in ('cancel') or o.state in ('cancel'):
-            return '0' # US_275 Return 0 for cancel lines
+        elif line.state == 'cancel' or o.state == 'cancel':
+            return '0'  # US_275 Return 0 for cancel lines
 
         if val == 0:
-            return ' ' # display blank instead 0
-        return val
+            return ' '  # display blank instead 0
+        return self.formatFloatDigitsToUom(val, rounding)
 
+    def getQtyFromINs(self, qties, line_number, incoming, backorder_search):
+        '''
+        Recursive method to get the needed qties from an IN and all those linked to it
+        '''
+        if 'confirmed' not in qties or 'backorder' not in qties:
+            raise osv.except_osv(_('Error'), _('Please ensure that the list "qties" has "confirmed" and "backorder"'))
+
+        for move in incoming.move_lines:
+            if move.line_number == line_number:
+                qties['confirmed'] += move.product_qty
+                if move.state not in ['done', 'cancel']:
+                    qties['backorder'] += move.product_qty
+
+        new_incoming = False
+        if backorder_search:
+            pick_obj = self.pool.get('stock.picking')
+            backorder_ids = pick_obj.search(self.cr, self.uid, [('backorder_id', '=', incoming.id)], context=self.localcontext)
+            if backorder_ids:
+                new_incoming = pick_obj.browse(self.cr, self.uid, backorder_ids[0], context=self.localcontext)
+        else:
+            new_incoming = incoming.backorder_id
+
+        if new_incoming:
+            qties = self.getQtyFromINs(qties, line_number, new_incoming, backorder_search)
+
+        return qties
+
+    def getFromScratchQty(self, line):
+        '''
+        Get the total confirmed and backorder qty for this line using backorder_id data
+        '''
+        pick_obj = self.pool.get('stock.picking')
+        qties = {
+            'confirmed': line.product_qty,  # Kept for old INs that don't have confirmed_qty
+            'backorder': line.state not in ['done', 'cancel'] and line.product_qty or 0.00,
+        }
+
+        # Get qties from processed INs
+        if line.picking_id.backorder_id:
+            qties = self.getQtyFromINs(qties, line.line_number, line.picking_id.backorder_id, False)
+        # Get qties from backorders
+        backorder_ids = pick_obj.search(self.cr, self.uid, [('backorder_id', '=', line.picking_id.id)], context=self.localcontext)
+        if backorder_ids:
+            qties = self.getQtyFromINs(qties, line.line_number, pick_obj.browse(self.cr, self.uid, backorder_ids[0],
+                                                                                context=self.localcontext), True)
+
+        return qties
 
     def getProject(self,o):
         return o and o.purchase_id and o.purchase_id.dest_address_id and o.purchase_id.dest_address_id.name or False
@@ -195,10 +242,6 @@ class report_reception(report_sxw.rml_parse):
 
         return ' '
 
-    def getNbItem(self, ):
-        self.item += 1
-        return self.item
-
     def getDateCreation(self, o):
         return time.strftime('%d-%b-%Y', time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))
 
@@ -222,6 +265,5 @@ class report_reception(report_sxw.rml_parse):
 
         return sorted(pack_info.items(), key=lambda x: x[0] and (x[0].ppl_name, x[0].packing_list, x[0].parcel_from))
 
-report_sxw.report_sxw('report.msf.report_reception_in', 'stock.picking', 'addons/msf_printed_documents/report/report_reception.rml', parser=report_reception, header=False)
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+report_sxw.report_sxw('report.msf.report_reception_in', 'stock.picking', 'addons/msf_printed_documents/report/report_reception.rml', parser=report_reception, header=False)

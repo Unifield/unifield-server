@@ -8,16 +8,36 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Products to Process">
+                    <field name="alert_msl_mml" invisible="1"/>
                     <field name="date" invisible="1" />
                     <field name="picking_id" invisible="1" />
+                    <html colspan="4">
+                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                        <script language="javascript">
+                            var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                            if (alert_msl_mml) {
+                                $('#msl_mml').html(alert_msl_mml);
+                                $('#msl_mml').show();
+                            }
+                        </script>
+                    </html>
                     <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
                     <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree"
                            colspan="4" nolabel="1" />
                     <field name="draft" invisible="1"/>
+                    <field name="partial_process_sign" invisible="1" />
                     <group colspan="4" col="6" name="actions">
                         <separator string="Actions" colspan="6" />
+                        <group colspan="6" attrs="{'invisible': [('partial_process_sign', '=', False)]}">
+                            <html>
+                                <p style="font-weight: bold; font-size: 1.2em; color: red; text-align: center;">
+                                    <translate>Warning: The OUT has already been electronically validated for all quantities. The new OUT will need to be signed again and the signature for the backorder should be reset. Do you want to continue ?</translate>
+                                </p>
+                            </html>
+                        </group>
+                        <newline />
                         <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
@@ -36,7 +56,7 @@
                       editable="top"
                       hide_delete_button="1"
                       hide_new_button="1"
-                      colors="red:integrity_status!='empty'"
+                      colors="red:integrity_status!='empty' or mml_status=='F' and not from_wkf_line"
                       >
                     <!-- Invisible fields -->
                     <field name="type_check" invisible="1" />
@@ -45,10 +65,12 @@
                     <field name="asset_check" invisible="1" />
                     <field name="location_id" invisible="1" />
                     <field name="ssl_check" invisible="1" widget="null_boolean" />
+                    <field name="uom_rounding_is_pce" invisible="1" />
                     <!-- Visible fields -->
                     <field name="line_number" string="Line" />
                     <field name="product_id" string="Product" />
                     <field name="comment" readonly="1" />
+                    <field name="from_wkf_line" invisible="1" />
                     <button name="open_change_product_wizard"
                             type="object"
                             icon="gtk-convert"
@@ -60,8 +82,8 @@
                            attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}"
                            />
                     <field name="composition_list_id"
-                           domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real')]"
-                           attrs="{'readonly': [('kit_check', '=', False)]}"
+                           domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real'), ('kcl_used_by', '=', False)]"
+                           attrs="{'readonly': ['|', ('kit_check', '=', False), ('uom_rounding_is_pce', '=', False)]}"
                            />
                     <field name="ordered_quantity" />
                     <field name="ordered_uom_id" />
@@ -96,6 +118,8 @@
                     <field name="cost" />
                     <field name="currency" />
                     <field name="integrity_status" string="" />
+                    <field name="mml_status" />
+                    <field name="msl_status" />
                 </tree>
             </field>
         </record>

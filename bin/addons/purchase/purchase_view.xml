@@ -112,6 +112,7 @@
                         <field name="is_validated_and_synced" invisible="1"/>
                         <field name="po_version" invisible="1"/>
                         <field name="msg_big_qty" invisible="1"/>
+                        <field name="alert_msl_mml" invisible="1"/>
                         <group colspan="6">
                             <html>
                                 <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
@@ -140,8 +141,17 @@
                                 <p id="nr_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                     <translate>WARNING: Order line(s) not synchronized, code(s) does not exist</translate>
                                 </p>
+                                <p id="nr_ad_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                    <translate>WARNING: Order line(s) not synchronized, please add an AD on line(s): </translate>
+                                </p>
+                                <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
 
                                 <script language="javascript">
+                                    var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                                    if (alert_msl_mml) {
+                                        $('#msl_mml').html(alert_msl_mml);
+                                        $('#msl_mml').show();
+                                    }
                                     var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
                                     if (is_big_amount) {
                                         $('#big_amount').append('&lt;span&gt;'+is_big_amount+'&lt;/span&gt;&lt;br/&gt;');
@@ -166,6 +176,11 @@
                                     if (has_nr &amp;&amp; has_nr!= '0') {
                                         $('#nr_lines').show();
                                     }
+                                    var has_ad_nr = $('#ad_lines_message_nr').val() || $('#ad_lines_message_nr').text();
+                                    if (has_ad_nr) {
+                                        $('#nr_ad_lines').append(has_ad_nr);
+                                        $('#nr_ad_lines').show();
+                                    }
 
                                 </script>
                             </html>
@@ -182,10 +197,11 @@
                         <field name="push_fo" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
                         <field name="nb_creation_message_nr" invisible="1"/>
+                        <field name="ad_lines_message_nr" invisible="1"/>
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('order_type', '=', 'loan_return')]}"/>
                         <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <newline/>
-                        <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="categ" on_change="onchange_categ(categ)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         <newline/>
                     </group>
@@ -251,7 +267,7 @@
                                 filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="'3'" o2m_selectable="2"
                                 >
-                                <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" editable="both">
+                                <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p'])]}" editable="both">
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
@@ -271,6 +287,7 @@
                                     <field name="internal_code" invisible="True"/>
                                     <field name="internal_name" invisible="True"/>
                                     <field name="supplier_name" invisible="True"/>
+                                    <field name="fake_id" invisible="True"/>
                                     <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,'','', context)" string="Qty"/>
                                     <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
                                     <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, '', '', context)"/>
@@ -306,6 +323,8 @@
                                     <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated', 'validated_n'])]}" header="True"/>
                                     <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', '|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct'), '&amp;', ('dest_partner_type', 'in', ['internal', 'section', 'intermission']), ('po_version', '!=', 1)]}"/>
                                     <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': ['|', '&amp;', ('fake_state', '!=', 'draft'), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('fake_state', 'not in', ['draft', 'validated', 'validated_n']), ('partner_type', 'in', ['external', 'esc'])]}"/>
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                                 <!-- default form view -->
                             </field>
@@ -359,10 +378,10 @@
                             <group colspan="2" col="2">
                                 <separator string="Delivery" colspan="2"/>
                                 <field name="dest_partner_type" invisible="1" />
-                                <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('partner_type', '=', 'internal')]"/>
+                                <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('available_on_po_dpo', '=', active_id)]"/>
                                 <field name="dest_address_id" domain="[('dest_address', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="cross_docking_ok" invisible="1" />
-                                <field name="location_id" domain="[('usage', '=', 'internal')]" readonly="1" on_change="onchange_location_id(location_id,categ)"/>
+                                <field name="location_names" readonly="1"/>
                                 <field name="incoterm_id" attrs="{'invisible': [('intl_supplier_ok', '=', False)], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" widget="selection"/>
                             </group>
                             <newline/>
@@ -617,6 +636,8 @@
                             <field name="created_by_vi_import" invisible="1"/>
                             <field name="to_correct_ok" readonly="1" invisible="1"/>
                             <field name="show_msg_ok" readonly="1" invisible="1"/>
+                            <field name="mml_status" invisible="1" widget="char"/>
+                            <field name="msl_status" invisible="1" widget="char"/>
                             <group colspan="4">
                             <html>
                                     <style>
@@ -652,6 +673,19 @@
                                         padding: 5px;
                                         width: 90%%;
                                     }
+
+                                    #msl_error
+                                    {
+                                        height: 1em;
+                                        min-height: 1em;
+                                        color: red;
+                                        font-weight: bold;
+                                        text-transform: uppercase;
+                                        padding: 5px;
+                                        width: 99%%;
+                                        text-align: center;
+                                        display: none;
+                                    }
                                 </style>
                                 </html>
                             </group>
@@ -661,7 +695,15 @@
                                         <field name="text_error" nolabel="1" readonly="1" colspan="4" attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
                                         <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="4"/>
                                     </div>
+
                             </html>
+                            </group>
+                            <group colspan="4">
+                                <html colspan="4">
+                                <div id="msl_error">
+                                        <translate>Product is not conform to <span id="msl">MSL</span>  <span id="mml">MML</span></translate>
+                                </div>
+                                </html>
                             </group>
                             <separator string="Product" colspan="4" />
                             <field name="product_id" colspan="4" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,state,old_price_unit,nomen_manda_0,comment,context, parent.categ, True, linked_sol_id, po_order_type)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" default_focus="1"/>
@@ -693,7 +735,7 @@
                                 <field name="display_resourced_orig_line" readonly="1"/>
                                 <field name="display_sync_ref" invisible="1"/>
                                 <field name="instance_sync_order_ref" attrs="{'required': [('display_sync_ref', '=', True), ('created_by_vi_import', '=', False)], 'invisible': ['|', ('display_sync_ref', '=', False), ('origin', '=', False)]}" domain="[('order_id.name', '=', origin)]"/>
-
+                                <field name="reception_dest_id" readonly="1"/>
 
                             <separator string="Changes" colspan="5"/>
                             <group colspan="5" col="8">
@@ -735,6 +777,17 @@
                             $('#order_line\\/select_fo_open').css('display', 'none');
                             $('#order_line\\/select_fo_select').css('right', '-14px').css('top', '2px');
                             $('[for="order_line\\/select_fo"]').css('width', '1%%');
+                            var mml_status = $('#order_line\\/mml_status').val() || $('#order_line\\/mml_status').text();
+                            var msl_status = $('#order_line\\/msl_status').val() || $('#order_line\\/msl_status').text();
+                            if (mml_status != 'F') {
+                                $('#mml').hide();
+                            }
+                            if (msl_status != 'F') {
+                                $('#msl').hide();
+                            }
+                            if (mml_status == 'F'||msl_status=='F') {
+                                $('#msl_error').show();
+                            }
                             setTimeout("$('#error_message_unifield').css('overflow', 'visible').css('border-width', '1px').css('height', 'auto');", 500);
                             </script>
                             </html>
@@ -786,7 +839,7 @@
             <field name="arch" type="xml">
                 <form string="Request for Quotation Line">
                     <notebook colspan="4">
-                        <page string="Order Line">
+                        <page string="Order Line" name="orderline">
                             <field name="tender_line_id" invisible="1"/>
                             <field name="linked_sol_id" invisible="1"/>
                             <field name="created_by_vi_import" invisible="1"/>
@@ -834,7 +887,9 @@
                                     </div>
                                 </html>
                             </group>
+                            <separator string="Product" colspan="4"/>
                             <field name="product_id" colspan="4" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context,False,False,linked_sol_id,po_order_type)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" default_focus="1"/>
+                            <field name="comment" colspan="4" attrs="{'required': [('product_id', '=', False)]}"/>
                             <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment, context)"/>
                             <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
                             <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)"/>
@@ -862,9 +917,6 @@
                             <field name="fake_id" invisible="1"/>
                             <field name="change_price_ok" invisible="1"/>
                             <field name="old_price_unit" invisible="1"/>
-                            <field name="date_planned" attrs="{'readonly': [('state', 'not in', ('draft', 'validated_n', 'validated'))]}"/>
-                            <field name="confirmed_delivery_date" attrs="{'readonly': [('state', 'not in', ('draft', 'validated', 'validated_n', 'rfq_sent', 'rfq_updated'))]}"/>
-                            <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
                             <group colspan="4">
                                 <group colspan="2">
                                     <field name="original_qty" colspan="1" readonly="1"/>
@@ -877,17 +929,11 @@
                                     <field name="modification_comment" colspan="2"/>
                                 </group>
                             </group>
-                            <field name="vat_ok" invisible="1"/>
-                            <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
-                                <separator colspan="4" string="Taxes"/>
-                                <field colspan="4" nolabel="1" name="taxes_id" domain="[('parent_id','=',False),('type_tax_use','!=','sale')]"/>
-                            </group>
                         </page>
-                        <page string="Nomenclature Selection">
+                        <page string="Nomenclature Selection" name="nomenselection">
                             <group colspan="4" col="2">
                                 <field name="nomenclature_code" colspan="2" invisible="True"/>
                                 <field name="nomenclature_description" colspan="2" readonly="True"/>
-                                <field name="comment" colspan="2" attrs="{'required':[('product_id', '=', False)]}"/>
                             </group>
                             <newline/>
                             <group colspan="2" col="5">

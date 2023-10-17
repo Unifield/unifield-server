@@ -14,6 +14,16 @@
             <field name="arch" type="xml">
                 <form string="Internal Request">
                     <field name="sourcing_trace_ok" invisible="1" />
+                    <html>
+                        <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                        <script language="javascript">
+                            var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
+                            if (alert_msl_mml) {
+                                $('#msl_mml').html(alert_msl_mml);
+                                $('#msl_mml').show();
+                            }
+                        </script>
+                    </html>
                     <group colspan="6" attrs="{'invisible': [('state', 'not in', ['validated', 'validated_p'])]}">
                         <html>
                             <p id="message_ir_validated" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
@@ -31,6 +41,7 @@
                     <group col="6" colspan="6" name="header">
                         <group col="4" colspan="4">
                             <field name="name" />
+                            <field name="alert_msl_mml" invisible="1"/>
                             <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                             <field name="requestor" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                             <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}" />
@@ -60,7 +71,7 @@
                                 filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="'3'" o2m_selectable="2">
                                 <tree string="Products" hide_delete_button="True" editable="top" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}"
-                                    colors="red:to_correct_ok == True or inactive_product == True;blue: soq_updated == True">
+                                    colors="red:mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True;blue: soq_updated == True">
                                     <button name="tree_button" string="Add Line" attrs="{'invisible': [('state', '!=', 'validated')]}" />
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
@@ -116,6 +127,8 @@
                                     <button string="Validate" icon="terp-check" name="validated_ir" type="object" header="True"
                                         attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                     <button string="Cancel" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                 </tree>
                                 <form>
                                    <field name="product_id" colspan="4" />

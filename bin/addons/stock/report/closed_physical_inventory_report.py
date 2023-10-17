@@ -118,7 +118,7 @@ class closed_physical_inventory_parser(XlsxReportParser):
 
         sheet.append([])
 
-        cell_in = WriteOnlyCell(sheet, value=_('Inventory Name'))
+        cell_in = WriteOnlyCell(sheet, value=_('Inventory Details'))
         cell_in.style = bold_right_style
         cell_ind = WriteOnlyCell(sheet, value=pi.name)
         cell_ind.style = bold_frame

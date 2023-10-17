@@ -130,10 +130,12 @@
         <field name="model">stock.mission.report.line</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Mission Stock Report" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+            <tree string="Mission Stock Report" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1" colors="red:mml_status=='F' or msl_status=='F'">
                 <field name="default_code" />
                 <field name="name" />
                 <field name="product_active" />
+                <field name="mml_status" invisible="not context.get('show_mml')"/>
+                <field name="msl_status" invisible="not context.get('show_mml')"/>
                 <field name="uom_id" />
                 <field name="cost_price" invisible="not context.get('with_valuation')" />
                 <field name="currency_id" invisible="not context.get('with_valuation')" />

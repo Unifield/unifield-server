@@ -40,23 +40,42 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="redline">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+        <Font ss:Color="#ff0000"/>
+    </Style>
 </Styles>
 ## ==================================== we loop over the product_list so "objects" == product_list  ====================================================
 % for o in objects:
 <ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
 <Table >
-    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
+    <Column ss:AutoFitWidth="1" ss:Span="5" ss:Width="64.26"/>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('MML')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('MSL')}</Data></Cell>
     </Row>
     ## we loop over the product_list_line
     % for line in o.product_ids:
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.default_code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+         % if line['mml_status'] == 'F' or line['msl_status'] == 'F':
+            <% line_style = 'redline' %>
+        % else:
+            <% line_style = 'line' %>
+        % endif
+        <Cell ss:StyleID="${line_style}" ><Data ss:Type="String">${(line.name.default_code or '')|x}</Data></Cell>
+        <Cell ss:StyleID="${line_style}" ><Data ss:Type="String">${(line.name.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="${line_style}" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+        <Cell ss:StyleID="${line_style}" ><Data ss:Type="String">${(getSel(line, 'mml_status') or '')|x}</Data></Cell>
+        <Cell ss:StyleID="${line_style}" ><Data ss:Type="String">${(getSel(line, 'msl_status') or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>

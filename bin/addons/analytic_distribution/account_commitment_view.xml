@@ -87,7 +87,7 @@
                     <field name="purchase_id" />
                     <field name="line_count"/>
                     <field name="currency_id"/>
-                    <field name="total" digits="(16,2)"/>
+                    <field name="total" digits="(16,2)" sum="Total" sum_selected="1"/>
                     <field name="type"/>
                     <field name="state"/>
                     <button name="commitment_open" string="Validate" icon="terp-camera_test" states="draft"/>

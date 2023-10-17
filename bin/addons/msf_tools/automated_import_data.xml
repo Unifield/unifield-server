@@ -155,5 +155,11 @@
             <field name="method_to_call">import_data_from_csv</field>
         </record>
 
+        <record id="auto_import_fnct_iil" model="automated.import.function">
+            <field name="name">Import IIL</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'esc.line.import')]" />
+            <field name="method_to_call">auto_import</field>
+        </record>
+
     </data>
 </openerp>

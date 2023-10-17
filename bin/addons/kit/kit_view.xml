@@ -61,13 +61,15 @@
 				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
 				            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
 				            		<field name="comment" />
-									<field name="item_lot"
-				            			on_change="on_lot_change(item_product_id, item_lot, context)" 
-				            			attrs="{'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
-				            		<field name="item_exp" attrs="{'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
+									<field name="item_lot_id"
+				            			on_change="on_lot_change(item_product_id, item_lot_id, context)"
+				            			attrs="{'readonly': [('hidden_batch_management_mandatory', '=', False)], 'required': [('composition_type', '=', 'real'), ('hidden_batch_management_mandatory', '=', True)]}" />
+				            		<field name="item_exp" attrs="{'readonly': [('hidden_perishable_mandatory', '=', False)], 'required': [('composition_type', '=', 'real'), ('hidden_perishable_mandatory', '=', True)]}" />
 				            		<field name="hidden_asset_mandatory" invisible="True" />
 				            		<field name="hidden_batch_management_mandatory" />
                                     <field name="hidden_perishable_mandatory" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                     <field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" readonly="1" />
 				            	</tree>
@@ -128,7 +130,8 @@
                     </group>
                     <notebook colspan="4">
                     	<page string="Composition Items">
-                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4">
+							<field name="kcl_used_by" invisible="1" />
+                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4" attrs="{'readonly': [('kcl_used_by', '!=', False)]}">
 								<form string="Kit Composition Item" noteditable="state != 'draft'">
 				                    <field name="kit_state" invisible="1" />
 									<group col="6" colspan="4">
@@ -138,6 +141,7 @@
 				           						<field name="item_product_id" />
 						                        <field name="item_qty" />
 						                        <field name="item_uom_id" domain="[('uom_by_product', '=', item_product_id)]" />
+												<field name="kcl_id" readonly="1" />
 					                        </page>
 					                        <page string="Notes">
 					                        	<field name="item_description" nolabel="True" />
@@ -147,20 +151,27 @@
 				            	</form>
                     			<tree string="Kit Composition Item" editable="top" noteditable="kit_state in ['done', 'cancel']" colors="red: inactive_product==True">
 				            		<field name="kit_state" invisible="1" />
+				            		<field name="item_kit_id" invisible="1" />
+				            		<field name="product_subtype" invisible="1" />
+				            		<field name="item_uom_rounding_is_pce" invisible="1" />
 									<field name="item_module" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_qty" on_change="onchange_uom_qty(item_uom_id, item_qty)" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_uom_id" on_change="onchange_uom_qty(item_uom_id, item_qty)" domain="[('uom_by_product', '=', item_product_id)]" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
-				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
+				            		<button name="open_split_wizard" type="object" icon="terp-stock_effects-object-colorize" string="Split" attrs="{'invisible': [('kit_state', '!=', 'draft')]}" />
+									<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
 				            			attrs="{'readonly': ['|', ('hidden_asset_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
+				            		<field name="kcl_id" on_change="onchange_kcl_id(kcl_id, item_qty)" attrs="{'readonly': ['|', '|', '|', ('item_product_id', '=', False), ('product_subtype', '!=', 'kit'), ('kit_state', 'not in', ['', 'draft', 'completed']), ('item_uom_rounding_is_pce', '=', False)]}" />
 				            		<field name="comment" />
-									<field name="item_lot"
-				            			on_change="on_lot_change(item_product_id, item_lot, context)"
-				            			attrs="{'readonly': ['|', ('hidden_batch_management_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
-				            		<field name="item_exp" attrs="{'readonly': ['|', ('hidden_perishable_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
+									<field name="item_lot_id" domain="[('product_id','=',item_product_id), ('check_type','=', True)]"
+				            			on_change="on_lot_change(item_product_id, item_lot_id, context)"
+				            			attrs="{'readonly': ['|', ('hidden_batch_management_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])], 'required': [('hidden_batch_management_mandatory', '=', True)]}" />
+				            		<field name="item_exp" attrs="{'readonly': ['|', ('hidden_perishable_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])], 'required': [('hidden_perishable_mandatory', '=', True)]}" />
 				            		<field name="hidden_asset_mandatory" invisible="True" />
 				            		<field name="hidden_batch_management_mandatory" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
                                     <field name="hidden_perishable_mandatory" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                     <field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" readonly="1" />
 				            	</tree>
@@ -343,7 +354,7 @@
 		                        <field name="item_qty" readonly="True" />
 		                        <field name="item_uom_id" readonly="True" />
 		                        <field name="item_asset_id" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
-		                        <field name="item_lot" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
+		                        <field name="item_lot_id" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
             					<field name="item_exp" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
 	                        </page>
 	                        <page string="Notes">
@@ -371,10 +382,12 @@
 					<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_asset_id" readonly="True" />
-            		<field name="item_lot" readonly="True" />
+            		<field name="item_lot_id" readonly="True" />
             		<field name="item_exp" readonly="True" />
             		<field name="hidden_batch_management_mandatory" />
             		<field name="hidden_perishable_mandatory" />
+                    <field name="mml_status" />
+                    <field name="msl_status" />
             		<field name="state" invisible="True" />
             	</tree>
             </field>
@@ -395,10 +408,12 @@
 					<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_asset_id" readonly="True" />
-            		<field name="item_lot" readonly="True" string="Component/BN" />
+            		<field name="item_lot_id" readonly="True" string="Component/BN" />
             		<field name="item_exp" readonly="True" />
             		<field name="hidden_batch_management_mandatory" />
             		<field name="hidden_perishable_mandatory" />
+                    <field name="mml_status" />
+                    <field name="msl_status" />
             		<field name="state" string="Status" />
             	</tree>
             </field>
@@ -442,7 +457,7 @@
 					<field name="item_kit_id" domain="[('composition_type', '=', 'real')]" select="1" string="Kit" />
                     <field name="item_module" select="1" />
                     <field name="item_product_id" select="1" />
-                    <field name="item_lot" select="1" />
+                    <field name="item_lot_id" select="1" />
                     <field name="item_exp" select="1" />
 					<newline />
                   	<group expand="0" string="Group By..." colspan="4" col="10">
@@ -451,10 +466,29 @@
                   		<filter string="Module" icon="gtk-directory" domain="[]" context="{'group_by':'item_module'}" />
 	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'item_product_id'}" />
 	                    <separator orientation="vertical"/>
-	                    <filter string="Batch Nb" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'item_lot'}" />
+	                    <filter string="Batch Nb" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'item_lot_id'}" />
 	                    <filter string="Expiry Date" icon="terp-go-today" domain="[]" context="{'group_by':'item_exp'}" />
                 	</group>
               	</search>
+            </field>
+        </record>
+
+		<record id="split_composition_item_wizard_view" model="ir.ui.view">
+            <field name="name">split.composition.item.wizard.view</field>
+            <field name="model">split.composition.item.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Split Composition List Item">
+                    <separator colspan="4" string="Quantities" />
+					<field name="original_qty" />
+					<field name="old_line_qty" />
+					<field name="new_line_qty" on_change="line_qty_change(original_qty, new_line_qty)" />
+					<separator colspan="4" string="Actions" />
+                    <group colspan="4" col="2">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" type="object" />
+                        <button name="split_line" string="Split line" icon="terp-stock_effects-object-colorize" type="object" />
+                    </group>
+                </form>
             </field>
         </record>
 		
@@ -496,7 +530,7 @@
         </record>
 
 		<record id="kit_composition_real_action_form_view" model="ir.actions.act_window.view">
-            <field eval="10" name="sequence" />
+            <field eval="11" name="sequence" />
             <field name="view_mode">form</field>
             <field name="view_id" ref="view_composition_kit_real_form" />
             <field name="act_window_id" ref="kit_composition_real_action" />

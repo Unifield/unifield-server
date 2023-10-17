@@ -22,7 +22,14 @@ list_sign = {
         ('mr', _('Mission Responsible'), False, ''),
         ('hq', _('HQ'), False, ''),
     ],
-    'sale.order': [
+    'sale.order.fo': [
+        ('sr', _('Supply Responsible'), True, ''),
+        ('tr', _('Technical Responsible'), True, ''),
+        ('fr', _('Finance Responsible'), True, ''),
+        ('mr', _('Mission Responsible'), False, ''),
+        ('hq', _('HQ'), False, ''),
+    ],
+    'sale.order.ir': [
         ('tr', _('Technical Responsible'), True, ''),
         ('sr', _('Supply Responsible'), True, ''),
     ],
@@ -48,9 +55,20 @@ list_sign = {
         ('fr', _('Finance Responsible'), True, ''),
         ('mr', _('Mission Responsible'), False, ''),
     ],
-    'stock.picking': [
+    'stock.picking.in': [
         ('tr', _('Receiver'), True, ''),
         ('sr', _('Controller'), True, ''),
+    ],
+    'stock.picking.out': [
+        ('sr', _('Approved by'), True, ''),
+        ('tr', _('Logistic / Supply'), True, ''),
+        ('fr', _('Storekeeper'), True, ''),
+        ('mr', _('Receiver'), True, ''),
+    ],
+    'stock.picking.pick': [
+        ('sr', _('Approved by'), True, ''),
+        ('tr', _('Picked by'), True, ''),
+        ('fr', _('Validated by'), True, ''),
     ],
 }
 
@@ -63,7 +81,7 @@ saved_name = {
 }
 saved_value = {
     'purchase.order': lambda doc: round(doc.amount_total, 2),
-    'sale.order': lambda doc: round(doc.ir_total_amount, 2),
+    'sale.order': lambda doc: doc.procurement_request and round(doc.ir_total_amount, 2) or round(doc.functional_amount_total, 2),
     'account.bank.statement': lambda doc: doc.journal_id.type in ('bank', 'cheque') and round(doc.balance_end, 2) or doc.journal_id.type == 'cash' and round(doc.msf_calculated_balance, 2) or 0,
     'account.invoice': lambda doc: round(doc.amount_total, 2),
     'stock.picking': lambda doc: False,
@@ -74,7 +92,7 @@ saved_unit = {
     'sale.order': lambda doc: doc.functional_currency_id.name,
     'account.bank.statement': lambda doc: doc.currency.name,
     'account.invoice': lambda doc: doc.currency_id.name,
-    'stock.picking': lambda doc: doc.total_qty_str,
+    'stock.picking': lambda doc: doc.type == 'out' and doc.subtype == 'picking' and doc.total_qty_process_str or doc.total_qty_str,
 }
 
 saved_state = {
@@ -367,12 +385,10 @@ class signature_object(osv.osv):
     def create(self, cr, uid, vals, context=None):
         new_id = super(signature_object, self).create(cr, uid, vals, context=context)
         if vals and 'signature_line_ids' not in vals and \
-                ( list_sign.get(self._name) or self._name == 'account.bank.statement' ) and \
+                (list_sign.get(self._name) or self._name in ['account.bank.statement', 'sale.order', 'stock.picking']) and \
                 self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature') and \
-                (   self._name not in ('stock.picking', 'sale.order') or \
-                    self._name == 'stock.picking' and vals.get('type') == 'in' or \
-                    self._name == 'sale.order' and vals.get('location_requestor_id')
-                    ):
+                (self._name != 'stock.picking' or self._name == 'stock.picking' and vals.get('type') in ['in', 'out'] and
+                 vals.get('subtype', False) in ['standard', 'picking', False]):
 
             line_obj = self.pool.get('signature.line')
             ftf = ['signature_id']
@@ -380,6 +396,10 @@ class signature_object(osv.osv):
                 ftf += ['local_register', 'journal_id']
             elif self._name == 'account.invoice':
                 ftf += ['doc_type']
+            elif self._name == 'sale.order':
+                ftf += ['procurement_request']
+            elif self._name == 'stock.picking':
+                ftf += ['type', 'subtype']
 
             obj = self.browse(cr, uid, new_id, fields_to_fetch=ftf, context=context)
 
@@ -391,7 +411,11 @@ class signature_object(osv.osv):
 
             if obj.signature_id:
                 if self._name == 'account.bank.statement':
-                    key = 'account.bank.statement.%s'%obj.journal_id.type
+                    key = 'account.bank.statement.%s' % obj.journal_id.type
+                elif self._name == 'sale.order':
+                    key = 'sale.order.%s' % (obj.procurement_request and 'ir' or 'fo')
+                elif self._name == 'stock.picking':
+                    key = 'stock.picking.%s' % (obj.type == 'out' and (obj.subtype == 'picking' and 'pick' or 'out') or 'in')
                 else:
                     key = self._name
 
@@ -427,9 +451,24 @@ class signature_line(osv.osv):
                 else:
                     res[x.id] = {'format_value': x.unit}
 
-                key = '%s-%s' % (x.signature_id.signature_res_model, x.doc_state)
+                doc_state = x.doc_state
+                key = '%s-%s' % (x.signature_id.signature_res_model, doc_state)
                 if key not in cache_state:
-                    cache_state[key] = self.pool.get('ir.model.fields').get_selection(cr, uid, x.signature_id.signature_res_model, 'state', x.doc_state, context=context)
+                    field = 'state'
+                    # To display OUT Delivered/Received states
+                    if x.signature_id.signature_res_model == 'stock.picking':
+                        p_data = self.pool.get('stock.picking').read(cr, uid, x.signature_id.signature_res_id,
+                                                                     ['type', 'subtype', 'delivered'], context=context)
+                        if p_data['type'] == 'out' and p_data['subtype'] == 'standard':
+                            if doc_state == 'done':
+                                if p_data['delivered']:
+                                    doc_state = 'received'
+                                else:
+                                    doc_state = 'dispatched'
+                            elif doc_state == 'delivered':
+                                doc_state = 'received'
+                            field = 'state_hidden'
+                    cache_state[key] = self.pool.get('ir.model.fields').get_selection(cr, uid, x.signature_id.signature_res_model, field, doc_state, context=context)
                 res[x.id]['format_state'] = cache_state[key]
         return res
 
@@ -467,7 +506,7 @@ class signature_line(osv.osv):
 
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'subtype'], context=context)
         if (real_uid, sign_line.subtype) not in [(x.user_id.id, x.subtype) for x in sign_line.signature_id.signature_user_ids]:
-            raise osv.except_osv(_('Warning'), _("Operation denied"))
+            raise osv.except_osv(_('Warning'), _("You are not on the list of users allowed to sign this document - please contact the document creator"))
 
         if sign_line.signature_id.signature_is_closed:
             raise osv.except_osv(_('Warning'), _("Signature Closed."))
@@ -970,15 +1009,21 @@ class signature_setup(osv.osv_memory):
                 for obj in list_sign:
                     if obj == 'purchase.order':
                         cond = "purchase_order o where o.signature_id is not null and o.rfq_ok='f'"
-                    elif obj == 'sale.order':
-                        cond = "sale_order o where o.signature_id is not null and o.procurement_request='t'"
+                    elif obj.startswith('sale.order'):
+                        is_ir = obj.split('.')[-1] == 'ir' or False
+                        cond = "sale_order o where o.signature_id is not null and o.procurement_request=%s" % (is_ir,)
                     elif obj.startswith('account.bank.statement'):
                         obj_typ = obj.split('.')[-1]
                         cond = "account_bank_statement o, account_journal j, res_company c where o.journal_id = j.id and o.signature_id is not null and j.type ='%s' and c.instance_id = j.instance_id" % (obj_typ, )
                     elif obj == 'account.invoice':
                         cond = "account_invoice o where o.signature_id is not null and o.real_doc_type in ('donation', 'si') or (o.real_doc_type is null and o.type='in_invoice' and o.is_direct_invoice='f' and o.is_inkind_donation='f' and o.is_debit_note='f' and o.is_intermission='f') or (o.real_doc_type is null and o.type='in_invoice' and o.is_debit_note='f' and o.is_inkind_donation='t')"
-                    elif obj == 'stock.picking':
-                        cond = "stock_picking o where o.signature_id is not null and o.type='in'"
+                    elif obj.startswith('stock.picking'):
+                        obj_type, obj_subtype = 'in', 'standard'
+                        if obj.split('.')[-1] == 'pick':
+                            obj_type, obj_subtype = 'out', 'picking'
+                        elif obj.split('.')[-1] == 'out':
+                            obj_type = 'out'
+                        cond = "stock_picking o where o.signature_id is not null and o.type='%s' and o.subtype='%s'" % (obj_type, obj_subtype)
 
                     for role in list_sign[obj]:
                         cr.execute("""

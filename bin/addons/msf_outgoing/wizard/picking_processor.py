@@ -138,6 +138,8 @@ class stock_picking_processor(osv.osv):
             help="Is at least one line contains a cool chain product.",
             multi='kc_dg',
         ),
+        'alert_msl_mml': fields.char(size=512, string="Contains non-conform MML/MSL", readonly=1),
+        'partial_process_sign': fields.boolean('Partial process warning if signature'),
     }
 
     def default_get(self, cr, uid, fields_list=None, context=None, from_web=False):
@@ -226,10 +228,13 @@ class stock_picking_processor(osv.osv):
             lines_ids = line_obj.search(cr, uid, dom, context=context)
             for move in line_obj.browse(cr, uid, lines_ids, context=context):
                 line_obj.write(cr, uid, [move.id], {'quantity': 0}, context=context)
+            self.write(cr, uid, ids, {'partial_process_sign': False}, context=context)
             return {
                 'type': 'ir.actions.refresh_o2m',
                 'o2m_refresh': 'move_ids'
             }
+        elif self._name == 'outgoing.delivery.processor':
+            self.write(cr, uid, ids, {'partial_process_sign': False}, context=context)
 
         for wizard in self.browse(cr, uid, ids, context=context):
             move_obj = wizard.move_ids[0]._name
@@ -262,6 +267,10 @@ class stock_picking_processor(osv.osv):
         for wizard in self.browse(cr, uid, ids, context=context):
             line_obj = self.pool.get(wizard._columns['move_ids']._obj)
             wiz_lines_moves_ids = [line.move_id.id for line in wizard.move_ids]
+            mml_alert = False
+            msl_alert = False
+
+            out_wizard_with_l2_alert = wizard.picking_id.type == 'out' and wizard.picking_id.subtype == 'standard' and not wizard.picking_id.sale_id
             for move in wizard.picking_id.move_lines:
                 if move.state in ('draft', 'done', 'cancel', 'confirmed') or move.product_qty == 0.00\
                         or move.id in wiz_lines_moves_ids:
@@ -270,7 +279,18 @@ class stock_picking_processor(osv.osv):
                         line_obj.unlink(cr, uid, line_ids, context=context)
                     continue
 
+                if wizard.picking_id.type == 'in':
+                    if not mml_alert and move.mml_status == 'F':
+                        mml_alert = True
+                    if not msl_alert and move.msl_status == 'F':
+                        msl_alert = True
+                if out_wizard_with_l2_alert and not mml_alert and move.mml_status == 'F':
+                    mml_alert = True
+
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                if line_obj._name == 'outgoing.delivery.processor':
+                    line_data['from_wkf_line'] = wizard.picking_id.from_wkf
+
                 if line_obj._name == 'stock.move.in.processor':
                     if wizard.fields_as_ro:
                         line_data['cost_as_ro'] = True
@@ -296,7 +316,15 @@ class stock_picking_processor(osv.osv):
                 if context.get('sync_message_execution') and wizard.picking_id.state == 'shipped':
                     line_data['quantity'] = move.product_qty
                 line_obj.create(cr, uid, line_data, context=context)
-
+            msg = False
+            if mml_alert and msl_alert:
+                msg = _('Document has lines that are not in the MSL / MML')
+            elif mml_alert:
+                msg = _('Document has lines that are not included in the MML')
+            elif msl_alert:
+                msg = _('Document has lines that are not included in the MSL')
+            if msg:
+                self.write(cr, uid, wizard.id, {'alert_msl_mml': msg}, context=context)
         return True
 
 stock_picking_processor()
@@ -356,6 +384,7 @@ class stock_move_processor(osv.osv):
                 'location_supplier_customer_mem_out': loc_supplier or loc_cust or valid_pt,
                 'type_check': line.move_id.picking_id.type,
                 'comment': line.move_id.comment,
+                'uom_rounding_is_pce': line.move_id.product_uom and line.move_id.product_uom.rounding == 1 or False,
             }
 
         return res
@@ -372,22 +401,11 @@ class stock_move_processor(osv.osv):
 
         res = {}
 
-        move_dict = dict([(x['id'], x['product_id'][0]) for x in self.read(cr, uid, ids,
-                                                                           ['id',
-                                                                            'product_id'],
-                                                                           context=context)])
+        move_dict = dict([(x['id'], x['product_id'][0]) for x in self.read(cr, uid, ids, ['id', 'product_id'], context=context)])
         product_module = self.pool.get('product.product')
-        product_list_dict = product_module.read(cr, uid,
-                                                move_dict.values(),
-                                                ['batch_management',
-                                                 'perishable',
-                                                 'type',
-                                                 'subtype',
-                                                 'is_kc',
-                                                 'ssl_txt',
-                                                 'dg_txt',
-                                                 'cs_txt',],
-                                                context=context)
+        product_list_dict = product_module.read(cr, uid, move_dict.values(), ['batch_management', 'perishable', 'type',
+                                                                              'subtype', 'is_kc', 'ssl_txt', 'dg_txt',
+                                                                              'cs_txt'], context=context)
         procuct_dict = dict([(x['id'], x) for x in product_list_dict])
 
         for move_id, product_id in move_dict.items():
@@ -396,11 +414,8 @@ class stock_move_processor(osv.osv):
                 res[move_id] = {
                     'lot_check': product['batch_management'],
                     'exp_check': product['perishable'],
-                    'asset_check': product['type'] == 'product' and
-                    product['subtype'] == 'asset',
-                    'kit_check': product['type'] == 'product' and
-                    product['subtype'] == 'kit' and not
-                    product['perishable'],
+                    'asset_check': product['type'] == 'product' and product['subtype'] == 'asset',
+                    'kit_check': product['type'] == 'product' and product['subtype'] == 'kit',
                     'kc_check': product['is_kc'] and 'X',
                     'ssl_check': product['ssl_txt'],
                     'dg_check': product['dg_txt'],
@@ -601,6 +616,14 @@ class stock_move_processor(osv.osv):
             help="Category of the expected UoM to receive",
             multi='move_info'
         ),
+        'uom_rounding_is_pce': fields.function(
+            _get_move_info,
+            method=True,
+            type='boolean',
+            string="UoM Rounding is PCE",
+            store=False,
+            multi='move_info'
+        ),
         'location_id': fields.function(
             _get_move_info,
             method=True,
@@ -787,12 +810,29 @@ class stock_move_processor(osv.osv):
             ondelete='set null',
         ),
         'change_reason': fields.char(size=256, string='Change reason'),
+        'mml_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', readonly=True),
+        'msl_status': fields.selection([('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', readonly=True),
+        'from_wkf_line': fields.boolean('From wkf', readonly=True),
     }
 
     _defaults = {
         'quantity': 0.00,
         'integrity_status': 'empty',
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        set the name corresponding to object subtype
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+
+        default['composition_list_id'] = False
+        return super(stock_move_processor, self).copy(cr, uid, id, default=default, context=context)
 
     def _fill_expiry_date(self, cr, uid, prodlot_id=False, expiry_date=False, vals=None, context=None):
         """
@@ -874,6 +914,8 @@ class stock_move_processor(osv.osv):
             'cost': move.price_unit,
             'currency': move.price_currency_id.id,
             'location_id': move.location_id and move.location_id.id,
+            'mml_status': move.mml_status or '',
+            'msl_status': move.msl_status or '',
         }
         return line_data
 
@@ -952,11 +994,15 @@ class stock_move_processor(osv.osv):
                 _('You must select a new product and specify a reason.'),
             )
 
+
+        prod_data = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['mml_status', 'msl_status'], context=context)
         wr_vals = {
             'change_reason': change_reason,
             'product_id': product_id,
             'prodlot_id': False,
             'expiry_date': False,
+            'mml_status': prod_data.mml_status,
+            'msl_status': prod_data.msl_status,
         }
         self.write(cr, uid, ids, wr_vals, context=context)
 
@@ -982,6 +1028,8 @@ class stock_move_processor(osv.osv):
         for line in self.browse(cr, uid, ids):
             cost = uom_obj._compute_price(cr, uid, line.uom_id.id, line.cost, to_uom_id=uom_id)
             new_qty.setdefault('value', {}).setdefault('cost', cost)
+            if not line.uom_id or line.uom_id.rounding != 1:
+                new_qty.setdefault('value', {}).update({'uom_rounding_is_pce': False, 'composition_list_id': False})
 
         return new_qty
 

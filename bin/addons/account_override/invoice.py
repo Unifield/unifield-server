@@ -27,6 +27,7 @@ from osv import fields
 from time import strftime
 from tools.translate import _
 from tools.misc import ustr
+from tools.misc import _max_amount
 from datetime import datetime
 from msf_partner import PARTNER_TYPE
 import re
@@ -428,9 +429,9 @@ class account_invoice(osv.osv):
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
         'date_invoice': fields.date('Posting Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
-                                                            'inv_close':[('readonly',True)]}, select=True),
+                                                            'inv_close':[('readonly',True)], 'done':[('readonly',True)]}, select=True),
         'document_date': fields.date('Document Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
-                                                              'inv_close':[('readonly',True)]}, select=True),
+                                                              'inv_close':[('readonly',True)], 'done':[('readonly',True)]}, select=True),
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
         'is_intermission': fields.boolean(string="Is an Intermission Voucher?"),
@@ -908,7 +909,6 @@ class account_invoice(osv.osv):
                         if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
-
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
@@ -1320,6 +1320,11 @@ class account_invoice(osv.osv):
             return False
         self.check_domain_restrictions(cr, uid, ids, context)  # raises an error if one unauthorized element is used
         self.update_counterpart_inv_status(cr, uid, ids, context=context)
+        for invoice in self.browse(cr, uid, ids, fields_to_fetch=['doc_type'], context=context):
+            if invoice.doc_type == 'donation':
+                self.write(cr, uid, invoice.id, {'state': 'done'}, context=context)
+            else:
+                self.write(cr, uid, invoice.id, {'state': 'open'}, context=context)
         return True
 
 
@@ -1705,7 +1710,6 @@ class account_invoice_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        too_big_amount = 10**10
         inv_line_fields = ['quantity', 'price_unit', 'discount', 'name']
         for inv_line in self.browse(cr, uid, ids, fields_to_fetch=inv_line_fields, context=context):
             # check amounts entered manually (cf. huge amounts could cause decimal.InvalidOperation), and the total to be used in JI
@@ -1713,8 +1717,8 @@ class account_invoice_line(osv.osv):
             pu = inv_line.price_unit or 0.0
             discount = inv_line.discount or 0.0
             subtotal = self._amount_line(cr, uid, [inv_line.id], 'price_subtotal', None, context)[inv_line.id]
-            if abs(qty) >= too_big_amount or abs(pu) >= too_big_amount or abs(discount) >= too_big_amount or abs(subtotal) >= too_big_amount:
-                raise osv.except_osv(_('Error'), _('Line "%s": one of the numbers entered is more than 10 digits.') % inv_line.name)
+            if _max_amount(qty)  or _max_amount(pu) or _max_amount(discount) or _max_amount(subtotal):
+                raise osv.except_osv(_('Error'), _('Line "%s": one of the numbers entered is more than 10 digits with decimals or 12 digits without decimals.') % inv_line.name)
 
     def _check_automated_invoice(self, cr, uid, invoice_id, context=None):
         """

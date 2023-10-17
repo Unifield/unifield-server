@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="report_finance_cost_price"
+            string="Track Changes Finance Price"
+            model="product.product"
+            name="report_finance_cost_price"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="True"
+            sequence="110"
+            view_ids="product.product_product_tree_view,product.product_normal_form_view"
+         />
+
+
+        <report
+            id="esc_line_import_template"
+            string="International Invoices Lines Template"
+            model="esc.line.import"
+            name="esc_line_import_template"
+            file="account_hq_entries/report/esc_line_import_template.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
+        <report
+            id="esc_line_import_rejected"
+            string="International Invoices Rejected Lines"
+            model="esc.line.import"
+            name="esc_line_import_rejected"
+            file="account_hq_entries/report/esc_line_import_template.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+    </data>
+</openerp>

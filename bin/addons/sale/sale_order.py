@@ -27,7 +27,9 @@ import threading
 
 from osv import fields, osv
 from tools.translate import _
+from tools.misc import _get_std_mml_status, _get_header_msl_mml_alert
 from osv.orm import browse_record
+from lxml import etree
 import decimal_precision as dp
 import netsvc
 import pooler
@@ -60,6 +62,11 @@ sale_shop()
 class sale_order(osv.osv):
     _name = "sale.order"
     _description = "Sales Order"
+
+    def __init__(self, pool, cr):
+        super(sale_order, self).__init__(pool, cr)
+        if cr.column_exists('sale_order', 'import_in_progress'):
+            cr.execute("update sale_order set import_in_progress='f' where import_in_progress='t'")
 
     def _where_calc(self, cr, uid, domain, active_test=True, context=None):
         '''
@@ -640,6 +647,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             res[id] = False
         return res
 
+
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}, select=True, sort_column='id'),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
@@ -755,6 +763,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
+        'alert_msl_mml': fields.function(_get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {
@@ -788,6 +797,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     ]
 
     _order = 'id desc'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        view = super(sale_order, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' and context.get('from_ost'):
+            form = etree.fromstring(view['arch'])
+            form.attrib['string'] = _('Field Orders and Internal Requests')
+            view['arch'] = etree.tostring(form)
+        return view
 
     def _check_stock_take_date(self, cr, uid, ids, context=None):
         if not context:
@@ -2187,6 +2207,72 @@ class sale_order_line(osv.osv):
 
         return res
 
+
+    def _defaults_instance_sync_order_ref_needed(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        if not context.get('fo_created_by_po_sync') or not context.get('sale_id'):
+            return False
+
+        cr.execute('''
+            select
+                so.id
+            from
+                sale_order so, sale_order_line other_sol
+            where
+                so.id = %s and
+                so.procurement_request = 'f' and
+                so.fo_created_by_po_sync = 't' and -- not a push flow
+                other_sol.order_id = so.id and
+                other_sol.state not in ('cancel', 'cancel_r') and
+                other_sol.instance_sync_order_ref is not null -- at least 1 other line has a IR / FO ref
+            group by so.id
+        ''', (context['sale_id'], ))
+
+        return cr.rowcount > 0
+
+    def _get_instance_sync_order_ref_needed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Get data from FO
+        '''
+        if context is None:
+            context = {}
+
+        if not ids:
+            return {}
+
+        res = {}
+        for _id in ids:
+            res[_id] = False
+
+        cr.execute('''
+            select
+                sol.id
+            from
+                sale_order_line sol
+            inner join sale_order so on so.id = sol.order_id
+            inner join sale_order_line other_sol on other_sol.order_id = sol.order_id
+            left join purchase_order_line pol on pol.linked_sol_id = sol.id
+            where
+                sol.id in %s and
+                sol.state = 'draft' and
+                so.procurement_request = 'f' and
+                so.fo_created_by_po_sync = 't' and -- not a push flow
+                sol.instance_sync_order_ref is null and
+                sol.resourced_original_line is null and -- not from a C&R flow
+                sol.is_line_split = 'f' and -- not a split line (split only available on validated FO lines)
+                coalesce(sol.sync_linked_pol, '') = '' and  -- not created from a PO line (new line added)
+                other_sol.state not in ('cancel', 'cancel_r') and
+                other_sol.instance_sync_order_ref is not null and -- at least 1 other line has a IR / FO ref
+                pol.id is null -- if sol already sourced to PO it's too late to set the original IR ref
+            group by sol.id
+        ''', (tuple(ids), ))
+
+        for sol in cr.fetchall():
+            res[sol[0]] = True
+
+        return res
+
     def _get_dpo_id(self, cr, uid, ids, name, arg, context=None):
         if context is None:
             context = {}
@@ -2228,7 +2314,7 @@ class sale_order_line(osv.osv):
         'type': fields.selection([('make_to_stock', 'from stock'), ('make_to_order', 'on order')], 'Procurement Method', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'address_allotment_id': fields.many2one('res.partner.address', 'Allotment Partner'),
         'product_uom_qty': fields.float('Quantity (UoM)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, related_uom='product_uom'),
-        'product_uom': fields.many2one('product.uom', 'Unit of Measure ', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'product_uom': fields.many2one('product.uom', 'Product UoM', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'product_uos_qty': fields.float('Quantity (UoS)', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, related_uom='product_uos'),
         'extra_qty': fields.float('Extra Qty from IN', readonly=True),
         'product_uos': fields.many2one('product.uom', 'Product UoS'),
@@ -2303,6 +2389,10 @@ class sale_order_line(osv.osv):
         'loan_line_id': fields.many2one('purchase.order.line', string='Linked loan line', readonly=True),
 
         'original_instance': fields.char('Original Instance', size=128, readonly=1),
+        'instance_sync_order_ref_needed': fields.function(_get_instance_sync_order_ref_needed, method=True, type='boolean', store=False, string='Is instance_sync_order_ref needed ?'),
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2326,7 +2416,25 @@ class sale_order_line(osv.osv):
         'sync_pushed_from_po': False,
         'cancelled_by_sync': False,
         'ir_name_from_sync': '',
+        'instance_sync_order_ref_needed': _defaults_instance_sync_order_ref_needed,
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        view = super(sale_order_line, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'form' and context.get('from_tab') != 1:
+            form = etree.fromstring(view['arch'])
+            for tag in form.xpath('//page[@name="nomenselection"]'):
+                tag.getparent().remove(tag)
+            nb = form.xpath('//notebook')
+            if nb:
+                nb[0].tag = 'empty'
+                view['arch'] = etree.tostring(form)
+        return view
 
     def _check_stock_take_date(self, cr, uid, ids, context=None):
         if not context:
@@ -2457,6 +2565,7 @@ class sale_order_line(osv.osv):
             'sync_pushed_from_po': False,
             'cv_line_ids': False,
             'extra_qty': False,
+            'sourcing_date': False,
         })
 
         reset_if_not_set = ['ir_name_from_sync', 'in_name_goods_return', 'counterpart_po_line_id', 'instance_sync_order_ref']
@@ -2502,6 +2611,7 @@ class sale_order_line(osv.osv):
             'sync_pushed_from_po': False,
             'cv_line_ids': False,
             'extra_qty': False,
+            'sourcing_date': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
@@ -3037,9 +3147,9 @@ class sale_order_line(osv.osv):
                 'view_id': [view_id],
                 }
 
-    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty=0,
-                             uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-                             lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
+    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty=0, uom=False, qty_uos=0, uos=False, name='',
+                             partner_id=False, lang=False, update_tax=True, date_order=False, packaging=False,
+                             fiscal_position=False, flag=False, categ=False, context=None):
         """
         Call sale_order_line.product_id_change() method and check if the selected product is consistent
         with order category.
@@ -3060,6 +3170,7 @@ class sale_order_line(osv.osv):
         :param packaging: Packaging selected for the line
         :param fiscal_position: Fiscal position selected on the order of the line
         :param flag: ???
+        :param categ: Category of the FO
         :param context: Context of the call
         :return: Result of the sale_order_line.product_id_change() method
         """
@@ -3085,9 +3196,9 @@ class sale_order_line(osv.osv):
                                      flag=flag,
                                      context=context)
 
-        if context and context.get('categ') and product:
+        if categ and product:
             # Check consistency of product
-            consistency_message = prod_obj.check_consistency(cr, uid, product, context.get('categ'), context=context)
+            consistency_message = prod_obj.check_consistency(cr, uid, product, categ, context=context)
             if consistency_message:
                 res.setdefault('warning', {})
                 res['warning'].setdefault('title', 'Warning')
@@ -3104,27 +3215,6 @@ class sale_order_line(osv.osv):
         """
         if not context:
             context = {}
-
-        if context.get('sale_id'):
-            # Check validity of the field order. We write the order to avoid
-            # the creation of a new line if one line of the order is not valid
-            # according to the order category
-            # Example :
-            #    1/ Create a new FO with 'Other' as Order Category
-            #    2/ Add a new line with a Stockable product
-            #    3/ Change the Order Category of the FO to 'Service' -> A warning message is displayed
-            #    4/ Try to create a new line -> The system displays a message to avoid you to create a new line
-            #       while the not valid line is not modified/deleted
-            #
-            #   Without the write of the order, the message displayed by the system at 4/ is displayed at the saving
-            #   of the new line that is not very understandable for the user
-            data = {}
-            if context.get('partner_id'):
-                data.update({'partner_id': context.get('partner_id')})
-            if context.get('categ'):
-                data.update({'categ': context.get('categ')})
-            if data:
-                self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
 
         default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context, from_web=from_web)
         default_data.update({'product_uom_qty': 0.00, 'product_uos_qty': 0.00})
@@ -3246,7 +3336,7 @@ class sale_order_line(osv.osv):
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
-        if vals.get('instance_sync_order_ref'):
+        if vals.get('instance_sync_order_ref') and not vals.get('sync_sourced_origin'):
             vals['sync_sourced_origin'] = self.pool.get('sync.order.label').read(cr, uid, vals['instance_sync_order_ref'], ['name'])['name']
 
         so_line_id = super(sale_order_line, self).create(cr, uid, vals, context=context)
@@ -3299,7 +3389,7 @@ class sale_order_line(osv.osv):
         if not 'soq_updated' in vals:
             vals['soq_updated'] = False
 
-        if vals.get('instance_sync_order_ref'):
+        if vals.get('instance_sync_order_ref') and not vals.get('sync_sourced_origin'):
             if self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft'), ('sync_sourced_origin', '=', False)], context=context):
                 vals['sync_sourced_origin'] = self.pool.get('sync.order.label').read(cr, uid, vals['instance_sync_order_ref'], ['name'])['name']
 

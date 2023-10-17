@@ -147,12 +147,14 @@ class assign_to_kit(osv.osv_memory):
                                    'item_product_id': obj.product_id_assign_to_kit.id,
                                    'item_qty': mem.assigned_qty_assign_to_kit_line,
                                    'item_uom_id': obj.uom_id_assign_to_kit.id,
-                                   'item_lot': obj.prodlot_id_assign_to_kit and obj.prodlot_id_assign_to_kit.name or False,
+                                   'item_lot_id': obj.prodlot_id_assign_to_kit and obj.prodlot_id_assign_to_kit.id or False,
                                    'item_exp': obj.expiry_date_assign_to_kit or False,
                                    'item_kit_id': mem.kit_id_assign_to_kit_line.id,
                                    'item_description': 'Kitting Order',
                                    'item_stock_move_id': stock_move_ids[0],
-                                   'to_consume_id': obj.move_id_assign_to_kit.to_consume_id_stock_move.id}
+                                   'to_consume_id': obj.move_id_assign_to_kit.to_consume_id_stock_move.id,
+                                   'kcl_id': obj.move_id_assign_to_kit.composition_list_id and
+                                   obj.move_id_assign_to_kit.composition_list_id.id or False,}
                     item_obj.create(cr, uid, item_values, context=context)
             # if kit_list is not empty, the user deleted some lines and we therefore delete the items corresponding to the deleted kits
             if kit_list:

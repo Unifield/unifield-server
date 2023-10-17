@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <!-- IN & OUT -->
+        <record id="action_loan_certificate_wizard_form_view" model="ir.ui.view">
+            <field name="name">loan.certificate.wizard.form.view</field>
+            <field name="model">loan.certificate.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">15</field>
+            <field name="arch" type="xml">
+                <form string="Loan Certificate Export">
+                    <group colspan="4">
+                        <group col="1" />
+                        <group col="2" colspan="2">
+                            <field colspan="2" name="display_value"/>
+                            <button colspan="2" name="create_report" string="Export Loan Certificate" type="object"/>
+                        </group>
+                        <group col="1" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <act_window id="action_loan_certificate_wizard"
+            name="Loan Certificate Export"
+            view_ids="view_picking_in_tree,view_picking_in_form,view_picking_out_tree,view_picking_out_form"
+            res_model="loan.certificate.wizard"
+            src_model="stock.picking"
+            view_mode='form'
+            view_type='form'
+            key2="client_print_multi"
+            context="{'active_id': active_id}"
+            target='new' />
+
+        <report id="loan_certificate"
+        string="Loan Certificate"
+        target_filename="${_('Loan Certificate')}"
+        model="stock.picking"
+        name="loan.certificate"
+        rml="stock/report/loan_certificate.rml"
+        header="False"
+        auto="False"
+        menu="False"
+        />
+
+        <report id="loan_return_certificate"
+        string="Loan Return Certificate"
+        target_filename="${_('Loan Return Certificate')}"
+        model="stock.picking"
+        name="loan.return.certificate"
+        rml="stock/report/loan_return_certificate.rml"
+        header="False"
+        auto="False"
+        menu="False"
+        />
+
+        <!-- SHIP -->
+        <record id="action_ship_loan_certificate_wizard_form_view" model="ir.ui.view">
+            <field name="name">ship.loan.certificate.wizard.form.view</field>
+            <field name="model">ship.loan.certificate.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">15</field>
+            <field name="arch" type="xml">
+                <form string="Loan Certificate Export">
+                    <field name="ship_id" invisible="1"/>
+                    <field name="has_loan" invisible="1"/>
+                    <field name="has_ret_loan" invisible="1"/>
+                    <group colspan="4">
+                        <group col="1" />
+                        <group col="2" colspan="2">
+                            <field colspan="2" name="display_value"/>
+                            <button colspan="1" name="create_report" string="Export Loan Certificate" type="object" attrs="{'invisible': [('has_loan', '!=', True)]}"/>
+                            <button colspan="1" name="create_return_report" string="Export Loan Return Certificate" type="object" attrs="{'invisible': [('has_ret_loan', '!=', True)]}"/>
+                        </group>
+                        <group col="1" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action "action_ship_loan_certificate_wizard" is in addons/msf_outgoing/msf_outgoing_report.xml -->
+
+        <report id="ship_loan_certificate"
+        string="Loan Certificate"
+        target_filename="${_('Loan Certificate')}"
+        model="shipment"
+        name="ship.loan.certificate"
+        rml="stock/report/ship_loan_certificate.rml"
+        header="False"
+        auto="False"
+        menu="False"
+        />
+
+        <report id="ship_loan_return_certificate"
+        string="Loan Return Certificate"
+        target_filename="${_('Loan Return Certificate')}"
+        model="shipment"
+        name="ship.loan.return.certificate"
+        rml="stock/report/ship_loan_return_certificate.rml"
+        header="False"
+        auto="False"
+        menu="False"
+        />
+    </data>
+</openerp>

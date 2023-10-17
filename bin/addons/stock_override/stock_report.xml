@@ -24,14 +24,34 @@
             menu="True" />
 
         <report auto="False"
-                id="delivery_order"
-                model="stock.picking"
-                name="delivery.order"
-                header="True"
-                rml="addons/stock_override/report/delivery_order.rml"
-                string="Delivery Order"
-                view_ids="stock.view_picking_out_tree,stock.view_picking_out_form"
-                />
+            id="delivery_order"
+            model="stock.picking"
+            name="delivery.order"
+            header="True"
+            rml="addons/stock_override/report/delivery_order.rml"
+            string="Delivery Order"
+            view_ids="stock.view_picking_out_tree,stock.view_picking_out_form"
+            />
+
+        <report id="action_menu_donation_certificate"
+            auto="False"
+            model="stock.picking"
+            name="order.type.donation.certificate"
+            header="True"
+            rml="addons/order_types/report/donation_certificate.rml"
+            string="Donation Certificate"
+            view_ids="stock.view_picking_out_tree,stock.view_picking_out_form"
+            />
+
+        <report id="action_menu_free_gift_certificate"
+            auto="False"
+            model="stock.picking"
+            name="order.type.free.gift.certificate"
+            header="True"
+            rml="addons/order_types/report/free_gift_certificate.rml"
+            string="Free Gift Certificate"
+            view_ids="stock.view_picking_out_tree,stock.view_picking_out_form"
+            />
 
     </data>
 </openerp>

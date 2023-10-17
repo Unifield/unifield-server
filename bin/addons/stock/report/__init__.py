@@ -36,3 +36,4 @@ import stock_expired_damaged_report
 import products_situation_report
 import stock_delivery_report
 import closed_physical_inventory_report
+import loan_certificate_report

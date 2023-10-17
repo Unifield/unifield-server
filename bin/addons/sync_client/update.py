@@ -63,6 +63,8 @@ OBJ_TO_RECREATE = [
     'replenishment.segment.line',
     'replenishment.segment.line.amc.month_exp',
     'replenishment.segment.date.generation',
+    'account.export.mapping',
+    'res.users',
 ]
 
 
@@ -104,6 +106,7 @@ class local_rule(osv.osv):
         'active' : fields.boolean('Active', select=True),
         'type' : fields.char('Group Type', size=256),
         'handle_priority': fields.boolean('Handle Priority'),
+        'direction': fields.char('Direction', size=128, readonly=True),
     }
 
     _defaults = {
@@ -209,12 +212,26 @@ class update_to_send(osv.osv,fv_formatter):
                 return 0
             domain.append(('id', 'in', ids_need_to_push))
 
-            ids_to_compute = self.search_ext(cr, uid, domain, context=context)
+            order = None
+            if hasattr(self, '_sync_order'):
+                # keep same id order at HQ and lower level
+                order = self._sync_order
+
+            ids_to_compute = self.search_ext(cr, uid, domain, order=order, context=context)
             if not ids_to_compute:
                 return 0
 
             owners = self.get_destination_name(cr, uid,
                                                ids_to_compute, rule.owner_field, context)
+
+            if rule.direction == 'mission-private' and owners:
+                for _id in owners:
+                    own = owners[_id]
+                    if not isinstance(own, (list, tuple)):
+                        own = [own]
+                    if self.pool.get('msf.instance').search_exists(cr, uid, [('instance', 'in', own), ('level', '!=', 'coordo')], context=context):
+                        assert False, "mission-private rule, object: %s, id: %s, owner must be a coordo: %s" % (self._name, _id, own)
+
             min_offset = 0
             max_offset = len(ids_to_compute)
 
@@ -602,6 +619,13 @@ class update_received(osv.osv,fv_formatter):
                         continue
 
                 row = eval(update.values)
+
+                if update.model == 'product.merged':
+                    old_product_sdref = row[import_fields.index('old_product_id/id')]
+                    new_product_sdref = row[import_fields.index('new_product_id/id')]
+                    if self.search_exists(cr, uid, [('sdref', 'in', [old_product_sdref, new_product_sdref]), ('run', '=', False), ('sequence_number', '<=', update.sequence_number)]):
+                        self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on produts %s or %s" % (old_product_sdref, new_product_sdref), context=context)
+                        continue
 
                 #4 check for fallback value : report missing fallback_value
                 #US-852: in case the account_move_line is given but not exist, then do not let the import of the current entry

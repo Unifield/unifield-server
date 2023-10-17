@@ -506,7 +506,7 @@ class analytic_account(osv.osv):
         return res
 
     _columns = {
-        'name': fields.char('Name', size=128, required=True, translate=1),
+        'name': fields.char('Name', size=128, required=True),
         'code': fields.char('Code', size=24),
         'type': fields.selection([('view','View'), ('normal','Normal')], 'Type', help='If you select the View Type, it means you won\'t allow to create journal entries using that account.'),
         'date_start': fields.date('Active from', required=True),
@@ -791,11 +791,35 @@ class analytic_account(osv.osv):
                     vals['fp_account_ids'] = [(6, 0, [])]
         return vals
 
-    def _check_date(self, vals):
+    def _check_data(self, vals, context=None):
+        if context is None:
+            context = {}
         if 'date' in vals and vals['date'] is not False \
                 and 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
             raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
+        if 'code' in vals and vals['code'] is not False and ';' in vals['code']:
+            # to prevent issues in the draft FO/PO AD import
+            raise osv.except_osv(_('Warning !'), _('The Code can not contain a semicolon (;)'))
+
+    def _check_sub_cc(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if 'category' in vals and vals['category'] == 'OC' and 'parent_id' in vals and vals['parent_id']:
+            msg = ''
+            parent = self.browse(cr, uid, vals['parent_id'], fields_to_fetch=['date_start', 'date', 'code'], context=context)
+            if parent.code == 'OC':  # If parent CC is OC, no need to check
+                return True
+            if parent.date and parent.date < datetime.today().strftime('%Y-%m-%d'):
+                raise osv.except_osv(_('Warning !'), _('The parent CC %s is not active, you can not create a child to this parent') % parent.code)
+            if ('date' in vals and vals['date'] and parent.date and vals['date'] > parent.date) or parent.date and ('date' not in vals or ('date' in vals and vals['date'] == False)):
+                msg += _('The sub-costcenter validity date is greater than the parent cost center validity date!') + "\n"
+            if 'date_start' in vals and vals['date_start'] and parent.date_start and vals['date_start'] < parent.date_start:
+                msg += _('The sub-costcenter activation date is lower than the parent cost center activation date!') + "\n"
+
+            if msg:
+                raise osv.except_osv(_('Warning !'), msg)
+
 
     def copy_translations(self, cr, uid, old_id, new_id, context=None):
         """
@@ -827,29 +851,15 @@ class analytic_account(osv.osv):
         """
         if context is None:
             context = {}
-        lang_obj = self.pool.get('res.lang')
         # no check at sync time (note that there may be some accounts with duplicated names created before US-5224)
         if not context.get('sync_update_execution', False):
             if isinstance(ids, (int, long)):
                 ids = [ids]
-            lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
             for analytic_acc in self.read(cr, uid, ids, ['category', 'name'], context=context):
                 dom = [('category', '=', analytic_acc.get('category', '')),
                        ('name', '=ilike', analytic_acc.get('name', '')),
                        ('id', '!=', analytic_acc.get('id'))]
-                duplicate = 0
-                # check the potential duplicates in all languages
-                if lang_ids:
-                    for lang in lang_obj.browse(cr, uid, lang_ids, fields_to_fetch=['code'], context=context):
-                        if self.search_exist(cr, uid, dom, context={'lang': lang.code}):
-                            duplicate += 1
-                elif self.search_exist(cr, uid, dom, context=context):
-                    duplicate += 1
-                if duplicate > 0:
-                    ir_trans = self.pool.get('ir.translation')
-                    trans_ids = ir_trans.search(cr, uid, [('res_id', 'in', ids), ('name', '=', 'account.analytic.account,name')], context=context)
-                    if trans_ids:
-                        ir_trans.clear_transid(cr, uid, trans_ids, context=context)
+                if self.search_exist(cr, uid, dom, context=context):
                     raise osv.except_osv(_('Warning !'), _('You cannot have the same name between analytic accounts in the same category!'))
         return True
 
@@ -951,7 +961,8 @@ class analytic_account(osv.osv):
         # Check that instance_id is filled in for FP
         if context.get('from_web', False) or context.get('from_import_menu', False):
             self.check_fp(cr, uid, vals, to_update=True, context=context)
-        self._check_date(vals)
+        self._check_data(vals, context=context)
+        self._check_sub_cc(cr, uid, vals=vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
         vals_copy = vals.copy()
@@ -964,6 +975,8 @@ class analytic_account(osv.osv):
             if init_cc_fx_gain and vals.get('code') == init_cc_fx_gain:
                 vals['for_fx_gain_loss'] = True
                 param.set_param(cr, 1, 'INIT_CC_FX_GAIN', '')
+        if vals.get('code', False):
+            vals['code'] = vals['code'].strip()
         analytic_acc_id = super(analytic_account, self).create(cr, uid, vals, context=context)
         self._check_name_unicity(cr, uid, analytic_acc_id, context=context)
         self._clean_dest_cc_link(cr, uid, analytic_acc_id, vals, context=context)
@@ -981,10 +994,12 @@ class analytic_account(osv.osv):
         # US-166: Ids needs to always be a list
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self._check_date(vals)
+        self._check_data(vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
         self._update_synched_dest_cc_ids(cr, uid, ids, vals, context)
+        if vals.get('code', False):
+            vals['code'] = vals['code'].strip()
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
         self._clean_dest_cc_link(cr, uid, ids, vals, context=context)
         self.check_access_rule(cr, uid, ids, 'write', context=context)

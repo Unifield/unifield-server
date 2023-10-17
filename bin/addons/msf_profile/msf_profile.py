@@ -57,7 +57,403 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF31.0
+    def us_11956_fix_po_line_reception_destination(self, cr, uid, *a, **b):
+        '''
+        Set the Reception Destination to Cross Docking for all PO line by Nomenclature (no product) if they are linked
+        to a FO or an External IR
+        '''
+        cross_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
+                                                                       'stock_location_cross_docking')[1]
+
+        cr.execute('''
+            UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
+                SELECT pl.id FROM purchase_order_line pl 
+                    LEFT JOIN sale_order so ON pl.link_so_id = so.id 
+                    LEFT JOIN stock_location l ON so.location_requestor_id = l.id 
+                WHERE pl.link_so_id = so.id AND pl.product_id IS NULL AND 
+                    (so.procurement_request = 'f' OR (so.location_requestor_id IS NOT NULL AND l.usage = 'customer'))
+        )''', (cross_id,))
+        self.log_info(cr, uid, "US-11956: The Line Destination of %s PO line(s) by Nomenclature have been set to 'Cross Docking'" % (cr.rowcount,))
+
+        return True
+
+    # UF30.0
+    def us_11810_fix_company_logo(self, cr, uid, *a, **b):
+        '''
+        Add the default logo to the company if there is none
+        '''
+        company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id
+        if not company.logo:
+            default_logo = tools.file_open(opj('msf_profile', 'data', 'msf.jpg'), 'rb')
+            self.pool.get('res.company').write(cr, uid, company.id, {'logo': base64.encodestring(default_logo.read())})
+            default_logo.close()
+
+        return True
+
+    def us_1074_create_unifield_instance(self, cr, uid, *a, **b):
+        uf_instance = self.pool.get('unifield.instance')
+        unidata_proj =  self.pool.get('unidata.project')
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            cr.execute('''select p.id, p.country_id, instance.code, instance.id, p.uf_active from
+                    unidata_project p, msf_instance instance
+                    where
+                        instance.id = p.instance_id
+                ''')
+            instance_cache = {}
+            for proj in cr.fetchall():
+                if proj[3] not in instance_cache:
+                    inst_ids = uf_instance.search(cr, uid, [('instance_id', '=', proj[3])])
+                    if not inst_ids:
+                        instance_cache[proj[3]] = uf_instance.create(cr, uid, {'instance_id': proj[3],'country_id': proj[1], 'uf_active': proj[4]})
+                    else:
+                        instance_cache[proj[3]] = inst_ids[0]
+
+                unidata_proj.write(cr, uid, proj[0], {'unifield_instance_id': instance_cache[proj[3]]})
+
+        return True
+
+    def us_11679_set_iil_oca(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance:
+            return True
+
+        if instance.instance.endswith('OCA'):
+            cr.execute("""UPDATE unifield_setup_configuration
+            SET esc_line='t'
+            """)
+        return True
+
+    def us_11090_replace_DC4_by_space(self, cr, uid, *a, **b):
+        cr.execute('''
+        UPDATE account_move_line
+        SET
+            ref = regexp_replace(ref, E'\x14', ' ', 'g'),
+            name = regexp_replace(name, E'\x14', ' ', 'g'),
+            partner_txt = regexp_replace(partner_txt, E'\x14', ' ', 'g')
+        WHERE ref ~ '\x14' OR name ~ '\x14' OR partner_txt ~ '\x14'
+        ''')
+        cr.execute('''
+        UPDATE account_analytic_line
+        SET
+            ref = regexp_replace(ref, E'\x14', ' ', 'g'),
+            name = regexp_replace(name, E'\x14', ' ', 'g'),
+            partner_txt = regexp_replace(partner_txt, E'\x14', ' ', 'g')
+        WHERE ref ~ '\x14' OR name ~ '\x14' OR partner_txt ~ '\x14'
+        ''')
+
+    def us_11130_trigger_down_account_mapping(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            # exclude new instances
+            return True
+        cr.execute("""UPDATE ir_model_data
+        SET last_modification=NOW(), touched='[''account_id'', ''mapping_value'']'
+        WHERE model='account.export.mapping'
+        """)
+        return True
+
+    def us_11448_update_rfq_line_state(self, cr, uid, *a, **b):
+        '''
+        Update the rfq_line_state of all RFQ lines
+        '''
+        # Non-cancelled
+        cr.execute("""
+            UPDATE purchase_order_line pl SET rfq_line_state = p.rfq_state FROM purchase_order p
+            WHERE pl.order_id = p.id AND pl.state NOT IN ('cancel', 'cancel_r') AND p.rfq_state != 'cancel' 
+                AND p.rfq_ok = 't'
+        """)
+
+        # Cancelled(-r)
+        cr.execute("""
+            UPDATE purchase_order_line pl SET rfq_line_state = pl.state FROM purchase_order p
+            WHERE pl.order_id = p.id AND pl.state IN ('cancel', 'cancel_r') AND p.rfq_ok = 't'
+        """)
+
+        return True
+
+    def us_10874_bar_hard_post_wizard(self, cr, uid, *a, **b):
+        bar = self.pool.get('msf_button_access_rights.button_access_rule')
+        bar_ids = bar.search(cr, uid, [('name', '=', 'action_confirm_hard_posting'), ('model_id.name', '=', 'wizard.temp.posting')])
+        group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Fin_Hard_Posting')])
+        if bar_ids and group_ids:
+            bar.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+
+        return True
+
+    def us_10783_11563_po_reception_destination(self, cr, uid, *a, **b):
+        '''
+        For each PO line, look at its origin to set the reception_destination_id. It can be Cross Docking, Service,
+        Non-Stockable or Input
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        srv_id = self.pool.get('stock.location').get_service_location(cr, uid, context={})
+        input_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        cross_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        n_stock_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+
+        # Cross Docking: PO line linked to a FO and product is not Service or an IR to Ext CU and product is neither
+        # Service or Non-Stockable
+        cr.execute("""UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
+            SELECT pl.id FROM purchase_order_line pl 
+                LEFT JOIN product_product pp ON pl.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN sale_order so ON pl.link_so_id = so.id 
+                LEFT JOIN stock_location l ON so.location_requestor_id = l.id
+            WHERE pl.link_so_id = so.id AND ((pt.type != 'service_recep' AND so.procurement_request = 'f') OR 
+                (pt.type NOT IN ('service_recep', 'consu') AND so.location_requestor_id IS NOT NULL AND l.usage = 'customer'))
+        )""", (cross_id,))
+        self.log_info(cr, uid, "US-10783-11563: The Line Destination of %s PO line(s) have been set to 'Cross Docking'" % (cr.rowcount,))
+
+        # Service: PO line from scratch or linked to internal IR and product is Service
+        cr.execute("""UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
+            SELECT pl.id FROM purchase_order_line pl
+                LEFT JOIN product_product pp ON pl.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+            WHERE pt.type = 'service_recep'
+        )""", (srv_id,))
+        self.log_info(cr, uid, "US-10783-11563: The Line Destination of %s PO line(s) have been set to 'Service'" % (cr.rowcount,))
+
+        # Non-Stockable: PO line from scratch or linked to internal IR and product is Non-Stockable
+        cr.execute("""UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
+            SELECT pl.id FROM purchase_order_line pl
+                LEFT JOIN product_product pp ON pl.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN sale_order so ON pl.link_so_id = so.id 
+                LEFT JOIN stock_location l ON so.location_requestor_id = l.id
+            WHERE pt.type = 'consu' AND (pl.link_so_id IS NULL OR so.procurement_request = 't')
+        )""", (n_stock_id,))
+        self.log_info(cr, uid, "US-10783-11563: The Line Destination of %s PO line(s) have been set to 'Non-Stockable'" % (cr.rowcount,))
+
+        # Input: All others
+        cr.execute("""UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
+            SELECT pl.id FROM purchase_order_line pl
+                LEFT JOIN product_product pp ON pl.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN sale_order so ON pl.link_so_id = so.id 
+                LEFT JOIN stock_location l ON so.location_requestor_id = l.id
+            WHERE (pl.product_id IS NULL OR pt.type NOT IN ('service_recep', 'consu')) 
+                AND (pl.link_so_id IS NULL OR (so.procurement_request = 't' AND l.usage != 'customer'))
+        )""", (input_id,))
+        self.log_info(cr, uid, "US-10783-11563: The Line Destination of %s PO line(s) have been set to 'Input'" % (cr.rowcount,))
+        return True
+
+
+    def us_11181_update_supply_signature_follow_up(self, cr, uid, *a, **b):
+        '''
+        Update the domain of the existing ir_rule for supply signatures.
+        '''
+        if _get_instance_level(self, cr, uid) == 'hq':
+            rr_obj = self.pool.get('ir.rule')
+            suppl_sign_fup_ids = rr_obj.search(cr, uid, [('name', '=', 'Signatures Follow-up Supply Creator')])
+            if suppl_sign_fup_ids:
+                data = {'domain_force': "[('doc_type', 'in', ['purchase.order', 'sale.order.fo', 'sale.order.ir', 'stock.picking.in', 'stock.picking.out', 'stock.picking.pick'])]"}
+                rr_obj.write(cr, uid, suppl_sign_fup_ids, data)
+        return True
+
+
+
+    # UF29.0
+    def us_11399_oca_mm_target(self, cr, uid, *a, **b):
+        if self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id:
+            cr.execute('''
+                update
+                    account_target_costcenter
+                set
+                    is_target='f'
+                where
+                    is_target='t'
+                    and id in
+                        (select res_id from ir_model_data where name='b8c174f0-2483-11e5-9d58-0050569320a7/account_target_costcenter/723')
+            ''')
+        return True
+
+    def us_11177_bn_for_kcl_items(self, cr, uid, *a, **b):
+        '''
+        For each KCL item with item_lot/item_exp filled, the script will try to find a corresponding BN or create a new
+        one, then fill item_lot_id with the data
+        '''
+        kcl_item_obj = self.pool.get('composition.item')
+        bn_obj = self.pool.get('stock.production.lot')
+        kcl_item_ids = kcl_item_obj.search(cr, uid, [('item_kit_type', '=', 'real'), '|', ('item_lot', '!=', False), ('item_exp', '!=', False)])
+        ftf = ['item_product_id', 'item_lot', 'item_exp']
+        for kcl_item in kcl_item_obj.browse(cr, uid, kcl_item_ids, fields_to_fetch=ftf):
+            # Skip if the product is not ED anymore
+            if kcl_item.item_exp and not kcl_item.item_product_id.perishable:
+                continue
+            # Use fake name and date for KCL lines with missing data, caused by BN/ED attributes changes over time
+            if kcl_item.item_product_id.batch_management or kcl_item.item_product_id.perishable:
+                lot_name = kcl_item.item_product_id.batch_management and (kcl_item.item_lot or 'TO-BE-REPLACED') or False
+                lot_date = kcl_item.item_exp or '2999-12-31'
+                new_bn_id = bn_obj._get_or_create_lot(cr, uid, lot_name, lot_date, kcl_item.item_product_id.id)
+                kcl_item_obj.write(cr, uid, kcl_item.id, {'item_lot_id': new_bn_id, 'item_exp': lot_date})
+        return True
+
+    def us_8968_shipments_returned(self, cr, uid, *a, **b):
+        '''
+        Set the state of all existing Shipments that have been returned to Returned (cancel)
+        '''
+        ship_obj = self.pool.get('shipment')
+
+        ships_to_cancel = []
+        nb_ships = 0
+        ship_ids = ship_obj.search(cr, uid, [('state', 'in', ['done', 'delivered'])])
+        for ship in ship_obj.browse(cr, uid, ship_ids, fields_to_fetch=['pack_family_memory_ids']):
+            if not ship.pack_family_memory_ids:  # Skip Shipments with no Pack Family
+                continue
+            all_returned = True
+            for fam in ship.pack_family_memory_ids:
+                if not fam.not_shipped:
+                    all_returned = False
+                    break
+            if all_returned:
+                ships_to_cancel.append(ship.id)
+                nb_ships += 1
+
+        if ships_to_cancel:
+            cr.execute("""UPDATE shipment SET state = 'cancel' WHERE id IN %s""", (tuple(ships_to_cancel),))
+            self.log_info(cr, uid, "US-8968: %d Shipments' state have been set to Returned" % (nb_ships,))
+        return True
+
+    def us_11046_fix_standard_price_products(self, cr, uid, *a, **b):
+        '''
+        Set the Costing Method of all Standard Price Products to Average Price
+        '''
+        cr.execute("""UPDATE product_template SET cost_method = 'average' WHERE cost_method = 'standard'""")
+        self.log_info(cr, uid, "US-11046: The Costing Method of %s product(s) have been set to 'Average Price'" % (cr.rowcount,))
+        return True
+
+    def us_10629_fix_partner_fo_pricelist(self, cr, uid, *a, **b):
+        '''
+        Set property_product_pricelist to the value of property_product_pricelist_purchase in Partners where they are
+        different
+        '''
+        cr.execute("""
+            SELECT p.id, pl.currency_id FROM res_partner p 
+            LEFT JOIN product_pricelist pl on p.property_product_pricelist_purchase = pl.id 
+            LEFT JOIN product_pricelist pl2 on p.property_product_pricelist = pl2.id 
+            WHERE pl.currency_id != pl2.currency_id
+        """)
+
+        for x in cr.fetchall():
+            fo_pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('currency_id', '=', x[1]), ('type', '=', 'sale')])
+            if fo_pricelist_ids:
+                cr.execute("""UPDATE res_partner SET property_product_pricelist = %s WHERE id = %s""", (fo_pricelist_ids[0], x[0]))
+        return True
+
+    def us_11022_accrual_third_party(self, cr, uid, *a, **b):
+        cr.execute('''UPDATE msf_accrual_line SET third_party_name = NULL WHERE third_party_type IS NULL AND third_party_name IS NOT NULL ''')
+        return True
+
+    def us_10904_donations_done_state(self, cr, uid, *a, **b):
+        cr.execute("update account_invoice set state='done' where is_inkind_donation = 't' and state='open'")
+        return True
+
+    def us_6976_analytic_translations(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        is_coordo = instance and instance.level == 'coordo'
+        aa_ids = []
+
+        # update name with en_MF translation
+        cr.execute('''
+            update
+                account_analytic_account
+            set
+                name=tr.trans
+            from
+                ( select a.id, coalesce(tr_en.value, tr_fr.value, '') as trans
+                from
+                    account_analytic_account a
+                    left join ir_translation tr_en on tr_en.name='account.analytic.account,name' and tr_en.res_id = a.id and tr_en.lang='en_MF' and tr_en.xml_id not like 'analytic_account%'
+                    left join ir_translation tr_fr on tr_fr.name='account.analytic.account,name' and tr_fr.res_id = a.id and tr_fr.lang='fr_MF' and tr_fr.xml_id not like 'analytic_account%'
+                group by a.id, tr_en.value, tr_fr.value
+                ) as tr
+            where
+                tr.id = account_analytic_account.id and
+                tr.trans != '' and
+                account_analytic_account.name != tr.trans
+            returning account_analytic_account.id
+        ''')
+        if is_coordo:
+            aa_ids = [x[0] for x in cr.fetchall()]
+
+        self.log_info(cr, uid, "US-6976: Update name on %s analytic accounts" % (cr.rowcount, ))
+
+        if instance.code == 'OCBCD100':
+            cr.execute('''update account_analytic_account set name='56-1-16 EVAL ROUGEOLE KAMWESHA 2' where name='56-1-31 EVAL ROUGEOLE LINGOMO-DJOLU (copy)' returning id ''');
+            aa_ids += [x[0] for x in cr.fetchall()]
+            self.log_info(cr, uid, "US-6976: Update OCBCD100 name on %s analytic account " % (cr.rowcount, ))
+
+        if aa_ids:
+            # for FP created at coordo, trigger sync to update name to HQ
+            entity = self.pool.get('sync.client.entity')._get_entity(cr)
+            if aa_ids:
+                cr.execute('''
+                    update
+                        ir_model_data d
+                    set
+                        last_modification=NOW(), touched='[''name'']'
+                    from
+                        account_analytic_account a
+                    where
+                        d.res_id = a.id and
+                        d.model= 'account.analytic.account' and
+                        d.module='sd' and
+                        a.category = 'FUNDING' and
+                        d.name like '%s/%%%%' and
+                        d.res_id in %%s
+                    ''' % (entity.identifier ,), (tuple(aa_ids), )) # not_a_user_entry
+                self.log_info(cr, uid, "US-6976: Trigger FP update on %s analytic accounts" % (cr.rowcount, ))
+
+        cr.execute("update ir_translation set name='account.analytic.account,nameko' where name='account.analytic.account,name' and type='model'")
+        return True
+
+    def us_10835_disable_iil_menu(self, cr, uid, *a, **b):
+        # hide menuitems
+        setup_obj = self.pool.get('esc_line.setup')
+        esc_line_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [esc_line_install])
+        return True
+
     # UF28.0
+    def us_10885_tc_entries(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance in ('BD_DHK_OCA', 'HQ_OCA', 'MY_CPLC_OCA', 'OCBHQ', 'OCBPK105', 'OCG_HQ'):
+            cr.execute('''
+                update
+                    audittrail_log_line l set res_id = p.product_tmpl_id
+                from
+                    ir_model m, ir_model_fields f , product_product p
+                where
+                    m.id=l.object_id
+                    and f.id = l.field_id
+                    and p.id=l.res_id
+                    and f.model_id != m.id
+                    and m.model='product.template'
+                    and p.id!=p.product_tmpl_id
+                    and l.create_date > (select applied from sync_client_version where name='UF27.0')
+            ''')
+        return True
+
+    def us_11195_oca_period_nr(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity') or self.pool.get('sync.server.update'):
+            return True
+
+        oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+        cr.execute(oc_sql)
+        oc = cr.fetchone()[0]
+        if oc == 'oca':
+            cr.execute("""update sync_client_update_received set
+                run='t', log='Set as Run by US-11195'
+                where
+                    run='f' and
+                    sdref in ('FY2022/Jul 2022_2022-07-01', 'FY2022/Jun 2022_2022-06-01') and
+                    version in (3, 4)
+            """)
+
+            self.log_info(cr, uid, "US-11195: set %d NR on periods as Run" % (cr.rowcount, ))
+        return True
+
     def us_8417_upd_srv_loc(self, cr, uid, *a, **b):
         '''
         Set 'virtual_location' to True on the existing 'Service' location
@@ -5658,9 +6054,13 @@ class res_users(osv.osv):
     _name = 'res.users'
 
     def _get_default_ctx_lang(self, cr, uid, context=None):
-        config_lang = self.pool.get('unifield.setup.configuration').get_config(cr, uid).lang_id
-        if config_lang:
-            return config_lang
+        config_obj = self.pool.get('unifield.setup.configuration')
+        if config_obj.search_exists(cr, uid, [], context=context):
+            # if not record, get_config create a record
+            # incorrect in case of user creation during install
+            config_lang = config_obj.get_config(cr, uid).lang_id
+            if config_lang:
+                return config_lang
         if self.pool.get('res.lang').search(cr, uid, [('translatable','=',True), ('code', '=', 'en_MF')]):
             return 'en_MF'
         return 'en_US'

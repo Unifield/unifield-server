@@ -284,25 +284,20 @@ class stock_incoming_processor(osv.osv):
             vals['linked_to_out'] = False
 
         if not vals.get('dest_type', False):
-            cd_move = move_obj.search(cr, uid, [
+            cd_move = move_obj.search_exist(cr, uid, [
                 ('picking_id', '=', picking.id),
                 ('location_dest_id.cross_docking_location_ok', '=', True),
-            ], count=True, context=context)
-            in_move = move_obj.search(cr, uid, [
+            ], context=context)
+            in_move = move_obj.search_exist(cr, uid, [
                 ('picking_id', '=', picking.id),
                 ('location_dest_id.input_ok', '=', True),
-            ], count=True, context=context)
+            ], context=context)
 
-            if cd_move and in_move:
+            if (cd_move and in_move) or (not cd_move and not in_move):
                 vals['dest_type'] = 'default'
-            elif not picking.backorder_id:
-                if picking.purchase_id and picking.purchase_id.cross_docking_ok:
-                    vals['dest_type'] = 'to_cross_docking'
-                elif picking.purchase_id:
-                    vals['dest_type'] = 'to_stock'
-            elif picking.cd_from_bo or (cd_move and not in_move):
+            elif cd_move and not in_move:
                 vals['dest_type'] = 'to_cross_docking'
-            elif not picking.cd_from_bo or (in_move and not cd_move):
+            elif not cd_move and in_move:
                 vals['dest_type'] = 'to_stock'
 
         if not vals.get('source_type', False):
@@ -313,7 +308,7 @@ class stock_incoming_processor(osv.osv):
 
         return super(stock_incoming_processor, self).create(cr, uid, vals, context=context)
 
-    def do_incoming_shipment(self, cr, uid, ids, context=None):
+    def do_incoming_shipment(self, cr, uid, ids, context=None, check_mml=True):
         """
         Made some integrity check on lines and run the do_incoming_shipment of stock.picking
         """
@@ -339,6 +334,10 @@ class stock_incoming_processor(osv.osv):
 
         picking_id = None
         for proc in self.browse(cr, uid, ids, context=context):
+
+            check_proc_mml = check_mml and proc.picking_id.type == 'in' and not proc.picking_id.purchase_id
+            has_mml_error = []
+
             picking_id = proc.picking_id.id
 
             if proc.picking_id.type != 'in':
@@ -378,12 +377,27 @@ class stock_incoming_processor(osv.osv):
                         'target': 'new',
                         'context': context,
                     }
+                if check_proc_mml and line.quantity and line.mml_status == 'F':
+                    has_mml_error.append('L%s %s' % (line.line_number, line.product_id.default_code))
 
-            self.write(cr, uid, [proc.id], {
-                'already_processed': True,
-            }, context=context)
+            self.write(cr, uid, [proc.id], {'already_processed': True}, context=context)
 
+            if has_mml_error:
+                cr.rollback()
+                msg = self.pool.get('message.action').create(cr, uid, {
+                    'title':  _('Warning'),
+                    'message': '<h2>%s</h2><h3>%s</h3>' % (_('You are about to process  this line(s) containing a product which does not conform to MML:'),
+                                                           ', '.join(has_mml_error)),
+                    'yes_action': lambda cr, uid, context: self.do_incoming_shipment(cr, uid, ids, context=context, check_mml=False),
+                    'yes_label': _('Process Anyway'),
+                    'no_label': _('Close window'),
+                }, context=context)
+                return self.pool.get('message.action').pop_up(cr, uid, [msg], context=context)
+
+
+            l_ids = []
             for line in proc.move_ids:
+                l_ids.append(line.id)
                 # if no quantity, don't process the move
                 if not line.quantity:
                     to_unlink.append(line.id)
@@ -414,6 +428,31 @@ class stock_incoming_processor(osv.osv):
 
             if proc.direct_incoming and not proc.location_dest_active_ok:
                 self.write(cr, uid, [proc.id], {'direct_incoming': False}, context=context)
+
+            # Add the warning if there's a signed signature during partial processing
+            if not context.get('auto_import_ok') and proc.picking_id.signature_id and not proc.partial_process_sign:
+                cr.execute("""
+                    SELECT mp.id FROM stock_move_in_processor mp LEFT JOIN stock_incoming_processor ip ON mp.wizard_id = ip.id 
+                            LEFT JOIN stock_picking p ON ip.picking_id = p.id
+                        , signature s LEFT JOIN signature_line sl ON sl.signature_id = s.id
+                    WHERE s.signature_res_id = p.id AND s.signature_res_model = 'stock.picking' AND s.signature_res_id = %s 
+                        AND mp.id IN %s AND sl.signed = 't' AND ip.picking_id = %s 
+                        AND mp.quantity < mp.ordered_quantity LIMIT 1
+                """, (proc.picking_id.id, tuple(l_ids), proc.picking_id.id))
+                if cr.fetchone():
+                    self.write(cr, uid, proc.id, {'partial_process_sign': True, 'already_processed': False}, context=context)
+                    target = not context.get('from_simu_screen') and 'new' or 'same'
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': self._name,
+                        'res_id': proc.id,
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': target,
+                        'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing',
+                                                                                        'stock_incoming_processor_form_view')[1]],
+                        'context': context,
+                    }
 
         if to_unlink:
             in_proc_obj.unlink(cr, uid, to_unlink, context=context)
@@ -549,7 +588,7 @@ class stock_incoming_processor(osv.osv):
         res_id = []
         for incoming in incoming_ids:
             res_id = incoming['picking_id']['id']
-        incoming_obj.write(cr, uid, ids, {'draft': False}, context=context)
+        incoming_obj.write(cr, uid, ids, {'draft': False, 'partial_process_sign': False}, context=context)
         return stock_p_obj.action_process(cr, uid, res_id, context=context)
 
     def do_save_draft(self, cr, uid, ids, context=None):

@@ -12,7 +12,36 @@ class purchase_order_line(osv.osv):
     _name = "purchase.order.line"
     _inherit = "purchase.order.line"
 
+    def popup_mml(self, cr, uid, ids, yes_method, context=None):
+        mml_error = []
+        # TODO: search method mml_status=F ?
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['mml_status', 'line_number', 'product_id'], context=context):
+            if x['mml_status'] == 'F':
+                mml_error.append(x)
+        if mml_error:
+            msg = self.pool.get('message.action').create(cr, uid, {
+                'title':  _('Warning'),
+                'message': '<h2>%s</h2><h3>%s</h3>' % (_('You are about to process  this line(s) containing a product which does not conform to MSL/MML:'),
+                                                       ', '.join(['L%s %s'%(x.line_number, x.product_id.default_code) for x in mml_error])),
+                'refresh_o2m': 'order_line',
+                'yes_action': yes_method,
+                'yes_label': _('Process Anyway'),
+                'no_label': _('Close window'),
+            }, context=context)
+            return self.pool.get('message.action').pop_up(cr, uid, [msg], context=context)
+        return yes_method(cr, uid, context)
+
     def validated(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not ids:
+            return True
+
+        return self.popup_mml(cr, uid, ids, lambda cr, uid, context: self.validated_nsl_part(cr, uid, ids, context=context), context=context)
+
+
+    def validated_nsl_part(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -76,6 +105,9 @@ class purchase_order_line(osv.osv):
                     sol_values['line_number'] = split_po.linked_sol_id.line_number
                     sol_values['original_line_id'] = split_po.linked_sol_id.id
                     sol_values['original_instance'] = split_po.linked_sol_id.original_instance
+
+                    if split_po.linked_sol_id.instance_sync_order_ref:
+                        sol_values['instance_sync_order_ref'] = split_po.linked_sol_id.instance_sync_order_ref.id
         return sol_values
 
 
@@ -255,6 +287,7 @@ class purchase_order_line(osv.osv):
                 sol_values.update({
                     'order_id': so_id,
                     'date_planned': pol.date_planned,
+                    'instance_sync_order_ref': pol.instance_sync_order_ref and pol.instance_sync_order_ref.id or False,
                 })
                 sol_values.update(self.get_split_info(cr, uid, pol, context))
                 if not sol_values.get('is_line_split'):
@@ -515,6 +548,14 @@ class purchase_order_line(osv.osv):
         return self.pool.get('sale.order').create(cr, uid, counterpart_data, context=context)
 
     def button_confirmed(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return self.popup_mml(cr, uid, ids, lambda cr, uid, context: self.button_confirmed_no_mml_check(cr, uid, ids, context=context), context=context)
+
+    def button_confirmed_no_mml_check(self, cr, uid, ids, context=None):
         '''
         Method called when trying to confirm a PO line
         '''
@@ -793,7 +834,7 @@ class purchase_order_line(osv.osv):
                     self.pool.get('stock.move').in_action_confirm(cr, uid, incoming_move_id, context)
 
                 # create internal moves (INT):
-                if pol.order_id.location_id.input_ok and pol.product_id.type not in ('service_recep', 'consu'):
+                if pol.reception_dest_id.input_ok and pol.product_id.type not in ('service_recep', 'consu'):
                     internal_pick = self.pool.get('stock.picking').search(cr, uid, [
                         ('type', '=', 'internal'),
                         ('purchase_id', '=', pol.order_id.id),
@@ -904,16 +945,21 @@ class purchase_order_line(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
 
         # cancel the linked SO line too:
+        is_rfq = False
         for pol in self.browse(cr, uid, ids, context=context):
             self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
+            is_rfq = pol.rfq_ok
             if pol.linked_sol_id:
                 if pol.cancelled_by_sync:
                     sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
         self.update_tax_corner(cr, uid, ids, context=context)
-        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        vals = {'state': 'cancel'}
+        if is_rfq:
+            vals.update({'rfq_line_state': 'cancel'})
+        self.write(cr, uid, ids, vals, context=context)
 
         return True
 
@@ -929,17 +975,22 @@ class purchase_order_line(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
 
         # cancel the linked SO line too:
+        is_rfq = False
         for pol in self.browse(cr, uid, ids, context=context):
             self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
+            is_rfq = pol.rfq_ok
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
                 if pol.cancelled_by_sync:
                     sol_obj.write(cr, uid, pol.linked_sol_id.id, {'cancelled_by_sync': True, 'product_uom_qty': pol.product_qty ,'product_uos_qty': pol.product_qty}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
 
         self.update_tax_corner(cr, uid, ids, context=context)
-        self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
+        vals = {'state': 'cancel_r'}
+        if is_rfq:
+            vals.update({'rfq_line_state': 'cancel_r'})
+        self.write(cr, uid, ids, vals, context=context)
 
         return True
 
@@ -961,8 +1012,9 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        po = self.browse(cr, uid, ids[0], fields_to_fetch=['order_line'], context=context)
-        return self.pool.get('purchase.order.line').validated(cr, uid, [pol.id for pol in po.order_line], context=context)
+        pol_obj =  self.pool.get('purchase.order.line')
+        pol_ids = pol_obj.search(cr, uid, [('order_id', '=', ids[0]), ('state', '=', 'draft')], context=context)
+        return pol_obj.validated(cr, uid, pol_ids, context=context)
 
 
 

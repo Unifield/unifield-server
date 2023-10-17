@@ -1664,7 +1664,6 @@ msgstr "Al desactivar el campo activo puede desactivar una unidad de medida sin 
 #: model:ir.actions.act_window,name:account.action_account_analytic_entries_free2_open_form
 #: model:ir.ui.menu,name:account.account_analytic_journal_free2_entries
 #: view:account.mcdb:0
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_free_2
 msgid "Free 2"
 msgstr "Free 2"
 
@@ -11007,7 +11006,7 @@ msgstr "Cancelar la orden de compra"
 
 #. module: product_list
 #: model:ir.actions.act_window,name:product_list.action_open_wizard_product_import_list
-msgid "Import to list"
+msgid "Import to Product List"
 msgstr "Importar a la lista"
 
 #. modules: return_claim, msf_outgoing, stock, stock_override, kit
@@ -19491,11 +19490,6 @@ msgstr "Creación de OCs - Lote  (reglas de reabastecimiento)"
 msgid "Northern Mariana Islands"
 msgstr "Islas Marianas del Norte"
 
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_expatriates
-msgid "Expatriates"
-msgstr "Expatriates"
-
 #. module: account
 #: model:process.node,note:account.process_node_supplierpaymentorder0
 msgid "Payment of invoices"
@@ -22502,11 +22496,6 @@ msgstr "Se han reasignado"
 #: view:sale.order:0
 msgid "Untaxed amount"
 msgstr "Importe no gravado"
-
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_operation
-msgid "Operations"
-msgstr "Operations"
 
 #. module: base
 #: model:res.partner.bank.type,name:base.bank_normal
@@ -29856,7 +29845,6 @@ msgstr "Entrega"
 #. modules: register_accounting, account_mcdb, account_hq_entries, analytic_distribution
 #: field:hq.entries.split.lines,analytic_id:0
 #: field:account.mcdb,analytic_account_fp_ids:0
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_funding_pool
 #: field:wizard.register.import.lines,funding_pool_id:0
 msgid "Funding Pool"
 msgstr "Funding Pool"
@@ -37755,11 +37743,6 @@ msgstr "Conciliación parcial con cambio"
 #, python-format
 msgid "You should make a choice for the Monthly configuration"
 msgstr "Debe hacer su selección para la configuración mensual"
-
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_support
-msgid "Support"
-msgstr "Support"
 
 #. module: procurement_request
 #: view:sale.order:0
@@ -54490,7 +54473,6 @@ msgstr "Evento para el seguimiento de activos"
 #: model:ir.actions.act_window,name:account.action_account_analytic_entries_free1_open_form
 #: model:ir.ui.menu,name:account.account_analytic_journal_free1_entries
 #: view:account.mcdb:0
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_free_1
 msgid "Free 1"
 msgstr "Free 1"
 
@@ -56234,11 +56216,6 @@ msgstr "Asia / Dhaka"
 #: model:ir.model,name:base.model_multi_company_default
 msgid "Default multi company"
 msgstr "Multiempresa por defecto"
-
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_project
-msgid "OC"
-msgstr "OC"
 
 #. module: msf_doc_import
 #: field:incoming.import.xml.line,file_line_number:0
@@ -65838,7 +65815,6 @@ msgstr "Contrato de financiación"
 #: selection:account.analytic.line,journal_type:0
 #: selection:account.move,journal_type:0
 #: selection:account.move.line,journal_type:0
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_project_intermission
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:purchase.order,partner_type:0
@@ -68741,11 +68717,6 @@ msgstr "Etc/GMT-4"
 msgid "Functional Subtotal"
 msgstr "Subtotal funcional"
 
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_national_staff
-msgid "National Staff"
-msgstr "National Staff"
-
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_wizard_import_ir_line
 msgid "Import IR Lines from Excel sheet"
@@ -69168,11 +69139,6 @@ msgstr "Detalles:"
 #: field:account.chart.template,property_account_receivable:0
 msgid "Receivable Account"
 msgstr "Cuenta por cobrar"
-
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_msf_private_funds
-msgid "MSF Private Funds"
-msgstr "MSF Private Funds"
 
 #. module: account
 #: field:account.fiscal.position.template,chart_template_id:0
@@ -71354,11 +71320,6 @@ msgstr "Importe paquete:"
 #: model:ir.ui.menu,name:kit.kit_composition_theoretical_menu
 msgid "Theoretical Kit Composition"
 msgstr "Composición de kit teórico "
-
-#. module: order_types
-#: field:stock.picking,cd_from_bo:0
-msgid "CD from BO"
-msgstr "CD de BO"
 
 #. module: product
 #: field:product.price_list,qty1:0
@@ -73940,7 +73901,6 @@ msgstr "Cuenta - Planes tributarios"
 
 #. modules: msf_budget, register_accounting, sync_remote_warehouse, account_hq_entries, analytic_distribution
 #: field:hq.entries.split.lines,destination_id:0
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:545
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:562
 #: field:wizard.register.import.lines,destination_id:0

@@ -75,6 +75,8 @@
             <blockSpan start="10,1" stop="10,-1" />
             <blockSpan start="11,1" stop="11,-1" />
             <blockSpan start="12,1" stop="12,-1" />
+            <blockSpan start="13,1" stop="13,-1" />
+            <blockSpan start="14,1" stop="14,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="FooterInfo">
@@ -102,6 +104,7 @@
             <blockSpan start="6,0" stop="6,-1" />
             <blockSpan start="7,0" stop="7,-1" />
             <blockSpan start="8,0" stop="8,-1" />
+            <blockSpan start="9,0" stop="9,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="NoteTable">
@@ -122,6 +125,7 @@
         <paraStyle name="LineHeaderLeft" fontName="Helvetica-Oblique" fontSize="6.0" alignment="LEFT" leading="5.0" />
 
         <paraStyle name="LineValue" fontName="Helvetica" fontSize="6.0" alignment="CENTER" leading="5.0" textColor="blue" />
+        <paraStyle name="LineValueGrey" fontName="Helvetica" fontSize="6.0" alignment="CENTER" leading="5.0" textColor="#747474" />
         <paraStyle name="LineValueBold" fontName="Helvetica-Bold" fontSize="6.0" alignment="CENTER" leading="8.0" textColor="blue" />
         <paraStyle name="LineValueLeft" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="5.0" textColor="blue" />
 
@@ -242,8 +246,17 @@
         <setNextTemplate name="second" />
 
         <!-- Lines -->
-        <blockTable colWidths="30.0,100.0,220.0,55.0,65.0,55.0,20.0,20.0,20.0,45.0,45.0,45.0,45.0,45.0" style="LinesHeader">
+        <blockTable colWidths="16.0,100.0,200.0,50.0,54.0,59.0,39.0,17.0,17.0,17.0,18,18,45.0,40.0,40.0,40.0,40.0" style="LinesHeader">
             <tr>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
                 <td>
                     <para style="LineHeader"></para>
                 </td>
@@ -301,6 +314,9 @@
                     <para style="LineHeader">Total Qty to pack</para>
                 </td>
                 <td>
+                    <para style="LineHeader">Kit</para>
+                </td>
+                <td>
                     <para style="LineHeader">Batch</para>
                 </td>
                 <td>
@@ -314,6 +330,12 @@
                 </td>
                 <td>
                     <para style="LineHeader">CS</para>
+                </td>
+                <td>
+                    <para style="LineHeader">MML</para>
+                </td>
+                <td>
+                    <para style="LineHeader">MML</para>
                 </td>
                 <td>
                     <para style="LineHeader">Qty Packed</para>
@@ -375,6 +397,15 @@
                 <td>
                     <para style="LineHeader"></para>
                 </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
             </tr>
         </blockTable>
 
@@ -401,8 +432,17 @@
                 <td></td>
             </tr>
         </blockTable>
-                <blockTable colWidths="30.0,100.0,220.0,55.0,65.0,55.0,20.0,20.0,20.0,45.0,45.0,45.0,45.0,45.0" style="LinesHeader">
+                <blockTable colWidths="16.0,100.0,200.0,50.0,54.0,59.0,39.0,17.0,17.0,17.0,18,18,45.0,40.0,40.0,40.0,40.0" style="LinesHeader">
                     <tr>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
                         <td>
                             <para style="LineHeader"></para>
                         </td>
@@ -460,6 +500,9 @@
                             <para style="LineHeader">Total Qty to pack</para>
                         </td>
                         <td>
+                            <para style="LineHeader">Kit</para>
+                        </td>
+                        <td>
                             <para style="LineHeader">Batch</para>
                         </td>
                         <td>
@@ -473,6 +516,12 @@
                         </td>
                         <td>
                             <para style="LineHeader">CS</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">MML</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader">MSL</para>
                         </td>
                         <td>
                             <para style="LineHeader">Qty Packed</para>
@@ -533,12 +582,21 @@
                         <td>
                             <para style="LineHeader"></para>
                         </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
                     </tr>
                 </blockTable>
             </pto_header>
 
             <!-- Lines -->
-            <blockTable colWidths="30.0,100.0,220.0,55.0,65.0,55.0,20.0,20.0,20.0,45.0,45.0,45.0,45.0,45.0" style="LinesValues">
+            <blockTable colWidths="16.0,100.0,200.0,50.0,54.0,59.0,39.0,17.0,17.0,17.0,18,18,45.0,40.0,40.0,40.0,40.0" style="LinesValues">
                 [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>
@@ -556,6 +614,9 @@
                         <para style="LineValueBold">[[ not m.no_product and formatFloatDigitsToUom(m.product_qty or 0.00, m.product_uom.rounding) or removeParentNode('para') ]] [[ m.product_uom.name ]]</para>
                     </td>
                     <td>
+                        <para style="LineValue">[[ m.composition_list_id and m.composition_list_id.composition_combined_ref_lot or '' ]]</para>
+                    </td>
+                    <td>
                         <para style="LineValue">[[ m.prodlot_id and m.prodlot_id.name or '' ]]</para>
                     </td>
                     <td>
@@ -569,6 +630,12 @@
                     </td>
                     <td>
                         <para style="LineValue">[[ m.product_id.cs_txt or ' ' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LineValue">[[ {'F': translate('No'), 'T': translate('Yes'), 'na': ''}.get(m.mml_status, '') ]]</para>
+                    </td>
+                    <td>
+                        <para style="LineValue">[[ {'F': translate('No'), 'T': translate('Yes'), 'na': ''}.get(m.msl_status, '') ]]</para>
                     </td>
                     <td>
                         <para style="LineValueGrey">[[ not m.no_product and removeParentNode('para') ]]</para>
@@ -600,6 +667,15 @@
                     </td>
                     <td>
                         <parawrap style="LineValueLeft">[[ m.comment ]]</parawrap>
+                    </td>
+                    <td>
+                        <para style="LineValue"></para>
+                    </td>
+                    <td>
+                        <para style="LineValue"></para>
+                    </td>
+                    <td>
+                        <para style="LineValue"></para>
                     </td>
                     <td>
                         <para style="LineValue"></para>

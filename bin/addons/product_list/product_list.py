@@ -22,7 +22,8 @@
 from osv import osv, fields
 from tools.translate import _
 from msf_doc_import import PRODUCT_LIST_TYPE
-
+from tools.misc import _get_std_mml_status
+from tools.misc import _get_header_msl_mml_alert
 import time
 
 
@@ -169,7 +170,7 @@ class product_list(osv.osv):
             string='# of products',
         ),
         'real_product_ids': fields.function(_get_real_product_ids, method=True, type='many2many', relation='product.product', fnct_search=_search_real_product_ids, string='Products', domain=[('in_any_product_list', '=', True)]),
-
+        'alert_msl_mml': fields.function(_get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
     _defaults = {
@@ -314,6 +315,14 @@ class product_list_line(osv.osv):
             size=256,
             string='Comment',
         ),
+        'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
+        'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
+    }
+
+    _defaults = {
+        'mml_status': 'na',
+        'msl_status': 'na',
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -543,7 +552,7 @@ product and can't be deleted"""),
         # UFTP-327 default_code passed from size 14 to 18
         # http://jira.unifield.org/browse/UFTP-327?focusedCommentId=36173&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-36173
         'default_code': fields.char(
-            string='CODE',
+            string='Code',
             size=18,
             select=True,
         ),
@@ -615,7 +624,7 @@ class product_template(osv.osv):
     _columns = {
         'name': fields.char(
             size=128,
-            string='DESCRIPTION',
+            string='Description',
             required=True,
             translate=True,
         ),

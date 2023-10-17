@@ -29,7 +29,7 @@ RFQ_STATE_SELECTION = [
     ('cancel', 'Cancelled'),
 ]
 
-RFQ_LINE_STATE_DISPLAY_SELECTION = RFQ_STATE_SELECTION + [
+RFQ_LINE_STATE_SELECTION = RFQ_STATE_SELECTION + [
     ('cancel_r', 'Cancelled-r'),
 ]
 

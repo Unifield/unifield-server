@@ -30,6 +30,7 @@ from osv.orm import browse_record
 import pooler
 from tools import misc
 from tools.translate import _
+from tools.safe_eval import safe_eval
 from tools import DEFAULT_SERVER_DATE_FORMAT
 from collections import deque
 
@@ -281,7 +282,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'priority': line.order_id.priority,
                 'categ': line.order_id.categ,
                 'rts': line.order_id.ready_to_ship_date,
-                'rdd': line.procurement_request and line.order_id.delivery_requested_date or line.date_planned,
                 'procurement_request': line.order_id.procurement_request,
                 'loan_type': line.order_id.order_type in ['loan', 'loan_return'],
                 'estimated_delivery_date': self._get_date(cr, uid, line, context=context),
@@ -502,15 +502,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             store=False,
             multi='line_info',
         ),
-        'rdd': fields.function(
-            _get_line_values,
-            method=True,
-            string='RDD',
-            type='date',
-            readonly=True,
-            store=False,
-            multi='line_info',
-        ),
         'stock_uom_id': fields.related(
             'product_id',
             'uom_id',
@@ -531,6 +522,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             store=False,
             readonly=True,
             multi='line_info',
+        ),
+        'sourcing_date': fields.date(
+            string='Date of Sourcing',
+            readonly=True,
         ),
         'display_confirm_button': fields.function(
             _get_line_values,
@@ -1567,6 +1562,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         wf_service = netsvc.LocalService("workflow")
         pricelist_obj = self.pool.get('product.pricelist')
+        po_obj = self.pool.get('purchase.order')
+        pol_obj = self.pool.get('purchase.order.line')
 
         company_currency_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
 
@@ -1590,9 +1587,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         po_loan = self.get_existing_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
                         if not po_loan:
                             po_loan = self.create_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
-                            po = self.pool.get('purchase.order').browse(cr, uid, po_loan, context=context)
-                            self.pool.get('purchase.order').log(cr, uid, po_loan, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
-                            self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                            po = po_obj.browse(cr, uid, po_loan, context=context)
+                            po_obj.log(cr, uid, po_loan, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
+                            po_obj.infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
 
                         # attach PO line:
                         pol_values = {
@@ -1604,7 +1601,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             'partner_id': sourcing_line.order_partner_id.id,
                             'loan_line_id': sourcing_line.id,
                         }
-                        cp_po_line_id = self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
+                        cp_po_line_id = pol_obj.create(cr, uid, pol_values, context=context)
                         so_line_data['counterpart_po_line_id'] = cp_po_line_id
                     # sourcing line: set delivery confirmed date to today:
                     self.write(cr, uid, [sourcing_line.id], so_line_data, context=context)
@@ -1619,11 +1616,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         if not po_to_use: # then create new PO:
                             po_to_use = self.create_po_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new PO:
-                            po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id', 'partner_id', 'name'],  context=context)
-                            self.pool.get('purchase.order').log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
-                            self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                            po = po_obj.browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id', 'partner_id', 'name'],  context=context)
+                            po_obj.log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
+                            po_obj.infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                         else:
-                            po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id', 'partner_id'], context=context)
+                            po = po_obj.browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id', 'partner_id'], context=context)
 
                         target_currency_id = po.pricelist_id.currency_id.id
                         # No AD on sourcing line if it comes from IR:
@@ -1683,19 +1680,21 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         }
                         if not sourcing_line.product_id:
                             pol_values['name'] = sourcing_line.comment
-                        self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
-                        self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
-                        self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
+                        pol_obj.create(cr, uid, pol_values, context=context)
+                        po_obj.write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
+                        po_obj.update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
 
                     elif sourcing_line.po_cft == 'rfq':
                         rfq_to_use = self.get_existing_rfq(cr, uid, sourcing_line.id, context=context)
                         if not rfq_to_use:
                             rfq_to_use = self.create_rfq_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new RfQ:
-                            rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, context=context)
-                            self.pool.get('purchase.order').infolog(cr, uid, _('The Request for Quotation %s for supplier %s has been created.') % (rfq.name, rfq.partner_id.name))
+                            rfq = po_obj.browse(cr, uid, rfq_to_use, context=context)
+                            po_obj.log(cr, uid, rfq_to_use, _('The Request for Quotation %s for supplier %s has been created.')
+                                       % (rfq.name, rfq.partner_id.name), action_xmlid='purchase.purchase_rfq')
+                            po_obj.infolog(cr, uid, _('The Request for Quotation %s for supplier %s has been created.') % (rfq.name, rfq.partner_id.name))
                         else:
-                            rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, fields_to_fetch=['pricelist_id'], context=context)
+                            rfq = po_obj.browse(cr, uid, rfq_to_use, fields_to_fetch=['pricelist_id'], context=context)
 
                         target_currency_id = rfq.pricelist_id.currency_id.id
 
@@ -1739,8 +1738,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         }
-                        self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
-                        self.pool.get('purchase.order').update_source_document(cr, uid, rfq_to_use, sourcing_line.order_id.id, context=context)
+                        pol_obj.create(cr, uid, rfq_line_values, context=context)
+                        po_obj.update_source_document(cr, uid, rfq_to_use, sourcing_line.order_id.id, context=context)
 
                     elif sourcing_line.po_cft == 'cft':
                         tender_to_use = self.get_existing_tender(cr, uid, sourcing_line.id, context=context)
@@ -2384,6 +2383,29 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                              context={}, count=True)  # search with 'new' context
                     g['line_number'] = line_count
         return res
+
+    def view_docs_with_product(self, cr, uid, ids, menu_action, context=None):
+        '''
+        Get info from the given menu action to return the right view with the right data
+        '''
+        if context is None:
+            context = {}
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, menu_action, ['tree', 'form'], new_tab=True, context=context)
+
+        res_context = res.get('context', False) and safe_eval(res['context']) or {}
+        for col in res_context:  # Remove the default filters
+            if 'search_default_' in col:
+                res_context[col] = False
+
+        sol_product_id = False
+        if context.get('active_id', False):
+            sol_product_id = self.read(cr, uid, context['active_id'], ['product_id'], context=context)['product_id'][0]
+        res_context['search_default_product_id'] = sol_product_id
+        res['context'] = res_context
+
+        return res
+
 
 sale_order_line()
 

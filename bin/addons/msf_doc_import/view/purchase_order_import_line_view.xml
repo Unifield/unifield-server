@@ -17,16 +17,6 @@
                         <field name="update_in_progress" invisible="1" readonly="1" />
                     </xpath>
 
-                <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='currency_id']" position="after">
-                    <field name="to_correct_ok" invisible="1"/>
-                </xpath>
-                <xpath expr="/form/notebook/page/field[@name='order_line']/tree//field[@name='default_name']" position="after">
-                    <field name="inactive_product" invisible="1" />
-                    <field name="soq_updated" invisible="1" readonly="1" />
-                </xpath>
-                <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True or red_color == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True</attribute>
-                </xpath>
                 <xpath expr="/form/notebook/page[@string='Notes']/field[@name='notes']" position="before">
                     <field name="import_in_progress" readonly="1" invisible="0" />
                 </xpath>

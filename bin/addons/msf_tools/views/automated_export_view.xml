@@ -109,5 +109,20 @@
             parent="object_query.menu_preferences" 
             sequence="16"/>
 
+        <record id="message_action_form" model="ir.ui.view">
+            <field name="name">message.action.form.view</field>
+            <field name="model">message.action</field>
+            <field name="type">form</field>
+            <field name="priority" eval="100" />
+            <field name="arch" type="xml">
+            <form string="">
+                        <field name="message" nolabel="1" colspan="4" widget="html_text"/>
+                        <separator colspan="4"/>
+                        <button string="do_no" icon="gtk-cancel" colspan="2" name="do_no" type="object"/>
+                        <button string="do_yes" icon="gtk-apply" colspan="2" name="do_yes" type="object"/>
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>

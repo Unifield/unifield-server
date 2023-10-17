@@ -23,6 +23,7 @@ import time
 from osv import osv, fields
 import netsvc
 from tools.translate import _
+from tools.misc import _get_header_msl_mml_alert
 import decimal_precision as dp
 from osv.orm import browse_record, browse_null
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
@@ -528,6 +529,33 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_location_data(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['order_line', 'state'], context=context):
+            if po.order_line:
+                not_cancel = ""
+                if po.state != 'cancel':
+                    not_cancel = " AND pl.state NOT IN ('cancel', 'cancel_r')"
+                cr.execute("""
+                    SELECT DISTINCT(l.id), l.name FROM purchase_order p 
+                        LEFT JOIN purchase_order_line pl ON pl.order_id = p.id
+                        LEFT JOIN stock_location l ON pl.reception_dest_id = l.id
+                    WHERE p.id = %s""" + not_cancel, (po.id,)) # not_a_user_entry
+                location_ids = []
+                location_names = []
+                for loc in cr.fetchall():
+                    location_ids.append(loc[0])
+                    location_names.append(loc[1])
+                res[po.id] = {
+                    'location_ids': location_ids,
+                    'location_names': "; ".join(location_names)
+                }
+            else:
+                input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
+                                                                               'stock_location_input')[1]
+                res[po.id] = {'location_ids': [input_id], 'location_names': _('Input')}
+        return res
+
     def _get_less_advanced_pol_state(self, cr, uid, ids, field_name, arg, context=None):
         """
         Get the less advanced state of the purchase order lines
@@ -820,6 +848,26 @@ class purchase_order(osv.osv):
 
         return ret
 
+    def _get_ad_lines_message_nr(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = 0
+
+        cr.execute("""select target_id, array_agg(distinct(line_number))
+            from sync_client_message_received
+            where
+                run='f' and
+                target_object='purchase.order.ad' and
+                target_id in %s
+            group by target_id""", (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = ', '.join(['%s'%l for l in x[1]])
+
+        return ret
+
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -888,7 +936,10 @@ class purchase_order(osv.osv):
                                            "In this case, it will remove the warehouse link and set the customer location."
                                            ),
         'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse'),
-        'location_id': fields.many2one('stock.location', 'Destination', required=True, domain=[('usage', '<>', 'view')]),
+        'location_ids': fields.function(_get_location_data, type='many2many', relation='stock.location', string='Destination', method=True, multi='location_data', readonly=True),
+        'location_names': fields.function(_get_location_data, type='char', size=256, string='Destination', method=True, multi='location_data',
+                                          readonly=True, store=False, help="""This location is set according to the origin of the line(s) of the document. 
+        It can have 'Input', 'Cross Docking', 'Non-Stockable' and/or 'Service' as data"""),
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
         'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
                                  store={
@@ -1000,7 +1051,9 @@ class purchase_order(osv.osv):
         'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
         'po_version': fields.integer('Migration: manage old flows', help='v1: dpo reception not synced up, SI/CV generated at PO confirmation', internal=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
+        'ad_lines_message_nr': fields.function(_get_ad_lines_message_nr, type='char', size=1024, method=1, string='Line number of NR message for missing AD'),
         'tax_line': fields.one2many('account.invoice.tax', 'purchase_id', 'Tax Lines'),
+        'alert_msl_mml': fields.function(_get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
     _defaults = {
         'po_version': 2,
@@ -1156,8 +1209,6 @@ class purchase_order(osv.osv):
 
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
-        # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
-        vals = self._get_location_id(cr, uid, vals, warehouse_id=vals.get('warehouse_id', False), context=context)
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
 
         if vals.get('stock_take_date'):
@@ -1284,8 +1335,7 @@ class purchase_order(osv.osv):
                     vals.update({'invoice_method': 'manual'})
                 else:
                     vals.update({'invoice_method': 'picking'})
-            # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
-            vals = self._get_location_id(cr, uid, vals,  warehouse_id=vals.get('warehouse_id', order['warehouse_id'] and order['warehouse_id'][0] or False), context=context)
+
             # FIXME here it is useless to continue as the next loop will overwrite vals
             break
 
@@ -1825,7 +1875,7 @@ class purchase_order(osv.osv):
                   'categ', 'priority', 'internal_type', 'arrival_date',
                   'transport_type', 'shipment_date', 'ready_to_ship_date',
                   'cross_docking_ok', 'delivery_confirmed_date',
-                  'est_transport_lead_time', 'location_id',
+                  'est_transport_lead_time',
                   'dest_address_id', 'incoterm_id']
 
         delivery_requested_date = getattr(order_id, 'delivery_requested_date')
@@ -1919,7 +1969,6 @@ class purchase_order(osv.osv):
                     'partner_address_id': porder.partner_address_id.id,
                     'dest_address_id': porder.dest_address_id.id,
                     'warehouse_id': porder.warehouse_id.id,
-                    'location_id': porder.location_id.id,
                     'pricelist_id': porder.pricelist_id.id,
                     'state': 'draft',
                     'order_line': [],
@@ -2144,6 +2193,19 @@ class purchase_order(osv.osv):
 
         company_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
 
+        if order_type == 'direct' and (not dest_partner_id or dest_partner_id == company_id):
+            dest_partner_ids = self.pool.get('res.partner').search(cr, uid, [('available_on_po_dpo', '=', ids[0])])
+            if not dest_partner_ids:
+                return {
+                    'value': {'order_type': False},
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _('Direct Purchase Order is not allowed on this order: not all lines are sourced for the same customer.'),
+                    }
+                }
+            dest_partner_id = dest_partner_ids[0]
+            v['dest_partner_id'] = dest_partner_id
+
         if order_type == 'direct' and dest_partner_id and dest_partner_id != company_id:
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id})
@@ -2252,8 +2314,7 @@ class purchase_order(osv.osv):
         '''
         res = {}
         if not warehouse_id:
-            wh_info = self.pool.get('stock.warehouse').read(cr, uid, [warehouse_id], ['lot_input_id'])
-            res = {'value': {'location_id': wh_info[0]['lot_input_id'][0], 'dest_address_id': False, 'cross_docking_ok': False}}
+            res = {'value': {'dest_address_id': False, 'cross_docking_ok': False}}
 
         if not res.get('value', {}).get('dest_address_id') and order_type != 'direct':
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id, ['delivery'])['delivery']
@@ -2503,29 +2564,12 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        data_obj = self.pool.get('ir.model.data')
 
         pol = self.ensure_object(cr, uid, 'purchase.order.line', pol)
         incoming = self.ensure_object(cr, uid, 'stock.picking', incoming_id)
         if not pol:
             return False
 
-        dest = pol.order_id.location_id.id
-        if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
-            # service with reception are directed to Service Location
-            dest = self.pool.get('stock.location').get_service_location(cr, uid)
-        else:
-            sol = pol.linked_sol_id
-            if sol and sol.order_id and not sol.order_id.procurement_request:
-                # source a FO line => go to Cross Dock (set at PO header)
-                pass
-            elif pol.product_id.type == 'service_recep':
-                dest = self.pool.get('stock.location').get_service_location(cr, uid)
-            elif pol.product_id.type == 'consu':
-                dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
-            elif sol and sol.order_id and sol.order_id.location_requestor_id.usage != 'customer':
-                dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-            # please also check in delivery_mechanism/delivery_mechanism.py _get_values_from_line to set location_dest_id
         values = {
             'name': ''.join((pol.order_id.name, ': ', (pol.name or ''))),
             'product_id': pol.product_id.id,
@@ -2534,7 +2578,7 @@ class purchase_order(osv.osv):
             'product_uom': pol.product_uom.id,
             'product_uos': pol.product_uom.id,
             'location_id': pol.order_id.partner_id.property_stock_supplier.id,
-            'location_dest_id': dest,
+            'location_dest_id': pol.reception_dest_id.id,
             'picking_id': incoming.id,
             'move_dest_id': pol.move_dest_id.id,
             'state': 'draft',
@@ -2574,7 +2618,7 @@ class purchase_order(osv.osv):
             return False
 
         # compute source location:
-        src_location = pol.order_id.location_id
+        src_location = pol.reception_dest_id
 
         # compute destination location
         dest = self.pool.get('purchase.order.line').final_location_dest(cr, uid, pol, context=context)
@@ -2611,34 +2655,6 @@ class purchase_order(osv.osv):
         ]
 
         return move_obj.create(cr, uid, values, context=ctx)
-
-    def _get_location_id(self, cr, uid, vals, warehouse_id=False, context=None):
-        """
-        Get the location_id according to the cross_docking_ok option
-        Return vals
-        """
-        if 'cross_docking_ok' not in vals:
-            return vals
-
-        stock_warehouse_obj = self.pool.get('stock.warehouse')
-        if not warehouse_id:
-            warehouse_id = stock_warehouse_obj.search(cr, uid, [], context=context)[0]
-
-        if isinstance(warehouse_id, (str, unicode)):
-            try:
-                warehouse_id = int(warehouse_id)
-            except ValueError:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('The field \'warehouse_id\' is a float field but value is a string - Please contact your administrator'),
-                )
-
-        if not vals.get('cross_docking_ok', False):
-            vals.update({'location_id': stock_warehouse_obj.read(cr, uid, warehouse_id, ['lot_input_id'], context=context)['lot_input_id'][0]})
-        elif vals.get('cross_docking_ok', False):
-            vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
-
-        return vals
 
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''

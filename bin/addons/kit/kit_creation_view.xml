@@ -44,7 +44,8 @@
 				            		<field name="total_qty_to_consume" />
 				            		<field name="uom_id_to_consume"
 				            			on_change="on_change_uom_id(product_id_to_consume, parent.default_location_src_id_kit_creation, parent.consider_child_locations_kit_creation, uom_id_to_consume, location_src_id_to_consume, context)" />
-				            		<field name="location_src_id_to_consume"
+				            		<field name="kcl_id" attrs="{'readonly': ['|', '|', '|', '|', ('product_id_to_consume', '=', False), ('product_subtype', '!=', 'kit'), ('fake_state', '!=', 'in_production'), ('uom_rounding_is_pce', '=', False), ('consumed_to_consume', '=', True)]}" />
+									<field name="location_src_id_to_consume"
 				            			attrs="{'readonly': ['|', ('consumed_to_consume', '=', True), ('fake_state', '!=', 'in_production')]}"
 				            			context="{'product_id':product_id_to_consume, 'specific_rules_tree_view':True, 'compute_child':parent.consider_child_locations_kit_creation}" />
 				            		<field name="qty_available_to_consume" />
@@ -52,8 +53,12 @@
 				            		<field name="fake_state" invisible="True" />
 				            		<field name="batch_check_kit_creation_to_consume" />
 				            		<field name="expiry_check_kit_creation_to_consume" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
 				            		<button name="do_process_to_consume" type="object" string="Process Line" icon="gtk-go-forward" attrs="{'invisible': ['|', ('consumed_to_consume', '=', True), ('fake_state', '!=', 'in_production')]}" />
 				            		<field name="consumed_to_consume" invisible="True" />
+				            		<field name="product_subtype" invisible="True" />
+				            		<field name="uom_rounding_is_pce" invisible="True" />
 				            	</tree>
                     		</field>
                     		<group col="4" colspan="4">
@@ -72,6 +77,7 @@
                     				<field name="product_qty" readonly="True" string="Qty" />
                     				<field name="assigned_qty_stock_move" invisible="True" />
                     				<field name="product_uom" readonly="True" string="UoM" />
+                    				<field name="composition_list_id" readonly="True" />
                     				<field name="hidden_asset_check" invisible="True" />
                     				<field name="asset_id" domain="[('product_id', '=', product_id)]"
                     					attrs="{'readonly': ['|', ('hidden_state', '!=', 'confirmed'), ('hidden_asset_check', '=', False)]}" />
@@ -90,6 +96,8 @@
                     				<field name="state" />
                     				<field name="lot_check" />
                                     <field name="exp_check" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
                                     <field name="kol_lot_manual" invisible="True" />
 	                   				<field name="hidden_perishable_mandatory" invisible="True" />
 	                   				<field name="hidden_exp_check" invisible="True" />
@@ -230,6 +238,52 @@
 	                    <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'creation_date_kit_creation'}"/>
                 	</group>
               	</search>
+            </field>
+        </record>
+
+		<record id="wizard_kitting_order_kcl_status_form_view" model="ir.ui.view">
+            <field name="name">wizard.kitting.order.kcl.status.form.view</field>
+            <field name="model">wizard.kitting.order.kcl.status</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="An additional action is required for this Kitting Order">
+                    <separator colspan="4" string="Information" />
+                    <field name="ko_more_qty" invisible="1" />
+                    <field name="no_kcl" invisible="1" />
+                    <field name="kcl_more_qty" invisible="1" />
+					<group colspan="4" attrs="{'invisible': [('ko_more_qty', '=', False)]}">
+                        <html colspan="4">
+                            <translate>This Kitting Order is to create a Qty of more than 1 Kit (Qty X (taken from header) of kits to be created). You have added a KCL ref on a Component but this is unique and cannot be used in more than 1 Kit KCL. The existing reference(s) will not be used if you do not agree to split automatically.</translate>
+                        </html>
+						<newline />
+                    </group>
+					<group colspan="4" attrs="{'invisible': [('no_kcl', '=', False)]}">
+                        <html colspan="4">
+                            <translate>This Kitting Order includes Kit Component(s) which have their own unused Completed KCL(s). But as you have not added any reference for this, all of those Kits (KCLs) will be created without including any KCL at lower level.</translate>
+                        </html>
+						<newline />
+                    </group>
+					<group colspan="4" attrs="{'invisible': [('kcl_more_qty', '=', False)]}">
+                        <html colspan="4">
+                            <translate>This Kitting Order includes Kit Component(s) with a KCL reference but a Qty > 1. The reference(s) will not be used if you do not agree to split automatically.</translate>
+                        </html>
+						<newline />
+                    </group>
+                    <separator colspan="4" string="Actions" />
+					<group colspan="4" attrs="{'invisible': [('ko_more_qty', '=', False), ('kcl_more_qty', '=', False)]}">
+						<html colspan="4">
+							<translate>You must agree to use the unused Completed KCLs if you want to automatically split the Components to Consume if necessary, to be able to create Consumed Components with a Qty of 1 and the KCL reference(s). If there is any Qty remaining, there will be no KCL reference on this last Consumed Component line.</translate>
+						</html>
+						<newline />
+						<field name="use_existing_kcl" />
+						<newline />
+					</group>
+					<group colspan="4" col="4">
+						<label string="" colspan="2"/>
+                        <button name="do_process_to_consume_and_kcl_auto" string="Continue" type="object" icon="gtk-go-forward" colspan="1" />
+                        <button name="close_wizard" string="Return to previous screen" type="object" icon="gtk-cancel" colspan="1" />
+                    </group>
+                </form>
             </field>
         </record>
 		

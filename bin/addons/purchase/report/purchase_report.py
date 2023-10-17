@@ -97,7 +97,7 @@ class purchase_report(osv.osv):
                     else
                         u.id
                     end) as product_uom,
-                    s.location_id as location_id,
+                    l.reception_dest_id as location_id,
                     sum(l.product_qty/u.factor) as quantity,
                     extract(epoch from age(s.date_approve,s.date_order))/(24*60*60)::decimal(16,2) as delay,
                     extract(epoch from age(l.date_planned,s.date_order))/(24*60*60)::decimal(16,2) as delay_pass,
@@ -119,7 +119,7 @@ class purchase_report(osv.osv):
                     s.partner_id,
                     l.product_qty,
                     u.factor,
-                    s.location_id,
+                    l.reception_dest_id,
                     l.price_unit,
                     s.date_approve,
                     l.date_planned,

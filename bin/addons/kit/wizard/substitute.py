@@ -327,29 +327,32 @@ class substitute(osv.osv_memory):
                 # we check product qty
                 if item.qty_substitute_item <= 0:
                     raise osv.except_osv(_('Warning !'), _('Replacement Item quantity must be greater than 0.'))
+                # we check kcl
+                if item.kcl_id_substitute_item and item.qty_substitute_item > 1:
+                    raise osv.except_osv(_('Warning !'), _('Replacement Item quantity must be no greater than 1 if there is a KCL reference.'))
                 # create corresponding stock move
-                move_values =  {'name': item.product_id_substitute_item.name[:64],
-                                'picking_id': pick_id,
-                                'product_id': item.product_id_substitute_item.id,
-                                'asset_id': item.asset_id_substitute_item.id,
-                                'date': date,
-                                'date_expected': date,
-                                'product_qty': item.qty_substitute_item,
-                                'product_uom': item.uom_id_substitute_item.id,
-                                'product_uos_qty': item.qty_substitute_item,
-                                'product_uos': item.uom_id_substitute_item.id,
-                                'product_packaging': False,
-                                'address_id': False,
-                                'location_id': item.location_id_substitute_item.id,
-                                'location_dest_id': kitting_id,
-                                'sale_line_id': False,
-                                'tracking_id': False,
-                                'state': 'draft',
-                                'note': 'Kit Substitution - Go to Kit',
-                                'company_id': company_id,
-                                'reason_type_id': reason_type_id,
-                                'prodlot_id': item.lot_id_substitute_item.id,
-                                }
+                move_values = {'name': item.product_id_substitute_item.name[:64],
+                               'picking_id': pick_id,
+                               'product_id': item.product_id_substitute_item.id,
+                               'asset_id': item.asset_id_substitute_item.id,
+                               'date': date,
+                               'date_expected': date,
+                               'product_qty': item.qty_substitute_item,
+                               'product_uom': item.uom_id_substitute_item.id,
+                               'product_uos_qty': item.qty_substitute_item,
+                               'product_uos': item.uom_id_substitute_item.id,
+                               'product_packaging': False,
+                               'address_id': False,
+                               'location_id': item.location_id_substitute_item.id,
+                               'location_dest_id': kitting_id,
+                               'sale_line_id': False,
+                               'tracking_id': False,
+                               'state': 'draft',
+                               'note': 'Kit Substitution - Go to Kit',
+                               'company_id': company_id,
+                               'reason_type_id': reason_type_id,
+                               'prodlot_id': item.lot_id_substitute_item.id,
+                               }
                 move_obj.create(cr, uid, move_values, context=context)
                 # create corresponding kit item
                 item_values = {'item_module': item.module_substitute_item,
@@ -357,7 +360,8 @@ class substitute(osv.osv_memory):
                                'item_qty': item.qty_substitute_item,
                                'item_uom_id': item.uom_id_substitute_item.id,
                                'item_asset_id': item.asset_id_substitute_item.id,
-                               'item_lot': item.lot_id_substitute_item.name,
+                               'kcl_id': item.kcl_id_substitute_item and item.kcl_id_substitute_item.id or False,
+                               'item_lot_id': item.lot_id_substitute_item.id,
                                'item_exp': item.exp_substitute_item,
                                'item_kit_id': obj.kit_id.id,
                                'item_description': 'Replacement Item from %s location.'%item.location_id_substitute_item.name,
@@ -390,9 +394,8 @@ class substitute(osv.osv_memory):
             available_qty = res['value']['qty_substitute_item']
             if available_qty < 1.0:
                 # we display the back button - hide close button
-                raise osv.except_osv(_("Error"),
-                                     _("The Kit \'%s\' is not available from selected source location \'%s\'"
-                                       %(obj.product_id_substitute.name, obj.source_location_id.name)))
+                raise osv.except_osv(_("Error"), _("The Kit \'%s\' is not available from selected source location \'%s\'")
+                                     % (obj.product_id_substitute.name, obj.source_location_id.name))
             else:
                 return self._do_de_kitting(cr, uid, ids, context=context)
 
@@ -438,9 +441,15 @@ class substitute(osv.osv_memory):
                 # analyze each item
                 self._handle_compo_item(cr, uid, ids, obj, item, items_to_stock_ids, pick_id, context=context)
                 if item.item_id_mirror:
-                    comp_item_obj.write(cr, uid, item.item_id_mirror, {'item_lot': item.lot_mirror, 'item_exp': item.exp_substitute_item}, context=context)
+                    prodlot_ids = False
+                    if item.lot_mirror:
+                        prodlot_ids = self.pool.get('stock.production.lot').\
+                            search(cr, uid, [('product_id', '=', item.product_id_substitute_item.id), ('name', '=', item.lot_mirror),
+                                             ('life_date', '=', item.exp_substitute_item)], context=context)
+                    comp_item_obj.write(cr, uid, item.item_id_mirror, {'item_lot_id': prodlot_ids and prodlot_ids[0] or False,
+                                                                       'item_exp': item.exp_substitute_item}, context=context)
             # the corresponding kit is set to done
-            kit_obj.close_kit(cr, uid, kit_ids, context=context)
+            kit_obj.close_kit(cr, uid, kit_ids, self._name, context=context)
             # a move with a kit from kitting location is created
             move_values =  {'name': obj.kit_id.composition_product_id.name[:64],
                             'picking_id': pick_id,
@@ -756,10 +765,11 @@ class substitute_item(osv.osv_memory):
         the product changes, set the hidden flag if necessary
         '''
         result = {}
-        # product changes, prodlot is always cleared - asset is cleared
+        # product changes, prodlot is always cleared - asset is cleared, kcl is cleared
         result.setdefault('value', {})['lot_id_substitute_item'] = False
         result.setdefault('value', {})['exp_substitute_item'] = False
         result.setdefault('value', {})['asset_id_substitute_item'] = False
+        result.setdefault('value', {})['kcl_id_substitute_item'] = False
         # clear uom
         result.setdefault('value', {})['uom_id_substitute_item'] = False
         # reset the hidden flags
@@ -771,9 +781,11 @@ class substitute_item(osv.osv_memory):
             # set the default uom
             uom_id = product.uom_id.id
             result.setdefault('value', {})['uom_id_substitute_item'] = uom_id
+            result.setdefault('value', {})['uom_substitute_item_is_pce'] = product.uom_id.rounding == 1
             result.setdefault('value', {})['hidden_batch_management_mandatory'] = product.batch_management
             result.setdefault('value', {})['hidden_perishable_mandatory'] = product.perishable
             result.setdefault('value', {})['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
+            result.setdefault('value', {})['product_subtype_substitute_item'] = product.subtype
         # Set the comment of the product to substitute if there is only one in the "Products to remove from the Kit"
         if not comment and composition_item_ids:
             comp_item_ids = composition_item_ids[0][2]
@@ -792,6 +804,8 @@ class substitute_item(osv.osv_memory):
 
         if qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty_substitute_item', result=res)
+        if not uom_id or self.pool.get('product.uom').browse(cr, uid, uom_id, fields_to_fetch=['rounding']).rounding != 1:
+            res['value'].update({'uom_substitute_item_is_pce': False, 'kcl_id_substitute_item': False})
 
         return res
 
@@ -886,6 +900,10 @@ class substitute_item(osv.osv_memory):
             result[obj.id].update({'availability_status_func_substitute_item': (compute_avail['value']['qty_substitute_item'] >= obj.qty_substitute_item and 'Available (%.2f %s)' or 'Not Enough Available (%.2f %s)')%(compute_avail['value']['qty_substitute_item'], obj.uom_id_substitute_item.name)})
             # availability_status_hidden_func_substitute_item
             result[obj.id].update({'availability_status_hidden_func_substitute_item': compute_avail['value']['qty_substitute_item'] >= obj.qty_substitute_item and 'available' or 'not_available'})
+            # is the uom pce
+            result[obj.id].update({'uom_substitute_item_is_pce': obj.uom_id_substitute_item and obj.uom_id_substitute_item.rounding == 1 or obj.product_id_substitute_item.uom_id.rounding == 1})
+            # product subtype
+            result[obj.id].update({'product_subtype_substitute_item': obj.product_id_substitute_item.subtype})
 
         return result
 
@@ -896,6 +914,7 @@ class substitute_item(osv.osv_memory):
                 'qty_substitute_item': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='uom_id_substitute_item'),
                 'uom_id_substitute_item': fields.many2one('product.uom', string='UoM', required=True),
                 'asset_id_substitute_item': fields.many2one('product.asset', string='Asset'),
+                'kcl_id_substitute_item': fields.many2one('composition.kit', 'Kit', domain="[('composition_product_id', '=', product_id_substitute_item), ('composition_type', '=', 'real'), ('state', '=', 'completed'), ('kcl_used_by', '=', False)]"),
                 'lot_id_substitute_item': fields.many2one('stock.production.lot', string='Batch Nb'),
                 'exp_substitute_item': fields.date(string='Expiry Date'),
                 'type_check': fields.char(string='Type Check', size=1024, readonly=True),
@@ -909,6 +928,8 @@ class substitute_item(osv.osv_memory):
                 'availability_status_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='char', size=1024, string='Availability', multi='get_vals_substitute_item', store=False, readonly=True),
                 'availability_status_hidden_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=SELECTION_AVAILABLE, string='Hidden availability', multi='get_vals_substitute_item', store=False, readonly=True),
                 'integrity_status_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=INTEGRITY_STATUS_SELECTION, string=' ', multi='get_vals_substitute_item', store=False, readonly=True),
+                'uom_substitute_item_is_pce': fields.function(_vals_get_substitute_item, method=True, type='boolean', string='UoM Rounding is PCE', multi='get_vals_substitute_item', store=False, readonly=True),
+                'product_subtype_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', string='Product Subtype', selection=[('single', 'Single Item'), ('kit', 'Kit/Module'), ('asset', 'Asset')], multi='get_vals_substitute_item', store=False, readonly=True),
                 }
 
     def _get_comment(self, cr, uid, context=None):
