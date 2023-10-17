@@ -213,6 +213,16 @@ class account_period(osv.osv):
                     if register.state not in ['confirm']:
                         raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period") % (register.name,))
 
+                nb_assets = self.pool.get('product.asset').search(cr, uid, [('state', '=', 'draft'), ('start_date', '<=', period.date_stop)], count=True, context=context)
+                if nb_assets:
+                    raise osv.except_osv(_('Warning'), _('There are %d draft assets for the period, please start depreciation or change the Start Date before closing the period') % nb_assets)
+                if level == 'coordo':
+                    nb_asset_lines = self.pool.get('product.asset.line').search(cr, uid, [('asset_id.state', '=', 'running'), ('move_id', '=', False), ('date', '<=', period.date_stop)], count=True, context=context)
+                    if nb_asset_lines:
+                        raise osv.except_osv(_('Warning'), _('There are %d draft asset lines for the period. Please Generate Asset Entries before closing the period') % nb_asset_lines)
+
+
+
                 # prevent period closing if one of the registers of the previous period
                 # has no corresponding register in the period to close AND has a non 0 balance. (except for period 13..16)
                 if not period.special:
@@ -336,6 +346,15 @@ class account_period(osv.osv):
 
         return [('number', operator, [0, 16])]
 
+    def _get_is_asset_activated(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        if not ids:
+            return {}
+        res = {}
+        asset = self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok')
+        for _id in ids:
+            res[_id] = asset
+        return res
+
     _columns = {
         'name': fields.char('Period Name', size=64, required=True, translate=True),
         'special': fields.boolean('Opening/Closing Period', size=12,
@@ -350,6 +369,7 @@ class account_period(osv.osv):
         'is_revaluated': fields.boolean('Revaluation run for the period', readonly=True),  # field used at coordo level
         'is_eoy_liquidity_revaluated': fields.boolean('Revaluation EoY liquidity', readonly=True),  # US-9770 For Year End revaluation checks before P15 closing
         'is_eoy_regular_bs_revaluated': fields.boolean('Revaluation EoY regular B/S', readonly=True),  # US-9770 For Year End revaluation checks before P15 closing
+        'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
     }
 
     _order = 'date_start DESC, number DESC'
@@ -697,6 +717,15 @@ class account_period(osv.osv):
                                  context=context)
         # open the sidebar by default
         res['sidebar_open'] = True
+        return res
+
+    def button_assets(self, cr, uid, ids, context=None):
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product_asset.asset_normal_action', ['tree', 'form'], context=context)
+        res['context'] = {
+            'search_default_s_draft': 1,
+            'search_default_s_running': 1,
+        }
+        res['target'] = 'current'
         return res
 
     def button_payrolls(self, cr, uid, ids, context=None):

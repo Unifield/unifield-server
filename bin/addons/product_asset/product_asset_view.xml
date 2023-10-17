@@ -219,6 +219,7 @@
                 <field name="type" />
                 <field name="year" />
                 <field name="useful_life_id" />
+                <field name="start_date" />
                 <field name="invo_value" sum="sum" sum_selected="1" />
                 <field name="invo_currency" />
                 <field name="depreciation_amount" sum="sum" sum_selected="1"/>
@@ -235,13 +236,15 @@
         <field name="type">search</field>
         <field name="arch" type="xml">
             <search string="Asset Form">
-                <filter icon="terp-document-new" string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
-                <filter icon="terp-camera_test" string="Running" name="running" domain="[('state', '=', 'running')]"/>
+                <separator orientation="vertical"/>
+                <filter icon="terp-document-new" string="Draft" name="s_draft" domain="[('state', '=', 'draft')]"/>
+                <filter icon="terp-camera_test" string="Running" name="s_running" domain="[('state', '=', 'running')]"/>
                 <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" />
+                <separator orientation="vertical"/>
 
                 <field name="name"  />
                 <field name="asset_type_id" widget="selection" />
-                <field name="product_id" domain="[('subtype', '=', 'asset')]" />
+                <field name="product_id"  />
                 <field name="serial_nb" />
                 <field name="brand" />
                 <field name="type" />
