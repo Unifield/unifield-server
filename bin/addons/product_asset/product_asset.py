@@ -306,19 +306,24 @@ class product_asset(osv.osv):
 
         return result
 
-    def _getRelatedMoveLineFields(self, cr, uid, move_line_id, context=None):
+    def _getRelatedMoveLineFields(self, cr, uid, move_line_id, on_change=False, context=None):
         if not move_line_id:
             return {}
         ml = self.pool.get('account.move.line').browse(cr, uid, move_line_id, fields_to_fetch=['date', 'debit_currency', 'currency_id'], context=context)
-        return {
-            'start_date': ml.date,
+
+        data = {
             'invo_date': ml.date,
             'invo_value': ml.debit_currency,
-            'invo_currency': ml.currency_id.id}
+            'invo_currency': ml.currency_id.id
+        }
+        if on_change:
+            data['start_date'] = ml.date
+        return data
+
 
     def change_invo_date(self, cr, uid, ids, move_line_id, context=None):
         if move_line_id:
-            return {'value': self._getRelatedMoveLineFields(cr, uid, move_line_id, context=context)}
+            return {'value': self._getRelatedMoveLineFields(cr, uid, move_line_id, on_change=True, context=context)}
         return {'value': {'start_date': False, 'invo_date': False, 'invo_value': False, 'invo_currency': False}}
 
     def _get_book_value(self, cr, uid, ids, field_name, args, context=None):
@@ -449,9 +454,13 @@ class product_asset(osv.osv):
         'has_posted_lines': fields.function(_get_has_posted_lines, string='Has at least one posted line', type='boolean', method=True),
         'can_be_disposed': fields.function(_get_can_be_disposed, string='Can be diposed', type='boolean', method=True),
         'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', method=True),
+        'prorata': fields.boolean('Prorata Temporis'),
+        'depreciation_method': fields.selection([('straight', 'Straight Line')], 'Depreciation Method', required=True),
     }
 
     _defaults = {
+        'depreciation_method': 'straight',
+        'prorata': False,
         'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
         'receipt_place': 'Country/Project/Activity',
         'state': 'draft',
@@ -517,13 +526,18 @@ class product_asset(osv.osv):
         nb_month = asset.useful_life_id.year * 12
         start_dt = datetime.strptime(asset.start_date, '%Y-%m-%d')
         dep_value = float(asset.invo_value)/nb_month
-        first_entry_nb_days = (start_dt + relativedelta(months=1, day=1) - start_dt).days
-        date_first_entry = start_dt + relativedelta(months=1, day=1, days=-1)
-
-
-        deprecated_value = dep_value / date_first_entry.day * first_entry_nb_days
         sum_deprecated_value = 0
         accumulated_rounded = 0
+        date_first_entry = start_dt + relativedelta(months=1, day=1, days=-1)
+
+        if asset.prorata:
+            first_entry_nb_days = (start_dt + relativedelta(months=1, day=1) - start_dt).days
+            deprecated_value = dep_value / date_first_entry.day * first_entry_nb_days
+        else:
+            start_dt = start_dt + relativedelta(day=1)
+            deprecated_value = dep_value
+
+
         rounded_dep = round(deprecated_value, 2)
         if rounded_dep >= 0.01:
             to_create.append([date_first_entry, rounded_dep, start_dt, date_first_entry])
@@ -611,8 +625,22 @@ class product_asset(osv.osv):
 
     def change_line(self, cr , uid, ids, context=None):
         if ids:
+            raw_display_strings_state = dict(self._columns['state'].selection)
+            display_strings_state = dict([(k, _(v)) \
+                                          for k, v in raw_display_strings_state.items()])
+
+            display_strings = {}
+            display_strings["state"] = display_strings_state
+
             d = self.read(cr, uid, ids[0], ['depreciation_amount', 'disposal_amount', 'state', 'has_posted_lines'], context=context)
-            return {'value': {'depreciation_amount': d['depreciation_amount'], 'disposal_amount': d['disposal_amount'], 'state': d['state'], 'has_posted_lines': d['has_posted_lines']}}
+            return {'value': {
+                'depreciation_amount': d['depreciation_amount'],
+                'disposal_amount': d['disposal_amount'],
+                'state': d['state'],
+                'has_posted_lines': d['has_posted_lines'],
+            },
+                'display_strings': display_strings
+            }
         return {}
 
     def test_and_set_done(self, cr , uid, ids, context=None):

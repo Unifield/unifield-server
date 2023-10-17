@@ -139,6 +139,9 @@
                     </page>
                     <page string="Depreciation">
                         <field name="start_date" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
+                        <field name="depreciation_method" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}"/>
+                        <field name="prorata" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
+                        <newline />
                         <field name="depreciation_amount" />
                         <field name="disposal_amount" />
                         <group col="6" colspan="4">
@@ -265,7 +268,7 @@
     </record>
 
     <!-- Assets in SALES>Products -->
-    <menuitem id="menu_asset_sales" name="Assets" parent="account.menu_finance_periodical_processing" sequence="20" />
+    <menuitem id="menu_asset_sales" name="Assets" parent="account.menu_finance_periodical_processing" sequence="20" active_config="fixed_asset_ok"/>
     <menuitem action="asset_normal_action" id="menu_assets_sales"
         parent="menu_asset_sales" sequence="1" />
 

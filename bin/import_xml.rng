@@ -189,6 +189,7 @@
             <rng:optional> <rng:attribute name="groups"/> </rng:optional>
             <rng:optional> <rng:attribute name="type"/> </rng:optional>
             <rng:optional> <rng:attribute name="menu"/> </rng:optional>
+            <rng:optional> <rng:attribute name="active_config"/> </rng:optional>
             <rng:empty />
         </rng:element>
     </rng:define>
