@@ -1411,7 +1411,7 @@
                                             <field name="product_uom" />
                                             <field name="location_id" />
                                             <field name="location_dest_id" />
-                                            <field name="state" />
+                                            <field name="ship_influenced_state" />
                                             <field name="inactive_product" invisible="1" />
                                             <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                             <field name="mml_status" />
