@@ -153,6 +153,7 @@ class product_asset(osv.osv):
             'analytic_distribution_id': False,
             'line_ids': False,
             'has_lines': False,
+            'journal_id': False,
         })
         # call to super
         return super(product_asset, self).copy(cr, uid, id, default, context=context)
@@ -449,7 +450,7 @@ class product_asset(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'depreciation_amount': fields.function(_get_book_value, string='Depreciation', type='float', method=True, help="Sum off all Asset journal item lines", multi='get_book', with_null=True),
         'disposal_amount': fields.function(_get_book_value, string='Remaining net value', type='float', method=True, multi='get_book', with_null=True),
-        'journal_id': fields.many2one('account.journal', 'Journal', readonly=1), # TODO CREATE IF MISSING
+        'journal_id': fields.many2one('account.journal', 'Journal', readonly=1),
         'has_lines': fields.boolean('Has Line', readonly='1'),
         'has_posted_lines': fields.function(_get_has_posted_lines, string='Has at least one posted line', type='boolean', method=True),
         'can_be_disposed': fields.function(_get_can_be_disposed, string='Can be diposed', type='boolean', method=True),
@@ -458,13 +459,19 @@ class product_asset(osv.osv):
         'depreciation_method': fields.selection([('straight', 'Straight Line')], 'Depreciation Method', required=True),
     }
 
+    def _get_default_journal(self, cr, uid, context=None):
+        j_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', 'DEP'), ('type', '=', 'depreciation'), ('is_current_instance', '=', True)], context=context)
+        if j_ids:
+            return j_ids[0]
+        return False
+
     _defaults = {
         'depreciation_method': 'straight',
         'prorata': False,
         'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
         'receipt_place': 'Country/Project/Activity',
         'state': 'draft',
-        'journal_id': lambda self, cr, uid, context: self.pool.get('account.journal').search(cr, uid, [('type', '=', 'depreciation'), ('is_current_instance', '=', True)], context=context)[0],
+        'journal_id': _get_default_journal,
         'instance_level': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_level(cr, uid)
     }
     # UF-2148: use this constraint with 3 attrs: name, prod and instance
@@ -507,7 +514,14 @@ class product_asset(osv.osv):
         line_obj = self.pool.get('product.asset.line')
         if not ids:
             return False
+
+        default_j = False
         asset = self.browse(cr, uid, ids[0], context=context)
+        if not asset.journal_id:
+            default_j = self._get_default_journal(cr, uid, context=context)
+            if not default_j:
+                raise osv.except_osv(_('Error !'), _('Depreciation journal (code: DEP, type: depreciation) does not exist, please create a Depreciation G/L Journal'))
+
         for field in ['start_date', 'asset_bs_depreciation_account_id', 'asset_pl_account_id', 'useful_life_id']:
             if not asset[field]:
                 raise osv.except_osv(_('Error !'), _('Please fill the mandatory field %s') % field) # TODO trans
@@ -578,7 +592,10 @@ class product_asset(osv.osv):
             }, context=context)
 
         if to_create:
-            self.write(cr, uid, ids[0], {'has_lines': True}, context=context)
+            to_write = {'has_lines': True}
+            if default_j:
+                to_write['journal_id'] = default_j
+            self.write(cr, uid, ids[0], to_write, context=context)
         return True
 
 
