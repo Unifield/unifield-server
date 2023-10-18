@@ -13,6 +13,7 @@ from dateutil.relativedelta import relativedelta
 class product_asset_type(osv.osv):
     _name = "product.asset.type"
     _description = "Specify the type of asset at product level"
+    _order = 'name, id'
 
     _columns = {
         'name': fields.char('Name', size=64, required=True),
@@ -65,6 +66,19 @@ class product_asset_useful_life(osv.osv):
         'is_active': True,
     }
 
+    def name_get(self, cr, uid, ids, context=None):
+        '''
+        override because no name field is defined
+        '''
+        result = []
+        for ul in self.read(cr, uid, ids, ['year'], context):
+            if ul['year'] > 1:
+                result.append((ul['id'], '%s %s' % (ul['year'], _('years'))))
+            else:
+                result.append((ul['id'], '%s %s' % (ul['year'], _('year'))))
+
+        return result
+
     _sql_constraints = [
         ('unique_year', 'unique(year, asset_type_id)', 'Useful life already exists.'),
     ]
@@ -73,7 +87,8 @@ product_asset_useful_life()
 class product_asset(osv.osv):
     _name = "product.asset"
     _description = "A specific asset of a product"
-
+    _order='id desc'
+    _trace = True
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -444,7 +459,7 @@ class product_asset(osv.osv):
         'state': fields.selection([('draft', 'Draft'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], 'State', readonly=1),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
-        'useful_life_id': fields.many2one('product.asset.useful.life', 'Useful Life (years)', ondelete='restrict'),
+        'useful_life_id': fields.many2one('product.asset.useful.life', 'Useful Life', ondelete='restrict'),
         'start_date': fields.date('Start Date', required=1),
         'line_ids': fields.one2many('product.asset.line', 'asset_id', 'Depreciation Lines'),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -1171,6 +1186,7 @@ class product_asset_generate_entries(osv.osv_memory):
         res['name'] = _('Asset lines')
         res['views'] = views
         res['domain'] = ['&', ('move_id.asset_id', '!=', False), ('date', '<=', end_date)]
+        res['popup_message'] = _('%d asset journal entries created') % (len(asset_line_ids),)
         return res
 
 

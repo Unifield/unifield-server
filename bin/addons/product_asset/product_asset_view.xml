@@ -14,7 +14,7 @@
 
                 <field name="type" position="after">
                     <field name="subtype" attrs="{'invisible':[('type','!=','product')]}" />
-                    <field name="asset_type_id" widget="selection"
+                    <field name="asset_type_id" widget="selection" former_domain="[('active', 'in', ['t', 'f'])]"
                         attrs="{'invisible':[('subtype','!=','asset')], 'required':[('subtype','=','asset')]}" />
                 </field>
 
