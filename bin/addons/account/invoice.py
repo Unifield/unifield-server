@@ -1104,7 +1104,7 @@ class account_invoice(osv.osv):
             new_move_name = self.pool.get('account.move').browse(cr, uid, move_id).name
             # make the invoice point to that move
             self.write(cr, uid, [inv.id], {'move_id': move_id,'period_id':period_id, 'move_name':new_move_name})
-            if inv.doc_type == 'si': # TODO
+            if inv.doc_type == ('si', 'isi', 'ivi'):
                 self._create_asset_form(cr, uid, inv.id, context)
             # Pass invoice in context in method post: used if you want to get the same
             # account move reference when creating the same invoice after a cancelled one:
@@ -1714,7 +1714,7 @@ class account_invoice_line(osv.osv):
 
 
 
-    def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, context=None):
+    def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, is_asset=False, context=None):
         if context is None:
             context = {}
         company_id = context.get('company_id',False)
@@ -1730,7 +1730,6 @@ class account_invoice_line(osv.osv):
             context.update({'lang': part.lang})
         result = {}
         res = self.pool.get('product.product').browse(cr, uid, product, context=context)
-
         if company_id:
             property_obj = self.pool.get('ir.property')
             account_obj = self.pool.get('account.account')
@@ -1795,9 +1794,16 @@ class account_invoice_line(osv.osv):
             if not a:
                 a = res.categ_id.property_account_income_categ.id
         else:
-            a = res.product_tmpl_id.property_account_expense.id
-            if not a:
-                a = res.categ_id.property_account_expense_categ.id
+            if is_asset:
+                if res.categ_id and res.categ_id.asset_bs_account_id:
+                    a = res.categ_id.asset_bs_account_id.id
+                else:
+                    a = False
+                    result['account_id'] = False
+            else:
+                a = res.product_tmpl_id.property_account_expense.id
+                if not a:
+                    a = res.categ_id.property_account_expense_categ.id
         a = fpos_obj.map_account(cr, uid, fpos, a)
         if a:
             result['account_id'] = a

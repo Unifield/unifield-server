@@ -396,7 +396,7 @@ class product_asset(osv.osv):
                 a.state = 'running'
             group by a.id
             having  (
-                count(l.is_disposal) = 0
+                count(l.is_disposal='t' or NULL) = 0
                 and (count(m.id) > 0 or count(l.move_id is NULL or NULL) > 0)
             )
         ''', (tuple(ids), ))
@@ -719,6 +719,7 @@ class product_asset_event(osv.osv):
     _name = "product.asset.event"
     _rec_name = 'asset_id'
     _description = "Event for asset follow up"
+    _order = 'date desc, id desc'
 
     eventTypeSelection = [('reception', 'Reception'),
                           ('startUse', 'Start Use'),
@@ -811,12 +812,12 @@ class product_asset_event(osv.osv):
 
     _columns = {
         # event information
-        'date': fields.date('Date', required=True),
+        'date': fields.date('Date', required=True, select=1),
         'location': fields.char('Location', size=128, required=True),
         'proj_code': fields.char('Project Code', size=128),
-        'event_type_id': fields.many2one('product.asset.event.type', 'Event Type', required=True),
+        'event_type_id': fields.many2one('product.asset.event.type', 'Event Type', required=True, add_empty=True),
         # selection
-        'asset_id': fields.many2one('product.asset', 'Asset Code', required=True, ondelete='cascade'),
+        'asset_id': fields.many2one('product.asset', 'Asset Code', required=True, ondelete='cascade', domain=[('state', '=', 'running')]),
         'product_id': fields.many2one('product.product', 'Product', readonly=True, ondelete='cascade'),
         'serial_nb': fields.char('Serial Number', size=128, readonly=True),
         'brand': fields.char('Brand', size=128, readonly=True), # from asset
@@ -824,6 +825,7 @@ class product_asset_event(osv.osv):
         'comment': fields.text('Comment'),
 
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
+        'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], readonly=1),
     }
 
     _defaults = {
@@ -1076,7 +1078,7 @@ class product_asset_disposal(osv.osv_memory):
     _rec_name = 'asset_id'
     _columns = {
         'asset_id': fields.many2one('product.asset', 'Asset', required=1),
-        'event_type_id': fields.many2one('product.asset.event.type', 'Event Type', required=1, domain=[('is_disposal', '=', True)]),
+        'event_type_id': fields.many2one('product.asset.event.type', 'Event Type', required=1, domain=[('is_disposal', '=', True)], add_empty=True),
         'disposal_expense_account': fields.many2one('account.account', 'Disposal P&L account', required=1, domain=[('user_type_code', 'in', ['expense', 'income'])]), # TODO domain
         'disposal_date': fields.date('Date', required=1),
         'register_event': fields.boolean('Register an Event'),

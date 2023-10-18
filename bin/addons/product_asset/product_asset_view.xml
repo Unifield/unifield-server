@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+
 <openerp>
 <data>
 
@@ -39,7 +39,7 @@
             <form string="Disposal">
                 <field name="disposal_date" />
                 <newline />
-                <field name="event_type_id" on_change="change_event_type_id(event_type_id)" />
+                <field name="event_type_id" on_change="change_event_type_id(event_type_id)" widget="selection"/>
                 <newline />
                 <field name="disposal_expense_account" />
                 <newline />
@@ -129,7 +129,7 @@
                             <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [('state', '!=', 'running')]}">
                                 <tree string="Events" editable="top">
                                     <field name="date" />
-                                    <field name="event_type_id" />
+                                    <field name="event_type_id" widget="selection"/>
                                     <field name="location" />
                                     <field name="proj_code" />
                                     <field name="comment" />
@@ -289,15 +289,15 @@
         <field name="arch" type="xml">
             <form string="Asset Event">
 
-                <group colspan="2" col="2">
+                <group colspan="2" col="2" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
                     <separator string="Event Information" colspan="2" />
                     <field name="date" />
                     <field name="location" />
                     <field name="proj_code" />
-                    <field name="event_type_id" />
+                    <field name="event_type_id" widget="selection"/>
                 </group>
 
-                <group colspan="2" col="2">
+                <group colspan="2" col="2" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
                     <separator string="Selection" colspan="2" />
                     <field name="asset_id" on_change="onChangeAssetId(asset_id)" />
                     <field name="product_id" />
@@ -305,13 +305,15 @@
                     <field name="brand" />
                     <field name="model" />
                 </group>
-                <group colspan="2" col="4">
+                <group colspan="2" col="4" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
                     <separator string="Comment" colspan="4" />
                     <!-- display hack -->
                     <group colspan="1" col="1"></group>
                     <field name="comment" nolabel="True" colspan="3" />
                 </group>
 
+                <newline />
+                <field name="asset_state" />
             </form>
         </field>
     </record>
@@ -329,6 +331,7 @@
                 <field name="event_type_id" />
                 <field name="location" />
                 <field name="proj_code" />
+                <field name="asset_state" />
             </tree>
         </field>
     </record>
@@ -339,9 +342,10 @@
         <field name="type">search</field>
         <field name="arch" type="xml">
             <search string="Asset Event">
+                <field name="asset_state" />
                 <field name="date" />
                 <field name="asset_id" />
-                <field name="product_id" domain="[('subtype', '=', 'asset')]" />
+                <field name="product_id" />
                 <field name="event_type_id" />
                 <newline />
                 <group expand="0" string="Group By..." colspan="11" col="11">

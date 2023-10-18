@@ -376,7 +376,7 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for invoice in self.browse(cr, uid, ids, fields_to_fetch=['doc_type'], context=context):
-            if invoice.doc_type == 'si': # TODO
+            if invoice.doc_type in ('si', 'isi', 'ivi'):
                 cr.execute("""
                     select
                         l.line_number

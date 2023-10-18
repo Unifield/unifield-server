@@ -30,6 +30,7 @@ import pooler
 from osv import fields, osv
 import decimal_precision as dp
 from tools.translate import _
+from tools.misc import get_fake
 from lxml import etree
 
 
@@ -295,6 +296,17 @@ class account_account(osv.osv):
         else:
             raise osv.except_osv(_('Error'), _('Operation not implemented!'))
 
+    def _search_asset_for_product(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args or not args[0] or not args[0][2] or not args[0][2][0]:
+            return []
+
+        if not args[0][2][1]:
+            return [('id', '=', 0)]
+        prod = self.pool.get('product.product').browse(cr, uid, args[0][2][1], fields_to_fetch=['categ_id'], context=context)
+        return [('id', '=', prod.categ_id and prod.categ_id.asset_bs_account_id and prod.categ_id.asset_bs_account_id.id or 0)]
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True),
         'currency_id': fields.many2one('res.currency', 'Secondary Currency', help="Forces all moves for this account to have this secondary currency."),
@@ -353,6 +365,7 @@ class account_account(osv.osv):
                                           required=True),
         'level': fields.function(_get_level, string='Level', method=True, store=True, type='integer'),
         'is_child_of_coa': fields.function(_get_child_of_coa, method=True, type='boolean', string='Is child of CoA', help="Check if the current account is a direct child of Chart Of Account account."),
+        'asset_for_product': fields.function(get_fake, method=True, type='boolean', string='Filter account for asset', fnct_search=_search_asset_for_product),
     }
 
     _defaults = {

@@ -1474,6 +1474,9 @@ class orm_template(object):
                     res[f]['relation'] = field_col._obj
                     res[f]['domain'] = field_col._domain
                     res[f]['context'] = field_col._context
+                    if getattr(field_col, 'add_empty', None):
+                        # m2o widget=selection + required
+                        res[f]['add_empty'] = getattr(field_col, 'add_empty')
         else:
             #TODO : read the fields from the database
             pass
