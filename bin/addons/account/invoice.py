@@ -255,6 +255,16 @@ class account_invoice(osv.osv):
     def _get_journal_type(self, cr, uid, context=None):
         return self.pool.get('account.journal').get_journal_type(cr, uid, context)
 
+    def _get_is_asset_activated(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        if not ids:
+            return {}
+        res = {}
+        asset = self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok')
+        for _id in ids:
+            res[_id] = asset
+        return res
+
+
     _columns = {
         'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that produced this invoice.", readonly=True, states={'draft':[('readonly',False)]}),
@@ -361,6 +371,7 @@ class account_invoice(osv.osv):
         'user_id': fields.many2one('res.users', 'Salesman', readonly=True, states={'draft':[('readonly',False)]}),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position', readonly=True, states={'draft':[('readonly',False)]}),
         'is_draft': fields.boolean('Is draft', help='used to sort invoices (draft on top)', readonly=1),
+        'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
     }
     _defaults = {
         'type': _get_type,
@@ -1114,6 +1125,8 @@ class account_invoice(osv.osv):
 
 
     def _create_asset_form(self, cr, uid, inv_id, context=None):
+        if not self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok'):
+            return True
         inv_line_obj = self.pool.get('account.invoice.line')
         asset_obj = self.pool.get('product.asset')
         line_ids = inv_line_obj.search(cr, uid, [('invoice_id', '=', inv_id), ('is_asset', '=', True)], context=context)
@@ -1344,6 +1357,7 @@ class account_invoice(osv.osv):
                     line['reversed_invoice_line_id'] = line['id']  # store a link to the original invoice line
             del line['id']
             del line['invoice_id']
+            del line['is_asset']
             if line.get('move_lines',False):
                 del line['move_lines']
             if line.get('import_invoice_id',False):

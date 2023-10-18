@@ -375,6 +375,8 @@ class account_invoice(osv.osv):
     def _check_asset_line(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if not self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok'):
+            return True
         for invoice in self.browse(cr, uid, ids, fields_to_fetch=['doc_type'], context=context):
             if invoice.doc_type in ('si', 'isi', 'ivi'):
                 cr.execute("""

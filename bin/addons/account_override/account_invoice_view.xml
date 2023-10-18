@@ -390,7 +390,8 @@
                                                              ('from_supply', '=', True),
                                                              '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                             </group>
-                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True, 'from_inv_form': True}">
+                            <field name="is_asset_activated" invisible="1" />
+                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True, 'from_inv_form': True, 'is_asset_activated': is_asset_activated}">
                                 <tree string="Intermission Voucher Lines"
                                       editable="both"
                                       colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True or not account_id;black:inactive_product == False and analytic_distribution_state in ('none', 'valid') and account_id">
@@ -428,7 +429,7 @@
                                     />
                                     <field name="price_unit"
                                            attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
-                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" />
+                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" invisible="not context.get('is_asset_activated')"/>
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
                                     <field name="inactive_product" invisible="1" />

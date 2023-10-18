@@ -240,7 +240,8 @@
                                                     'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                            </group>
 
-                            <field colspan="4" default_get="{'type': type, 'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
+                            <field name="is_asset_activated" invisible="1" />
+                            <field colspan="4" default_get="{'is_asset_activated': is_asset_activated, 'type': type, 'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
                                 <tree string="Invoice lines" editable="both" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True or not account_id;black:analytic_distribution_state in ('none', 'valid') and inactive_product == False and account_id">
                                     <field name="from_supply" invisible="1"/>
                                     <field name="line_synced" invisible="1"/>
@@ -275,7 +276,7 @@
                                     <field name="price_unit"
                                            attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"
                                     />
-                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" invisible="context.get('type')=='in_refund'" />
+                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" invisible="context.get('type')=='in_refund' or not context.get('is_asset_activated')" />
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
