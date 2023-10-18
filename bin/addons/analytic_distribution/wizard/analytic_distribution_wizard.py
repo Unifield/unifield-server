@@ -510,9 +510,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                 res[el.id] = False
             if el.model_line_id and el.model_line_id.model_id.state == 'done':
                 res[el.id] = False
-            if el.asset_id and el.asset_id.state == 'done':
+            if el.asset_id and el.asset_id.state in ('cancel', 'done'):
                 res[el.id] = False
-            if el.asset_line_id and el.asset_line_id.move_id and el.asset_line_id.move_id.state != 'draft':
+            if el.asset_line_id and (el.asset_line_id.move_id and el.asset_line_id.move_id.state != 'draft' or el.asset_line_id.asset_id.state in ('cancel', 'done')):
                 res[el.id] = False
         return res
 

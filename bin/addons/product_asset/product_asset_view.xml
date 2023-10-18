@@ -96,10 +96,10 @@
                         <group colspan="2" col="4">
                             <separator string="Comment" colspan="4" />
                             <!-- display hack -->
-                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', '=', 'done')]}"/>
+                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
                         </group>
 
-                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '=', 'done')]}">
+                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', 'in', ['cancel', 'done'])]}">
                             <separator string="Traceability" colspan="2" />
                             <field name="project_po" />
                             <field name="orig_mission_code" />
@@ -114,9 +114,9 @@
                             <field name="invo_value" />
                             <field name="invo_currency"  />
                             <field name="invo_date" />
-                            <field name="invo_supplier_id" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('from_invoice', '=', True)]}" />
-                            <field name="invo_donator_code" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', '=', 'done')]}"/>
-                            <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', '=', 'done')]}"/>
+                            <field name="invo_supplier_id" colspan="4" attrs="{'readonly': ['|', '|', ('from_sync', '=', True), ('from_invoice', '=', True), ('state', '!=', 'draft')]}" />
+                            <field name="invo_donator_code" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
+                            <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Accounts" colspan="2" />
@@ -148,12 +148,12 @@
                             <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
                                 <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="3" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
                                 <button name="button_reset_distribution" string="Reset AD at line level" type="object"
-                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', '=', 'done')]}"/>
+                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['cancel', 'done'])]}"/>
                             </group>
                             <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
-                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="3" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="3" attrs="{'invisible': ['|', ('state', 'in', ['cancel', 'done']), ('analytic_distribution_id', '!=', False)]}"/>
                                 <button name="button_reset_distribution" string="Reset AD at line level" type="object"
-                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', '=', 'done')]}"/>
+                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['cancel', 'done'])]}"/>
                             </group>
                             <field name="analytic_distribution_id" invisible="1"/>
                         </group>
@@ -181,7 +181,7 @@
                         </field>
                     </page>
                 </notebook>
-                <group colspan="4" col="8">
+                <group colspan="4" col="10">
                     <field name="has_lines" invisible="1" />
                     <field name="has_posted_lines" invisible="1" />
                     <field name="can_be_disposed" invisible="1" />
@@ -199,6 +199,8 @@
                     <group colspan="2" col="2" attrs="{'invisible': [('instance_level', '=', 'coordo')]}">
                         <button type="object" name="button_project_depreciation" string="Start Depreciation" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                     </group>
+                    <button type="object" name="button_cancel_asset" string="Cancel" icon="gtk-cancel" attrs="{'invisible': [('state', '!=', 'draft')]}"  />
+                    <button type="object" name="button_from_cancel_to_draft" string="Set as Draft" icon="gtk-goto-first" attrs="{'invisible': [('state', '!=', 'cancel')]}" />
                 </group>
             </form>
         </field>
@@ -240,6 +242,7 @@
                 <filter icon="terp-document-new" string="Draft" name="s_draft" domain="[('state', '=', 'draft')]"/>
                 <filter icon="terp-camera_test" string="Running" name="s_running" domain="[('state', '=', 'running')]"/>
                 <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" />
+                <filter icon="gtk-cancel" string="Cancel" name="cancel" domain="[('state','=','cancel')]" />
                 <separator orientation="vertical"/>
 
                 <field name="name"  />

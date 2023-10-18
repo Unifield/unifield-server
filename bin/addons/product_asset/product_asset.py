@@ -437,11 +437,11 @@ class product_asset(osv.osv):
         # event history
         'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
         # UF-1617: field only used for sync purpose
-        'instance_id': fields.many2one('msf.instance', string="Instance/id", readonly=True, required=False),
+        'instance_id': fields.many2one('msf.instance', string="Instance", readonly=True, required=False),
         'xmlid_name': fields.char('XML Code, hidden field', size=128),
         'from_invoice': fields.boolean('From Invoice', readonly=1),
         'from_sync': fields.boolean('From Sync', readonly=1),
-        'state': fields.selection([('draft', 'Draft'), ('running', 'Running'), ('done', 'Done')], 'State', readonly=1),
+        'state': fields.selection([('draft', 'Draft'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], 'State', readonly=1),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
         'useful_life_id': fields.many2one('product.asset.useful.life', 'Useful Life (years)', ondelete='restrict'),
@@ -477,6 +477,18 @@ class product_asset(osv.osv):
     # UF-2148: use this constraint with 3 attrs: name, prod and instance
     _sql_constraints = [('asset_name_uniq', 'unique(name)', 'Asset Code must be unique.')]
     _order = 'name desc'
+
+    def button_cancel_asset(self, cr, uid, ids, context=None):
+        draft_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context)
+        if draft_ids:
+            self.write(cr, uid, draft_ids, {'state': 'cancel'}, context=context)
+        return True
+
+    def button_from_cancel_to_draft(self, cr, uid, ids, context=None):
+        cancel_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'cancel')], context=context)
+        if cancel_ids:
+            self.write(cr, uid, cancel_ids, {'state': 'draft'}, context=context)
+        return True
 
     def button_set_as_draft(self, cr, uid, ids, context=None):
         draft_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'running')], context=context)
@@ -926,7 +938,7 @@ class product_asset_line(osv.osv):
         'move_state': fields.related('move_id', 'state', type='selection', selection=[('posted', 'Posted'), ('draft', 'Unposted')], string="Entry State"),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
-        'asset_id': fields.many2one('product.asset', 'Asset', required=1, select=1, join=True),
+        'asset_id': fields.many2one('product.asset', 'Asset', required=1, select=1, join=True, ondelete='cascade'),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'),

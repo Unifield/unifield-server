@@ -1496,7 +1496,7 @@ class account_move(osv.osv):
         'date': fields.date('Date', required=True, states={'posted':[('readonly',True)]}, select=True),
         'narration':fields.text('Narration'),
         'company_id': fields.related('journal_id','company_id',type='many2one',relation='res.company',string='Company', store=True, readonly=True),
-        'asset_id': fields.many2one('product.asset', 'Asset', readonly=1),
+        'asset_id': fields.many2one('product.asset', 'Asset', readonly=1, ondelete='restrict'),
     }
     _defaults = {
         'name': '/',
