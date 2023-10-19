@@ -5,7 +5,7 @@ xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
 xmlns:html="http://www.w3.org/TR/REC-html40">
 <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-<Title>${get_title()|x}</Title>
+<Title>${_(get_title())|x}</Title>
 </DocumentProperties>
 <Styles>
 <Style ss:ID="ssCell">
@@ -218,7 +218,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Journals')}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Display')}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Open Items at')}</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Filter By')} ${(get_filter(data)!='No Filter' and get_filter(data) or '')|x}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Filter By')} ${(get_filter(data)!=_('No Filter') and get_filter(data) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Target Moves')}</Data></Cell>
 % if get_show_move_lines():
     <Cell ss:StyleID="ssH" ss:MergeAcross="2">
