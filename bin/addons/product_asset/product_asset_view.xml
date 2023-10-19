@@ -110,7 +110,7 @@
 
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
-                            <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', '|', ('from_sync', '=', True), ('from_invoice', '=', True), ('has_lines', '!=', False)]}" on_change="change_invo_date(move_line_id)" domain="[('journal_id.type', '=', 'purchase'), ('account_id.user_type_code', '=', 'asset')]" />
+                            <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', '|', '|', ('state', '!=', 'draft'), ('from_sync', '=', True), ('from_invoice', '=', True), ('has_lines', '!=', False)]}" on_change="change_invo_date(move_line_id)" domain="[('journal_id.type', '=', 'purchase'), ('account_id.user_type_code', '=', 'asset')]" />
                             <field name="invo_value" />
                             <field name="invo_currency"  />
                             <field name="invo_date" />
