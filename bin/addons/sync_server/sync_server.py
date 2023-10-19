@@ -45,7 +45,7 @@ def check_validated(f):
         entity = entity_pool.browse(cr, uid, id)[0]
         if not entity.hardware_id or entity.hardware_id != hw_id:
             logging.getLogger('sync.server').warn('Hardware id mismatch: instance %s, db hw_id: %s, hw_id sent: %s' % (entity.name, entity.hardware_id, hw_id))
-            return (False, 'Error Hardware ID: Hardware ID is incorrect, please contact the support')
+            return (False, 'Error: Hardware ID is incorrect, please contact the support')
         if entity.state == 'updated':
             return (False, 'This instance config has been updated and the update procedure has to be launched at your side to apply the changes.')
         if not entity.state == 'validated':
@@ -450,7 +450,7 @@ class entity(osv.osv):
         if entity_id:
             entity = self.browse(cr, uid, entity_id, context=context)
             if not entity.hardware_id or entity.hardware_id != data['hardware_id']:
-                return (False, 'Error Hardware ID: Hardware ID is incorrect, please contact the support')
+                return (False, 'Error: Hardware ID is incorrect, please contact the support')
             res = self.write(cr, 1, [entity_id], data, context=context)
             if res:
                 #self._send_registration_email(cr, uid, data, groups_names, context=context)
