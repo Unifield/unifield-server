@@ -1115,7 +1115,7 @@ class account_invoice(osv.osv):
             new_move_name = self.pool.get('account.move').browse(cr, uid, move_id).name
             # make the invoice point to that move
             self.write(cr, uid, [inv.id], {'move_id': move_id,'period_id':period_id, 'move_name':new_move_name})
-            if inv.doc_type == ('si', 'isi', 'ivi'):
+            if inv.doc_type in ('si', 'isi', 'ivi'):
                 self._create_asset_form(cr, uid, inv.id, context)
             # Pass invoice in context in method post: used if you want to get the same
             # account move reference when creating the same invoice after a cancelled one:
