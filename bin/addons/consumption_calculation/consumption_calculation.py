@@ -628,8 +628,6 @@ class real_average_consumption(osv.osv):
                         values.update({'remark': _('You must assign a batch number')})
                     if date_mandatory:
                         values.update({'remark': _('You must assign an expiry date')})
-                    if asset_mandatory:
-                        values.update({'remark': _('You must assign an asset')})
                     self.pool.get('real.average.consumption.line').create(cr, uid, values)
 
         self.write(cr, uid, ids, {'created_ok': False})
@@ -790,16 +788,8 @@ class real_average_consumption_line(osv.osv):
                 else:
                     prodlot_id = prod_ids[0]
 
-            if asset_mandatory:
-                if not obj.asset_id:
-                    if not noraise:
-                        raise osv.except_osv(_('Error'),
-                                             _("Product: %s, You must assign an Asset to process it.")%(obj.product_id.name,))
-                    elif context.get('import_in_progress'):
-                        error_message.append(_("You must assign an Asset to process it."))
-                        context.update({'error_message': error_message})
-                elif obj.asset_id:
-                    asset_id = obj.asset_id.id
+            if asset_mandatory and obj.asset_id:
+                asset_id = obj.asset_id.id
 
             product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
 

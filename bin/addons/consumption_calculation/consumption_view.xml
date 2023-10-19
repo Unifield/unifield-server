@@ -62,7 +62,7 @@
                                 on_change="change_expiry(expiry_date, product_id, parent.cons_location_id, uom_id, remark)"
                                 attrs="{'required': [('date_mandatory', '=', True), ('batch_mandatory', '=', False)], 'readonly': ['|', ('batch_mandatory', '=', True), ('date_mandatory', '=', False)]}"/>
                             <field name="asset_id"
-                                attrs="{'required': [('asset_mandatory', '=', True)], 'readonly': [('asset_mandatory', '=', False)]}"
+                                attrs="{'readonly': [('asset_mandatory', '=', False)]}"
                                 on_change="change_asset(asset_id, product_id, parent.cons_location_id, uom_id, remark)"
                                 domain="[('product_id', '=', product_id)]" />
                             <field name="consumed_qty" on_change="change_qty(consumed_qty, product_id, prodlot_id, parent.cons_location_id, uom_id)"/>
