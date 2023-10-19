@@ -2103,7 +2103,8 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
 
         context['web_copy'] = True
-        default.update({'partner_id': False, 'partner_id2': False, 'address_id': False, 'ext_cu': False, 'sale_id': False})
+        default.update({'partner_id': False, 'partner_id2': False, 'address_id': False, 'ext_cu': False,
+                        'sale_id': False, 'invoice_state': 'none'})
         loan_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
         og_pick_ids = self.search(cr, uid, [('id', '=', id), ('reason_type_id', '=', loan_ret_rt_id)], context=context)
         if og_pick_ids:
