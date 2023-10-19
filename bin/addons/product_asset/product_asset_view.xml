@@ -175,8 +175,9 @@
                                 <field name="is_allocatable" invisible="1"/>
                                 <field name="move_id" />
                                 <field name="move_state" />
+                                <field name="move_state_fake" invisible="1"/>
                                 <button name="button_generate_unposted_entries" type="object" icon="terp-gtk-jump-to-ltr" attrs="{'invisible': ['|', ('state', '!=', 'running'), ('move_id', '!=', False)]}" header="True"/>
-                                <button name="button_post_entries" type="object" icon="gtk-apply" attrs="{'invisible': ['|', ('state', '!=', 'running'), ('move_state', '=', 'posted')]}" header="True"/>
+                                <button name="button_post_entries" type="object" icon="gtk-apply" attrs="{'invisible': ['|', ('state', '!=', 'running'), ('move_state_fake', '=', 'posted')]}" header="True"/>
                             </tree>
                         </field>
                     </page>
