@@ -601,10 +601,10 @@ class product_asset(osv.osv):
                 accumulated_rounded += value
 
         remaining = round(asset.invo_value - sum_deprecated_value, 2)
-        if remaining > 0.001:
+        if asset.prorata and remaining > 1:
             last_entry_date = start_dt + relativedelta(months=nb_month+1, day=1, days=-1)
             to_create.append([last_entry_date, remaining, last_entry_date + relativedelta(day=1), last_entry_date + relativedelta(day=start_dt.day)])
-        elif remaining < 0.001:
+        else:
             to_create[-1][1] = to_create[-1][1] + remaining
 
         for line in to_create:
