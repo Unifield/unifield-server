@@ -1309,7 +1309,6 @@
 					<field name="date" />
 					<field name="shipment_expected_date" />
 					<field name="state"/>
-					<button name="do_create_shipment_bg" states="draft" string="Create Shipment" type="object" icon="gtk-add"/>
 					<button name="open_select_actual_ship_date_wizard" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
 				</tree>
 			</field>
