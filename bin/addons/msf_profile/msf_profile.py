@@ -57,7 +57,19 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
     # UF31.0
+
+    def us_11026_oca_liquidity_migration_journal(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'oca':
+            sql_file = opj('msf_profile', 'data', 'us_11026_migration_items_to_liquidity_journals.sql')
+            fp = tools.file_open(sql_file, 'r')
+            cr.execute(fp.read())
+            fp.close()
+        return True
+
+    # UF30.1
     def us_11956_fix_po_line_reception_destination(self, cr, uid, *a, **b):
         '''
         Set the Reception Destination to Cross Docking for all PO line by Nomenclature (no product) if they are linked
