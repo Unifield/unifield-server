@@ -974,7 +974,7 @@ class audittrail_log_line(osv.osv):
 
             # No translation
             if not res[line.id]:
-                res[line.id] = line.field_description
+                res[line.id] = _(line.field_description)
 
             # rename 'Field Order' to 'Order' in case of IR
             if line.object_id.model == 'sale.order':
