@@ -101,7 +101,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[('type','=','out'), ('subtype', '=', 'standard')]</field>
-			<field name="context">{'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'}</field>
+			<field name="context">{'picking_screen': False, 'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'}</field>
 			<field name="search_view_id" ref="stock.view_picking_out_search"/>
 			<field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
 		</record>
