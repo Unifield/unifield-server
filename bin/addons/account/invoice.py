@@ -1712,10 +1712,18 @@ class account_invoice_line(osv.osv):
     }
 
     def change_is_asset(self, cr, uid, ids, is_asset, product_id, context=None):
-        if not is_asset or not product_id:
+        if not product_id:
             return {}
 
-        prod = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['categ_id', 'default_code'], context=context)
+
+        prod = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['categ_id', 'default_code', 'property_account_expense'], context=context)
+
+        if not is_asset:
+            account_id = prod.property_account_expense and prod.property_account_expense.id or \
+                prod.categ_id and prod.categ_id.property_account_expense_categ and prod.categ_id.property_account_expense_categ.id or \
+                False
+            return {'value': {'account_id': account_id}}
+
         if not prod.categ_id:
             return {'warning': {'message': _('Product %s has no category') % (prod.default_code, )}, 'value': {'is_asset': False}}
         if not prod.categ_id.asset_bs_account_id:
