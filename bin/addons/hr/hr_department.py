@@ -57,7 +57,7 @@ class hr_department(osv.osv):
         'complete_name': fields.function(_dept_name_get_fnc, method=True,
                                          type="char", string='Name', size=512,
                                          store = {
-                                         'hr.department': (_get_ids_to_update, ['child_ids', 'name'], 10),
+                                             'hr.department': (_get_ids_to_update, ['child_ids', 'name'], 10),
                                          }),
         'company_id': fields.many2one('res.company', 'Company', select=True, required=False),
         'parent_id': fields.many2one('hr.department', 'Parent Department', select=True),
@@ -126,7 +126,7 @@ class res_users(osv.osv):
     _description = 'User'
 
     _columns = {
-        'context_department_id': fields.many2one('hr.department', 'Departments'),
+        'context_department_id': fields.many2one('hr.department', 'Department'),
     }
 
 res_users()
