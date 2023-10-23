@@ -787,7 +787,6 @@ class account_invoice(osv.osv):
             'purchase_list': False,  # UFTP-24 do not copy linked: reset of potential purchase list flag (from a PO direct purchase)
             'partner_move_line': False,
             'imported_invoices': False,
-            'is_asset': False,
         })
         inv = self.browse(cr, uid, inv_id, fields_to_fetch=['state', 'from_supply', 'journal_id'], context=context)
         if not inv.journal_id.is_active:
@@ -1896,6 +1895,14 @@ class account_invoice_line(osv.osv):
                         'allow_no_account': False,
                         'is_asset': False,
                         })
+        if self.read(cr, uid, invl_id, ['is_asset'], context=context)['is_asset']:
+            line_data = self.browse(cr, uid, invl_id, fields_to_fetch=['product_id'], context=context)
+            prod = line_data.product_id
+            if prod:
+                default['account_id'] = prod.property_account_expense and prod.property_account_expense.id or \
+                    prod.categ_id and prod.categ_id.property_account_expense_categ and prod.categ_id.property_account_expense_categ.id or \
+                    False
+                print default['account_id']
         # Manual duplication should generate a "manual document not created through the supply workflow"
         # so we don't keep the link to PO/FO/CV at line level
         if context.get('from_button') and not context.get('from_split'):
