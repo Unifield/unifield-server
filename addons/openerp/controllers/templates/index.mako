@@ -309,6 +309,57 @@
                 jQuery.fancybox.close();
             }
         </script>
+    % elif department_required:
+        <div id="survey">
+                <div id="survey_title">${_('Please fill your Department')}</div>
+                 <div class="row">
+                  <div class="column" style="width: 50%">${_('Department')}: <select id="department" style="width: 50%; font-size:20px">
+                            <option value="" />
+                        % for dpt_id, dpt_name in department_list:
+                            <option value="${dpt_id}"
+                                % if dpt_id == selected_department:
+                                    selected="selected"
+                                % endif
+                            >${dpt_name}</option>
+                        % endfor
+                  </select></div>
+                  <div class="column"><div class="survey_button" onclick="click_dpt_answer('goto')">${_('Save')}</div></div>
+                </div>
+                % if nb_department_asked != -1:
+                     <div class="row">
+                      % if nb_department_asked < 2:
+                        <div class="column"><div class="survey_button" onclick="click_dpt_answer('later')">${_('Ask Later')}</div></div>
+                      % else:
+                        <div class="column"><div class="survey_button" onclick="click_dpt_answer('never')">${_('Do not ask again')}</div></div>
+                      % endif
+                    </div>
+                % endif
+        </div>
+        <script type="text/javascript">
+            jQuery('#survey').fancybox({'modal': true, 'height': 250, 'width': 700, 'scrolling': 'no', 'autoDimensions': false, 'autoScale': false});
+
+            jQuery(document).ready(function() {
+                jQuery('#survey').trigger('click');
+                jQuery('#survey').show();
+                jQuery('#survey').unbind('click.fb');
+                jQuery('#department').focus()
+            });
+            function click_dpt_answer(answer) {
+                if (answer=='goto') {
+                    dpt_field = jQuery('#department')
+                    console.log(dpt_field);
+                    console.log(dpt_field.val());
+                    jQuery.post('/openerp/pref/save_department', {'dpt': dpt_field.val()});
+                } else if (answer=='later') {
+                    jQuery.post('/openerp/pref/department_update_nb');
+                } else if (answer=='never') {
+                    jQuery.post('/openerp/pref/department_dontask');
+                }
+                jQuery('#survey').hide();
+                jQuery.fancybox.close();
+            }
+        </script>
+
     % elif email_required:
         <div id="survey">
                 <div id="survey_title">${_('Please fill your email address')}</div>

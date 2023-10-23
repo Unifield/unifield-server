@@ -158,12 +158,20 @@ class Root(SecuredController):
             tools = None
 
         user_info = rpc.RPCProxy("res.users").read([rpc.session.uid],
-                                                               ['force_password_change', 'new_signature_required', 'nb_email_asked', 'display_email_popup'],
+                                                               ['force_password_change', 'new_signature_required', 'nb_email_asked', 'display_email_popup', 'display_department_popup', 'nb_department_asked', 'context_department_id'],
                                                                rpc.session.context)[0]
         force_password_change = user_info['force_password_change']
         signature_required = user_info.get('new_signature_required')
         email_required = user_info.get('display_email_popup')
         nb_email_asked = user_info['nb_email_asked'] or 0
+
+        department_required = user_info.get('display_department_popup')
+        nb_department_asked = user_info.get('nb_department_asked') or 0
+        department_list = []
+        selected_department = user_info.get('context_department_id') and user_info.get('context_department_id')[0] or False
+        if department_required:
+            department_list = rpc.RPCProxy('res.users').list_department(rpc.session.context)
+
         widgets= openobject.pooler.get_pool()\
             .get_controller('/openerp/widgets')\
             .user_home_widgets(ctx)
@@ -220,7 +228,11 @@ class Root(SecuredController):
                     display_warning=display_warning,
                     refresh_timeout=refresh_timeout,
                     email_required=email_required,
-                    nb_email_asked=nb_email_asked)
+                    nb_email_asked=nb_email_asked,
+                    department_required=department_required,
+                    nb_department_asked=nb_department_asked,
+                    department_list=department_list,
+                    selected_department=selected_department)
 
     @expose()
     def do_login(self, *arg, **kw):
