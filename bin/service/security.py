@@ -28,6 +28,7 @@ from passlib.hash import bcrypt
 from tools.translate import _
 from osv import osv
 from psycopg2._psycopg import ProgrammingError
+import os
 PASSWORD_MIN_LENGHT = 8
 
 # When rejecting a password, hide the traceback
@@ -107,9 +108,10 @@ def login(db_name, login, password):
         if not nb:
             to_update = updater.test_do_upgrade(cr)
         if nb or to_update:
-            s = threading.Thread(target=pooler.get_pool, args=(db_name,),
-                                 kwargs={'threaded': True})
-            s.start()
+            if not os.path.isfile(os.path.join(tools.config['root_path'], 'unifield-socket.py')):
+                s = threading.Thread(target=pooler.get_pool, args=(db_name,),
+                                     kwargs={'threaded': True})
+                s.start()
             raise Exception("ServerUpdate: Server is updating modules ...")
 
         pool = pooler.get_pool(db_name)
