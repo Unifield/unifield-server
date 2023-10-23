@@ -6,7 +6,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'hr.employee')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['active', 'birthday', 'code', 'cost_center_id', 'country_id', 'destination_id', 'employee_type', 'free1_id', 'free2_id', 'funding_pool_id', 'gender', 'homere_codeterrain', 'homere_id_staff', 'homere_id_unique', 'identification_id', 'job_id', 'marital', 'mobile_phone', 'name', 'name_resource', 'notes', 'passport_id', 'private_phone', 'resource_type', 'sinid', 'ssnid', 'work_email', 'work_location', 'work_phone']
+        fields = ['active', 'birthday', 'code', 'cost_center_id', 'country_id', 'destination_id', 'employee_type', 'free1_id', 'free2_id', 'funding_pool_id', 'gender', 'homere_codeterrain', 'homere_id_staff', 'homere_id_unique', 'identification_id', 'job_name', 'marital', 'mobile_phone', 'name', 'name_resource', 'notes', 'passport_id', 'private_phone', 'resource_type', 'sinid', 'ssnid', 'work_email', 'work_location', 'work_phone']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', 'in' , ('hr.employee', 'resource.resource')), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
