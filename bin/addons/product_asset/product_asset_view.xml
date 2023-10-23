@@ -197,7 +197,7 @@
                         <button type="object" name="button_set_as_draft" string="Set as Draft" icon="gtk-goto-first" attrs="{'invisible': ['|', ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
                         <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', ('state', '!=', 'running'), ('can_be_disposed', '=', False)]}"/>
                     </group>
-                    <group colspan="2" col="2" attrs="{'invisible': [('instance_level', '=', 'coordo')]}">
+                    <group colspan="2" col="2" attrs="{'invisible': [('instance_level', '!=', 'project')]}">
                         <button type="object" name="button_project_depreciation" string="Start Depreciation" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                     </group>
                     <button type="object" name="button_cancel_asset" string="Cancel" icon="gtk-cancel" attrs="{'invisible': [('state', '!=', 'draft')]}"  />
