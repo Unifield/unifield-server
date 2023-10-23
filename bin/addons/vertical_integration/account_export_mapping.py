@@ -112,7 +112,7 @@ class account_export_mapping(osv.osv):
             for el in arch.xpath('field[@name="hq_system_account"]'):
                 el.set('invisible', '0')
 
-            view['arch'] = etree.tostring(arch)
+            view['arch'] = etree.tostring(arch, encoding='unicode')
 
 account_export_mapping()
 
