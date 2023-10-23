@@ -61,14 +61,30 @@ class msf_accrual_line_expense(osv.osv):
             ids = [ids]
         res = {}
         inactive_invalid = False
+        def _is_active_at_posting_date(fp_line, date):
+            """
+            Check if all the analytic accounts of the accrual line AD are active at posting date
+            @param fp_line: funding_pool_lines object
+            @param date: posting date of the current accrual
+            @return: boolean
+            """
+            if fp_line.destination_id.date_start > date or fp_line.cost_center_id.date_start > date or fp_line.analytic_id.date_start > date:
+                return False
+            elif (fp_line.destination_id.date and fp_line.destination_id.date <= date) or\
+                    (fp_line.cost_center_id.date and fp_line.cost_center_id.date <= date) or\
+                    (fp_line.analytic_id.date and fp_line.analytic_id.date <= date):
+                return False
+            else:
+                return True
+
         for expense_line in self.browse(cr, uid, ids,
                                         fields_to_fetch=['analytic_distribution_id', 'accrual_line_id', 'expense_account_id', 'accrual_amount'],
                                         context=context):
             fp_lines = expense_line.analytic_distribution_id.funding_pool_lines or\
                        expense_line.accrual_line_id.analytic_distribution_id.funding_pool_lines
+            date = expense_line.accrual_line_id.date
             for fp_line in fp_lines:
-                if not fp_line.destination_id.filter_active or not fp_line.cost_center_id.filter_active or\
-                        not fp_line.analytic_id.filter_active:
+                if not _is_active_at_posting_date(fp_line, date):
                     res[expense_line.id] = 'invalid'
                     inactive_invalid = True
             # US-11577 Add code for CC and FP
