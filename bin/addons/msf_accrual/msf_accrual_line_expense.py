@@ -69,9 +69,10 @@ class msf_accrual_line_expense(osv.osv):
             fp_lines = expense_line.analytic_distribution_id.funding_pool_lines or\
                        expense_line.accrual_line_id.analytic_distribution_id.funding_pool_lines
             document_date = expense_line.accrual_line_id.document_date
+            date = expense_line.accrual_line_id.date
             for fp_line in fp_lines:
-                if not aaa_obj.is_account_active(fp_line.cost_center_id, document_date) or \
-                        not aaa_obj.is_account_active(fp_line.destination_id, document_date) or \
+                if not aaa_obj.is_account_active(fp_line.cost_center_id, date) or \
+                        not aaa_obj.is_account_active(fp_line.destination_id, date) or \
                         not aaa_obj.is_account_active(fp_line.analytic_id, document_date):
                     res[expense_line.id] = 'invalid'
                     inactive_invalid = True
