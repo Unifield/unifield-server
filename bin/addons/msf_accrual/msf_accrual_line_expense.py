@@ -60,29 +60,18 @@ class msf_accrual_line_expense(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
-        aaa_obj = self.pool.get('account.analytic.account')
-        inactive_invalid = False
 
         for expense_line in self.browse(cr, uid, ids,
                                         fields_to_fetch=['analytic_distribution_id', 'accrual_line_id', 'expense_account_id', 'accrual_amount'],
                                         context=context):
-            fp_lines = expense_line.analytic_distribution_id.funding_pool_lines or\
-                       expense_line.accrual_line_id.analytic_distribution_id.funding_pool_lines
-            document_date = expense_line.accrual_line_id.document_date
-            date = expense_line.accrual_line_id.date
-            for fp_line in fp_lines:
-                if not aaa_obj.is_account_active(fp_line.cost_center_id, date) or \
-                        not aaa_obj.is_account_active(fp_line.destination_id, date) or \
-                        not aaa_obj.is_account_active(fp_line.analytic_id, document_date):
-                    res[expense_line.id] = 'invalid'
-                    inactive_invalid = True
-            # US-11577 Add code for CC and FP
-            if not inactive_invalid:
-                res[expense_line.id] = self.pool.get('analytic.distribution').\
-                    _get_distribution_state(cr, uid, expense_line.analytic_distribution_id.id,
-                                            expense_line.accrual_line_id.analytic_distribution_id.id,
-                                            expense_line.expense_account_id.id, context=context,
-                                            amount=expense_line.accrual_amount or 0.0)
+            res[expense_line.id] = self.pool.get('analytic.distribution').\
+                _get_distribution_state(cr, uid, expense_line.analytic_distribution_id.id,
+                                        expense_line.accrual_line_id.analytic_distribution_id.id,
+                                        expense_line.expense_account_id.id, context=context,
+                                        amount=expense_line.accrual_amount or 0.0,
+                                        doc_date=expense_line.accrual_line_id.document_date,
+                                        posting_date=expense_line.accrual_line_id.date,
+                                        manual=True)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
