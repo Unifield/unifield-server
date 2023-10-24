@@ -627,7 +627,8 @@ class product_asset(osv.osv):
 
 
     def button_dispose(self, cr, uid, ids, context=None):
-        wiz_id = self.pool.get('product.asset.disposal').create(cr, uid, {'asset_id': ids[0]}, context=context)
+        asset = self.browse(cr, uid, ids[0], fields_to_fetch=['move_line_id'], context=context)
+        wiz_id = self.pool.get('product.asset.disposal').create(cr, uid, {'asset_id': ids[0], 'disposal_bs_account': asset.move_line_id and asset.move_line_id.account_id.id or False}, context=context)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'product.asset.disposal',
@@ -1066,6 +1067,7 @@ class product_asset_line(osv.osv):
                         'document_date': line.date,
                         'date': line.date,
                         'asset_line_id': x.get('asset_line_id', False),
+                        'currency_id': line.asset_id.invo_currency.id,
                     }) for x in entries]
             }, context=context)
 
@@ -1081,6 +1083,7 @@ class product_asset_disposal(osv.osv_memory):
         'asset_id': fields.many2one('product.asset', 'Asset', required=1),
         'event_type_id': fields.many2one('product.asset.event.type', 'Event Type', required=1, domain=[('is_disposal', '=', True)], add_empty=True),
         'disposal_expense_account': fields.many2one('account.account', 'Disposal P&L account', required=1, domain=[('user_type_code', 'in', ['expense', 'income'])]), # TODO domain
+        'disposal_bs_account': fields.many2one('account.account', 'Disposal B/S account', required=1, domain=[('user_type_code', '=', 'asset'), ('type', '=', 'other')]),
         'disposal_date': fields.date('Date', required=1),
         'register_event': fields.boolean('Register an Event'),
         'location': fields.char('Location', size=128),
@@ -1151,7 +1154,7 @@ class product_asset_disposal(osv.osv_memory):
             'is_disposal': True,
             'date': wiz.disposal_date,
             'asset_pl_account_id': wiz.disposal_expense_account.id,
-            'asset_bs_depreciation_account_id': wiz.asset_id.asset_bs_depreciation_account_id.id,
+            'asset_bs_depreciation_account_id': wiz.disposal_bs_account.id,
             'amount': wiz.asset_id.disposal_amount,
             'asset_id': wiz.asset_id.id
 

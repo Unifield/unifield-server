@@ -43,6 +43,8 @@
                 <newline />
                 <field name="disposal_expense_account" />
                 <newline />
+                <field name="disposal_bs_account" />
+                <newline />
                 <field name="register_event" />
                 <newline />
                 <field name="location" attrs="{'invisible': [('register_event','=', False)], 'required': [('register_event','!=', False)]}" />
