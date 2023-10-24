@@ -71,6 +71,7 @@ class patch_scripts(osv.osv):
         ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
         oth_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
         loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+        deli_partner_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
         # To ignore moves with Scrap and Loss RT, because of US-806 (stock_override/stock.py def create() stock_move)
         scrp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
         exp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1]
@@ -133,6 +134,15 @@ class patch_scripts(osv.osv):
         cr.execute("""UPDATE stock_picking SET reason_type_id = %s 
             WHERE type = 'internal' AND reason_type_id = %s""", (intm_rt_id, oth_rt_id))
         self.log_info(cr, uid, "US-7168-7169-10518: The Reason Type of %s INT(s) with the Other Reason Type have been set to 'Internal'" % (cr.rowcount,))
+
+        # RT OUTs from scratch with RT Other: Deliver Partner
+        cr.execute("""UPDATE stock_move SET reason_type_id = %s
+            WHERE picking_id IN (SELECT id FROM stock_picking WHERE reason_type_id = %s AND type = 'out' AND 
+                subtype = 'standard' AND sale_id IS NULL AND purchase_id IS NULL)
+        """, (deli_partner_rt_id, oth_rt_id))
+        cr.execute("""UPDATE stock_picking SET reason_type_id = %s WHERE reason_type_id = %s AND type = 'out' AND 
+            subtype = 'standard' AND sale_id IS NULL AND purchase_id IS NULL""", (deli_partner_rt_id, oth_rt_id))
+        self.log_info(cr, uid, "US-7168-7169-10518: The Reason Type of %s OUT(s) from scratch with the Other Reason Type have been set to 'Deliver Partner'" % (cr.rowcount,))
 
         # Change 'Other' RT
         cr.execute("""UPDATE stock_reason_type SET incoming_ok ='f', internal_ok = 'f', outgoing_ok = 'f'
