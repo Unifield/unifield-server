@@ -1902,7 +1902,6 @@ class account_invoice_line(osv.osv):
                 default['account_id'] = prod.property_account_expense and prod.property_account_expense.id or \
                     prod.categ_id and prod.categ_id.property_account_expense_categ and prod.categ_id.property_account_expense_categ.id or \
                     False
-                print default['account_id']
         # Manual duplication should generate a "manual document not created through the supply workflow"
         # so we don't keep the link to PO/FO/CV at line level
         if context.get('from_button') and not context.get('from_split'):
