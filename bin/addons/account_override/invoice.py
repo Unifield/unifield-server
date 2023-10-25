@@ -1516,6 +1516,15 @@ class account_invoice(osv.osv):
             return True
         return False
 
+    def _get_ad(self, cr, uid, ids,  ad_obj, context=None):
+        percentages, cc_codes, dest_codes, fp_codes = [], [], [], []
+        for fp_line in ad_obj.funding_pool_lines:
+            percentages.append(str(fp_line.percentage))
+            cc_codes.append(fp_line.cost_center_id.code)
+            dest_codes.append(fp_line.destination_id.code)
+            fp_codes.append(fp_line.analytic_id.code)
+        return [';'.join(percentages), ';'.join(cc_codes), ';'.join(dest_codes), ';'.join(fp_codes)]
+
     def export_invoice(self, cr, uid, ids, data, context=None):
         """
         Opens the Export Invoice report
