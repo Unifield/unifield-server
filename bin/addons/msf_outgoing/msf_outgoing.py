@@ -598,7 +598,6 @@ class shipment(osv.osv):
 
         return {}
 
-
     def attach_draft_pick_to_ship(self, cr, uid, new_shipment_id, family, description_ppl=False, context=None, job_id=False, nb_processed=0):
         if context is None:
             context = {}
@@ -629,7 +628,6 @@ class shipment(osv.osv):
             if family.selected_number < int(family.num_of_packs) and move.product_uom.rounding == 1 and \
                     move.qty_per_pack % move.product_uom.rounding != 0:
                 raise osv.except_osv(_('Error'), _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together'))
-
 
         # search if the ship already contains a draft PACK
         new_packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', new_shipment_id), ('backorder_id', '=', picking.id), ('state', 'not in', ['cancel', 'done'])], context=context)
@@ -1047,7 +1045,7 @@ class shipment(osv.osv):
         return res
 
     def add_packs(self, cr, uid, ids, context=None):
-        ship = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id'], context=context)
+        ship = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id', 'address_id'], context=context)
         other_ship_ids = self.search(cr, uid, [('state', '=', 'draft'), ('partner_id', '=', ship.partner_id.id), ('address_id', '=', ship.address_id.id)], context=context)
         pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('state', '!=', 'done'), ('shipment_id', 'in', other_ship_ids)], context=context)
         if not pack_ids:
@@ -1150,6 +1148,7 @@ class shipment(osv.osv):
                     ('picking_id', '=', family.draft_packing_id.id),
                     ('from_pack', '=', family.from_pack),
                     ('to_pack', '=', family.to_pack),
+                    ('not_shipped', '=', False),
                 ], context=context)
                 stay = []
                 if family.to_pack >= family.return_to:
@@ -4734,7 +4733,7 @@ class pack_family_memory(osv.osv):
             left join sale_order_line sol on sol.id = m.sale_line_id
             left join product_pricelist pl on pl.id = so.pricelist_id
             where p.shipment_id is not null
-            group by p.shipment_id, p.description_ppl, from_pack, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
+            group by p.shipment_id, p.description_ppl, from_pack, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, m.not_shipped
     )
     ''')
 

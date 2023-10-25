@@ -412,7 +412,7 @@ class stock_move(osv.osv):
         result = {}
         uom_obj = self.pool.get('product.uom')
         ftf = ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty', 'pick_shipment_id', 'picking_id',
-               'state']
+               'state', 'not_shipped']
         for move in self.read(cr, uid, ids, ftf, context=context):
             default_values = {
                 'total_amount': 0.0,
@@ -449,11 +449,8 @@ class stock_move(osv.osv):
                 result[move['id']]['product_uom_rounding_is_pce'] = uom_rounding == 1
             # Give the Returned state to the Shipment's lines popup lines if the pack.family.memory is Returned
             ship_influenced_state = move['state']
-            if move['pick_shipment_id'] and move['picking_id']:
-                pfm_domain = [('shipment_id', '=', move['pick_shipment_id'][0]),
-                              ('draft_packing_id', '=', move['picking_id'][0]), ('state', '=', 'returned')]
-                if self.pool.get('pack.family.memory').search_exist(cr, uid, pfm_domain, context=context):
-                    ship_influenced_state = 'returned'
+            if move['pick_shipment_id'] and move['picking_id'] and move['not_shipped']:
+                ship_influenced_state = 'returned'
             result[move['id']]['ship_influenced_state'] = ship_influenced_state
 
         return result
