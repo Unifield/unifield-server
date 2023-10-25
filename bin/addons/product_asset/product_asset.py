@@ -16,7 +16,7 @@ class product_asset_type(osv.osv):
     _order = 'name, id'
 
     _columns = {
-        'name': fields.char('Name', size=64, required=True),
+        'name': fields.char('Name', size=64, required=True, translate=1),
         'description': fields.char('Description', size=512),
         'active': fields.boolean('Active'),
         'useful_life_id': fields.one2many('product.asset.useful.life', 'asset_type_id', 'Useful Life (years)'),
@@ -37,7 +37,7 @@ class product_asset_event_type(osv.osv):
     _order = 'name, id'
 
     _columns = {
-        'name': fields.char('Name', size=512, required=True),
+        'name': fields.char('Name', size=512, required=True, translate=1),
         'is_disposal': fields.boolean('Is Disposal'),
         'expense_account_id': fields.many2one('account.account', 'P&L account', domain=[('user_type_code', 'in', ['expense', 'income'])]), #TODO FIX DOMAIN ?
         'active': fields.boolean('Active')
