@@ -463,7 +463,7 @@ class product_asset(osv.osv):
         'start_date': fields.date('Start Date', required=1),
         'line_ids': fields.one2many('product.asset.line', 'asset_id', 'Depreciation Lines'),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
-        'depreciation_amount': fields.function(_get_book_value, string='Depreciation', type='float', method=True, help="Sum off all Asset journal item lines", multi='get_book', with_null=True),
+        'depreciation_amount': fields.function(_get_book_value, string='Depreciation', type='float', method=True, help="Sum of all Asset journal item lines", multi='get_book', with_null=True),
         'disposal_amount': fields.function(_get_book_value, string='Remaining net value', type='float', method=True, multi='get_book', with_null=True),
         'journal_id': fields.many2one('account.journal', 'Journal', readonly=1),
         'has_lines': fields.boolean('Has Line', readonly='1'),
