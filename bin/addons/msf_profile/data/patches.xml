@@ -984,5 +984,9 @@
         <record id="us_11956_fix_po_line_reception_destination" model="patch.scripts">
             <field name="method">us_11956_fix_po_line_reception_destination</field>
         </record>
+
+        <record id="us_11950_delete_previous_assets" model="patch.scripts">
+            <field name="method">us_11950_delete_previous_assets</field>
+        </record>
     </data>
 </openerp>

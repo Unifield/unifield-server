@@ -58,6 +58,16 @@ class patch_scripts(osv.osv):
     }
 
     # UF31.0
+    def us_11950_delete_previous_assets(self, cr,uid, *a, **b):
+        # TODO: code used to manage migration of dev RB, to be deleted at integration
+        # where name not like
+        # search exists
+        cr.execute("delete from product_asset where name not like 'AF-%'")
+        if not self.pool.get('product.asset').search_exists(cr, uid, []):
+            cr.execute("update ir_sequence set number_next=1 where code='product.asset'")
+        return True
+
+
     def us_11956_fix_po_line_reception_destination(self, cr, uid, *a, **b):
         '''
         Set the Reception Destination to Cross Docking for all PO line by Nomenclature (no product) if they are linked
