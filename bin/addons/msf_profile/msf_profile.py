@@ -59,6 +59,14 @@ class patch_scripts(osv.osv):
 
 
     # UF31.0
+    def us_11781_remove_product_country_restriction(self, cr, uid, *a, **b):
+        '''
+        Remove the country restrictions from the products who have some
+        '''
+        cr.execute("""UPDATE product_product SET restricted_country = 'f', country_restriction = NULL 
+            WHERE restricted_country = 't'""")
+        self.log_info(cr, uid, "US-11781: The Product Restrictions have been removed on %s Product(s)" % (cr.rowcount,))
+        return True
 
     def us_11026_oca_liquidity_migration_journal(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
