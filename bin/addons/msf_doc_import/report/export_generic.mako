@@ -35,6 +35,12 @@
             <NumberFormat ss:Format="@"/>
             <Protection ss:Protected="0" />
         </Style>
+        <Style ss:ID="StringProtected">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+            <Interior ss:Color="#A9A9A9" ss:Pattern="Solid"/>
+            <NumberFormat ss:Format="@"/>
+            <Protection />
+        </Style>
         <Style ss:ID="Boolean">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
             <Protection ss:Protected="0" />
@@ -56,7 +62,7 @@
         </Style>
     </Styles>
 
-    <ss:Worksheet ss:Name="${data.get('model_name', _('Sheet 1'))|x}" ss:Protected="0">
+    <ss:Worksheet ss:Name="${data.get('model_name', _('Sheet 1'))|x}" ss:Protected="1">
 
         <Table x:FullColumns="1" x:FullRows="1">
             <% rows = getRows(data) %>
@@ -90,6 +96,15 @@
                 % for row in rows:
                 <Row>
                     % for index, cell in enumerate(row):
+                    % if data['selection'] == 'cost_centers_update' and index not in (1, 4, 5):
+                    <Cell ss:StyleID="StringProtected">
+                    % if headers[index][1] == 'String' and not cell:
+                            <Data ss:Type="String"></Data>
+                        % else:
+                            <Data ss:Type="String">${cell|x}</Data>
+                        % endif
+                    </Cell>
+                    % else:
                     <Cell ss:StyleID="${headers[index][1]|x}">
                         % if headers[index][1] == 'String' and not cell:
                             <Data ss:Type="String"></Data>
@@ -97,6 +112,7 @@
                             <Data ss:Type="String">${cell|x}</Data>
                         % endif
                     </Cell>
+                    % endif
                     % endfor
                 </Row>
                 % endfor
