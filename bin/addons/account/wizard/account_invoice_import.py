@@ -111,7 +111,7 @@ class account_invoice_import(osv.osv_memory):
                 if current_ad.funding_pool_lines[i].analytic_id.id != fp_ids[i] or \
                         current_ad.funding_pool_lines[i].cost_center_id.id != cc_ids[i] or \
                         current_ad.funding_pool_lines[i].destination_id.id != dest_ids[i] or \
-                        current_ad.funding_pool_lines[i].percentage != percent:
+                        current_ad.funding_pool_lines[i].percentage != float(percent):
                     ad_diff = True
             return ad_diff
 
@@ -328,7 +328,9 @@ class account_invoice_import(osv.osv_memory):
                             else:
                                 dest_ids.append(dest_id[0])
 
-                        current_ad =  invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+                        line_ad =  invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+                        header_ad = invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['invoice_id'], context=context).invoice_id.analytic_distribution_id
+                        current_ad = line_ad or header_ad  # if the line does not have his own AD, it means that it uses the AD from the header
 
                         # create a new AD if diff from current AD on line
                         if not current_ad or _is_ad_diff(current_ad, cc_ids=cc_ids, dest_ids=dest_ids, fp_ids=fp_ids, percentages=percentage_vals):
