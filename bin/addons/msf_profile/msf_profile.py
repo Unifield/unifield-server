@@ -77,6 +77,17 @@ class patch_scripts(osv.osv):
             fp.close()
         return True
 
+    def us_11571_new_job_text_field_employee(self, cr, uid, *a, **b):
+        cr.execute('''
+        UPDATE hr_employee emp
+        SET job_name = job.name
+        FROM hr_job job
+        WHERE
+            emp.job_id IS NOT NULL AND
+            emp.job_id = job.id
+        ''')
+        return True
+
     # UF30.1
     def us_11956_fix_po_line_reception_destination(self, cr, uid, *a, **b):
         '''
@@ -85,7 +96,6 @@ class patch_scripts(osv.osv):
         '''
         cross_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking',
                                                                        'stock_location_cross_docking')[1]
-
         cr.execute('''
             UPDATE purchase_order_line SET reception_dest_id = %s WHERE id IN (
                 SELECT pl.id FROM purchase_order_line pl 
@@ -95,8 +105,8 @@ class patch_scripts(osv.osv):
                     (so.procurement_request = 'f' OR (so.location_requestor_id IS NOT NULL AND l.usage = 'customer'))
         )''', (cross_id,))
         self.log_info(cr, uid, "US-11956: The Line Destination of %s PO line(s) by Nomenclature have been set to 'Cross Docking'" % (cr.rowcount,))
-
         return True
+
 
     # UF30.0
     def us_11810_fix_company_logo(self, cr, uid, *a, **b):

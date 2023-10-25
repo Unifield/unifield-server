@@ -994,6 +994,10 @@
             <field name="method">us_11781_remove_product_country_restriction</field>
         </record>
 
+        <record id="us_11571_new_job_text_field_employee" model="patch.scripts">
+            <field name="method">us_11571_new_job_text_field_employee</field>
+        </record>
+
 
     </data>
 </openerp>

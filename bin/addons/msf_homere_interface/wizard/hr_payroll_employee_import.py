@@ -477,8 +477,8 @@ class hr_payroll_employee_import(osv.osv_memory):
                     if contract.date_end and contract.date_end < strftime('%Y-%m-%d'):
                         vals.update({'active': False})
                     # Check job
-                    if contract.job_id:
-                        vals.update({'job_id': contract.job_id.id})
+                    if contract.job_name:
+                        vals.update({'job_name': contract.job_name})
                 # Check the contract dates
                 vals.update({'contract_start_date': contract.date_start or False})
                 vals.update({'contract_end_date': contract.date_end or False})
@@ -533,39 +533,12 @@ class hr_payroll_employee_import(osv.osv_memory):
                     else:
                         vals.update({field[1]: line.get(field[0])})
             # Update values for job
-            if line.get('fonction'):
-                job_ids = self.pool.get('hr.job').search(cr, uid, [('code', '=', line.get('fonction'))])
-                if job_ids:
-                    vals.update({'job_id': job_ids[0]})
+            if line.get('libfonction', False):
+                vals.update({'job_name': line.get('libfonction')})
             # Add entry to database
             new_line = self.pool.get('hr.contract.msf').create(cr, uid, vals)
             if new_line:
                 res.append(new_line)
-        return res
-
-    def update_job(self, cr, uid, ids, reader, context=None):
-        """
-        Read lines from reader and update database
-        """
-        res = []
-        if not reader:
-            return res
-        for line in reader:
-            # Check that no line with same code exist
-            if line.get('code', False):
-                search_ids = self.pool.get('hr.job').search(cr, uid, [('code', '=', line.get('code'))])
-                if search_ids:
-                    continue
-                vals = {
-                    'homere_codeterrain': line.get('codeterrain') or False,
-                    'homere_id_unique': line.get('id_unique') or False,
-                    'code': line.get('code') or '',
-                    'name': line.get('libelle') or '',
-                }
-                # Add entry to database
-                new_line = self.pool.get('hr.job').create(cr, uid, vals)
-                if new_line:
-                    res.append(new_line)
         return res
 
     def _extract_7z(self, cr, uid, filename):
@@ -684,9 +657,6 @@ class hr_payroll_employee_import(osv.osv_memory):
                 # block all the import if the file imported is not a valid PER_MOIS file
                 raise osv.except_osv(_('Error'), _("You can't import this file. Please check that it contains data "
                                                    "for only one month and one field."))
-            if job_reader:
-                self.update_job(cr, uid, ids, job_reader, context=context)
-            # Do not raise error for job file because it's just a useful piece of data, but not more.
             # read the contract file
             contract_ids = False
             if contract_reader:
