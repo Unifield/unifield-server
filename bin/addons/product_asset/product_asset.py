@@ -1003,6 +1003,30 @@ class product_asset_line(osv.osv):
             context = {}
 
         period_cache = {}
+
+        if ids:
+            cr.execute('''
+                select
+                    asset.name, min(l1.date)
+                from
+                    product_asset_line l1, product_asset_line l2, product_asset asset
+                where
+                    l2.id in %s
+                    and l1.id not in %s
+                    and l1.asset_id = l2.asset_id
+                    and l1.date < l2.date
+                    and l1.move_id is null
+                    and asset.id = l2.asset_id
+                    and asset.state = 'running'
+                group by
+                    asset.name
+            ''', (tuple(ids), tuple(ids)))
+            error = []
+            for x in cr.fetchall():
+                error.append('%s: %s' % (x[0], x[1]))
+            if error:
+                raise osv.except_osv(_('Error'), _('Please post entries in chronological order, following entries are draft:\n%s') % '\n'.join(error))
+
         for line in self.browse(cr, uid, ids, context=context):
             if line.asset_id.state != 'running':
                 continue
