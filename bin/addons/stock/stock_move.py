@@ -629,7 +629,7 @@ class stock_move(osv.osv):
         'ship_influenced_state': fields.function(_vals_get, method=True, store=False, string='State', type='selection',
                                                  selection=[('draft', 'Draft'), ('waiting', 'Waiting'),
                                                             ('confirmed', 'Not Available'), ('assigned', 'Available'),
-                                                            ('done', 'Done'), ('cancel', 'Cancelled'),
+                                                            ('done', 'Closed'), ('cancel', 'Cancelled'),
                                                             ('returned', 'Returned')], readonly=True, multi='get_vals'),
         'from_manage_expired_move': fields.related('picking_id', 'from_manage_expired', string='Manage Expired', type='boolean', readonly=True),
         'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
