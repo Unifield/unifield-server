@@ -191,7 +191,7 @@
                             <field name="object_name" invisible="1" />
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
-                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="1"
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id, type)" required="1"
                                     attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('from_ir', '=', True)]}" />
                             <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
                             <field name="address_id" colspan="2" context="{'contact_display':'partner'}"
@@ -687,7 +687,7 @@
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
-                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id, type)"
                                                         required="1"
                             attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('from_ir', '=', True)]}" />
                             <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" on_change="change_packing_list(packing_list)"/>
@@ -911,7 +911,7 @@
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
-							<field name="partner_id2"  readonly="1" on_change="on_change_partner(partner_id2, address_id)"
+							<field name="partner_id2"  readonly="1" on_change="on_change_partner(partner_id2, address_id, type)"
                                                         required="1"
 							 />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"  readonly="1"/>
@@ -1080,7 +1080,7 @@
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
-							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id, type)"
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
