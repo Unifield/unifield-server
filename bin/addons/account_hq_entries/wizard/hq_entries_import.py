@@ -293,7 +293,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Line creation
         hq_obj.create(cr, uid, vals)
 
-        if vals['cost_center_id_first_value']:
+        if vals['cost_center_id_first_value'] and  vals['destination_id'] and vals['analytic_id']:
             aa_data = (account_ids[0], vals['destination_id'], vals['cost_center_id'], vals['analytic_id'], vals['date'], vals['document_date'])
             if aa_data not in cache_data.setdefault('distrib_state', {}):
                 cache_data['distrib_state'][aa_data] = self.pool.get('analytic.distribution').analytic_state_from_info(cr, uid, *aa_data, check_analytic_active=True, context=context)
