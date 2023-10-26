@@ -491,7 +491,7 @@ class po_follow_up(osv.osv_memory):
             max_line = 20000
 
         if nb_lines > max_line:
-            raise osv.except_osv(_('Error'), _('The requested report is too heavy to generate: requested %d lines, maximum allowed %d. Please apply further filters so that report can be generated.'), (nb_lines, max_line))
+            raise osv.except_osv(_('Error'), _('The requested report is too heavy to generate: requested %d lines, maximum allowed %d. Please apply further filters so that report can be generated.') % (nb_lines, max_line))
 
         if wiz.pending_only_ok and report_name == 'po.follow.up_rml':
             filtered_po_ids = []
