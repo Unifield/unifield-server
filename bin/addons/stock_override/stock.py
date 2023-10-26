@@ -383,14 +383,20 @@ class stock_picking(osv.osv):
         if context.get('not_workflow', False):
             vals['from_wkf'] = False
 
-        if vals.get('from_wkf') and vals.get('purchase_id'):
-            po = self.pool.get('purchase.order').browse(cr, uid, vals.get('purchase_id'), fields_to_fetch=['dest_partner_names', 'short_customer_ref', 'linked_sol_id', 'order_line'], context=context)
-            vals['customers'] = po.dest_partner_names
-            vals['customer_ref'] = po.short_customer_ref
-            for line in po.order_line:
-                if line.linked_sol_id:
-                    vals['from_wkf_sourcing'] = True
-                    break
+        if vals.get('from_wkf'):
+            if vals.get('purchase_id'):
+                ftf = ['dest_partner_names', 'short_customer_ref', 'linked_sol_id', 'order_line', 'details']
+                po = self.pool.get('purchase.order').browse(cr, uid, vals['purchase_id'], fields_to_fetch=ftf, context=context)
+                vals['customers'] = po.dest_partner_names
+                vals['customer_ref'] = po.short_customer_ref
+                if 'details' not in vals:
+                    vals['details'] = po.details
+                for line in po.order_line:
+                    if line.linked_sol_id:
+                        vals['from_wkf_sourcing'] = True
+                        break
+            elif vals.get('sale_id') and 'details' not in vals:
+                vals['details'] = self.pool.get('sale.order').read(cr, uid, vals['sale_id'], ['details'], context=context)['details']
 
         if not vals.get('partner_id2') and vals.get('address_id'):
             addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
@@ -1806,6 +1812,7 @@ class stock_move(osv.osv):
             'reason_type_id': reason_type_id,
             'previous_chained_pick_id': picking.id,
             'from_wkf': picking.from_wkf,
+            'details': picking.details,
         }
         return picking_obj.create(cr, uid, pick_values, context=context)
 

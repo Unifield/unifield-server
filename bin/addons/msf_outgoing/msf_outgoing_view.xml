@@ -164,6 +164,7 @@
                     <field name="sale_id" invisible="True" />
                     <field name="reason_type_id" />
                     <field name="origin"/>
+                    <field name="details" truncate="15"/>
                     <field name="packing_list"/>
                     <field name="order_category" string="Order\nCategory"/>
                     <field name="incoming_id" />
@@ -200,6 +201,7 @@
                             <field name="backorder_id" readonly="1" string="Original PICK" />
                             <field name="reason_type_id" widget="selection" readonly="1" />
                             <field name="order_category" />
+                            <field name="details" readonly="1" />
                         </group>
 
                         <group colspan="2" col="2">
@@ -498,6 +500,7 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
+						<field name="details"/>
                         <field name="packing_list" />
                         <field name="order_category" />
                         <newline />
@@ -1286,9 +1289,9 @@
 			<field name="type">form</field>
             <field name="priority">21</field>
 			<field name="arch" type="xml">
-                <form string="Change description shipment line">
+                <form string="Change details shipment line">
 					<field name="description_ppl"/>
-					<button name="change_description_save" string="Save description" icon="gtk-save" type="object" />
+					<button name="change_description_save" string="Save details" icon="gtk-save" type="object" />
 				</form>
 			</field>
 		</record>
@@ -1355,9 +1358,10 @@
                                     <field name="ppl_id" readonly="1"/>
                                     <field name="packing_list" readonly="1" />
                                     <field name="description_ppl" readonly="1" />
-                                    <button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
+                                    <button name="change_description" string="Change details" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="from_pack" readonly="1" />
                                     <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" readonly="0"/>
+                                    <field name="parcel_comment" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}"/>
                                     <field name="num_of_packs" readonly="1" />
                                     <field name="selected_number" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0" on_change="change_selected_number(selected_number)"/>
                                     <field name="pack_type" readonly="1" />
@@ -1381,6 +1385,7 @@
                                     <newline />
                                     <field name="from_pack" readonly="1" />
                                     <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" />
+                                    <field name="parcel_comment" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}"/>
                                     <field name="num_of_packs" readonly="1"/>
                                     <field name="selected_number" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" on_change="change_selected_number(selected_number)" />
                                     <field name="pack_type" readonly="1" />

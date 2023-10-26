@@ -2520,7 +2520,7 @@ class stock_picking(osv.osv):
                                       store={'stock.move': (_get_picking_ids, ['picking_id', 'state', 'product_qty'], 10),
                                              'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
         'pack_family_memory_ids': fields.one2many('pack.family.memory', 'ppl_id', string='Memory Families'),
-        'description_ppl': fields.char('Description', size=256),
+        'description_ppl': fields.char('Details', size=256),
         'already_shipped': fields.boolean(string='The shipment is done'),  # UF-1617: only for indicating the PPL that the relevant Ship has been closed
         'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
         'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
@@ -3786,6 +3786,7 @@ class stock_picking(osv.osv):
                 'previous_step_id': picking.id,
                 'backorder_id': False,
                 'move_lines': [],
+                'description_ppl': picking.details,
             }
             context.update({
                 'keep_prodlot': True,
@@ -4724,7 +4725,8 @@ class pack_family_memory(osv.osv):
                 bool_and(m.not_shipped) as not_shipped,
                 ''::varchar(1) as comment,
                 p.flow_type = 'quick' as quick_flow,
-                p.state as pack_state
+                p.state as pack_state,
+                min(m.parcel_comment) as parcel_comment
             from stock_picking p
             inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
             left join sale_order so on so.id = p.sale_id
@@ -4784,6 +4786,7 @@ class pack_family_memory(osv.osv):
         'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
+        'parcel_comment': fields.char(string='Parcel Comment', size=256),
         'pack_type': fields.many2one('pack.type', string='Pack Type'),
         'length': fields.float(digits=(16, 2), string='Length [cm]'),
         'width': fields.float(digits=(16, 2), string='Width [cm]'),
@@ -4809,7 +4812,7 @@ class pack_family_memory(osv.osv):
         'selected_number': fields.integer('Nb. Parcels to Ship'),
         'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
         'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
-        'description_ppl': fields.char('Description', size=256),
+        'description_ppl': fields.char('Details', size=256),
         'not_shipped': fields.boolean(string='Not shipped'),
         'comment': fields.char(string='Comment', size=1024),
         'volume_set': fields.boolean('Volume set at PPL'),
@@ -4842,11 +4845,23 @@ class pack_family_memory(osv.osv):
             fields.append('selected_number=%(to_ship)s')
 
         if 'total_weight' in vals:
+            try:
+                vals['total_weight'] = float(vals['total_weight'])
+            except Exception:
+                raise osv.except_osv(_('Error'), _('The Total Weight[kg] must be a number'))
             sql_data['total_weight'] = vals['total_weight'] or 0
             fields.append('weight=%%(total_weight)s/(%s-from_pack+1)' % to_pack_field)
         if 'total_volume' in vals:
+            try:
+                vals['total_volume'] = float(vals['total_volume'])
+            except Exception:
+                raise osv.except_osv(_('Error'), _('The Total Volume[dm³] must be a number'))
             sql_data['size'] = (vals['total_volume']**(1.0/3))*10. or 0
             fields += ['length=%%(size)s/(%s-from_pack+1)' % to_pack_field, 'width=%(size)s', 'height=%(size)s']
+
+        if 'parcel_comment' in vals:
+            sql_data['parcel_comment'] = vals.get('parcel_comment', '')
+            fields.append('parcel_comment=%(parcel_comment)s')
 
         if fields:
             cr.execute('''
@@ -4871,7 +4886,7 @@ class pack_family_memory(osv.osv):
         for pack in pack_obj:
             res_id = pack['draft_packing_id'][0]
             return {
-                'name': 'Change description',
+                'name': _('Change details'),
                 'view_type': 'form',
                 'view_mode': 'form',
                 'view_id': [res and res[1] or False],

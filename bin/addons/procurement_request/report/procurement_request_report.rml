@@ -138,30 +138,30 @@
                     <para style="Header">[[ req.origin  ]]</para>
                 </td>
                 <td>
+                    <para style="HeaderRight">Details :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ req.details ]]</para>
+                </td>
+                <td>
                     <para style="HeaderRight">Functional Currency :</para>
                 </td>
                 <td>
                     <para style="Header">[[ req.functional_currency_id and get_name('res.currency', req.functional_currency_id.id) or '' ]]</para>
                 </td>
+            </tr>
+            <tr>
                 <td>
                     <para style="HeaderRight">Warehouse :</para>
                 </td>
                 <td>
                     <para style="Header">[[ req.warehouse_id and get_name('stock.warehouse', req.warehouse_id.id) or '' ]]</para>
                 </td>
-            </tr>
-            <tr>
                 <td>
                     <para style="HeaderRight">Order category :</para>
                 </td>
                 <td>
                     <para style="Header">[[ getSel(req, 'categ') ]]</para>
-                </td>
-                <td>
-                    <para style="HeaderRight"></para>
-                </td>
-                <td>
-                    <para style="Header"></para>
                 </td>
                 <td>
                     <para style="HeaderRight"></para>

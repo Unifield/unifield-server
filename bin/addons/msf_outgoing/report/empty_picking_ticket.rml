@@ -198,6 +198,9 @@
                     <tr>
                     <td><para style="HeaderInfosTitle">Transport mode:</para></td><td><para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.transport_type and getSel(pt.sale_id, 'transport_type') or '' ]]</para></td>
                     </tr>
+                    <tr>
+                    <td><para style="HeaderInfosTitle">Details:</para></td><td><para style="HeaderInfosTitle">[[ pt.description_ppl ]]</para></td>
+                    </tr>
                     </blockTable>
                 </td>
                 <td>

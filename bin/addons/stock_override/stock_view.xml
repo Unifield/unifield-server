@@ -198,8 +198,9 @@
                     <group colspan="4" col="6">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
-                            <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
+                            <field name="origin" attrs="{'readonly': ['|', ('state', 'not in', ['auto', 'assigned', 'confirmed']), '&amp;', '&amp;', ('incoming_id', '=', False), ('sale_id', '=', False), ('from_pick_cancel_id', '=', False)]}"/>
                             <field name="backorder_id" readonly="1"/>
+                            <field name="details"  attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="reason_type_id" widget="selection"
                                    domain="[('internal_ok', '=', True)]" 
                                    attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
@@ -392,18 +393,6 @@
             </field>
         </record>
 
-        <record id="sale.stock_picking_inherit_sale" model="ir.ui.view">
-            <field name="name">stock.picking.form</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_form"/>
-            <field name="arch" type="xml">
-                <field name="auto_picking" position="after">
-                    <field name="sale_id" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                </field>
-            </field>
-        </record>
-
         <record id="stock.view_picking_in_form" model="ir.ui.view">
             <field name="name">view.picking.in.form</field>
             <field name="model">stock.picking</field>
@@ -452,7 +441,7 @@
                     <group colspan="4" col="6">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
-                            <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
+                            <field name="origin" attrs="{'readonly': ['|', ('state', 'not in', ['auto', 'assigned', 'confirmed']), ('purchase_id', '=', False)]}"/>
                             <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id, type)" required="0" attrs="{'readonly': ['|', '|', '|', '|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('ext_cu', '!=', False), ('purchase_id', '!=', False), ('backorder_id', '!=', False), ('ret_from_unit_rt', '=', True)], 'required': [('ext_cu', '=', False)]}"/>
                             <field name="ext_cu" on_change="on_change_ext_cu(ext_cu)" attrs="{'readonly': ['|', '|', '|', ('partner_id2', '!=', False), ('sale_id', '!=', False), ('purchase_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])], 'required': ['|', ('purchase_id', '=', False), '&amp;', ('partner_id2', '=', False), ('ret_from_unit_rt', '=', True)]}" domain="[('location_category', '=', 'consumption_unit'), ('usage', 'in', ('customer', 'supplier'))]" />
                             <field name="address_id" invisible="1" />
@@ -473,6 +462,7 @@
                             <field name="min_date_manually" invisible="1" />
                             <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="shipment_ref" />
+                            <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                             <field name="claim_name" readonly="1" attrs="{'invisible': [('claim', '=', False)]}"/>
                         </group>
                     </group>
@@ -802,6 +792,7 @@
                                 attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
                                 on_change="on_change_rt_out(partner_id2, reason_type_id)"
                                 />
+                            <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>

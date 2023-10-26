@@ -52,6 +52,7 @@
                                 <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent"
                                     attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                             </group>
+                            <field name="details" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                             <field name="fo_to_resource" invisible="1" />
                             <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                         </group>
@@ -175,6 +176,7 @@
                     <field name="origin" />
                     <field name="requestor" />
                     <field name="location_requestor_id" />
+                    <field name="details" truncate="15"/>
                     <field name="ir_total_amount" string="Indicative Total Value"/>
                     <field name="functional_currency_id" />
                     <field name="line_count"/>
@@ -202,6 +204,7 @@
                     <field name="origin" />
                     <field name="requestor" />
                     <field name="location_requestor_id" />
+                    <field name="details" />
                     <field name="product_id" />
                     <newline />
                     <group string="Group By...">

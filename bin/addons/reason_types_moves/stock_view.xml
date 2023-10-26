@@ -153,6 +153,7 @@
                         <field name="origin"/>
                         <field name="customers" />
                         <field name="order_category" />
+                        <field name="details" />
                         <field name="reason_type_id" widget="selection" domain="[('incoming_ok', '=', True)]" />
                         <newline />
                         <field name="date" string="Creation date" />
@@ -191,6 +192,7 @@
                     <field name="customer_ref" />
                     <field name="customers" />
                     <field name="order_category" />
+                    <field name="details" truncate="15" />
                     <field name="shipment_ref" />
                     <field name="reason_type_id" domain="[('incoming_ok', '=', True)]" />
                     <field name="date" string="Creation Date" />

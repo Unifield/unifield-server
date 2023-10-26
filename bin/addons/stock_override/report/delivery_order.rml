@@ -186,6 +186,26 @@
                     <para style="Header">[[ picking.warehouse_id and picking.warehouse_id.name or '' ]]</para>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <para style="HeaderRight">Details :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ picking.details ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderRight"></para>
+                </td>
+                <td>
+                    <para style="Header"></para>
+                </td>
+                <td>
+                    <para style="HeaderRight"></para>
+                </td>
+                <td>
+                    <para style="Header"></para>
+                </td>
+            </tr>
         </blockTable>
 
         <para style="Header">
