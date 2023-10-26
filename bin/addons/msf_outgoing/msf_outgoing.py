@@ -2103,7 +2103,7 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
 
         context['web_copy'] = True
-        default.update({'partner_id': False, 'partner_id2': False, 'address_id': False, 'ext_cu': False, 'sale_id': False})
+        default.update({'partner_id': False, 'partner_id2': False, 'address_id': False, 'ext_cu': False, 'sale_id': False, 'invoice_state': 'none'})
         pick_type = self.read(cr, uid, id, ['type'], context=context)['type']
         if pick_type == 'out':
             default['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
