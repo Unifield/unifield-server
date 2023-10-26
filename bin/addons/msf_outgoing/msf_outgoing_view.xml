@@ -1147,9 +1147,10 @@
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
+                                        <field name="picking_id" invisible="1" />
 										<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_dest_id)]"
 										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
-										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, location_id)" />
+										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, picking_id)" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Dates" colspan="2" />

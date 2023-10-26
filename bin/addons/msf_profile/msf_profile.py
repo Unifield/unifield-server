@@ -57,7 +57,6 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-
     # UF31.0
     def us_11781_remove_product_country_restriction(self, cr, uid, *a, **b):
         '''
@@ -86,6 +85,98 @@ class patch_scripts(osv.osv):
             emp.job_id IS NOT NULL AND
             emp.job_id = job.id
         ''')
+        return True
+
+    def us_7168_7169_10518_fix_docs_reason_type(self, cr, uid, *a, **b):
+        '''
+        Fix the Reason Type of INs from scratch to have only Internal Supply, Return from unit or External Supply
+        Prevent the 'Other' Reason Type from appearing in the IN, INT, OUT and P/P
+        Fix the Reason Type of INs and INTs which have the Other Reason Type
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+        intm_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+        ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+        ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        oth_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+        loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+        deli_partner_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        # To ignore moves with Scrap and Loss RT, because of US-806 (stock_override/stock.py def create() stock_move)
+        scrp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+        exp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_expiry')[1]
+
+        exp_loc_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+        dest_loc_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_scrapped')[1]
+
+        # RT INs from scratch and with RT Other: Internal
+        cr.execute("""UPDATE stock_move SET reason_type_id = %s 
+            WHERE reason_type_id NOT IN %s AND picking_id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN res_partner pt ON p.partner_id = pt.id WHERE p.type = 'in' 
+                    AND ((p.purchase_id IS NULL AND p.partner_id IS NOT NULL AND pt.partner_type IN ('internal', 'esc'))
+                    OR (p.purchase_id IS NOT NULL AND p.reason_type_id = %s)))
+        """, (int_rt_id, tuple([int_rt_id, loss_rt_id, scrp_rt_id]), oth_rt_id))
+        cr.execute("""UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN res_partner pt ON p.partner_id = pt.id 
+                WHERE p.type = 'in' AND ((p.reason_type_id != %s AND p.purchase_id IS NULL AND p.partner_id IS NOT NULL 
+                        AND pt.partner_type IN ('internal', 'esc'))
+                    OR (p.purchase_id IS NOT NULL AND p.reason_type_id = %s)))""", (int_rt_id, int_rt_id, oth_rt_id))
+        self.log_info(cr, uid, "US-7168-7169-10518: The Reason Type of %s IN(s) from scratch or with the Other Reason Type have been set to 'Internal'" % (cr.rowcount,))
+
+        # RT INs from scratch and with RT Other: External
+        cr.execute("""UPDATE stock_move SET reason_type_id = %s 
+            WHERE reason_type_id NOT IN %s AND picking_id IN (SELECT p.id FROM stock_picking p 
+                LEFT JOIN res_partner pt ON p.partner_id = pt.id WHERE p.type = 'in' 
+                    AND ((p.purchase_id IS NULL AND ((p.partner_id IS NULL AND p.ext_cu IS NULL) 
+                        OR (p.partner_id IS NOT NULL AND pt.partner_type = 'external')))
+                    OR (p.purchase_id IS NOT NULL AND p.reason_type_id = %s)))
+        """, (ext_rt_id, tuple([ext_rt_id, loss_rt_id, scrp_rt_id]), oth_rt_id))
+        cr.execute("""UPDATE stock_picking SET reason_type_id = %s 
+            WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN res_partner pt ON p.partner_id = pt.id 
+                WHERE p.type = 'in'
+                    AND ((p.reason_type_id != %s AND p.purchase_id IS NULL AND ((p.partner_id IS NULL AND p.ext_cu IS NULL)
+                        OR (p.partner_id IS NOT NULL AND pt.partner_type = 'external')))
+                    OR (p.purchase_id IS NOT NULL AND p.reason_type_id = %s)))""", (ext_rt_id, ext_rt_id, oth_rt_id))
+        self.log_info(cr, uid, "US-7168-7169-10518: The Reason Type of %s IN(s) from scratch or with the Other Reason Type have been set to 'External'" % (cr.rowcount,))
+
+        # RT INs from scratch and with RT Other: Return from Unit
+        cr.execute("""UPDATE stock_move SET reason_type_id = %s 
+            WHERE reason_type_id NOT IN %s AND picking_id IN (SELECT id FROM stock_picking WHERE type = 'in' 
+                AND partner_id IS NULL AND ext_cu IS NOT NULL AND (purchase_id IS NULL
+                OR (purchase_id IS NOT NULL AND reason_type_id = %s)))
+        """, (ret_rt_id, tuple([ret_rt_id, loss_rt_id, scrp_rt_id]), oth_rt_id))
+        cr.execute("""UPDATE stock_picking SET reason_type_id = %s 
+            WHERE type = 'in' AND partner_id IS NULL AND ext_cu IS NOT NULL
+                AND ((reason_type_id != %s AND purchase_id IS NULL)
+                OR (purchase_id IS NOT NULL AND reason_type_id = %s))""", (ret_rt_id, ret_rt_id, oth_rt_id))
+        self.log_info(cr, uid, "US-7168-7169-10518: The Reason Type of %s IN(s) from scratch or with the Other Reason Type have been set to 'Return from Unit'" % (cr.rowcount,))
+
+        # RT INTs with RT Other: Loss/Expiry for the moves going to Destruction or Expired/Damaged/For scrap ;
+        # Internal otherwise and for the document
+        cr.execute("""UPDATE stock_move SET reason_type_id = %s
+            WHERE location_dest_id IN %s
+                AND picking_id IN (SELECT id FROM stock_picking WHERE type = 'internal' AND reason_type_id = %s)
+            """, (exp_rt_id, tuple([exp_loc_id, dest_loc_id]), oth_rt_id))
+        cr.execute("""UPDATE stock_move SET reason_type_id = %s
+            WHERE location_dest_id NOT IN %s AND reason_type_id NOT IN %s
+                AND picking_id IN (SELECT id FROM stock_picking WHERE type = 'internal' AND reason_type_id = %s)
+            """, (intm_rt_id, tuple([exp_loc_id, dest_loc_id]), tuple([exp_rt_id, loss_rt_id, scrp_rt_id]), oth_rt_id))
+        cr.execute("""UPDATE stock_picking SET reason_type_id = %s 
+            WHERE type = 'internal' AND reason_type_id = %s""", (intm_rt_id, oth_rt_id))
+        self.log_info(cr, uid, "US-7168-7169-10518: The Reason Type of %s INT(s) with the Other Reason Type have been set to 'Internal'" % (cr.rowcount,))
+
+        # RT OUTs from scratch with RT Other: Deliver Partner
+        cr.execute("""UPDATE stock_move SET reason_type_id = %s
+            WHERE picking_id IN (SELECT id FROM stock_picking WHERE reason_type_id = %s AND type = 'out' AND 
+                subtype = 'standard' AND sale_id IS NULL AND purchase_id IS NULL)
+        """, (deli_partner_rt_id, oth_rt_id))
+        cr.execute("""UPDATE stock_picking SET reason_type_id = %s WHERE reason_type_id = %s AND type = 'out' AND 
+            subtype = 'standard' AND sale_id IS NULL AND purchase_id IS NULL""", (deli_partner_rt_id, oth_rt_id))
+        self.log_info(cr, uid, "US-7168-7169-10518: The Reason Type of %s OUT(s) from scratch with the Other Reason Type have been set to 'Deliver Partner'" % (cr.rowcount,))
+
+        # Change 'Other' RT
+        cr.execute("""UPDATE stock_reason_type SET incoming_ok ='f', internal_ok = 'f', outgoing_ok = 'f'
+            WHERE id = %s""", (oth_rt_id,))
+
         return True
 
     # UF30.1

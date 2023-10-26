@@ -1280,9 +1280,8 @@ class stock_picking(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         for pick in self.read(cr, uid, ids, ['move_lines']):
             if not pick['move_lines']:
-                raise osv.except_osv(_('Error !'),_('You can not process picking without stock moves'))
-            wf_service.trg_validate(uid, 'stock.picking', pick['id'],
-                                    'button_confirm', cr)
+                raise osv.except_osv(_('Error !'), _('You can not process picking without stock moves'))
+            wf_service.trg_validate(uid, 'stock.picking', pick['id'], 'button_confirm', cr)
         return True
 
     def draft_validate(self, cr, uid, ids, context=None):
