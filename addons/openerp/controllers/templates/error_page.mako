@@ -102,8 +102,7 @@
                         <div class="error-section">
                             <h5><label for="error">${_('Let me fix it')}</label></h5>
                             <div class="details">
-                                <textarea id="error" name="error" class="text" readonly="readonly" rows="15" >${error}
-                                ${tb}</textarea>
+                                <textarea id="error" name="error" class="text" readonly="readonly" rows="15" >${error}</textarea>
                             </div>
                         </div>
                         <div class="error-section ${maintenance_default}">
