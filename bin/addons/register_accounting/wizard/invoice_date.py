@@ -24,6 +24,9 @@ from osv import osv
 from osv import fields
 import netsvc
 import decimal_precision as dp
+from lxml import etree
+from tools import misc
+from tools.translate import _
 
 
 class wizard_invoice_date(osv.osv_memory):
@@ -36,6 +39,28 @@ class wizard_invoice_date(osv.osv_memory):
         'check_total': fields.float('Total', digits_compute=dp.get_precision('Account')),
         'state': fields.selection([('both','Both'), ('amount', 'amount'), ('date','date')], 'State'),
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if not context:
+            context = {}
+        f = super(wizard_invoice_date, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+        if view_type == 'form' and context.get('active_ids'):
+            asset_line_ids = self.pool.get('account.invoice.line').search(cr, uid, [('invoice_id', 'in', context['active_ids']), ('is_asset', '=', True)], context=context)
+            if asset_line_ids:
+                form = etree.fromstring(f['arch'])
+                for grp in form.xpath('//group[@name="insert_asset"]'):
+                    new_elem = u"""
+                        <group colspan="4">
+                            <separator colspan="4" string="%s" />
+                    """ % misc.escape_html(_('The following lines will generate asset forms'))
+                    for line in self.pool.get('account.invoice.line').browse(cr, uid, asset_line_ids, fields_to_fetch=['line_number', 'product_id', 'quantity'], context=context):
+                        new_elem += u'<label colspan="4" align="0.0" string=" #%s %s %s Quantity %s" />' % (line.line_number, misc.escape_html(line.product_id.default_code), misc.escape_html(line.product_id.name), line.quantity)
+                    new_elem += u'<label string=" " colspan="4" /><label string=" " colspan="4" /></group>'
+                    grp.insert(0, etree.fromstring(new_elem))
+                    break
+                f['arch'] = etree.tostring(form)
+        return f
 
     def validate(self, cr, uid, ids, context=None):
         inv_obj = self.pool.get('account.invoice')

@@ -1333,7 +1333,7 @@ class account_move(osv.osv):
                     asset.name, min(l1.date)
                 from
                     product_asset_line l1
-                    inner join product_asset_line l2 on l1.asset_id = l2.asset_id and l1.date <= l2.date
+                    inner join product_asset_line l2 on l1.asset_id = l2.asset_id and (l1.date < l2.date or l1.date = l2.date and l1.id < l2.id)
                     inner join product_asset asset on asset.id = l2.asset_id
                     left join account_move move_l1 on move_l1.id = l1.move_id
                 where

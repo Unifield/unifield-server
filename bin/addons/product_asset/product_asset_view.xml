@@ -70,14 +70,14 @@
                     <field name="instance_id" readonly='1'/>
                     <field name="journal_id" />
                     <group colspan="2" col="4">
-                        <field name="asset_type_id" on_change="change_asset_type_id(asset_type_id, useful_life_id)" required="1" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
-                        <field name="useful_life_id" widget="selection" get_selection="get_selection_useful_life_id" required="1" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
+                        <field name="asset_type_id" on_change="change_asset_type_id(asset_type_id, useful_life_id)" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                        <field name="useful_life_id" widget="selection" get_selection="get_selection_useful_life_id" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
                     </group>
-                    <field name="product_id" on_change="onChangeProductId(product_id)" attrs="{'readonly': ['|', '|', '|',  ('from_sync', '=', True), ('from_invoice', '=', True), ('state', '!=', 'draft'), ('has_lines', '!=', False)]}"/>
-                    <field name="description" attrs="{'readonly': ['|', '|', '|', ('from_sync', '=', True), ('from_invoice', '=', True), ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
+                    <field name="product_id" on_change="onChangeProductId(product_id)" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '!=', 'draft')]}"/>
+                    <field name="description" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '!=', 'draft')]}" />
                     <notebook colspan="4">
                     <page string="Asset Form">
-                        <group colspan="2" col="2" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('has_lines', '!=', False), ('from_sync', '=', True)]}">
+                        <group colspan="2" col="2" attrs="{'readonly': [('state', '!=', 'draft')]}">
                             <separator string="MSF Codification" colspan="2" />
                             <field name="prod_int_code" />
                             <field name="prod_int_name" />
@@ -86,7 +86,7 @@
                             <field name="local_ref" />
                         </group>
 
-                        <group colspan="2" col="8" attrs="{'readonly': ['|', '|', ('from_sync', '=', True), ('state', '!=', 'draft'), ('has_lines', '!=', False)]}">
+                        <group colspan="2" col="8" attrs="{'readonly': [('state', '!=', 'draft')]}">
                             <separator string="Asset Reference" colspan="2" />
                             <field name="serial_nb" colspan="8" />
                             <field name="brand" colspan="8" />
@@ -112,7 +112,7 @@
 
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
-                            <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', '|', '|', ('state', '!=', 'draft'), ('from_sync', '=', True), ('from_invoice', '=', True), ('has_lines', '!=', False)]}" on_change="change_invo_date(move_line_id)" domain="[('journal_id.type', '=', 'purchase'), ('account_id.user_type_code', '=', 'asset')]" />
+                            <field name="move_line_id" colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="change_invo_date(move_line_id, product_id)" />
                             <field name="invo_value" />
                             <field name="invo_currency"  />
                             <field name="invo_date" />
@@ -122,13 +122,13 @@
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Accounts" colspan="2" />
-                            <field name="asset_bs_depreciation_account_id" required="1" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
-                            <field name="asset_pl_account_id" required="1" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
+                            <field name="asset_bs_depreciation_account_id" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                            <field name="asset_pl_account_id" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
                         </group>
                     </page>
                     <page string="Event History">
                         <group colspan="2" col="2">
-                            <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [('state', '!=', 'running')]}">
+                            <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [('state', 'not in', ['open', 'running'])]}">
                                 <tree string="Events" editable="top">
                                     <field name="date" />
                                     <field name="event_type_id" widget="selection"/>
@@ -140,9 +140,9 @@
                         </group>
                     </page>
                     <page string="Depreciation">
-                        <field name="start_date" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
-                        <field name="depreciation_method" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}"/>
-                        <field name="prorata" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_lines', '!=', False)]}" />
+                        <field name="start_date" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                        <field name="depreciation_method" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}"/>
+                        <field name="prorata" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
                         <newline />
                         <field name="depreciation_amount" />
                         <field name="disposal_amount" />
@@ -163,8 +163,9 @@
                                 on_change="change_line()"
                                 filter_selector="[('Show all', []), ('Hide Posted', ['|', ('move_id', '=', False), ('move_id.state', '!=', 'posted')])]"
                                 o2m_selectable="2">
-                            <tree string="Depreciation Lines" editable="top" hide_delete_button="1" hide_new_button="1" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount')">
+                            <tree string="Depreciation Lines" editable="top" hide_delete_button="1" hide_new_button="1" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount');green:is_initial_line">
                                 <field name="date" />
+                                <field name="is_initial_line" invisible="1" />
                                 <field name="amount" />
                                 <field name="depreciation_amount" />
                                 <field name="remaining_amount" />
@@ -185,25 +186,22 @@
                     </page>
                 </notebook>
                 <group colspan="4" col="10">
-                    <field name="has_lines" invisible="1" />
+                    <field name="lock_open" invisible="1" />
                     <field name="has_posted_lines" invisible="1" />
                     <field name="can_be_disposed" invisible="1" />
                     <field name="instance_level" invisible="1" />
                     <field name="from_sync" invisible="1" />
                     <field name="state" />
                     <field name="from_invoice"  />
-                    <group colspan="2" col="4" attrs="{'invisible': [('instance_level', '=', 'project')]}">
-                        <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|', ('has_lines', '!=', False), ('state', '!=', 'draft')]}" />
-                        <button type="object" name="button_delete_draft_entries" string="Delete Lines" icon="terp-gtk-stop" attrs="{'invisible': ['|', ('has_lines', '=', False), ('state', '!=', 'draft')]}" />
-                        <button type="object" name="button_start_depreciation" string="Start Depreciation" icon="terp-camera_test" attrs="{'invisible': ['|', ('has_lines', '=', False), ('state', '!=', 'draft')]}" />
-                        <button type="object" name="button_set_as_draft" string="Set as Draft" icon="gtk-goto-first" attrs="{'invisible': ['|', ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
-                        <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', ('state', '!=', 'running'), ('can_be_disposed', '=', False)]}"/>
+                    <group colspan="6" col="12">
+                        <button type="object" name="button_open_asset" string="Open" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <button type="object" name="button_cancel_asset" string="Cancel" icon="gtk-cancel" attrs="{'invisible': [('state', '!=', 'draft')]}"  />
+                        <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|','|', ('instance_level', '=', 'project'), ('lock_open', '!=', False), ('state', '!=', 'open')]}" />
+                        <button type="object" name="button_delete_draft_entries" string="Delete Lines" icon="terp-gtk-stop" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('lock_open', '=', False), ('state', '!=', 'open')]}" />
+                        <button type="object" name="button_start_depreciation" string="Start Depreciation" icon="gtk-media-play" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('lock_open', '=', False), ('state', '!=', 'open')]}" />
+                        <button type="object" name="button_set_as_open" string="Set as Open" icon="gtk-goto-first" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
+                        <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('state', '!=', 'running'), ('can_be_disposed', '=', False)]}"/>
                     </group>
-                    <group colspan="2" col="2" attrs="{'invisible': [('instance_level', '!=', 'project')]}">
-                        <button type="object" name="button_project_depreciation" string="Start Depreciation" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                    </group>
-                    <button type="object" name="button_cancel_asset" string="Cancel" icon="gtk-cancel" attrs="{'invisible': [('state', '!=', 'draft')]}"  />
-                    <button type="object" name="button_from_cancel_to_draft" string="Set as Draft" icon="gtk-goto-first" attrs="{'invisible': [('state', '!=', 'cancel')]}" />
                 </group>
             </form>
         </field>
@@ -243,7 +241,8 @@
             <search string="Asset Form">
                 <separator orientation="vertical"/>
                 <filter icon="terp-document-new" string="Draft" name="s_draft" domain="[('state', '=', 'draft')]"/>
-                <filter icon="terp-camera_test" string="Running" name="s_running" domain="[('state', '=', 'running')]"/>
+                <filter icon="terp-camera_test" string="Open" name="s_open" domain="[('state', '=', 'open')]"/>
+                <filter icon="gtk-media-play" string="Running" name="s_running" domain="[('state', '=', 'running')]"/>
                 <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" />
                 <filter icon="gtk-cancel" string="Cancel" name="cancel" domain="[('state','=','cancel')]" />
                 <separator orientation="vertical"/>

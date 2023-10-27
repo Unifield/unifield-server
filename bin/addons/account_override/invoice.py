@@ -1048,7 +1048,9 @@ class account_invoice(osv.osv):
             if inv.type in ('in_invoice', 'in_refund') and not ignore_check_total and abs(inv.check_total - inv.amount_total) >= (inv.currency_id.rounding/2.0):
                 state = values and 'both' or 'amount'
                 values.update({'check_total': inv.check_total, 'amount_total': inv.amount_total, 'state': state})
-            if values:
+
+            has_asset_line = self.pool.get('account.invoice.line').search_exists(cr, uid, [('invoice_id', '=', inv.id), ('is_asset', '=', True)], context=context)
+            if values or has_asset_line:
                 values['invoice_id'] = inv.id
                 wiz_id = self.pool.get('wizard.invoice.date').create(cr, uid, values, context)
                 return {

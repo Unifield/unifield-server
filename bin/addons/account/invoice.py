@@ -1146,8 +1146,7 @@ class account_invoice(osv.osv):
                     'move_line_id': line.move_lines[0].id,
                     'start_date': line.invoice_id.date_invoice,
                 }, context=context)
-                number = asset_obj.read(cr, uid, asset_id, ['name'], context=context)['name']
-                asset_obj.log(cr, uid, asset_id, _('Asset %s created from %s') % (number, line.invoice_id.number), context=context)
+                asset_obj.log(cr, uid, asset_id, _('Asset created from %s') % (line.invoice_id.number), context=context)
         return True
 
     def line_get_convert(self, cr, uid, x, part, date, context=None):
