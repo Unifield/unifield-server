@@ -990,6 +990,8 @@
             <field name="method">us_11026_oca_liquidity_migration_journal</field>
         </record>
 
-
+        <record id="us_12149_transfer_ppl_description_data" model="patch.scripts">
+            <field name="method">us_12149_transfer_ppl_description_data</field>
+        </record>
     </data>
 </openerp>
