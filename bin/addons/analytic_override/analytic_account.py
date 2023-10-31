@@ -977,6 +977,8 @@ class analytic_account(osv.osv):
                 param.set_param(cr, 1, 'INIT_CC_FX_GAIN', '')
         if vals.get('code', False):
             vals['code'] = vals['code'].strip()
+        if vals.get('name', False):
+            vals['name'] = vals['name'].strip()
         analytic_acc_id = super(analytic_account, self).create(cr, uid, vals, context=context)
         self._check_name_unicity(cr, uid, analytic_acc_id, context=context)
         self._clean_dest_cc_link(cr, uid, analytic_acc_id, vals, context=context)
@@ -1000,6 +1002,8 @@ class analytic_account(osv.osv):
         self._update_synched_dest_cc_ids(cr, uid, ids, vals, context)
         if vals.get('code', False):
             vals['code'] = vals['code'].strip()
+        if vals.get('name', False):
+            vals['name'] = vals['name'].strip()
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
         self._clean_dest_cc_link(cr, uid, ids, vals, context=context)
         self.check_access_rule(cr, uid, ids, 'write', context=context)

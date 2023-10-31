@@ -5,7 +5,7 @@ xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
 xmlns:html="http://www.w3.org/TR/REC-html40">
 <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-<Title>Profit And Loss</Title>
+<Title>${_("Profit And Loss")}</Title>
 </DocumentProperties>
 <Styles>
 
@@ -108,12 +108,12 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="190" />
 <Column ss:AutoFitWidth="1" ss:Width="64" />
 <Row>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Chart of Account</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Display</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter_name(data)!='No Filter' and get_filter_name(data) or '')|x}</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Proprietary Instances</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_("Chart of Account")}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_("Fiscal Year")}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_("Display")}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_("Filter By")} ${(get_filter_name(data)!=_('No Filter') and _(get_filter_name(data)) or '')|x}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_("Proprietary Instances")}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_("Target Moves")}</Data></Cell>
 </Row>
 
 <Row>
@@ -145,10 +145,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Code</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Expense</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_("Expense")}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Code</Data></Cell>
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Income</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_("Income")}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance</Data></Cell>
 </Row>
 

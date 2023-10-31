@@ -115,7 +115,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self.func_currency = func_curr.name
         self.func_currency_id = func_curr.id
         for reg in regs:
-
             journal = reg.journal_id
             currency = journal.currency
 

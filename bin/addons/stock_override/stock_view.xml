@@ -1109,40 +1109,29 @@
             <field name="arch" type="xml">
                 <form string="Cancel Picking">
                     <field name="allow_cr" invisible="1" />
-                    <group colspan="4" col="1" attrs="{'invisible': [('allow_cr', '=', False)]}">
+                    <field name="has_moves_from_cross_docking" invisible="1" />
+                    <field name="doc_type" invisible="1" />
+                    <group colspan="4" col="1" attrs="{'invisible': ['|', ('allow_cr', '=', False), ('doc_type', '!=', 'pick')]}">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px"><translate>If you click on 'Cancel &amp; Resource' button, all lines of this Picking attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</translate></h4>
+                        </html>
+                    </group>
+                    <group colspan="4" col="1" attrs="{'invisible': ['|', ('allow_cr', '=', False), ('doc_type', '=', 'pick')]}">
                         <html>
                             <h4 style="text-align: center; margin: 10px"><translate>If you click on 'Cancel &amp; Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</translate></h4>
                         </html>
                     </group>
-                    <newline />
-                    <separator string="Actions" />
-                    <field name="has_moves_from_cross_docking" invisible="1" />
-                    <button name="ask_cancel" string="Cancel" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('has_moves_from_cross_docking', '=', False)]}" />
-                    <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('has_moves_from_cross_docking', '=', True)]}" />
-                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('allow_cr', '=', False)]}" />
-                </form>
-            </field>
-        </record>
-
-        <record id="stock_picking_cancel_more_wizard" model="ir.ui.view">
-            <field name="name">stock.picking.cancel.more.wizard</field>
-            <field name="model">stock.picking.cancel.more.wizard</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Cancel Picking">
-                    <group colspan="4" col="1">
+                    <group colspan="4" col="1" attrs="{'invisible': [('has_moves_from_cross_docking', '=', False)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px"><translate>
-                                Cancelling these moves might result in unreserved stock.<br/>
-                                Do you want to create an Internal Move or update the existing one to reallocate the quantities ?
-                            </translate></h4>
+                            <h4 style="text-align: center; margin: 10px"><translate>Cancelling these moves might result in unreserved stock. Do you want to create an Internal Move or update the existing one to reallocate the quantities ?</translate></h4>
                         </html>
                     </group>
                     <newline />
                     <separator string="Actions" />
                     <button name="no_cancel" string="Do not cancel" type="object" icon="gtk-undo" colspan="1" />
                     <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-cancel" colspan="1" />
-                    <button name="cancel_and_create_int" string="Cancel &amp; create Internal Move" type="object" icon="terp-document-new" colspan="1" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('allow_cr', '=', False)]}" />
+                    <button name="cancel_and_create_int" string="Cancel &amp; create Internal Move" type="object" icon="terp-document-new" colspan="1" attrs="{'invisible': [('has_moves_from_cross_docking', '=', False)]}" />
                 </form>
             </field>
         </record>
@@ -1168,39 +1157,21 @@
                             <h2 style="text-align: center; margin: 10px"><translate>Warning! There is a risk of producing inconsistent data if you cancel this line before it receives the delivery details and is changed into status "Available Shipped" after synchronization.</translate></h2>
                         </html>
                     </group>
+                    <group colspan="4" col="1" attrs="{'invisible': [('is_move_from_cross_docking', '=', False)]}">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px"><translate>Cancelling this move might result in unreserved stock. Do you want to create an Internal Move or update the existing one to reallocate the quantities ?</translate></h4>
+                        </html>
+                    </group>
                     <newline />
                     <field name="cancel_only" invisible="1" />
                     <field name="from_dpo" invisible="1" />
                     <field name="display_warning" invisible="1" />
                     <field name="is_move_from_cross_docking" invisible="1" />
                     <separator string="Actions" colspan="4" />
-                    <button name="ask_cancel" string="Cancel" type="object" icon="gtk-execute" colspan="1" attrs="{'invisible': [('is_move_from_cross_docking', '=', False)]}" />
-                    <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-execute" colspan="1" attrs="{'invisible': [('is_move_from_cross_docking', '=', True)]}" />
-                    <button name="cancel_and_resource" string="Cancel and Resource" type="object" icon="gtk-execute" colspan="1"
-                    attrs="{'invisible': [('cancel_only', '=', True)]}" />
-                </form>
-            </field>
-        </record>
-
-        <record id="stock_move_cancel_more_wizard_form_view" model="ir.ui.view">
-            <field name="name">stock.move.cancel.more.wizard.form.view</field>
-            <field name="model">stock.move.cancel.more.wizard</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Cancel move">
-                    <group colspan="4" col="1">
-                        <html>
-                            <h4 style="text-align: center; margin: 10px"><translate>
-                                Cancelling this move might result in unreserved stock.<br/>
-                                Do you want to create an Internal Move or update the existing one to reallocate the quantities ?
-                            </translate></h4>
-                        </html>
-                    </group>
-                    <newline />
-                    <separator string="Actions" colspan="4" />
                     <button name="no_cancel" string="Do not cancel" type="object" icon="gtk-undo" colspan="1" />
-                    <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-execute" colspan="1" />
-                    <button name="cancel_and_create_int" string="Cancel &amp; create Internal Move" type="object" icon="terp-document-new" colspan="1" />
+                    <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-cancel" colspan="1" />
+                    <button name="cancel_and_resource" string="Cancel and Resource" type="object" icon="gtk-execute" colspan="1" attrs="{'invisible': [('cancel_only', '=', True)]}" />
+                    <button name="cancel_and_create_int" string="Cancel &amp; create Internal Move" type="object" icon="terp-document-new" colspan="1" attrs="{'invisible': [('is_move_from_cross_docking', '=', False)]}" />
                 </form>
             </field>
         </record>
