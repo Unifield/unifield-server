@@ -11,7 +11,7 @@
         <record id="seq_product_asset" model="ir.sequence">
             <field name="name">Product Asset</field>
             <field name="code">product.asset</field>
-            <field name="prefix">AF-%(instance)s-</field>
+            <field name="prefix">AF-%(move_prefix)s-%(y)s</field>
             <field name="padding">5</field>
         </record>
 

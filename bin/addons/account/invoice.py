@@ -1137,6 +1137,7 @@ class account_invoice(osv.osv):
                     'description': line.name,
                     'invoice_id': inv_id,
                     'invo_num': line.invoice_id.number,
+                    'quantity_divisor': line.quantity,
                     'invoice_line_id': line.id,
                     'invo_date': line.invoice_id.date_invoice,
                     'invo_value': line.price_unit,
@@ -1712,7 +1713,10 @@ class account_invoice_line(osv.osv):
 
     def change_is_asset(self, cr, uid, ids, is_asset, product_id, context=None):
         if not product_id:
-            return {}
+            return {
+                'warning': {'message': _('Product is mandatory, please fill the product before ticking Asset.')},
+                'value': {'is_asset': False}
+            }
 
 
         prod = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['categ_id', 'default_code', 'property_account_expense'], context=context)

@@ -2,6 +2,7 @@
 <openerp>
 <data>
 
+    <menuitem name="Assets" id="product_asset.asset_configuration" parent="account.menu_configuration_misc" sequence="50" />
     <!-- product -->
     <record id="product_normal_form_view" model="ir.ui.view">
         <field name="name">product.normal.form</field>
@@ -112,7 +113,8 @@
 
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
-                            <field name="move_line_id" colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="change_invo_date(move_line_id, product_id)" />
+                            <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
+                            <field name="quantity_divisor"  attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_quantity_divisor(quantity_divisor, move_line_id)"/>
                             <field name="invo_value" />
                             <field name="invo_currency"  />
                             <field name="invo_date" />
@@ -178,9 +180,6 @@
                                 <field name="is_allocatable" invisible="1"/>
                                 <field name="move_id" />
                                 <field name="move_state" />
-                                <field name="move_state_fake" invisible="1"/>
-                                <button name="button_generate_unposted_entries" type="object" icon="terp-gtk-jump-to-ltr" attrs="{'invisible': ['|', ('state', '!=', 'running'), ('move_id', '!=', False)]}" header="True"/>
-                                <button name="button_post_entries" type="object" icon="gtk-apply" attrs="{'invisible': ['|', ('state', '!=', 'running'), ('move_state_fake', '=', 'posted')]}" header="True"/>
                             </tree>
                         </field>
                     </page>
@@ -195,10 +194,9 @@
                     <field name="from_invoice"  />
                     <group colspan="6" col="12">
                         <button type="object" name="button_open_asset" string="Open" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                        <button type="object" name="button_cancel_asset" string="Cancel" icon="gtk-cancel" attrs="{'invisible': [('state', '!=', 'draft')]}"  />
+                        <button type="object" name="button_cancel_asset" string="Cancel" icon="gtk-cancel" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}"  />
                         <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|','|', ('instance_level', '=', 'project'), ('lock_open', '!=', False), ('state', '!=', 'open')]}" />
                         <button type="object" name="button_delete_draft_entries" string="Delete Lines" icon="terp-gtk-stop" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('lock_open', '=', False), ('state', '!=', 'open')]}" />
-                        <button type="object" name="button_start_depreciation" string="Start Depreciation" icon="gtk-media-play" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('lock_open', '=', False), ('state', '!=', 'open')]}" />
                         <button type="object" name="button_set_as_open" string="Set as Open" icon="gtk-goto-first" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
                         <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('state', '!=', 'running'), ('can_be_disposed', '=', False)]}"/>
                     </group>
@@ -216,6 +214,7 @@
             <tree string="Asset Forms">
                 <field name="name" />
                 <field name="instance_id"/>
+                <field name="move_line_id" />
                 <field name="asset_type_id" />
                 <field name="product_id" />
                 <field name="brand" />
@@ -248,11 +247,10 @@
                 <separator orientation="vertical"/>
 
                 <field name="name"  />
+                <field name="move_line_id" />
                 <field name="asset_type_id" widget="selection" />
                 <field name="product_id"  />
                 <field name="serial_nb" />
-                <field name="brand" />
-                <field name="type" />
                 <field name="model" />
                 <field name="invo_currency" />
                 <newline />
@@ -427,7 +425,7 @@
     </record>
 
     <menuitem action="asset_event_type_action" id="menu_asset_event_type"
-        parent="account.menu_configuration_misc" sequence="60" />
+        parent="product_asset.asset_configuration" sequence="60" />
 
     <!-- Asset Events in SALES>Products>Assets -->
     <menuitem action="asset_event_normal_action" id="menu_asset_event_sales"
@@ -492,7 +490,7 @@
 
     <!-- Asset Types in SALES>Products>Asssets -->
     <menuitem action="asset_type_normal_action" id="menu_asset_type_sales"
-        parent="account.menu_configuration_misc" sequence="50" />
+        parent="product_asset.asset_configuration" sequence="50" />
 
 
     <record id="action_open_asset_account_move_line" model="ir.actions.server">

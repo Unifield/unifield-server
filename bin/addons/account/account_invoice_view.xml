@@ -68,7 +68,8 @@
                                    default_focus="1"
                                    attrs="{'readonly': ['|',
                                                         '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
-                                                        '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
+                                                        '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))],
+                                            'required': [('is_asset', '=', True)]}"
                             />
                             <field name="uos_id"
                                    on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
@@ -253,7 +254,8 @@
                                     <field name="product_id"
                                            attrs="{'readonly': ['|',
                                                                 '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
-                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
+                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))],
+                                                   'required': [('is_asset', '=', True)]}"
                                            on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, is_asset, {'company_id': parent.company_id})"
                                     />
                                     <field name="account_id"

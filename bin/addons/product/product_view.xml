@@ -259,14 +259,15 @@
             <field name="view_id" ref="product_category_tree_view"/>
             <field name="help">Here is a list of all your products classified by category. You can click a category to get the list of all products linked to this category or to a child of this category.</field>
         </record>
-		
-		<record id="product_category_action_form" model="ir.actions.act_window">
+
+        <record id="product_category_action_form" model="ir.actions.act_window">
             <field name="name">Products Categories</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">product.category</field>
             <field name="view_type">form</field>
             <field name="view_id" ref="product_category_list_view"/>
         </record>
+
         <menuitem action="product_category_action_form"
             groups="base.group_extended"
             id="menu_product_category_action_form"

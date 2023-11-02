@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-        <menuitem 
+       <menuitem id="product_category_configuration" parent="account.menu_configuration_misc" sequence="2" name="Product Categories" />
+        <menuitem
                 id="stock.menu_product_category_config_stock" 
-                parent="account.menu_configuration_misc" sequence="0"/>
+                parent="product_category_configuration" sequence="0"/>
     </data>
 </openerp>
