@@ -1116,7 +1116,7 @@ class stock_picking(osv.osv):
         'total_qty_process_str': fields.function(_get_total_qty_str, method=1, string='Qties to Process', type='char', multi='total_qty'),
         'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
         'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='char', string="Contains non-conform MML/MSL"),
-        'details': fields.char(size=86, string='Details', readonly=True),
+        'details': fields.char(size=256, string='Details'),
     }
 
     _defaults = {

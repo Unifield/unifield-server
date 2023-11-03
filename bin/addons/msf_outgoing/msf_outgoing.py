@@ -646,7 +646,7 @@ class shipment(osv.osv):
                 'shipment_id': new_shipment_id,
                 'move_lines': [],
                 'description_ppl': description_ppl or picking.description_ppl,  # US-803: added the description
-                'claim': picking.claim or False, #TEST ME
+                'claim': picking.claim or False,  #TEST ME
             }
             # Update context for copy
             context.update({
@@ -2519,7 +2519,8 @@ class stock_picking(osv.osv):
                                       store={'stock.move': (_get_picking_ids, ['picking_id', 'state', 'product_qty'], 10),
                                              'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
         'pack_family_memory_ids': fields.one2many('pack.family.memory', 'ppl_id', string='Memory Families'),
-        'description_ppl': fields.char('Details', size=256),
+        # TODO: Remove in a future release when Parcel Comment is added/used at line level for PPLs
+        'description_ppl': fields.char('Parcel Comment', size=256),
         'already_shipped': fields.boolean(string='The shipment is done'),  # UF-1617: only for indicating the PPL that the relevant Ship has been closed
         'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
         'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
@@ -4717,7 +4718,7 @@ class pack_family_memory(osv.osv):
                 min(m.pack_type) as pack_type,
                 min(m.selected_number) as selected_number,
                 p.id as draft_packing_id,
-                p.description_ppl as description_ppl,
+                p.details as description_ppl,
                 '_name'::varchar(5) as name,
                 min(pl.currency_id) as currency_id,
                 sum(sol.price_unit * m.product_qty) as total_amount,
@@ -4725,14 +4726,14 @@ class pack_family_memory(osv.osv):
                 ''::varchar(1) as comment,
                 p.flow_type = 'quick' as quick_flow,
                 p.state as pack_state,
-                min(m.parcel_comment) as parcel_comment
+                p.description_ppl as parcel_comment
             from stock_picking p
             inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
             left join sale_order so on so.id = p.sale_id
             left join sale_order_line sol on sol.id = m.sale_line_id
             left join product_pricelist pl on pl.id = so.pricelist_id
             where p.shipment_id is not null
-            group by p.shipment_id, p.description_ppl, from_pack, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, m.not_shipped
+            group by p.shipment_id, p.details, p.description_ppl, from_pack, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, m.not_shipped
     )
     ''')
 
@@ -4879,13 +4880,12 @@ class pack_family_memory(osv.osv):
             ids = [ids]
 
         mod_obj = self.pool.get('ir.model.data')
-        res = mod_obj.get_object_reference(cr, uid, 'msf_outgoing',
-                                           'view_change_desc_wizard')
+        res = mod_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_change_desc_wizard')
         pack_obj = self.read(cr, uid, ids, ['draft_packing_id'], context=context)
         for pack in pack_obj:
             res_id = pack['draft_packing_id'][0]
             return {
-                'name': _('Change details'),
+                'name': _('Change details or parcel comment'),
                 'view_type': 'form',
                 'view_mode': 'form',
                 'view_id': [res and res[1] or False],

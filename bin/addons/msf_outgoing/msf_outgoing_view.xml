@@ -214,6 +214,7 @@
                             <field name="subtype" invisible="True" readonly="True" />
                             <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
                             <field name="incoming_id" readonly="True" />
+                            <field name="details" readonly="1" />
                         </group>
                         <group colspan="6" col="2">
                             <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute"/>
@@ -661,7 +662,7 @@
 			<field name="arch" type="xml">
 				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Pre-Packing Lists">
 					<field name="name"/>
-                    <field name="description_ppl"/>
+                    <field name="details" truncate="15"/>
 					<field name="partner_id2"/>
 					<field name="backorder_id" />
 					<field name="origin"/>
@@ -714,7 +715,8 @@
                             <field name="subtype" invisible="True" />
                             <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
                             <field name='ppl_customize_label' required="True" />
-                            <field name="description_ppl"  />
+                            <field name="details" readonly="1" />
+                            <field name="description_ppl" />
                         </group>
                         <group colspan="6" col="2">
                             <button name="export_ppl" string="Export Packing" icon="gtk-execute" type="object"/>
@@ -1289,9 +1291,12 @@
 			<field name="type">form</field>
             <field name="priority">21</field>
 			<field name="arch" type="xml">
-                <form string="Change details shipment line">
-					<field name="description_ppl"/>
-					<button name="change_description_save" string="Save details" icon="gtk-save" type="object" />
+                <form string="Change details or parcel comment shipment line">
+                    <group colspan="4" col="4">
+                        <field name="details" readonly="1"/>
+                        <field name="description_ppl"/>
+                    </group>
+					<button name="change_description_save" string="Save details/parcel comment" icon="gtk-save" type="object" />
 				</form>
 			</field>
 		</record>
@@ -1358,10 +1363,10 @@
                                     <field name="ppl_id" readonly="1"/>
                                     <field name="packing_list" readonly="1" />
                                     <field name="description_ppl" readonly="1" />
-                                    <button name="change_description" string="Change details" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="from_pack" readonly="1" />
                                     <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" readonly="0"/>
-                                    <field name="parcel_comment" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}"/>
+                                    <field name="parcel_comment" readonly="1"/>
+                                    <button name="change_description" string="Change details or parcel comment" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="num_of_packs" readonly="1" />
                                     <field name="selected_number" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0" on_change="change_selected_number(selected_number)"/>
                                     <field name="pack_type" readonly="1" />
@@ -1385,7 +1390,7 @@
                                     <newline />
                                     <field name="from_pack" readonly="1" />
                                     <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" />
-                                    <field name="parcel_comment" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}"/>
+                                    <field name="parcel_comment" readonly="1"/>
                                     <field name="num_of_packs" readonly="1"/>
                                     <field name="selected_number" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" on_change="change_selected_number(selected_number)" />
                                     <field name="pack_type" readonly="1" />

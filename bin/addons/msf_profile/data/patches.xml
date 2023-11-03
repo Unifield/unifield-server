@@ -1002,6 +1002,11 @@
             <field name="method">us_7168_7169_10518_fix_docs_reason_type</field>
         </record>
 
+        <record id="us_12149_transfer_ppl_description_data" model="patch.scripts">
+            <field name="method">us_12149_transfer_ppl_description_data</field>
+        </record>
+
+
 
     </data>
 </openerp>
