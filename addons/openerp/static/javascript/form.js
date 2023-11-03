@@ -1019,7 +1019,9 @@ function onChangePop(caller){
                         else if (typeof(value)=='object') {
                             var opts = [OPTION({'value': ''})];
                             for (var opt = 0; opt < value.length; opt++) {
-                                if (value[opt].length > 0) {
+                                if (value[opt].length > 1 && value[opt][2]=='selected') {
+                                    opts.push(OPTION({'value': value[opt][0], 'selected': 'selected'}, value[opt][1]));
+                                } else if (value[opt].length > 0) {
                                     opts.push(OPTION({'value': value[opt][0]}, value[opt][1]));
                                 } 
                             }
