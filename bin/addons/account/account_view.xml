@@ -497,6 +497,7 @@
             <field name="arch" type="xml">
                 <tree string="Account Journal" colors="red:is_active==False;black:is_active==True">
                     <field name="is_active" invisible="1"/>
+                    <field name="is_default" invisible="1"/>
                     <field name="code"/>
                     <field name="name"/>
                     <field name="type"/>
@@ -514,6 +515,9 @@
                     <group>
                     <filter name="filter_is_active" string="Active" domain="[('is_active', '=', True)]" icon="terp-check"/>
                     <filter name="filter_is_not_active" string="Inactive" domain="[('is_active', '=', False)]" icon="gtk-dialog-error"/>
+                    <separator orientation="vertical"/>
+                    <filter name="sys_created" string="Automatically created" domain="[('is_default', '=', True)]" icon="terp-folder-orange"/>
+                    <filter name="manual_created" string="Manually created" domain="[('is_default', '=', False)]" icon="terp-personal"/>
                     <separator orientation="vertical"/>
                     <field name="code"/>
                     <field name="name"/>
@@ -593,7 +597,7 @@
             <field name="res_model">account.journal</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="context">{'search_default_filter_is_active': 1, 'search_default_filter_is_not_active': 0}</field>
+            <field name="context">{'search_default_filter_is_active': 1, 'search_default_filter_is_not_active': 0, 'search_default_sys_created': 1, 'search_default_manual_created': 1}</field>
             <field name="help">Create and manage your company's journals from this menu. A journal is used to record transactions of all accounting data related to the day-to-day business of your company using double-entry bookkeeping system. Depending on the nature of its activities and the number of daily transactions, a company may keep several types of specialized journals such as a cash journal, purchase journal, sales journal...</field>
         </record>
         <menuitem action="action_account_journal_form" id="menu_action_account_journal_form" parent="menu_journals"/>
@@ -2520,5 +2524,6 @@
             parent="menu_finance_payables"
             action="base.action_partner_supplier_form" sequence="100"/>
 
+        <menuitem id="product_category_configuration" parent="account.menu_configuration_misc" sequence="2" name="Product Categories" />
     </data>
 </openerp>

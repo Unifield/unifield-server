@@ -475,9 +475,7 @@ class stock_move_processor(osv.osv):
            and line.product_id.subtype == 'asset':
             asset_mandatory = True
 
-        if asset_mandatory and not line.asset_id:
-            res = 'missing_asset'
-        elif not asset_mandatory and line.asset_id:
+        if not asset_mandatory and line.asset_id:
             res = 'not_asset_needed'
 
         return res

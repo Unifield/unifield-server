@@ -472,6 +472,11 @@ class ir_sequence(osv.osv):
                 data['instance_code'] = self._get_instance_code(cr, uid)
             if '%(missioncode)s' in s:
                 data['missioncode'] = self._get_instance_missioncode(cr, uid)
+            if '%(move_prefix)s' in s:
+                data['move_prefix'] = ''
+                instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+                if instance and instance.move_prefix:
+                    data['move_prefix'] = instance.move_prefix
 
         return (s or '') % data
 ir_sequence()

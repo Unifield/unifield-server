@@ -198,8 +198,9 @@
                     <group colspan="4" col="6">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
-                            <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
+                            <field name="origin" attrs="{'readonly': ['|', ('state', 'not in', ['auto', 'assigned', 'confirmed']), '&amp;', '&amp;', ('incoming_id', '=', False), ('sale_id', '=', False), ('from_pick_cancel_id', '=', False)]}"/>
                             <field name="backorder_id" readonly="1"/>
+                            <field name="details"  attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="reason_type_id" widget="selection"
                                    domain="[('internal_ok', '=', True)]" 
                                    attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
@@ -307,6 +308,7 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
+                                        <field name="picking_id" invisible="1" />
                                         <field name="location_id" 
                                             attrs="{'readonly': [('state', '=', 'assigned')]}"
                                             domain="[('internal_src', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_dest_id), ('virtual_ok', '!=', 't')]"
@@ -314,7 +316,7 @@
                                             />
                                        <field name="location_dest_id"
                                             domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id), ('output_ok', '=', False), '|', ('virtual_ok', '!=', 't'), ('destruction_location', '=', 't')]"
-                                            on_change="location_dest_change(location_dest_id, location_id, product_id)"
+                                            on_change="location_dest_change(location_dest_id, picking_id, product_id)"
                                             />
                                     </group>
 
@@ -391,18 +393,6 @@
             </field>
         </record>
 
-        <record id="sale.stock_picking_inherit_sale" model="ir.ui.view">
-            <field name="name">stock.picking.form</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_form"/>
-            <field name="arch" type="xml">
-                <field name="auto_picking" position="after">
-                    <field name="sale_id" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                </field>
-            </field>
-        </record>
-
         <record id="stock.view_picking_in_form" model="ir.ui.view">
             <field name="name">view.picking.in.form</field>
             <field name="model">stock.picking</field>
@@ -451,14 +441,15 @@
                     <group colspan="4" col="6">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
-                            <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="0" attrs="{'readonly': ['|', '|', '|', '|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('ext_cu', '!=', False), ('purchase_id', '!=', False), ('backorder_id', '!=', False), ('ret_from_unit_rt', '=', True)], 'required': [('ext_cu', '=', False)]}"/>
+                            <field name="origin" attrs="{'readonly': ['|', ('state', 'not in', ['auto', 'assigned', 'confirmed']), ('purchase_id', '=', False)]}"/>
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id, type)" required="0" attrs="{'readonly': ['|', '|', '|', '|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('ext_cu', '!=', False), ('purchase_id', '!=', False), ('backorder_id', '!=', False), ('ret_from_unit_rt', '=', True)], 'required': [('ext_cu', '=', False)]}"/>
                             <field name="ext_cu" on_change="on_change_ext_cu(ext_cu)" attrs="{'readonly': ['|', '|', '|', ('partner_id2', '!=', False), ('sale_id', '!=', False), ('purchase_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])], 'required': ['|', ('purchase_id', '=', False), '&amp;', ('partner_id2', '=', False), ('ret_from_unit_rt', '=', True)]}" domain="[('location_category', '=', 'consumption_unit'), ('usage', 'in', ('customer', 'supplier'))]" />
                             <field name="address_id" invisible="1" />
                             <field name="backorder_id" readonly="1"/>
                             <field name="customer_ref" readonly="1" />
                             <field name="reason_type_id" widget="selection"
-                                   domain="[('incoming_ok', '=', True)]" on_change="on_change_reason_type_id(reason_type_id)"
+                                   domain="[('incoming_ok', '=', True), ('is_fs_in', '=', True)]" get_selection="list_reason_type_incoming"
+                                   on_change="on_change_reason_type_id(reason_type_id)"
                                    attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="customers" readonly="1" />
                             <field name="change_reason"/>
@@ -471,6 +462,7 @@
                             <field name="min_date_manually" invisible="1" />
                             <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="shipment_ref" />
+                            <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                             <field name="claim_name" readonly="1" attrs="{'invisible': [('claim', '=', False)]}"/>
                         </group>
                     </group>
@@ -568,6 +560,7 @@
 
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
+                                        <field name="picking_id" invisible="1" />
                                         <field name="location_id"
                                             domain="[('filter_partner_ext_cu', 'in', [parent.partner_id2, parent.ext_cu]), ('usage', '!=', 'view'), ('id', '!=', location_dest_id), '|', '&amp;', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit'), ('usage', '=', 'supplier')]"
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
@@ -576,7 +569,7 @@
                                         <field name="product_type" invisible="1"/>
                                         <field name="location_dest_id"
                                             domain="[('usage', '!=', 'view'), ('incoming_dest', '=', product_id), ('id', '!=', location_id)]"
-                                            on_change="location_dest_change(location_dest_id, location_id)"
+                                            on_change="location_dest_change(location_dest_id, picking_id)"
                                             />
                                     <field name="move_cross_docking_ok" invisible="1"/>
                                     </group>
@@ -598,8 +591,7 @@
                                             <field name="dg_check" widget="null_boolean" />
                                             <field name="np_check" widget="null_boolean" />
                                         </group>
-                                        <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
-                                            domain="[('incoming_ok', '=', True)]" />
+                                        <field name="reason_type_id" widget="selection" readonly="1" />
                                     </group>
 
                                     <group colspan="2" col="2">
@@ -780,7 +772,7 @@
                             <field name="origin" readonly="1" />
                             <field name="alert_msl_mml" invisible="1" />
                             <field name="partner_id2"
-                                on_change="on_change_partner_out(partner_id2, address_id)"
+                                on_change="on_change_partner_out(partner_id2, address_id, type)"
                                 required="1"
                                 domain="[('partner_type', 'in', ['esc', 'external'])]"
                                 attrs="{'readonly': ['|', ('sale_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"
@@ -794,12 +786,13 @@
                                 />
                             <field name="order_category"/>
                             <field name="reason_type_id"
-                                domain="[('outgoing_ok', '=', True), ('is_fs', '=', True)]"
+                                domain="[('outgoing_ok', '=', True), ('is_fs_out', '=', True)]"
                                 get_selection="list_reason_type_outgoing"
                                 widget="selection"
                                 attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
                                 on_change="on_change_rt_out(partner_id2, reason_type_id)"
                                 />
+                            <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
@@ -898,6 +891,7 @@
                                         <separator string="Locations" colspan="2"/>
                                         <field name="location_virtual_id" invisible="1"/>
                                         <field name="location_output_id" invisible="1"/>
+                                        <field name="picking_id" invisible="1" />
                                         <field name="location_id"
                                             domain="[('outgoing_src', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_dest_id)]"
                                             attrs="{'readonly': [('state', '=', 'assigned')]}"
@@ -905,7 +899,7 @@
                                         <field name="move_cross_docking_ok" invisible="1"/>
                                         <field name="location_dest_id"
                                             domain="[('outgoing_dest', '=', parent.partner_id2)]"
-                                        	on_change="location_dest_change(location_dest_id, location_id)"
+                                        	on_change="location_dest_change(location_dest_id, picking_id)"
                                             attrs="{'readonly': [('from_wkf_line', '=', True)]}"
                                             context="partner_id=parent.partner_id2"
                                         	 />
@@ -1118,40 +1112,29 @@
             <field name="arch" type="xml">
                 <form string="Cancel Picking">
                     <field name="allow_cr" invisible="1" />
-                    <group colspan="4" col="1" attrs="{'invisible': [('allow_cr', '=', False)]}">
+                    <field name="has_moves_from_cross_docking" invisible="1" />
+                    <field name="doc_type" invisible="1" />
+                    <group colspan="4" col="1" attrs="{'invisible': ['|', ('allow_cr', '=', False), ('doc_type', '!=', 'pick')]}">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px"><translate>If you click on 'Cancel &amp; Resource' button, all lines of this Picking attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</translate></h4>
+                        </html>
+                    </group>
+                    <group colspan="4" col="1" attrs="{'invisible': ['|', ('allow_cr', '=', False), ('doc_type', '=', 'pick')]}">
                         <html>
                             <h4 style="text-align: center; margin: 10px"><translate>If you click on 'Cancel &amp; Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</translate></h4>
                         </html>
                     </group>
-                    <newline />
-                    <separator string="Actions" />
-                    <field name="has_moves_from_cross_docking" invisible="1" />
-                    <button name="ask_cancel" string="Cancel" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('has_moves_from_cross_docking', '=', False)]}" />
-                    <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('has_moves_from_cross_docking', '=', True)]}" />
-                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('allow_cr', '=', False)]}" />
-                </form>
-            </field>
-        </record>
-
-        <record id="stock_picking_cancel_more_wizard" model="ir.ui.view">
-            <field name="name">stock.picking.cancel.more.wizard</field>
-            <field name="model">stock.picking.cancel.more.wizard</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Cancel Picking">
-                    <group colspan="4" col="1">
+                    <group colspan="4" col="1" attrs="{'invisible': [('has_moves_from_cross_docking', '=', False)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px"><translate>
-                                Cancelling these moves might result in unreserved stock.<br/>
-                                Do you want to create an Internal Move or update the existing one to reallocate the quantities ?
-                            </translate></h4>
+                            <h4 style="text-align: center; margin: 10px"><translate>Cancelling these moves might result in unreserved stock. Do you want to create an Internal Move or update the existing one to reallocate the quantities ?</translate></h4>
                         </html>
                     </group>
                     <newline />
                     <separator string="Actions" />
                     <button name="no_cancel" string="Do not cancel" type="object" icon="gtk-undo" colspan="1" />
                     <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-cancel" colspan="1" />
-                    <button name="cancel_and_create_int" string="Cancel &amp; create Internal Move" type="object" icon="terp-document-new" colspan="1" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('allow_cr', '=', False)]}" />
+                    <button name="cancel_and_create_int" string="Cancel &amp; create Internal Move" type="object" icon="terp-document-new" colspan="1" attrs="{'invisible': [('has_moves_from_cross_docking', '=', False)]}" />
                 </form>
             </field>
         </record>
@@ -1177,39 +1160,21 @@
                             <h2 style="text-align: center; margin: 10px"><translate>Warning! There is a risk of producing inconsistent data if you cancel this line before it receives the delivery details and is changed into status "Available Shipped" after synchronization.</translate></h2>
                         </html>
                     </group>
+                    <group colspan="4" col="1" attrs="{'invisible': [('is_move_from_cross_docking', '=', False)]}">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px"><translate>Cancelling this move might result in unreserved stock. Do you want to create an Internal Move or update the existing one to reallocate the quantities ?</translate></h4>
+                        </html>
+                    </group>
                     <newline />
                     <field name="cancel_only" invisible="1" />
                     <field name="from_dpo" invisible="1" />
                     <field name="display_warning" invisible="1" />
                     <field name="is_move_from_cross_docking" invisible="1" />
                     <separator string="Actions" colspan="4" />
-                    <button name="ask_cancel" string="Cancel" type="object" icon="gtk-execute" colspan="1" attrs="{'invisible': [('is_move_from_cross_docking', '=', False)]}" />
-                    <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-execute" colspan="1" attrs="{'invisible': [('is_move_from_cross_docking', '=', True)]}" />
-                    <button name="cancel_and_resource" string="Cancel and Resource" type="object" icon="gtk-execute" colspan="1"
-                    attrs="{'invisible': [('cancel_only', '=', True)]}" />
-                </form>
-            </field>
-        </record>
-
-        <record id="stock_move_cancel_more_wizard_form_view" model="ir.ui.view">
-            <field name="name">stock.move.cancel.more.wizard.form.view</field>
-            <field name="model">stock.move.cancel.more.wizard</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Cancel move">
-                    <group colspan="4" col="1">
-                        <html>
-                            <h4 style="text-align: center; margin: 10px"><translate>
-                                Cancelling this move might result in unreserved stock.<br/>
-                                Do you want to create an Internal Move or update the existing one to reallocate the quantities ?
-                            </translate></h4>
-                        </html>
-                    </group>
-                    <newline />
-                    <separator string="Actions" colspan="4" />
                     <button name="no_cancel" string="Do not cancel" type="object" icon="gtk-undo" colspan="1" />
-                    <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-execute" colspan="1" />
-                    <button name="cancel_and_create_int" string="Cancel &amp; create Internal Move" type="object" icon="terp-document-new" colspan="1" />
+                    <button name="just_cancel" string="Cancel Only" type="object" icon="gtk-cancel" colspan="1" />
+                    <button name="cancel_and_resource" string="Cancel and Resource" type="object" icon="gtk-execute" colspan="1" attrs="{'invisible': [('cancel_only', '=', True)]}" />
+                    <button name="cancel_and_create_int" string="Cancel &amp; create Internal Move" type="object" icon="terp-document-new" colspan="1" attrs="{'invisible': [('is_move_from_cross_docking', '=', False)]}" />
                 </form>
             </field>
         </record>

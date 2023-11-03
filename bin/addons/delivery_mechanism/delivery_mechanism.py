@@ -497,8 +497,8 @@ class stock_picking(osv.osv):
         track_finance_price = []
         tc_fin_ids = []
         if qty > 0.00:
-            if compute_finance_price:
-                esc_dom = [('state','!=', 'done'), ('product_id', '=', line.product_id.id), ('po_name', '=', move.purchase_line_id.order_id.name)]
+            if compute_finance_price and move.purchase_line_id:
+                esc_dom = [('state', '!=', 'done'), ('product_id', '=', line.product_id.id), ('po_name', '=', move.purchase_line_id.order_id.name)]
                 # exact qty
                 esc_ids = esc_line_obj.search(cr, uid, esc_dom + [('remaining_qty', '=', qty)], order='state, id', limit=1, context=context)
                 if not esc_ids:
@@ -539,7 +539,7 @@ class stock_picking(osv.osv):
                     track_finance_price.append({'qty_processed': remaining_in_qty, 'price_unit': po_price, 'matching_type': 'po', 'purchase_oder_line_id': move.purchase_line_id.id})
 
 
-                # by remaining qty
+            # by remaining qty
             new_price = line.cost
             # Recompute unit price if the currency used is not the functional currency
             if line.currency.id != move_currency_id:
@@ -554,7 +554,7 @@ class stock_picking(osv.osv):
             new_std_price = 0.00
             if line.product_id.qty_available <= 0.00:
                 new_std_price = new_price
-                if compute_finance_price:
+                if compute_finance_price and move.purchase_line_id:
                     new_finance_price = round(total_price / float(qty), 5)
             else:
                 # Get the current price in today's rate
@@ -565,19 +565,19 @@ class stock_picking(osv.osv):
                     new_std_price = ((current_price * product_availability[line.product_id.id])
                                      + (new_price * qty)) / (product_availability[line.product_id.id] + qty)
 
-                    if compute_finance_price:
+                    if compute_finance_price and move.purchase_line_id:
                         # TODO : init finance_price
                         if not line.product_id.finance_price:
                             new_finance_price = round(total_price / float(qty), 5)
                         else:
-                            new_finance_price = round((line.product_id.finance_price *  product_availability[line.product_id.id] + total_price) / (product_availability[line.product_id.id] + qty), 5)
+                            new_finance_price = round((line.product_id.finance_price * product_availability[line.product_id.id] + total_price) / (product_availability[line.product_id.id] + qty), 5)
 
             new_std_price = round(currency_obj.compute(cr, uid, line.currency.id, move.company_id.currency_id.id,
                                                        new_std_price, round=False, context=context), 5)
 
             # Write the field according to price type field
             prod_to_write = {'standard_price': new_std_price}
-            if compute_finance_price:
+            if compute_finance_price and move.purchase_line_id:
                 prod_to_write['finance_price'] = new_finance_price
                 for tc_fin in track_finance_price:
                     tc_fin.update({'product_id': line.product_id.id, 'old_price': line.product_id.finance_price, 'new_price': new_finance_price, 'stock_before': product_availability.get(line.product_id.id, 0)})

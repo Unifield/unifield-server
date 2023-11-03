@@ -986,6 +986,33 @@
             <field name="method">us_11956_fix_po_line_reception_destination</field>
         </record>
 
+        <!-- UF31.0 -->
+        <record id="us_11026_oca_liquidity_migration_journal" model="patch.scripts">
+            <field name="method">us_11026_oca_liquidity_migration_journal</field>
+        </record>
+
+        <record id="us_11781_remove_product_country_restriction" model="patch.scripts">
+            <field name="method">us_11781_remove_product_country_restriction</field>
+        </record>
+
+        <record id="us_11571_new_job_text_field_employee" model="patch.scripts">
+            <field name="method">us_11571_new_job_text_field_employee</field>
+        </record>
+
+        <record id="us_7168_7169_10518_fix_docs_reason_type" model="patch.scripts">
+            <field name="method">us_7168_7169_10518_fix_docs_reason_type</field>
+        </record>
+
+        <record id="us_12149_transfer_ppl_description_data" model="patch.scripts">
+            <field name="method">us_12149_transfer_ppl_description_data</field>
+        </record>
+
+        <record id="us_11950_delete_previous_assets" model="patch.scripts">
+            <field name="method">us_11950_delete_previous_assets</field>
+        </record>
+
+
+
         <!-- py3 -->
         <record id="py3_migrate_pickle_ir_values" model="patch.scripts">
             <field name="method">py3_migrate_pickle_ir_values</field>
@@ -994,6 +1021,8 @@
         <record id="us_9321_2_remove_location_colors" model="patch.scripts">
             <field name="method">us_9321_2_remove_location_colors</field>
         </record>
+
+
 
     </data>
 </openerp>

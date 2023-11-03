@@ -738,6 +738,8 @@
                     <field name="name"/>
                     <field name="backorder_id" groups="base.group_extended"/>
                     <field name="origin"/>
+                    <field name="details" truncate="15"/>
+                    <field name="reason_type_id" />
                     <field name="date"/>
                     <field name="min_date"/>
                     <field name="invoice_state"/>
@@ -807,6 +809,9 @@
                     <field name="partner_id"/>
                     <field name="destinations_list"/>
                     <field name="origin"/>
+                    <field name="details" truncate="15"/>
+                    <field name="order_category" />
+                    <field name="reason_type_id" />
                     <field name="date"/>
                     <field name="min_date"/>
                     <field name="backorder_id" groups="base.group_extended"/>
@@ -847,6 +852,8 @@
                         <field name="name"/>
                         <field name="partner_id" />
                         <field name="origin"/>
+                        <field name="details"/>
+                        <field name="order_category" />
                         <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
                         <field name="company_id" widget="selection" groups="base.group_multi_company"/>
                    </group>
@@ -1001,8 +1008,12 @@
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="origin"/>
-                        <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
-                        <field name="company_id" widget="selection"/>
+                        <field name="details"/>
+                        <field name="reason_type_id" widget="selection" />
+                        <field name="order_category" />
+                        <field name="date" />
+                        <newline/>
+                        <field name="min_date" string="Expected Move Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel', 'import'])]}" on_change="change_min_date()" required="1"/>
                         <field name="product_id"/>
                     </group>
                     <newline/>
@@ -1071,7 +1082,7 @@
                     <field name="order_priority" />
                     <field name="prodlot_id" groups="base.group_extended"/>
                     <field name="location_id" domain="[('quarantine_location', '=', False)]"/>
-                    <field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]"/>
+                    <field name="location_dest_id" on_change="location_dest_change(location_dest_id, picking_id)" domain="[('id', '!=', location_id)]"/>
                     <field name="date"/>
                     <field name="date_expected"/>
                     <field name="state"/>
@@ -1234,6 +1245,7 @@
                     <field name="picking_with_sysint_name" string="Picking Ref."/>
                     <field name="origin"/>
                     <field name="create_date" invisible="1"/>
+                    <field name="picking_id" invisible="1" />
                     <field name="reason_type_id" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
                     <field name="comment" />
                     <field name="partner_id"/>
@@ -1245,7 +1257,7 @@
                     <field name="order_priority" />
                     <field name="prodlot_id" groups="base.group_extended"/>
                     <field name="location_id" domain="[('quarantine_location', '=', False)]"/>
-                    <field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]"/>
+                    <field name="location_dest_id" on_change="location_dest_change(location_dest_id, picking_id)" domain="[('id', '!=', location_id)]"/>
                     <field name="date"/>
                     <field name="date_expected"/>
                     <field name="state"/>

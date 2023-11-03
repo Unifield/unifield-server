@@ -147,15 +147,15 @@
   </stylesheet>
   <story>
     <para style="terp_default_8">[[ repeatIn(objects, 'a') ]]</para>
-    <para style="terp_header_Centre">[[ get_title() ]]</para>
+    <para style="terp_header_Centre">[[ translate(get_title()) ]]</para>
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
     <blockTable colWidths="98.0,84.0,98.0,98.0,80.0,134.0,98.0,98.0" style="Table1">
       <tr>
         <td>
-          <para style="terp_tblheader_General_Centre">[[ data['model']=='account.account' and 'Company' or removeParentNode('para') ]]</para>
-          <para style="terp_tblheader_General_Centre">[[ data['model']=='ir.ui.menu' and 'Chart of Account' or removeParentNode('para') ]]</para>
+          <para style="terp_tblheader_General_Centre">[[ data['model']=='account.account' and translate('Company') or removeParentNode('para') ]]</para>
+          <para style="terp_tblheader_General_Centre">[[ data['model']=='ir.ui.menu' and translate('Chart of Account') or removeParentNode('para') ]]</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Centre">Fiscal Year</para>
@@ -170,7 +170,7 @@
           <para style="terp_tblheader_General_Centre">Open Items at</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!='No Filter' and get_filter(data) ]]</para>
+          <para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!=translate('No Filter') and get_filter(data) ]]</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Centre">Proprietary Instances</para>

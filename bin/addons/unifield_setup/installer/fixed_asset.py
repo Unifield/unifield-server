@@ -52,7 +52,25 @@ class fixed_asset_setup(osv.osv_memory):
 
         setup_obj = self.pool.get('unifield.setup.configuration')
         setup_id = setup_obj.get_config(cr, uid)
-
+        menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_asset', 'menu_asset_sales')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': payload.fixed_asset_ok}, context=context)
         setup_obj.write(cr, uid, [setup_id.id], {'fixed_asset_ok': payload.fixed_asset_ok}, context=context)
+        if payload.fixed_asset_ok and self.pool.get('res.company')._get_instance_id(cr, uid):
+            journal_obj = self.pool.get('account.journal')
+            if not journal_obj.search_exist(cr, uid,
+                                            [('code', '=', 'DEP'), ('type', '=', 'depreciation'),('is_current_instance', '=', True)], context=context):
+                ana_dep_journal_id = self.pool.get('account.analytic.journal').search(cr, uid,
+                                                                                      [('code', '=', 'DEP'), ('type', '=', 'depreciation'), ('is_current_instance', '=', True)],
+                                                                                      context=context)
+                if ana_dep_journal_id:
+                    journal_obj.create(cr, 1, {
+                        'code': 'DEP',
+                        'name': 'Depreciation',
+                        'type': 'depreciation',
+                        'analytic_journal_id': ana_dep_journal_id[0]
+                    }, context=context)
+
+
+
 
 fixed_asset_setup()

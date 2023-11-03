@@ -247,6 +247,16 @@ class account_invoice(osv.osv):
     def _get_journal_type(self, cr, uid, context=None):
         return self.pool.get('account.journal').get_journal_type(cr, uid, context)
 
+    def _get_is_asset_activated(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        if not ids:
+            return {}
+        res = {}
+        asset = self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok')
+        for _id in ids:
+            res[_id] = asset
+        return res
+
+
     _columns = {
         'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that produced this invoice.", readonly=True, states={'draft':[('readonly',False)]}),
@@ -353,6 +363,7 @@ class account_invoice(osv.osv):
         'user_id': fields.many2one('res.users', 'Salesman', readonly=True, states={'draft':[('readonly',False)]}),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position', readonly=True, states={'draft':[('readonly',False)]}),
         'is_draft': fields.boolean('Is draft', help='used to sort invoices (draft on top)', readonly=1),
+        'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
     }
     _defaults = {
         'type': _get_type,
@@ -1096,10 +1107,39 @@ class account_invoice(osv.osv):
             new_move_name = self.pool.get('account.move').browse(cr, uid, move_id).name
             # make the invoice point to that move
             self.write(cr, uid, [inv.id], {'move_id': move_id,'period_id':period_id, 'move_name':new_move_name})
+            if inv.doc_type in ('si', 'isi', 'ivi'):
+                self._create_asset_form(cr, uid, inv.id, context)
             # Pass invoice in context in method post: used if you want to get the same
             # account move reference when creating the same invoice after a cancelled one:
             self.pool.get('account.move').post(cr, uid, [move_id], context={'invoice':inv})
         self._log_event(cr, uid, ids)
+        return True
+
+
+    def _create_asset_form(self, cr, uid, inv_id, context=None):
+        if not self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok'):
+            return True
+        inv_line_obj = self.pool.get('account.invoice.line')
+        asset_obj = self.pool.get('product.asset')
+        line_ids = inv_line_obj.search(cr, uid, [('invoice_id', '=', inv_id), ('is_asset', '=', True)], context=context)
+        for line in inv_line_obj.browse(cr, uid,  line_ids, context=None):
+            for idx in range(0, int(line.quantity)):
+                asset_id = asset_obj.create(cr, uid, {
+                    'product_id': line.product_id.id or False,
+                    'description': line.name,
+                    'invoice_id': inv_id,
+                    'invo_num': line.invoice_id.number,
+                    'quantity_divisor': line.quantity,
+                    'invoice_line_id': line.id,
+                    'invo_date': line.invoice_id.date_invoice,
+                    'invo_value': line.price_unit,
+                    'invo_currency': line.invoice_id.currency_id.id,
+                    'invo_supplier_id': line.invoice_id.partner_id.id,
+                    'from_invoice': True,
+                    'move_line_id': line.move_lines[0].id,
+                    'start_date': line.invoice_id.date_invoice,
+                }, context=context)
+                asset_obj.log(cr, uid, asset_id, _('Asset created from %s') % (line.invoice_id.number), context=context)
         return True
 
     def line_get_convert(self, cr, uid, x, part, date, context=None):
@@ -1273,6 +1313,7 @@ class account_invoice(osv.osv):
                     line['reversed_invoice_line_id'] = line['id']  # store a link to the original invoice line
             del line['id']
             del line['invoice_id']
+            del line['is_asset']
             if line.get('move_lines',False):
                 del line['move_lines']
             if line.get('import_invoice_id',False):
@@ -1499,14 +1540,43 @@ class account_invoice_line(osv.osv):
         'note': fields.text('Notes'),
         'account_analytic_id':  fields.many2one('account.analytic.account', 'Analytic Account'),
         'company_id': fields.related('invoice_id','company_id',type='many2one',relation='res.company',string='Company', store=True, readonly=True),
-        'partner_id': fields.related('invoice_id','partner_id',type='many2one',relation='res.partner',string='Partner',store=True, write_relate=False)
+        'partner_id': fields.related('invoice_id','partner_id',type='many2one',relation='res.partner',string='Partner',store=True, write_relate=False),
+        'is_asset': fields.boolean('Asset'),
     }
     _defaults = {
         'quantity': 1,
         'discount': 0.0,
     }
 
-    def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, context=None):
+    def change_is_asset(self, cr, uid, ids, is_asset, product_id, context=None):
+        if not product_id:
+            return {
+                'warning': {'message': _('Product is mandatory, please fill the product before ticking Asset.')},
+                'value': {'is_asset': False}
+            }
+
+
+        prod = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['categ_id', 'default_code', 'property_account_expense'], context=context)
+
+        if not is_asset:
+            account_id = prod.property_account_expense and prod.property_account_expense.id or \
+                prod.categ_id and prod.categ_id.property_account_expense_categ and prod.categ_id.property_account_expense_categ.id or \
+                False
+            return {'value': {'account_id': account_id}}
+
+        if not prod.categ_id:
+            return {'warning': {'message': _('Product %s has no category') % (prod.default_code, )}, 'value': {'is_asset': False}}
+        if not prod.categ_id.asset_bs_account_id:
+            return {'warning': {'message': _('Product Category %s has no Asset Balance Sheet Account') % (prod.categ_id.name, )}, 'value': {'is_asset': False}}
+        return {
+            'value': {
+                'account_id': prod.categ_id.asset_bs_account_id.id
+            }
+        }
+
+
+
+    def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, is_asset=False, context=None):
         if context is None:
             context = {}
         company_id = context.get('company_id',False)
@@ -1522,7 +1592,6 @@ class account_invoice_line(osv.osv):
             context.update({'lang': part.lang})
         result = {}
         res = self.pool.get('product.product').browse(cr, uid, product, context=context)
-
         if company_id:
             property_obj = self.pool.get('ir.property')
             account_obj = self.pool.get('account.account')
@@ -1587,9 +1656,16 @@ class account_invoice_line(osv.osv):
             if not a:
                 a = res.categ_id.property_account_income_categ.id
         else:
-            a = res.product_tmpl_id.property_account_expense.id
-            if not a:
-                a = res.categ_id.property_account_expense_categ.id
+            if is_asset:
+                if res.categ_id and res.categ_id.asset_bs_account_id:
+                    a = res.categ_id.asset_bs_account_id.id
+                else:
+                    a = False
+                    result['account_id'] = False
+            else:
+                a = res.product_tmpl_id.property_account_expense.id
+                if not a:
+                    a = res.categ_id.property_account_expense_categ.id
         a = fpos_obj.map_account(cr, uid, fpos, a)
         if a:
             result['account_id'] = a

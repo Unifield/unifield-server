@@ -224,7 +224,7 @@
           <para style="P10">Supplier</para>
         </td>
         <td>
-          <para style="terp_default_8">[[ reportAsset.invo_supplier ]]</para>
+          <para style="terp_default_8">[[ reportAsset.invo_supplier_id.name ]]</para>
         </td>
       </tr>
       <tr>

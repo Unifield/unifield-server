@@ -20,9 +20,11 @@ class product_merged_wizard(osv.osv_memory):
     }
 
     def do_merge_product(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
         prod_obj = self.pool.get('product.product')
         wiz = self.browse(cr, uid, ids[0], context)
-
 
         if wiz.level == 'coordo':
             error_used = prod_obj._error_used_in_doc(cr, uid, wiz.new_product_id.id, context=context)
@@ -75,11 +77,10 @@ class product_merged_wizard(osv.osv_memory):
                     'width': '720px',
                 }
 
-
         if wiz.level == 'coordo':
-            prod_obj.merge_product(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, context=None)
+            prod_obj.merge_product(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, context=context)
         else:
-            prod_obj.merge_hq_product(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, context=None)
+            prod_obj.merge_hq_product(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, context=context)
 
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['form', 'tree'], context=context)
         res['res_id'] = wiz.new_product_id.id

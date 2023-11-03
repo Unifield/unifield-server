@@ -100,6 +100,13 @@
                                 <button string="Recurring entries" name="button_recurring" type="object" icon="terp-stage"/>
                             </group>
 
+                            <field name="is_asset_activated" invisible="1" />
+                            <!-- Asset Fomrs -->
+                            <group col="4" colspan="4" attrs="{'invisible': [('is_asset_activated', '=', False)]}">
+                                <label string="Did you generate and post all asset entries?" colspan="2" align="0.0"/>
+                                <button string="Assets" name="button_assets" type="object" icon="gtk-dnd-multiple"/>
+                            </group>
+
                             <!-- Payrolls -->
                             <group col="4" colspan="4" attrs="{'invisible': [('payroll_ok', '!=', True)]}">
                                 <label string="Did you import and validate all payroll entries?" colspan="2" align="0.0"/>

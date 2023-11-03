@@ -195,5 +195,13 @@
                  auto="False"
                  menu="False"/>
 
+        <report id="pl_account_horizontal"
+                menu="False"
+                model="account.account"
+                name="pl.account.horizontal"
+                rml="account/report/account_profit_horizontal.rml"
+                string="Profit And Loss"
+                auto="False" />
+
     </data>
 </openerp>

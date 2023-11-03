@@ -51,8 +51,8 @@
                 </data>
             </field>
         </record>
-        
-        
+
+
         <record id="procurement_request_tree_view" model="ir.ui.view">
             <field name="name">procurement.request.tree.view</field>
             <field name="model">sale.order</field>

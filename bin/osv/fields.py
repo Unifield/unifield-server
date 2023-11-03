@@ -396,7 +396,7 @@ class many2one(_column):
         _column.__init__(self, string=string, **args)
         self._obj = obj
         self._join = args.get('join', False)
-        if self._join and not self.required:
+        if self._join and not self.required and self._join != 'LEFT':
             raise Exception('join fields must be required')
 
     def set_memory(self, cr, obj, id, field, values, user=None, context=None):

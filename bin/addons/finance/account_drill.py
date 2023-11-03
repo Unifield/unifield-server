@@ -317,7 +317,7 @@ class AccountDrill(object):
             node.obj = self.model.browse(self.cr, self.uid, node.account_id,
                                          self.context)
             node.code = node.obj.code
-            node.name = "%s %s" % (node.code, node.obj.name, )
+            node.name = "%s %s" % (node.code, _(node.obj.name), )
             if self._next_node_index == 0:
                 # MSF top account
                 node.name += " / %s" % (_('Total Selection'), )

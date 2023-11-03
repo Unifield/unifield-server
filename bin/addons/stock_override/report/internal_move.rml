@@ -158,10 +158,10 @@
                     <para style="Header">[[ get_selec(picking, 'state') ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight"> </para>
+                    <para style="HeaderRight">Details :</para>
                 </td>
                 <td>
-                    <para style="Header"> </para>
+                    <para style="Header">[[ picking.details ]]</para>
                 </td>
                 <td>
                     <para style="HeaderRight"> </para>

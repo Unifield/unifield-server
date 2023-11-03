@@ -118,10 +118,16 @@ class stock_reason_type(osv.osv):
         res = self.name_get(cr, uid, ids, context=context)
         return dict(res)
 
-    def _search_is_fs(self, cr, uid, obj, name, args, context=None):
+    def _search_is_fs_out(self, cr, uid, obj, name, args, context=None):
         for arg in args:
-            if arg[0] == 'is_fs' and arg[1] == '=' and arg[2] in (True, 1, 'True', 'true', '1'):
+            if arg[0] == 'is_fs_out' and arg[1] == '=' and arg[2] in (True, 1, 'True', 'true', '1'):
                 return [('code', 'in', [6, 20])]
+        return []
+
+    def _search_is_fs_in(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[0] == 'is_fs_in' and arg[1] == '=' and arg[2] in (True, 1, 'True', 'true', '1'):
+                return [('code', 'in', [1, 4, 5]), ('parent_id', '=', False)]
         return []
 
     _columns = {
@@ -138,7 +144,8 @@ class stock_reason_type(osv.osv):
         'internal_ok': fields.boolean(string='Available for internal picking ?'),
         'outgoing_ok': fields.boolean(string='Available for outgoing movements ?'),
         'pi_discrepancy_type': fields.boolean(string="Is an Adjustment Type in the Physical Inventory's Discrepancy lines"),
-        'is_fs': fields.function(tools.misc.get_fake, type='boolean', string='For FS out', method=True, fnct_search=_search_is_fs),
+        'is_fs_out': fields.function(tools.misc.get_fake, type='boolean', string='For FS out', method=True, fnct_search=_search_is_fs_out),
+        'is_fs_in': fields.function(tools.misc.get_fake, type='boolean', string='For FS in', method=True, fnct_search=_search_is_fs_in),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -302,27 +309,47 @@ class stock_picking(osv.osv):
          - GOODS RETURN UNIT
          - GOODS REPLACEMENT
          - OTHER
+        Only permet user to create/write a non-claim IN from scratch with some reason types:
+         - EXTERNAL SUPPLY
+         - INTERNAL SUPPLY
+         - RETURN FROM UNIT
         """
         data_obj = self.pool.get('ir.model.data')
         res = True
         try:
             rt_replacement_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+            rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+            ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
         except ValueError:
             rt_replacement_id = 0
-        try:
-            rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
-        except ValueError:
-            rt_return_unit_id = 0
-        try:
-            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-        except ValueError:
             rt_other_id = 0
+            rt_return_unit_id = 0
+            int_rt_id = 0
+            ext_rt_id = 0
 
-        for sp in self.read(cr, uid, ids, ['purchase_id', 'sale_id', 'type', 'reason_type_id'], context=context):
-            if not sp['purchase_id'] and not sp['sale_id'] and sp['type'] == 'out' and sp['reason_type_id']:
-                if sp['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id]:
+        for sp in self.read(cr, uid, ids, ['purchase_id', 'sale_id', 'type', 'reason_type_id', 'claim'], context=context):
+            if not sp['purchase_id'] and not sp['sale_id'] and sp['reason_type_id']:
+                if (sp['type'] == 'in' and not sp['claim'] and
+                        sp['reason_type_id'][0] not in [rt_return_unit_id, int_rt_id, ext_rt_id]) or \
+                        (sp['type'] == 'out' and sp['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id]):
                     return False
         return res
+
+    def _invalid_reason_type_msg(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        doc = _('a document')
+        if context.get('picking_type'):
+            if context['picking_type'] == 'incoming_shipment':
+                doc = _('an IN')
+            elif context['picking_type'] == 'delivery_order':
+                doc = _('an OUT')
+        msg = _('Wrong reason type for %s created from scratch.') % (doc,)
+
+        return msg
 
     def _get_type_donation_ids(self, cr, uid, context=None):
         data_obj = self.pool.get('ir.model.data')
@@ -384,19 +411,20 @@ class stock_picking(osv.osv):
             context = {}
 
         data_obj = self.pool.get('ir.model.data')
-        return_reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
-        loan_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
+        int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+        ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+        return_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
 
-        if reason_type_id == loan_ret_rt_id:
+        if reason_type_id not in (int_rt_id, ext_rt_id, return_rt_id):
             return {'value': {'reason_type_id': False, 'ret_from_unit_rt': False},
                     'warning': {'title': _('Error'), 'message': _('You can not select this Reason Type manually')}}
-        elif reason_type_id == return_reason_type_id:
+        elif reason_type_id == return_rt_id:
             return {'value': {'ret_from_unit_rt': True, 'partner_id': False, 'partner_id2': False, 'address_id': False}}
         else:
             return {'value': {'ret_from_unit_rt': False}}
 
     _constraints = [
-        (_check_reason_type, "Wrong reason type for an OUT created from scratch.", ['reason_type_id', ]),
+        (_check_reason_type, _invalid_reason_type_msg, ['reason_type_id', ]),
     ]
 
 

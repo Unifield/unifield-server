@@ -411,7 +411,9 @@ class stock_move(osv.osv):
         '''
         result = {}
         uom_obj = self.pool.get('product.uom')
-        for move in self.read(cr, uid, ids, ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'], context=context):
+        ftf = ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty', 'pick_shipment_id', 'picking_id',
+               'state', 'not_shipped']
+        for move in self.read(cr, uid, ids, ftf, context=context):
             default_values = {
                 'total_amount': 0.0,
                 'amount': 0.0,
@@ -445,6 +447,12 @@ class stock_move(osv.osv):
             if move['product_uom']:
                 uom_rounding = uom_obj.read(cr, uid, move['product_uom'][0], ['rounding'], context=context)['rounding']
                 result[move['id']]['product_uom_rounding_is_pce'] = uom_rounding == 1
+            # Give the Returned state to the Shipment's lines popup lines if the pack.family.memory is Returned
+            ship_influenced_state = move['state']
+            if move['pick_shipment_id'] and move['picking_id'] and move['not_shipped']:
+                ship_influenced_state = 'returned'
+            result[move['id']]['ship_influenced_state'] = ship_influenced_state
+
         return result
 
     def _get_picking_with_sysint_name(self, cr, uid, ids, fields, arg, context=None):
@@ -583,6 +591,7 @@ class stock_move(osv.osv):
         # msf_outgoing
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
+        'parcel_comment': fields.char(string='Parcel Comment', size=256),
         'ppl_returned_ok': fields.boolean(string='Has been returned ?', readonly=True, internal=True),
         'integrity_error': fields.selection(INTEGRITY_STATUS_SELECTION, 'Error', readonly=True),
         'pack_type': fields.many2one('pack.type', string='Pack Type'),
@@ -618,6 +627,11 @@ class stock_move(osv.osv):
                 'stock.picking': (_get_picking, ['shipment_id'], 10),
             }
         ),
+        'ship_influenced_state': fields.function(_vals_get, method=True, store=False, string='State', type='selection',
+                                                 selection=[('draft', 'Draft'), ('waiting', 'Waiting'),
+                                                            ('confirmed', 'Not Available'), ('assigned', 'Available'),
+                                                            ('done', 'Closed'), ('cancel', 'Cancelled'),
+                                                            ('returned', 'Returned')], readonly=True, multi='get_vals'),
         'from_manage_expired_move': fields.related('picking_id', 'from_manage_expired', string='Manage Expired', type='boolean', readonly=True),
         'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
         'location_output_id': fields.many2one('stock.location', string='Output location'),
@@ -642,13 +656,6 @@ class stock_move(osv.osv):
         """ Checks if asset is assigned to stock move or not.
         @return: True or False
         """
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
-                # either the asset comes from a supplier or the asset goes to a customer
-                if move.location_id.usage == 'supplier' or move.location_dest_id.usage == 'customer' or (move.picking_id and move.picking_id.type == 'out' and move.picking_id.subtype == 'picking'):
-                    if move.product_id.subtype == 'asset':
-                        if not move.asset_id and move.product_qty:
-                            raise osv.except_osv(_('Error!'),  _('You must assign an asset for the product %s.') % move.product_id.name)
         return True
 
     def _check_constaints_service(self, cr, uid, ids, context=None):
@@ -722,38 +729,61 @@ class stock_move(osv.osv):
          - GOODS RETURN UNIT
          - GOODS REPLACEMENT
          - OTHER
+        Only permet user to create/write a non-claim IN move from scratch with some reason types:
+         - EXTERNAL SUPPLY
+         - INTERNAL SUPPLY
+         - RETURN FROM UNIT
+         - LOSS
+         - SCRAP
         """
         data_obj = self.pool.get('ir.model.data')
         res = True
         try:
             rt_replacement_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+            rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
+            ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+            loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            scrp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
         except ValueError:
             rt_replacement_id = 0
-        try:
-            rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
-        except ValueError:
-            rt_return_unit_id = 0
-        try:
-            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-        except ValueError:
             rt_other_id = 0
+            rt_return_unit_id = 0
+            int_rt_id = 0
+            ext_rt_id = 0
+            loss_rt_id = 0
+            scrp_rt_id = 0
 
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
-                if sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id]:
-                    pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
-                    if not pick['purchase_id'] and not pick['sale_id'] and pick['type'] == 'out':
-                        return False
+                pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type', 'claim'], context=context)
+                if not pick['purchase_id'] and not pick['sale_id'] \
+                        and ((pick['type'] == 'in' and not pick['claim']
+                              and sm['reason_type_id'][0] not in [int_rt_id, ext_rt_id, rt_return_unit_id, loss_rt_id, scrp_rt_id])
+                             or (pick['type'] == 'out' and sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id])):
+                    return False
         return res
+
+    def _invalid_reason_type_msg(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        doc = _('a document')
+        if context.get('picking_type'):
+            if context['picking_type'] == 'incoming_shipment':
+                doc = _('an IN')
+            elif context['picking_type'] == 'delivery_order':
+                doc = _('an OUT')
+        msg = _('Wrong reason type for %s created from scratch.') % (doc,)
+
+        return msg
 
 
     _constraints = [
-        (_check_asset,
-            'You must assign an asset for this product.',
-            ['asset_id']),
         (_check_constaints_service, 'You cannot select Service Location as Source Location.', []),
         (_check_tracking, 'You must assign a batch number for this product.', ['prodlot_id']),
-        (_check_reason_type, "Wrong reason type for an OUT created from scratch.", ['reason_type_id', ]),
+        (_check_reason_type, _invalid_reason_type_msg, ['reason_type_id', ]),
     ]
 
     _defaults = {
@@ -986,6 +1016,8 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
 
+        data_obj = self.pool.get('ir.model.data')
+
         defaults['procurements'] = []
         defaults['original_from_process_stock_move'] = False
         defaults['included_in_mission_stock'] = False
@@ -1002,6 +1034,12 @@ class stock_move(osv.osv):
         if context.get('subtype') != 'in' or (context.get('from_button') and context.get('web_copy')):
             defaults['confirmed_qty'] = 0
 
+        if context.get('from_button') and context.get('web_copy'):
+            if context.get('picking_type') == 'delivery_order':
+                defaults['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+            elif context.get('picking_type') == 'incoming_shipment':
+                defaults['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
             # UF-1797: when we duplicate a doc we delete the link with the poline
@@ -1013,10 +1051,11 @@ class stock_move(osv.osv):
                 defaults['composition_list_id'] = False
             if context.get('subtype', False) == 'incoming':
                 # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
-                input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+                input_loc = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
                 defaults.update(location_dest_id=input_loc)
         else:
             defaults['composition_list_id'] = False
+
         return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
 
     def onchange_lot_processor(self, cr, uid, ids, lot_id, qty, location_id, uom_id, context=None):
@@ -1379,6 +1418,11 @@ class stock_move(osv.osv):
         self.check_product_quantity(cr, uid, ids, context=context)
 
         for move in self.browse(cr, uid, ids, fields_to_fetch=['picking_id', 'product_qty', 'confirmed_qty'], context=context):
+            if context.get('picking_type') == 'incoming_shipment' and not move.picking_id.partner_id and \
+                    not move.picking_id.ext_cu:
+                raise osv.except_osv(_('Error'), _('You can not process an IN with neither Partner or Ext. C.U.'))
+            if context.get('picking_type') == 'delivery_order' and not move.picking_id.partner_id:
+                raise osv.except_osv(_('Error'), _('You can not process an OUT without a Partner'))
             l_vals = vals
             l_vals.update({'state': 'confirmed', 'already_confirmed': True})
             if move.picking_id.type == 'in' and not move.picking_id.purchase_id and move.product_qty and \
@@ -2411,24 +2455,28 @@ class stock_move(osv.osv):
 
         return {'value': vals}
 
-    def location_dest_change(self, cr, uid, ids, location_dest_id, location_id, product_id=False, context=None):
+    def location_dest_change(self, cr, uid, ids, location_dest_id, picking_id, product_id=False, context=None):
         '''
         Tries to define a reason type for the move according to the destination location
         '''
+        data_obj = self.pool.get('ir.model.data')
         vals = {}
 
         if location_dest_id:
             dest_id = self.pool.get('stock.location').browse(cr, uid, location_dest_id, context=context)
             if dest_id.usage == 'inventory':
-                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_id.scrap_location:
-                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            elif dest_id.scrap_location:
+                vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            elif picking_id:  # Header RT
+                vals['reason_type_id'] = self.pool.get('stock.picking').read(cr, uid, picking_id, ['reason_type_id'],
+                                                                             context=context)['reason_type_id'][0]
 
             if product_id:
                 # Test the compatibility of the product with the location
                 vals, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, product_id, field_name='location_dest_id', values={'value': vals}, vals={'location_id': location_dest_id})
                 if test:
-                    return  vals
+                    return vals
 
         return {'value': vals}
 

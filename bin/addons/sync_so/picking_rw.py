@@ -372,7 +372,7 @@ class stock_picking(osv.osv):
             # get the current pick which has been changed in description
             pick = picks[0]
             usb_entity = self._get_usb_entity_type(cr, uid)
-            if pick and pick.shipment_id and usb_entity == self.REMOTE_WAREHOUSE: # only special handle when it's in RW
+            if pick and pick.shipment_id and usb_entity == self.REMOTE_WAREHOUSE:  # only special handle when it's in RW
                 # Now, check if there is any sync message UNSENT for this shipment
                 msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
                 remote_call = "shipment.usb_create_shipment"
@@ -386,7 +386,7 @@ class stock_picking(osv.osv):
                         # if it's related to the current pick, then start to update the message
                         arguments = msg_to_send_obj.read(cr, uid, s, ['arguments'])['arguments']
                         st = arguments.find('\'description_ppl\': False')
-                        if st >= 0: # if the original description is empty, normally on creation of the message, then search for text with False
+                        if st >= 0:  # if the original description is empty, normally on creation of the message, then search for text with False
                             old_desc = '\'description_ppl\': False'
                         else:
                             # otherwise, search for the old desc
@@ -396,13 +396,13 @@ class stock_picking(osv.osv):
 
                         # build the new desc, if it's empty -> False
                         new_desc = '\'description_ppl\': False'
-                        if pick.description_ppl:
-                            new_desc = '\'description_ppl\': \'' + pick.description_ppl + '\''
+                        if pick.details:
+                            new_desc = '\'description_ppl\': \'' + pick.details + '\''
 
                         # replace the desc in argument and save it into the message
                         arguments = arguments.replace(old_desc, new_desc)
-                        msg_to_send_obj.write(cr, uid, s, {'arguments':arguments}, context=context)
-                        break # One pick is only valid for one ship, no need to go further
+                        msg_to_send_obj.write(cr, uid, s, {'arguments': arguments}, context=context)
+                        break  # One pick is only valid for one ship, no need to go further
 
         return super(stock_picking, self).change_description_save(cr, uid, ids, context=context)
 

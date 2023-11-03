@@ -199,7 +199,7 @@ class account_move_line(osv.osv):
             amount = obj_line.get('debit_currency', 0.0) - obj_line.get('credit_currency', 0.0)
             amount_ji_fctal = obj_line.get('debit', 0.0) - obj_line.get('credit', 0.0)
             journal = self.pool.get('account.journal').read(cr, uid, obj_line.get('journal_id', [False])[0], ['analytic_journal_id', 'name'], context=context)
-            move = self.pool.get('account.move').read(cr, uid, obj_line.get('move_id', [False])[0], ['analytic_distribution_id', 'status', 'line_id'], context=context)
+            move = self.pool.get('account.move').read(cr, uid, obj_line.get('move_id', [False])[0], ['analytic_distribution_id', 'status', 'line_id', 'asset_id'], context=context)
             account = self.pool.get('account.account').read(cr, uid, obj_line.get('account_id', [False])[0], ['is_analytic_addicted'], context=context)
             aal_obj = self.pool.get('account.analytic.line')
             line_distrib_id = (obj_line.get('analytic_distribution_id', False) and obj_line.get('analytic_distribution_id')[0]) or (move.get('analytic_distribution_id', False) and move.get('analytic_distribution_id')[0]) or False
@@ -217,7 +217,7 @@ class account_move_line(osv.osv):
                                                                                            )
                 # For manual journal entries, do not raise an error. But delete all analytic distribution linked to other_lines because if one line is invalid, all lines should not create analytic lines
                 invalid_state = ana_state in ('invalid', 'invalid_small_amount')
-                if invalid_state and move.get('status', '') == 'manu':
+                if invalid_state and (move.get('status', '') == 'manu' or move.get('asset_id')):
                     ana_line_ids = acc_ana_line_obj.search(cr, uid, [('move_id', 'in', move.get('line_id', []))])
                     acc_ana_line_obj.unlink(cr, uid, ana_line_ids)
                     continue
@@ -752,6 +752,7 @@ class account_move_line(osv.osv):
                                         ),
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, fnct_search=_search_reconcile_total_partial,
                                                       type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
+        'asset_line_id': fields.many2one('product.asset.line', 'Asset Line', readonly=1, ondelete='restrict'),
     }
 
     def _get_currency(self, cr, uid, context=None):

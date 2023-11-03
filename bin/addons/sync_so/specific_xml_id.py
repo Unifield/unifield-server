@@ -848,18 +848,6 @@ class product_product(osv.osv):
 
 product_product()
 
-class product_asset(osv.osv):
-
-    _inherit = "product.asset"
-
-    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        asset = self.browse(cr, uid, res_id)
-        #UF-2148: use the xmlid_name for building the xml for this object
-        return get_valid_xml_name('product_asset', (asset.partner_name or 'no_partner'), (asset.product_id.code or 'noprod'), (asset.xmlid_name or 'noname'))
-
-product_asset()
-
-
 class ir_model_access(osv.osv):
     """
     UF-2146 To allow synchronisation of ir.model.access, must have same sd ref across all instances

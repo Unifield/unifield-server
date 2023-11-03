@@ -101,7 +101,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[('type','=','out'), ('subtype', '=', 'standard')]</field>
-			<field name="context">{'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'}</field>
+			<field name="context">{'picking_screen': False, 'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'}</field>
 			<field name="search_view_id" ref="stock.view_picking_out_search"/>
 			<field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
 		</record>
@@ -164,6 +164,7 @@
                     <field name="sale_id" invisible="True" />
                     <field name="reason_type_id" />
                     <field name="origin"/>
+                    <field name="details" truncate="15"/>
                     <field name="packing_list"/>
                     <field name="order_category" string="Order\nCategory"/>
                     <field name="incoming_id" />
@@ -191,7 +192,7 @@
                             <field name="object_name" invisible="1" />
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
-                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="1"
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id, type)" required="1"
                                     attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('from_ir', '=', True)]}" />
                             <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" />
                             <field name="address_id" colspan="2" context="{'contact_display':'partner'}"
@@ -200,6 +201,7 @@
                             <field name="backorder_id" readonly="1" string="Original PICK" />
                             <field name="reason_type_id" widget="selection" readonly="1" />
                             <field name="order_category" />
+                            <field name="details" readonly="1" />
                         </group>
 
                         <group colspan="2" col="2">
@@ -212,6 +214,7 @@
                             <field name="subtype" invisible="True" readonly="True" />
                             <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
                             <field name="incoming_id" readonly="True" />
+                            <field name="details" readonly="1" />
                         </group>
                         <group colspan="6" col="2">
                             <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute"/>
@@ -498,6 +501,7 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
+						<field name="details"/>
                         <field name="packing_list" />
                         <field name="order_category" />
                         <newline />
@@ -658,7 +662,7 @@
 			<field name="arch" type="xml">
 				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Pre-Packing Lists">
 					<field name="name"/>
-                    <field name="description_ppl"/>
+                    <field name="details" truncate="15"/>
 					<field name="partner_id2"/>
 					<field name="backorder_id" />
 					<field name="origin"/>
@@ -687,7 +691,7 @@
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="origin" readonly="1"/>
-                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id, type)"
                                                         required="1"
                             attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('from_ir', '=', True)]}" />
                             <field name="packing_list" attrs="{'readonly': [('state', 'not in', ['draft', 'confirmed', 'assigned'])]}" on_change="change_packing_list(packing_list)"/>
@@ -711,7 +715,8 @@
                             <field name="subtype" invisible="True" />
                             <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
                             <field name='ppl_customize_label' required="True" />
-                            <field name="description_ppl"  />
+                            <field name="details" readonly="1" />
+                            <field name="description_ppl" />
                         </group>
                         <group colspan="6" col="2">
                             <button name="export_ppl" string="Export Packing" icon="gtk-execute" type="object"/>
@@ -911,7 +916,7 @@
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
-							<field name="partner_id2"  readonly="1" on_change="on_change_partner(partner_id2, address_id)"
+							<field name="partner_id2"  readonly="1" on_change="on_change_partner(partner_id2, address_id, type)"
                                                         required="1"
 							 />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"  readonly="1"/>
@@ -1080,7 +1085,7 @@
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
-							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id, type)"
                                                         required="1"
 							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
 							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
@@ -1147,9 +1152,10 @@
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
+                                        <field name="picking_id" invisible="1" />
 										<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_dest_id)]"
 										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
-										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, location_id)" />
+										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, picking_id)" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Dates" colspan="2" />
@@ -1285,9 +1291,12 @@
 			<field name="type">form</field>
             <field name="priority">21</field>
 			<field name="arch" type="xml">
-                <form string="Change description shipment line">
-					<field name="description_ppl"/>
-					<button name="change_description_save" string="Save description" icon="gtk-save" type="object" />
+                <form string="Change details or parcel comment shipment line">
+                    <group colspan="4" col="4">
+                        <field name="details" readonly="1"/>
+                        <field name="description_ppl"/>
+                    </group>
+					<button name="change_description_save" string="Save details/parcel comment" icon="gtk-save" type="object" />
 				</form>
 			</field>
 		</record>
@@ -1309,7 +1318,6 @@
 					<field name="date" />
 					<field name="shipment_expected_date" />
 					<field name="state"/>
-					<button name="do_create_shipment_bg" states="draft" string="Create Shipment" type="object" icon="gtk-add"/>
 					<button name="open_select_actual_ship_date_wizard" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
 				</tree>
 			</field>
@@ -1355,9 +1363,10 @@
                                     <field name="ppl_id" readonly="1"/>
                                     <field name="packing_list" readonly="1" />
                                     <field name="description_ppl" readonly="1" />
-                                    <button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="from_pack" readonly="1" />
                                     <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" readonly="0"/>
+                                    <field name="parcel_comment" readonly="1"/>
+                                    <button name="change_description" string="Change details or parcel comment" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
                                     <field name="num_of_packs" readonly="1" />
                                     <field name="selected_number" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0" on_change="change_selected_number(selected_number)"/>
                                     <field name="pack_type" readonly="1" />
@@ -1381,6 +1390,7 @@
                                     <newline />
                                     <field name="from_pack" readonly="1" />
                                     <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" />
+                                    <field name="parcel_comment" readonly="1"/>
                                     <field name="num_of_packs" readonly="1"/>
                                     <field name="selected_number" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" on_change="change_selected_number(selected_number)" />
                                     <field name="pack_type" readonly="1" />
@@ -1411,7 +1421,7 @@
                                             <field name="product_uom" />
                                             <field name="location_id" />
                                             <field name="location_dest_id" />
-                                            <field name="state" />
+                                            <field name="ship_influenced_state" />
                                             <field name="inactive_product" invisible="1" />
                                             <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                             <field name="mml_status" />

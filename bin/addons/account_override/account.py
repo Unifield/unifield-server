@@ -1287,9 +1287,30 @@ class account_move(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No line found. Please add some lines before Journal Entry validation!'))
             elif len(ml_ids) < 2:
                 raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
+        if ids:
+            cr.execute('''
+                select
+                    asset.name, min(l1.date)
+                from
+                    product_asset_line l1
+                    inner join product_asset_line l2 on l1.asset_id = l2.asset_id and (l1.date < l2.date or l1.date = l2.date and l1.id < l2.id)
+                    inner join product_asset asset on asset.id = l2.asset_id
+                    left join account_move move_l1 on move_l1.id = l1.move_id
+                where
+                    l2.move_id in %s
+                    and l1.move_id not in %s
+                    and ( l1.move_id is null or move_l1.state='draft' )
+                group by
+                    asset.name
+            ''', (tuple(ids), tuple(ids)))
+            error = []
+            for x in cr.fetchall():
+                error.append('%s: %s' % (x[0], x[1]))
+            if error:
+                raise osv.except_osv(_('Error'), _('Please post asset entries in chronological order, following entries are unposted:\n%s') % '\n'.join(error))
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
-                if m.status == 'sys' and not context.get('from_recurring_entries'):
+                if m.status == 'sys' and not context.get('from_recurring_entries') and not m.asset_id:
                     raise osv.except_osv(_('Warning'), _("You can't approve a Journal Entry that comes from the system!"))
                 # UFTP-105: Do not permit to validate a journal entry on a period that is not open
                 if m.period_id and m.period_id.state != 'draft':

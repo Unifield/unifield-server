@@ -55,6 +55,21 @@ class account_period(osv.osv):
             raise osv.except_osv(_('Warning'), _('Period closing is denied: some Journal Entries remain unposted in this period.'))
         return True
 
+    def _check_asset(self, cr, uid, period, context):
+        level = self.pool.get('res.company')._get_instance_level(cr, uid)
+        if level == 'coordo':
+            states = ['draft', 'open']
+        else:
+            states = ['draft']
+        nb_assets = self.pool.get('product.asset').search(cr, uid, [('state', 'in', states), ('start_date', '<=', period.date_stop)], count=True, context=context)
+        if nb_assets:
+            raise osv.except_osv(_('Warning'), _('There are %d draft or open assets for the period, please start depreciation or change the Start Date before closing the period') % nb_assets)
+        if level == 'coordo':
+            nb_asset_lines = self.pool.get('product.asset.line').search(cr, uid, [('asset_id.state', '=', 'running'), ('move_id', '=', False), ('date', '<=', period.date_stop)], count=True, context=context)
+            if nb_asset_lines:
+                raise osv.except_osv(_('Warning'), _('There are %d running asset lines for the period. Please Generate Asset Entries before closing the period') % nb_asset_lines)
+            return True
+
     def action_set_state(self, cr, uid, ids, context):
         """
         Change period state
@@ -213,6 +228,8 @@ class account_period(osv.osv):
                     if register.state not in ['confirm']:
                         raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period") % (register.name,))
 
+                self._check_asset(cr, uid, period, context=context)
+
                 # prevent period closing if one of the registers of the previous period
                 # has no corresponding register in the period to close AND has a non 0 balance. (except for period 13..16)
                 if not period.special:
@@ -277,6 +294,7 @@ class account_period(osv.osv):
 
             # UFTP-351: Check that no Journal Entries are Unposted for this period
             if period.state == 'field-closed' and context['state'] == 'mission-closed':
+                self._check_asset(cr, uid, period, context=context)
                 self.check_unposted_entries(cr, uid, period.id, context=context)
 
         # check if unposted move lines are linked to this period
@@ -336,6 +354,15 @@ class account_period(osv.osv):
 
         return [('number', operator, [0, 16])]
 
+    def _get_is_asset_activated(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        if not ids:
+            return {}
+        res = {}
+        asset = self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok')
+        for _id in ids:
+            res[_id] = asset
+        return res
+
     _columns = {
         'name': fields.char('Period Name', size=64, required=True, translate=True),
         'special': fields.boolean('Opening/Closing Period', size=12,
@@ -350,6 +377,7 @@ class account_period(osv.osv):
         'is_revaluated': fields.boolean('Revaluation run for the period', readonly=True),  # field used at coordo level
         'is_eoy_liquidity_revaluated': fields.boolean('Revaluation EoY liquidity', readonly=True),  # US-9770 For Year End revaluation checks before P15 closing
         'is_eoy_regular_bs_revaluated': fields.boolean('Revaluation EoY regular B/S', readonly=True),  # US-9770 For Year End revaluation checks before P15 closing
+        'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
     }
 
     _order = 'date_start DESC, number DESC'
@@ -697,6 +725,16 @@ class account_period(osv.osv):
                                  context=context)
         # open the sidebar by default
         res['sidebar_open'] = True
+        return res
+
+    def button_assets(self, cr, uid, ids, context=None):
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product_asset.asset_normal_action', ['tree', 'form'], context=context)
+        res['context'] = {
+            'search_default_s_draft': 1,
+            'search_default_s_open': 1,
+            'search_default_s_running': 1,
+        }
+        res['target'] = 'current'
         return res
 
     def button_payrolls(self, cr, uid, ids, context=None):

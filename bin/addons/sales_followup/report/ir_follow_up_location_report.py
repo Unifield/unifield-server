@@ -175,6 +175,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             m_index = 0
             bo_qty = line.product_uom_qty
             po_name = '-'
+            po_supplier = '-'
 
             edd = False
             cdd = False
@@ -189,6 +190,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             if linked_pol:
                 linked_pol = pol_obj.browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
+                po_supplier = linked_pol.partner_id and linked_pol.partner_id.name or '-'
                 edd = linked_pol.esti_dd or linked_pol.order_id.delivery_requested_date_modified
                 cdd = linked_pol.confirmed_delivery_date
                 if line.product_id:
@@ -254,6 +256,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                     delivery_order = int_cancel_info[0]
                         data.update({
                             'po_name': po_name,
+                            'po_supplier': po_supplier,
                             'edd': edd,
                             'cdd': cdd,
                             'line_number': line.line_number,
@@ -365,6 +368,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     elif not pick_data and move.picking_id.subtype == 'picking':
                         pick_data = {
                             'po_name': po_name,
+                            'po_supplier': po_supplier,
                             'edd': edd,
                             'cdd': cdd,
                             'line_number': line.line_number,
@@ -438,6 +442,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'line_number': line.line_number,
                         'line_comment': line.comment or '-',
                         'po_name': po_name,
+                        'po_supplier': po_supplier,
                         'product_code': line.product_id.default_code or '-',
                         'product_name': line.product_id.name or '-',
                         'uom_id': line.product_uom.name,
@@ -463,6 +468,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             if bo_qty and bo_qty > 0 and not first_line and line.state not in ('cancel', 'cancel_r', 'done'):
                 lines.append({
                     'po_name': po_name,
+                    'po_supplier': po_supplier,
                     'edd': edd,
                     'cdd': cdd,
                     'line_number': line.line_number,

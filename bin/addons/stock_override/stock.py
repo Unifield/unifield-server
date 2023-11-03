@@ -205,9 +205,28 @@ class stock_picking(osv.osv):
 
             is_not_fs, current_rt_id = cr.fetchone()
             if not is_not_fs:
-                dom = ['&', ('is_fs', '=', True)] + dom
+                dom = ['&', ('is_fs_out', '=', True)] + dom
             if current_rt_id:
                 dom = ['|',('id', '=', current_rt_id)] + dom
+        rt_obj = self.pool.get('stock.reason.type')
+        if context is None:
+            lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
+            if lang_dict.get('context_lang'):
+                context = {'lang': lang_dict.get('context_lang')}
+        ret = rt_obj._name_search(cr, uid, '', dom, limit=None, name_get_uid=1, context=context)
+        return ret
+
+    def list_reason_type_incoming(self, cr, uid, id, name, context=None):
+        dom = [('incoming_ok', '=', True)]
+        if id:
+            cr.execute("""SELECT bool(coalesce(purchase_id, 0)) OR from_wkf OR claim, reason_type_id
+                FROM stock_picking WHERE id = %s""", (id, ))
+
+            is_not_fs, current_rt_id = cr.fetchone()
+            if not is_not_fs:
+                dom = ['&', ('is_fs_in', '=', True)] + dom
+            if current_rt_id:
+                dom = ['|', ('id', '=', current_rt_id)] + dom
         rt_obj = self.pool.get('stock.reason.type')
         if context is None:
             lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
@@ -293,8 +312,8 @@ class stock_picking(osv.osv):
                 return {}
             if ext_cu:
                 self.pool.get('stock.move').write(cr, uid, [move.id for move in pick.move_lines], {'location_id': ext_cu}, context=context)
-                message =  _('The source location of lines has been changed to the same as header value')
-            else: # not ext_cu set defualt location because source location of stock.move is a mandatory field:
+                message = _('The source location of lines has been changed to the same as header value')
+            else:  # not ext_cu set default location because source location of stock.move is a mandatory field:
                 other_supplier_location = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')
                 self.pool.get('stock.move').write(cr, uid, [move.id for move in pick.move_lines], {'location_id': other_supplier_location[1]}, context=context)
                 message = _("Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!")
@@ -364,14 +383,20 @@ class stock_picking(osv.osv):
         if context.get('not_workflow', False):
             vals['from_wkf'] = False
 
-        if vals.get('from_wkf') and vals.get('purchase_id'):
-            po = self.pool.get('purchase.order').browse(cr, uid, vals.get('purchase_id'), fields_to_fetch=['dest_partner_names', 'short_customer_ref', 'linked_sol_id', 'order_line'], context=context)
-            vals['customers'] = po.dest_partner_names
-            vals['customer_ref'] = po.short_customer_ref
-            for line in po.order_line:
-                if line.linked_sol_id:
-                    vals['from_wkf_sourcing'] = True
-                    break
+        if vals.get('from_wkf'):
+            if vals.get('purchase_id'):
+                ftf = ['dest_partner_names', 'short_customer_ref', 'linked_sol_id', 'order_line', 'details']
+                po = self.pool.get('purchase.order').browse(cr, uid, vals['purchase_id'], fields_to_fetch=ftf, context=context)
+                vals['customers'] = po.dest_partner_names
+                vals['customer_ref'] = po.short_customer_ref
+                if 'details' not in vals:
+                    vals['details'] = po.details
+                for line in po.order_line:
+                    if line.linked_sol_id:
+                        vals['from_wkf_sourcing'] = True
+                        break
+            elif vals.get('sale_id') and 'details' not in vals:
+                vals['details'] = self.pool.get('sale.order').read(cr, uid, vals['sale_id'], ['details'], context=context)['details']
 
         if not vals.get('partner_id2') and vals.get('address_id'):
             addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
@@ -421,15 +446,17 @@ class stock_picking(osv.osv):
     def write_web(self, cr, uid, ids, vals, context=None, ignore_access_error=False):
         if ids:
             doc_type = self.browse(cr, uid, ids[0], fields_to_fetch=['type'], context=context).type
-            if vals and 'reason_type_id' in vals:
-                data_obj = self.pool.get('ir.model.data')
-                other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-                if other_type_id != vals['reason_type_id']:
-                    if isinstance(ids, int):
-                        ids = [ids]
-                    # INT only: any RT != other set on picking must be written to all moves
-                    # use sql query to prevent loops: write picking -> write move -> write picking ...
-                    cr.execute("update stock_move set reason_type_id=%s where picking_id in %s and type='internal' and state not in ('cancel', 'done')", (vals['reason_type_id'], tuple(ids)))
+            # Ensure the moves have the same RT as the IN or INT if the change is necessary
+            if vals and vals.get('reason_type_id') and doc_type in ('in', 'internal'):
+                for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines'], context=context):
+                    moves_to_update_rt = []
+                    for move in pick.move_lines:
+                        if move.location_dest_id and not (not move.location_dest_id.virtual_location and
+                                                          (move.location_dest_id.usage == 'inventory' or move.location_dest_id.scrap_location)):
+                            moves_to_update_rt.append(move.id)
+                    if moves_to_update_rt:
+                        self.pool.get('stock.move').write(cr, uid, moves_to_update_rt,
+                                                          {'reason_type_id': vals['reason_type_id']}, context=context)
             if doc_type == 'in':
                 if vals.get('partner_id2'):
                     vals['ext_cu'] = False
@@ -480,8 +507,10 @@ class stock_picking(osv.osv):
             rt = 'reason_type_deliver_partner'
         return  self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', rt)[1]
 
-    def on_change_partner_out(self, cr, uid, ids, partner_id, address_id, context=None):
-        res = self.on_change_partner(cr, uid, ids, partner_id, address_id, context=context)
+    def on_change_partner_out(self, cr, uid, ids, partner_id, address_id, type, context=None):
+        if context is None:
+            context = {}
+        res = self.on_change_partner(cr, uid, ids, partner_id, address_id, type, context=context)
         if partner_id and not res.get('warning'):
             res['value']['reason_type_id'] = self._get_rt_for_fs_out(cr, uid, partner_id)
         return res
@@ -500,8 +529,7 @@ class stock_picking(osv.osv):
             }
         return {}
 
-
-    def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
+    def on_change_partner(self, cr, uid, ids, partner_id, address_id, type, context=None):
         '''
         Change the delivery address when the partner change.
         '''
@@ -533,28 +561,37 @@ class stock_picking(osv.osv):
 
             v.update({'address_id': addr})
 
-        if partner_id and ids:
-            picking = self.browse(cr, uid, ids[0], context=context)
-            if not picking.from_wkf and partner.partner_type in ('internal', 'intermission', 'section'):
+        if partner_id:
+            if not ids and type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
                 return {
                     'value': {'partner_id2': False, 'partner_id': False,},
                     'warning': {
                         'title': _('Error'),
-                        'message': _("In a PICK from scratch, your are not allowed to choose this type of partner."),
+                        'message': _("You are not allowed to choose this type of partner in this document from scratch."),
                     },
                 }
-            default_loc = partner.property_stock_supplier.id
-            move_ids = move_obj.search(cr, uid, [('picking_id', '=', ids[0]), ('location_id', '!=', default_loc)], context=context)
-            if not picking.from_wkf and move_ids and picking.type == 'in':
-                move_obj.write(cr, uid, move_ids, {'location_id': default_loc}, context=context)
-                return {
-                    'value': v,
-                    'domain': d,
-                    'warning': {
-                        'title': _('Warning'),
-                        'message': _('The source location of lines has been changed according to the new partner'),
+            elif ids:
+                picking = self.browse(cr, uid, ids[0], context=context)
+                if not picking.from_wkf and type == 'out' and partner.partner_type in ('internal', 'intermission', 'section'):
+                    return {
+                        'value': {'partner_id2': False, 'partner_id': False,},
+                        'warning': {
+                            'title': _('Error'),
+                            'message': _("You are not allowed to choose this type of partner in this document from scratch."),
+                        },
                     }
-                }
+                default_loc = partner.property_stock_supplier.id
+                move_ids = move_obj.search(cr, uid, [('picking_id', '=', ids[0]), ('location_id', '!=', default_loc)], context=context)
+                if not picking.from_wkf and move_ids and picking.type == 'in':
+                    move_obj.write(cr, uid, move_ids, {'location_id': default_loc}, context=context)
+                    return {
+                        'value': v,
+                        'domain': d,
+                        'warning': {
+                            'title': _('Warning'),
+                            'message': _('The source location of lines has been changed according to the new partner'),
+                        }
+                    }
 
         return {'value': v,
                 'domain': d}
@@ -710,7 +747,7 @@ class stock_picking(osv.osv):
         '''
         if isinstance(ids, int):
             ids = [ids]
-        for pick_data in self.read(cr, uid, ids, ['sale_id', 'purchase_id', 'subtype', 'state'], context=context):
+        for pick_data in self.read(cr, uid, ids, ['sale_id', 'purchase_id', 'type', 'subtype', 'state'], context=context):
             # if draft and shipment is in progress, we cannot cancel
             if pick_data['subtype'] == 'picking' and pick_data['state'] in ('draft',):
                 if self.has_picking_ticket_in_progress(cr, uid, [pick_data['id']], context=context)[pick_data['id']]:
@@ -720,8 +757,12 @@ class stock_picking(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('The shipment process is completed and cannot be canceled!'))
 
             if pick_data['sale_id'] or pick_data['purchase_id']:
+                wiz_title = _('Cancel Picking')
+                if pick_data['type'] == 'out' and pick_data['subtype'] == 'standard':
+                    wiz_title = _('Cancel OUT')
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'stock.picking.cancel.wizard',
+                        'name': wiz_title,
                         'view_type': 'form',
                         'view_mode': 'form',
                         'target': 'new',
@@ -788,13 +829,20 @@ class stock_picking(osv.osv):
                 inv_type = 'out_invoice'
         return inv_type
 
-
     def draft_force_assign(self, cr, uid, ids, context=None):
         '''
         Confirm all stock moves
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, int):
             ids = [ids]
+
+        for pick in self.read(cr, uid, ids, ['partner_id', 'ext_cu'], context=context):
+            if context.get('picking_type') == 'incoming_shipment' and not pick['partner_id'] and not pick['ext_cu']:
+                raise osv.except_osv(_('Error'), _('You can not process an IN with neither Partner or Ext. C.U.'))
+            if context.get('picking_type') == 'delivery_order' and not pick['partner_id']:
+                raise osv.except_osv(_('Error'), _('You can not process an OUT without a Partner'))
         res = super(stock_picking, self).draft_force_assign(cr, uid, ids)
 
         move_obj = self.pool.get('stock.move')
@@ -1375,7 +1423,7 @@ class stock_move(osv.osv):
         sync_dpo_in = False
         if vals.get('picking_id', False):
             picking = pick_obj.read(cr, uid, vals['picking_id'], ['move_sequence_id', 'type', 'reason_type_id',
-                                                                  'sync_dpo_in', 'sale_id'], context=context)
+                                                                  'sync_dpo_in', 'sale_id', 'purchase_id'], context=context)
             if not vals.get('line_number', False):
                 # new number need - gather the line number form the sequence
                 sequence_id = picking['move_sequence_id'][0]
@@ -1387,20 +1435,8 @@ class stock_move(osv.osv):
                 val_type = picking['type']
             sync_dpo_in = picking['sync_dpo_in']
 
-            # Remove the Loan Return Reason Type
-            loan_ret_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan_return')[1]
-            if picking and context.get('web_copy') and vals.get('reason_type_id', False) == loan_ret_rt_id:
-                if picking['type'] == 'out':
-                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
-                else:
-                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
-
         if vals.get('product_id', False):
-            product = prod_obj.read(cr, uid, vals['product_id'],
-                                    ['subtype',
-                                     'type',
-                                     'batch_management',
-                                     'perishable',],
+            product = prod_obj.read(cr, uid, vals['product_id'], ['subtype', 'type', 'batch_management', 'perishable',],
                                     context=context)
             vals['subtype'] = product['subtype']
 
@@ -1454,20 +1490,13 @@ class stock_move(osv.osv):
                     elif loc_dest_id['usage'] == 'inventory':
                         vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
-            # If the source location and teh destination location are the same, the state should be 'Closed'
+            # If the source location and the destination location are the same, the state should be 'Closed'
             if vals.get('location_id', False) == vals.get('location_dest_id', False) and vals.get('state') != 'cancel':
                 vals['state'] = 'done'
 
-        # Change the reason type of the picking if it is not the same
-        rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-        if picking and picking['type'] == 'out':
-            if not vals.get('reason_type_id'):
-                vals['reason_type_id'] = picking['reason_type_id'][0]
-
-        if picking and not context.get('from_claim') and not context.get('from_chaining') \
-                and picking['reason_type_id'][0] != rt_id \
-                and vals.get('reason_type_id', False) != picking['reason_type_id'][0]:
-            pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': rt_id}, context=context)
+        # Change the reason type if needed
+        if picking and picking['type'] in ('in', 'out') and not vals.get('reason_type_id'):
+            vals['reason_type_id'] = picking['reason_type_id'][0]
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
 
@@ -1548,6 +1577,8 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
             if dest_dict['scrap_location'] and not dest_dict['virtual_location']:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            if vals.get('picking_id') and not vals.get('reason_type_id'):  # Header RT
+                vals['reason_type_id'] = pick_obj.read(cr, uid, vals['picking_id'], ['reason_type_id'], context=context)['reason_type_id'][0]
             # if the source location and the destination location are the same, the state is done
             if 'location_id' in vals and vals['location_dest_id'] == vals['location_id'] and vals.get('state') != 'cancel':
                 vals['state'] = 'done'
@@ -1569,11 +1600,6 @@ class stock_move(osv.osv):
             if self.search_exist(cr, uid, [('id', 'in', ids), ('address_id', '!=', vals['address_id'])], context=context):
                 addr = addr_obj.read(cr, uid, vals.get('address_id'), ['partner_id'], context=context)
                 vals['partner_id2'] = addr['partner_id'] and addr['partner_id'][0] or False
-        if 'reason_type_id' in vals:
-            pick_ids = pick_obj.search(cr, uid, [('reason_type_id', '!=', vals['reason_type_id']), ('move_lines', 'in', ids)], order='NO_ORDER', context=context)
-            if pick_ids:
-                other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-                pick_obj.write(cr, uid, pick_ids, {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
@@ -1786,8 +1812,10 @@ class stock_move(osv.osv):
             'reason_type_id': reason_type_id,
             'previous_chained_pick_id': picking.id,
             'from_wkf': picking.from_wkf,
+            'details': picking.details,
         }
         return picking_obj.create(cr, uid, pick_values, context=context)
+
 
 stock_move()
 
@@ -2058,27 +2086,14 @@ class stock_move_cancel_wizard(osv.osv_memory):
         'display_warning': False,
     }
 
-    def ask_cancel(self, cr, uid, ids, context=None, *args, **kw):
-        if context is None:
-            context = {}
-
-        move_id = self.pool.get('stock.move.cancel.wizard').read(cr, uid, ids[0], ['move_id'], context=context)['move_id']
-        wiz_id = self.pool.get('stock.move.cancel.more.wizard').create(cr, uid, {'move_id': move_id}, context=context)
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.move.cancel.more.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': wiz_id,
-                'context': context}
+    def no_cancel(self, uid, ids, context=None, *args, **kw):
+        return {'type': 'ir.actions.act_window_close'}
 
     def is_in_forced(self, cr, uid, picking_browse, context=None):
         return picking_browse.state == 'assigned' and \
             picking_browse.purchase_id and \
             picking_browse.purchase_id.partner_type in ('internal', 'section', 'intermission') and \
             picking_browse.purchase_id.order_type != 'direct'
-
 
     def just_cancel(self, cr, uid, ids, context=None):
         '''
@@ -2135,62 +2150,6 @@ class stock_move_cancel_wizard(osv.osv_memory):
         move_obj.write(cr, uid, move_ids, {'has_to_be_resourced': True}, context=context)
 
         return self.just_cancel(cr, uid, ids, context=context)
-
-
-stock_move_cancel_wizard()
-
-
-class stock_move_cancel_more_wizard(osv.osv_memory):
-    _name = 'stock.move.cancel.more.wizard'
-
-    _columns = {
-        'move_id': fields.many2one('stock.move', string='Move', required=True),
-    }
-
-    _defaults = {
-        'move_id': lambda self, cr, uid, c: c.get('active_id'),
-    }
-
-    def no_cancel(self, uid, ids, context=None, *args, **kw):
-        return {'type': 'ir.actions.act_window_close'}
-
-    def just_cancel(self, cr, uid, ids, context=None):
-        '''
-        Just call the cancel of stock.move (re-sourcing flag not set)
-        '''
-        # Objects
-        move_obj = self.pool.get('stock.move')
-        pick_obj = self.pool.get('stock.picking')
-
-        wf_service = netsvc.LocalService("workflow")
-        if isinstance(ids, int):
-            ids = [ids]
-
-        for wiz in self.browse(cr, uid, ids, context=context):
-            move_id = wiz.move_id.id
-            picking_id = wiz.move_id.picking_id.id
-            move_obj.action_cancel(cr, uid, [wiz.move_id.id], context=context)
-            move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)],
-                                       limit=1, order='NO_ORDER', context=context)
-            if move_ids and  wiz.move_id.has_to_be_resourced:
-                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s (%s) has been canceled and resourced" % (
-                    move_id,
-                    picking_id,
-                    pick_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
-                ))
-            else:
-                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s (%s) has been canceled" % (
-                    move_id,
-                    picking_id,
-                    pick_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
-                ))
-
-            if move_ids and wiz.move_id.picking_id:
-                lines = wiz.move_id.picking_id.move_lines
-                if all(l.state == 'cancel' for l in lines):
-                    wf_service.trg_validate(uid, 'stock.picking', wiz.move_id.picking_id.id, 'button_cancel', cr)
-
-        return {'type': 'ir.actions.act_window_close'}
 
     def cancel_and_create_int(self, cr, uid, ids, context=None):
         """
@@ -2285,7 +2244,7 @@ class stock_move_cancel_more_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 
-stock_move_cancel_more_wizard()
+stock_move_cancel_wizard()
 
 
 class stock_picking_cancel_wizard(osv.osv_memory):
@@ -2321,32 +2280,34 @@ class stock_picking_cancel_wizard(osv.osv_memory):
 
         return False
 
+    def _get_doc_type(self, cr, uid, context=None):
+        """
+        Is the document an OUT, a Pick or something else ?
+        """
+        if context is None:
+            context = {}
+
+        picking_id = context.get('active_id')
+        pick = self.pool.get('stock.picking').read(cr, uid, picking_id, ['type', 'subtype'], context=context)
+
+        return pick['type'] == 'out' and (pick['subtype'] == 'standard' and 'out' or pick['subtype'] == 'picking' and 'pick') or 'other'
+
     _columns = {
         'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
         'allow_cr': fields.boolean(string='Allow Cancel and resource'),
         'has_moves_from_cross_docking': fields.boolean(string='Is one of the moves from the Cross docking Location ?'),
+        'doc_type': fields.selection(string="Document Type", selection=[('out', 'OUT'), ('pick', 'Picking'), ('other', 'Other')]),
     }
 
     _defaults = {
         'picking_id': lambda self, cr, uid, c: c.get('active_id'),
         'allow_cr': _get_allow_cr,
         'has_moves_from_cross_docking': _check_from_cross_docking,
+        'doc_type': _get_doc_type,
     }
 
-    def ask_cancel(self, cr, uid, ids, context=None, *args, **kw):
-        if context is None:
-            context = {}
-
-        picking_id = self.pool.get('stock.picking.cancel.wizard').read(cr, uid, ids[0], ['picking_id'], context=context)['picking_id']
-        wiz_id = self.pool.get('stock.picking.cancel.more.wizard').create(cr, uid, {'picking_id': picking_id}, context=context)
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking.cancel.more.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': wiz_id,
-                'context': context}
+    def no_cancel(self, uid, ids, context=None, *args, **kw):
+        return {'type': 'ir.actions.act_window_close'}
 
     def just_cancel(self, cr, uid, ids, context=None):
         '''
@@ -2395,50 +2356,6 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         pick_obj.write(cr, uid, pick_ids, vals, context=context)
 
         return self.just_cancel(cr, uid, ids, context=context)
-
-
-stock_picking_cancel_wizard()
-
-
-class stock_picking_cancel_more_wizard(osv.osv_memory):
-    _name = 'stock.picking.cancel.more.wizard'
-
-    _columns = {
-        'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
-    }
-
-    _defaults = {
-        'picking_id': lambda self, cr, uid, c: c.get('active_id'),
-    }
-
-    def no_cancel(self, uid, ids, context=None, *args, **kw):
-        return {'type': 'ir.actions.act_window_close'}
-
-    def just_cancel(self, cr, uid, ids, context=None):
-        '''
-        Just call the cancel of the stock.picking
-        '''
-        if isinstance(ids, int):
-            ids = [ids]
-        msg_type = {
-            'in': 'Incoming Shipment',
-            'internal': 'Internal Picking',
-            'out': {
-                'standard': 'Delivery Order',
-                'picking': 'Picking Ticket',
-            }
-        }
-
-        wf_service = netsvc.LocalService("workflow")
-        for wiz in self.browse(cr, uid, ids, context=context):
-            wf_service.trg_validate(uid, 'stock.picking', wiz.picking_id.id, 'button_cancel', cr)
-            self.infolog(cr, uid, "The %s id:%s (%s) has been canceled." % (
-                wiz.picking_id.type == 'out' and msg_type.get('out', {}).get(wiz.picking_id.subtype, '') or msg_type.get(wiz.picking_id.type),
-                wiz.picking_id.id,
-                wiz.picking_id.name,
-            ))
-
-        return {'type': 'ir.actions.act_window_close'}
 
     def cancel_and_create_int(self, cr, uid, ids, context=None):
         """
@@ -2541,4 +2458,4 @@ class stock_picking_cancel_more_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 
-stock_picking_cancel_more_wizard()
+stock_picking_cancel_wizard()

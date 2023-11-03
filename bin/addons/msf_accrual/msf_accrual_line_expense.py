@@ -60,6 +60,7 @@ class msf_accrual_line_expense(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
         res = {}
+
         for expense_line in self.browse(cr, uid, ids,
                                         fields_to_fetch=['analytic_distribution_id', 'accrual_line_id', 'expense_account_id', 'accrual_amount'],
                                         context=context):
@@ -67,7 +68,10 @@ class msf_accrual_line_expense(osv.osv):
                 _get_distribution_state(cr, uid, expense_line.analytic_distribution_id.id,
                                         expense_line.accrual_line_id.analytic_distribution_id.id,
                                         expense_line.expense_account_id.id, context=context,
-                                        amount=expense_line.accrual_amount or 0.0)
+                                        amount=expense_line.accrual_amount or 0.0,
+                                        doc_date=expense_line.accrual_line_id.document_date,
+                                        posting_date=expense_line.accrual_line_id.date,
+                                        manual=True)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):

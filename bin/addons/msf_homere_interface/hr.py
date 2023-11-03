@@ -251,6 +251,8 @@ class hr_employee(osv.osv):
             vals['name'] = vals['name'].strip()
         if vals.get('identification_id', False) and vals.get('employee_type', False) == 'ex':
             vals['identification_id'] = vals['identification_id'].strip()
+        if vals.get('job_name', False):
+            vals['job_name'] = vals['job_name'].strip()
         allow_edition = False
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
             # Search Payroll functionnality preference (activated or not)
@@ -261,6 +263,10 @@ class hr_employee(osv.osv):
             # Raise an error if employee is created manually
             if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_update_execution', False) and not allow_edition:
                 raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
+        if vals.get('job_id', False):
+            job_obj = self.pool.get('hr.job')
+            job = job_obj.browse(cr, uid, vals['job_id'], fields_to_fetch=['name'])
+            vals['job_name'] = job and job.name
         employee_id = super(hr_employee, self).create(cr, uid, vals, context)
         self._check_employee_cc_compatibility(cr, uid, employee_id, context=context)
         return employee_id
@@ -293,6 +299,8 @@ class hr_employee(osv.osv):
         # Prepare some variable for process
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
+        if vals.get('job_name', False):
+            vals['job_name'] = vals['job_name'].strip()
         if vals.get('identification_id', False) and vals.get('employee_type', False) == 'ex':
             vals['identification_id'] = vals['identification_id'].strip()
         if vals.get('employee_type', False):
@@ -302,6 +310,10 @@ class hr_employee(osv.osv):
                 ex = True
         if (context.get('from', False) and context.get('from') in ['yaml', 'import']) or context.get('sync_update_execution', False):
             allowed = True
+            if vals.get('job_id', False):
+                job_obj = self.pool.get('hr.job')
+                job = job_obj.browse(cr, uid, vals['job_id'], fields_to_fetch=['name'])
+                vals['job_name'] = job and job.name
         # Browse all employees
         for emp in self.browse(cr, uid, ids):
             new_vals = dict(vals)

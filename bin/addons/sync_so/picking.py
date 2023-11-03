@@ -115,11 +115,6 @@ class stock_picking(osv.osv):
                 raise Exception("The corresponding product does not exist here. Product name: %s" % product_name)
             product_id = product_ids[0]
 
-        # UF-1617: asset form
-        asset_id = False
-        if data.get('asset_id') and data['asset_id']['id']:
-            asset_id = self.pool.get('product.asset').find_sd_ref(cr, uid, xmlid_to_sdref(data['asset_id']['id']), context=context)
-
         # uom
         uom_id = uom_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data['product_uom']['id']), context=context)
         if not uom_id:
@@ -175,7 +170,6 @@ class stock_picking(osv.osv):
             'dpo_line_id': dpo_line_id,
             'sync_dpo': dpo_line_id and True or False,
 
-            'asset_id': asset_id,
             'change_reason': data.get('change_reason') or None,
             'name': data['name'],
             'quantity': data['product_qty'] or 0.0,
@@ -582,8 +576,7 @@ class stock_picking(osv.osv):
                         for line in move_proc.browse(cr, uid, line_proc_ids, context=context):
                             if line.product_id.id == data.get('product_id') and \
                                line.uom_id.id == data.get('uom_id') and \
-                               (line.prodlot_id and line.prodlot_id.id == data.get('prodlot_id')) or (not line.prodlot_id and not data.get('prodlot_id')) and \
-                               (line.asset_id and line.asset_id.id == data.get('asset_id')) or (not line.asset_id and not data.get('asset_id')):
+                               (line.prodlot_id and line.prodlot_id.id == data.get('prodlot_id')) or (not line.prodlot_id and not data.get('prodlot_id')):
                                 move_proc.write(cr, uid, [line.id], data, context=context)
                                 # comment is ovewritten in previous write
                                 if data.get('comment'):
@@ -944,7 +937,6 @@ class stock_picking(osv.osv):
     def _hook_create_sync_messages(self, cr, uid, ids, context=None):
         if isinstance(ids, int):
             ids = [ids]
-        so_po_common = self.pool.get('so.po.common')
 
         res = super(stock_picking, self)._hook_create_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
@@ -953,7 +945,6 @@ class stock_picking(osv.osv):
                 return True
 
             list_batch = []
-            list_asset = []
             # only treat for the internal partner
             for move in pick.move_lines:
                 if move.state not in ('done', 'cancel'):
@@ -963,16 +954,6 @@ class stock_picking(osv.osv):
                     # put the new batch number into the list, and create messages for them below
                     list_batch.append(move.prodlot_id.id)
 
-                # Get asset object
-                if move.asset_id:
-                    # put the new batch number into the list, and create messages for them below
-                    list_asset.append(move.asset_id.id)
-
-
-            # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
-            # for each new asset object and for each partner, create messages and put into the queue for sending on next sync round
-            for item in list_asset:
-                so_po_common.create_message_with_object_and_partner(cr, uid, 1002, item, partner, context)
         return res
 
     def msg_create_invoice(self, cr, uid, source, stock_picking, context=None):

@@ -12,7 +12,8 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree/field[@name='location_dest_id']" position="replace">
-                        <field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]"/>
+                        <field name="picking_id" invisible="1" />
+                        <field name="location_dest_id" on_change="location_dest_change(location_dest_id, picking_id)" domain="[('id', '!=', location_id)]"/>
                     </xpath>
 
                     <xpath expr="/tree/field[@name='product_uom']" position="after">
@@ -152,6 +153,7 @@
                         <field name="origin"/>
                         <field name="customers" />
                         <field name="order_category" />
+                        <field name="details" />
                         <field name="reason_type_id" widget="selection" domain="[('incoming_ok', '=', True)]" />
                         <newline />
                         <field name="date" string="Creation date" />
@@ -190,6 +192,7 @@
                     <field name="customer_ref" />
                     <field name="customers" />
                     <field name="order_category" />
+                    <field name="details" truncate="15" />
                     <field name="shipment_ref" />
                     <field name="reason_type_id" domain="[('incoming_ok', '=', True)]" />
                     <field name="date" string="Creation Date" />

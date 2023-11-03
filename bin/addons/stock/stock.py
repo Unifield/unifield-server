@@ -1116,6 +1116,7 @@ class stock_picking(osv.osv):
         'total_qty_process_str': fields.function(_get_total_qty_str, method=1, string='Qties to Process', type='char', multi='total_qty'),
         'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
         'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='char', string="Contains non-conform MML/MSL"),
+        'details': fields.char(size=256, string='Details'),
     }
 
     _defaults = {
@@ -1280,9 +1281,8 @@ class stock_picking(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         for pick in self.read(cr, uid, ids, ['move_lines']):
             if not pick['move_lines']:
-                raise osv.except_osv(_('Error !'),_('You can not process picking without stock moves'))
-            wf_service.trg_validate(uid, 'stock.picking', pick['id'],
-                                    'button_confirm', cr)
+                raise osv.except_osv(_('Error !'), _('You can not process picking without stock moves'))
+            wf_service.trg_validate(uid, 'stock.picking', pick['id'], 'button_confirm', cr)
         return True
 
     def draft_validate(self, cr, uid, ids, context=None):

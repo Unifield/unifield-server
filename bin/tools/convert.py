@@ -683,6 +683,8 @@ form: module.record_id""" % (xml_id,)
                     groups_value.append((4, group_id))
             values['groups_id'] = groups_value
 
+        if rec.get('active_config'):
+            values['active'] = self.pool.get('unifield.setup.configuration').get_config(cr, self.uid, key=rec.get('active_config'))
         xml_id = rec.get('id','')
         self._test_xml_id(xml_id)
         pid = self.pool.get('ir.model.data')._update(cr, self.uid, 'ir.ui.menu', self.module, values, xml_id, noupdate=self.isnoupdate(data_node), mode=self.mode, res_id=res and res[0] or False)

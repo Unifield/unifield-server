@@ -89,6 +89,44 @@
             action="action_hq_export_oca"
             id="menu_action_hq_export_oca"  sequence="20"/>
 
+
+        <record id="field_bal_spec_report_wizard" model="ir.ui.view">
+            <field name="name">FIELD BALANCE SPECIFICATION REPORT</field>
+            <field name="model">field.balance.spec.report</field>
+            <field name="type">form</field>
+            <field name="priority" eval="25" />
+            <field name="arch" type="xml">
+            <form string="FIELD BALANCE SPECIFICATION REPORT">
+                <field name="instance_id" />
+                <field name="period_id" />
+                <field name="selection"/>
+                <group colspan="2" col="4">
+                    <field name="has_one_table" invisible="1" />
+                    <field name="eoy" attrs="{'readonly': [('has_one_table', '=', False)]}"/>
+                </group>
+                <group colspan="6" col="4">
+                    <label string="" colspan="2"/>
+                    <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                    <button icon="terp-camera_test" string="Print" name="button_create_report" type="object" default_focus="1" colspan="1"/>
+                </group>
+            </form>
+            </field>
+        </record>
+
+        <record id="action_field_bal_spec_report" model="ir.actions.act_window">
+            <field name="name">Field Balance Specification Report</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">field.balance.spec.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="field_bal_spec_report_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem parent="account.final_accounting_reports"
+            action="action_field_bal_spec_report"
+            id="menu_action_field_bal_spec_report"  sequence="200"/>
+
     <!-- OCB export -->
 
         <record id="ocb_export_wizard" model="ir.ui.view">

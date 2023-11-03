@@ -61,7 +61,7 @@
                         </group>
                         <group col="2" colspan="2">
                             <separator string="Position" colspan="2"/>
-                            <field name="job_id" domain="[('state','!=','old')]" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="job_name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                             <field name="coach_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                             <field name="contract_start_date" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
                             <field name="contract_end_date" attrs="{'readonly': ['|', ('employee_type', '=', 'ex'), ('allow_edition', '=', False)]}"/>
@@ -122,7 +122,7 @@
                 <field name="name" position="after">
                   <field name="identification_id" attrs="{'required': [('employee_type', '=', 'local')]}"/>
                 </field>
-                <field name="job_id" position="after">
+                <field name="job_name" position="after">
                     <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
@@ -147,7 +147,7 @@
                 <field name="allow_edition" invisible="1"/>
                 <field name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                 <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)], 'required': [('employee_type', '=', 'local')]}"/>
-                <field name="job_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                <field name="job_name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                 <field name="destination_id" domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                 <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                 <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
@@ -174,7 +174,7 @@
                 <separator orientation="vertical" />
                 <field name="name"/>
                 <field name="identification_id"/>
-                <field name="job_id"/>
+                <field name="job_name"/>
                 <newline/>
                 <group>
                     <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
@@ -183,7 +183,7 @@
                 </group>
                 <newline />
                 <group expand="0" string="Group By...">
-                    <filter string="Job" icon="terp-gtk-select-all" domain="[]" context="{'group_by':'job_id'}"/>
+                    <filter string="Job" icon="terp-gtk-select-all" domain="[]" context="{'group_by':'job_name'}"/>
                 </group>
             </search>
         </field>

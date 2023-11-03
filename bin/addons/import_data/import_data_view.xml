@@ -322,7 +322,7 @@
 
         <menuitem
             id="parent_import_category"
-            parent="account.menu_configuration_misc"
+            parent="account.product_category_configuration"
             sequence="5"
             name="Import Product Category" />
 

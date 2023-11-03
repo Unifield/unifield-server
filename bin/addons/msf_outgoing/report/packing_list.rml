@@ -180,6 +180,14 @@
                             			<para style="HeaderInfosValue">[[ getSel(objects[0], 'transport_type') ]]</para>
 									</td>
 								</tr>
+								<tr>
+									<td>
+                            			<para style="HeaderInfosTitle">Details:</para>
+									</td>
+									<td>
+                            			<para style="HeaderInfosValue">[[ p['pf_description_ppl'] or '' ]]</para>
+									</td>
+								</tr>
 							</blockTable>
                         </td>
                         <td>
@@ -249,7 +257,7 @@
                                 <para style="ParcelInfosRight" alignment="CENTER">Containing</para>
                             </td>
                             <td>
-                                <para style="ParcelInfos">Description</para>
+                                <para style="ParcelInfos">Parcel Comment</para>
                             </td>
                         </tr>
                     </blockTable>
@@ -295,7 +303,7 @@
                                 <para style="ParcelLineTitle">MSL</para>
                             </td>
                             <td>
-                                <para style="ParcelLineTitle">[[ pf.description_ppl or ' ' ]]</para>
+                                <para style="ParcelLineTitle">[[ pf.parcel_comment or ' ' ]]</para>
                             </td>
                         </tr>
                         <tr>
@@ -351,6 +359,24 @@
 
             <!-- Empty line -->
             <para style="SW">
+                <font color="white"> </font>
+            </para>
+
+            <blockTable rowHeights="10.0" colWidths="10.0,45.0,755.0,10.0" style="HeaderInfos">
+                <tr>
+                    <td></td>
+                    <td>
+                        <para style="HeaderInfosTitle">Notes :</para>
+                    </td>
+                    <td>
+                        <para style="HeaderInfosValue">[[ p['ppl'].note ]]</para>
+                    </td>
+                    <td></td>
+                </tr>
+            </blockTable>
+
+            <!-- Empty line -->
+            <para style="HeaderInfosTitle">
                 <font color="white"> </font>
             </para>
 

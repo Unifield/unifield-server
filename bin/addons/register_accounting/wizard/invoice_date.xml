@@ -24,6 +24,7 @@
                         <label string=" " colspan="4" />
                         <label string=" " colspan="4" />
                     </group>
+                    <group colspan="4" name="insert_asset" />
                     <group colspan="4">
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>
                         <button name="validate" type="object" string="Validate" icon="gtk-ok" />

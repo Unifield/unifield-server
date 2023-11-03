@@ -8,6 +8,8 @@
         <pageGraphics>
             <drawString x="35" y="560.0">FIELD ORDER [[ '%s (%s/%s)' % (objects[0].name, getSel(objects[0],'order_type'), getSel(objects[0],'state')) ]]</drawString>
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="9"/>
+            <drawString x="35" y="520.0">Details : [[ objects[0].details ]]</drawString>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
             <drawString x="730" y="520.0">Page : <pageNumber /></drawString>

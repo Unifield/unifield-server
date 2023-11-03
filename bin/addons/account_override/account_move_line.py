@@ -680,6 +680,7 @@ class account_move_line(osv.osv):
             'counterpart_transfer_st_line_id': False,
             'counterpart_transfer_st_line_sdref': False,
             'has_a_counterpart_transfer': False,
+            'asset_line_id': False,
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 

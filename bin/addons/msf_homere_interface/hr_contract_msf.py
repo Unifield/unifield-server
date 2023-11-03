@@ -37,6 +37,7 @@ class hr_contract_msf(osv.osv):
         'date_end': fields.date(string="Contract's ending date", readonly=True, required=False),
         'current': fields.boolean(string="Current contract", readonly=True, required=True),
         'job_id': fields.many2one('hr.job', string="Job", readonly=True, required=False),
+        'job_name': fields.char('Job', size=256),
     }
 
 hr_contract_msf()

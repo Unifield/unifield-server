@@ -192,7 +192,7 @@ class wizard_import_po_line(osv.osv_memory):
                                 row=row, cell_nb=header_index[_('line number')], to_write=to_write, context=context)
                             to_write.update(
                                 line_number=ln_value['line_number'],
-                                error_list=ln_value['error_list'])
+                                warning_list=ln_value['warning_list'])
 
                         # Cell 1: Product Code
                         p_value = check_line.product_value(
@@ -308,7 +308,7 @@ class wizard_import_po_line(osv.osv_memory):
                             if not rfq_line_ids:
                                 created_lines += 1
                                 if wiz.po_id.tender_id:
-                                    msg =  _('Warning! You are adding new lines which did not exist in the original tender!')
+                                    msg = _('Warning! You are adding new lines which did not exist in the original tender!')
                                     if msg not in message:
                                         message += msg
                                 to_write.update({

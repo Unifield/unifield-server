@@ -1,25 +1,84 @@
 <openerp>
-	<data noupdate="1">
+	<data noupdate="0">
 
-		<record model="product.asset.type" id="asset_type_it">
-			<field name="name">IT</field>
-		</record>
 
-		<record model="product.asset.type" id="asset_type_transport">
-			<field name="name">Transport</field>
-		</record>
+        <record model="product.asset.type" id="asset_type_it">
+            <field name="name">IT</field>
+            <field name="active" eval="False" />
+        </record>
+        <record model="product.asset.type" id="asset_type_general">
+            <field name="name">General</field>
+            <field name="active" eval="False" />
+        </record>
 
-		<record model="product.asset.type" id="asset_type_medical">
-			<field name="name">Medical</field>
-		</record>
+        <record model="product.asset.type" id="asset_type_transport">
+            <field name="name">Transport</field>
+        </record>
 
-		<record model="product.asset.type" id="asset_type_telecommunication">
-			<field name="name">Telecommunication</field>
-		</record>
+        <record model="product.asset.type" id="asset_type_medical">
+            <field name="name">Medical</field>
+        </record>
 
-		<record model="product.asset.type" id="asset_type_general">
-			<field name="name">General</field>
-		</record>
+        <record model="product.asset.type" id="asset_type_telecommunication">
+            <field name="name">Communication</field>
+        </record>
+        <record model="product.asset.type" id="asset_type_energy">
+            <field name="name">Energy</field>
+        </record>
+        <record model="product.asset.type" id="asset_type_watsan">
+            <field name="name">Watsan</field>
+        </record>
+        <record model="product.asset.type" id="asset_type_logistic">
+            <field name="name">Logistic</field>
+        </record>
+        <record model="product.asset.type" id="asset_type_Construction">
+            <field name="name">Construction</field>
+        </record>
 
-	</data>
+
+        <record model="product.asset.event.type" id="asset_event_type_reception">
+           <field name="name">Reception</field>
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_startuse">
+           <field name="name">Start use</field>
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_repairing">
+           <field name="name">Repairing</field>
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_enduse">
+           <field name="name">End use</field>
+           <field name="is_disposal" eval="True" />
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_obsolete">
+           <field name="name">Obsolete</field>
+           <field name="is_disposal" eval="True" />
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_loaning">
+           <field name="name">Loaning</field>
+           <field name="is_disposal" eval="True" />
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_transfer">
+           <field name="name">Transfer</field>
+           <field name="is_disposal" eval="True" />
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_donation">
+           <field name="name">Donation</field>
+           <field name="is_disposal" eval="True" />
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_other">
+           <field name="name">Other</field>
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_damage">
+           <field name="name">Damage</field>
+           <field name="is_disposal" eval="True" />
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_missing">
+           <field name="name">Missing</field>
+           <field name="is_disposal" eval="True" />
+        </record>
+        <record model="product.asset.event.type" id="asset_event_type_sale">
+           <field name="name">Sale</field>
+           <field name="is_disposal" eval="True" />
+        </record>
+    </data>
 </openerp>

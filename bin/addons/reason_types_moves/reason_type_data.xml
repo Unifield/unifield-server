@@ -121,9 +121,6 @@
             <field name="name">Other</field>
             <field name="code">14</field>
             <field name="inventory_ok" eval="1" />
-            <field name="incoming_ok">True</field>
-            <field name="outgoing_ok">True</field>
-            <field name="internal_ok">True</field>
             <field name="pi_discrepancy_type">True</field>
         </record>
         

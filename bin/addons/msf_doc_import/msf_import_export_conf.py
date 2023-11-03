@@ -19,6 +19,8 @@
 #
 ##############################################################################
 
+from tools.translate import _
+
 MODEL_DICT = {
     # SUPPLY
     'products': {
@@ -108,7 +110,14 @@ MODEL_DICT = {
         'domain': [('category', '=', 'DEST'), ('parent_id', '!=', False)]
     },
     'cost_centers': {
-        'name': 'Cost Centers',
+        'name': _('Cost Center Creation Mapping'),
+        'domain_type': 'finance',
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)],
+        'partial': False
+    },
+    'cost_centers_update': {
+        'name': _('Cost Center Updates'),
         'domain_type': 'finance',
         'model': 'account.analytic.account',
         'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)],
@@ -300,6 +309,9 @@ MODEL_DATA_DICT = {
             'name',
             'property_stock_journal',
             'donation_expense_account',
+            'asset_bs_account_id',
+            'asset_bs_depreciation_account_id',
+            'asset_pl_account_id',
             'family_id.msfid',
         ],
         'required_field_list': [
@@ -547,6 +559,23 @@ MODEL_DATA_DICT = {
             'code',
             'parent_id.code',
             'date_start',
+        ],
+    },
+    'cost_centers_update': {
+        'header_list': [
+            'code',
+            'name',
+            'parent_id.code',
+            'type',
+            'date_start',
+            'date',  # "inactive from"
+            'top_prop_instance',
+            'is_target_cc_instance_ids',
+            'top_cc_instance_ids',
+            'po_fo_cc_instance_ids',
+        ],
+        'required_field_list': [
+            'code',
         ],
     },
     'destinations': {

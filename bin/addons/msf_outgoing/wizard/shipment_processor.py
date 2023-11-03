@@ -43,12 +43,14 @@ class shipment_add_pack_processor(osv.osv):
 
         return True
 
+
 shipment_add_pack_processor()
+
 
 class shipment_add_pack_processor_line(osv.osv):
     _name = 'shipment.add.pack.processor.line'
     _inherit = 'return.shipment.family.processor'
-    _description ='Pack to add'
+    _description = 'Pack to add'
 
     _columns = {
         'wizard_id': fields.many2one('shipment.add.pack.processor', 'Processor'),
@@ -56,5 +58,6 @@ class shipment_add_pack_processor_line(osv.osv):
         'volume': fields.float(digits=(16, 2), string='Volume[dm³]'),
         'weight': fields.float(digits=(16, 2), string='Weight P.P [Kg]'),
     }
+
 
 shipment_add_pack_processor_line()
