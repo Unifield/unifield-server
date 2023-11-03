@@ -411,7 +411,9 @@ class stock_move(osv.osv):
         '''
         result = {}
         uom_obj = self.pool.get('product.uom')
-        for move in self.read(cr, uid, ids, ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'], context=context):
+        ftf = ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty', 'pick_shipment_id', 'picking_id',
+               'state', 'not_shipped']
+        for move in self.read(cr, uid, ids, ftf, context=context):
             default_values = {
                 'total_amount': 0.0,
                 'amount': 0.0,
@@ -445,6 +447,12 @@ class stock_move(osv.osv):
             if move['product_uom']:
                 uom_rounding = uom_obj.read(cr, uid, move['product_uom'][0], ['rounding'], context=context)['rounding']
                 result[move['id']]['product_uom_rounding_is_pce'] = uom_rounding == 1
+            # Give the Returned state to the Shipment's lines popup lines if the pack.family.memory is Returned
+            ship_influenced_state = move['state']
+            if move['pick_shipment_id'] and move['picking_id'] and move['not_shipped']:
+                ship_influenced_state = 'returned'
+            result[move['id']]['ship_influenced_state'] = ship_influenced_state
+
         return result
 
     def _get_picking_with_sysint_name(self, cr, uid, ids, fields, arg, context=None):
@@ -619,6 +627,11 @@ class stock_move(osv.osv):
                 'stock.picking': (_get_picking, ['shipment_id'], 10),
             }
         ),
+        'ship_influenced_state': fields.function(_vals_get, method=True, store=False, string='State', type='selection',
+                                                 selection=[('draft', 'Draft'), ('waiting', 'Waiting'),
+                                                            ('confirmed', 'Not Available'), ('assigned', 'Available'),
+                                                            ('done', 'Closed'), ('cancel', 'Cancelled'),
+                                                            ('returned', 'Returned')], readonly=True, multi='get_vals'),
         'from_manage_expired_move': fields.related('picking_id', 'from_manage_expired', string='Manage Expired', type='boolean', readonly=True),
         'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
         'location_output_id': fields.many2one('stock.location', string='Output location'),
