@@ -12,7 +12,11 @@ var fields_values = JSON.parse(window.atob("${fields_values}"));
 jQuery(document).ready(function () {
     for (var i = 0; i < fields_values.length; i++) {
         field_id = "#" + fields_values[i].id;
-        $(field_id, window.parent.document).val(fields_values[i].value);
+        if ($('#_terp_view_type', window.parent.document).val() == 'tree') {
+            new window.parent.ListView('_terp_list').reload_from_wizard();
+        } else {
+            $(field_id, window.parent.document).val(fields_values[i].value);
+        }
     }
     window.frameElement.close();
 })

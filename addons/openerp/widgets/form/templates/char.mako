@@ -9,7 +9,7 @@
         % if translatable and ( not readonly_before_state or ro_by_trans ) :
             <img src="/openerp/static/images/stock/stock_translate.png" class="translatable" id="${name}_translatable"/>
             <script type="text/javascript">
-                jQuery('#${name}_translatable').click(function() {
+                jQuery(idSelector('${name}_translatable')).click(function() {
                     var params = {
                         'relation': '${model}',
                         'id': jQuery('#_terp_id').attr('value'),

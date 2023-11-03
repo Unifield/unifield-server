@@ -324,6 +324,7 @@ class List(TinyWidget):
                         self.editors = {}
                         break
                     fa['editable_style'] = attrs.get('editable_style', False)
+                    fa['model'] = self.model
                     Widget = get_widget(fa.get('type', 'char')) or get_widget('char')
                     self.editors[f] = Widget(**fa)
 
