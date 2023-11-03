@@ -1208,23 +1208,32 @@ class product_asset_disposal(osv.osv_memory):
         if self.pool.get('product.asset').search_exists(cr, uid, [('id', '=', wiz.asset_id.id), ('start_date', '>=', wiz.disposal_date)], context=context):
             raise osv.except_osv(_('Error !'), _('Date of disposal %s is before the depreciation date %s!') % (wiz.disposal_date, wiz.asset_id.start_date))
 
-        nb_posted = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>=', wiz.disposal_date), ('move_id.state', '=', 'posted')], count=True, context=context)
+        orig_disposal = wiz.disposal_date
+        disposale_dt = datetime.strptime(wiz.disposal_date, '%Y-%m-%d')
+        end_of_month = disposale_dt + relativedelta(months=1, day=1, days=-1)
+        if not wiz.asset_id.prorata:
+            disposale_dt = end_of_month
+            wiz.disposal_date = end_of_month.strftime('%Y-%m-%d')
+
+        nb_posted = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>', wiz.disposal_date), ('move_id.state', '=', 'posted')], count=True, context=context)
         if nb_posted:
             raise osv.except_osv(_('Error !'), _('Date of disposal %s does not match: there are %d posted entries') % (wiz.disposal_date, nb_posted))
 
-        nb_draft = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>=', wiz.disposal_date), ('move_id.state', '=', 'draft')], count=True, context=context)
+        nb_draft = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>', wiz.disposal_date), ('move_id.state', '=', 'draft')], count=True, context=context)
         if nb_draft > 1:
             raise osv.except_osv(_('Error !'), _('Date of disposal %s does not match: there are %d unposted entries') % (wiz.disposal_date, nb_draft))
 
-        disposale_dt = datetime.strptime(wiz.disposal_date, '%Y-%m-%d')
-        end_of_month = disposale_dt + relativedelta(months=1, day=1, days=-1)
+        if not asset_line_obj.search_exists(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('last_dep_day', '>', wiz.disposal_date)], context=context):
+            raise osv.except_osv(_('Error !'), _('Asset already fully deprecated at %s') % wiz.disposal_date)
+
         draft_lines = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>', end_of_month)], context=context)
         if draft_lines:
             asset_line_obj.unlink(cr, uid, draft_lines, context=context)
 
+
         if wiz.register_event:
             self.pool.get('product.asset.event').create(cr, uid, {
-                'date': wiz.disposal_date,
+                'date': orig_disposal,
                 'asset_id': wiz.asset_id.id,
                 'event_type_id': wiz.event_type_id.id,
                 'location': wiz.location,
@@ -1251,8 +1260,6 @@ class product_asset_disposal(osv.osv_memory):
                         self.pool.get('account.move.line').write(cr, uid, [ji.id], {'credit_currency': new_value, 'document_date': wiz.disposal_date, 'date': wiz.disposal_date}, context=context, check=False)
                 self.pool.get('account.move').write(cr, uid, [line_to_update.move_id.id], {'document_date': wiz.disposal_date, 'date': wiz.disposal_date}, context=context)
 
-        #asset = self.pool.get('product.asset').browse(cr, uid, [wiz.asset_id.id], fields_to_fetch=['disposal_amount'], context=context)
-        #print asset[0].disposal_amount, wiz.asset_id.disposal_amount
         new_line_id = asset_line_obj.create(cr, uid, {
             'is_disposal': True,
             'date': wiz.disposal_date,
