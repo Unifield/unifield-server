@@ -384,7 +384,7 @@
                         <para style="TotalInfos">Qty of parcels:</para>
                     </td>
                     <td>
-                        <para style="TotalInfosRight">[[ p['nb_parcel'] or '0' ]] total</para>
+                        <para style="TotalInfosRight">[[ p['nb_parcel'] or '0' ]]</para>
                     </td>
                     <td></td>
                 </tr>
