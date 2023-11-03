@@ -322,7 +322,7 @@
 
         <menuitem
             id="parent_import_category"
-            parent="useability_dashboard_and_menu.product_category_configuration"
+            parent="account.product_category_configuration"
             sequence="5"
             name="Import Product Category" />
 
