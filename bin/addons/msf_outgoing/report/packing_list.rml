@@ -366,7 +366,7 @@
                         <para style="HeaderInfosTitle">Notes :</para>
                     </td>
                     <td>
-                        <para style="HeaderInfosValue">[[ p['ppl'].note ]] total</para>
+                        <para style="HeaderInfosValue">[[ p['ppl'].note ]]</para>
                     </td>
                     <td></td>
                 </tr>
