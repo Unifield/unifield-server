@@ -443,7 +443,7 @@
                 <field name="active" />
                 <newline />
                 <field name="useful_life_id"
-                    filter_selector="[('Show Active', [('is_active', '=', True)]), ('Show Inactive', [('is_active', '=', False)]), ('Show all', [])]"
+                    filter_selector="[('Show all', []), ('Show Active', [('is_active', '=', True)]), ('Show Inactive', [('is_active', '=', False)])]"
                     >
                     <tree editable="top" colors="grey: not is_active" hide_delete_button="True">
                         <field name="year" />
