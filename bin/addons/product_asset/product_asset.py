@@ -688,7 +688,7 @@ class product_asset(osv.osv):
                 'asset_bs_depreciation_account_id': bs_prod_account_id,
                 'asset_pl_account_id': asset.move_line_id.account_id.id,
                 'date': to_create[0][0],
-                'amount': -1*asset.move_line_id.amount_currency,
+                'amount': -1*asset.invo_value,
                 'is_initial_line': True,
                 'analytic_distribution_id': new_ad_id,
             }, context=context)
