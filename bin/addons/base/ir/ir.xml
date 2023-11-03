@@ -2067,6 +2067,7 @@
                     <separator orientation="vertical"/>
                     <field name="state"/>
                     <field name="restart"/>
+                    <field name="action_id" widget="char" />
                 </search>
             </field>
         </record>

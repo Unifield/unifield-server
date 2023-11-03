@@ -40,6 +40,9 @@ class product_category(osv.osv):
             method=True,
             view_load=True,
             help="This account will be used for invoices to value expenses for the current product category"),
+        'asset_bs_account_id': fields.many2one('account.account', 'Asset Balance Sheet Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
+        'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
+        'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciationn Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
     }
 product_category()
 
@@ -51,11 +54,11 @@ class product_template(osv.osv):
     _inherit = "product.template"
     _columns = {
         'taxes_id': fields.many2many('account.tax', 'product_taxes_rel',
-            'prod_id', 'tax_id', 'Customer Taxes',
-            domain=[('parent_id','=',False),('type_tax_use','in',['sale','all'])]),
+                                     'prod_id', 'tax_id', 'Customer Taxes',
+                                     domain=[('parent_id','=',False),('type_tax_use','in',['sale','all'])]),
         'supplier_taxes_id': fields.many2many('account.tax',
-            'product_supplier_taxes_rel', 'prod_id', 'tax_id',
-            'Supplier Taxes', domain=[('parent_id', '=', False),('type_tax_use','in',['purchase','all'])]),
+                                              'product_supplier_taxes_rel', 'prod_id', 'tax_id',
+                                              'Supplier Taxes', domain=[('parent_id', '=', False),('type_tax_use','in',['purchase','all'])]),
         'property_account_income': fields.many2one(
             'account.account',
             string='Income Account',

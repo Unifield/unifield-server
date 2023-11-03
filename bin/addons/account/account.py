@@ -30,6 +30,7 @@ import pooler
 from osv import fields, osv
 import decimal_precision as dp
 from tools.translate import _
+from tools.misc import get_fake
 from lxml import etree
 
 
@@ -295,6 +296,17 @@ class account_account(osv.osv):
         else:
             raise osv.except_osv(_('Error'), _('Operation not implemented!'))
 
+    def _search_asset_for_product(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args or not args[0] or not args[0][2] or not args[0][2][0]:
+            return []
+
+        if not args[0][2][1]:
+            return [('id', '=', 0)]
+        prod = self.pool.get('product.product').browse(cr, uid, args[0][2][1], fields_to_fetch=['categ_id'], context=context)
+        return [('id', '=', prod.categ_id and prod.categ_id.asset_bs_account_id and prod.categ_id.asset_bs_account_id.id or 0)]
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True),
         'currency_id': fields.many2one('res.currency', 'Secondary Currency', help="Forces all moves for this account to have this secondary currency."),
@@ -353,6 +365,7 @@ class account_account(osv.osv):
                                           required=True),
         'level': fields.function(_get_level, string='Level', method=True, store=True, type='integer'),
         'is_child_of_coa': fields.function(_get_child_of_coa, method=True, type='boolean', string='Is child of CoA', help="Check if the current account is a direct child of Chart Of Account account."),
+        'asset_for_product': fields.function(get_fake, method=True, type='boolean', string='Filter account for asset', fnct_search=_search_asset_for_product),
     }
 
     _defaults = {
@@ -1496,6 +1509,7 @@ class account_move(osv.osv):
         'date': fields.date('Date', required=True, states={'posted':[('readonly',True)]}, select=True),
         'narration':fields.text('Narration'),
         'company_id': fields.related('journal_id','company_id',type='many2one',relation='res.company',string='Company', store=True, readonly=True),
+        'asset_id': fields.many2one('product.asset', 'Asset', readonly=1, ondelete='restrict'),
     }
     _defaults = {
         'name': '/',
@@ -1545,7 +1559,8 @@ class account_move(osv.osv):
             #            raise osv.except_osv(_('Integrity Error !'), _('You cannot validate a non-balanced entry !\nMake sure you have configured Payment Term properly !\nIt should contain atleast one Payment Term Line with type "Balance" !'))
             raise osv.except_osv(_('Integrity Error!'), _('You cannot validate a non-balanced entry ! All lines should have a “Valid” state to validate the entry.'))
         obj_sequence = self.pool.get('ir.sequence')
-        for move in self.browse(cr, uid, valid_moves, context=context):
+        asset_ids_to_check = []
+        for move in self.browse(cr, uid, valid_moves, fields_to_fetch=['name', 'journal_id', 'period_id', 'asset_id'], context=context):
             if move.name =='/':
                 new_name = False
                 journal = move.journal_id
@@ -1562,8 +1577,15 @@ class account_move(osv.osv):
                 if new_name:
                     self.write(cr, uid, [move.id], {'name':new_name})
 
-        return super(account_move, self).write(cr, uid, valid_moves,
-                                               {'state':'posted'})
+            if move.asset_id:
+                asset_ids_to_check.append(move.asset_id.id)
+
+        a = super(account_move, self).write(cr, uid, valid_moves,
+                                            {'state':'posted'})
+
+        if asset_ids_to_check:
+            self.pool.get('product.asset').test_and_set_done(cr, uid, asset_ids_to_check, context=context)
+        return a
 
     def button_validate(self, cursor, user, ids, context=None):
         for move in self.browse(cursor, user, ids, context=context):
@@ -1651,6 +1673,7 @@ class account_move(osv.osv):
         default.update({
             'state':'draft',
             'name':'/',
+            'asset_id': False,
         })
         context.update({
             'copy':True
@@ -1946,6 +1969,18 @@ class account_move(osv.osv):
             obj_move_line.create_analytic_lines(cr, uid, [line.id for line in record.line_id], context)
 
         valid_moves = [move.id for move in valid_moves]
+        if valid_moves:
+            # copy ad from account_move_line to asset line
+            # case of AD copied from header to line on posting
+            cr.execute('''update product_asset_line al
+                set analytic_distribution_id = ml.analytic_distribution_id
+                from account_move_line ml
+                where
+                    ml.asset_line_id = al.id
+                    and (al.analytic_distribution_id!=ml.analytic_distribution_id or al.analytic_distribution_id is null)
+                    and ml.analytic_distribution_id is not null
+                    and ml.move_id in %s
+            ''', (tuple(valid_moves),))
         return len(valid_moves) > 0 and valid_moves or False
 
     # US-852: At the end of each sync execution of the create move line, make a quick check if any other move lines of the same move were invalid

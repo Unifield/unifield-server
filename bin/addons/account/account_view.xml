@@ -3039,5 +3039,6 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
             parent="menu_finance_payables"
             action="base.action_partner_supplier_form" sequence="100"/>
 
+        <menuitem id="product_category_configuration" parent="account.menu_configuration_misc" sequence="2" name="Product Categories" />
     </data>
 </openerp>

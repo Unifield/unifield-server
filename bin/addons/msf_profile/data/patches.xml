@@ -1006,6 +1006,11 @@
             <field name="method">us_12149_transfer_ppl_description_data</field>
         </record>
 
+        <record id="us_11950_delete_previous_assets" model="patch.scripts">
+            <field name="method">us_11950_delete_previous_assets</field>
+        </record>
+
+
 
 
     </data>

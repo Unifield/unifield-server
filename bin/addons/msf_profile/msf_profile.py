@@ -58,6 +58,12 @@ class patch_scripts(osv.osv):
     }
 
     # UF31.0
+
+    def us_11950_delete_previous_assets(self, cr,uid, *a, **b):
+        cr.execute("delete from product_asset")
+        cr.execute("update ir_sequence set number_next=1 where code='product.asset'")
+        return True
+
     def us_11781_remove_product_country_restriction(self, cr, uid, *a, **b):
         '''
         Remove the country restrictions from the products who have some

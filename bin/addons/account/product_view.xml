@@ -76,6 +76,9 @@
                                domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
                                         ('user_type_code', 'in', ['expense', 'income', 'asset']),
                                         ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"/>
+                        <field name="asset_bs_account_id" />
+                        <field name="asset_bs_depreciation_account_id" />
+                        <field name="asset_pl_account_id" />
                     </group>
                 </form>
             </field>

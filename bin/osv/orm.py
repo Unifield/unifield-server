@@ -1474,6 +1474,9 @@ class orm_template(object):
                     res[f]['relation'] = field_col._obj
                     res[f]['domain'] = field_col._domain
                     res[f]['context'] = field_col._context
+                    if getattr(field_col, 'add_empty', None):
+                        # m2o widget=selection + required
+                        res[f]['add_empty'] = getattr(field_col, 'add_empty')
         else:
             #TODO : read the fields from the database
             pass
@@ -4792,12 +4795,13 @@ class orm(orm_template):
             e = expression.expression(domain)
             e.parse(cr, user, self, context)
             tables = e.get_tables()
-            where_clause, where_params = e.to_sql()
+            where_clause, where_params, extra_joins = e.to_sql()
             where_clause = where_clause and [where_clause] or []
         else:
             where_clause, where_params, tables = [], [], ['"%s"' % self._table]
+            extra_joins = None
 
-        return Query(tables, where_clause, where_params)
+        return Query(tables, where_clause, where_params, joins=extra_joins)
 
     def _check_qorder(self, word):
         if not regex_order.match(word):

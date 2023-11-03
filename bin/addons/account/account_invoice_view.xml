@@ -64,11 +64,12 @@
                             <field name="line_synced" invisible="1"/>
                             <field name="partner_type" invisible="1"/>
                             <field name="product_id"
-                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
+                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, is_asset, {'company_id': parent.company_id})"
                                    default_focus="1"
                                    attrs="{'readonly': ['|',
                                                         '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
-                                                        '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
+                                                        '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))],
+                                            'required': [('is_asset', '=', True)]}"
                             />
                             <field name="uos_id"
                                    on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
@@ -85,9 +86,10 @@
                                    attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                             <field colspan="4" name="name"/>
                             <field name="account_id"
-                                   domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                   domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines'), ('asset_for_product', '=', [is_asset, product_id])]"
                                    required="1"
                             />
+                            <field name="is_asset" invisible="1" />
                             <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
                             <newline/>
                             <field name="company_id" groups="base.group_multi_company" readonly="1"/>
@@ -239,7 +241,8 @@
                                                     'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                            </group>
 
-                            <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
+                            <field name="is_asset_activated" invisible="1" />
+                            <field colspan="4" default_get="{'is_asset_activated': is_asset_activated, 'type': type, 'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
                                 <tree string="Invoice lines" editable="both" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True or not account_id;black:analytic_distribution_state in ('none', 'valid') and inactive_product == False and account_id">
                                     <field name="from_supply" invisible="1"/>
                                     <field name="line_synced" invisible="1"/>
@@ -251,11 +254,12 @@
                                     <field name="product_id"
                                            attrs="{'readonly': ['|',
                                                                 '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
-                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
-                                           on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
+                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))],
+                                                   'required': [('is_asset', '=', True)]}"
+                                           on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, is_asset, {'company_id': parent.company_id})"
                                     />
                                     <field name="account_id"
-                                           domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                           domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines'), ('asset_for_product', '=', [is_asset, product_id])]"
                                            required="1"
                                     />
                                     <field name="invoice_line_tax_id" view_mode="2" context="{'type':parent.type}" domain="[('parent_id','=',False)]"/>
@@ -274,6 +278,7 @@
                                     <field name="price_unit"
                                            attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"
                                     />
+                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" invisible="context.get('type')=='in_refund' or not context.get('is_asset_activated')" />
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
                                     <field name="name"/>

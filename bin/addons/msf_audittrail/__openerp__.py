@@ -64,6 +64,7 @@
         'data/audittrail_accrual.yml',
         'audittrail_report.xml',
         'audittrail_invoice_data.yml',
+        'data/audittrail_data_asset.yml',
     ],
     'demo_xml': [],
     'installable': True,

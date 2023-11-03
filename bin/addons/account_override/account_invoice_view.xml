@@ -390,7 +390,8 @@
                                                              ('from_supply', '=', True),
                                                              '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                             </group>
-                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True, 'from_inv_form': True}">
+                            <field name="is_asset_activated" invisible="1" />
+                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True, 'from_inv_form': True, 'is_asset_activated': is_asset_activated}">
                                 <tree string="Intermission Voucher Lines"
                                       editable="both"
                                       colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True or not account_id;black:inactive_product == False and analytic_distribution_state in ('none', 'valid') and account_id">
@@ -401,11 +402,12 @@
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="product_id"
-                                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
+                                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, is_asset, {'company_id': parent.company_id})"
                                                    attrs="{'readonly': ['|',
                                                                         ('from_supply', '=', True),
-                                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}" />
-                                    <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"
+                                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)],
+                                                           'required': [('is_asset', '=', True)]}" />
+                                    <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines'), ('asset_for_product', '=', [is_asset, product_id])]"
                                            required="1"
                                            context="{'type': parent.type, 'journal_type': parent.journal_type, 'intermission_type': parent.type == 'out_invoice' and 'out' or 'in'}"
                                     />
@@ -428,6 +430,7 @@
                                     />
                                     <field name="price_unit"
                                            attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
+                                    <field name="is_asset" on_change="change_is_asset(is_asset, product_id)" invisible="not context.get('is_asset_activated')"/>
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
                                     <field name="inactive_product" invisible="1" />
@@ -440,11 +443,12 @@
                                             <field name="line_synced" invisible="1"/>
                                             <field name="invoice_type" invisible="1"/>
                                             <field name="product_id"
-                                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
+                                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, is_asset, {'company_id': parent.company_id})"
                                                    default_focus="1"
                                                    attrs="{'readonly': ['|',
                                                                         ('from_supply', '=', True),
-                                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}" />
+                                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)],
+                                                            'required': [('is_asset', '=', True)]}" />
                                             <field name="uos_id"
                                                    on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                                    attrs="{'readonly': ['|',
@@ -457,7 +461,8 @@
                                             <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                             <field name="discount" groups="base.group_extended" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                             <field name="name" colspan="4"/>
-                                            <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]" required="1"/>
+                                            <field name="is_asset" invisible="1" />
+                                            <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines'), ('asset_for_product', '=', [is_asset, product_id])]" required="1"/>
                                             <group colspan="6">
                                                 <field name="analytic_distribution_state" invisible="1"/>
                                                 <field name="newline" invisible="1" />

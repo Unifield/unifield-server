@@ -1,315 +1,591 @@
-<?xml version="1.0" encoding="utf-8"?>
+
 <openerp>
-	<data>
+<data>
 
-		<!-- product -->
-		<record id="product_normal_form_view" model="ir.ui.view">
-			<field name="name">product.normal.form</field>
-			<field name="model">product.product</field>
-			<field name="type">form</field>
-            <field name="priority">55</field>
-			<field name="inherit_id" ref="product.product_normal_form_view" />
-			<field name="arch" type="xml">
-				<data>
+    <menuitem name="Assets" id="product_asset.asset_configuration" parent="account.menu_configuration_misc" sequence="50" />
+    <!-- product -->
+    <record id="product_normal_form_view" model="ir.ui.view">
+        <field name="name">product.normal.form</field>
+        <field name="model">product.product</field>
+        <field name="type">form</field>
+        <field name="priority">55</field>
+        <field name="inherit_id" ref="product.product_normal_form_view" />
+        <field name="arch" type="xml">
+            <data>
 
-					<field name="type" position="after">
-						<field name="subtype" attrs="{'invisible':[('type','!=','product')]}" />
-						<field name="asset_type_id" widget="selection"
-							attrs="{'invisible':[('subtype','!=','asset')], 'required':[('subtype','=','asset')]}" />
-					</field>
+                <field name="type" position="after">
+                    <field name="subtype" attrs="{'invisible':[('type','!=','product')]}" />
+                    <field name="asset_type_id" widget="selection" former_domain="[('active', 'in', ['t', 'f'])]"
+                        attrs="{'invisible':[('subtype','!=','asset')], 'required':[('subtype','=','asset')]}" />
+                </field>
 
-				</data>
-			</field>
-		</record>
-
-
-		<act_window id="product_2_assets_normal_link" context="{}"
-			domain="[('product_id', '=', active_id)]" name="Asset Forms"
-			res_model="product.asset" src_model="product.product" />
-
-		<act_window id="product_2_events_normal_link" context="{}"
-			domain="[('product_id', '=', active_id)]" name="Asset Follow Up"
-			res_model="product.asset.event" src_model="product.product" />
-
-		<!--
-			Main asset form
-		-->
-		<record id="asset_normal_form_view" model="ir.ui.view">
-			<field name="name">asset.normal.form</field>
-			<field name="model">product.asset</field>
-			<field name="type">form</field>
-			<field name="arch" type="xml">
-				<form string="Asset">
-					<notebook>
-						<page string="Asset Form">
-							<group colspan="2" col="2">
-								<separator string="Asset" colspan="2" />
-								<field name="name" />
-								<field name="partner_name" readonly='1'/>
-								<field name="asset_type_id" />
-								<field name="description" />
-								<field name="product_id" on_change="onChangeProductId(product_id)"
-									domain="[('subtype', '=', 'asset')]" />
-							</group>
-
-							<group colspan="2" col="2">
-								<separator string="MSF Codification" colspan="2" />
-								<field name="prod_int_code" />
-								<field name="prod_int_name" />
-								<field name="nomenclature_description" />
-								<field name="hq_ref" />
-								<field name="local_ref" />
-							</group>
-
-							<group colspan="2" col="8">
-								<separator string="Asset Reference" colspan="2" />
-								<field name="serial_nb" colspan="8" />
-								<field name="brand" colspan="8" />
-								<field name="type" colspan="8" />
-								<field name="model" colspan="8" />
-								<field name="year" on_change="onChangeYear(year)" />
-							</group>
-
-							<group colspan="2" col="4">
-								<separator string="Comment" colspan="4" />
-								<!-- display hack -->
-								<group colspan="1" col="1"></group>
-								<field name="comment" nolabel="True" colspan="3" />
-							</group>
-
-							<group colspan="2" col="2">
-								<separator string="Traceability" colspan="2" />
-								<field name="project_po" />
-								<field name="orig_mission_code" />
-								<field name="international_po" />
-								<field name="arrival_date" />
-								<field name="receipt_place" />
-							</group>
-
-							<group colspan="2" col="4">
-								<separator string="Invoice" colspan="4" />
-								<field name="invo_num" colspan="4" />
-								<field name="invo_date" colspan="4" />
-								<field name="invo_value" />
-								<field name="invo_currency"  widget="many2one" />
-								<field name="invo_supplier" colspan="4" />
-								<field name="invo_donator_code" colspan="4" />
-								<field name="invo_certif_depreciation" colspan="4" />
-							</group>
-						</page>
-
-						<page string="Event History">
-							<group colspan="2" col="2">
-								<field colspan="4" name="event_ids" nolabel="1" mode="tree,form">
-									<tree string="Events">
-										<field name="date" />
-										<field name="event_type" />
-										<field name="location" />
-										<field name="state" />
-										<field name="proj_code" />
-									</tree>
-								</field>
-							</group>
-						</page>
-					</notebook>
-				</form>
-			</field>
-		</record>
+            </data>
+        </field>
+    </record>
 
 
-		<record id="asset_normal_tree_view" model="ir.ui.view">
-			<field name="name">asset.normal.tree</field>
-			<field name="model">product.asset</field>
-			<field name="type">tree</field>
-			<field name="arch" type="xml">
-				<tree string="Asset Forms">
-					<field name="name" />
-					<field name="partner_name"/>
-					<field name="asset_type_id" />
-					<field name="product_id" />
-					<field name="brand" />
-					<field name="type" />
-					<field name="year" />
-				</tree>
-			</field>
-		</record>
+    <act_window id="product_2_assets_normal_link" context="{}"
+        domain="[('product_id', '=', active_id)]" name="Asset Forms"
+        res_model="product.asset" src_model="product.product" />
+
+    <act_window id="product_2_events_normal_link" context="{}"
+        domain="[('product_id', '=', active_id)]" name="Asset Follow Up"
+        res_model="product.asset.event" src_model="product.product" />
+
+    <record id="asset_disposal_form_view" model="ir.ui.view">
+        <field name="name">product.asset.disposal.form</field>
+        <field name="model">product.asset.disposal</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Disposal">
+                <field name="disposal_date" />
+                <newline />
+                <field name="event_type_id" on_change="change_event_type_id(event_type_id)" widget="selection"/>
+                <newline />
+                <field name="disposal_expense_account" />
+                <newline />
+                <field name="disposal_bs_account" />
+                <newline />
+                <field name="register_event" />
+                <newline />
+                <field name="location" attrs="{'invisible': [('register_event','=', False)], 'required': [('register_event','!=', False)]}" />
+                <field name="proj_code" attrs="{'invisible': [('register_event','=', False)]}" />
+                <field name="comment" attrs="{'invisible': [('register_event','=', False)]}" colspan="4"/>
+                <group colspan="4" col="4">
+                    <button name="button_generate_disposal_entry" type="object" string="Dispose" icon="gtk-ok"/>
+                    <button name="cancel"  type="special" special="cancel" string="Cancel" icon="gtk-cancel" />
+                </group>
+            </form>
+        </field>
+    </record>
+    <!--
+        Main asset form
+    -->
+    <record id="asset_normal_form_view" model="ir.ui.view">
+        <field name="name">asset.normal.form</field>
+        <field name="model">product.asset</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Asset">
+                    <field name="name" />
+                    <field name="instance_id" readonly='1'/>
+                    <field name="journal_id" />
+                    <group colspan="2" col="4">
+                        <field name="asset_type_id" on_change="change_asset_type_id(asset_type_id, useful_life_id)" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                        <field name="useful_life_id" widget="selection" get_selection="get_selection_useful_life_id" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                    </group>
+                    <field name="product_id" on_change="onChangeProductId(product_id)" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '!=', 'draft')]}"/>
+                    <field name="description" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '!=', 'draft')]}" />
+                    <notebook colspan="4">
+                    <page string="Asset Form">
+                        <group colspan="2" col="2" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                            <separator string="MSF Codification" colspan="2" />
+                            <field name="prod_int_code" />
+                            <field name="prod_int_name" />
+                            <field name="nomenclature_description" />
+                            <field name="hq_ref" />
+                            <field name="local_ref" />
+                        </group>
+
+                        <group colspan="2" col="8" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                            <separator string="Asset Reference" colspan="2" />
+                            <field name="serial_nb" colspan="8" />
+                            <field name="brand" colspan="8" />
+                            <field name="type" colspan="8" />
+                            <field name="model" colspan="8" />
+                            <field name="year" on_change="onChangeYear(year)" />
+                        </group>
+
+                        <group colspan="2" col="4">
+                            <separator string="Comment" colspan="4" />
+                            <!-- display hack -->
+                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
+                        </group>
+
+                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', 'in', ['cancel', 'done'])]}">
+                            <separator string="Traceability" colspan="2" />
+                            <field name="project_po" />
+                            <field name="orig_mission_code" />
+                            <field name="international_po" />
+                            <field name="arrival_date" />
+                            <field name="receipt_place" />
+                        </group>
+
+                        <group colspan="2" col="4">
+                            <separator string="Invoice" colspan="4" />
+                            <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
+                            <field name="quantity_divisor"  attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_quantity_divisor(quantity_divisor, move_line_id)"/>
+                            <field name="invo_value" />
+                            <field name="invo_currency"  />
+                            <field name="invo_date" />
+                            <field name="invo_supplier_id" colspan="4" attrs="{'readonly': ['|', '|', ('from_sync', '=', True), ('from_invoice', '=', True), ('state', '!=', 'draft')]}" />
+                            <field name="invo_donator_code" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
+                            <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
+                        </group>
+                        <group colspan="2" col="2">
+                            <separator string="Accounts" colspan="2" />
+                            <field name="asset_bs_depreciation_account_id" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                            <field name="asset_pl_account_id" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                        </group>
+                    </page>
+                    <page string="Event History">
+                        <group colspan="2" col="2">
+                            <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [('state', 'not in', ['open', 'running'])]}">
+                                <tree string="Events" editable="top">
+                                    <field name="date" />
+                                    <field name="event_type_id" widget="selection"/>
+                                    <field name="location" />
+                                    <field name="proj_code" />
+                                    <field name="comment" />
+                                </tree>
+                            </field>
+                        </group>
+                    </page>
+                    <page string="Depreciation">
+                        <field name="start_date" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                        <field name="depreciation_method" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}"/>
+                        <field name="prorata" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                        <newline />
+                        <field name="depreciation_amount" />
+                        <field name="disposal_amount" />
+                        <group col="6" colspan="4">
+                            <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
+                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="3" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                                <button name="button_reset_distribution" string="Reset AD at line level" type="object"
+                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['cancel', 'done'])]}"/>
+                            </group>
+                            <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
+                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="3" attrs="{'invisible': ['|', ('state', 'in', ['cancel', 'done']), ('analytic_distribution_id', '!=', False)]}"/>
+                                <button name="button_reset_distribution" string="Reset AD at line level" type="object"
+                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['cancel', 'done'])]}"/>
+                            </group>
+                            <field name="analytic_distribution_id" invisible="1"/>
+                        </group>
+                        <field colspan="4" name="line_ids" nolabel="1" mode="tree" readonly="1"
+                                on_change="change_line()"
+                                filter_selector="[('Show all', []), ('Hide Posted', ['|', ('move_id', '=', False), ('move_id.state', '!=', 'posted')])]"
+                                o2m_selectable="2">
+                            <tree string="Depreciation Lines" editable="top" hide_delete_button="1" hide_new_button="1" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount');green:is_initial_line">
+                                <field name="date" />
+                                <field name="is_initial_line" invisible="1" />
+                                <field name="amount" />
+                                <field name="depreciation_amount" />
+                                <field name="remaining_amount" />
+                                <field name="asset_bs_depreciation_account_id" />
+                                <field name="asset_pl_account_id" />
+                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                                <field name="analytic_distribution_state_recap"/>
+                                <field name="have_analytic_distribution_from_header" invisible="1"/>
+                                <field name="analytic_distribution_state" invisible="1"/>
+                                <field name="is_allocatable" invisible="1"/>
+                                <field name="move_id" />
+                                <field name="move_state" />
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+                <group colspan="4" col="10">
+                    <field name="lock_open" invisible="1" />
+                    <field name="has_posted_lines" invisible="1" />
+                    <field name="can_be_disposed" invisible="1" />
+                    <field name="instance_level" invisible="1" />
+                    <field name="from_sync" invisible="1" />
+                    <field name="state" />
+                    <field name="from_invoice"  />
+                    <group colspan="6" col="12">
+                        <button type="object" name="button_open_asset" string="Open" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <button type="object" name="button_cancel_asset" string="Cancel" icon="gtk-cancel" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}"  />
+                        <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|','|', ('instance_level', '=', 'project'), ('lock_open', '!=', False), ('state', '!=', 'open')]}" />
+                        <button type="object" name="button_delete_draft_entries" string="Delete Lines" icon="terp-gtk-stop" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('lock_open', '=', False), ('state', '!=', 'open')]}" />
+                        <button type="object" name="button_set_as_open" string="Set as Open" icon="gtk-goto-first" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
+                        <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('state', '!=', 'running'), ('can_be_disposed', '=', False)]}"/>
+                    </group>
+                </group>
+            </form>
+        </field>
+    </record>
 
 
-		<record id="asset_search_form_view" model="ir.ui.view">
-			<field name="name">asset.search.form</field>
-			<field name="model">product.asset</field>
-			<field name="type">search</field>
-			<field name="arch" type="xml">
-				<search string="Asset Form">
-					<field name="name"  />
-					<field name="asset_type_id" widget="selection" />
-					<field name="product_id" domain="[('subtype', '=', 'asset')]" />
-					<field name="serial_nb" />
-					<field name="brand" />
-					<field name="type" />
-					<field name="model" />
-					<newline />
-					<group expand="0" string="Group By..." colspan="11" col="11">
-						<filter string="Product" icon="terp-product" domain="[]"
-							context="{'group_by':'product_id'}" />
-						<filter string="Asset Type" icon="terp-stock_symbol-selection"
-							domain="[]" context="{'group_by':'asset_type_id'}" />
-					</group>
-				</search>
-			</field>
-		</record>
+    <record id="asset_normal_tree_view" model="ir.ui.view">
+        <field name="name">asset.normal.tree</field>
+        <field name="model">product.asset</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Asset Forms">
+                <field name="name" />
+                <field name="instance_id"/>
+                <field name="move_line_id" />
+                <field name="asset_type_id" />
+                <field name="product_id" />
+                <field name="brand" />
+                <field name="type" />
+                <field name="year" />
+                <field name="useful_life_id" />
+                <field name="start_date" />
+                <field name="invo_value" sum="sum" sum_selected="1" />
+                <field name="invo_currency" />
+                <field name="depreciation_amount" sum="sum" sum_selected="1"/>
+                <field name="disposal_amount" sum="sum" sum_selected="1"/>
+                <field name="state" />
+            </tree>
+        </field>
+    </record>
 
 
-		<record id="asset_normal_action" model="ir.actions.act_window">
-			<field name="name">Asset Forms</field>
-			<field name="res_model">product.asset</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form</field>
-			<field name="search_view_id" ref="asset_search_form_view" />
-		</record>
+    <record id="asset_search_form_view" model="ir.ui.view">
+        <field name="name">asset.search.form</field>
+        <field name="model">product.asset</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Asset Form">
+                <separator orientation="vertical"/>
+                <filter icon="terp-document-new" string="Draft" name="s_draft" domain="[('state', '=', 'draft')]"/>
+                <filter icon="terp-camera_test" string="Open" name="s_open" domain="[('state', '=', 'open')]"/>
+                <filter icon="gtk-media-play" string="Running" name="s_running" domain="[('state', '=', 'running')]"/>
+                <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" />
+                <filter icon="gtk-cancel" string="Cancel" name="cancel" domain="[('state','=','cancel')]" />
+                <separator orientation="vertical"/>
 
-		<!-- Assets in SALES>Products -->
-		<menuitem id="menu_asset_sales" name="Assets" parent="base.menu_product" sequence="100" />
-		<menuitem action="asset_normal_action" id="menu_assets_sales"
-			parent="menu_asset_sales" sequence="1" />
-
-		<act_window id="asset_2_events_normal_link" context="{}"
-			domain="[('asset_id', '=', active_id)]" name="Asset Follow Up" res_model="product.asset.event"
-			src_model="product.asset" />
-
-		<record id="asset_event_normal_form_view" model="ir.ui.view">
-			<field name="name">asset.event.normal.form</field>
-			<field name="model">product.asset.event</field>
-			<field name="type">form</field>
-			<field name="arch" type="xml">
-				<form string="Asset Event">
-
-					<group colspan="2" col="2">
-						<separator string="Event Information" colspan="2" />
-						<field name="date" />
-						<field name="location" />
-						<field name="proj_code" />
-						<field name="event_type" />
-						<field name="state" />
-					</group>
-
-					<group colspan="2" col="2">
-						<separator string="Selection" colspan="2" />
-						<field name="asset_id" on_change="onChangeAssetId(asset_id)" />
-						<field name="product_id" />
-						<field name="serial_nb" />
-						<field name="brand" />
-						<field name="model" />
-					</group>
-					
-					<group colspan="2" col="4">
-						<separator string="Comment" colspan="4" />
-						<!-- display hack -->
-						<group colspan="1" col="1"></group>
-						<field name="comment" nolabel="True" colspan="3" />
-					</group>
-
-				</form>
-			</field>
-		</record>
-
-		<record id="asset_event_normal_tree_view" model="ir.ui.view">
-			<field name="name">asset.event.normal.tree</field>
-			<field name="model">product.asset.event</field>
-			<field name="type">tree</field>
-			<field name="arch" type="xml">
-				<tree string="Asset Events">
-					<field name="date" />
-					<field name="asset_id" />
-					<field name="product_id" />
-					<field name="asset_type_id" />
-					<field name="event_type" />
-					<field name="location" />
-					<field name="state" />
-					<field name="proj_code" />
-				</tree>
-			</field>
-		</record>
-
-		<record id="asset_event_search_form_view" model="ir.ui.view">
-			<field name="name">asset.event.search.form</field>
-			<field name="model">product.asset.event</field>
-			<field name="type">search</field>
-			<field name="arch" type="xml">
-				<search string="Asset Event">
-					<field name="date" />
-					<field name="asset_id" />
-					<field name="product_id" domain="[('subtype', '=', 'asset')]" />
-					<field name="event_type" />
-					<newline />
-					<group expand="0" string="Group By..." colspan="11" col="11">
-						<filter string="Asset Form" icon="terp-accessories-archiver"
-							domain="[]" context="{'group_by':'asset_id'}" />
-						<filter string="Asset Type" icon="terp-stock_symbol-selection"
-							domain="[]" context="{'group_by':'asset_type_id'}" />
-						<filter string="Product" icon="terp-product" domain="[]"
-							context="{'group_by':'product_id'}" />
-						<filter string="Project Code" icon="gtk-bold" domain="[]"
-							context="{'group_by':'proj_code'}" />
-						<filter string="Event Type" icon="gtk-select-color" domain="[]"
-							context="{'group_by':'event_type'}" />
-						<filter string="Current Status" icon="terp-purchase"
-							domain="[]" context="{'group_by':'state'}" />
-					</group>
-				</search>
-			</field>
-		</record>
-
-		<record id="asset_event_normal_action" model="ir.actions.act_window">
-			<field name="name">Asset Events</field>
-			<field name="res_model">product.asset.event</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form</field>
-			<field name="search_view_id" ref="asset_event_search_form_view" />
-		</record>
+                <field name="name"  />
+                <field name="move_line_id" />
+                <field name="asset_type_id" widget="selection" />
+                <field name="product_id"  />
+                <field name="serial_nb" />
+                <field name="model" />
+                <field name="invo_currency" />
+                <newline />
+                <group expand="0" string="Group By..." colspan="11" col="11">
+                    <filter string="Product" icon="terp-product" domain="[]"
+                        context="{'group_by':'product_id'}" />
+                    <filter string="Asset Type" icon="terp-stock_symbol-selection"
+                        domain="[]" context="{'group_by':'asset_type_id'}" />
+                </group>
+            </search>
+        </field>
+    </record>
 
 
-		<!-- Asset Events in SALES>Products>Assets -->
-		<menuitem action="asset_event_normal_action" id="menu_asset_event_sales"
-			parent="menu_asset_sales" sequence="1" />
+    <record id="asset_normal_action" model="ir.actions.act_window">
+        <field name="name">Asset Forms</field>
+        <field name="res_model">product.asset</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="asset_search_form_view" />
+    </record>
 
-		<record id="asset_type_normal_form_view" model="ir.ui.view">
-			<field name="name">asset.type.normal.form</field>
-			<field name="model">product.asset.type</field>
-			<field name="type">form</field>
-			<field name="arch" type="xml">
-				<form string="Asset Type">
+    <!-- Assets in SALES>Products -->
+    <menuitem id="menu_asset_sales" name="Assets" parent="account.menu_finance_periodical_processing" sequence="20" active_config="fixed_asset_ok"/>
+    <menuitem action="asset_normal_action" id="menu_assets_sales"
+        parent="menu_asset_sales" sequence="1" />
 
-					<group colspan="2" col="2">
-						<separator string="Asset Type Information" colspan="2" />
-						<field name="name" />
-					</group>
+    <act_window id="asset_2_events_normal_link" context="{}"
+        domain="[('asset_id', '=', active_id)]" name="Asset Follow Up" res_model="product.asset.event"
+        src_model="product.asset" />
 
-				</form>
-			</field>
-		</record>
+    <record id="asset_event_normal_form_view" model="ir.ui.view">
+        <field name="name">asset.event.normal.form</field>
+        <field name="model">product.asset.event</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Asset Event">
 
-		<record id="asset_type_normal_tree_view" model="ir.ui.view">
-			<field name="name">asset.type.normal.tree</field>
-			<field name="model">product.asset.type</field>
-			<field name="type">tree</field>
-			<field name="arch" type="xml">
-				<tree string="Asset Types">
-					<field name="name" />
-				</tree>
-			</field>
-		</record>
+                <group colspan="2" col="2" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
+                    <separator string="Event Information" colspan="2" />
+                    <field name="date" />
+                    <field name="location" />
+                    <field name="proj_code" />
+                    <field name="event_type_id" widget="selection"/>
+                </group>
 
-		<record id="asset_type_normal_action" model="ir.actions.act_window">
-			<field name="name">Asset Types</field>
-			<field name="res_model">product.asset.type</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form</field>
-		</record>
+                <group colspan="2" col="2" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
+                    <separator string="Selection" colspan="2" />
+                    <field name="asset_id" on_change="onChangeAssetId(asset_id)" />
+                    <field name="product_id" />
+                    <field name="serial_nb" />
+                    <field name="brand" />
+                    <field name="model" />
+                </group>
+                <group colspan="2" col="4" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
+                    <separator string="Comment" colspan="4" />
+                    <!-- display hack -->
+                    <group colspan="1" col="1"></group>
+                    <field name="comment" nolabel="True" colspan="3" />
+                </group>
 
-		<!-- Asset Types in SALES>Products>Asssets -->
-		<menuitem action="asset_type_normal_action" id="menu_asset_type_sales"
-			parent="product_attributes.menu_product_config" sequence="1000" />
+                <newline />
+                <field name="asset_state" />
+            </form>
+        </field>
+    </record>
 
-	</data>
+    <record id="asset_event_normal_tree_view" model="ir.ui.view">
+        <field name="name">asset.event.normal.tree</field>
+        <field name="model">product.asset.event</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Asset Events">
+                <field name="date" />
+                <field name="asset_id" />
+                <field name="product_id" />
+                <field name="asset_type_id" />
+                <field name="event_type_id" />
+                <field name="location" />
+                <field name="proj_code" />
+                <field name="asset_state" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="asset_event_search_form_view" model="ir.ui.view">
+        <field name="name">asset.event.search.form</field>
+        <field name="model">product.asset.event</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Asset Event">
+                <field name="asset_state" />
+                <field name="date" />
+                <field name="asset_id" />
+                <field name="product_id" />
+                <field name="event_type_id" />
+                <newline />
+                <group expand="0" string="Group By..." colspan="11" col="11">
+                    <filter string="Asset Form" icon="terp-accessories-archiver"
+                        domain="[]" context="{'group_by':'asset_id'}" />
+                    <filter string="Asset Type" icon="terp-stock_symbol-selection"
+                        domain="[]" context="{'group_by':'asset_type_id'}" />
+                    <filter string="Product" icon="terp-product" domain="[]"
+                        context="{'group_by':'product_id'}" />
+                    <filter string="Project Code" icon="gtk-bold" domain="[]"
+                        context="{'group_by':'proj_code'}" />
+                    <filter string="Event Type" icon="gtk-select-color" domain="[]"
+                        context="{'group_by':'event_type_id'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="asset_event_normal_action" model="ir.actions.act_window">
+        <field name="name">Asset Events</field>
+        <field name="res_model">product.asset.event</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="asset_event_search_form_view" />
+    </record>
+
+    <record id="asset_event_type_form_view" model="ir.ui.view">
+        <field name="name">product.asset.event.type.form</field>
+        <field name="model">product.asset.event.type</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Asset Event Type" hide_delete_button="True">
+                <field name="name" />
+                <field name="active" />
+                <newline />
+                <field name="is_disposal" />
+                <newline />
+                <field name="expense_account_id" attrs="{'invisible': [('is_disposal', '=', False)], 'required': [('is_disposal', '!=', False)]}" />
+            </form>
+        </field>
+    </record>
+
+    <record id="asset_event_type_tree_view" model="ir.ui.view">
+        <field name="name">product.asset.event.type.tree</field>
+        <field name="model">product.asset.event.type</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Asset Event Types" colors="grey: not is_active" hide_delete_button="True" editable="top">
+                <field name="name" />
+                <field name="active" />
+                <field name="is_disposal" />
+                <field name="expense_account_id" attrs="{'invisible': [('is_disposal', '=', False)], 'required': [('is_disposal', '!=', False)]}" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="asset_event_type_search_view" model="ir.ui.view">
+        <field name="name">product.asset.event.type.search</field>
+        <field name="model">product.asset.event.type</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Asset Event Types">
+                <filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
+                <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('active','=', False)]" />
+                <field name="name" />
+                <field name="is_disposal" />
+                <field name="expense_account_id" />
+            </search>
+        </field>
+    </record>
+
+    <record id="asset_event_type_action" model="ir.actions.act_window">
+        <field name="name">Asset Event Types</field>
+        <field name="res_model">product.asset.event.type</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem action="asset_event_type_action" id="menu_asset_event_type"
+        parent="product_asset.asset_configuration" sequence="60" />
+
+    <!-- Asset Events in SALES>Products>Assets -->
+    <menuitem action="asset_event_normal_action" id="menu_asset_event_sales"
+        parent="menu_asset_sales" sequence="1" />
+
+    <record id="asset_type_normal_form_view" model="ir.ui.view">
+        <field name="name">asset.type.normal.form</field>
+        <field name="model">product.asset.type</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Asset Type" hide_delete_button="True">
+                <separator string="Asset Type Information" colspan="4" />
+                <field name="name" />
+                <field name="description" />
+                <field name="active" />
+                <newline />
+                <field name="useful_life_id"
+                    filter_selector="[('Show all', []), ('Show Active', [('is_active', '=', True)]), ('Show Inactive', [('is_active', '=', False)])]"
+                    >
+                    <tree editable="top" colors="grey: not is_active" hide_delete_button="True">
+                        <field name="year" />
+                        <field name="is_active" />
+                    </tree>
+                </field>
+            </form>
+        </field>
+    </record>
+
+    <record id="asset_type_normal_tree_view" model="ir.ui.view">
+        <field name="name">asset.type.normal.tree</field>
+        <field name="model">product.asset.type</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Asset Types" colors="grey: not is_active" hide_delete_button="True">
+                <field name="name" />
+                <field name="description" />
+                <field name="active" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="asset_type_normal_search_view" model="ir.ui.view">
+        <field name="name">asset.type.normal.search</field>
+        <field name="model">product.asset.type</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Asset Types">
+                <filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
+                <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('active','=', False)]" />
+                <field name="name" />
+                <field name="description" />
+            </search>
+        </field>
+    </record>
+
+    <record id="asset_type_normal_action" model="ir.actions.act_window">
+        <field name="name">Asset Types</field>
+        <field name="res_model">product.asset.type</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Asset Types in SALES>Products>Asssets -->
+    <menuitem action="asset_type_normal_action" id="menu_asset_type_sales"
+        parent="product_asset.asset_configuration" sequence="50" />
+
+
+    <record id="action_open_asset_account_move_line" model="ir.actions.server">
+        <field name="name">Asset Journal Items</field>
+        <field name="model_id" ref="product_asset.model_product_asset"/>
+        <field name="state">code</field>
+        <field name="code">
+action = self.open_asset_account_move_line(cr, uid, ids, context=context)
+        </field>
+    </record>
+
+    <record id="relate_open_asset_account_move_line" model="ir.values">
+        <field name="key2">client_action_relate</field>
+        <field name="model">product.asset</field>
+        <field name="name">Asset Journal Items</field>
+        <field name="value" eval="'ir.actions.server,%d'%action_open_asset_account_move_line"/>
+        <field name="object" eval="True"/>
+        <field name="sequence" eval="10"/>
+    </record>
+
+    <record id="action_open_asset_account_move" model="ir.actions.server">
+        <field name="name">Asset Journal Entries</field>
+        <field name="model_id" ref="product_asset.model_product_asset"/>
+        <field name="state">code</field>
+        <field name="code">
+action = self.open_asset_account_move(cr, uid, ids, context=context)
+        </field>
+    </record>
+
+    <record id="relate_open_asset_account_move" model="ir.values">
+        <field name="key2">client_action_relate</field>
+        <field name="model">product.asset</field>
+        <field name="name">Asset Journal Entries</field>
+        <field name="value" eval="'ir.actions.server,%d'%action_open_asset_account_move"/>
+        <field name="object" eval="True"/>
+        <field name="sequence" eval="10"/>
+    </record>
+
+
+   <!-- duplicate reccuring line to post view (AD is editable) -->
+    <record model="ir.ui.view" id="view_account_move_line_asset_tree">
+        <field name="name">account.move.line.asset.tree</field>
+        <field name="model">account.move.line</field>
+        <field name="type">tree</field>
+        <field name="priority" eval="150" />
+        <field name="duplicate_view_id" ref="account_subscription.account_move_line_recurring_entries_to_validate" />
+        <field name="arch" type="xml">
+            <tree />
+        </field>
+    </record>
+    <record model="ir.ui.view" id="view_account_move_line_asset_2tree">
+        <field name="name">account.move.line.asset.tree.inherit</field>
+        <field name="model">account.move.line</field>
+        <field name="type">tree</field>
+        <field name="priority" eval="160" />
+        <field name="inherit_id" ref="view_account_move_line_asset_tree" />
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="string">Asset Journal Items</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_product_asset_generate_entries" model="ir.ui.view">
+        <field name="name">product.asset.generate.entries.form</field>
+        <field name="model">product.asset.generate.entries</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Asset Generate Entries">
+                <group colspan="4" col="10">
+                    <separator string="Generate Entries until:" colspan="4"/>
+                    <newline/>
+                    <label string="Automatically generate entries based on what has been entered in the system until a specific date." colspan="4" nolabel="1"/>
+                    <newline/>
+                    <field name="date" colspan="2"/>
+                    <group colspan="8" />
+                    <button icon="gtk-cancel" special="cancel" string="Cancel" colspan="2"/>
+                    <button icon="gtk-execute" string="Generate Entries" name="button_generate_all" type="object"  colspan="2"/> 
+                    <group colspan="6" />
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_product_asset_generate_entries" model="ir.actions.act_window">
+        <field name="name">Generate Asset Entries</field>
+        <field name="res_model">product.asset.generate.entries</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem sequence="200" action="action_product_asset_generate_entries" id="menu_product_asset_generate_entries" parent="product_asset.menu_asset_sales" />
+
+
+
+</data>
 </openerp>

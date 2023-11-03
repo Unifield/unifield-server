@@ -13,12 +13,6 @@
         
         <!-- ASSET TYPE -->
         
-        <menuitem id="menu_asset_type_sales" 
-        name="Asset Types" 
-        action="product_asset.asset_type_normal_action"
-        parent="purchase.menu_product_in_config_purchase"
-        sequence="20" />
-        
         <!-- UOM -->
         <menuitem id="menu_uom" 
         name="Unit Of Measure" 

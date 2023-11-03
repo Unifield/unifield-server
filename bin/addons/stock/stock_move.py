@@ -656,13 +656,6 @@ class stock_move(osv.osv):
         """ Checks if asset is assigned to stock move or not.
         @return: True or False
         """
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
-                # either the asset comes from a supplier or the asset goes to a customer
-                if move.location_id.usage == 'supplier' or move.location_dest_id.usage == 'customer' or (move.picking_id and move.picking_id.type == 'out' and move.picking_id.subtype == 'picking'):
-                    if move.product_id.subtype == 'asset':
-                        if not move.asset_id and move.product_qty:
-                            raise osv.except_osv(_('Error!'),  _('You must assign an asset for the product %s.') % move.product_id.name)
         return True
 
     def _check_constaints_service(self, cr, uid, ids, context=None):
@@ -788,9 +781,6 @@ class stock_move(osv.osv):
 
 
     _constraints = [
-        (_check_asset,
-            'You must assign an asset for this product.',
-            ['asset_id']),
         (_check_constaints_service, 'You cannot select Service Location as Source Location.', []),
         (_check_tracking, 'You must assign a batch number for this product.', ['prodlot_id']),
         (_check_reason_type, _invalid_reason_type_msg, ['reason_type_id', ]),
