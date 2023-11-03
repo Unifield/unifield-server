@@ -81,6 +81,75 @@ class res_currency_table(osv.osv):
         (_check_unicity, 'You cannot have the same code or name between currency tables!', ['code', 'name']),
     ]
 
+    def currency_table_update(self, cr, uid, currency_table_id, currency_code, date, rate, context=None):
+        """
+            method used by OCP Talend to update currency tables
+        """
+
+        if context is None:
+            context = {}
+
+        cur_table_obj = self.pool.get('res.currency.table')
+        cur_obj = self.pool.get('res.currency')
+        currency_rate_obj = self.pool.get('res.currency.rate')
+
+        if not isinstance(currency_table_id, (int, long)):
+            raise osv.except_osv(_('Error'), _('currency Table id %s must be an integer') % (currency_table_id, ))
+
+        if not cur_table_obj.search_exists(cr, uid, [('id', '=', currency_table_id)], context=context):
+            raise osv.except_osv(_('Error'), _('The currency table id:%s does not exist') % currency_table_id)
+
+        try:
+            datetime.datetime.strptime(date, '%Y-%m-%d')
+        except:
+            raise osv.except_osv(_('Error'), _('Date %s must be in the format YYYY-MM-DD') % (date, ))
+
+        try:
+            float(rate)
+        except:
+            raise osv.except_osv(_('Error'), _('Rate %s must be a float') % (rate, ))
+
+        cur_ids = cur_obj.search(cr, uid, [('currency_table_id', '=', currency_table_id), ('name', '=', currency_code), ('active', 'in', ['t', 'f'])], context=context)
+        if not cur_ids:
+            cur_id = cur_obj.search(cr, uid, [('name', '=', currency_code), ('active', 'in', ['t', 'f'])], context=context)
+            if not cur_id:
+                raise osv.except_osv(_('Error'), _('The currency %s does not exist') % currency_code)
+            main_currency = cur_obj.browse(cr, uid, cur_id[0], context=context)
+            currency_vals = {
+                'name': main_currency.name,
+                'currency_name': main_currency.currency_name,
+                'symbol': main_currency.symbol,
+                'accuracy': main_currency.accuracy,
+                'rounding': main_currency.rounding,
+                'company_id': main_currency.company_id.id,
+                'date': main_currency.date,
+                'base': main_currency.base,
+                'currency_table_id': currency_table_id,
+                'reference_currency_id': main_currency.id,
+                'active': False
+            }
+            cur_ids = [cur_obj.create(cr, uid, currency_vals, context=context)]
+
+        currency_rates = currency_rate_obj.search(cr, uid, [('currency_id', '=', cur_ids[0]), ('name', '=', date)], context=context)
+        if currency_rates:
+            # A rate exists for this date; we update it
+            currency_rate_obj.write(cr, uid, currency_rates, {
+                'name': date,
+                'rate': float(rate),
+            }, context=context)
+        else:
+            # No rate for this date: create it
+            currency_rate_obj.create(cr, uid, {
+                'name': date,
+                'rate': float(rate),
+                'currency_id': cur_ids[0],
+            }, context=context)
+
+        # Now that there is a rate, update currency as active
+        cur_obj.write(cr, uid, cur_ids[0], {'active': True}, context=context)
+        return True
+
+
 res_currency_table()
 
 class res_currency(osv.osv):
