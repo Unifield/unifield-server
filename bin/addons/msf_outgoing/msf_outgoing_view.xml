@@ -201,7 +201,6 @@
                             <field name="backorder_id" readonly="1" string="Original PICK" />
                             <field name="reason_type_id" widget="selection" readonly="1" />
                             <field name="order_category" />
-                            <field name="details" readonly="1" />
                         </group>
 
                         <group colspan="2" col="2">
