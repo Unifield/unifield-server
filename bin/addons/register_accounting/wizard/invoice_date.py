@@ -50,16 +50,16 @@ class wizard_invoice_date(osv.osv_memory):
             if asset_line_ids:
                 form = etree.fromstring(f['arch'])
                 for grp in form.xpath('//group[@name="insert_asset"]'):
-                    new_elem = u"""
+                    new_elem = """
                         <group colspan="4">
                             <separator colspan="4" string="%s" />
                     """ % misc.escape_html(_('The following lines will generate asset forms'))
                     for line in self.pool.get('account.invoice.line').browse(cr, uid, asset_line_ids, fields_to_fetch=['line_number', 'product_id', 'quantity'], context=context):
-                        new_elem += u'<label colspan="4" align="0.0" string=" #%s %s %s Quantity %s" />' % (line.line_number, misc.escape_html(line.product_id.default_code), misc.escape_html(line.product_id.name), line.quantity)
-                    new_elem += u'<label string=" " colspan="4" /><label string=" " colspan="4" /></group>'
+                        new_elem += '<label colspan="4" align="0.0" string=" #%s %s %s Quantity %s" />' % (line.line_number, misc.escape_html(line.product_id.default_code), misc.escape_html(line.product_id.name), line.quantity)
+                    new_elem += '<label string=" " colspan="4" /><label string=" " colspan="4" /></group>'
                     grp.insert(0, etree.fromstring(new_elem))
                     break
-                f['arch'] = etree.tostring(form)
+                f['arch'] = etree.tostring(form, encoding='unicode')
         return f
 
     def validate(self, cr, uid, ids, context=None):
