@@ -980,9 +980,14 @@
             <field name="method">us_11810_fix_company_logo</field>
         </record>
 
-        <!-- UF31.0 -->
+        <!-- UF30.1 -->
         <record id="us_11956_fix_po_line_reception_destination" model="patch.scripts">
             <field name="method">us_11956_fix_po_line_reception_destination</field>
+        </record>
+
+
+        <record id="us_9119_employee_uuid" model="patch.scripts">
+            <field name="method">us_9119_employee_uuid</field>
         </record>
     </data>
 </openerp>

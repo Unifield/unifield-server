@@ -139,7 +139,7 @@ class hr_employee(osv.osv):
         'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=False),
         'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=False),
         'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=False),
-        'homere_uuid_key': fields.char(string='Homere field: UUID_key', size=64, readonly=True, required=False),
+        'homere_uuid_key': fields.char(string='Homere field: UUID_key', size=64, readonly=True, required=False, select=1),
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True, write_relate=False),
@@ -160,6 +160,7 @@ class hr_employee(osv.osv):
         'homere_id_unique': lambda *a: '',
         'gender': lambda *a: 'unknown',
         'ex_allow_edition': lambda *a: True,
+        'homere_uuid_key': False,
     }
 
     def _set_sync_update_as_run(self, cr, uid, data, sdref, context=None):
@@ -210,6 +211,7 @@ class hr_employee(osv.osv):
     _constraints = [
         (_check_unicity, "Another employee has the same Identification No.", ['identification_id']),
     ]
+
 
     def _check_employee_cc_compatibility(self, cr, uid, employee_id, context=None):
         """
