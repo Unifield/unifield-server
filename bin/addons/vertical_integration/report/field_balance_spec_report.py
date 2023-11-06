@@ -53,7 +53,7 @@ class field_balance_spec_report(osv.osv_memory):
         if context is None:
             context = {}
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
 
         report = self.browse(cr, uid, ids[0], context=context)

@@ -197,7 +197,7 @@ class product_asset(osv.osv):
         if not ids:
             return True
 
-        if isinstance(ids, (int, long)):
+        if isinstance(ids,int):
             ids = [ids]
 
         if context is None:
@@ -775,7 +775,7 @@ class product_asset(osv.osv):
         return {}
 
     def test_and_set_done(self, cr , uid, ids, context=None):
-        if isinstance(ids, (int, long)):
+        if isinstance(ids, int):
             ids = [ids]
         cr.execute('''
             select
