@@ -1295,7 +1295,7 @@
                         <field name="details" readonly="1"/>
                         <field name="description_ppl"/>
                     </group>
-					<button name="change_description_save" string="Save details/parcel comment" icon="gtk-save" type="object" />
+					<button name="change_description_save" string="Save parcel comment" icon="gtk-save" type="object" />
 				</form>
 			</field>
 		</record>
