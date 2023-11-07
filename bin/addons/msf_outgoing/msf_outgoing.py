@@ -1386,11 +1386,14 @@ class shipment(osv.osv):
             make_invoice = False
             move = False
             cur_id = False
+            is_sr = False
             for pack in shipment.pack_family_memory_ids:
                 for move in pack.move_lines:
-                    if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking' and not move.sale_line_id.in_name_goods_return) and not move.picking_id.claim:
+                    if move.state != 'cancel' and \
+                            (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking' and not move.sale_line_id.in_name_goods_return) and \
+                            not (move.picking_id.claim and not 'return' in move.picking_id.name):
                         make_invoice = True
-                        cur_id = pack.currency_id.id
+                        cur_id = pack.currency_id.id or move.price_currency_id.id
                         break
                 if make_invoice:
                     break
@@ -1405,10 +1408,14 @@ class shipment(osv.osv):
                                      _('Please put a partner on the shipment if you want to generate invoice.'))
 
             # (US-952) No STV created when a shipment is generated on an external supplier
-            if partner.partner_type in ('external', 'esc'):
+            # (US-10877) but should generate a Supplier Refund in case of a pick-return with a return claim on an external supplier
+            if partner.partner_type == 'esc' or (partner.partner_type == 'external' and not (move.picking_id.claim and 'return' in move.picking_id.name)):
                 continue
 
-            account_id = partner.property_account_receivable.id
+            if move.picking_id.claim and move.type == 'out' and 'return' in move.picking_id.name and \
+                    partner.partner_type in ('external') and partner.supplier:
+                is_sr = True
+            account_id = is_sr and partner.property_account_payable.id or partner.property_account_receivable.id
             payment_term_id = partner.property_payment_term and partner.property_payment_term.id or False
 
             addresses = partner_obj.address_get(cr, uid, [partner.id], ['contact', 'invoice'])
@@ -1432,7 +1439,7 @@ class shipment(osv.osv):
             if cur_id:
                 invoice_vals['currency_id'] = cur_id
             # Journal type
-            journal_type = 'sale'
+            journal_type = is_sr and 'purchase_refund' or 'sale'
             # Disturb journal for invoice only on intermission partner type
             if shipment.partner_id2.partner_type == 'intermission':
                 if not company.intermission_default_counterpart or not company.intermission_default_counterpart.id:
@@ -1454,7 +1461,7 @@ class shipment(osv.osv):
             inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
             intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
             is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
-            is_stv = out_invoice and not debit_note and not inkind_donation and not intermission
+            is_stv = out_invoice and not debit_note and not inkind_donation and not intermission and not is_sr
 
             # US-3822 Block STV creation if the partner is internal
             if is_stv and partner.partner_type == 'internal':
@@ -1473,17 +1480,17 @@ class shipment(osv.osv):
                     if move.sale_line_id and (move.sale_line_id.order_id.order_policy != 'picking' or move.sale_line_id.in_name_goods_return):
                         continue
 
-                    if move.picking_id.claim:
+                    if move.picking_id.claim and 'return' not in move.picking_id.name:
                         continue
 
                     # create 1 FO = 1 Invoice
                     order_id = move.sale_line_id and move.sale_line_id.order_id or False
                     if order_id not in invoice_id_by_fo:
                         new_invoice_vals = invoice_vals.copy()
-                        if is_ivo or is_stv:
+                        if is_ivo or is_stv or is_sr:
                             # add "synced" tag + real_doc_type for STV and IVO created from Supply flow
-                            real_doc_type = is_stv and 'stv' or 'ivo'
-                            new_invoice_vals.update({'synced': True,
+                            real_doc_type = (is_stv and 'stv') or (is_ivo and 'ivo') or 'sr'
+                            new_invoice_vals.update({'synced': is_ivo or is_stv,
                                                      'real_doc_type': real_doc_type,
                                                      })
                             origin_inv = 'origin' in new_invoice_vals and new_invoice_vals['origin'] or False
@@ -1595,6 +1602,7 @@ class shipment(osv.osv):
                             line_data['cv_line_ids'] = [(6, 0, [move.sale_line_id.cv_line_ids[0].id])]
 
                     line_id = line_obj.create(cr, uid, line_data, context=context)
+                    invoice_obj.button_compute(cr, uid, [invoice_id], context=context, set_total=True)
 
                     if move.sale_line_id:
                         sale_obj.write(cr, uid, [move.sale_line_id.order_id.id], {'invoice_ids': [(4, invoice_id)], })
