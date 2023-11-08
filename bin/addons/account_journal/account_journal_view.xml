@@ -26,9 +26,9 @@
                         <group col="2" colspan="2">
                                <separator string="Accounts" colspan="4"/>
                                <field name="default_debit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]"
-                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))]}"/>
+                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))], 'readonly': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj')), ('has_entries', '=', True)]}"/>
                                <field name="default_credit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]"
-                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))]}"/>
+                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))], 'readonly': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj')), ('has_entries', '=', True)]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Company" colspan="4"/>
