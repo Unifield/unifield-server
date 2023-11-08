@@ -644,7 +644,7 @@
 
         <!-- Display in-kind donation list (only invoice that have 'is_inkind_donation' to True)-->
         <record id="action_inkind_donation" model="ir.actions.act_window">
-            <field name="name">Donation</field>
+            <field name="name">Donation Received</field>
             <field name="res_model">account.invoice</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
