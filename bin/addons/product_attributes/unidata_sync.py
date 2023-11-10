@@ -719,7 +719,7 @@ class unidata_sync(osv.osv):
         try:
             ud_sync(cr, uid, self.pool, max_retries=0).query(q_filter='msfIdentifier=1234')
         except requests.exceptions.HTTPError as e:
-            raise osv.except_osv(_('Error'), e.message)
+            raise osv.except_osv(_('Error'), e)
         raise osv.except_osv(_('OK'), _('Login successful'))
 
 

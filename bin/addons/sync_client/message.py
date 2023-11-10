@@ -499,7 +499,7 @@ class message_received(osv.osv):
                     self.write(cr, uid, message.id, {
                         'execution_date' : execution_date,
                         'run' : True,
-                        'log' : "%s\nSet as run without exec by system" % e.message,
+                        'log' : "%s\nSet as run without exec by system" % e,
                         'manually_set_run_date': fields.datetime.now(),
                         'editable': False
                     }, context=context)

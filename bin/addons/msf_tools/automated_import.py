@@ -85,7 +85,7 @@ class RemoteOneDrive(RemoteInterface):
         try:
             self.dav = webdav.Client(host=self.host ,port=self.port, protocol=self.protocol, username=self.username, password=self.password, path=self.path)
         except webdav.ConnectionFailed as e:
-            raise Exception(_('Unable to connect: %s') % (e.message))
+            raise Exception(_('Unable to connect: %s') % (e,))
 
     def list_files(self, path, startswith, already=None):
         if already is None:
@@ -331,8 +331,8 @@ class Remote(object):
         try:
             self.connection.connect()
         except Exception as e:
-            self.infolog(e.message)
-            raise osv.except_osv(_('Error'), e.message)
+            self.infolog(e)
+            raise osv.except_osv(_('Error'), e)
 
         self.infolog(_('Connection succeeded'))
         return True

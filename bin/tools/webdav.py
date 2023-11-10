@@ -38,7 +38,7 @@ class Client(object):
         self.login()
 
     def login(self):
-        self.request = ClientContext(self.baseurl)
+        self.request = ClientContext(self.url)
         self.request.with_user_credentials(self.username, self.password)
         if not isinstance(self.request.authentication_context._provider, SamlTokenProvider) or \
                 not self.request.authentication_context._provider.get_authentication_cookie():
