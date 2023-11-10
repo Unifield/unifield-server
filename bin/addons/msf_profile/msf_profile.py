@@ -58,7 +58,6 @@ class patch_scripts(osv.osv):
     }
 
     # UF31.0
-
     def us_11950_delete_previous_assets(self, cr,uid, *a, **b):
         cr.execute("delete from product_asset")
         cr.execute("update ir_sequence set number_next=1 where code='product.asset'")
@@ -71,20 +70,6 @@ class patch_scripts(osv.osv):
         cr.execute("""UPDATE product_product SET restricted_country = 'f', country_restriction = NULL 
             WHERE restricted_country = 't'""")
         self.log_info(cr, uid, "US-11781: The Product Restrictions have been removed on %s Product(s)" % (cr.rowcount,))
-        return True
-
-
-    def us_12149_transfer_ppl_description_data(self, cr, uid, *a, **b):
-        '''
-        Put the data from description_ppl into details in PPLs and Packs
-        '''
-        cr.execute("""SELECT id FROM stock_picking WHERE description_ppl IS NOT NULL AND type = 'out' 
-            AND subtype IN ('packing', 'ppl')""")
-
-        for x in cr.fetchall():
-            cr.execute("""UPDATE stock_picking SET details = description_ppl, description_ppl = NULL
-                WHERE id = %s""", (x[0],))
-
         return True
 
     def us_11026_oca_liquidity_migration_journal(self, cr, uid, *a, **b):

@@ -3786,7 +3786,6 @@ class stock_picking(osv.osv):
                 'previous_step_id': picking.id,
                 'backorder_id': False,
                 'move_lines': [],
-                'description_ppl': picking.details,
             }
             context.update({
                 'keep_prodlot': True,
@@ -4859,10 +4858,6 @@ class pack_family_memory(osv.osv):
             sql_data['size'] = (vals['total_volume']**(1.0/3))*10. or 0
             fields += ['length=%%(size)s/(%s-from_pack+1)' % to_pack_field, 'width=%(size)s', 'height=%(size)s']
 
-        if 'parcel_comment' in vals:
-            sql_data['parcel_comment'] = vals.get('parcel_comment', '')
-            fields.append('parcel_comment=%(parcel_comment)s')
-
         if fields:
             cr.execute('''
                 update stock_move
@@ -4885,7 +4880,7 @@ class pack_family_memory(osv.osv):
         for pack in pack_obj:
             res_id = pack['draft_packing_id'][0]
             return {
-                'name': _('Change details or parcel comment'),
+                'name': _('Change parcel comment'),
                 'view_type': 'form',
                 'view_mode': 'form',
                 'view_id': [res and res[1] or False],
