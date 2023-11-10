@@ -831,7 +831,7 @@ class PhysicalInventory(osv.osv):
                                 expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
                             else:
                                 raise ValueError()
-                        except ValueError:
+                        except:
                             if not year or year >= 1900:
                                 add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
 
@@ -897,7 +897,7 @@ class PhysicalInventory(osv.osv):
                 result = wizard_obj.message_box(cr, uid, title='Information', message='\n'.join(counting_sheet_warnings))
         except Exception as e:
             cr.rollback()
-            result = wizard_obj.message_box(cr, uid, title='Information', message=_('An error occured: %s') % (e.message,))
+            result = wizard_obj.message_box(cr, uid, title='Information', message=_('An error occured: %s') % (e,))
         finally:
             context['import_in_progress'] = False
             return result
