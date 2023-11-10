@@ -100,6 +100,11 @@ class import_data(osv.osv_memory):
             else:
                 data[clean_account_code] = None
 
+        if data.get('property_stock_journal'):
+            j_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', data['property_stock_journal']), ('is_current_instance', '=', True)], context=context)
+            data['property_stock_journal'] = j_ids and j_ids[0] or False
+
+
     def _set_full_path_nomen(self, cr, uid, headers, row, col):
         if not col:
             # modify headers if needed
