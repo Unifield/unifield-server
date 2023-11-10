@@ -290,7 +290,7 @@
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Our ref')}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Your ref')}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Packing List')}</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Description')}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Details')}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Parcels')}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Kgs')}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('m³')}</Data></Cell>
