@@ -98,11 +98,10 @@
 
                         <group colspan="2" col="4">
                             <separator string="Comment" colspan="4" />
-                            <!-- display hack -->
-                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
+                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
                         </group>
 
-                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', 'in', ['cancel', 'done'])]}">
+                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}">
                             <separator string="Traceability" colspan="2" />
                             <field name="project_po" />
                             <field name="orig_mission_code" />
@@ -118,9 +117,9 @@
                             <field name="invo_value" />
                             <field name="invo_currency"  />
                             <field name="invo_date" />
-                            <field name="invo_supplier_id" colspan="4" attrs="{'readonly': ['|', '|', ('from_sync', '=', True), ('from_invoice', '=', True), ('state', '!=', 'draft')]}" />
-                            <field name="invo_donator_code" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
-                            <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': ['|', ('from_sync', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
+                            <field name="invo_supplier_id" colspan="4" />
+                            <field name="invo_donator_code" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
+                            <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Accounts" colspan="2" />
@@ -144,7 +143,6 @@
                     <page string="Depreciation">
                         <field name="start_date" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
                         <field name="depreciation_method" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}"/>
-                        <field name="prorata" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
                         <newline />
                         <field name="depreciation_amount" />
                         <field name="disposal_amount" />
@@ -247,6 +245,7 @@
                 <separator orientation="vertical"/>
 
                 <field name="name"  />
+                <field name="instance_id"/>
                 <field name="move_line_id" />
                 <field name="asset_type_id" widget="selection" />
                 <field name="product_id"  />
@@ -563,9 +562,9 @@ action = self.open_asset_account_move(cr, uid, ids, context=context)
                 <group colspan="4" col="10">
                     <separator string="Generate Entries until:" colspan="4"/>
                     <newline/>
-                    <label string="Automatically generate entries based on what has been entered in the system until a specific date." colspan="4" nolabel="1"/>
+                    <label string="Automatically generate entries based on what has been entered in the system until a specific period." colspan="4" nolabel="1"/>
                     <newline/>
-                    <field name="date" colspan="2"/>
+                    <field name="period_id" colspan="2"/>
                     <group colspan="8" />
                     <button icon="gtk-cancel" special="cancel" string="Cancel" colspan="2"/>
                     <button icon="gtk-execute" string="Generate Entries" name="button_generate_all" type="object"  colspan="2"/> 

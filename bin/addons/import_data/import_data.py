@@ -83,53 +83,22 @@ class import_data(osv.osv_memory):
             raise osv.except_osv(_('Warning !'),
                                  _('Product category MSFID required'))
 
-        paec_code = data.get('property_account_expense_categ', False)
-        if paec_code:
-            if isinstance(paec_code, (str,unicode)):
-                re_res = re.findall(r'[0-9]+', paec_code)
-                if re_res:
-                    paec_code = re_res[0]
-            paec_ids = aa_obj.search(cr, uid, [('code', '=', paec_code)], context=context)
-            if paec_ids:
-                data['property_account_expense_categ'] = paec_ids[0]
+        for clean_account_code in ['property_account_expense_categ', 'property_account_income_categ', 'donation_expense_account', 'asset_bs_account_id', 'asset_bs_depreciation_account_id', 'asset_pl_account_id']:
+            account_code = data.get(clean_account_code, False)
+            if account_code:
+                if isinstance(account_code, (str,unicode)):
+                    re_res = re.findall(r'[0-9]+', account_code)
+                    if re_res:
+                        account_code = re_res[0]
+                paec_ids = aa_obj.search(cr, uid, [('code', '=', account_code)], context=context)
+                if paec_ids:
+                    data[clean_account_code] = paec_ids[0]
+                else:
+                    raise osv.except_osv(_('Warning !'),
+                                         _('Account code "%s" not found')
+                                         % (account_code))
             else:
-                raise osv.except_osv(_('Warning !'),
-                                     _('Account code "%s" not found')
-                                     % (paec_code))
-        else:
-            data['property_account_expense_categ'] = None
-
-        paic_code = data.get('property_account_income_categ', False)
-        if paic_code:
-            if isinstance(paic_code, (str,unicode)):
-                re_res = re.findall(r'[0-9]+', paic_code)
-                if re_res:
-                    paic_code = re_res[0]
-            paic_ids = aa_obj.search(cr, uid, [('code', '=', paic_code)], context=context)
-            if paic_ids:
-                data['property_account_income_categ'] = paic_ids[0]
-            else:
-                raise osv.except_osv(_('Warning !'),
-                                     _('Account code "%s" not found')
-                                     % (paic_code))
-        else:
-            data['property_account_income_categ'] = None
-
-        dea_code = data.get('donation_expense_account', False)
-        if dea_code:
-            if isinstance(dea_code, (str,unicode)):
-                re_res = re.findall(r'[0-9]+', dea_code)
-                if re_res:
-                    dea_code = re_res[0]
-            dea_ids = aa_obj.search(cr, uid, [('code', '=', dea_code)], context=context)
-            if dea_ids:
-                data['donation_expense_account'] = dea_ids[0]
-            else:
-                raise osv.except_osv(_('Warning !'),
-                                     _('Expense account code "%s" not found')
-                                     % (dea_code))
-        else:
-            data['donation_expense_account'] = None
+                data[clean_account_code] = None
 
     def _set_full_path_nomen(self, cr, uid, headers, row, col):
         if not col:
