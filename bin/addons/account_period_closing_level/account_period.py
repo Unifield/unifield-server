@@ -728,7 +728,7 @@ class account_period(osv.osv):
         dom_date = [('start_date', '<=', date)]
         if level == 'coordo':
             return  ['&'] + dom_date + ['|', ('state', '=', 'draft'), '&', ('state', '=', 'open'), ('lock_open', '=', False)]
-        return [('sate', '=', 'draft')] + dom_date
+        return [('state', '=', 'draft')] + dom_date
 
     def button_assets(self, cr, uid, ids, context=None):
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product_asset.asset_normal_action', ['tree', 'form'], context=context)
