@@ -729,12 +729,20 @@ class account_period(osv.osv):
 
     def button_assets(self, cr, uid, ids, context=None):
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product_asset.asset_normal_action', ['tree', 'form'], context=context)
-        res['context'] = {
-            'search_default_s_draft': 1,
-            'search_default_s_open': 1,
-            'search_default_s_running': 1,
-            'search_default_period_id': ids[0],
-        }
+
+        period = self.pool.get('account.period').browse(cr, uid, ids[0], fields_to_fetch=['date_stop', 'name'], context=context)
+        level = self.pool.get('res.company')._get_instance_level(cr, uid)
+        dom_date = [('start_date', '<=', period.date_stop)]
+        if level == 'coordo':
+            dom = ['&'] + dom_date + ['|', ('state', '=', 'draft'), '&', ('state', '=', 'open'), ('lock_open', '=', False)]
+            string = _('to open and compute')
+        else:
+            dom = [('sate', '=', 'draft')] + dom_date
+            string= _('to open')
+
+
+        res['domain'] = dom
+        res['name'] = _('Assets %s before closing %s') % (string, period.name)
         res['target'] = 'current'
         return res
 
