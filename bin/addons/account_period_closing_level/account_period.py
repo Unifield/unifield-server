@@ -57,15 +57,12 @@ class account_period(osv.osv):
 
     def _check_asset(self, cr, uid, period, context):
         level = self.pool.get('res.company')._get_instance_level(cr, uid)
-        if level == 'coordo':
-            states = ['draft', 'open']
-        else:
-            states = ['draft']
-        nb_assets = self.pool.get('product.asset').search(cr, uid, [('state', 'in', states), ('start_date', '<=', period.date_stop)], count=True, context=context)
+        dom = self._asset_domain(cr, uid, period.date_stop, level, context=context)
+        nb_assets = self.pool.get('product.asset').search(cr, uid, dom, count=True, context=context)
         if nb_assets:
             raise osv.except_osv(_('Warning'), _('There are %d draft or open assets for the period, please start depreciation or change the Start Date before closing the period') % nb_assets)
         if level == 'coordo':
-            nb_asset_lines = self.pool.get('product.asset.line').search(cr, uid, [('asset_id.state', '=', 'running'), ('move_id', '=', False), ('date', '<=', period.date_stop)], count=True, context=context)
+            nb_asset_lines = self.pool.get('product.asset.line').search(cr, uid, [('asset_id.state', 'in', ['open', 'running']), ('move_id', '=', False), ('date', '<=', period.date_stop)], count=True, context=context)
             if nb_asset_lines:
                 raise osv.except_osv(_('Warning'), _('There are %d running asset lines for the period. Please Generate Asset Entries before closing the period') % nb_asset_lines)
             return True
@@ -727,21 +724,23 @@ class account_period(osv.osv):
         res['sidebar_open'] = True
         return res
 
+    def _asset_domain(self, cr, uid, date, level, context=None):
+        dom_date = [('start_date', '<=', date)]
+        if level == 'coordo':
+            return  ['&'] + dom_date + ['|', ('state', '=', 'draft'), '&', ('state', '=', 'open'), ('lock_open', '=', False)]
+        return [('sate', '=', 'draft')] + dom_date
+
     def button_assets(self, cr, uid, ids, context=None):
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product_asset.asset_normal_action', ['tree', 'form'], context=context)
-
         period = self.pool.get('account.period').browse(cr, uid, ids[0], fields_to_fetch=['date_stop', 'name'], context=context)
         level = self.pool.get('res.company')._get_instance_level(cr, uid)
-        dom_date = [('start_date', '<=', period.date_stop)]
         if level == 'coordo':
-            dom = ['&'] + dom_date + ['|', ('state', '=', 'draft'), '&', ('state', '=', 'open'), ('lock_open', '=', False)]
             string = _('to open and compute')
         else:
-            dom = [('sate', '=', 'draft')] + dom_date
             string= _('to open')
 
 
-        res['domain'] = dom
+        res['domain'] = self._asset_domain(cr, uid, period.date_stop, level, context=context)
         res['name'] = _('Assets %s before closing %s') % (string, period.name)
         res['target'] = 'current'
         return res
