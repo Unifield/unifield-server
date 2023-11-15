@@ -606,13 +606,41 @@ class product_asset(osv.osv):
             raise osv.except_osv(_('Error !'), _('Please fill the mandatory field: %s') % ', '.join(missing_fields))
         return True
 
-    def button_generate_draft_entries(self, cr, uid, ids, context=None):
+    def force_generate_draft_entries(self, cr, uid, ids, context=None):
+        self.button_generate_draft_entries(cr, uid, ids, context=context, display_period_warning=False)
+        return {'type': 'ir.actions.act_window_close'}
+
+    def button_generate_draft_entries(self, cr, uid, ids, context=None, display_period_warning=True):
         line_obj = self.pool.get('product.asset.line')
+        tools_obj = self.pool.get('date.tools')
+
         if not ids:
             return False
 
         default_j = False
         asset = self.browse(cr, uid, ids[0], context=context)
+        if asset.start_date < asset.invo_date:
+            raise osv.except_osv(_('Error !'), _('Asset %s: Start Date (%s) must be after Invoice Date (%s).') % (
+                asset.name,
+                tools_obj.get_date_formatted(cr, uid, datetime=asset.start_date, context=context),
+                tools_obj.get_date_formatted(cr, uid, datetime=asset.invo_date, context=context),
+            ))
+
+        if display_period_warning and asset.start_date and asset.invo_date and asset.start_date[0:7] != asset.invo_date[0:7]:
+            msg = self.pool.get('message.action').create(cr, uid, {
+                'title':  _('Warning'),
+                'message': '<h3>%s</h3>' % (_('The Depreciation Start Date (%s) is not in the same period as the Invoice Date (%s)') % (
+                    tools_obj.get_date_formatted(cr, uid, datetime=asset.start_date, context=context),
+                    tools_obj.get_date_formatted(cr, uid, datetime=asset.invo_date, context=context),
+                )
+                ),
+                'yes_action': lambda cr, uid, context: self.force_generate_draft_entries(cr, uid, ids, context=context),
+                'yes_label': _('Process Anyway'),
+                'no_label': _('Close window'),
+            }, context=context)
+            return self.pool.get('message.action').pop_up(cr, uid, [msg], context=context)
+
+
         if not asset.journal_id:
             default_j = self._get_default_journal(cr, uid, context=context)
             if not default_j:
@@ -1117,7 +1145,7 @@ class product_asset_line(osv.osv):
                 period_ids = period_obj.search(cr, uid, period_domain, context=context)
 
                 if not period_ids:
-                    raise osv.except_osv(_('No period found !'), _('Unable to find a valid period for %s!') % (line.date, ))
+                    raise osv.except_osv(_('No period found !'), _('%s: unable to find a valid period for %s!') % (line.asset_id.name, line.date))
                 period_cache[line.date] = period_ids[0]
 
             period_id = period_cache[line.date]
