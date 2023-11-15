@@ -163,7 +163,7 @@
                                 on_change="change_line()"
                                 filter_selector="[('Show all', []), ('Hide Posted', ['|', ('move_id', '=', False), ('move_id.state', '!=', 'posted')])]"
                                 o2m_selectable="2">
-                            <tree string="Depreciation Lines" editable="top" hide_delete_button="1" hide_new_button="1" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount');green:is_initial_line">
+                            <tree string="Depreciation Lines" editable="top" hide_delete_button="1" hide_new_button="1" colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount');green:is_initial_line and analytic_distribution_state not in ('invalid', 'invalid_small_amount')">
                                 <field name="date" />
                                 <field name="is_initial_line" invisible="1" />
                                 <field name="amount" />

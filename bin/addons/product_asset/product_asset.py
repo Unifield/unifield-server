@@ -978,7 +978,8 @@ class product_asset_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id,
                                                                                           line.asset_id.analytic_distribution_id.id,
-                                                                                          line.asset_pl_account_id.id, amount=line.amount)
+                                                                                          line.asset_pl_account_id.id, amount=line.amount,
+                                                                                          doc_date=line.date, posting_date=line.date, manual=True)
         return res
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
