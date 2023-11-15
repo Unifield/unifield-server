@@ -3,6 +3,7 @@
 from osv import fields, osv
 import time
 from tools.translate import _
+from tools import misc
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -89,6 +90,7 @@ class product_asset(osv.osv):
     _description = "A specific asset of a product"
     _order='id desc'
     _trace = True
+
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -442,6 +444,19 @@ class product_asset(osv.osv):
             res[_id] = level
         return res
 
+    def _search_period_id(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        for arg in args:
+            if arg[0] == 'period_id' and (arg[1] != '=' or not arg[2]):
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % name)
+            period = self.pool.get('account.period').browse(cr, uid, arg[2], fields_to_fetch=['date_start', 'date_stop'], context=context)
+            return [('start_date', '>=', period.date_start), ('start_date', '<=', period.date_stop)]
+        return []
+
+
     _columns = {
         # asset
         'name': fields.char('Asset Code', size=128, readonly=True),
@@ -502,6 +517,7 @@ class product_asset(osv.osv):
         'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', method=True),
         'prorata': fields.boolean('Prorata Temporis'),
         'depreciation_method': fields.selection([('straight', 'Straight Line')], 'Depreciation Method', required=True),
+        'period_id': fields.function(misc.get_fake, fnct_search=_search_period_id, method=True, type='many2one', relation='account.period', string='Start Period', domain=[('special', '=', False)]),
     }
 
     def unlink(self, cr, uid, ids, context=None):

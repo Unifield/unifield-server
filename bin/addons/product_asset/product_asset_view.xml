@@ -248,6 +248,7 @@
                 <field name="instance_id"/>
                 <field name="move_line_id" />
                 <field name="asset_type_id" widget="selection" />
+                <field name="period_id" />
                 <field name="product_id"  />
                 <field name="serial_nb" />
                 <field name="model" />

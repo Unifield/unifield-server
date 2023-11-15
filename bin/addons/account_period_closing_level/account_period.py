@@ -733,6 +733,7 @@ class account_period(osv.osv):
             'search_default_s_draft': 1,
             'search_default_s_open': 1,
             'search_default_s_running': 1,
+            'search_default_period_id': ids[0],
         }
         res['target'] = 'current'
         return res
