@@ -739,6 +739,7 @@ class stock_move(osv.osv):
         res = True
         try:
             rt_replacement_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+            rt_g_return_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
             rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
             rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
             int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
@@ -747,6 +748,7 @@ class stock_move(osv.osv):
             scrp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
         except ValueError:
             rt_replacement_id = 0
+            rt_g_return_id = 0
             rt_other_id = 0
             rt_return_unit_id = 0
             int_rt_id = 0
@@ -758,7 +760,7 @@ class stock_move(osv.osv):
             if sm['reason_type_id'] and sm['picking_id']:
                 pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
                 if not pick['purchase_id'] and not pick['sale_id'] and ((pick['type'] == 'in'
-                                                                         and sm['reason_type_id'][0] not in [int_rt_id, ext_rt_id, rt_return_unit_id, loss_rt_id, scrp_rt_id, rt_replacement_id])
+                                                                         and sm['reason_type_id'][0] not in [int_rt_id, ext_rt_id, rt_return_unit_id, loss_rt_id, scrp_rt_id, rt_replacement_id, rt_g_return_id])
                                                                         or (pick['type'] == 'out' and sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id])):
                     return False
         return res
