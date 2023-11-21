@@ -880,6 +880,17 @@ class account_invoice(osv.osv):
         if not vals.get('real_doc_type') and context.get('doc_type') and not context.get('from_refund_button'):
             vals.update({'real_doc_type': context['doc_type']})
 
+        # US-12137: avoid the creation of a manual IVO and IVI with an inactive currency
+        if 'currency_id' in vals:
+            curr_obj = self.pool.get('res.currency')
+            curr_active = curr_obj.browse(cr, uid, vals.get('currency_id'), fields_to_fetch=['active'],
+                                          context=context).active
+            if not curr_active and \
+                    context.get('doc_type', False) in ('ivo', 'ivi') and \
+                    context.get('from_inv_form', False):
+                raise osv.except_osv(_('Error'),
+                                     _('You cannot create a manual IVO and IVI with an inactive currency.'))
+
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
 
         return super(account_invoice, self).create(cr, uid, vals, context)
@@ -909,6 +920,14 @@ class account_invoice(osv.osv):
                         if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
+        # US-12137: avoid the creation of a manual IVO and IVI with an inactive currency
+        if 'currency_id' in vals:
+            curr_obj = self.pool.get('res.currency')
+            curr_active = curr_obj.browse(cr, uid, vals.get('currency_id'), fields_to_fetch=['active'], context=context).active
+            if not curr_active and context.get('doc_type', False) in ('ivo', 'ivi') and context.get('from_inv_form', False):
+                raise osv.except_osv(_('Error'),
+                                     _('You cannot create a manual IVO and IVI with an inactive currency.'))
+
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
