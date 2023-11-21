@@ -476,7 +476,7 @@ class users(osv.osv):
 
     def _get_display_email_popup(self, cr, uid, ids, name=None, arg=None, context=None):
         ret = {}
-        if datetime.now() > datetime(2023, 12, 4):
+        if datetime.now() > datetime(2023, 11, 4):
             for x in ids:
                 ret[x] = False
             return ret
