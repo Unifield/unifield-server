@@ -36,6 +36,7 @@ from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from lxml import etree
 from datetime import datetime
+from tools.misc import fakeUid
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -484,6 +485,20 @@ class users(osv.osv):
             ret[x.id] = x.id != 1 and not x['synchronize'] and not x['dont_ask_email']
         return ret
 
+    def _get_display_department_popup(self, cr, uid, ids, name=None, arg=None, context=None):
+        ret = {}
+
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['synchronize', 'dont_ask_department', 'context_department_id', 'nb_department_asked'], context=context):
+            if x.id == 1 or x.synchronize:
+                ret[x.id] = False
+            elif x.nb_department_asked == -1: # forced after password change
+                ret[x.id] = True
+            elif x.context_department_id or x.dont_ask_department:
+                ret[x.id] = False
+            else:
+                ret[x.id] = True
+        return ret
+
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
                             help="The new user's real name, used for searching"
@@ -552,6 +567,9 @@ class users(osv.osv):
         'dont_ask_email': fields.boolean("Don't ask for email", readonly=1),
         'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1),
         'display_email_popup': fields.function(_get_display_email_popup, type='boolean', method=True, string='Display popup at login'),
+        'dont_ask_department': fields.boolean("Don't ask for department", readonly=1),
+        'nb_department_asked': fields.integer('Nb department popup displayed', readonly=1),
+        'display_department_popup': fields.function(_get_display_department_popup, type='boolean', method=True, string='Display department at login'),
     }
 
     def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
@@ -725,7 +743,47 @@ class users(osv.osv):
         return self._get_company(cr, uid, context=context, uid2=uid2)
 
     # User can write to a few of her own fields (but not her groups for example)
-    SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email', 'dont_ask_email', 'nb_email_asked']
+    SELF_WRITEABLE_FIELDS = [
+        'menu_tips','view', 'password', 'signature', 'action_id', 'company_id',
+        'user_email', 'dont_ask_email', 'nb_email_asked', 'context_department_id',
+        'context_tz', 'context_lang',
+        'nb_department_asked', 'dont_ask_email', 'dont_ask_department'
+    ]
+
+    def list_department(self, cr, uid, context=None):
+        dpt_list = []
+        dpt_obj = self.pool.get('hr.department')
+        dpt_ids = dpt_obj.search(cr, 1, [], context=context)
+        if dpt_ids:
+            for dpt in dpt_obj.read(cr, 1, dpt_ids, ['name'], context=context):
+                dpt_list.append((dpt['id'], dpt['name']))
+        return dpt_list
+
+    def set_department(self, cr, uid, department, context=None):
+        to_write = {'context_department_id': department}
+        user_data = self.read(cr, 1, uid, ['nb_department_asked', 'nb_department_asked'], context=context)
+        if user_data['nb_department_asked'] == -1:
+            to_write['nb_department_asked'] = 2
+            to_write['dont_ask_department'] = True
+        elif department:
+            to_write['dont_ask_department'] = True
+        else:
+            to_write['nb_department_asked'] = (user_data['nb_department_asked'] or 0) + 1
+
+        self.write(cr, uid, uid, to_write, context=context)
+        return True
+
+    def set_nb_department_asked(self, cr, uid, context=None):
+        if uid:
+            if self.read(cr, 1, uid, ['nb_department_asked'], context=context)['nb_department_asked'] == -1:
+                cr.execute('update res_users set nb_department_asked=2 where id=%s', (uid, ))
+            else:
+                cr.execute('update res_users set nb_department_asked=coalesce(nb_department_asked, 0)+1 where id=%s', (uid, ))
+        return True
+
+    def set_department_dontask(self, cr, uid, context=None):
+        self.write(cr, 1, uid, {'dont_ask_department': True}, context=context)
+        return True
 
     def set_dont_ask_email(self, cr, uid, context=None):
         self.write(cr, 1, uid, {'dont_ask_email': True}, context=context)
@@ -803,8 +861,8 @@ class users(osv.osv):
         if not isinstance(ids, list):
             ids = [ids]
         if ids == [uid]:
-            for key in list(values.keys()):
-                if not (key in self.SELF_WRITEABLE_FIELDS or key.startswith('context_')):
+            for key in values.keys():
+                if key not in self.SELF_WRITEABLE_FIELDS:
                     break
             else:
                 if 'company_id' in values:
@@ -812,7 +870,8 @@ class users(osv.osv):
                         del values['company_id']
                 if values.get('user_email'):
                     values['dont_ask_email'] = True # disable pop up
-                uid = 1 # safe fields only, so we write as super-user to bypass access rights
+                if not hasattr(uid, 'realUid'):
+                    uid = fakeUid(1, uid) # safe fields only, so we write as super-user to bypass access rights
 
         if values.get('active') and self._get_unidata_pull_user_id(cr) in ids:
             raise osv.except_osv(_('Error'), _('Activation of UniData_pull user is not allowed.'))
@@ -922,6 +981,10 @@ class users(osv.osv):
                        signature_from=False,
                        signature_to=False,
                        signature_history_ids=False,
+                       dont_ask_email=False,
+                       nb_email_asked=False,
+                       dont_ask_department=False,
+                       nb_department_asked=False
                        )
         copydef.update(default)
         return super(users, self).copy(cr, uid, id, copydef, context)
@@ -1086,13 +1149,15 @@ class users(osv.osv):
             try:
                 login = tools.ustr(login).lower()
                 # get user_uid
-                cr.execute("""SELECT id from res_users
+                cr.execute("""SELECT id, force_password_change, not coalesce(never_expire, 'f') AND coalesce(last_password_change, NOW()) + interval '6 months' < NOW() from res_users
                               WHERE login=%s AND active=%s AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                            (login, True))
                 res = cr.fetchone()
                 uid = None
                 if res:
                     uid = res[0]
+                    force_password_change = res[1]
+                    expired_password = res[2]
                 if not uid:
                     raise security.ExceptionNoTb('AccessDenied')
                 security.check_password_validity(self, cr, uid, old_passwd, new_passwd, confirm_passwd, login)
@@ -1102,6 +1167,8 @@ class users(osv.osv):
                     'force_password_change': False,
                     'last_password_change': time.strftime('%Y-%m-%d %H:%M:%S'),
                 }
+                if force_password_change or expired_password:
+                    vals['nb_department_asked'] = -1
                 self.check(db_name, uid, tools.ustr(old_passwd))
                 if email is not None:
                     vals['user_email'] = email
