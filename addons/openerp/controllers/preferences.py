@@ -66,6 +66,18 @@ class Preferences(Form):
         return actions.execute(action_data)
 
     @expose()
+    def save_department(self, dpt):
+        rpc.RPCProxy('res.users').set_department(dpt, rpc.session.context)
+
+    @expose()
+    def department_update_nb(self):
+        rpc.RPCProxy('res.users').set_nb_department_asked(rpc.session.context)
+
+    @expose()
+    def department_dontask(self):
+        rpc.RPCProxy('res.users').set_department_dontask(rpc.session.context)
+
+    @expose()
     def save_email(self, email):
         proxy = rpc.RPCProxy('res.users')
         proxy.set_my_email(email, rpc.session.context)

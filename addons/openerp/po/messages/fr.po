@@ -1962,6 +1962,14 @@ msgid "Please fill your email address"
 msgstr "Veuillez saisir votre adresse email"
 
 #: controllers/templates/index.mako:268
+msgid "Department"
+msgstr "Département"
+
+#: controllers/templates/index.mako:268
+msgid "Please fill your Department"
+msgstr "Veuillez saisir votre Département"
+
+#: controllers/templates/index.mako:268
 msgid "Save email"
 msgstr "Enregistrer l'adresse"
 
