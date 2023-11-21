@@ -39,6 +39,8 @@
         'data/product.category.csv',
         'data/product.product.csv',
         'data/account.tax.csv',
+        'data/product.asset.useful.life.csv',
+        'data/product.asset.event.type.csv',
     ],
     'demo_xml': [],
     'test':[],
