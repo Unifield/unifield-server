@@ -58,15 +58,28 @@
                                 return;
                             } else {
                                 var editable = jQuery(idSelector('_terp_editable'),$doc).val();
+                            % if force_read_view:
+                                topWindow.viewRecord(terp_id);
+                            % else:
                                 if (editable == "True") {
                                     topWindow.editRecord(terp_id);
                                 } else {
                                     topWindow.viewRecord(terp_id);
                                 }
+                            % endif
+
+                            % if popup_message:
+                                var popup_message_decoded = jQuery("<div/>").html("${popup_message}").text();
+                                topWindow.alert(popup_message_decoded);
+                            % endif
                                 return;
                             }
                         case 'tree':
                             new topWindow.ListView('_terp_list').reload_from_wizard();
+                            % if popup_message:
+                                var popup_message_decoded = jQuery("<div/>").html("${popup_message}").text();
+                                topWindow.alert(popup_message_decoded);
+                            % endif
                             return;
                     }
                     topWindow.location.reload();
