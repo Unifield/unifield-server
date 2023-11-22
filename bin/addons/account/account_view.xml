@@ -263,6 +263,7 @@
                         <filter name="accrual_account" string="Accrual" domain="[('accrual_account','=',True)]" />
                         <filter name="expense_account" string="Expense" domain="[('user_type.code','=', 'expense')]" icon="terp-stock_symbol-selection"/>
                         <filter name="income_account" string="Income" domain="[('user_type.code','=', 'income')]" icon="gtk-go-forward"/>
+                        <filter name="asset_account" string="Assets" domain="[('user_type.code','=', 'asset')]" icon="terp-dolar"/>
                         <separator orientation="vertical"/>
                         <newline/>
 
