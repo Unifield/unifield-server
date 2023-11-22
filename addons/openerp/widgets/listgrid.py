@@ -101,7 +101,7 @@ class List(TinyWidget):
         self.pageable = kw.get('pageable', True)
         self.view_mode = kw.get('view_mode', [])
         self.offset = kw.get('offset', 0)
-        self.limit = None
+        self.limit = 0
         self.count = kw.get('count', 0)
         self.approximation = kw.get('approximation', False)
         self.link = kw.get('nolinks')
@@ -212,7 +212,7 @@ class List(TinyWidget):
             else:
                 ids = proxy.search(search_param, 0, 0, 0, context)
             if len(ids) < self.limit:
-                if self.offset > 0:
+                if self.offset and self.offset > 0:
                     self.count = len(ids) + self.offset
                 else:
                     self.count = len(ids)
