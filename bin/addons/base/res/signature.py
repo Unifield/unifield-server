@@ -859,7 +859,7 @@ class signature_set_user(osv.osv_memory):
         while not fit and font_size > 3:
             font_path = customfonts.GetFontPath('DejaVuSans.ttf')
             font = ImageFont.truetype(font_path, font_size)
-            w,h = font.getsize(msg)
+            left, top, w,h = font.getbbox(msg)
             fit = w <= W
             font_size -= 1
         new_img = Image.new("RGBA", (W, H+init_font_size))
