@@ -22,6 +22,7 @@
 from osv import fields
 from osv import osv
 
+
 class related_sourcing(osv.osv):
     """
     This object is used to link sourcing lines on a same PO to the same
@@ -47,9 +48,8 @@ class related_sourcing(osv.osv):
         """
         Format the name value
         """
-        vals['name'] = filter(str.isalnum, vals.get('name', '')).upper()
-        return super(related_sourcing, self).\
-            create(cr, uid, vals, context=context)
+        vals['name'] = ''.join(filter(str.isalnum, vals.get('name', ''))).upper()
+        return super(related_sourcing, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -57,9 +57,9 @@ class related_sourcing(osv.osv):
         """
         if not ids:
             return True
-        vals['name'] = filter(str.isalnum, vals.get('name', '')).upper()
-        return super(related_sourcing, self).\
-            write(cr, uid, ids, vals, context=context)
+        vals['name'] = ''.join(filter(str.isalnum, vals.get('name', ''))).upper()
+        return super(related_sourcing, self).write(cr, uid, ids, vals, context=context)
+
 
 related_sourcing()
 
