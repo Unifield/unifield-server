@@ -167,7 +167,8 @@ class account_report_general_ledger(osv.osv_memory):
             ids = [ids]
         if context is None:
             context = {}
-        if data.get('form', {}).get('export_format') == 'xls':
+        data = self.read(cr, uid, ids[0], ['export_format'], context=context)
+        if data.get('export_format') == 'xls':
             report_name = 'account.general.ledger_xls'
         else:
             report_name = 'account.general.ledger_landscape'
@@ -182,7 +183,7 @@ class account_report_general_ledger(osv.osv_memory):
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
             #'datas': {'ids': ids, 'target_filename': filename, 'context': context},
-            'datas': {'ids': ids, 'context': context},
+            'datas': {'ids': ids, 'keep_open': True, 'context': context},
             'context': context,
         }
 
@@ -215,8 +216,20 @@ class account_report_general_ledger(osv.osv_memory):
             if default_journals:
                 if set(default_journals) == set(data['form']['journal_ids']):
                     data['form']['all_journals'] = True
-
+        used_context = self._build_contexts(cr, uid, ids, data, context=context)
+        data['form']['periods'] = used_context.get('periods', False) and used_context['periods'] or []
+        data['form']['used_context'] = used_context
         return data
+
+    def check_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        data = {}
+        data['keep_open'] = 1
+        data['ids'] = context.get('active_ids', [])
+        data['model'] = context.get('active_model', 'ir.ui.menu')
+        return self._print_report(cr, uid, ids, data, context=context)
+
 account_report_general_ledger()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

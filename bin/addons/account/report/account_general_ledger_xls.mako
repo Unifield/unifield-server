@@ -301,6 +301,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 %>
 
 % for o in get_tree_nodes(a):
+${update_percent()}
 % if '*' in o.data and show_node_in_report(o):
 <Row>
 <Cell ss:StyleID="ssBorder${ac_style_suffix}">

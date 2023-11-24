@@ -199,9 +199,23 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         # "Open Items at" filter
         if data['form'].get('open_items'):
-            aml_ids = obj_move.search(self.cr, self.uid, [('open_items', '=', data['form']['open_items'])],
-                                      order='NO_ORDER', context=self.context) or [0]
-            self.query += " AND l.id in(%s) " % (",".join(map(str, aml_ids)))
+            open_item_period = self.pool.get('account.period').browse(self.cr, self.uid, data['form']['open_items'], fields_to_fetch=['date_start', 'period_number'])
+            self.query += """
+                AND a.reconcile = 't'
+                AND (
+                            l.reconcile_id is null
+                            or exists(
+                                select rec_line.id from account_move_line rec_line, account_period rec_p
+                            where
+                                rec_line.reconcile_id = l.reconcile_id
+                                and rec_p.id = rec_line.period_id
+                                and (
+                                    rec_p.date_start > '%(period_start)s'
+                                    or rec_p.date_start = '%(period_start)s' and rec_p.number > '%(period_number)s'
+                                )
+                            )
+                        )
+            """ % {'period_start': open_item_period.date_start, 'period_number': open_item_period.number}
 
         query = self.query
         if self.reconciled_filter:
@@ -211,6 +225,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         else:
             query += " AND am.state in ('draft', 'posted') "
 
+        print(query)
         self._drill = self.pool.get("account.drill").build_tree(self.cr,
                                                                 self.uid, query, self.init_query,
                                                                 include_accounts=self.account_ids,
@@ -258,6 +273,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_initial_balance': self._get_initial_balance,
             'get_tree_nodes': self._get_tree_nodes,
             'show_node_in_report': self._show_node_in_report,
+            'update_percent': self._update_percent,
         })
 
         # company currency
@@ -265,6 +281,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.currency_id = False
         self.currency_name = ''
         self.instance_id = False
+        self.counter = 0
+        self.bk_id = context.get('background_id')
         user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
         if user and user[0] and user[0].company_id:
             self.currency_id = user[0].company_id.currency_id.id
@@ -276,6 +294,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         self.context = context
         self._drill = None
+
+    def _update_percent(self):
+        print(self.counter, self.counter/self._drill.nodes_count)
+        self.counter += 1
+        if self.bk_id:
+            self.pool.get('memory.background.report').write(self.cr, self.uid, self.bk_id, {'percent': min(0.95, self.counter/self._drill.nodes_count)})
+
 
     def _get_tree_nodes(self, account):
         res = []
@@ -312,6 +337,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         #if not node.is_move_level:
         #    return res
 
+        all_t = time.time()
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
             return res
@@ -368,22 +394,22 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 l.period_id AS lperiod_id, l.partner_id AS lpartner_id,
                 m.name AS move_name, m.id AS mmove_id,per.code as period_code,
                 c.symbol AS currency_code,
-                i.id AS invoice_id, i.type AS invoice_type,
-                i.number AS invoice_number,
                 p.name AS partner_name, c.name as currency_name, l.partner_txt as third_party, l.reconcile_txt
                 FROM account_move_line l
                 JOIN account_move m on (l.move_id=m.id)
                 LEFT JOIN res_currency c on (l.currency_id=c.id)
                 LEFT JOIN res_partner p on (l.partner_id=p.id)
-                LEFT JOIN account_invoice i on (m.id =i.move_id)
                 LEFT JOIN account_period per on (per.id=l.period_id)
                 JOIN account_journal j on (l.journal_id=j.id)
                 JOIN account_account a on (a.id=l.account_id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
             """ %(self.query, move_state_in, sql_sort)
             sql = sql.replace('{{reconcile}}', self.reconciled_filter)
+            print('11',self.cr.mogrify(sql, (account.id, )))
             self.cr.execute(sql, (account.id, ))
+            t = time.time()
             res = self.cr.dictfetchall()
+            print(time.time() - t)
         else:
             if self.init_balance:
                 # US-822: move lines for period 0 IB journal
@@ -411,8 +437,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                         JOIN account_journal j on (l.journal_id=j.id)
                     WHERE %s AND l.account_id = %%s and per.number = 0 ORDER by %s
                 """ % (self.init_query, sql_sort, )
+                print('22', self.cr.mogrify(sql, (account.id, )))
                 self.cr.execute(sql, (account.id, ))
+                t = time.time()
                 res = self.cr.dictfetchall()
+                print(time.time() - t)
 
         if res:
             account_sum = 0.0
@@ -429,6 +458,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                         l['amount_currency'] = abs(l['amount_currency']) * -1
                 if l['amount_currency'] != None:
                     self.tot_currency = self.tot_currency + l['amount_currency']
+        print('uu', time.time() - all_t, len(res))
         return res
 
     def _get_account(self, data):
@@ -501,6 +531,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not amount or amount == 0.:
             return 0.
         if not self._is_company_currency():
+            print(self.currency_id == self.output_currency_id)
             amount = self.pool.get('res.currency').compute(self.cr, self.uid,
                                                            self.currency_id, self.output_currency_id, amount)
         if not amount or abs(amount) < 0.001:
