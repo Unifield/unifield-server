@@ -167,17 +167,36 @@ class account_report_general_ledger(osv.osv_memory):
             ids = [ids]
         if context is None:
             context = {}
+        if data.get('form', {}).get('export_format') == 'xls':
+            report_name = 'account.general.ledger_xls'
+        else:
+            report_name = 'account.general.ledger_landscape'
+
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'report_name': report_name,
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 3
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': report_name,
+            #'datas': {'ids': ids, 'target_filename': filename, 'context': context},
+            'datas': {'ids': ids, 'context': context},
+            'context': context,
+        }
+
+    def _init_data(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        data = {'form': self.read(cr, uid, ids[0], [], context=context)}
+        data['model'] = context.get('active_model')
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form']['report_mode'] = 'gl'  # general ledger mode
 
-        form_fields = [ 'initial_balance', 'amount_currency', 'sortby',
-                        'output_currency', 'instance_ids', 'export_format',
-                        'account_type', 'reconciled', 'reconcile_date',
-                        'account_ids', 'open_items', ]
-        data['form'].update(self.read(cr, uid, ids, form_fields)[0])
-
         # US-822: safe initial balance check box
-        rec = self.browse(cr, uid, ids[0], context=context)
+        rec = self.browse(cr, uid, ids[0], fields_to_fetch=['filter', 'fiscalyear_id', 'date_from', 'date_to', 'period_from', 'period_to'], context=context)
         ofd_res = self.onchange_filter_date(cr, uid, [ids[0]],
                                             rec.filter, rec.fiscalyear_id.id,
                                             rec.date_from, rec.date_to,
@@ -197,19 +216,7 @@ class account_report_general_ledger(osv.osv_memory):
                 if set(default_journals) == set(data['form']['journal_ids']):
                     data['form']['all_journals'] = True
 
-        if data['form']['export_format'] \
-           and data['form']['export_format'] == 'xls':
-            return {
-                'type': 'ir.actions.report.xml',
-                'report_name': 'account.general.ledger_xls',
-                'datas': data,
-            }
-        return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'account.general.ledger_landscape',
-            'datas': data,
-        }
-
+        return data
 account_report_general_ledger()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

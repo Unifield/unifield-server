@@ -42,6 +42,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         new_ids = ids
         obj_move = self.pool.get('account.move.line')
 
+        data.update(self.pool.get('account.report.general.ledger')._init_data(self.cr, self.uid, ids, context=data.get('context')))
         # local context AND move line _query_get call
         self.sortby = data['form'].get('sortby', 'sort_date')
         used_context = data['form'].get('used_context',{})
