@@ -57,6 +57,17 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_12074_gdpr_remove_personal_data_from_track_changes(self, cr, uid, *a, **b):
+        '''
+        GDPR - Remove from staff track changes the fields removed from US-7791
+        '''
+        cr.execute(
+            """
+            DELETE FROM audittrail_log_line
+            WHERE name IN ('birthday', 'gender', 'marital', 'mobile_phone', 'notes', 'private_phone', 'work_email',
+            'work_phone', 'country_id', 'ssnid', 'bank_name', 'bank_account_number')
+            """)
+        return True
 
     # python 3
     def us_9321_2_remove_location_colors(self, cr, uid, *a, **b):
