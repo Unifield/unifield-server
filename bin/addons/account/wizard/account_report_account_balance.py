@@ -86,21 +86,37 @@ class account_balance_report(osv.osv_memory):
         return {}
 
     def _print_report(self, cr, uid, ids, data, context=None):
-        """data = self.pre_print_report(cr, uid, ids, data, context=context)
-        return {'type': 'ir.actions.report.xml', 'report_name': 'account.account.balance', 'datas': data}
-        """
+        data = self.read(cr, uid, ids[0], ['export_format'], context=context)
+        if data.get('export_format') == 'xls':
+            report_name = 'account.general.ledger_xls'
+        else:
+            report_name = 'account.general.ledger_landscape_tb'
+
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'report_name': report_name,
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 3
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': report_name,
+            'datas': {'ids': ids, 'keep_open': True, 'context': context, 'wiz_model': 'account.balance.report'},
+            'context': context,
+        }
+
+    def _init_data(self, cr, uid, ids, context=None):
         # US-334: General ledger and Trial balance report common parser/templates
         if context is None:
             context = {}
+
+        data = {'form': self.read(cr, uid, ids[0], [], context=context)}
+        data['model'] = context.get('active_model')
+
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form']['report_mode'] = 'tb'  # trial balance mode
 
-        data['form']['initial_balance'] = False
-        form_fields = [ 'initial_balance', 'instance_ids', 'export_format',
-                        'account_type', 'account_ids', 'reconciled', 'reconcile_date', 'open_items']
-        data['form'].update(self.read(cr, uid, ids, form_fields)[0])
-
-        if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
+        if not data['form']['fiscalyear_id']:
             data['form']['initial_balance'] = False
 
         if data['form']['journal_ids']:
@@ -109,15 +125,7 @@ class account_balance_report(osv.osv_memory):
                 if set(default_journals) == set(data['form']['journal_ids']):
                     data['form']['all_journals'] = True
 
-        action = {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'account.general.ledger_landscape_tb',  # PDF
-            'datas': data,
-        }
-        if data['form']['export_format'] \
-           and data['form']['export_format'] == 'xls':
-            action['report_name'] = 'account.general.ledger_xls'
-        return action
+        return data
 
 account_balance_report()
 

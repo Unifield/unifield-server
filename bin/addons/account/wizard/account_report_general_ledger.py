@@ -182,8 +182,7 @@ class account_report_general_ledger(osv.osv_memory):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
-            #'datas': {'ids': ids, 'target_filename': filename, 'context': context},
-            'datas': {'ids': ids, 'keep_open': True, 'context': context},
+            'datas': {'ids': ids, 'keep_open': True, 'context': context, 'wiz_model': 'account.report.general.ledger'},
             'context': context,
         }
 
