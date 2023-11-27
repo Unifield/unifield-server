@@ -3102,7 +3102,7 @@ class account_bank_statement_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.statement_id and line.statement_id.state != 'open':
                 raise osv.except_osv(_('Warning'), _("Register not open, you can't duplicate lines."))
-            if line.account_id and line.account_id.name == 'Outstanding Cheques'  and line.from_import_cheque_id and line.from_import_cheque_id.id is not None:
+            if line.account_id and line.account_id.name in ('Outstanding Cheques', 'Outstanding checks')  and line.from_import_cheque_id and line.from_import_cheque_id.id is not None:
                 raise osv.except_osv(_('Warning'), _("You can't duplicate imported cheque line in bank register."))
             default_vals = ({
                 'name': '(copy) ' + line.name,
