@@ -146,108 +146,111 @@
     <images/>
   </stylesheet>
   <story>
-    <para style="terp_default_8">[[ repeatIn(objects, 'a') ]]</para>
-    <para style="terp_header_Centre">[[ translate(get_title()) ]]</para>
+    % for a in objects:
+    <para style="terp_header_Centre">${get_title()|x }</para>
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
     <blockTable colWidths="98.0,84.0,98.0,98.0,80.0,134.0,98.0,98.0" style="Table1">
       <tr>
         <td>
-          <para style="terp_tblheader_General_Centre">[[ data['model']=='account.account' and translate('Company') or removeParentNode('para') ]]</para>
-          <para style="terp_tblheader_General_Centre">[[ data['model']=='ir.ui.menu' and translate('Chart of Account') or removeParentNode('para') ]]</para>
+          % if data['model']=='account.account':
+          <para style="terp_tblheader_General_Centre">${_('Company')}</para>
+          % else:
+          <para style="terp_tblheader_General_Centre">${_('Chart of Account')}</para>
+          % endif
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">Fiscal Year</para>
+          <para style="terp_tblheader_General_Centre">${_('Fiscal Year')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">Journals</para>
+          <para style="terp_tblheader_General_Centre">${_('Journals')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">Display</para>
+          <para style="terp_tblheader_General_Centre">${_('Display')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">Open Items at</para>
+          <para style="terp_tblheader_General_Centre">${_('Open Items at')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!=translate('No Filter') and get_filter(data) ]]</para>
+          <para style="terp_tblheader_General_Centre">${_('Filter By')} ${(get_filter(data)!='No Filter' and get_filter(data))|x}</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">Proprietary Instances</para>
+          <para style="terp_tblheader_General_Centre">${_('Proprietary Instances')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_General_Centre">Target Moves</para>
+          <para style="terp_tblheader_General_Centre">${_('Target Moves')}</para>
         </td>
       </tr>
     </blockTable>
     <blockTable colWidths="98.0,84.0,98.0,98.0,80.0,134.0,98.0,98.0" style="Table2">
       <tr>
         <td>
-          <para style="terp_default_Centre_8">[[ get_account(data) or removeParentNode('para') ]]</para>
+          <para style="terp_default_Centre_8">${(get_account(data) or '')|x}</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">[[ get_fiscalyear(data) or '' ]]</para>
+          <para style="terp_default_Centre_8">${(get_fiscalyear(data) or '')|x}</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">[[ get_journals_str(data) or '' ]]</para>
+          <para style="terp_default_Centre_8">${(get_journals_str(data) or '')|x}</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">[[ get_display_info(data) ]]</para>
+          <para style="terp_default_Centre_8">${(get_display_info(data))|x}</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">[[ get_open_items_selection(data) ]]</para>
+          <para style="terp_default_Centre_8">${(get_open_items_selection(data))|x}</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">[[ get_filter_info(data) ]]</para>
+          <para style="terp_default_Centre_8">${(get_filter_info(data))|x}</para>
           <para style="terp_default_Centre_8">
             <font color="white"> </font>
           </para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">[[ get_prop_instances() ]]</para>
+          <para style="terp_default_Centre_8">${ get_prop_instances()|x }</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">[[ get_target_move(data) ]]</para>
+          <para style="terp_default_Centre_8">${ get_target_move(data)|x }</para>
         </td>
       </tr>
     </blockTable>
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
+    % if get_show_move_lines():
     <blockTable colWidths="114.0,80.0,92.0,70.0,50.0,95.0,95.0,95.0,95.0" style="Table7">
-      [[ get_show_move_lines() or removeParentNode('blockTable') ]]
       <tr>
         <td>
-          <para style="terp_tblheader_Details">Account/Entry Seq</para>
+          <para style="terp_tblheader_Details">${_('Account/Entry Seq')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">Posting Date</para>
+          <para style="terp_tblheader_Details">${_('Posting Date')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">Description</para>
+          <para style="terp_tblheader_Details">${_('Description')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">Third Party</para>
+          <para style="terp_tblheader_Details">${_('Third Party')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">[[ get_ccy_label() ]]</para>
+          <para style="terp_tblheader_Details">${ get_ccy_label()|x }</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Debit</para>
+          <para style="terp_tblheader_Details_Right">${_('Debit')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Credit</para>
+          <para style="terp_tblheader_Details_Right">${_('Credit')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Booking Balance</para>
+          <para style="terp_tblheader_Details_Right">${_('Booking Balance')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Balance [[ get_output_currency_code(data) ]]</para>
+          <para style="terp_tblheader_Details_Right">${_('Balance')} ${ get_output_currency_code(data)|x }</para>
         </td>
       </tr>
     </blockTable>
+    % else:
     <blockTable colWidths="114.0,80.0,92.0,70.0,50.0,95.0,95.0,95.0,95.0" style="Table7">
-      [[ not get_show_move_lines() or removeParentNode('blockTable') ]]
       <tr>
         <td>
           <para style="terp_tblheader_Details"></para>
@@ -262,144 +265,153 @@
           <para style="terp_tblheader_Details"></para>
         </td>
         <td>
-          <para style="terp_tblheader_Details">[[ get_ccy_label() ]]</para>
+          <para style="terp_tblheader_Details">${ get_ccy_label()|x }</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Debit</para>
+          <para style="terp_tblheader_Details_Right">${_('Debit')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Credit</para>
+          <para style="terp_tblheader_Details_Right">${_('Credit')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Booking Balance</para>
+          <para style="terp_tblheader_Details_Right">${_('Booking Balance')}</para>
         </td>
         <td>
-          <para style="terp_tblheader_Details_Right">Balance [[ get_output_currency_code(data) ]]</para>
+          <para style="terp_tblheader_Details_Right">${_('Balance')} ${ get_output_currency_code(data)|x }</para>
         </td>
       </tr>
     </blockTable>
+    % endif
+
+    % for o in get_tree_nodes(a):
     <section>
-      <para style="terp_default_8">[[ repeatIn(get_tree_nodes(a), 'o') ]]</para>
+    % if show_node_in_report(o):
       <blockTable colWidths="356.0,50.0,95.0,95.0,95.0,95.0" style="Table8_header">
-        [[ show_node_in_report(o) or removeParentNode('blockTable') ]]
         <tr>
           <td>
-            <para style="terp_default_Bold_9">[[ '..'*(o.level-1) ]] [[ o.name ]]</para>
+            <para style="terp_default_Bold_9">${ '..'*(o.level-1) } ${ o.name|x }</para>
           </td>
           <td>
-              <para style="terp_default_Bold_9_Right">[[ get_output_currency_code(data) ]]</para>
+              <para style="terp_default_Bold_9_Right">${ get_output_currency_code(data)|x }</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(o.data['*']['debit'], digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['debit'], digits=get_digits(dp='Account'))|x }</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(o.data['*']['credit'], digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['credit'], digits=get_digits(dp='Account'))|x }</para>
           </td>
            <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(o.data['*']['debit'] - o.data['*']['credit'], digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['debit'] - o.data['*']['credit'], digits=get_digits(dp='Account'))|x }</para>
           </td>
           <td>
-            <para style="terp_default_Bold_9_Right">[[ formatLang(o.data['*']['debit'] - o.data['*']['credit'], digits=get_digits(dp='Account')) ]]</para>
+            <para style="terp_default_Bold_9_Right">${ formatLang(o.data['*']['debit'] - o.data['*']['credit'], digits=get_digits(dp='Account'))|x }</para>
           </td>
         </tr>
       </blockTable>
+    % endif
 
+    % if o.displayed:
+    % for ccy in o.get_currencies():
       <section>
-        <para style="terp_default_8">[[ repeatIn(o.get_currencies() if o.displayed else [], 'ccy') ]]</para>
         <blockTable colWidths="40.0,316.0,50.0,95.0,95.0,95.0,95.0" style="Table8_subtotal_ccy">
           <tr>
             <td>
-              <para style="terp_default_9_Right">[[ o.code or '' ]]</para>
+              <para style="terp_default_9_Right">${(o.code or '')|x }</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">Sub Total</para>
+              <para style="terp_default_9_Right">${_('Sub Total')}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ ccy ]]</para>
+              <para style="terp_default_9_Right">${ ccy|x }</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit_ccy'], digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['debit_ccy'], digits=get_digits(dp='Account')))|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')))|x}</para>
             </td>
              <td>
-              <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy'], digits=get_digits(dp='Account')))|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(o.data[ccy]['debit'] - o.data[ccy]['credit'], digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${(formatLang(o.data[ccy]['debit'] - o.data[ccy]['credit'], digits=get_digits(dp='Account')))|x }</para>
             </td>
           </tr>
         </blockTable>
       </section>
+      % endfor
+      %endif
 
+      % if o.displayed:
+      % for line in lines(o, initial_balance_mode=True):
       <section>
-        <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=True) if o.displayed else [], 'line') ]]</para>
         <blockTable colWidths="40.0,316.0,50.0,95.0,95.0,95.0,95.0" style="Table9">
           <tr>
             <td>
-              <para style="terp_default_9_Right">[[ o.code or '' ]]</para>
+              <para style="terp_default_9_Right">${(o.code or '')|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ line['move'] or '' ]]</para>
+              <para style="terp_default_9_Right">${(line['move'] or '')|x}</para>
             </td>
             <td>
-                <para style="terp_default_9_Right">[[ line['currency_name'] or '' ]]</para>
+                <para style="terp_default_9_Right">${(line['currency_name'] or '')|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account') ]]</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account'))|x}</para>
             </td>
            </tr>
         </blockTable>
       </section>
-
+    % endfor
+    % for line in lines(o, initial_balance_mode=False):
       <section>
-        <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=False) if o.displayed else [], 'line') ]]</para>
         <blockTable colWidths="114.0,80.0,92.0,70.0,50.0,95.0,95.0,95.0,95.0" style="Table9">
           <tr>
             <td>
-              <para style="terp_default_8">[[ line['move'] or '' ]]</para>
+              <para style="terp_default_8">${(line['move'] or '')|x}</para>
             </td>
             <td>
-              <para style="terp_default_8">[[ formatLang(line['ldate'],date=True) ]]</para>
+              <para style="terp_default_8">${(formatLang(line['ldate'],date=True))|x}</para>
             </td>
             <td>
-              <parawrap style="terp_default_8">[[ line['lname'] or '' ]]</parawrap>
+              <para style="terp_default_8">${(line['lname'] or '')|x}</para>
             </td>
             <td>
-              <parawrap style="terp_default_Right_8">[[ line['third_party'] or '' ]]</parawrap>
+              <para style="terp_default_Right_8">${(line['third_party'] or '')|x}</para>
             </td>
             <td>
-                <para style="terp_default_Right_8">[[ line['currency_name'] or '' ]]</para>
+                <para style="terp_default_Right_8">${(line['currency_name'] or '')|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_credit(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=True), digits=get_digits(dp='Account'))|x}</para>
             </td>
             <td>
-              <para style="terp_default_9_Right">[[ formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account')) ]]</para>
+              <para style="terp_default_9_Right">${formatLang(get_line_balance(line, booking=False), digits=get_digits(dp='Account'))|x}</para>
             </td>
            </tr>
         </blockTable>
       </section>
-
-<para>[[ update_percent() ]]</para>
+    % endfor
+    % endif
     </section>
-
+      ${update_percent()}
+    % endfor
+    % endfor
   </story>
 </document>
 

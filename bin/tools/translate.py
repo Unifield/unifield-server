@@ -754,11 +754,11 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
         elif model=='ir.actions.report.xml':
             name = obj.report_name
             fname = ""
-            if obj.report_rml:
+            if obj.report_rml and not obj.mako_template:
                 fname = obj.report_rml
                 parse_func = trans_parse_rml
                 report_type = "report"
-            elif obj.report_xsl:
+            elif obj.report_xsl or obj.mako_template:
                 fname = obj.report_xsl
                 parse_func = trans_parse_xsl
                 report_type = "xsl"

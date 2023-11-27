@@ -35,6 +35,10 @@ from . import common
 import math
 from osv.fields import float as float_class, function as function_class
 
+from mako.template import Template
+from mako import exceptions
+from osv.osv import except_osv
+
 DT_FORMAT = '%Y-%m-%d'
 DHM_FORMAT = '%Y-%m-%d %H:%M:%S'
 HM_FORMAT = '%H:%M:%S'
@@ -723,14 +727,29 @@ class report_sxw(report_rml, preprocess.report):
         try:
             objs = self.getObjects(cr, uid, ids, context)
             rml_parser.set_context(objs, data, ids, report_xml.report_type)
-            processed_rml = etree.XML(rml)
-            if report_xml.header:
-                rml_parser._add_header(processed_rml, self.header)
-            processed_rml = self.preprocess_rml(processed_rml,report_xml.report_type)
+            if not report_xml.mako_template:
+                processed_rml = etree.XML(rml)
+                if report_xml.header:
+                    rml_parser._add_header(processed_rml, self.header)
+                processed_template = etree.tostring(self.preprocess_rml(processed_rml,report_xml.report_type), encoding='utf8')
+            else:
+                body = Template(filename=os.path.join(tools.config['root_path'], self.tmpl), input_encoding='utf-8', output_encoding='utf-8', default_filters=['decode.utf8'])
+                rml_parser.localcontext['explicit_translate'] = True
+                rml_parser.orig_file=self.tmpl
+                try:
+                    processed_template = body.render(
+                        _=rml_parser.translate_call,
+                        **rml_parser.localcontext
+                    )
+                except Exception:
+                    msg = exceptions.text_error_template().render()
+                    raise except_osv('mako2pdf render', msg)
+
             if rml_parser.logo:
                 logo = base64.b64decode(rml_parser.logo)
+
             create_doc = self.generators[report_xml.report_type]
-            pdf = create_doc(etree.tostring(processed_rml, encoding='utf8'),rml_parser.localcontext,logo,title)
+            pdf = create_doc(processed_template, rml_parser.localcontext, logo, title)
             return (pdf, report_xml.report_type)
         finally:
             if rml_parser.log_export:

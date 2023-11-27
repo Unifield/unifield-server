@@ -119,8 +119,11 @@ def _process_text(self, txt):
     sps = _regex.split(txt)
     while sps:
         # This is a simple text to translate
-        to_translate = tools.ustr(sps.pop(0))
-        result += tools.ustr(self.localcontext.get('translate', lambda x:x)(to_translate))
+        if not self.localcontext.get('explicit_translate'):
+            to_translate = tools.ustr(sps.pop(0))
+            result += tools.ustr(self.localcontext.get('translate', lambda x:x)(to_translate))
+        else:
+            result += tools.ustr(sps.pop(0))
         if sps:
             try:
                 txt = None
