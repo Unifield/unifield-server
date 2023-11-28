@@ -252,6 +252,7 @@ class entity(osv.osv):
 
         'activity' : fields.function(_get_activity, type='char', string="Activity", method=True, multi="_get_act"),
         'last_dateactivity': fields.function(_get_activity, type='datetime', string="Date of last activity", method=True, multi="_get_act"),
+        'date_success_sync': fields.datetime('Date of last success sync', readonly=True),
         #'last_activity' : fields.datetime("Date of last activity", readonly=True),
 
         'parent_left' : fields.integer("Left Parent", select=1),
@@ -1012,6 +1013,12 @@ class sync_manager(osv.osv):
     @check_validated
     def message_recover_from_seq(self, cr, uid, entity, start_seq, context=None):
         return (True, self.pool.get('sync.server.message').recovery(cr, 1, entity, start_seq, context=context))
+
+    @check_validated
+    def sync_success(self, cr, uid, entity, context=None):
+        self._logger.info("::::::::[%s] success sync" % (entity.name, ))
+        self.pool.get('sync.server.entity').write(cr, uid, entity.id, {'date_success_sync': fields.datetime.now()})
+        return True
 
 sync_manager()
 
