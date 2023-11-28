@@ -289,7 +289,7 @@
                 <tree string="MSL Projects" hide_new_button="1" hide_delete_button="1" colors="red:not instance_id">
                     <field name="instance_id" />
                     <field name="country_id" />
-                    <field name="msl_product_ids" string="Product Count"/>
+                    <field name="msl_product_count"/>
                     <field name="uf_active" />
                 </tree>
             </field>
@@ -304,7 +304,7 @@
                 <tree string="MSL Projects" hide_new_button="1" hide_delete_button="1" colors="red:not instance_id">
                     <field name="instance_id" />
                     <field name="country_id" />
-                    <field name="msl_product_ids" string="Product Count"/>
+                    <field name="msl_product_count"/>
                     <field name="uf_active" />
                     <button type="object" string="Activate" name="activate" icon="terp-check" attrs="{'invisible': [('uf_active', '=', True)]}"/>
                     <button type="object" string="De-activate" name="de_activate" icon="gtk-stop" attrs="{'invisible': [('uf_active', '=', False)]}"/>
@@ -625,12 +625,12 @@
             <tree string="All Projects" hide_new_button="1" hide_delete_button="1" colors="red:not instance_id">
                 <field name="instance_id" />
                 <field name="country_id" />
-                <field name="msl_product_ids" string="Product Count"/>
-                    <field name="uf_active" />
-                    <field name="is_published" />
-                </tree>
-            </field>
-        </record>
+                <field name="msl_product_count"/>
+                <field name="uf_active" />
+                <field name="is_published" />
+            </tree>
+        </field>
+    </record>
 
 
         <record  model="ir.actions.act_window" id="unifield_instance_all_action">
