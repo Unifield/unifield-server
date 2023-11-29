@@ -38,7 +38,7 @@ class stock_invoice_onshipping(osv.osv_memory):
         res_ids = context and context.get('active_ids', [])
         vals = []
         browse_picking = model_pool.browse(cr, uid, res_ids, context=context)
-        
+
         for pick in browse_picking:
             if not pick.move_lines:
                 continue
@@ -55,7 +55,7 @@ class stock_invoice_onshipping(osv.osv_memory):
                 journal_type = 'sale_refund'
             else:
                 journal_type = 'sale'
-                
+
             value = journal_obj.search(cr, uid, [('type', '=',journal_type )])
             for jr_type in journal_obj.browse(cr, uid, value, context=context):
                 t1 = jr_type.id,jr_type.name
@@ -63,7 +63,7 @@ class stock_invoice_onshipping(osv.osv_memory):
                     vals.append(t1)
         if not vals:
             raise osv.except_osv(_('Warning !'), _('Either there are no moves linked to the picking or Accounting Journals are misconfigured!'))
-        
+
         return vals
 
 
@@ -82,9 +82,8 @@ class stock_invoice_onshipping(osv.osv_memory):
         res = super(stock_invoice_onshipping, self).view_init(cr, uid, fields_list, context=context)
         pick_obj = self.pool.get('stock.picking')
         active_ids = context.get('active_ids',[])
-        count = pick_obj.search(cr, uid, active_ids,
-                [('invoice_state', '!=', '2binvoiced'),],
-                count=True, context=context)
+        count = pick_obj.search(cr, uid, [('id', 'in', active_ids), ('invoice_state', '!=', '2binvoiced')],
+                                count=True, context=context)
         if len(active_ids) == 1 and count:
             raise osv.except_osv(_('Warning !'), _('This picking list does not require invoicing.'))
         if len(active_ids) == count:
@@ -131,10 +130,10 @@ class stock_invoice_onshipping(osv.osv_memory):
         inv_type = picking_pool._get_invoice_type(active_picking)
         context['inv_type'] = inv_type
         res = picking_pool.action_invoice_create(cr, uid, active_ids,
-              journal_id = onshipdata_obj[0]['journal_id'],
-              group = onshipdata_obj[0]['group'],
-              type = None,
-              context=context)
+                                                 journal_id = onshipdata_obj[0]['journal_id'],
+                                                 group = onshipdata_obj[0]['group'],
+                                                 type = None,
+                                                 context=context)
         return res
 
 stock_invoice_onshipping()
