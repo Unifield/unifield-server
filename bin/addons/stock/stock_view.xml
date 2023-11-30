@@ -1118,8 +1118,6 @@
                     <group colspan="2" col="2">
                         <separator colspan="2" string="Move Information"/>
                         <field name="name" string="Reason" readonly="1" />
-                        <field name="product_uos_qty" readonly="1" />
-                        <field name="product_uos" readonly="1" colspan="4"/>
                     </group>
 
                     <group colspan="2" col="2">
@@ -1349,8 +1347,6 @@
                     <group colspan="2" col="2">
                         <separator colspan="2" string="Move Information"/>
                         <field name="name" string="Reason" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"/>
-                        <field name="product_uos_qty" groups="product.group_uos"  on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4"/>
-                        <field name="product_uos" groups="product.group_uos" colspan="4"/>
                     </group>
 
                     <group colspan="2" col="2">
@@ -1396,12 +1392,6 @@
                     </group>
                     <separator colspan="4"/>
                     <field name="state"/>
-                    <group col="5" colspan="2">
-                        <button name="action_cancel" states="assigned,confirmed" string="_Cancel" type="object" icon="gtk-cancel"/>
-                        <button name="action_confirm" states="draft" string="Process Later" type="object" icon="gtk-apply" invisible="1"/>
-                        <button name="force_assign" states="confirmed" string="Set Available" type="object" icon="gtk-yes" invisible="1"/>
-                        <button name="%(action_partial_move_server)d" string="Process" type="action" states="assigned" icon="gtk-go-forward"/>
-                    </group>
                 </form>
             </field>
         </record>
