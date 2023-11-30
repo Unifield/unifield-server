@@ -812,6 +812,7 @@
                         <filter icon="terp-camera_test" string="Ready" name="ready" domain="[('state','=','assigned')]" help="Stock moves that are Available (Ready to process)"/>
                         <separator orientation="vertical"/>
                         <field name="name" string="Name" />
+                        <field name="picking_id" widget="char" />
                         <field name="origin"/>
                         <field name="address_id" string="Partner" context="{'contact_display':'partner'}" filter_domain="[('picking_id.address_id','ilike',self)]"/>
                         <field name="product_id"/>

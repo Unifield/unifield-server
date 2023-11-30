@@ -794,6 +794,7 @@ action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.act
                 <tree colors="grey:state in ('cancel')" string="Moves"  noteditable="1" hide_delete_button="1"    hide_new_button="1" editable="top">
                     <field name="name" />
                     <field name="picking_id" string="Reference"/>
+                    <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                     <field name="origin"/>
                     <field name="reason_type_id" />
                     <field name="comment" />
@@ -816,7 +817,6 @@ action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.act
                     <field name="kc_check" />
                     <field name="dg_check" />
                     <field name="np_check" />
-                    <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                 </tree>
             </field>
         </record>

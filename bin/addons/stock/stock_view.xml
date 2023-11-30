@@ -1069,6 +1069,7 @@
                 <tree colors="grey:state in ('cancel');red:(state not in ('cancel','done')) and date > current_date" string="Moves" editable="top" noteditable="1" hide_new_button="1" hide_delete_button="1">
                     <field name="name"/>
                     <field name="picking_id" string="Picking Ref."/>
+                    <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                     <field name="origin"/>
                     <field name="create_date" invisible="1"/>
                     <field name="reason_type_id" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" />
@@ -1092,7 +1093,6 @@
                     <field name="ssl_check" invisible="True" widget="null_boolean" />
                     <field name="dg_check" widget="null_boolean" />
                     <field name="np_check" widget="null_boolean" />
-                    <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                 </tree>
             </field>
         </record>
@@ -1285,6 +1285,7 @@
             <field name="arch" type="xml">
                 <tree colors="grey:state in ('cancel')" string="Moves" hide_new_button="1" hide_delete_button="1" noteditable="1" editable="top">
                     <field name="picking_id" string="Reference"/>
+                    <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                     <field name="reason_type_id" domain="[('incoming_ok', '=', True)]" />
                     <field name="origin"/>
                     <field name="partner_id" string="Partner"/>
@@ -1304,7 +1305,6 @@
                     <field name="ssl_check" invisible="True" widget="null_boolean" />
                     <field name="dg_check" widget="null_boolean" />
                     <field name="np_check" widget="null_boolean" />
-                    <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                 </tree>
             </field>
         </record>

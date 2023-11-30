@@ -1082,29 +1082,21 @@
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
 							<field name="origin" readonly="1"/>
-							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id, type)"
-                                                        required="1"
-							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
-								   domain="[('partner_id', '=', partner_id2)]"
-							/>
-							<field name="invoice_state"/>
+							<field name="partner_id2" readonly="1" />
+							<field name="address_id" colspan="2" context="{'contact_display':'partner'}" readonly="1" />
 							<field name="backorder_id" readonly="1" />
-							<field name="shipment_id" readonly="True" />
+							<field name="shipment_id" readonly="1" />
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1" />
-							<field name="min_date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
-							<field name="stock_journal_id" widget="selection" invisible="True" />
-							<field name="reason_type_id" widget="selection"/>
-							<field name="sale_id" invisible="True" />
-							<field name="subtype" invisible="True" />
-							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
+							<field name="min_date" readonly="1" />
+							<field name="reason_type_id" widget="selection" readonly="1" />
+							<field name="warehouse_id" readonly="1" />
 						</group>
 					</group>
 					<notebook colspan="4">
 						<page string="Products">
-							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}">
+							<field colspan="4" name="move_lines" nolabel="1" readonly="1">
 								<tree string="Stock Moves" colors="red: inactive_product==True">
 									<field name="product_id"/>
 									<field name="composition_list_id" readonly="1" />
@@ -1137,74 +1129,53 @@
 								<form string="Stock Moves">
 									<group colspan="2" col="4">
 										<separator colspan="4" string="Move Information"/>
-										<field name="name" invisible="1" colspan="4" />
-                                        <field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
-										<field name="asset_id" />
-                                        <field name="composition_list_id" invisible="True" />
-										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
-										<field name="product_uom" string="Unit Of Measure" colspan="4" />
-										<field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
-										<field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
-										<field name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" />
+                                        <field name="product_id" readonly="1"/>
+										<field name="asset_id" readonly="1" />
+										<field name="product_qty" readonly="1" />
+										<field name="product_uom" string="Unit Of Measure" colspan="4" readonly="1"/>
+										<field name="product_uos_qty" readonly="1" colspan="4" />
+										<field name="product_uos" readonly="1"  colspan="4" />
+										<field name="product_packaging"  readonly="1" colspan="4" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
-                                        <field name="picking_id" invisible="1" />
-										<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_dest_id)]"
-										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
-										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, picking_id)" />
+										<field name="location_id" readonly="1" />
+										<field name="location_dest_id" readonly="1" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Dates" colspan="2" />
-										<field name="create_date" invisible="1"/>
-										<field name="date"/>
-										<field name="date_expected"/>
+										<field name="date" readonly="1" />
+										<field name="date_expected" readonly="1"/>
 									</group>
 									<group colspan="2" col="4">
 										<separator string="Traceability" colspan="4" />
-										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
-										<field name="prodlot_id"
-										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
-										'search_default_real': True}"
-										domain="[('product_id','=?',product_id), ('check_type','=', True)]"
-										on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-										attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
-										<field name="hidden_batch_management_mandatory" invisible="True" />
-										<field name="hidden_perishable_mandatory" invisible="True" />
-										<field name="expired_date" />
-										<field name="lot_check" />
-										<field name="exp_check" />
-                                        <field name="kc_check" widget="null_boolean" />
-                                        <field name="ssl_check" invisible="True" widget="null_boolean" />
-                                        <field name="dg_check" widget="null_boolean" />
-                                        <field name="np_check" widget="null_boolean" />
+										<field name="reason_type_id"  widget="selection" readonly="1" />
+										<field name="prodlot_id" readonly="1" />
+										<field name="expired_date" readonly="1" />
+										<field name="lot_check" readonly="1" />
+										<field name="exp_check" readonly="1" />
+                                        <field name="kc_check" widget="null_boolean" readonly="1" />
+                                        <field name="ssl_check" invisible="True" widget="null_boolean" readonly="1" />
+                                        <field name="dg_check" widget="null_boolean" readonly="1"/>
+                                        <field name="np_check" widget="null_boolean" readonly="1"/>
 									</group>
 									<label string="" colspan="4"/>
-									<field name="state"/>
-									<group col="4" colspan="2">
-										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
-									</group>
+									<field name="state" readonly="1"/>
 								</form>
 							</field>
 							<group col="12" colspan="4">
 								<field name="state" readonly="1"/>
-								<field name="flow_type" />
-								<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"  context="{'from_button': True}" />
-								<button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" icon="gtk-find"/>
-								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
-								<button name="packing" states="assigned" string="Pack..." type="object" icon="gtk-go-forward"/>
+								<field name="flow_type" readonly="1" />
 							</group>
 						</page>
 						<page string="Additional info">
-							<field name="auto_picking" />
-							<field name="date_done" />
-							<field name="move_type" />
-							<field name="type" />
-							<field name="company_id" groups="base.group_multi_company" widget="selection"/>
+							<field name="auto_picking" readonly="1" />
+							<field name="date_done" readonly="1" />
+							<field name="move_type" readonly="1" />
+							<field name="type" readonly="1"  />
 						</page>
 						<page string="Notes">
-							<field colspan="4" name="note" nolabel="1"/>
+							<field colspan="4" name="note" nolabel="1" readonly="1" />
 						</page>
 					</notebook>
 				</form>

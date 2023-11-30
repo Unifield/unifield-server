@@ -12,7 +12,7 @@ import decimal_precision as dp
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from kit import KIT_CREATION_STATE
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
-
+from tools.safe_eval import safe_eval
 
 class stock_move(osv.osv):
 
@@ -2531,6 +2531,17 @@ class stock_move(osv.osv):
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'],context=context)
         res['res_id'] = move.picking_id.id
         res['target'] = 'current'
+        res['domain'] = [('id', '=',move.picking_id.id)]
+        if isinstance(res.get('context'), str):
+            try:
+                res['context'] = safe_eval(res['context'])
+            except:
+                pass
+        if isinstance(res.get('context'), dict):
+            for x in list(res['context'].keys()):
+                if x.startswith('search_default'):
+                    del(res['context'][x])
+        res['name'] = '%s %s' % (res.get('name', ''), move.picking_id.name)
         return res
 
 
