@@ -70,7 +70,7 @@ try:
         # Get file's data
         file_ids = sock.execute(dbname, uid, password, 'ir.attachment', 'search', [('name', '=', '%s.po' % (lang,)),('create_date', '>=', now)])
         if file_ids:
-            file_data = base64.b64decode(sock.execute(dbname, uid, password, 'ir.attachment', 'read', file_ids[0], ['datas'])['datas'])
+            file_data = base64.b64decode(sock.execute(dbname, uid, password, 'ir.attachment', 'read', file_ids[0], ['datas'])['datas'].data)
             print('Data retrieved')
         i += 1
     if not file_data:
@@ -80,7 +80,7 @@ try:
         filepath = os.path.join(tmp_dir, '%s.po' % (lang,))
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
-        file = open(filepath, 'w')
+        file = open(filepath, 'wb')
         file.write(file_data)
         file.close()
         print('The new file has been created at "/tmp/translation"')
