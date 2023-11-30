@@ -1067,6 +1067,7 @@
             <field eval="6" name="priority"/>
             <field name="arch" type="xml">
                 <tree colors="grey:state in ('cancel');red:(state not in ('cancel','done')) and date > current_date" string="Moves" editable="top" noteditable="1" hide_new_button="1" hide_delete_button="1">
+                    <field name="name"/>
                     <field name="picking_id" string="Picking Ref."/>
                     <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                     <field name="origin"/>
