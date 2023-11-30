@@ -64,8 +64,15 @@ class patch_scripts(osv.osv):
         cr.execute(
             """
             DELETE FROM audittrail_log_line
-            WHERE name IN ('birthday', 'gender', 'marital', 'mobile_phone', 'notes', 'private_phone', 'work_email',
-            'work_phone', 'country_id', 'ssnid', 'bank_name', 'bank_account_number')
+            WHERE
+                name IN ('birthday', 'gender', 'marital', 'mobile_phone', 'notes', 'private_phone', 'work_email',
+            'work_phone', 'country_id', 'ssnid', 'bank_name', 'bank_account_number') AND
+                object_id = (SELECT id FROM ir_model WHERE model = 'hr.employee') AND
+                field_id IN (SELECT id FROM ir_model_fields
+                            WHERE
+                                model_id = (SELECT id FROM ir_model WHERE model = 'hr.employee') AND
+                                name IN ('birthday', 'gender', 'marital', 'mobile_phone', 'notes', 'private_phone',
+                                'work_email', 'work_phone', 'country_id', 'ssnid', 'bank_name', 'bank_account_number'))
             """)
         return True
 
