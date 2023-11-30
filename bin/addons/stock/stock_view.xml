@@ -1061,7 +1061,7 @@
         <menuitem action="action_picking_tree6" id="menu_action_picking_tree6" parent="menu_stock_warehouse_mgmt" sequence="2"/>
 
         <record id="view_move_tree" model="ir.ui.view">
-            <field name="name">stock.move.tree</field>
+            <field name="name">default.stock.move.tree</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
             <field eval="6" name="priority"/>
@@ -1086,13 +1086,13 @@
                     <field name="date"/>
                     <field name="date_expected"/>
                     <field name="state"/>
-                    <button name="action_done" states="confirmed,assigned" string="Process" type="object" icon="gtk-go-forward" invisible="1"/>
                     <field name="lot_check" />
                     <field name="exp_check" />
                     <field name="kc_check" widget="null_boolean" />
                     <field name="ssl_check" invisible="True" widget="null_boolean" />
                     <field name="dg_check" widget="null_boolean" />
                     <field name="np_check" widget="null_boolean" />
+                    <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                 </tree>
             </field>
         </record>
@@ -1304,6 +1304,7 @@
                     <field name="ssl_check" invisible="True" widget="null_boolean" />
                     <field name="dg_check" widget="null_boolean" />
                     <field name="np_check" widget="null_boolean" />
+                    <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                 </tree>
             </field>
         </record>

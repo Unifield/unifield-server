@@ -2520,5 +2520,20 @@ class stock_move(osv.osv):
         res['res_id'] = move.linked_incoming_move and move.linked_incoming_move.picking_id.id or move.picking_id.id
         return res
 
+    def open_picking_view(self, cr, uid, ids, context=None):
+        if not ids:
+            return False
+        move = self.browse(cr, uid, ids[0], fields_to_fetch=['picking_id'], context=context)
+        if not move.picking_id:
+            raise osv.except_osv(_('Info'), _('This record is not linked to any Picking.'))
+
+        xmlid = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, [move.picking_id.id], context=context, pick=move.picking_id)
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'],context=context)
+        res['res_id'] = move.picking_id.id
+        res['target'] = 'current'
+        return res
+
+
+
 stock_move()
 
