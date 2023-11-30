@@ -1220,7 +1220,7 @@
 		</record>
 		<!-- Added 'subtype' in domain -->
 		<record id="action_packing" model="ir.actions.act_window">
-			<field name="name">Packing (debug)</field>
+			<field name="name">Packing</field>
 			<field name="res_model">stock.picking</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
