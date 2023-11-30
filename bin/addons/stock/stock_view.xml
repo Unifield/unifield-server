@@ -1406,21 +1406,30 @@
                     <group col="8" colspan="4">
                         <filter icon="terp-go-today" string="Today" domain="['&amp;', ('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders planned for today"/>
                         <separator orientation="vertical"/>
-                        <filter icon="terp-gtk-go-back-rtl" name="receive" string="To Do" domain="[('state','in',('confirmed','assigned'))]" help="Stock to be received"/>
+                        <filter icon="terp-gtk-go-back-rtl" name="receive" string="In Progress" domain="[('state','in',('confirmed','assigned'))]" help="Stock to be received"/>
                         <filter icon="terp-dialog-close" name="received" string="Done" domain="[('state','=','done')]"/>
                         <separator orientation="vertical"/>
+                        <field name="picking_id" widget="char"/>
+                        <field name="reason_type_id" widget="selection" domain="[('incoming_ok', '=', True)]" />
                         <field name="origin"/>
                         <field name="partner_id" string="Partner"/>
                         <field name="product_id"/>
+                        <field name="order_category" />
+                        <field name="state" />
                     </group>
                     <newline/>
                     <group expand="0" string="Extended Filters..." groups="base.group_extended">
-                       <field name="tracking_id" context="{'tracking': self}"/>
                        <field name="prodlot_id"/>
+                       <group>
+                            <separator string="Order Traceability" />
+                            <field name="order_priority" />
+                       </group>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="8" groups="base.group_extended">
                         <filter string="Supplier" icon="terp-personal" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
+                        <separator orientation="vertical" />
                         <filter string="Product" icon="terp-accessories-archiver" domain="[]" context="{'group_by':'product_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Order" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'origin'}"/>
@@ -1442,22 +1451,33 @@
                     <group col="8" colspan="4">
                         <filter icon="terp-go-today" string="Today" domain="['&amp;', ('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders planned for today"/>
                         <separator orientation="vertical"/>
-                        <filter icon="terp-gtk-go-back-rtl" name="receive" string="To Do" domain="[('state','in',('confirmed','assigned'))]" help="Stock to be delivered (available or not)"/>
-                        <filter icon="terp-check" name="available" string="Available" domain="[('state','in',('assigned',))]" help="Stock available to be delivered"/>
-                        <filter icon="terp-dialog-close" name="received" string="Done" domain="[('state','=','done')]"/>
+                        <filter icon="terp-gtk-go-back-rtl" name="receive" string="In Progress" domain="[('state','in',('confirmed','assigned'))]" help="Stock to be delivered (available or not)"/>
+                        <filter icon="terp-dialog-close" name="received" string="Closed" domain="[('state','=','done')]"/>
                         <separator orientation="vertical"/>
+                        <field name="picking_id" widget="char"/>
+                        <field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
+
                         <field name="origin"/>
                         <field name="partner_id" string="Partner"/>
                         <field name="product_id"/>
+                        <newline />
+                        <field name="order_category" />
+                        <field name="state" />
+
                     </group>
                     <newline/>
                     <group expand="0" string="Extended Filters..." groups="base.group_extended">
-                       <field name="tracking_id" context="{'tracking_id': self}"/>
                        <field name="prodlot_id"/>
+                       <group>
+                           <separator string="Order Traceability" />
+                           <field name="order_priority" />
+                       </group>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="4" col="8" groups="base.group_extended">
                         <filter string="Customer" icon="terp-personal" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <separator orientation="vertical" />
+                        <filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Product" icon="terp-accessories-archiver" domain="[]" context="{'group_by':'product_id'}"/>
                         <filter string="Order" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'origin'}"/>

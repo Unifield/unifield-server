@@ -51,50 +51,5 @@
                 </data>
             </field>
         </record>
-        
-        <record id="order_type_view_move_search_reception_incoming_picking" model="ir.ui.view">
-            <field name="name">order.type.view.move.search.reception.incoming.picking</field>
-            <field name="model">stock.move</field>
-            <field name="type">search</field>
-            <field name="priority">25</field>
-            <field name="inherit_id" ref="stock.view_move_search_reception_incoming_picking" />
-            <field name="arch" type="xml">
-                <data>
-                	<xpath expr="/search//filter[@string='To Do']" position="attributes">
-                		<attribute name="string">In Progress</attribute>
-                	</xpath>
-                	
-                	<xpath expr="/search/group[2]/field[@name='tracking_id']" position="replace" />
-                	
-                    <xpath expr="/search/group[2]/field[@name='prodlot_id']" position="after">
-                        <group> 
-                            <separator string="Order Traceability" />
-                            <field name="order_priority" />
-                        </group>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-    
-            <record id="order_type_view_move_search_reception_outcoming_picking" model="ir.ui.view">
-            <field name="name">order.type.view.move.search.reception.outcoming.picking</field>
-            <field name="model">stock.move</field>
-            <field name="type">search</field>
-            <field name="priority">25</field>
-            <field name="inherit_id" ref="stock.view_move_search_reception_outcoming_picking" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/search/group[2]/field[@name='prodlot_id']" position="after">
-                        <group> 
-                            <separator string="Order Traceability" />
-                            <field name="order_priority" />
-                        </group>
-                    </xpath>
-                    
-                    <xpath expr="/search//filter[@string='Available']" position="replace" />
-                </data>
-            </field>
-        </record>
-        
     </data>
 </openerp>
