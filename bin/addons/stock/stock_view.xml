@@ -1556,14 +1556,6 @@
             res_model="stock.move"
             src_model="product.product"/>
 
-        <act_window
-            domain="[('move_lines','in',[active_id])]"
-            id="act_relate_picking"
-            name="Related Picking"
-            res_model="stock.picking"
-            src_model="stock.move"
-            context="{'search_view': False}" />
-
         <record id="ir_act_product_location_open" model="ir.values">
             <field name="key2">tree_but_open</field>
             <field name="model">stock.location</field>
