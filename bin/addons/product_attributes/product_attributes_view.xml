@@ -816,6 +816,7 @@ action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.act
                     <field name="kc_check" />
                     <field name="dg_check" />
                     <field name="np_check" />
+                    <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                 </tree>
             </field>
         </record>
