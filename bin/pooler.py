@@ -20,8 +20,12 @@
 ##############################################################################
 
 import updater
-
+import os
+import configparser
+from threading import Lock
 pool_dic = {}
+
+__lock = Lock()
 
 def get_db_and_pool(db_name, force_demo=False, status=None,
                     update_module=False, pooljobs=True, threaded=False, upgrade_modules=True, if_open=False):
@@ -59,6 +63,34 @@ def get_db_and_pool(db_name, force_demo=False, status=None,
         except Exception:
             del pool_dic[db_name]
             raise
+
+        from tools.config import config
+        if config.get('save_database_in_config') == 'Y' and config.rcfile and os.path.exists(config.rcfile) and (not config['db_name_file'] or db_name not in config['db_name_file'].split(',')):
+            import logging
+            locked = __lock.acquire(False)
+            if locked:
+                try:
+                    config_file_parser = configparser.ConfigParser()
+                    config_file_parser.read(config.rcfile)
+                    if 'options' not in config_file_parser.sections():
+                        config_file_parser['options'] = {'db_name': ''}
+
+                    if not config_file_parser['options'].get('db_name'):
+                        config_file_parser['options']['db_name'] = ''
+
+                    dbs = config_file_parser['options']['db_name'].split(',')
+                    dbs.append(db_name)
+                    all_loaded_dbs = ','.join(list(set(dbs)))
+                    config_file_parser['options']['db_name'] = all_loaded_dbs
+                    config['db_name_file'] = all_loaded_dbs
+                    logging.getLogger('server').info('Add %s in %s', db_name, config.rcfile)
+
+                    with open(config.rcfile, 'w') as configfile:
+                        config_file_parser.write(configfile)
+                finally:
+                    __lock.release()
+            else:
+                logging.getLogger('server').warning('Unbale to lock file %s, db %s not added', config.rcfile, db_name)
 
         cr = db.cursor()
         try:

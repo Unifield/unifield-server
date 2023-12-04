@@ -149,16 +149,26 @@ if not ( tools.config["stop_after_init"] or \
 if tools.config['db_name']:
     for dbname in tools.config['db_name'].split(','):
         ops_event('commandline-update', dbname)
-        db,pool = pooler.get_db_and_pool(dbname, update_module=tools.config['init'] or tools.config['update'], pooljobs=False)
-        cr = db.cursor()
+        cr = False
         try:
-            if tools.config["test_file"]:
-                logger.info('loading test file %s', tools.config["test_file"])
-                tools.convert_yaml_import(cr, 'base', open(tools.config["test_file"]), {}, 'test', True)
-                cr.rollback()
-            pool.get('ir.cron').restart(db.dbname)
-        finally:
-            cr.close()
+            db,pool = pooler.get_db_and_pool(dbname, update_module=tools.config['init'] or tools.config['update'], pooljobs=False)
+            cr = db.cursor()
+
+            try:
+                if tools.config["test_file"]:
+                    logger.info('loading test file %s', tools.config["test_file"])
+                    tools.convert_yaml_import(cr, 'base', open(tools.config["test_file"]), {}, 'test', True)
+                    cr.rollback()
+                pool.get('ir.cron').restart(db.dbname)
+            finally:
+                if cr:
+                    cr.close()
+
+        except Exception as e:
+            logger.error('Unable to load %s: %s', dbname, e)
+            logger.warning('if db %s does not exist anymore you can edit %s and change "db_name"', dbname, tools.config.rcfile)
+            if cr:
+                cr.close()
 
 #----------------------------------------------------------
 # translation stuff
