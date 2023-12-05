@@ -51,7 +51,7 @@ class configmanager(object):
             'db_port': False,
             'db_name': False,
             'db_name_file': False,
-            'save_database_in_config': 'Y',
+            'save_db_name_in_config': 'Y',
             'db_user': False,
             'db_password': False,
             'db_maxconn': 64,
@@ -212,7 +212,7 @@ class configmanager(object):
 
         group = optparse.OptionGroup(parser, "Database related options")
         group.add_option("-d", "--database", dest="db_name", help="specify the database name")
-        group.add_option("--save-database-in-config", dest="save_database_in_config", type='choice', choices=['Y', 'N'], metavar='Y/N', help="update config file with db name [Y/N]")
+        group.add_option("--save_db_name_in_config", dest="save_db_name_in_config", type='choice', choices=['Y', 'N'], metavar='Y/N', help="update config file with db name [Y/N] (default Y)")
         group.add_option("-r", "--db_user", dest="db_user", help="specify the database user name")
         group.add_option("-w", "--db_password", dest="db_password", help="specify the database password")
         group.add_option("--pg_path", dest="pg_path", help="specify the pg executable path")
@@ -323,7 +323,7 @@ class configmanager(object):
                 'xmlrpcs_interface', 'xmlrpcs_port', 'xmlrpcs',
                 'secure_cert_file', 'secure_pkey_file',
                 'static_http_enable', 'static_http_document_root', 'static_http_url_prefix',
-                'save_database_in_config',
+                'save_db_name_in_config',
                 ]
 
         # opt : command line option

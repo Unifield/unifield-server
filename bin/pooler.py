@@ -65,7 +65,7 @@ def get_db_and_pool(db_name, force_demo=False, status=None,
             raise
 
         from tools.config import config
-        if config.get('save_database_in_config') == 'Y' and config.rcfile and os.path.exists(config.rcfile) and (not config['db_name_file'] or db_name not in config['db_name_file'].split(',')):
+        if config.get('save_db_name_in_config') == 'Y' and config.rcfile and os.path.exists(config.rcfile) and (not config['db_name_file'] or db_name not in config['db_name_file'].split(',')):
             import logging
             locked = __lock.acquire(False)
             if locked:
