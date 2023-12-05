@@ -249,13 +249,14 @@ class db(netsvc.ExportService):
                                                          'state', 'error'])
 
             # get the last sync_monitor informations:
-            monitor_obj = pool.get('sync.monitor')
-            monitor_id = monitor_obj.search(cr, 1, [], order='start desc', limit=1)
-            monitor_id = monitor_id and monitor_id[0] or False
             monitor_status = ''
-            if monitor_id:
-                result = monitor_obj.read(cr, 1, monitor_id, ['status', 'error'])
-                monitor_status = 'Synchronisation status: %s : %s' % (result['status'], result['error'])
+            monitor_obj = pool.get('sync.monitor')
+            if monitor_obj and pool._ready:
+                monitor_id = monitor_obj.search(cr, 1, [], order='start desc', limit=1)
+                monitor_id = monitor_id and monitor_id[0] or False
+                if monitor_id:
+                    result = monitor_obj.read(cr, 1, monitor_id, ['status', 'error'])
+                    monitor_status = 'Synchronisation status: %s : %s' % (result['status'], result['error'])
         finally:
             cr.close()
         return res['resume'], res['progress'], res['state'], res['error'], monitor_status

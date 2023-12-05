@@ -37,6 +37,9 @@ from pprint import pformat
 import warnings
 import heapq
 import pooler
+import itertools
+
+heapq_counter = itertools.count()
 
 # Try to log the traceback in operations.event, but on a best-effort
 # basis: catch all errors and give up
@@ -44,13 +47,15 @@ def ops_event(dbname, kind, dat, uid=1):
     try:
         cr = None
         db, pool = pooler.get_db_and_pool(dbname, if_open=True)
-        if db is not None and pool is not None:
+        # not pool._ready: db is loading modules (could be operations.event table creation)
+        if db is not None and pool is not None and pool._ready:
             cr = db.cursor()
             oe = pool.get('operations.event')
             oe.create(cr, uid, { 'kind': kind, 'data': dat })
             cr.commit()
     except:
         pass
+
     finally:
         if cr is not None:
             cr.close()
@@ -385,8 +390,11 @@ class Agent(object):
 
     @classmethod
     def setAlarm(cls, function, timestamp, db_name, *args, **kwargs):
-        task = [timestamp, db_name, function, args, kwargs]
         with lock_runner:
+            # counter: task added for db1, then cancelled, added again, cancel again
+            # function cannot be used to sort task, so add a counter
+            cnt = next(heapq_counter)
+            task = [timestamp, db_name, cnt, function, args, kwargs]
             heapq.heappush(cls.__tasks, task)
 
     @classmethod
@@ -415,7 +423,7 @@ class Agent(object):
             with lock_runner:
                 while cls.__tasks and cls.__tasks[0][0] < time.time():
                     task = heapq.heappop(cls.__tasks)
-                    timestamp, dbname, function, args, kwargs = task
+                    timestamp, dbname, cnt, function, args, kwargs = task
                     if not timestamp:
                         # null timestamp -> cancelled task
                         continue

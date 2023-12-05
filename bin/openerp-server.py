@@ -75,7 +75,8 @@ def ops_event(what, dbname=None):
             c, pool = pooler.get_db_and_pool(db, upgrade_modules=False)
             cr = c.cursor()
             oe = pool.get('operations.event')
-            oe.create(cr, 1, { 'kind': what })
+            if oe:
+                oe.create(cr, 1, { 'kind': what })
             cr.commit()
         except:
             pass
