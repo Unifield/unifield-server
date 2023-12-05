@@ -78,9 +78,11 @@ def get_db_and_pool(db_name, force_demo=False, status=None,
                     if not config_file_parser['options'].get('db_name'):
                         config_file_parser['options']['db_name'] = ''
 
-                    dbs = config_file_parser['options']['db_name'].split(',')
-                    dbs.append(db_name)
-                    all_loaded_dbs = ','.join(list(set(dbs)))
+                    dbs = set(config_file_parser['options']['db_name'].split(','))
+                    dbs.add(db_name)
+                    dbs.discard('False') # case db_name = False
+                    dbs.discard('')  # case db_name =
+                    all_loaded_dbs = ','.join(dbs)
                     config_file_parser['options']['db_name'] = all_loaded_dbs
                     config['db_name_file'] = all_loaded_dbs
                     logging.getLogger('server').info('Add %s in %s', db_name, config.rcfile)
