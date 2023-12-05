@@ -110,7 +110,7 @@ class configmanager(object):
             'sync_user_password': False,
         }
 
-        self.blacklist_for_save = set(["publisher_warranty_url", "load_language", "netrpc", "netrpc_gzip", "netrpc_interface", "netrpc_port", "xmlrpcs_port", "xmlrpcs_interface"])
+        self.blacklist_for_save = set(["publisher_warranty_url", "load_language", "netrpc", "netrpc_gzip", "netrpc_interface", "netrpc_port", "xmlrpcs_port", "xmlrpcs_interface", "db_name_file"])
 
         self.rcfile = ""
         self.misc = {}
