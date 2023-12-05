@@ -585,7 +585,10 @@ class OpenERPDispatcher:
         except Exception as e:
             self.log('exception', tools.exception_to_unicode(e))
             tb = getattr(e, 'traceback', sys.exc_info())
-            tb_s = "".join(traceback.format_exception(*tb))
+            if tb == ('','',''):
+                tb_s = ""
+            else:
+                tb_s = "".join(traceback.format_exception(*tb))
             # For service 'db', param[0] is not a dbname, so just skip it.
             if len(params) >= 1 and service_name != 'db':
                 ops_event(params[0], 'traceback', tb_s)
