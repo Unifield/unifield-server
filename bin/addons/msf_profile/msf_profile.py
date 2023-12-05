@@ -58,6 +58,13 @@ class patch_scripts(osv.osv):
     }
 
 
+    def us_12110_remove_sup_fin_read(self, cr, uid, *a, **b):
+        '''
+        Remove all Sup_Fin_Read groups from all users
+        '''
+        cr.execute("DELETE FROM res_groups_users_rel WHERE gid=(SELECT id FROM res_groups WHERE name='Sup_Fin_Read')")
+        return True
+
     # python 3
     def us_9321_2_remove_location_colors(self, cr, uid, *a, **b):
         '''
