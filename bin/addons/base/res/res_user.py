@@ -785,10 +785,10 @@ class users(osv.osv):
 
         if values.get('groups_id'):
             # US-12110: Handle in-pipe sync of users
-            grp_to_remove_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sup_Fin_Read')], context=context)[0]
-            if values.get('groups_id')[0] and len(values.get('groups_id')[0]) and values.get('groups_id')[0][2] and \
-                    grp_to_remove_id in values.get('groups_id')[0][2]:
-                values.get('groups_id')[0][2].remove(grp_to_remove_id)
+            grp_to_remove_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sup_Fin_Read')], context=context)
+            if values.get('groups_id')[0] and len(values.get('groups_id')[0]) == 3 and values.get('groups_id')[0][2] and \
+                    grp_to_remove_id and grp_to_remove_id[0] in values.get('groups_id')[0][2]:
+                values.get('groups_id')[0][2].remove(grp_to_remove_id[0])
 
         user_id = super(users, self).create(cr, uid, values, context)
         if values.get('signature_enabled') or values.get('groups_id'):
@@ -831,10 +831,10 @@ class users(osv.osv):
         if values.get('groups_id'):
             old_groups = self.pool.get('res.groups').search(cr, uid, [('users', 'in', ids)], context=context)
             # US-12110: Handle in-pipe sync of users
-            grp_to_remove_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sup_Fin_Read')], context=context)[0]
-            if values.get('groups_id')[0] and len(values.get('groups_id')[0]) and values.get('groups_id')[0][2] and\
-                    grp_to_remove_id in values.get('groups_id')[0][2]:
-                values.get('groups_id')[0][2].remove(grp_to_remove_id)
+            grp_to_remove_id = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sup_Fin_Read')], context=context)
+            if values.get('groups_id')[0] and len(values.get('groups_id')[0]) == 3 and values.get('groups_id')[0][2] and \
+                    grp_to_remove_id and grp_to_remove_id[0] in values.get('groups_id')[0][2]:
+                values.get('groups_id')[0][2].remove(grp_to_remove_id[0])
 
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log
