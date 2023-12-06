@@ -317,6 +317,9 @@ class db(netsvc.ExportService):
             cr.close()
             if drop_db and db_name in pooler.pool_dic:
                 del pooler.pool_dic[db_name]
+                if tools.config.get('save_db_name_in_config') == 'Y':
+                    tools.config.delete_db_name(db_name)
+
         return True
 
     def _set_pg_psw_env_var(self):

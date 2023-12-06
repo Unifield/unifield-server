@@ -27,6 +27,8 @@ import netsvc
 import logging
 import release
 from base64 import b64decode, b64encode
+from threading import Lock
+
 
 def check_ssl():
     try:
@@ -37,7 +39,11 @@ def check_ssl():
     except:
         return False
 
+
 class configmanager(object):
+
+    __lock = Lock()
+
     def __init__(self, fname=None):
         self.options = {
             'email_from':False,
@@ -550,6 +556,60 @@ class configmanager(object):
 
     def __getitem__(self, key):
         return self.options[key]
+
+    def _load_current(self):
+        config_file_parser = configparser.ConfigParser()
+        config_file_parser.read(self.rcfile)
+        if 'options' not in config_file_parser.sections():
+            config_file_parser['options'] = {'db_name': ''}
+
+        if not config_file_parser['options'].get('db_name'):
+            config_file_parser['options']['db_name'] = ''
+        return config_file_parser
+
+    def _save_config(self, config_file_parser, dbs_set):
+        for to_del in ['False', '']:
+            dbs_set.discard(to_del)
+
+        all_loaded_dbs = ','.join(dbs_set)
+        config_file_parser['options']['db_name'] = all_loaded_dbs
+        self['db_name_file'] = all_loaded_dbs
+
+        with open(self.rcfile, 'w') as configfile:
+            config_file_parser.write(configfile)
+
+    def add_db_name(self, db_name):
+        if not db_name or not self.rcfile or not os.path.exists(config.rcfile) or (config['db_name_file'] and db_name in config['db_name_file'].split(',')):
+            return False
+        locked = self.__lock.acquire(False)
+        if locked:
+            try:
+                config_file_parser = self._load_current()
+                dbs = set(config_file_parser['options']['db_name'].split(','))
+                dbs.add(db_name)
+                self._save_config(config_file_parser, dbs)
+                logging.getLogger('server').info('Add %s in %s', db_name, self.rcfile)
+            finally:
+                self.__lock.release()
+        else:
+            logging.getLogger('server').warning('Unbale to lock file %s, db %s not added', self.rcfile, db_name)
+
+    def delete_db_name(self, db_name):
+        if not db_name or not self.rcfile or not os.path.exists(config.rcfile):
+            return False
+        locked = self.__lock.acquire(False)
+        if locked:
+            try:
+                config_file_parser = self._load_current()
+                dbs = set(config_file_parser['options']['db_name'].split(','))
+                dbs.discard(db_name)
+                self._save_config(config_file_parser, dbs)
+                logging.getLogger('server').info('Delete %s in %s', db_name, self.rcfile)
+            finally:
+                self.__lock.release()
+        else:
+            logging.getLogger('server').warning('Unbale to lock file %s, db %s not added', config.rcfile, db_name)
+
 
 config = configmanager()
 
