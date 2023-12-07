@@ -62,7 +62,9 @@ class patch_scripts(osv.osv):
         '''
         Remove all Sup_Fin_Read groups from all users
         '''
-        cr.execute("DELETE FROM res_groups_users_rel WHERE gid=(SELECT id FROM res_groups WHERE name='Sup_Fin_Read')")
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'US-12110-Sup_Fin_Read'})
         return True
 
     # python 3
@@ -6660,6 +6662,11 @@ class sync_tigger_something(osv.osv):
                 )
             """)
             _logger.warn('Deletion of %d Dest CC Links created out of HQ' % (cr.rowcount,))
+
+        if vals.get('name') == 'US-12110-Sup_Fin_Read':
+            cr.execute("""
+            DELETE FROM res_groups_users_rel
+            WHERE gid=(SELECT id FROM res_groups WHERE name='Sup_Fin_Read')""")
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 
