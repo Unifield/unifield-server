@@ -858,6 +858,8 @@ Nothing has been imported because of %s. See below:
                     2/ Within lines with same line number, same product and same UoM
                     3/ Within lines with same line number and same product
                     4/ Within lines with same line number
+                    5/ Within other claims IN(s) linked to the same origin but with lines not existing in the main 
+                        document anymore
 
                 If a matching line is found in one of these cases, keep the link between the
                 file line and the simulation screen line.
@@ -972,6 +974,42 @@ Nothing has been imported because of %s. See below:
                 for x in to_del:
                     del file_lines[x]
                 to_del = []
+
+                # Search if there is one or more IN claims with lines corresponding to the remaining lines
+                if file_lines and wiz.picking_id.origin:
+                    simu_line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+                    for x, fl in file_lines.items():
+                        cr.execute("""
+                            SELECT  m.id, m.product_id, m.product_qty, m.product_uom, m.price_unit, pt.standard_price, 
+                                m.price_currency_id, m.line_number, pl.external_ref
+                            FROM stock_move m 
+                                LEFT JOIN stock_picking p ON m.picking_id = p.id
+                                LEFT JOIN product_product pp ON m.product_id = pp.id
+                                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                                LEFT JOIN purchase_order_line pl ON m.purchase_line_id = pl.id
+                            WHERE p.type = 'in' AND p.state NOT IN ('done', 'cancel') AND p.claim = 't'
+                                AND p.origin = %s AND m.line_number = %s
+                        """, (wiz.picking_id.origin, fl[0]))
+                        for y in cr.fetchall():
+                            m_data = {
+                                'move_id': y[0],
+                                'initial_move_id': y[0],
+                                'simu_id': wiz.id,
+                                'move_product_id': y[1] or False,
+                                'move_product_qty': y[2] or 0.00,
+                                'move_uom_id': y[3] or False,
+                                'move_price_unit': y[4] or y[5],
+                                'move_currency_id': y[6] or False,
+                                'line_number': y[7],
+                                'external_ref': y[8] or False,
+                            }
+                            n_simu_line_id = simu_line_obj.create(cr, uid, m_data, context=context)
+                            file_in_lines[n_simu_line_id] = [(x, 'match')]
+                        to_del.append(x)
+                    # Clear the dict
+                    for x in to_del:
+                        del file_lines[x]
+                    to_del = []
 
                 # For file lines with no simu. screen lines with same line number,
                 # create a new simu. screen line
