@@ -387,9 +387,6 @@ class hr_payroll_employee_import(osv.osv_memory):
             uuid_key = employee_data.get('uuid_key', False)
             nom = employee_data.get('nom', False)
             prenom = employee_data.get('prenom', False)
-            bqmodereglement = employee_data.get('bqmodereglement', False)
-            bqnom = employee_data.get('bqnom', False)
-            bqnumerocompte = employee_data.get('bqnumerocompte', False)
         except ValueError as e:
             raise osv.except_osv(_('Error'), _('The given file is probably corrupted!\n%s') % (e))
         # Process data

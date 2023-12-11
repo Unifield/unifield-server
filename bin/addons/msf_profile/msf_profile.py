@@ -58,6 +58,21 @@ class patch_scripts(osv.osv):
     }
 
 
+    def us_12071_gdpr_patch(self, cr, uid, *a, **b):
+        cr.execute("""UPDATE hr_employee
+        SET
+        payment_method_id = NULL,
+        bank_name = NULL,
+        bank_account_number = NULL
+        WHERE employee_type = 'local'
+        """)
+        cr.execute("""
+        DELETE FROM audittrail_log_line
+        WHERE
+            name IN ('payment_method_id', 'bank_name', 'bank_account_number') AND
+            object_id = (SELECT id FROM ir_model WHERE model = 'hr.employee')""")
+        return True
+
     # python 3
     def us_9321_2_remove_location_colors(self, cr, uid, *a, **b):
         '''
