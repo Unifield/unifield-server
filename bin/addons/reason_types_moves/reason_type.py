@@ -309,31 +309,29 @@ class stock_picking(osv.osv):
          - GOODS RETURN UNIT
          - GOODS REPLACEMENT
          - OTHER
-        Only permet user to create/write a non-claim IN from scratch with some reason types:
-         - EXTERNAL SUPPLY
-         - INTERNAL SUPPLY
-         - RETURN FROM UNIT
+        Do not permit user to create/write an IN from scratch with some reason types:
+         - OTHER
+         - LOSS
+         - STOCK INITIALIZATION
         """
         data_obj = self.pool.get('ir.model.data')
         res = True
         try:
             rt_replacement_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
-            rt_g_return_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
             rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
             rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
-            int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
-            ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+            loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            rt_s_init_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_stock_initialization')[1]
         except ValueError:
             rt_replacement_id = 0
-            rt_g_return_id = 0
             rt_other_id = 0
             rt_return_unit_id = 0
-            int_rt_id = 0
-            ext_rt_id = 0
+            loss_rt_id = 0
+            rt_s_init_id = 0
 
         for sp in self.read(cr, uid, ids, ['purchase_id', 'sale_id', 'type', 'reason_type_id'], context=context):
             if not sp['purchase_id'] and not sp['sale_id'] and sp['reason_type_id']:
-                if (sp['type'] == 'in' and sp['reason_type_id'][0] not in [rt_return_unit_id, int_rt_id, ext_rt_id, rt_replacement_id, rt_g_return_id]) or \
+                if (sp['type'] == 'in' and sp['reason_type_id'][0] in [rt_other_id, loss_rt_id, rt_s_init_id]) or \
                         (sp['type'] == 'out' and sp['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id]):
                     return False
         return res
