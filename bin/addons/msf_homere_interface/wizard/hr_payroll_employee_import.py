@@ -370,7 +370,6 @@ class hr_payroll_employee_import(osv.osv_memory):
             context = {}
         if line_number is not None:
             line_number = line_number + 2  # cf. the count starts at "1" and the header line is ignored
-        payment_method_obj = self.pool.get('hr.payment.method')
         if not employee_data or not wizard_id:
             message = _('No data found for this line: %s.') % line_number
             self.store_error(errors, wizard_id, message)
@@ -435,23 +434,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'photo': False,
                 'identification_id': code_staff or False,
                 'name': employee_name,
-                'bank_name': bqnom,
-                'bank_account_number': bqnumerocompte,
             }
-
-
-            # Update the payment method
-            payment_method_id = False
-            if bqmodereglement:
-                payment_method_ids = payment_method_obj.search(cr, uid, [('name', '=', bqmodereglement)], limit=1, context=context)
-                if payment_method_ids:
-                    payment_method_id = payment_method_ids[0]
-                else:
-                    message = _('Payment Method %s not found for line: %s. Please fix Homere configuration or request a new Payment Method to the HQ.') % (ustr(bqmodereglement), line_number)
-                    self.store_error(errors, wizard_id, message)
-                    return False, created, updated
-
-            vals.update({'payment_method_id': payment_method_id})
 
             # In case of death, desactivate employee
             if decede and decede == 'Y':
