@@ -1017,5 +1017,8 @@
         </record>
 
 
+        <record id="us_9119_employee_uuid" model="patch.scripts">
+            <field name="method">us_9119_employee_uuid</field>
+        </record>
     </data>
 </openerp>

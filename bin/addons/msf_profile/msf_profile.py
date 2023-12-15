@@ -57,6 +57,8 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_9119_employee_uuid(self, cr, uid, *a, **b):
+        cr.execute("update hr_employee set homere_uuid_key=NULL where homere_uuid_key=''")
 
     # python 3
     def us_9321_2_remove_location_colors(self, cr, uid, *a, **b):
@@ -632,6 +634,7 @@ class patch_scripts(osv.osv):
                    (self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1],))
 
         return True
+
 
     def us_10652_chg_partn_property_fields(self, cr, uid, *a, **b):
         '''
