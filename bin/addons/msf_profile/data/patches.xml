@@ -1016,6 +1016,9 @@
             <field name="method">us_9321_2_remove_location_colors</field>
         </record>
 
-
+        <!-- UF32.0 -->
+        <record id="us_12076_remove_po_audittrail_rule_domain" model="patch.scripts">
+            <field name="method">us_12076_remove_po_audittrail_rule_domain</field>
+        </record>
     </data>
 </openerp>

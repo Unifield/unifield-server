@@ -540,13 +540,7 @@ class audittrail_rule(osv.osv):
                 "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
             }
             view_ids = []
-            if thisrule.object_id.model in ('purchase.order', 'purchase.order.line'):
-                # not Track changes on RfQ
-                view_ids.append(obj_model.get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1])
-                view_ids.append(obj_model.get_object_reference(cr, uid, 'purchase', 'purchase_order_tree')[1])
-
-            elif thisrule.object_id.model == 'account.bank.statement.line' or\
-                    thisrule.object_id.model == 'account.move.line':
+            if thisrule.object_id.model == 'account.bank.statement.line' or thisrule.object_id.model == 'account.move.line':
                 # for register line we allow to select many lines in track changes view
                 # it is required to use fct_object_id and fct_res_id instead
                 # of object_id and res_id because account.bank.statement.line are sub object of
@@ -908,7 +902,8 @@ class audittrail_log_line(osv.osv):
             obj_to_log = line.fct_object_id or line.object_id
 
             # translate value of fields.selection
-            to_compute = line.field_id.name in ('state_to_display', 'state', 'state_hidden_sale_order') and obj_to_log.model in ('sale.order', 'sale.order.line', 'purchase.order', 'purchase.order.line')
+            to_compute = line.field_id.name in ('state_to_display', 'state', 'state_hidden_sale_order', 'rfq_state', 'rfq_line_state')\
+                         and obj_to_log.model in ('sale.order', 'sale.order.line', 'purchase.order', 'purchase.order.line')
             if line.method == 'create':
                 res[line.id]['old_value_fct'] = False
             elif to_compute or not line.old_value_text:
