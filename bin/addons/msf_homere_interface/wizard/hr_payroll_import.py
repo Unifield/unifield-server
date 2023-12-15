@@ -92,26 +92,44 @@ class hr_payroll_import(osv.osv_memory):
         employee_obj = self.pool.get('hr.employee')
         employee_ids = []
         employee_identification_id = ""
+        uuid_used = False
         if third and third[0]:
             # the Third column should contain the exact code of the employee
             employee_identification_id = third[0]
-            employee_ids = employee_obj.search(cr, uid,
-                                               [('identification_id', '=', employee_identification_id)],
-                                               context=context, order='NO_ORDER')
+            employee_ids = employee_obj.search(cr, uid, [('homere_uuid_key', '=', employee_identification_id)], context=context)
+            if not employee_ids:
+                employee_ids = employee_obj.search(cr, uid,
+                                                   [('identification_id', '=', employee_identification_id)],
+                                                   context=context, order='NO_ORDER')
+            else:
+                uuid_used = True
         # check the Secondary description if no employee found (no matter if the Third column is empty or not)
         if not employee_ids and second_description and second_description[0]:
             # Secondary description looks like "John Smith MWNP0001" => extract the employee code MWNP0001
             employee_identification_id = ustr(second_description[0]).split(' ')[-1]
-            employee_ids = employee_obj.search(cr, uid,
-                                               [('identification_id', '=', employee_identification_id)],
-                                               context=context, order='NO_ORDER')
+            employee_ids = employee_obj.search(cr, uid, [('homere_uuid_key', '=', employee_identification_id)], context=context)
+            if not employee_ids:
+                employee_ids = employee_obj.search(cr, uid,
+                                                   [('identification_id', '=', employee_identification_id)],
+                                                   context=context, order='NO_ORDER')
+            else:
+                uuid_used = True
+
         if employee_identification_id and not employee_ids and account.is_analytic_addicted and not is_counterpart:
             raise osv.except_osv(_('Error'), _('No employee found for this code: %s.\nDEBIT: %s.\nCREDIT: %s.') % (
                 employee_identification_id, debit, credit,))
         if employee_ids and len(employee_ids) > 1:
+            if uuid_used:
+                raise osv.except_osv(_('Error'), _('More than one employee have the same uuid: %s') % (
+                    employee_identification_id,))
+
             raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (
                 employee_identification_id,))
         employee_id = employee_ids and employee_ids[0] or False
+
+        if employee_id and uuid_used:
+            employee_identification_id = employee_obj.browse(cr, uid, employee_id, fields_to_fetch=['identification_id'], context=context).identification_id
+
         return employee_identification_id, employee_id
 
     def update_payroll_entries(self, cr, uid,
