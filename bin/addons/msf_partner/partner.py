@@ -576,7 +576,7 @@ class res_partner(osv.osv):
             +[so['name']+_(' (Field Order)') for so in sale_obj.read(cr, uid, sale_ids, ['name'], context) if so['name']]
             +(intermission_vouch_in_ids and [_('%s Intermission Voucher IN') % (len(intermission_vouch_in_ids),)] or [])
             +(intermission_vouch_out_ids and [_('%s Intermission Voucher OUT') % (len(intermission_vouch_out_ids),)] or [])
-            +(donation_ids and [_('%s Donation(s)') % (len(donation_ids),)] or [])
+            +(donation_ids and [_('%s Donation(s) Received') % (len(donation_ids),)] or [])
             +(supp_invoice_ids and [_('%s Supplier Invoice(s)') % (len(supp_invoice_ids), )] or [])
             + (sr_ids and [_('%s Supplier Refund(s)') % (len(sr_ids),)] or [])
             + (isi_ids and [_('%s Intersection Supplier Invoice(s)') % (len(isi_ids),)] or [])
