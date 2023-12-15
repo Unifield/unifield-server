@@ -671,6 +671,19 @@ class account_period(osv.osv):
             context = {}
         if isinstance(ids, int):
             ids = [ids]
+        regs_to_close = []
+        period_name = self.browse(cr, uid, ids[0], context=context).name
+        reg_ids = self.pool.get('account.bank.statement').search(cr, uid, [('period_id', '=', ids[0])], context=context)
+        regs = self.pool.get('account.bank.statement').browse(cr, uid, reg_ids, context=context)
+        for reg in regs:
+            if reg.journal_id.is_active == 'True' and reg.state not in ['draft', 'open', 'confirm']\
+                     and self.browse(cr, uid, ids[0], context=context).all_active_journals_registers_created is not None:
+                regs_to_close.append(reg.name)
+        if regs_to_close:
+            raise osv.except_osv(_('Warning'),
+                                 _('Period %s could not be closed because the register(s) %s is/are not created/opened/closed for this period.'
+                                   'Please either create/open/close the register(s) or inactivate the related journal.') % (period_name, ','.join(regs_to_close)))
+
         return self.write(cr, uid, ids, {'field_process': True}, context)
 
     def button_fx_rate(self, cr, uid, ids, context=None):
