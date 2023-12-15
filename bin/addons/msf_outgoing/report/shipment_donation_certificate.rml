@@ -359,10 +359,10 @@
                     <para style="ItemsLineValue">[[ o.currency_id.name ]]</para>
                 </td>
                 <td>
-                    <para style="ItemsLineValueRight">[[ formatLang(line['unit_price'], digits=5) ]]</para>
+                    <para style="ItemsLineValueRight">[[ round(line['unit_price'], 5) ]]</para>
                 </td>
                 <td>
-                    <para style="ItemsLineValueRight">[[ formatLang(line['tot_value'], digits=2) ]]</para>
+                    <para style="ItemsLineValueRight">[[ round(line['tot_value'], 2) ]]</para>
                 </td>
             </tr>
         </blockTable>
