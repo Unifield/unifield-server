@@ -42,7 +42,7 @@ class product_category(osv.osv):
             help="This account will be used for invoices to value expenses for the current product category"),
         'asset_bs_account_id': fields.many2one('account.account', 'Asset Balance Sheet Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
-        'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciationn Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
+        'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
     }
 product_category()
 
