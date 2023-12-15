@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 
 class modify_responsible(osv.osv_memory):
@@ -63,7 +64,7 @@ class modify_responsible(osv.osv_memory):
         if active_ids:
             resp_ids = self.read(cr, uid, ids, ['responsible_ids'])[0]['responsible_ids']
             reg_obj.write(cr, uid, active_ids, {'responsible_ids': [(6, 0, resp_ids)]}, context=context)
-        return {'type': 'ir.actions.act_window_close'}
+        return {'type': 'ir.actions.act_window_close', 'popup_message': _("Responsible Successfully Modified"), 'force_read_view': True}
 
 
 modify_responsible()
