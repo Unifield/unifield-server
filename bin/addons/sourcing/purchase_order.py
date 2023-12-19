@@ -141,7 +141,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
                 source_doc_details = self.pool.get('sale.order').read(cr, uid, source_document_id, ['details'], context=context)['details']
                 if source_doc_details:
                     source_doc_details = source_doc_details.strip()
-                    self.write(cr, uid, po['id'], {'details': '%s; %s' % (po['details'], source_doc_details)}, context=context)
+                    po_details = po['details'] and po['details'] + '; ' or ''
+                    self.write(cr, uid, po['id'], {'details': '%s%s' % (po_details, source_doc_details)}, context=context)
 
         return True
 
