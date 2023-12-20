@@ -32,6 +32,8 @@ import threading
 class wizard_hq_report_oca(osv.osv_memory):
     _name = "wizard.hq.report.oca"
 
+    _delete_suffix = '.delete'
+
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
@@ -74,6 +76,23 @@ class wizard_hq_report_oca(osv.osv_memory):
 
         coordo_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
         return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16)], context=context)
+
+    def _delete_file(self, filename):
+        try:
+            if filename.endswith(self._delete_suffix):
+                # request to delete the suffixed file, try to delete the original first
+                original = filename[:-len(self._delete_suffix)]
+                if os.path.isfile(original) and not self._delete_file(original):
+                    # unable to delete the original: do not delete the suffixed file
+                    return False
+            os.unlink(filename)
+        except:
+            to_delete_name = '%s%s' % (filename, self._delete_suffix)
+            if not filename.endswith(self._delete_suffix) and not os.path.isfile(to_delete_name):
+                with open(to_delete_name, 'wb'):
+                    pass
+            return False
+        return True
 
     def auto_export_vi(self, cr, uid, export_wiz, remote_con, disable_generation=False, context=None):
         """
@@ -141,9 +160,13 @@ class wizard_hq_report_oca(osv.osv_memory):
             for filename in os.listdir(export_wiz.destination_local_path):
                 fullfilename = os.path.join(export_wiz.destination_local_path, filename)
                 try:
-                    if os.path.isfile(fullfilename):
+                    to_delete = '%s%s' % (fullfilename, self._delete_suffix)
+                    if os.path.isfile(fullfilename) and (os.path.isfile(to_delete) or fullfilename.endswith(self._delete_suffix)):
+                        self._delete_file(fullfilename)
+                    elif os.path.isfile(fullfilename):
                         msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), fullfilename, export_wiz.dest_path))
-                        export_job_obj.send_file(cr, uid, export_wiz, remote_con, fullfilename, export_wiz.dest_path, delete=True, context=context)
+                        export_job_obj.send_file(cr, uid, export_wiz, remote_con, fullfilename, export_wiz.dest_path, delete=False, context=context)
+                        self._delete_file(fullfilename)
                         if disable_generation:
                             nb_ok += 1
                 except Exception, e:
@@ -157,9 +180,13 @@ class wizard_hq_report_oca(osv.osv_memory):
             for filename in os.listdir(export_wiz.report_local_path):
                 fullfilename = os.path.join(export_wiz.report_local_path, filename)
                 try:
-                    if os.path.isfile(fullfilename):
+                    to_delete = '%s%s' % (fullfilename, self._delete_suffix)
+                    if os.path.isfile(fullfilename) and (os.path.isfile(to_delete) or fullfilename.endswith(self._delete_suffix)):
+                        self._delete_file(fullfilename)
+                    elif os.path.isfile(fullfilename):
                         msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), fullfilename, export_wiz.report_path))
-                        export_job_obj.send_file(cr, uid, export_wiz, remote_con, fullfilename, export_wiz.report_path, delete=True, context=context)
+                        export_job_obj.send_file(cr, uid, export_wiz, remote_con, fullfilename, export_wiz.report_path, delete=False, context=context)
+                        self._delete_file(fullfilename)
                         if disable_generation:
                             nb_ok += 1
                 except Exception, e:
@@ -174,7 +201,8 @@ class wizard_hq_report_oca(osv.osv_memory):
             if export_wiz.ftp_report_ok:
                 msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), current_report, export_wiz.report_path))
                 try:
-                    export_job_obj.send_file(cr, uid, export_wiz, remote_con, current_report, export_wiz.report_path, delete=True, context=context)
+                    export_job_obj.send_file(cr, uid, export_wiz, remote_con, current_report, export_wiz.report_path, delete=False, context=context)
+                    self._delete_file(current_report)
                 except Exception, e:
                     nb_error += 1
                     msg.append('ERROR %s %s' % (current_report,  misc.get_traceback(e)))
