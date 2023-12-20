@@ -202,7 +202,7 @@ class HttpOptions:
         self.send_response(200)
         self.send_header("Content-Length", 0)
         if 'Microsoft' in self.headers.get('User-Agent', ''):
-            self.send_header('MS-Author-Via', 'DAV') 
+            self.send_header('MS-Author-Via', 'DAV')
             # Microsoft's webdav lib ass-umes that the server would
             # be a FrontPage(tm) one, unless we send a non-standard
             # header that we are not an elephant.
@@ -267,7 +267,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, http.server.BaseHTTPRequestHan
                 self.sec_realms[auth_provider.realm].checkRequest(fore,path)
             except AuthRequiredExc as ae:
                 # Darwin 9.x.x webdav clients will report "HTTP/1.0" to us, while they support (and need) the
-                # authorisation features of HTTP/1.1 
+                # authorisation features of HTTP/1.1
                 if self.request_version != 'HTTP/1.1' and ('Darwin/9.' not in fore.headers.get('User-Agent', '')):
                     self.log_error("Cannot require auth at %s", self.request_version)
                     self.send_error(403)
@@ -521,7 +521,7 @@ class ConnThreadingMixIn:
         no risk of blocking in get_request().
         """
         try:
-            self._mark_start(threading.currentThread())
+            self._mark_start(threading.current_thread())
             request, client_address = self.get_request()
             if self.verify_request(request, client_address):
                 try:
@@ -532,6 +532,6 @@ class ConnThreadingMixIn:
         except socket.error:
             return
         finally:
-            self._mark_end(threading.currentThread())
+            self._mark_end(threading.current_thread())
 
 #eof

@@ -1,0 +1,13 @@
+id,asset_type_id/id,year
+l1,product_asset.asset_type_telecommunication,2
+l2,product_asset.asset_type_Construction,2
+l3,product_asset.asset_type_Construction,5
+l4,product_asset.asset_type_energy,1
+l5,product_asset.asset_type_energy,3
+l6,product_asset.asset_type_logistic,2
+l7,product_asset.asset_type_logistic,5
+l8,product_asset.asset_type_medical,5
+l9,product_asset.asset_type_transport,3
+l10,product_asset.asset_type_transport,5
+l11,product_asset.asset_type_watsan,1
+l12,product_asset.asset_type_watsan,3

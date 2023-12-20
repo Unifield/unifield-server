@@ -203,7 +203,7 @@ LEVEL_COLOR_MAPPING = {
 
 class DBFormatter(logging.Formatter):
     def format(self, record):
-        record.dbname = getattr(threading.currentThread(), 'dbname', '?')
+        record.dbname = getattr(threading.current_thread(), 'dbname', '?')
         return logging.Formatter.format(self, record)
 
 class ColoredFormatter(DBFormatter):
@@ -410,7 +410,7 @@ class Agent(object):
         """Neverending function (intended to be ran in a dedicated thread) that
            checks every 60 seconds tasks to run. TODO: make configurable
         """
-        current_thread = threading.currentThread()
+        current_thread = threading.current_thread()
         while True:
             with lock_runner:
                 while cls.__tasks and cls.__tasks[0][0] < time.time():

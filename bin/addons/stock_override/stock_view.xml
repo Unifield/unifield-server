@@ -450,7 +450,7 @@
                             <field name="reason_type_id" widget="selection"
                                    domain="[('incoming_ok', '=', True), ('is_fs_in', '=', True)]" get_selection="list_reason_type_incoming"
                                    on_change="on_change_reason_type_id(reason_type_id)"
-                                   attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                   attrs="{'readonly': ['|', '|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('claim', '=', True)]}"/>
                             <field name="customers" readonly="1" />
                             <field name="change_reason"/>
                             <field name="order_category"/>
