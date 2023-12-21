@@ -267,7 +267,7 @@ class signature_object(osv.osv):
     def add_user_signatures(self, cr, uid, ids, context=None):
         doc_name = self.name_get(cr, uid, ids, context=context)[0][1]
 
-        ftf = ['signature_id', 'signature_res_model']
+        ftf = ['signature_id', 'signature_res_model', 'signature_line_ids']
         if self._name == 'account.bank.statement':
             ftf += ['journal_id']
         doc = self.browse(cr, uid, ids[0], fields_to_fetch=ftf, context=context)
@@ -275,28 +275,24 @@ class signature_object(osv.osv):
         wiz_data = {
             'name': doc_name,
             'signature_id': doc.signature_id.id,
-            'res_users_rec': [(6, 0, [])],
-            'res_users_full': [(6, 0, [])],
         }
-        if doc.signature_res_model == 'account.bank.statement' and doc.journal_id.type != 'cheque':
-            wiz_data['num_col'] = 2
-            for user in doc.signature_id.signature_user_ids:
-                if user.subtype == 'rec':
-                    wiz_data['res_users_rec'][0][2].append(user.user_id.id)
-                else:
-                    wiz_data['res_users_full'][0][2].append(user.user_id.id)
-            view_id = [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_add_user_register_wizard_form')[1]]
-        else:
-            wiz_data['num_col'] = 1
-            wiz_data['res_users'] = [(6, 0, [x.user_id.id for x in doc.signature_id.signature_user_ids])]
-            wiz_id = self.pool.get('signature.add_user.wizard').create(cr, uid, {
-                'name': doc_name,
-                'signature_id': doc.signature_id.id,
-                'res_users': [(6, 0, [x.user_id.id for x in doc.signature_id.signature_user_ids])],
-            }, context=context)
-            view_id = []
+        view_id = [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_add_user_wizard_form')[1]]
+        x = 0
+        for line in doc.signature_line_ids:
+            wiz_data.update({
+                'line_id_%d' % x : line.id,
+                'role_%d' % x : line.name,
+                'active_%d' % x: line.is_active,
+                'backup_%d' % x: line.backup,
+                'legal_name_%d' % x: line.user_id and line.user_id.esignature_id and line.user_id.esignature_id.legal_name or '',
+                'login_%d' % x: line.user_id and line.user_id.id or False,
+                'username_%d' % x: line.user_id and line.user_id.login or False,
+                'signed_%d' % x: line.signed,
+            })
+            x += 1
 
         wiz_id = self.pool.get('signature.add_user.wizard').create(cr, uid, wiz_data, context=context)
+        context['wiz_id'] = wiz_id
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'signature.add_user.wizard',
@@ -307,7 +303,7 @@ class signature_object(osv.osv):
             'context': context,
             'view_id': view_id,
             'height': '400px',
-            'width': '720px',
+            'width': '920px',
         }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -491,6 +487,7 @@ class signature_line(osv.osv):
         'format_value': fields.function(_format_state_value, method=1, type='char', string='Value', multi='fsv'),
         'format_state': fields.function(_format_state_value, method=1, type='char', string='Document State', multi='fsv'),
         'subtype': fields.selection([('full', 'Full Report'), ('rec', 'Reconciliation')], string='Type of signature', readonly=1),
+        'backup': fields.boolean('Backup', readonly=1),
     }
 
     _defaults = {
@@ -595,34 +592,6 @@ class signature_line(osv.osv):
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
-    def activate_role(self, cr, uid, ids, context=None):
-        return self._toggle_active(cr, uid, ids, True, context=context)
-
-    def disable_role(self, cr, uid, ids, context=None):
-        return self._toggle_active(cr, uid, ids, False, context=context)
-
-    def _toggle_active(self, cr, uid, ids, value, context=None):
-        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-        root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        for line in self.browse(cr, uid, ids, fields_to_fetch=['is_active', 'signed', 'name', 'signature_id', 'subtype'], context=context):
-            if line.is_active == value:
-                continue
-            if line['signed']:
-                raise osv.except_osv(_('Warning'), _("You can't change Active value on an already signed role."))
-            txt = 'Signature active on role %s' % (line.name, )
-            _register_log(self, cr, real_uid, line.signature_id.signature_res_id, line.signature_id.signature_res_model, txt, '%s'%(not value, ), '%s'%(value, ), 'write', context)
-
-            self.write(cr, uid, line['id'], {'is_active': value}, context=context)
-
-            if not value:
-                nb_users = len([x.id for x in line.signature_id.signature_user_ids if x.subtype == line.subtype])
-                nb_active = len([x for x in line.signature_id.signature_line_ids if x.is_active and x.subtype == line.subtype]) - 1
-                if nb_users > nb_active:
-                    raise osv.except_osv(_('Warning'), _('%d users are allowed to sign, you cannot disable this line.') % nb_users)
-            self.pool.get('signature')._set_signature_state(cr, root_uid, [line.signature_id.id], context=context)
-        return True
-
-
 signature_line()
 
 class signature_image(osv.osv):
@@ -703,29 +672,105 @@ class signature_add_user_wizard(osv.osv_memory):
     _name = 'signature.add_user.wizard'
     _description = 'Wizard used on document to add users allowed to sign'
 
+    _max_role = 5
     _columns = {
         'name': fields.char('Document', size=256, readonly=1),
         'signature_id': fields.many2one('signature', readonly=1),
-        'res_users': fields.many2many('res.users', string='Signature users', domain=[('signature_enabled', '=', True)]),
-        'res_users_rec': fields.many2many('res.users', string='Signature users', domain=[('signature_enabled', '=', True)]),
-        'res_users_full': fields.many2many('res.users', string='Signature users', domain=[('signature_enabled', '=', True)]),
-        'num_col': fields.integer('Num of profiles', readonly=1),
     }
 
-    _defaults = {
-        'num_col': 1,
-    }
+    def __init__(self, pool, cr):
+
+        for x in range(0, self._max_role):
+            self._columns.update({
+                'line_id_%d' % x: fields.many2one('signature.line',  'Signature Line', readonly=1),
+                'role_%d' % x : fields.char('Role', size=256, readonly=1),
+                'active_%d' % x: fields.boolean('Active'),
+                'backup_%d' % x: fields.boolean('Back up'),
+                'legal_name_%d' % x: fields.char('Legal Name', size=256, readonly=1),
+                'login_%d' % x: fields.many2one('res.users', 'Login', domain=[('signature_enabled', '=', True)], context={'from_sign_view': True}),
+                'username_%d' % x: fields.char('Username', size=256, readonly=1),
+                'signed_%d' % x: fields.boolean('Signed'),
+            })
+        super(signature_add_user_wizard, self).__init__(pool, cr)
+
+
+    def change_user(self, cr, uid, ids, user_id, row, context=None):
+        values = {
+            'legal_name_%s' % row: False,
+            'username_%s' % row: False,
+        }
+        if user_id:
+            u = self.pool.get('res.users').browse(cr, uid, user_id, fields_to_fetch=['name', 'esignature_id'], context=context)
+            values['legal_name_%s' % row] = u.esignature_id and u.esignature_id.legal_name or ''
+            values['username_%s' % row] = u.name
+
+        return {'value': values}
+
+    def change_active(self, cr, uid, ids, active, row, context=None):
+        if not active:
+            return {
+                'value':  {
+                    'legal_name_%s' % row: False,
+                    'username_%s' % row: False,
+                    'backup_%s' % row: False,
+                    'login_%s' % row: False,
+                }
+            }
+
+
+        return {}
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        view = super(signature_add_user_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if context is None:
+            context = {}
+
+        if view_type == 'form' and context.get('wiz_id'):
+            arch = etree.fromstring(view['arch'])
+
+            wiz = self.browse(cr, uid, context['wiz_id'], context=context)
+            added = """<group colspan="4" col="12">
+                <separator string="Role" colspan="2" />
+                <separator string="Active" colspan="2" halign="center" />
+                <separator string="User" colspan="2" />
+                <separator string="Back up" colspan="2" halign="center" />
+                <separator string="User Name" colspan="2" />
+                <separator string="Legal Name" colspan="2" />
+            """
+            for x in range(0, self._max_role):
+                if wiz['role_%d' % x]:
+                    readonly = ""
+                    if not wiz['active_%d' % x] or wiz['signed_%d' % x]:
+                        readonly = 'readonly="1"'
+                    added += """
+                        <field name="role_%(x)d" colspan="2" nolabel="1" />
+                        <field name="active_%(x)d" colspan="2" nolabel="1" halign="center" on_change="change_active(active_%(x)d, '%(x)d')"/>
+                        <field name="login_%(x)d" colspan="2" nolabel="1" %(readonly)s on_change="change_user(login_%(x)d, '%(x)d')" attrs="{'readonly': [('active_%(x)d', '=',False)]}"/>
+                        <field name="backup_%(x)d" colspan="2" nolabel="1" %(readonly)s halign="center" attrs="{'readonly': [('active_%(x)d', '=',False)]}"/>
+                        <field name="username_%(x)d" colspan="2" nolabel="1" />
+                        <field name="legal_name_%(x)d" colspan="2" nolabel="1" />
+                    """ % {'x': x, 'readonly': readonly}
+
+            added += "</group>"
+            added_etree = etree.fromstring(added)
+            fields = arch.xpath('//group[@name="list_values"]')
+            parent_node = fields[0].getparent()
+            parent_node.remove(fields[0])
+            parent_node.append(added_etree)
+
+            xarch, xfields = super(signature_add_user_wizard, self)._view_look_dom_arch(cr, uid, arch, view_id, context=context)
+
+            view['arch'] = xarch
+            view['fields'] = xfields
+
+        return view
+
     def save(self, cr, uid, ids, context=None):
         signature_obj = self.pool.get('signature')
+        line_sign_obj = self.pool.get('signature.line')
 
         wiz = self.browse(cr, uid, ids[0], context=context)
         data = {}
-
-        if wiz.num_col == 2:
-            wiz_type_users = [('rec', wiz.res_users_rec), ('full', wiz.res_users_full)]
-        else:
-            wiz_type_users = [('', wiz.res_users)]
-
 
         fake_uid = uid
         rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
@@ -737,55 +782,71 @@ class signature_add_user_wizard(osv.osv_memory):
                     fake_uid = fakeUid(1, uid)
                     break
 
-        num_listed_users = 0
-        for subtype, list_users in wiz_type_users:
-            if list_users:
-                num_listed_users += len(list_users)
-                if wiz.signature_id.signature_line_ids:
-                    active_sign = len([x for x in wiz.signature_id.signature_line_ids if x.is_active and x.subtype == subtype])
-                else:
-                    active_sign = len([x for x in list_sign.get(wiz.signature_id.signature_res_model, []) if x[2] and x[3] == subtype])
+        nb_set = 0
+        for x in range(0, self._max_role):
+            if not wiz['line_id_%d' %x]:
+                continue
 
-                if len(list_users) > active_sign:
-                    raise osv.except_osv(_('Warning'), _('A maximum of %d users are allowed to sign') % active_sign)
+            if wiz['line_id_%d' %x].signed:
+                nb_set += 1
+                continue
+
+            if not wiz['active_%d' %x]:
+                line_data = {
+                    'user_id': False,
+                    'backup':  False,
+                    'user_name': False,
+                    'is_active': False,
+                }
             else:
-                list_users = []
-                if wiz.signature_id.signature_state == 'open':
-                    data['signature_state'] = False
+                line_data = {
+                    'user_id': wiz['login_%d' %x].id,
+                    'backup':  wiz['backup_%d' %x] or False,
+                    'user_name': wiz['login_%d' %x].name,
+                    'is_active': True,
+                }
+            if line_data['is_active'] != wiz['line_id_%d' %x].is_active:
+                _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model,
+                              'Signature active on role %s' % (wiz['line_id_%d' %x].name, ),
+                              '%s'%(wiz['line_id_%d' %x].is_active, ),
+                              '%s'%(line_data['is_active'], ),
+                              'write', context
+                              )
 
+            if line_data['user_id'] != wiz['line_id_%d' %x].user_id.id:
+                _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model,
+                              'User Allowed to sign on %s' % wiz['line_id_%d' %x].name,
+                              '%s %s' % (wiz['line_id_%d' %x].user_id.login or '', wiz['line_id_%d' %x].user_id and wiz['line_id_%d' %x].user_id.esignature_id and wiz['line_id_%d' %x].user_id.esignature_id.legal_name or ''),
+                              '%s %s' % (wiz['login_%d' %x].login or '', wiz['login_%d' %x].esignature_id and wiz['login_%d' %x].esignature_id.legal_name or ''),
+                              'write', context
+                              )
+            if line_data['backup'] != wiz['line_id_%d' %x].backup:
+                _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model,
+                              'Sign backup on %s (%s)' % (wiz['line_id_%d' %x].name, wiz['login_%d' %x].login or ''),
+                              wiz['line_id_%d' %x].backup,
+                              line_data['backup'],
+                              'write', context
+                              )
 
-            for line in wiz.signature_id.signature_line_ids:
-                if line.signed and line.subtype == subtype and line.user_id not in list_users:
-                    raise osv.except_osv(_('Warning'), _('Document already signed by %s, you cannot remove this user') % (line.user_id.name,))
+            line_sign_obj.write(cr, fake_uid, wiz['line_id_%d' %x].id, line_data, context=context)
+            if wiz['login_%d' %x]:
+                nb_set += 1
 
-            to_del = []
-            for allowed_obj in wiz.signature_id.signature_user_ids:
-                if allowed_obj.subtype == subtype:
-                    if allowed_obj.user_id not in list_users:
-                        to_del.append((allowed_obj.id, allowed_obj.user_id.name))
-                    else:
-                        list_users.remove(allowed_obj.user_id)
-
-            for to_create in list_users:
-                _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, 'Add User Allowed to sign %s' % (subtype), '', '%s (id:%s)' % (to_create.name, to_create.id) , 'create', context)
-                self.pool.get('signature.users.allowed').create(cr, fake_uid, {'signature_id': wiz.signature_id.id, 'user_id': to_create.id, 'subtype': subtype}, context=context)
-
-            for _to_del_id, _to_del_name in to_del:
-                _register_log(self, cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, 'Delete User Allowed to sign %s' % (subtype), '%s (id:%s)' % (_to_del_name, _to_del_id), '', 'unlink', context)
-                self.pool.get('signature.users.allowed').unlink(cr, fake_uid, _to_del_id, context=context)
-
-        previous_state = wiz.signature_id.signature_state
-        if num_listed_users and wiz.signature_id.signature_state not in ('partial', 'signed'):
-            data['signature_state'] = 'open'
-        elif not num_listed_users and wiz.signature_id.signature_state == 'open':
+        if wiz.signature_id.signature_state == 'open' and not nb_set:
             data['signature_state'] = False
+        elif wiz.signature_id.signature_state not in ('partial', 'signed') and nb_set:
+            data['signature_state'] = 'open'
 
         if data:
-            if 'signature_state' in data:
-                signature_obj._log_sign_state(cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, previous_state, data['signature_state'], context)
+            previous_state = wiz.signature_id.signature_state
+            signature_obj._log_sign_state(cr, uid, wiz.signature_id.signature_res_id, wiz.signature_id.signature_res_model, previous_state, data['signature_state'], context)
             signature_obj.write(cr, fake_uid, wiz.signature_id.id, data, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
+
+        # TODO Obj removed
+        #self.pool.get('signature.users.allowed').create(cr, fake_uid, {'signature_id': wiz.signature_id.id, 'user_id': to_create.id, 'subtype': subtype}, context=context)
+
 
     def cancel(self, cr, uid, ids, context=None):
         return {'type': 'ir.actions.act_window_close'}

@@ -15,6 +15,19 @@
                 </tree>
             </field>
         </record>
+
+        <record model="ir.ui.view" id="view_user_signature_tree">
+            <field name="name">user.signature.tree</field>
+            <field name="model">res.users</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="200" />
+            <field name="arch" type="xml">
+                <tree string="Users">
+                    <field name="name"/>
+                    <field name="login"/>
+                </tree>
+            </field>
+        </record>
         <record model="ir.actions.act_window" id="action_user_connection_tree">
             <field name="name">User Connections</field>
             <field name="res_model">res.users</field>
