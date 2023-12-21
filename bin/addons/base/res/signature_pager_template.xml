@@ -21,12 +21,13 @@
             <tree string="Signatures">
                 <field name="name" />
                 <field name="is_active" />
+                <field name="user_id" invisible="1" />
                 <field name="user_name" string="Signee User" />
                 <field name="data_image" widget="image" height="50" />
                 <field name="date" />
                 <field name="format_value" />
-                <button name="open_sign_wizard" string="Sign" icon="gtk-paste-v" attrs="{'invisible': ['|', '|',('signature_is_closed', '=', True), ('signed', '=', True), ('is_active', '=', False)]}" type="object" />
-                <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|',('signature_is_closed', '=', True), ('signed', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
+                <button name="open_sign_wizard" string="Sign" icon="gtk-paste-v" attrs="{'invisible': ['|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('signed', '=', True), ('is_active', '=', False)]}" type="object" />
+                <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('signed', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
                 <field name="backup" />
                 <field name="signed" />
             </tree>

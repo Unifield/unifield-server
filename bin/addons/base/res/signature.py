@@ -131,28 +131,6 @@ def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, co
             'field_description': desc,
         }, context=context)
 
-class signature_users_allowed(osv.osv):
-    _name = 'signature.users.allowed'
-    _rec_name = 'signature_id'
-    _description = 'Users Allowed to Sign on document'
-
-    _doc_subtype = [('full', 'Full Report'), ('rec', 'Reconciliation')]
-    _columns = {
-        'signature_id': fields.many2one('signature','Document', required=1, ondelete='cascade'),
-        'user_id': fields.many2one('res.users', 'User', required=1),
-        'subtype': fields.selection(_doc_subtype, string='Subtype'),
-    }
-
-    _sql_constraints = [
-        ('unique_signature_user_subtype,', 'unique(signature_id, user_id, subtype)', 'Triplet must be unique'),
-    ]
-
-    _defaults = {
-        'subtype': '',
-    }
-
-signature_users_allowed()
-
 
 class signature(osv.osv):
     _name = 'signature'
@@ -169,7 +147,6 @@ class signature(osv.osv):
         return ret
 
     _columns = {
-        'signature_user_ids': fields.one2many('signature.users.allowed', 'signature_id', 'Users allowed to sign'),
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
         'signature_res_model': fields.char('Model', size=254, index=1),
         'signature_res_id': fields.integer('Id', index=1),
@@ -316,7 +293,7 @@ class signature_object(osv.osv):
                 arch = etree.fromstring(fvg['arch'])
                 fields = arch.xpath('//page[@name="signature_tab"]')
                 if fields:
-                    for to_remove in ['signature_state', 'signature_user_ids', 'signed_off_line', 'signature_line_ids', 'signature_is_closed']:
+                    for to_remove in ['signature_state', 'signed_off_line', 'signature_line_ids', 'signature_is_closed']:
                         if fvg.get('fields') and to_remove in fvg['fields']:
                             del fvg['fields'][to_remove]
                     parent_node = fields[0].getparent()
@@ -339,19 +316,19 @@ class signature_object(osv.osv):
 
     def activate_offline_reset(self, cr, uid, ids, context=None):
         to_unsign = []
-        user_allowed = []
-        for doc in self.browse(cr, uid, ids, fields_to_fetch=['signature_line_ids', 'signature_user_ids'], context=context):
+        to_delete = []
+        for doc in self.browse(cr, uid, ids, fields_to_fetch=['signature_line_ids'], context=context):
             for line in doc.signature_line_ids:
                 if line.signed:
                     to_unsign.append(line.id)
-            if doc.signature_user_ids:
-                user_allowed += [x.id for x in doc.signature_user_ids]
+                elif line.user_id:
+                    to_delete.append(line.id)
 
         if to_unsign:
             # disable check if button as BAR (i.e: uid.realUid exists)
             self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'))
-        if user_allowed:
-            self.pool.get('signature.users.allowed').unlink(cr, uid, user_allowed, context=context)
+        if to_delete:
+            self.pool.get('signature.line').write(cr, uid, to_delete, {'user_id': False, 'user_name': False},  context=context)
 
         return self.activate_offline(cr, uid, ids, context=context)
 
@@ -364,7 +341,7 @@ class signature_object(osv.osv):
         if default is None:
             default = {}
         fields_to_reset = [
-            'signature_id', 'signature_user_ids', 'signature_line_ids',
+            'signature_id', 'signature_line_ids',
             'signature_state', 'signed_off_line', 'signature_is_closed',
             'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model'
         ]
@@ -501,9 +478,9 @@ class signature_line(osv.osv):
         assert len(ids) < 2, '_check_sign_unsign: only 1 id is allowed'
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
 
-        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'subtype'], context=context)
-        if (real_uid, sign_line.subtype) not in [(x.user_id.id, x.subtype) for x in sign_line.signature_id.signature_user_ids]:
-            raise osv.except_osv(_('Warning'), _("You are not on the list of users allowed to sign this document - please contact the document creator"))
+        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'user_id'], context=context)
+        if real_uid != sign_line.user_id.id:
+            raise osv.except_osv(_('Warning'), _("You are not allowed to sign on this line - please contact the document creator"))
 
         if sign_line.signature_id.signature_is_closed:
             raise osv.except_osv(_('Warning'), _("Signature Closed."))
@@ -588,7 +565,7 @@ class signature_line(osv.osv):
         _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
-        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'user_id': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False, 'user_name': False, 'doc_state': False}, context=context)
+        self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False, 'doc_state': False}, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
@@ -739,17 +716,21 @@ class signature_add_user_wizard(osv.osv_memory):
             """
             for x in range(0, self._max_role):
                 if wiz['role_%d' % x]:
-                    readonly = ""
-                    if not wiz['active_%d' % x] or wiz['signed_%d' % x]:
+                    if wiz['signed_%d' % x]:
                         readonly = 'readonly="1"'
+                        attr_ro = readonly
+                    else:
+                        readonly = ""
+                        attr_ro = """ attrs="{'readonly': [('active_%d', '=',False)]}" """ % x
+
                     added += """
                         <field name="role_%(x)d" colspan="2" nolabel="1" />
-                        <field name="active_%(x)d" colspan="2" nolabel="1" halign="center" on_change="change_active(active_%(x)d, '%(x)d')"/>
-                        <field name="login_%(x)d" colspan="2" nolabel="1" %(readonly)s on_change="change_user(login_%(x)d, '%(x)d')" attrs="{'readonly': [('active_%(x)d', '=',False)]}"/>
-                        <field name="backup_%(x)d" colspan="2" nolabel="1" %(readonly)s halign="center" attrs="{'readonly': [('active_%(x)d', '=',False)]}"/>
+                        <field name="active_%(x)d" colspan="2" nolabel="1" halign="center" on_change="change_active(active_%(x)d, '%(x)d')" %(readonly)s/>
+                        <field name="login_%(x)d" colspan="2" nolabel="1" on_change="change_user(login_%(x)d, '%(x)d')" %(attr_ro)s />
+                        <field name="backup_%(x)d" colspan="2" nolabel="1" halign="center" %(attr_ro)s />
                         <field name="username_%(x)d" colspan="2" nolabel="1" />
                         <field name="legal_name_%(x)d" colspan="2" nolabel="1" />
-                    """ % {'x': x, 'readonly': readonly}
+                    """ % {'x': x, 'attr_ro': attr_ro, 'readonly': readonly}
 
             added += "</group>"
             added_etree = etree.fromstring(added)

@@ -41,7 +41,7 @@ def _check_xml(self, cr, uid, ids, context=None):
                 return False
             for x in eview.xpath('//*[@attrs]'):
                 try:
-                    eval(x.attrib.get('attrs'))
+                    eval(x.attrib.get('attrs'), {'uid': 0})
                 except:
                     logger.error('Unable to parse attrs %s on node %s' % (x.attrib.get('attrs'), x.attrib.get('name')))
         finally:
