@@ -158,7 +158,7 @@ class Frame(TinyWidget):
                 'for': widget.name,
                 'model': getattr(widget, 'model', None),
                 'fname':getattr(widget, 'name', None),
-                'widget_item': ({}, widget)
+                'widget_item': ({}, widget),
             }
             td = [attrs, label]
 
@@ -202,6 +202,9 @@ class Frame(TinyWidget):
         if getattr(widget, 'attributes', None):
             attrs['attrs'] = str(widget.attributes)
             attrs['widget'] = widget.name
+
+        if getattr(widget, "halign", None):
+            attrs['align'] = widget.halign
 
         if widget.__class__.__name__ == 'O2M' and widget.view_type == 'form':
             attrs['id'] = widget.name
