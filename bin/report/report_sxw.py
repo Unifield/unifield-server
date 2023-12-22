@@ -271,7 +271,11 @@ class rml_parse(object):
 
         if field == 'backup':
             if data.backup:
-                return self._translate('As back up of ')
+                term = 'As back up of '
+                lang = self.localcontext.get('lang')
+                if not lang:
+                    return term
+                return self.pool.get('ir.translation')._get_source(self.cr, 1, None, ('code','sql_constraint'), lang, term)
             return ''
         if field == 'date':
             formatted_date = ''

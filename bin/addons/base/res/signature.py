@@ -4,6 +4,7 @@ from osv import fields, osv
 from tools.translate import _
 from tools import ustr
 from tools.misc import fakeUid
+from tools.misc import escape_html
 from lxml import etree
 from datetime import datetime
 from datetime import timedelta
@@ -15,60 +16,60 @@ from io import BytesIO
 
 list_sign = {
     'purchase.order': [
-        # (key, label, active, subtyp)
-        ('sr', _('Supply Responsible'), True, ''),
-        ('tr', _('Technical Responsible'), True, ''),
-        ('fr', _('Finance Responsible'), True, ''),
-        ('mr', _('Mission Responsible'), False, ''),
+        # (key, label, active)
+        ('sr', _('Supply Responsible'), True),
+        ('tr', _('Technical Responsible'), True),
+        ('fr', _('Finance Responsible'), True),
+        ('mr', _('Mission Responsible'), False),
         ('hq', _('HQ'), False, ''),
     ],
     'sale.order.fo': [
-        ('sr', _('Supply Responsible'), True, ''),
-        ('tr', _('Technical Responsible'), True, ''),
-        ('fr', _('Finance Responsible'), True, ''),
-        ('mr', _('Mission Responsible'), False, ''),
-        ('hq', _('HQ'), False, ''),
+        ('sr', _('Supply Responsible'), True),
+        ('tr', _('Technical Responsible'), True),
+        ('fr', _('Finance Responsible'), True),
+        ('mr', _('Mission Responsible'), False),
+        ('hq', _('HQ'), False),
     ],
     'sale.order.ir': [
-        ('tr', _('Technical Responsible'), True, ''),
-        ('sr', _('Supply Responsible'), True, ''),
+        ('tr', _('Technical Responsible'), True),
+        ('sr', _('Supply Responsible'), True),
     ],
     'account.bank.statement.cash': [
-        ('fr', _('Signature 1 - reconciliation'), True, 'rec'),
-        ('mr', _('Signature 2 - reconciliation'), True, 'rec'),
-        ('fr_report', _('Signature 1 - full report'), True, 'full'),
-        ('mr_report', _('Signature 2 - full report'), True, 'full'),
+        ('fr', _('Signature 1 - reconciliation'), True),
+        ('mr', _('Signature 2 - reconciliation'), True),
+        ('fr_report', _('Signature 1 - full report'), True),
+        ('mr_report', _('Signature 2 - full report'), True),
     ],
     'account.bank.statement.bank': [
-        ('fr', _('Signature 1 - reconciliation'), True, 'rec'),
-        ('mr', _('Signature 2 - reconciliation'), True, 'rec'),
-        ('fr_report', _('Signature 1 - full report'), True, 'full'),
-        ('mr_report', _('Signature 2 - full report'), True, 'full'),
+        ('fr', _('Signature 1 - reconciliation'), True),
+        ('mr', _('Signature 2 - reconciliation'), True),
+        ('fr_report', _('Signature 1 - full report'), True),
+        ('mr_report', _('Signature 2 - full report'), True),
     ],
     'account.bank.statement.cheque': [
-        ('fr_report', _('Signature 1 - full report'), True, ''),
-        ('mr_report', _('Signature 2 - full report'), True, ''),
+        ('fr_report', _('Signature 1 - full report'), True),
+        ('mr_report', _('Signature 2 - full report'), True),
     ],
     'account.invoice': [
-        ('sr', _('Supply Responsible'), True, ''),
-        ('tr', _('Technical Responsible'), True, ''),
-        ('fr', _('Finance Responsible'), True, ''),
-        ('mr', _('Mission Responsible'), False, ''),
+        ('sr', _('Supply Responsible'), True),
+        ('tr', _('Technical Responsible'), True),
+        ('fr', _('Finance Responsible'), True),
+        ('mr', _('Mission Responsible'), False),
     ],
     'stock.picking.in': [
-        ('tr', _('Receiver'), True, ''),
-        ('sr', _('Controller'), True, ''),
+        ('tr', _('Receiver'), True),
+        ('sr', _('Controller'), True),
     ],
     'stock.picking.out': [
-        ('sr', _('Approved by'), True, ''),
-        ('tr', _('Logistic / Supply'), True, ''),
-        ('fr', _('Storekeeper'), True, ''),
-        ('mr', _('Receiver'), True, ''),
+        ('sr', _('Approved by'), True),
+        ('tr', _('Logistic / Supply'), True),
+        ('fr', _('Storekeeper'), True),
+        ('mr', _('Receiver'), True),
     ],
     'stock.picking.pick': [
-        ('sr', _('Approved by'), True, ''),
-        ('tr', _('Picked by'), True, ''),
-        ('fr', _('Validated by'), True, ''),
+        ('sr', _('Approved by'), True),
+        ('tr', _('Picked by'), True),
+        ('fr', _('Validated by'), True),
     ],
 }
 
@@ -397,7 +398,6 @@ class signature_object(osv.osv):
                         'name_key': x[0],
                         'name': x[1],
                         'is_active': x[2],
-                        'subtype': x[3],
                         'signature_id': obj.signature_id.id
                     }, context=context)
         return new_id
@@ -463,18 +463,19 @@ class signature_line(osv.osv):
         'unit': fields.char('Unit', size=16),
         'format_value': fields.function(_format_state_value, method=1, type='char', string='Value', multi='fsv'),
         'format_state': fields.function(_format_state_value, method=1, type='char', string='Document State', multi='fsv'),
-        'subtype': fields.selection([('full', 'Full Report'), ('rec', 'Reconciliation')], string='Type of signature', readonly=1),
         'backup': fields.boolean('Back Up', readonly=1),
     }
 
     _defaults = {
-        'subtype': '',
     }
 
     _sql_constraints = [
         ('unique_signature_name_key', 'unique (signature_id,name_key)', 'Unique signature_id,name_key')
     ]
     def _check_sign_unsign(self, cr, uid, ids, check_has_sign=False, context=None):
+        # to export the term used in report
+        _('As back up of ')
+
         assert len(ids) < 2, '_check_sign_unsign: only 1 id is allowed'
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
 
@@ -709,13 +710,20 @@ class signature_add_user_wizard(osv.osv_memory):
 
             wiz = self.browse(cr, uid, context['wiz_id'], context=context)
             added = """<group colspan="4" col="12">
-                <separator string="Role" colspan="2" />
-                <separator string="Active" colspan="2" halign="center" />
-                <separator string="User" colspan="2" />
-                <separator string="Back up" colspan="2" halign="center" />
-                <separator string="Login" colspan="2" />
-                <separator string="Legal Name" colspan="2" />
-            """
+                <separator string="%(Role)s" colspan="2" />
+                <separator string="%(Active)s" colspan="2" halign="center" />
+                <separator string="%(User)s" colspan="2" />
+                <separator string="%(Back up)s" colspan="2" halign="center" />
+                <separator string="%(Login)s" colspan="2" />
+                <separator string="%(Legal Name)s" colspan="2" />
+            """ % {
+                'Role': escape_html(_('Role')),
+                'Active': escape_html(_('Active')),
+                'User': escape_html(_('User')),
+                'Back up': escape_html(_('Back up')),
+                'Login': escape_html(_('Login')),
+                'Legal Name': escape_html(_('Legal Name')),
+            }
             for x in range(0, self._max_role):
                 if wiz['role_%d' % x]:
                     if wiz['signed_%d' % x]:
@@ -826,9 +834,6 @@ class signature_add_user_wizard(osv.osv_memory):
             signature_obj.write(cr, fake_uid, wiz.signature_id.id, data, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
-
-        # TODO Obj removed
-        #self.pool.get('signature.users.allowed').create(cr, fake_uid, {'signature_id': wiz.signature_id.id, 'user_id': to_create.id, 'subtype': subtype}, context=context)
 
 
     def cancel(self, cr, uid, ids, context=None):
@@ -1071,15 +1076,14 @@ class signature_setup(osv.osv_memory):
 
                     for role in list_sign[obj]:
                         cr.execute("""
-                            insert into signature_line (signature_id, is_active, name, name_key, subtype)
-                                    select o.signature_id, %%(is_active)s, %%(name)s, %%(name_key)s, %%(subtype)s from
+                            insert into signature_line (signature_id, is_active, name, name_key)
+                                    select o.signature_id, %%(is_active)s, %%(name)s, %%(name_key)s from
                                     %s
                             on conflict on constraint signature_line_unique_signature_name_key do nothing
                         """ % cond, { # not_a_user_entry
                             'is_active': role[2],
                             'name': role[1],
                             'name_key': role[0],
-                            'subtype': role[3],
                         })
             setup_obj.write(cr, uid, [setup.id], {'signature': wiz.signature}, context=context)
 

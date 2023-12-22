@@ -365,7 +365,7 @@
                     <para style="LFooter"> </para>
                 </td>
                 <td>
-                    <para style="LFooter">[[ getSign(objects[0], 'sr', 'backup') ]]Approved by :</para>
+                    <para style="LFooter">[[ translate('Approved by') ]] [[ getSign(objects[0], 'sr', 'backup') ]]:</para>
                 </td>
                 <td>
                     <para style="LFooter">[[ getSign(objects[0], 'tr', 'backup') ]]Logistics / Supply :</para>
