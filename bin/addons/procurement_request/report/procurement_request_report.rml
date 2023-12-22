@@ -317,10 +317,10 @@
                     <para style="LFooter"> </para>
                 </td>
                 <td>
-                    <para style="LFooter">Technical Responsible :</para>
+                    <para style="LFooter">[[ getSign(objects[0], 'tr', 'backup') ]]Technical Responsible :</para>
                 </td>
                 <td>
-                    <para style="LFooter">Supply Responsible :</para>
+                    <para style="LFooter">[[ getSign(objects[0], 'sr', 'backup') ]]Supply Responsible :</para>
                 </td>
             </tr>
             <tr>

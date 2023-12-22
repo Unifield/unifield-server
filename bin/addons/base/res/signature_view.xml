@@ -10,8 +10,8 @@
                 <form string="Add Users">
                     <group colspan="4" col="4" name="list_values" />
                     <group colspan="4">
-                      <button string="Cancel" name="cancel" type="object" icon="gtk-cancel" />
-                      <button string="Confirm" icon="terp-check" name="save" type="object"/>
+                      <button string="Cancel" name="cancel" type="object" icon="gtk-cancel" colspan="1"/>
+                      <button string="Confirm" icon="terp-check" name="save" type="object" colspan="3"/>
                     </group>
                 </form>
             </field>

@@ -23,8 +23,9 @@
             <field name="priority" eval="200" />
             <field name="arch" type="xml">
                 <tree string="Users">
-                    <field name="name"/>
-                    <field name="login"/>
+                    <field name="name" />
+                    <field name="login" />
+                    <field name="current_legal_name" />
                 </tree>
             </field>
         </record>

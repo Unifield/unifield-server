@@ -148,8 +148,8 @@ class signature(osv.osv):
 
     _columns = {
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
-        'signature_res_model': fields.char('Model', size=254, index=1),
-        'signature_res_id': fields.integer('Id', index=1),
+        'signature_res_model': fields.char('Model', size=254, select=1),
+        'signature_res_id': fields.integer('Id', select=1),
         'signature_state': fields.selection([('open', 'Open'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=True),
         'signed_off_line': fields.boolean('Signed Off Line'),
         'signature_is_closed': fields.boolean('Signature Closed', readonly=True),
@@ -446,7 +446,7 @@ class signature_line(osv.osv):
         return res
 
     _columns = {
-        'signature_id': fields.many2one('signature', 'Parent', required=1),
+        'signature_id': fields.many2one('signature', 'Parent', required=1, select=1),
         'user_id': fields.many2one('res.users', 'Signee User'),
         'legal_name': fields.char('Legal name', size=64),
         'user_name': fields.char('User name', size=64),
@@ -464,7 +464,7 @@ class signature_line(osv.osv):
         'format_value': fields.function(_format_state_value, method=1, type='char', string='Value', multi='fsv'),
         'format_state': fields.function(_format_state_value, method=1, type='char', string='Document State', multi='fsv'),
         'subtype': fields.selection([('full', 'Full Report'), ('rec', 'Reconciliation')], string='Type of signature', readonly=1),
-        'backup': fields.boolean('Backup', readonly=1),
+        'backup': fields.boolean('Back Up', readonly=1),
     }
 
     _defaults = {
@@ -677,9 +677,9 @@ class signature_add_user_wizard(osv.osv_memory):
             'username_%s' % row: False,
         }
         if user_id:
-            u = self.pool.get('res.users').browse(cr, uid, user_id, fields_to_fetch=['name', 'esignature_id'], context=context)
+            u = self.pool.get('res.users').browse(cr, uid, user_id, fields_to_fetch=['login', 'esignature_id'], context=context)
             values['legal_name_%s' % row] = u.esignature_id and u.esignature_id.legal_name or ''
-            values['username_%s' % row] = u.name
+            values['username_%s' % row] = u.login
 
         return {'value': values}
 
@@ -711,7 +711,7 @@ class signature_add_user_wizard(osv.osv_memory):
                 <separator string="Active" colspan="2" halign="center" />
                 <separator string="User" colspan="2" />
                 <separator string="Back up" colspan="2" halign="center" />
-                <separator string="User Name" colspan="2" />
+                <separator string="Login" colspan="2" />
                 <separator string="Legal Name" colspan="2" />
             """
             for x in range(0, self._max_role):

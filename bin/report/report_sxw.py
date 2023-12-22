@@ -269,6 +269,10 @@ class rml_parse(object):
 
         data = sign_line_obj.browse(self.cr, self.uid, sign_ids[0], fields_to_fetch=fields_to_fetch, context={'lang': self.localcontext.get('lang')})
 
+        if field == 'backup':
+            if data.backup:
+                return self._translate('As back up of ')
+            return ''
         if field == 'date':
             formatted_date = ''
             if data.date:
