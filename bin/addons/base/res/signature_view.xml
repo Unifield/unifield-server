@@ -84,7 +84,8 @@
             <field name="arch" type="xml">
                 <form string="Sign Document">
                     <field name="name" invisible="1"/>
-                    <field name="role" colspan="4" />
+                    <field name="role" />
+                    <field name="backup" />
                     <field name="user_name" colspan="4" />
                     <newline />
                     <field name="image" widget="image" />

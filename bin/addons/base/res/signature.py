@@ -517,6 +517,7 @@ class signature_line(osv.osv):
             'line_id': line.id,
             'doc_state': doc_state,
             'image': image,
+            'backup': line.backup,
         }, context=context)
 
         return {
@@ -635,6 +636,7 @@ class signature_document_wizard(osv.osv_memory):
         'value': fields.float('Value', digits=(16, 2)),
         'unit': fields.char('Unit', size=16),
         'doc_state': fields.char('Doc state', size=64),
+        'backup': fields.boolean('Back up', readonly=1),
     }
 
     def save(self, cr, uid, ids, context=None):
