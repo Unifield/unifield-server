@@ -115,6 +115,36 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
 
         return True
 
+    def update_details_po(self, cr, uid, ids, source_document_id, context=None):
+        '''
+        update the field 'details' of the purchase.order
+        @param source_document_id: id of source sale.order to add in fields purchase.order.origin
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        # For each PO, get all FO ids linked to the lines
+        fo_in_pos = {}
+        cr.execute("""
+            SELECT order_id, link_so_id FROM purchase_order_line WHERE order_id IN %s GROUP BY order_id, link_so_id
+        """, (tuple(ids),))
+        for x in cr.fetchall():
+            if not fo_in_pos.get(x[0]):
+                fo_in_pos[x[0]] = [x[1]]
+            elif x[1] not in fo_in_pos[x[0]]:
+                fo_in_pos[x[0]].append(x[1])
+
+        for po in self.read(cr, uid, ids, ['details'], context=context):
+            if source_document_id not in fo_in_pos.get(po['id'], []):
+                source_doc_details = self.pool.get('sale.order').read(cr, uid, source_document_id, ['details'], context=context)['details']
+                if source_doc_details:
+                    source_doc_details = source_doc_details.strip()
+                    po_details = po['details'] and po['details'] + '; ' or ''
+                    self.write(cr, uid, po['id'], {'details': '%s%s' % (po_details, source_doc_details)}, context=context)
+
+        return True
 
     _constraints = [
         (
@@ -123,6 +153,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
             ['order_type', 'partner_id'],
         ),
     ]
+
 
 purchase_order()
 
