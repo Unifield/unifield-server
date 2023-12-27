@@ -69,7 +69,7 @@
                             <button name="action_open_period" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" colspan="1"/>
                         </group>
                         <group colspan="4" col="2" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('field_process', '=', True)]}">
-                            <label string="" colspan="1"/>
+                            <button name="action_set_created" string="Back to draft state" type="object" icon="gtk-go-back" colspan="1"/>
                             <button name="button_close_field_period" string="Do closing period (Field) process" type="object" icon="gtk-go-forward" colspan="1"/>
                         </group>
                         <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'field-closed')]}">
@@ -181,7 +181,7 @@
                         </group>
                         <newline/>
                         <group attrs="{'invisible': [('field_process', '!=', True)]}" colspan="4" col="2">
-                            <label string="" colspan="1"/>
+                            <button name="action_set_created" string="Back to draft state" type="object" icon="gtk-go-back" colspan="1"/>
                             <button name="action_close_field" states="draft" confirm="Are you sure you want to close this period?" string="Close period (Field)" type="object" icon="gtk-go-forward" colspan="1"/>
                         </group>
                         <newline/>

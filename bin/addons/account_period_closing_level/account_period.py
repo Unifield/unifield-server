@@ -462,6 +462,27 @@ class account_period(osv.osv):
         context['state'] = 'field-closed'
         return self.action_set_state(cr, uid, ids, context)
 
+    def action_set_created(self, cr, uid, ids, context=None):
+        reg_obj = self.pool.get('account.bank.statement')
+
+        nb_move = self.pool.get('account.move').search(cr, 1, [('period_id', 'in', ids)], count=True, context=context)
+        if nb_move:
+            raise osv.except_osv(_('Warning'), _('Operation denied: there are %s Journal Item(s)') % nb_move)
+
+        nb_reg = reg_obj.search(cr, 1, [('period_id', 'in', ids), ('state', '!=', 'draft')], count=True, context=context)
+        if nb_reg:
+            raise osv.except_osv(_('Warning'), _('Operation denied: there are %s open or closed register(s)') % nb_reg)
+
+        draft_reg_ids = reg_obj.search(cr, 1, [('period_id', 'in', ids), ('state', '=', 'draft')], context=context)
+        if draft_reg_ids:
+            reg = reg_obj.browse(cr, 1, draft_reg_ids, fields_to_fetch=['journal_id'], context=context)
+            raise osv.except_osv(_('Warning'), _('You must first modify the period on the following register(s): %s') % (', '.join([x.journal_id.code for x in reg]), ))
+
+        self.write(cr, uid, ids, {'state': 'created', 'state_sync_flag': 'created', 'field_process': False}, context=context) # sync down draft
+        return True
+
+
+
     def action_open_period(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
