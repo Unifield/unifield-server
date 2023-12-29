@@ -52,6 +52,7 @@ import math
 from functools import reduce
 from functools import cmp_to_key
 import hashlib
+from . import sql
 
 try:
     from html2text import html2text
@@ -173,7 +174,12 @@ def path_to_cygwin(path):
     return new_path
 
 def force_wal_generation(cr, wal_path):
-    cr.execute('select * from pg_xlogfile_name_offset(pg_switch_xlog())')
+
+    if sql.is_pg14(cr):
+        cr.execute('select * from pg_walfile_name_offset(pg_switch_wal())')
+    else:
+        cr.execute('select * from pg_xlogfile_name_offset(pg_switch_xlog())')
+
     file_name, offset = cr.fetchone()
     _logger.warn('WAL generation forced %s %s' % (file_name, offset))
     if not offset or not file_name:
@@ -227,7 +233,7 @@ def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=
     except Exception as e:
         raise e
 
-def pg_basebackup(db_name, wal_dir):
+def pg_basebackup(db_name, wal_dir, is_pg14=False):
     if not os.path.isdir(wal_dir):
         raise Exception("Destination directory %s not found" % (wal_dir,))
     dest_dir = os.path.join(wal_dir, 'base')
@@ -239,7 +245,12 @@ def pg_basebackup(db_name, wal_dir):
         pg_basebackup = find_pg_tool('pg_basebackup')
         if not pg_basebackup:
             raise Exception("Couldn't find %s" % pg_basebackup)
-        cmd = [pg_basebackup, '--format=t', '-D', dest_dir]
+
+        if is_pg14:
+            cmd = [pg_basebackup, '--format=t', '-X', 'n', '--no-manifest', '-D', dest_dir]
+        else:
+            cmd = [pg_basebackup, '--format=t', '-D', dest_dir]
+
         if config['db_user']:
             cmd.append('--username=' + config['db_user'])
         if config['db_host']:
@@ -256,7 +267,7 @@ def pg_basebackup(db_name, wal_dir):
         base_path = os.path.join(dest_dir, 'base.tar')
         if not os.path.exists(base_path):
             raise Exception('%s not found' % base_path)
-        command_7z = [szexe, '-sdel', '-bd', '-bso0', '-w', 'a', '%s.7z' % base_path, base_path]
+        command_7z = [szexe, '-sdel', '-bd', '-bso0', '-w', dest_dir, 'a', '%s.7z' % base_path, base_path]
         _logger.info(' '.join(command_7z))
         subprocess.check_output(command_7z, stderr=subprocess.STDOUT)
         _logger.info('7z done')
