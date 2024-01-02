@@ -309,8 +309,16 @@ class hr_payroll_employee_import(osv.osv_memory):
         # employee by uuid_key
         e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_uuid_key', '=', uuid_key)])
         if len(e_ids) > 1:
-            self.store_error(errors, wizard_id, _('Homere uuid_key %s is duplicated in the UF database, number of records: %d') % (uuid_key, len(e_ids)))
-            return False, 0, 0
+            with_id_staff_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_uuid_key', '=', uuid_key), ('homere_id_staff', '=', id_staff)])
+            if len(e_ids) > 1:
+                dups = self.pool.get('hr.employee').browse(cr, uid, e_ids, fields_to_fetch=['name'])
+                self.store_error(errors, wizard_id, _('Homere uuid_key %s is duplicated in the UF database, number of records: %d: %s') % (uuid_key, len(e_ids), '; '.join([x.name for x in dups])))
+                return False, 0, 0
+            elif not with_id_staff_ids:
+                self.store_error(errors, wizard_id, _('Homere uuid_key %s is duplicated in the UF database, but no match with id_staff %s number of records: %d: %s') % (uuid_key, id_staff, len(e_ids), '; '.join([x.name for x in dups])))
+                return False, 0, 0
+            else:
+                e_ids = with_id_staff_ids
         if not e_ids:
             # else no uuid, same name, same identification_id
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id','=', code_staff), ('name', '=', employee_name), ('homere_uuid_key', '=', False)])
