@@ -267,7 +267,7 @@ def pg_basebackup(db_name, wal_dir, is_pg14=False):
         base_path = os.path.join(dest_dir, 'base.tar')
         if not os.path.exists(base_path):
             raise Exception('%s not found' % base_path)
-        command_7z = [szexe, '-sdel', '-bd', '-bso0', '-w', dest_dir, 'a', '%s.7z' % base_path, base_path]
+        command_7z = [szexe, '-sdel', '-bd', '-bso0', '-w%s'%dest_dir, 'a', '%s.7z' % base_path, base_path]
         _logger.info(' '.join(command_7z))
         subprocess.check_output(command_7z, stderr=subprocess.STDOUT)
         _logger.info('7z done')
