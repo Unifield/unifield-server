@@ -57,10 +57,23 @@ class report_fully_report(report_sxw.rml_parse):
             'getManualFreeLines': self.getManualFreeLines,
             'getManualAalColor': self.getManualAalColor,
             'update_percent': self.update_percent,
+            'getCorNoAd': self.getCorNoAd,
         })
 
         self._cache_move = {}
         self._cache_ana = {}
+
+
+    def getCorNoAd(self, st_line_id):
+        cor_ids = self.pool.get('account.move.line').search(self.cr, self.uid, [
+            ('corrected_st_line_id', '=', st_line_id),
+            ('account_id.is_analytic_addicted', '=', False),
+            ('reversal_line_id', '=', False), # ignore REV in case of double COR
+            ('corrected', '=', False) # get last COR in case of double COR
+        ], order='id')
+        if not cor_ids:
+            return []
+        return self.pool.get('account.move.line').browse(self.cr, self.uid, cor_ids, context={'lang': self.localcontext.get('lang', 'en_US')})
 
     def translate_weasyprint(self, src):
         ir_translation = self.pool.get('ir.translation')
