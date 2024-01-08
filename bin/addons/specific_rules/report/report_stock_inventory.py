@@ -339,11 +339,16 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             w_prod = ""
             if report.product_id:
                 w_prod = " product_id = %s AND" % report.product_id.id
+            w_nomen_fam = ""
+            if report.nomen_family_id:
+                w_nomen_fam = " n2.id = %s AND" % report.nomen_family_id.id
 
             self.cr.execute("""
                 SELECT DISTINCT m.product_id, m.prodlot_id FROM stock_move m
                 LEFT JOIN product_product p ON m.product_id = p.id 
-                WHERE""" + w_prod + """ m.state = 'done' AND m.product_qty != 0 AND p.active = 't' AND
+                LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id 
+                LEFT JOIN product_nomenclature n2 ON pt.nomen_manda_2 = n2.id
+                WHERE""" + w_prod + w_nomen_fam + """ m.state = 'done' AND m.product_qty != 0 AND p.active = 't' AND
                     (location_id IN %s OR location_dest_id IN %s) AND m.date >= %s AND m.date <= %s
                 """, (values['location_ids'], values['location_ids'], from_date, to_date))
             for x in self.cr.fetchall():
@@ -542,97 +547,97 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         cell_h1.style = orange_style
         cell_h1d = WriteOnlyCell(sheet, value=report.company_id.name)
         cell_h1d.style = grey_style
-        sheet.append([cell_h1, empty_orange_cell, cell_h1d, empty_grey_cell, empty_grey_cell])
+        sheet.append([cell_h1, empty_orange_cell, cell_h1d, empty_grey_cell, empty_grey_cell, empty_grey_cell])
         sheet.merged_cells.ranges.append("A1:B1")
-        sheet.merged_cells.ranges.append("C1:E1")
+        sheet.merged_cells.ranges.append("C1:F1")
 
         cell_h2 = WriteOnlyCell(sheet, value=loc_list and _('Report Generation date') or _('Generated on'))
         cell_h2.style = orange_style
         cell_h2d = WriteOnlyCell(sheet, value=self.to_datetime(report.name))
         cell_h2d.style = grey_date_style
-        sheet.append([cell_h2, empty_orange_cell, cell_h2d, empty_grey_date_cell, empty_grey_date_cell])
+        sheet.append([cell_h2, empty_orange_cell, cell_h2d, empty_grey_date_cell, empty_grey_date_cell, empty_grey_date_cell])
         sheet.merged_cells.ranges.append("A2:B2")
-        sheet.merged_cells.ranges.append("C2:E2")
+        sheet.merged_cells.ranges.append("C2:F2")
 
         cell_h3 = WriteOnlyCell(sheet, value=_('Stock Level date'))
         cell_h3.style = orange_style
         cell_h3d = WriteOnlyCell(sheet, value=self.to_datetime(report.stock_level_date))
         cell_h3d.style = grey_date_style
-        sheet.append([cell_h3, empty_orange_cell, cell_h3d, empty_grey_date_cell, empty_grey_date_cell])
+        sheet.append([cell_h3, empty_orange_cell, cell_h3d, empty_grey_date_cell, empty_grey_date_cell, empty_grey_date_cell])
         sheet.merged_cells.ranges.append("A3:B3")
-        sheet.merged_cells.ranges.append("C3:E3")
+        sheet.merged_cells.ranges.append("C3:F3")
 
         cell_h4 = WriteOnlyCell(sheet, value=_('Specific product'))
         cell_h4.style = orange_style
         cell_h4d = WriteOnlyCell(sheet, value=report.product_id and report.product_id.default_code or '')
         cell_h4d.style = grey_style
-        sheet.append([cell_h4, empty_orange_cell, cell_h4d, empty_grey_cell, empty_grey_cell])
+        sheet.append([cell_h4, empty_orange_cell, cell_h4d, empty_grey_cell, empty_grey_cell, empty_grey_cell])
         sheet.merged_cells.ranges.append("A4:B4")
-        sheet.merged_cells.ranges.append("C4:E4")
+        sheet.merged_cells.ranges.append("C4:F4")
 
         cell_h5 = WriteOnlyCell(sheet, value=_('Specific location'))
         cell_h5.style = orange_style
         cell_h5d = WriteOnlyCell(sheet, value=report.location_id and report.location_id.name or _('All Locations'))
         cell_h5d.style = grey_style
-        sheet.append([cell_h5, empty_orange_cell, cell_h5d, empty_grey_cell, empty_grey_cell])
+        sheet.append([cell_h5, empty_orange_cell, cell_h5d, empty_grey_cell, empty_grey_cell, empty_grey_cell])
         sheet.merged_cells.ranges.append("A5:B5")
-        sheet.merged_cells.ranges.append("C5:E5")
+        sheet.merged_cells.ranges.append("C5:F5")
 
         cell_h6 = WriteOnlyCell(sheet, value=_('Specific batch number'))
         cell_h6.style = orange_style
         cell_h6d = WriteOnlyCell(sheet, value=report.prodlot_id and report.prodlot_id.name or '')
         cell_h6d.style = grey_style
-        sheet.append([cell_h6, empty_orange_cell, cell_h6d, empty_grey_cell, empty_grey_cell])
+        sheet.append([cell_h6, empty_orange_cell, cell_h6d, empty_grey_cell, empty_grey_cell, empty_grey_cell])
         sheet.merged_cells.ranges.append("A6:B6")
-        sheet.merged_cells.ranges.append("C6:E6")
+        sheet.merged_cells.ranges.append("C6:F6")
 
         cell_h7 = WriteOnlyCell(sheet, value=_('Specific expiry date'))
         cell_h7.style = orange_style
         cell_h7d = WriteOnlyCell(sheet, value=self.to_datetime(report.expiry_date))
         cell_h7d.style = grey_date_style
-        sheet.append([cell_h7, empty_orange_cell, cell_h7d, empty_grey_date_cell, empty_grey_date_cell])
+        sheet.append([cell_h7, empty_orange_cell, cell_h7d, empty_grey_date_cell, empty_grey_date_cell, empty_grey_date_cell])
         sheet.merged_cells.ranges.append("A7:B7")
-        sheet.merged_cells.ranges.append("C7:E7")
+        sheet.merged_cells.ranges.append("C7:F7")
 
         cell_h8 = WriteOnlyCell(sheet, value=_('Specific Product list'))
         cell_h8.style = orange_style
         cell_h8d = WriteOnlyCell(sheet, value=report.product_list_id and report.product_list_id.name or '')
         cell_h8d.style = grey_style
-        sheet.append([cell_h8, empty_orange_cell, cell_h8d, empty_grey_cell, empty_grey_cell])
+        sheet.append([cell_h8, empty_orange_cell, cell_h8d, empty_grey_cell, empty_grey_cell, empty_grey_cell])
         sheet.merged_cells.ranges.append("A8:B8")
-        sheet.merged_cells.ranges.append("C8:E8")
+        sheet.merged_cells.ranges.append("C8:F8")
 
         cell_h9 = WriteOnlyCell(sheet, value=_('Specific Product family'))
         cell_h9.style = orange_style
         cell_h9d = WriteOnlyCell(sheet, value=report.nomen_family_id and report.nomen_family_id.complete_name or '')
         cell_h9d.style = grey_style
-        sheet.append([cell_h9, empty_orange_cell, cell_h9d, empty_grey_cell, empty_grey_cell])
+        sheet.append([cell_h9, empty_orange_cell, cell_h9d, empty_grey_cell, empty_grey_cell, empty_grey_cell])
         sheet.merged_cells.ranges.append("A9:B9")
-        sheet.merged_cells.ranges.append("C9:E9")
+        sheet.merged_cells.ranges.append("C9:F9")
 
         cell_h10 = WriteOnlyCell(sheet, value=_('MML'))
         cell_h10.style = orange_style
         cell_h10d = WriteOnlyCell(sheet, value=report.mml_id and report.mml_id.name or '')
         cell_h10d.style = grey_style
-        sheet.append([cell_h10, empty_orange_cell, cell_h10d, empty_grey_cell, empty_grey_cell])
+        sheet.append([cell_h10, empty_orange_cell, cell_h10d, empty_grey_cell, empty_grey_cell, empty_grey_cell])
         sheet.merged_cells.ranges.append("A10:B10")
-        sheet.merged_cells.ranges.append("C10:E10")
+        sheet.merged_cells.ranges.append("C10:F10")
 
         cell_h11 = WriteOnlyCell(sheet, value=_('MSL'))
         cell_h11.style = orange_style
         cell_h11d = WriteOnlyCell(sheet, value=report.msl_id and report.msl_id.instance_name or '')
         cell_h11d.style = grey_style
-        sheet.append([cell_h11, empty_orange_cell, cell_h11d, empty_grey_cell, empty_grey_cell])
+        sheet.append([cell_h11, empty_orange_cell, cell_h11d, empty_grey_cell, empty_grey_cell, empty_grey_cell])
         sheet.merged_cells.ranges.append("A11:B11")
-        sheet.merged_cells.ranges.append("C11:E11")
+        sheet.merged_cells.ranges.append("C11:F11")
 
         cell_h12 = WriteOnlyCell(sheet, value=_('Including products with stock <= 0 with movements in the last months'))
         cell_h12.style = orange_style
         cell_h12d = WriteOnlyCell(sheet, value=report.display_0 and report.in_last_x_months + _(' months') or _('N/A'))
         cell_h12d.style = grey_style
-        sheet.append([cell_h12, empty_orange_cell, cell_h12d, empty_grey_cell, empty_grey_cell])
+        sheet.append([cell_h12, empty_orange_cell, cell_h12d, empty_grey_cell, empty_grey_cell, empty_grey_cell])
         sheet.merged_cells.ranges.append("A12:B12")
-        sheet.merged_cells.ranges.append("C12:E12")
+        sheet.merged_cells.ranges.append("C12:F12")
 
         total_value, nb_items, lines = self.get_lines(report.id, context=context)
         # Lines Header data
