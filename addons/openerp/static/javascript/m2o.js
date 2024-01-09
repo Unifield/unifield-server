@@ -106,6 +106,10 @@ ManyToOne.prototype.lostFocus = function(evt) {
     }
 
     if(this.selectedResult || this.lastKey == 9) {
+        if (this.selectedResult && this.field.value && !jQuery(this.field).hasClass('m2o_search')) {
+            $(this.field).change();
+            this.change_icon();
+        }
         this.lastKey = null;
         this.clearResults();
         return;
@@ -303,6 +307,8 @@ ManyToOne.prototype.on_keydown = function(evt) {
                 $(this.field).change();
                 this.change_icon();
                 this.clearResults();
+                // do not call listgrid.js onKeyDown to not loose focus on field
+                evt.stopImmediatePropagation();
                 break;
 
             // Escape Key
@@ -333,10 +339,16 @@ ManyToOne.prototype.on_keydown = function(evt) {
         }
 
         if(evt.which == 13 || evt.which == 27 || evt.which == 38 || evt.which == 40)
+            // 13: enter
+            // 27: escape
+            // 38: Arrow UP
+            // 40: Arrow Down
             this.specialKeyPressed = true;
     }
 
     if((evt.which == 8 || evt.which == 46) && this.field.value) {
+        // 8: backspace
+        // 46: delete
         this.text.value = '';
         this.field.value = '';
         this.on_change(evt);
@@ -347,15 +359,17 @@ ManyToOne.prototype.on_keydown = function(evt) {
     //if((evt.which == 9) && this.text.value && !this.field.value) {
     // check with m2o_search added to disable the popup in search view on tab
     if((evt.which == 9 || evt.which == 13) && this.text.value && !this.field.value && !jQuery(this.field).hasClass('m2o_search')) {
+        // 9: tab
+        // 13: enter
         this.get_matched();
     }
 
     // F1
-    if(evt.which == 112) {
+    /*if(evt.which == 112) {
         this.create(evt);
         evt.stopPropagation();
         evt.preventDefault();
-    }
+    }*/
 
     // F2
     if(evt.which == 113 || (evt.which == 13 && !this.text.value)) {
@@ -468,6 +482,7 @@ ManyToOne.prototype.clearResults = function() {
     this.lastSearch = null;
     this.eval_domain = null;
     this.eval_context = null;
+    this.selectedResult = false;
 };
 
 ManyToOne.prototype.doDelayedRequest = function () {
@@ -651,8 +666,8 @@ ManyToOne.prototype.getOnclick = function(evt) {
 
             if($m2o_field[0].onchange) {
                 $m2o_field[0].onchange();
-	    } else if ($m2o_field[0]._m2o) {
-		$m2o_field[0]._m2o.on_change();
+            } else if ($m2o_field[0]._m2o) {
+                $m2o_field[0]._m2o.on_change();
             } else {
                 $m2o_field.change();
             }
