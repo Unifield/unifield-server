@@ -58,6 +58,10 @@ class patch_scripts(osv.osv):
     }
 
 
+    def fix_far_model_id(self, cr, uid, *a, **b):
+        cr.execute("update msf_field_access_rights_field_access_rule fr set model_id=m.id from ir_model m where m.model = fr.model_name and fr.model_id!=m.id")
+        return True
+
     def us_12071_gdpr_patch(self, cr, uid, *a, **b):
         cr.execute("""UPDATE hr_employee
         SET

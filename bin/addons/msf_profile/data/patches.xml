@@ -1020,5 +1020,9 @@
             <field name="method">us_12071_gdpr_patch</field>
         </record>
 
+        <record id="us_10865_fix_far_model_id" model="patch.scripts">
+            <field name="method">fix_far_model_id</field>
+        </record>
+
     </data>
 </openerp>

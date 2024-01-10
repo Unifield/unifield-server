@@ -53,7 +53,6 @@ from datetime import datetime, timedelta
 from sync_common import OC_LIST_TUPLE
 from base64 import b64decode
 
-from msf_field_access_rights.osv_override import _get_instance_level
 
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
@@ -784,43 +783,51 @@ class Entity(osv.osv):
 
     @sync_process('user_rights')
     def check_user_rights(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        context['lang'] = 'en_US'
-        logger = context.get('logger')
+        try:
+            if not bool(self.pool.get('res.users').get_browse_user_instance(cr, uid)):
+                # init sync, groups with former xmlid must first be pulled
+                return False
 
-        if _get_instance_level(self, cr, uid) != 'hq':
-            return True
+            cr.execute("SAVEPOINT import_userrights")
+            if context is None:
+                context = {}
+            context['lang'] = 'en_US'
+            logger = context.get('logger')
 
-        entity = self.get_entity(cr, uid, context)
-        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        res = proxy.get_last_user_rights_info(entity.identifier, self._hardware_id)
-        if not res.get('sum'):
-            return True
+            # TODO: not on init sync (res.groups from HQ not pulled)
+            entity = self.get_entity(cr, uid, context)
+            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+            res = proxy.get_last_user_rights_info(entity.identifier, self._hardware_id)
+            if not res.get('sum'):
+                return True
 
-        first_sync = not entity.user_rights_sum
-        to_install = False
-        if res.get('sum') != entity.user_rights_sum:
+            to_install = False
+            if res.get('sum') != entity.user_rights_sum:
+                if logger:
+                    logger.append(_("Download new User Rights: %s") % res.get('name'))
+                    logger.write()
+                ur_data_encoded = proxy.get_last_user_rights_file(entity.identifier, self._hardware_id, res.get('sum'))
+                ur_data = b64decode(ur_data_encoded)
+                computed_hash = hashlib.md5(ur_data).hexdigest()
+                if computed_hash != res.get('sum'):
+                    raise Exception('User Rights: computed sum (%s) and server sum (%s) differ' % (computed_hash, res.get('sum')))
+                entity.write({'user_rights_name': res.get('name'), 'user_rights_sum': computed_hash, 'user_rights_state': 'to_install', 'user_rights_data': ur_data_encoded})
+                to_install = True
+
+            if to_install or entity.user_rights_state == 'to_install':
+                self.install_user_rights(cr, uid, context=context)
+                entity.write({'user_rights_state': 'installed', 'user_rights_data': False})
+
+        except Exception as e:
+            cr.execute("ROLLBACK TO SAVEPOINT import_userrights")
             if logger:
-                logger.append(_("Download new User Rights: %s") % res.get('name'))
+                logger.append("Import UR error: %s" % e)
                 logger.write()
-            ur_data_encoded = proxy.get_last_user_rights_file(entity.identifier, self._hardware_id, res.get('sum'))
-            ur_data = b64decode(ur_data_encoded)
-            computed_hash = hashlib.md5(ur_data).hexdigest()
-            if computed_hash != res.get('sum'):
-                raise Exception('User Rights: computed sum (%s) and server sum (%s) differ' % (computed_hash, res.get('sum')))
-            entity.write({'user_rights_name': res.get('name'), 'user_rights_sum': computed_hash, 'user_rights_state': 'to_install', 'user_rights_data': ur_data_encoded})
-            to_install = True
+            self._logger.error('Import UR error: %s' % tools.misc.get_traceback(e))
+        else:
+            cr.execute("RELEASE SAVEPOINT import_userrights")
+            cr.commit()
 
-        if to_install or entity.user_rights_state == 'to_install':
-            if first_sync:
-                self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'clean_ir_model_access'})
-                # to generate all sync updates
-                self.pool.get('sync.trigger.something').delete_ir_model_access(cr, uid)
-            self.install_user_rights(cr, uid, context=context)
-            entity.write({'user_rights_state': 'installed'})
-
-        cr.commit()
         self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
         return True

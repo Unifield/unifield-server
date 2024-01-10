@@ -2264,3 +2264,23 @@ def _get_std_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=N
             ret[x[0]]['mml_status'] = 'T'
 
     return ret
+
+def get_global_instance_level(self, cr, uid, ids, *a, **b):
+    if self.pool.get('msf.instance'):
+        level = self.pool.get('res.company')._get_instance_level(cr, uid)
+    else:
+        level = False
+    ret = {}
+    for _id in ids:
+        ret[_id] = level
+    return ret
+
+def search_global_instance_level(self, cr, uid, obj, name, args, context=None):
+    for arg in args:
+        if self.pool.get('msf.instance'):
+            instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+        else:
+            instance_id = 0
+        if not self.pool.get('msf.instance').search_exists(cr, uid, [('level', arg[1], arg[2]), ('id', '=', instance_id)]):
+            return [('id', '=', 0)]
+    return []
