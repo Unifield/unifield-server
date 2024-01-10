@@ -1020,5 +1020,9 @@
             <field name="method">us_12071_gdpr_patch</field>
         </record>
 
+        <record id="us_12110_remove_sup_fin_read" model="patch.scripts">
+            <field name="method">us_12110_remove_sup_fin_read</field>
+        </record>
+
     </data>
 </openerp>

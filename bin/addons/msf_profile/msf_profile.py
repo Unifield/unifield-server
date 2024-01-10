@@ -73,6 +73,15 @@ class patch_scripts(osv.osv):
             object_id = (SELECT id FROM ir_model WHERE model = 'hr.employee')""")
         return True
 
+    def us_12110_remove_sup_fin_read(self, cr, uid, *a, **b):
+        '''
+        Remove all Sup_Fin_Read groups from all users
+        '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'US-12110-Sup_Fin_Read'})
+        return True
+
     # python 3
     def us_9321_2_remove_location_colors(self, cr, uid, *a, **b):
         '''
@@ -6668,6 +6677,11 @@ class sync_tigger_something(osv.osv):
                 )
             """)
             _logger.warn('Deletion of %d Dest CC Links created out of HQ' % (cr.rowcount,))
+
+        if vals.get('name') == 'US-12110-Sup_Fin_Read':
+            cr.execute("""
+            DELETE FROM res_groups_users_rel
+            WHERE gid=(SELECT id FROM res_groups WHERE name='Sup_Fin_Read')""")
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 
