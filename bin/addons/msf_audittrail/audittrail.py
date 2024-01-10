@@ -973,9 +973,21 @@ class audittrail_log_line(osv.osv):
 
             # rename 'Field Order' to 'Order' in case of IR
             if line.object_id.model == 'sale.order':
-                so = self.pool.get('sale.order').browse(cr, uid, line.res_id)
-                if so.procurement_request and res[line.id].find('Field Order') != -1:
-                    res[line.id] = res[line.id].replace('Field Order', 'Order')
+                so = self.pool.get('sale.order').browse(cr, uid, line.res_id, fields_to_fetch=['procurement_request'], context=context)
+                if so.procurement_request:
+                    if res[line.id].find('Commande de Terrain') != -1:
+                            res[line.id] = res[line.id].replace('Commande de Terrain', 'Commande')
+                    elif res[line.id].find('Field Order') != -1:
+                        res[line.id] = res[line.id].replace('Field Order', 'Order')
+
+            # rename 'Purchase Order' to 'Request for Quotation' in case of RfQ
+            if line.object_id.model == 'purchase.order':
+                po = self.pool.get('purchase.order').browse(cr, uid, line.res_id, fields_to_fetch=['rfq_ok'], context=context)
+                if po.rfq_ok:
+                    if res[line.id].find('Bon de Commande') != -1:
+                        res[line.id] = res[line.id].replace('Bon de Commande', 'Demande de Devis')
+                    elif res[line.id].find('Purchase Order') != -1:
+                        res[line.id] = res[line.id].replace('Purchase Order', 'Request for Quotation')
 
         return res
 
