@@ -234,7 +234,10 @@ class finance_archive():
 
             if fileparams.get('select_1') and self.context.get('poc_export') and pool.get('res.company')._get_instance_level(cr, uid) == 'section':
                 # trigger ocb_numbering only at HQ level
-                self._execute_query(cr, fileparams, select=fileparams['select_1'], ocb_vi_cond='AND ocb_vi.id is NULL', insert_numbering=True)
+                ocb_vi_cond = 'AND ocb_vi.id is NULL'
+                if fileparams.get('numbering_cond'):
+                    ocb_vi_cond = ' %s AND %s ' % (ocb_vi_cond, fileparams.get('numbering_cond'))
+                self._execute_query(cr, fileparams, select=fileparams['select_1'], ocb_vi_cond=ocb_vi_cond, insert_numbering=True)
                 # create unique id on move_id, period_id
                 cr.execute("INSERT INTO ocb_vi_je_period_number (move_id, period_id) (SELECT distinct move_id, period_id from ocb_vi_export_number WHERE move_number IS NULL) ON CONFLICT DO NOTHING")
 
