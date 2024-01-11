@@ -592,7 +592,7 @@
                     <para style="Total" alignment="RIGHT">[[ formatLang(getTotValue()) ]]</para>
                 </td>
                 <td>
-                    <para style="Total" alignment="LEFT">[[ getFonCur(line) ]]</para>
+                    <para style="Total" alignment="LEFT">[[ getFonCur() ]]</para>
                 </td>
             </tr>
         </blockTable>
