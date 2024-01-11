@@ -152,8 +152,12 @@ class report_fully_report(report_sxw.rml_parse):
             ]
             aml_ids = aml_obj.search(self.cr, self.uid, domain)
             if aml_ids:
+                # US-11868: Add also the JIs of the COR and/or REV lines without AD related to a corrected JI
+                corr_aml_ids = aml_obj.search(self.cr, self.uid, [('corrected_line_id', 'in', aml_ids), ('analytic_lines', '=', False)])
+                rev_aml_ids = aml_obj.search(self.cr, self.uid, [('reversal_line_id', 'in', aml_ids), ('reversal', '=', True), ('analytic_lines', '=', False)])
+                aml_ids = [*aml_ids, *corr_aml_ids, *rev_aml_ids]
                 res = aml_obj.browse(self.cr, self.uid, aml_ids, context={'lang': self.localcontext.get('lang')})
-            self._cache_move[key] = sorted(res, key=lambda x: (x.invoice.number, x.line_number))
+            self._cache_move[key] = sorted(res, key=lambda x: (x.ref, x.line_number, x.id))
         return self._cache_move[key]
 
     def getMoveLines(self, move_brs, regline_br):

@@ -847,6 +847,7 @@
 % endif
 
 % for inv_line in move_lines:
+    % if not inv_line.corrected_line_id and not inv_line.reversal:
       <Row>
         <Cell ss:Index="4" ss:StyleID="text_left">
           <Data ss:Type="String">${hasattr(inv_line, 'line_number') and inv_line.line_number or ''|x}</Data>
@@ -930,6 +931,51 @@ endif
       </Row>
 % endfor
 % endif
+% endif
+    % if inv_line.corrected_line_id or inv_line.reversal:
+        <%
+        if inv_line.reversal:
+            line_color = 'green'
+        elif inv_line.corrected_line_id:
+            line_color = 'red'
+        %>
+        <Row>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
+        % else:
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+        % endif
+          <Data ss:Type="String">${inv_line.account_id.code + ' ' + inv_line.account_id.name|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${inv_line.partner_txt or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${''}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_amount">
+          <Data ss:Type="Number">${(-1 * inv_line.debit_currency) + inv_line.credit_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${inv_line.reversal and _('Reversal') or ''}</Data>
+        </Cell>
+      </Row>
+    % endif
 % endfor
 
 <!-- Display analytic lines linked to this register line -->
