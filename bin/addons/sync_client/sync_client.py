@@ -231,17 +231,6 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                         self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=context)
                     context['log_sale_purchase'] = True
 
-                    # generate a white list of models
-                    if self.pool.get('sync.client.rule') and\
-                            self.pool.get('sync.client.message_rule'):
-                        server_model_white_set = self.get_model_white_list(cr, uid)
-                        # check all models are in the hardcoded white list
-                        difference = server_model_white_set.difference(WHITE_LIST_MODEL)
-                        if difference:
-                            msg = 'Warning: Some models used in the synchronization '\
-                                'rule are not present in the WHITE_LIST_MODEL: %s'
-                            logger.append(_(msg) % ' ,'.join(list(difference)))
-
                     # create a specific cursor for the call
                     self.sync_cursor = pooler.get_db(cr.dbname).cursor()
 
@@ -305,8 +294,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     cr.execute('SHOW server_version')
                     result = cr.fetchone()
                     pg_version = result and result[0] or 'pgversion not found'
-                    proxy.set_pg_version(entity.identifier, self._hardware_id,
-                                         pg_version)
+                    proxy.set_pg_ur_version(entity.identifier, self._hardware_id, pg_version, entity.current_user_rights_name)
             except SkipStep:
                 # res failed but without exception
                 assert is_step, "Cannot have a SkipTest error outside a sync step process!"
@@ -768,6 +756,14 @@ class Entity(osv.osv):
         entity.write({'previous_hw': self._hardware_id}, context=context)
         check_md5(res[2], res[1], _('method set_rules'))
         self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
+        logger = context.get('logger')
+        if logger and self.pool.get('sync.client.message_rule'):
+            server_model_white_set = self.get_model_white_list(cr, uid)
+            difference = server_model_white_set.difference(WHITE_LIST_MODEL)
+            if difference:
+                msg = 'Warning: Some models used in the synchronization '\
+                    'rule are not present in the WHITE_LIST_MODEL: %s'
+                logger.append(_(msg) % ' ,'.join(list(difference)))
 
     def install_user_rights(self, cr, uid, context=None):
         if not context:
@@ -783,50 +779,49 @@ class Entity(osv.osv):
 
     @sync_process('user_rights')
     def check_user_rights(self, cr, uid, context=None):
-        try:
-            if not bool(self.pool.get('res.users').get_browse_user_instance(cr, uid)):
-                # init sync, groups with former xmlid must first be pulled
-                return False
+        if not bool(self.pool.get('res.users').get_browse_user_instance(cr, uid)):
+            # init sync, groups with former xmlid must first be pulled
+            return False
 
-            cr.execute("SAVEPOINT import_userrights")
-            if context is None:
-                context = {}
-            context['lang'] = 'en_US'
-            logger = context.get('logger')
+        if context is None:
+            context = {}
+        context['lang'] = 'en_US'
+        logger = context.get('logger')
 
-            # TODO: not on init sync (res.groups from HQ not pulled)
-            entity = self.get_entity(cr, uid, context)
-            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-            res = proxy.get_last_user_rights_info(entity.identifier, self._hardware_id)
-            if not res.get('sum'):
-                return True
+        entity = self.get_entity(cr, uid, context)
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+        res = proxy.get_last_user_rights_info(entity.identifier, self._hardware_id)
+        if not res.get('sum'):
+            return True
 
-            to_install = False
-            if res.get('sum') != entity.user_rights_sum:
-                if logger:
-                    logger.append(_("Download new User Rights: %s") % res.get('name'))
-                    logger.write()
-                ur_data_encoded = proxy.get_last_user_rights_file(entity.identifier, self._hardware_id, res.get('sum'))
-                ur_data = b64decode(ur_data_encoded)
-                computed_hash = hashlib.md5(ur_data).hexdigest()
-                if computed_hash != res.get('sum'):
-                    raise Exception('User Rights: computed sum (%s) and server sum (%s) differ' % (computed_hash, res.get('sum')))
-                entity.write({'user_rights_name': res.get('name'), 'user_rights_sum': computed_hash, 'user_rights_state': 'to_install', 'user_rights_data': ur_data_encoded})
-                to_install = True
-
-            if to_install or entity.user_rights_state == 'to_install':
-                self.install_user_rights(cr, uid, context=context)
-                entity.write({'user_rights_state': 'installed', 'user_rights_data': False})
-
-        except Exception as e:
-            cr.execute("ROLLBACK TO SAVEPOINT import_userrights")
+        to_install = False
+        if res.get('sum') != entity.user_rights_sum:
             if logger:
-                logger.append("Import UR error: %s" % e)
+                logger.append(_("Download new User Rights: %s") % res.get('name'))
                 logger.write()
-            self._logger.error('Import UR error: %s' % tools.misc.get_traceback(e))
-        else:
-            cr.execute("RELEASE SAVEPOINT import_userrights")
-            cr.commit()
+            ur_data_encoded = proxy.get_last_user_rights_file(entity.identifier, self._hardware_id, res.get('sum'))
+            ur_data = b64decode(ur_data_encoded)
+            computed_hash = hashlib.md5(ur_data).hexdigest()
+            if computed_hash != res.get('sum'):
+                raise Exception('User Rights: computed sum (%s) and server sum (%s) differ' % (computed_hash, res.get('sum')))
+            entity.write({'user_rights_name': res.get('name'), 'user_rights_sum': computed_hash, 'user_rights_state': 'to_install', 'user_rights_data': ur_data_encoded})
+            to_install = True
+
+
+        if to_install or entity.user_rights_state == 'to_install':
+            try:
+                cr.execute("SAVEPOINT import_userrights")
+                self.install_user_rights(cr, uid, context=context)
+                entity.write({'user_rights_state': 'installed', 'user_rights_data': False, 'current_user_rights_name': res.get('name')})
+            except Exception as e:
+                cr.execute("ROLLBACK TO SAVEPOINT import_userrights")
+                if logger:
+                    logger.append("Import UR error: %s" % e)
+                    logger.write()
+                self._logger.error('Import UR error: %s' % tools.misc.get_traceback(e))
+            else:
+                cr.execute("RELEASE SAVEPOINT import_userrights")
+                cr.commit()
 
         self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)

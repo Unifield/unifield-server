@@ -794,11 +794,11 @@ MODEL_DATA_DICT = {
         ],
         'required_field_list': [
             'field_access_rule.name',
-            'field.id',
+            'field.name',
         ],
         'ignore_field': [
             'field.field_description',
-            'field.name',
+            'field.id',
         ],
     },
     'button_access_rules': {

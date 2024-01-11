@@ -719,6 +719,8 @@ class msf_import_export(osv.osv_memory):
         gl_account_cache = {}
         parent_ok_cache = {}
         instances_cache = {}
+        far_cache = {}
+        far_rule_obj_id_cache = {}
         import_data_obj = self.pool.get('import_data')
         prod_nomenclature_obj = self.pool.get('product.nomenclature')
 
@@ -953,13 +955,26 @@ class msf_import_export(osv.osv_memory):
                                 nb_error += 1
                                 line_ok = False
                                 break
-
                     if newo2m and ('.' not in h or h.split('.')[0] != newo2m or h.split('.')[1] == delimiter):
                         data.setdefault(newo2m, []).append((0, 0, o2mdatas.copy()))
                         o2mdatas = {}
                         delimiter = False
                         newo2m = False
-                    if h == 'id' and line_data[n]:
+
+                    if impobj._name == 'msf_field_access_rights.field_access_rule_line':
+                        if h == 'field_access_rule.name':
+                            if line_data[n] not in far_cache:
+                                far_cache[line_data[n]] = self.pool.get('msf_field_access_rights.field_access_rule').search(cr, uid, [('name', '=', line_data[n])])[0]
+                            data['field_access_rule'] = far_cache[line_data[n]]
+                        elif h == 'field.name':
+                            if data.get('field_access_rule') not in far_rule_obj_id_cache:
+                                far = self.pool.get('msf_field_access_rights.field_access_rule').browse(cr, uid, data['field_access_rule'], fields_to_fetch=['model_name'])
+                                far_rule_obj_id_cache[data['field_access_rule']] = [far.model_name]
+                                for inherits in self.pool.get(far.model_name)._inherits:
+                                    far_rule_obj_id_cache[data['field_access_rule']].append(inherits)
+                            data['field'] = self.pool.get('ir.model.fields').search(cr, uid, [('model', 'in', far_rule_obj_id_cache[data['field_access_rule']]), ('name', '=', line_data[n])])[0]
+
+                    elif h == 'id' and line_data[n]:
                         ids_to_update = _get_obj('id.id', line_data[n], {'id': {'relation': impobj._name}})
 
                     elif '.' not in h:

@@ -155,7 +155,7 @@ class entity(osv.osv):
     _inherit = "sync.server.entity"
 
     _columns = {
-        'version_id': fields.many2one('sync_server.version', 'Unifield Version', ondelete='set null', ),
+        'version_id': fields.many2one('sync_server.version', 'Unifield Version', ondelete='set null'),
     }
 
     def _set_version(self, cr, uid, ids, version_id, context=None):
