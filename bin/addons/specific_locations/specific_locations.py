@@ -115,18 +115,18 @@ class stock_location(osv.osv):
                         return False
         return True
 
+    _columns = {
+        'quarantine_location': fields.boolean(string='Quarantine Location'),
+        'destruction_location': fields.boolean(string='Destruction Location'),
+        'location_category': fields.selection([('stock', 'Stock'),
+                                               ('consumption_unit', 'Consumption Unit'),
+                                               ('transition', 'Transition'),
+                                               ('other', 'Other'),], string='Location Category', required=True),
+        'eprep_location': fields.boolean('Eprep Location', readonly=1),
+        # could be used after discussion with Magali
+        #'check_quarantine': fields.function(_get_false, fnct_search=search_check_quarantine, string='Check Quarantine', type="boolean", readonly=True, method=True),
+    }
 
-    _columns = {'quarantine_location': fields.boolean(string='Quarantine Location'),
-                'destruction_location': fields.boolean(string='Destruction Location'),
-                'location_category': fields.selection([('stock', 'Stock'),
-                                                       ('consumption_unit', 'Consumption Unit'),
-                                                       ('transition', 'Transition'),
-                                                       ('eprep', 'EPrep'),
-                                                       ('other', 'Other'),], string='Location Category', required=True),
-                'eprep_location': fields.boolean('Eprep Location', readonly=1),
-                # could be used after discussion with Magali
-                #'check_quarantine': fields.function(_get_false, fnct_search=search_check_quarantine, string='Check Quarantine', type="boolean", readonly=True, method=True),
-                }
     _defaults = {
         'location_category': 'stock',
         'eprep_location': False,
@@ -139,6 +139,7 @@ class stock_location(osv.osv):
                      'You cannot define a quarantine location as chained location.',
                      ['quarantine_location', 'chained_location_type'],),
                     ]
+
 
 stock_location()
 

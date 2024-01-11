@@ -220,7 +220,7 @@ class product_product(osv.osv):
                                                     ('usage', 'in', location_usage)], order='NO_ORDER', context=context)
         else:
             default_locs_domain = ['|', ('eprep_location', '=', True), '&', ('usage', '=', 'internal'),
-                                   ('location_category', 'in', ('stock', 'consumption_unit', 'eprep'))]
+                                   ('location_category', 'in', ('stock', 'consumption_unit'))]
             location_ids = loc_obj.search(cr, uid, default_locs_domain, context=context)
 
         # build the list of ids of children of the location given by id

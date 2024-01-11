@@ -57,6 +57,24 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF32.0
+    def us_11907_12339_fix_locations_eprep_category(self, cr, uid, *a, **b):
+        '''
+        Change the Category to Stock, Eprep Location to True and search_color to lightpink to locations and instance
+        locations which have the Category EPrep
+        '''
+        eprep_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_eprep_view')
+        add_loc = ''
+        if eprep_view:
+            add_loc = ', location_id = %s' % eprep_view[1]
+        cr.execute("""UPDATE stock_location SET location_category = 'stock', eprep_location = 't', 
+            search_color = 'lightpink'""" + add_loc + """ WHERE location_category = 'eprep'""")
+        self.log_info(cr, uid, "US-11907-12339: %s EPrep Location(s) have been updated" % (cr.rowcount,))
+
+        cr.execute("""UPDATE stock_location_instance SET location_category = 'stock' WHERE location_category = 'eprep'""")
+        self.log_info(cr, uid, "US-11907-12339: %s Instance EPrep Location(s) have been updated" % (cr.rowcount,))
+
+        return True
 
     def us_12071_gdpr_patch(self, cr, uid, *a, **b):
         cr.execute("""UPDATE hr_employee
