@@ -291,6 +291,8 @@ class stock_location(osv.osv):
 
     def _search_from_config(self, cr, uid, obj, name, args, context=None):
         for arg in args:
+            if not arg[2]:
+                return []
             if arg[1] != '=' or not isinstance(arg[2], int):
                 raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
 
