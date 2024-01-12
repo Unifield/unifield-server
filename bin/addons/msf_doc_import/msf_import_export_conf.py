@@ -219,6 +219,12 @@ MODEL_DICT = {
         'lang': 'en_MF',
         'domain': [('res_model', '!=', 'audittrail.log.line')],
     },
+    '00_full_ur': {
+        'name': '-- UR full archive --',
+        'domain_type': 'non_functionnal',
+        'model': 'msf.import.export',
+        'lang': 'en_MF',
+    }
 }
 
 MODEL_DATA_DICT = {
@@ -712,6 +718,13 @@ MODEL_DATA_DICT = {
         'required_field_list': [
             'name',
         ],
+    },
+    '00_full_ur' : {
+        'header_list': [],
+        'required_field_list': [],
+        'hide_download_template': True,
+        'hide_download_3_entries': True,
+        'display_file_import': False,
     },
     'user_access': {
         'header_list': [

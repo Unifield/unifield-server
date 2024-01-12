@@ -3,6 +3,13 @@
     <data>
 
         <report
+            auto="False"
+            id="sync_client_user_rights_download"
+            model="msf.import.export"
+            name="sync_client.user_rights.download"
+            string="Download UR" />
+
+        <report
             id="in_simulation_screen_xls"
             model="wizard.import.in.simulation.screen"
             name="in.simulation.screen.xls"
