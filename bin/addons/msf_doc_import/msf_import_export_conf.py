@@ -745,11 +745,11 @@ MODEL_DATA_DICT = {
             'perm_unlink',
             'perm_read',
             'perm_write',
-            'model_id.id',
+            'model_id.model',
         ],
         'required_field_list': [
             'name',
-            'model_id.id',
+            'model_id.model',
         ],
     },
     'access_control_list_empty': {

@@ -76,6 +76,8 @@ class patch_scripts(osv.osv):
             and l.field!=f.id
         """)
 
+        # delete sdref on ir.actions.act_window, Windows Action export will then use the xmlid
+        cr.execute("delete from ir_model_data where model='ir.actions.act_window' and module='sd'")
         return True
 
     def us_12071_gdpr_patch(self, cr, uid, *a, **b):

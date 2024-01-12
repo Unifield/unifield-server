@@ -10,13 +10,7 @@ from tools.translate import _
 
 # create an sdref on record creation but do not monitor fields changes
 SDREF_BUT_NO_TOUCH = [
-    'ir.actions.act_window',
-    'ir.model.access',
-    'ir.rule',
-    'ir.ui.menu',
     'msf_button_access_rights.button_access_rule',
-    'msf_field_access_rights.field_access_rule',
-    'msf_field_access_rights.field_access_rule_line',
 ]
 
 # model related to synchronization, this model don't have to be ignored.
