@@ -275,12 +275,14 @@ class sync_server_user_rights_add_file(osv.osv_memory):
     _columns = {
         'name': fields.char(string='Version', size=256, required=1),
         'zip_file': fields.binary('File', required=1),
-        'state': fields.selection([('draft', 'Draft'), ('inprogress', 'In-progress'), ('error', 'Error'), ('done', 'Done')],'State', readonly=1),
+        'state': fields.selection([('draft', 'Draft'), ('inprogress', 'In-progress'), ('error', 'Error'), ('done', 'Done'), ('deployed', 'Deployed')],'State', readonly=1),
         'message': fields.text('Message', readonly=1),
+        'install': fields.boolean('Deploy UR if no error'),
     }
 
     _defaults = {
         'state': 'draft',
+        'install': False,
     }
     def load_bg(self, dbname, uid, wiz_id, plain_zip, context=None):
         cr = pooler.get_db(dbname).cursor()
@@ -288,7 +290,15 @@ class sync_server_user_rights_add_file(osv.osv_memory):
             cr.commit_org, cr.commit = cr.commit, lambda:None
             wiz = self.browse(cr, uid, wiz_id, context=context)
             self.pool.get('user_rights.tools').load_ur_zip(cr, uid, plain_zip, sync_server=True, logger=logger(wiz), context=context)
-            wiz.write({'state': 'done', 'message': 'Import Done'})
+            if wiz.install:
+                new_cr = pooler.get_db(dbname).cursor()
+                self.done(new_cr, uid, [wiz_id], context=context)
+                new_cr.commit()
+                new_cr.close(True)
+                wiz.write({'state': 'deployed', 'message': 'Deployed'})
+            else:
+                wiz.write({'state': 'done', 'message': 'Import Done'})
+
         except Exception as e:
             cr.rollback()
             if isinstance(e, osv.except_osv):
@@ -304,6 +314,9 @@ class sync_server_user_rights_add_file(osv.osv_memory):
 
     def dummy(self, *a, **b):
         return True
+
+    def close(self, cr, uid, ids, context=None):
+        return {'type': 'ir.actions.act_window_close'}
 
     def done(self, cr, uid, ids, context=None):
         wiz = self.browse(cr, uid, ids[0], context=context)
