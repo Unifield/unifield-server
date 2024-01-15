@@ -253,6 +253,24 @@ endif
       </tr>
 % endfor
 % endif
+<!-- G/L account corrected from Expense to B/S : no analytic line to display changes -->
+    % for corrected_no_ad in getMlCorNoAd(inv_line.id):
+      <tr class="loop${nbloop%2} red">
+          <td colspan="${colspan}" />
+          <td>${corrected_no_ad.account_id.code + ' ' + corrected_no_ad.account_id.name|x}</td>
+          <td>${corrected_no_ad.partner_txt or ''|x}</td>
+          <td></td>
+          <td>${formatLang(-1*corrected_no_ad.amount_currency, monetary=True)}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td />
+      </tr>
+
+    % endfor
 % endfor
 
 <!-- Display analytic lines linked to this register line -->
@@ -292,7 +310,7 @@ endif
 % endif
 
 <!-- G/L account corrected from Expense to B/S : no analytic line to display changes -->
-    % for corrected_no_ad in getCorNoAd(line.id):
+    % for corrected_no_ad in getStCorNoAd(line.id):
       <tr class="loop${nbloop%2} red">
           <td colspan="${colspan}" />
           <td>${corrected_no_ad.account_id.code + ' ' + corrected_no_ad.account_id.name|x}</td>
