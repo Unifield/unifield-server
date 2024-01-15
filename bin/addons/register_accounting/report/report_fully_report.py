@@ -65,15 +65,16 @@ class report_fully_report(report_sxw.rml_parse):
         self._cache_ana = {}
 
     def getMlCorNoAd(self, move_line_id):
-        cor_ids = self.pool.get('account.move.line').search(self.cr, self.uid, [
-            ('corrected_line_id', '=', move_line_id),
-            ('account_id.is_analytic_addicted', '=', False),
-            ('reversal_line_id', '=', False), # ignore REV in case of double COR
-            ('corrected', '=', False) # get last COR in case of double COR
-        ], order='id')
-        if not cor_ids:
+        all_rev_cor_ids = []
+        prev = [move_line_id]
+        while prev:
+            prev = self.pool.get('account.move.line').search(self.cr, self.uid, [
+                '|', '&', ('corrected_line_id', 'in', prev), ('reversal_line_id', '=', False), ('reversal_line_id', 'in', prev)
+            ], order='id')
+            all_rev_cor_ids += prev
+        if not  all_rev_cor_ids:
             return []
-        return self.pool.get('account.move.line').browse(self.cr, self.uid, cor_ids, context={'lang': self.localcontext.get('lang', 'en_US')})
+        return self.pool.get('account.move.line').browse(self.cr, self.uid, all_rev_cor_ids, context={'lang': self.localcontext.get('lang', 'en_US')})
 
     def getStCorNoAd(self, st_line_id):
         cor_ids = self.pool.get('account.move.line').search(self.cr, self.uid, [

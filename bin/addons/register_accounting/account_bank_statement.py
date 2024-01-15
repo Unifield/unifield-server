@@ -1246,6 +1246,7 @@ class account_bank_statement_line(osv.osv):
         'from_cash_return': fields.boolean(string='Come from a cash return?'),
         'direct_invoice': fields.boolean(string='Direct invoice?'),
         'first_move_line_id': fields.many2one('account.move.line', "Register Move Line"),
+        'mirror_move_line_id': fields.many2one('account.move.line', "Mirror Move Line"),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True,
                                          string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], help="To use for python code when registering", multi="third_parties_key"),
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id',
@@ -1554,7 +1555,7 @@ class account_bank_statement_line(osv.osv):
 
         # Removed post from original method
         # Optimization on write for this field
-        self.write(cr, uid, [st_line.id], {'first_move_line_id': first_move_line_id}, context=context)
+        self.write(cr, uid, [st_line.id], {'first_move_line_id': first_move_line_id, 'mirror_move_line_id': move_line_id}, context=context)
         return move_id
 
     def _update_amount(self, values):
@@ -2313,6 +2314,7 @@ class account_bank_statement_line(osv.osv):
             'analytic_distribution_id': False,
             'direct_invoice': False,
             'first_move_line_id': False,
+            'mirror_move_line_id': False,
             'from_cash_return': False,
             'from_import_cheque_id': False,
             'imported_invoice_line_ids': False,
