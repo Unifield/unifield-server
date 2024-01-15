@@ -143,18 +143,22 @@ class res_currency_rate_functional(osv.osv):
         """
         res = True
         period_obj = self.pool.get('account.period')
+        currency_obj = self.pool.get('res.currency')
+        currency = False
         if context is None:
             context = {}
-        for currency in self.read(cr, uid, ids, ['currency_id', 'name'], context=context):
-            period_ids = period_obj.get_period_from_date(cr, uid, currency['name'], context=context)
+        for currency_rate in self.read(cr, uid, ids, ['currency_id', 'name'], context=context):
+            period_ids = period_obj.get_period_from_date(cr, uid, currency_rate['name'], context=context)
             if period_ids:
                 period = period_obj.read(cr, uid, period_ids[0], ['state', 'name'], context=context)
-                if period['state'] != 'created':
+                if currency_rate['currency_id']:
+                    currency = currency_obj.read(cr, uid, currency_rate['currency_id'][0], ['currency_table_id'], context=context)
+                if period['state'] != 'created' and currency and currency['currency_table_id'] is None:
                     raise osv.except_osv(_('Error'),
                                          _("You can't delete this FX rate as the period \"%s\" isn't in Draft state.") % period['name'])
             res = res & super(res_currency_rate_functional, self).unlink(cr, uid, ids, context)
-            if currency['currency_id']:
-                currency_id = currency['currency_id'][0]
+            if currency_rate['currency_id'] and currency and currency['currency_table_id'] is None:
+                currency_id = currency_rate['currency_id'][0]
                 self.refresh_move_lines(cr, uid, ids, currency=currency_id)
         return res
 
