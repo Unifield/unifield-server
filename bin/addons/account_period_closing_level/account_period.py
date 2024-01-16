@@ -375,7 +375,6 @@ class account_period(osv.osv):
         'is_eoy_liquidity_revaluated': fields.boolean('Revaluation EoY liquidity', readonly=True),  # US-9770 For Year End revaluation checks before P15 closing
         'is_eoy_regular_bs_revaluated': fields.boolean('Revaluation EoY regular B/S', readonly=True),  # US-9770 For Year End revaluation checks before P15 closing
         'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
-        'all_active_journals_registers_created': fields.boolean('Are all the registers corresponding to all active journals are created?', readonly=True),
     }
 
     _order = 'date_start DESC, number DESC'
@@ -391,7 +390,6 @@ class account_period(osv.osv):
             else:
                 vals['state'] = 'draft'  # passtrough for system periods: 'Open'
 
-        vals['all_active_journals_registers_created'] = False
         res = super(account_period, self).create(cr, uid, vals, context=context)
         self.pool.get('account.period.state').update_state(cr, uid, res,
                                                            context=context)
@@ -423,8 +421,6 @@ class account_period(osv.osv):
             else:
                 vals['state_sync_flag'] = 'none'
 
-        if 'state' in vals and vals['state'] in ('created', 'draft'):
-            vals['all_active_journals_registers_created'] = False
         res = super(account_period, self).write(cr, uid, ids, vals, context=context)
         self.pool.get('account.period.state').update_state(cr, uid, ids, context=context)
         return res
@@ -692,19 +688,6 @@ class account_period(osv.osv):
             context = {}
         if isinstance(ids, int):
             ids = [ids]
-        regs_to_close = []
-        period_name = self.browse(cr, uid, ids[0], context=context).name
-        reg_ids = self.pool.get('account.bank.statement').search(cr, uid, [('period_id', '=', ids[0])], context=context)
-        regs = self.pool.get('account.bank.statement').browse(cr, uid, reg_ids, context=context)
-        for reg in regs:
-            if reg.journal_id.is_active == 'True' and reg.state not in ['draft', 'open', 'confirm']\
-                     and self.browse(cr, uid, ids[0], context=context).all_active_journals_registers_created is not None:
-                regs_to_close.append(reg.name)
-        if regs_to_close:
-            raise osv.except_osv(_('Warning'),
-                                 _('Period %s could not be closed because the register(s) %s is/are not created/opened/closed for this period.'
-                                   'Please either create/open/close the register(s) or inactivate the related journal.') % (period_name, ','.join(regs_to_close)))
-
         return self.write(cr, uid, ids, {'field_process': True}, context)
 
     def button_fx_rate(self, cr, uid, ids, context=None):
