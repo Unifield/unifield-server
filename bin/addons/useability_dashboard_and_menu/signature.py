@@ -16,8 +16,8 @@ class signature_follow_up(osv.osv):
         cr.execute("""
             create or replace view signature_follow_up as (
                 select
-                    user_rel.id as id,
-                    user_rel.user_id as user_id,
+                    min(l.id) as id,
+                    l.user_id as user_id,
                     s.signature_res_id as doc_id,
                     s.signature_state as status,
                     case
@@ -30,16 +30,15 @@ class signature_follow_up(osv.osv):
                         when pick.type = 'out' and pick.subtype = 'standard' then 'stock.picking.out'
                         when pick.type = 'out' and pick.subtype = 'picking' then 'stock.picking.pick'
                         else s.signature_res_model end as doc_type,
-                    l.subtype as subtype,
-                    count(l.user_id=user_rel.user_id or NULL) as signed,
+                    string_agg(l.name, ',') as roles,
+                    bool_and(l.signed) as signed,
                     coalesce(po.name, so.name, invoice.number, invoice.name, pick.name, jour.code|| ' ' ||per.name) as doc_name,
-                    min(case when l.user_id=user_rel.user_id then l.date else NULL end) as signature_date,
+                    min(case when l.signed then l.date else NULL end) as signature_date,
                     coalesce(po.state, so.state, invoice.state, st.state, pick.state) as doc_state,
                     s.signature_is_closed as signature_is_closed
                 from
                     signature s
-                inner join signature_users_allowed user_rel on user_rel.signature_id = s.id
-                inner join signature_line l on l.signature_id = s.id and l.subtype=user_rel.subtype
+                inner join signature_line l on l.signature_id = s.id
                 left join purchase_order po on po.id = s.signature_res_id and s.signature_res_model='purchase.order'
                 left join sale_order so on so.id = s.signature_res_id and s.signature_res_model='sale.order'
                 left join account_invoice invoice on invoice.id = s.signature_res_id and s.signature_res_model='account.invoice'
@@ -49,8 +48,10 @@ class signature_follow_up(osv.osv):
                 left join account_journal jour on jour.id = st.journal_id
 
                 left join stock_picking pick on pick.id =  s.signature_res_id and s.signature_res_model='stock.picking'
+                where
+                    l.user_id is not null
                 group by
-                    user_rel.id, user_rel.user_id, s.signature_res_id, s.signature_state, s.signature_res_model, s.signature_is_closed, po.name, so.name, jour.code, jour.type, per.name, l.subtype, pick.name,
+                    l.user_id, s.signature_res_id, s.signature_state, s.signature_res_model, s.signature_is_closed, po.name, so.name, jour.code, jour.type, per.name, pick.name,
                     invoice.real_doc_type, invoice.type, invoice.is_debit_note, invoice.is_inkind_donation, invoice.is_direct_invoice, invoice.is_intermission, invoice.number, invoice.name,
                     po.state, so.state, so.procurement_request, invoice.state, st.name, pick.state, pick.type, pick.subtype, st.state
             )
@@ -75,9 +76,9 @@ class signature_follow_up(osv.osv):
         'doc_id': fields.integer('Doc ID', readonly=1),
         'status': fields.selection([('open', 'Open'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=1),
         'doc_state': fields.selection(_get_all_states, string='Document State', readonly=1),
-        'signed': fields.integer('Signed', readonly=1),
+        'signed': fields.boolean('Signed', readonly=1),
         'signature_date': fields.datetime('Signature Date', readonly=1),
-        'subtype': fields.selection([('full', 'Full Report'), ('rec', 'Reconciliation')], string='Type of signature', readonly=1),
+        'roles': fields.char('Roles', size=256, readonly=1),
         'signature_is_closed': fields.boolean('Signature Closed', readonly=1),
     }
 

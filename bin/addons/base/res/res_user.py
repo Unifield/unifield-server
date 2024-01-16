@@ -521,6 +521,7 @@ class users(osv.osv):
         'signature_enabled': fields.boolean('Enable Signature'),
         'esignature_id': fields.many2one('signature.image', 'Current Signature'),
         'current_signature': fields.related('esignature_id', 'pngb64', string='Signature', type='text', readonly=1),
+        'current_legal_name': fields.related('esignature_id', 'legal_name', string='Legal Name', type='char', size=64, readonly=1),
         'signature_from': fields.date('Signature Start Date'),
         'signature_to': fields.date('Signature End Date'),
         'has_signature': fields.function(_get_has_signature, type='boolean', string='Has Signature', method=1, multi='sign_state'),
