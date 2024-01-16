@@ -195,9 +195,9 @@ else:
 
 <%
 if o.journal_id.type == 'cheque':
-    colspan = '8'
+    colspan = 8
 else:
-    colspan = '7'
+    colspan = 7
 %>
 
 % for inv_line in move_lines:
@@ -267,11 +267,16 @@ endif
 
 
       <tr class="loop${nbloop%2} ${line_color}">
-          <td colspan="${colspan}" />
+          <td colspan="5" />
+          <td>${corrected_no_ad.move_id.name}</td>
+          <td/>
+          % if o.journal_id.type == 'cheque':
+           <td />
+          % endif
           <td>${corrected_no_ad.account_id.code + ' ' + corrected_no_ad.account_id.name|x}</td>
           <td>${corrected_no_ad.partner_txt or ''|x}</td>
           <td></td>
-          <td>${formatLang(-1*corrected_no_ad.amount_currency, monetary=True)}</td>
+          <td>${formatLang(corrected_no_ad.amount_currency, monetary=True)}</td>
           <td></td>
           <td></td>
           <td></td>
@@ -332,7 +337,7 @@ endif
 
 <%
 if not found_ana:
-    check_no_ad_cor = getLinkedMoveLines(line.first_move_line_id.move_id.id, line.id)
+    check_no_ad_cor = getLinkedMoveLines(line)
 else:
     check_no_ad_cor = []
     for x in last_exists:
@@ -356,11 +361,16 @@ endif
             %>
 
       <tr class="loop${nbloop%2} ${line_color}">
-          <td colspan="${colspan}" />
+          <td colspan="5" />
+          <td>${corrected_no_ad.move_id.name}</td>
+          <td/>
+          % if o.journal_id.type == 'cheque':
+           <td />
+          % endif
           <td>${corrected_no_ad.account_id.code + ' ' + corrected_no_ad.account_id.name|x}</td>
           <td>${corrected_no_ad.partner_txt or ''|x}</td>
           <td></td>
-          <td>${formatLang(-1*corrected_no_ad.amount_currency, monetary=True)}</td>
+          <td>${formatLang(corrected_no_ad.amount_currency, monetary=True)}</td>
           <td></td>
           <td></td>
           <td></td>

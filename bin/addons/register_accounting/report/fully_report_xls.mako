@@ -942,11 +942,15 @@ endif
         endif
         %>
       <Row>
+        <Cell ss:Index="5" />
+        <Cell ss:StyleID="${line_color}_ana_left">
+            <Data ss:Type="String">${corrected_no_ad.move_id.name}</Data>
+        </Cell>
         % if o.journal_id.type == 'cheque':
-          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
-        % else:
-          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+            <Cell ss:StyleID="${line_color}_ana_left" />
         % endif
+        <Cell ss:StyleID="${line_color}_ana_left" />
+        <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String">${corrected_no_ad.account_id.code + ' ' + corrected_no_ad.account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
@@ -956,7 +960,7 @@ endif
           <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_amount">
-          <Data ss:Type="Number">${-1*corrected_no_ad.amount_currency}</Data>
+          <Data ss:Type="Number">${corrected_no_ad.amount_currency}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String"></Data>
@@ -1052,7 +1056,7 @@ endif
 
 <%
 if not found_ana:
-    check_no_ad_cor = getLinkedMoveLines(line.first_move_line_id.move_id.id, line.id)
+    check_no_ad_cor = getLinkedMoveLines(line)
 else:
     check_no_ad_cor = []
     for x in last_exists:
@@ -1074,11 +1078,15 @@ endif
         endif
         %>
       <Row>
+          <Cell ss:Index="5" />
+        <Cell ss:StyleID="${line_color}_ana_left">
+            <Data ss:Type="String">${corrected_no_ad.move_id.name}</Data>
+        </Cell>
         % if o.journal_id.type == 'cheque':
-          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
-        % else:
-          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:StyleID="${line_color}_ana_left" />
         % endif
+        <Cell ss:StyleID="${line_color}_ana_left" />
+        <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String">${corrected_no_ad.account_id.code + ' ' + corrected_no_ad.account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
@@ -1088,7 +1096,7 @@ endif
           <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_amount">
-          <Data ss:Type="Number">${-1*corrected_no_ad.amount_currency}</Data>
+          <Data ss:Type="Number">${corrected_no_ad.amount_currency}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String"></Data>

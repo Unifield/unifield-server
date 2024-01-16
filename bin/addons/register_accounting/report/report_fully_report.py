@@ -64,10 +64,10 @@ class report_fully_report(report_sxw.rml_parse):
         self._cache_move = {}
         self._cache_ana = {}
 
-    def getLinkedMoveLines(self, move_id, st_line_id):
-        if not move_id:
+    def getLinkedMoveLines(self, st_line_record):
+        if not st_line_record or not st_line_record.first_move_line_id:
             return []
-        return self.pool.get('account.move.line').search(self.cr, self.uid, [('move_id', '=', move_id), ('id', '!=', st_line_id), ('partner_register_line_id', '=', False)])
+        return self.pool.get('account.move.line').search(self.cr, self.uid, [('move_id', '=', st_line_record.first_move_line_id.id), ('id', '!=', st_line_record.id), ('partner_register_line_id', '=', False)])
 
     def getMlCorNoAd(self, move_line_ids):
         if isinstance(move_line_ids, int):
