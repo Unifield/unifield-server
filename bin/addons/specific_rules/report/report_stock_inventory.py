@@ -174,11 +174,11 @@ class export_report_stock_inventory(osv.osv):
 
         return True
 
-    def onchange_product_list(self, cr, uid, ids, product_list_id):
+    def onchange_reset_display_0(self, cr, uid, ids, data_id):
         """
-        Change the product when change the prodlot
+        Reset the display > 0 when a product list, a nomenclature family, a mml or a msl is selected
         """
-        if product_list_id:
+        if data_id:
             return {
                 'value': {
                     'display_0': False,
@@ -288,9 +288,12 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             values['product_ids'] = (report.product_id.id,)
         else:
             plist_prod_list = []
+            fam_prod_list = []
             mmlmsl_prod_list = []
             if report.product_list_id:
                 plist_prod_list = prod_obj.search(self.cr, self.uid, [('list_ids', '=', report.product_list_id.id)], context=context)
+            if report.nomen_family_id:
+                fam_prod_list = prod_obj.search(self.cr, self.uid, [('nomen_manda_2', '=', report.nomen_family_id.id)], context=context)
             if report.mml_id or report.msl_id:
                 dom = []
                 if report.mml_id:
@@ -299,21 +302,28 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                     dom.append(('in_msl_instance', '=', report.msl_id.id))
                 mmlmsl_prod_list = prod_obj.search(self.cr, self.uid, dom, context=context)
 
-            if plist_prod_list and mmlmsl_prod_list:
-                full_prod_list = plist_prod_list.intersection(mmlmsl_prod_list)
-            elif plist_prod_list and not mmlmsl_prod_list:
+            if plist_prod_list and fam_prod_list and mmlmsl_prod_list:  # 1-1-1
+                full_prod_list = list(set(plist_prod_list).intersection(fam_prod_list, mmlmsl_prod_list))
+            elif plist_prod_list and fam_prod_list and not mmlmsl_prod_list:  # 1-1-0
+                full_prod_list = list(set(plist_prod_list).intersection(fam_prod_list))
+            elif plist_prod_list and not fam_prod_list and mmlmsl_prod_list:  # 1-0-1
+                full_prod_list = list(set(plist_prod_list).intersection(mmlmsl_prod_list))
+            elif not plist_prod_list and fam_prod_list and mmlmsl_prod_list:  # 0-1-1
+                full_prod_list = list(set(fam_prod_list).intersection(mmlmsl_prod_list))
+            elif plist_prod_list and not fam_prod_list and not mmlmsl_prod_list:  # 1-0-0
                 full_prod_list = plist_prod_list
-            elif not plist_prod_list and mmlmsl_prod_list:
+            elif not plist_prod_list and fam_prod_list and not mmlmsl_prod_list:  # 0-1-0
+                full_prod_list = fam_prod_list
+            elif not plist_prod_list and not fam_prod_list and mmlmsl_prod_list:  # 0-0-1
                 full_prod_list = mmlmsl_prod_list
-            if full_prod_list:
-                cond.append('product_id in %(product_ids)s')
-                values['product_ids'] = tuple(full_prod_list)
-                with_zero = True
 
-        if report.nomen_family_id:
-            cond.append('nomen_family_id=%(nomen_family_id)s')
-            values['nomen_family_id'] = report.nomen_family_id.id
-            with_zero = True
+            if plist_prod_list or fam_prod_list or mmlmsl_prod_list:
+                if full_prod_list:
+                    cond.append('product_id in %(product_ids)s')
+                    values['product_ids'] = tuple(full_prod_list)
+                    with_zero = True
+                else:  # No need to continue if no product was found with the combined filters
+                    return 0, 0, []
 
         if report.prodlot_id:
             cond.append('prodlot_id=%(prodlot_id)s')
@@ -329,7 +339,8 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             cond.append('date<%(stock_level_date)s')
             values['stock_level_date'] = '%s 23:59:59' % report.stock_level_date
 
-        if (not report.product_list_id or not report.prodlot_id or not report.expiry_date) and report.display_0:
+        if (not report.prodlot_id or not report.expiry_date or not report.product_list_id or not report.nomen_family_id) \
+                and report.display_0:
             to_date = datetime.now()
             if report.stock_level_date:
                 to_date = datetime.strptime(values['stock_level_date'], '%Y-%m-%d %H:%M:%S')
@@ -339,16 +350,13 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             w_prod = ""
             if report.product_id:
                 w_prod = " product_id = %s AND" % report.product_id.id
-            w_nomen_fam = ""
-            if report.nomen_family_id:
-                w_nomen_fam = " n2.id = %s AND" % report.nomen_family_id.id
 
             self.cr.execute("""
                 SELECT DISTINCT m.product_id, m.prodlot_id FROM stock_move m
                 LEFT JOIN product_product p ON m.product_id = p.id 
                 LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id 
                 LEFT JOIN product_nomenclature n2 ON pt.nomen_manda_2 = n2.id
-                WHERE""" + w_prod + w_nomen_fam + """ m.state = 'done' AND m.product_qty != 0 AND p.active = 't' AND
+                WHERE""" + w_prod + """ m.state = 'done' AND m.product_qty != 0 AND p.active = 't' AND
                     (location_id IN %s OR location_dest_id IN %s) AND m.date >= %s AND m.date <= %s
                 """, (values['location_ids'], values['location_ids'], from_date, to_date))
             for x in self.cr.fetchall():
