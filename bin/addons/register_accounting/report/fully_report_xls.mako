@@ -989,10 +989,14 @@ endif
 a_lines = False
 if not line.invoice_id and not line.imported_invoice_line_ids and line.fp_analytic_lines:
     a_lines = line.fp_analytic_lines
+corrected = {}
+last_exists = set()
+found_ana = False
 %>
 % if a_lines:
 % for ana_line in [x for x in sorted(a_lines, key=lambda x: x.id) if not x.free_account]:
 <%
+found_ana = True
 line_color = 'blue'
 if ana_line.is_reallocated:
     line_color = 'purple'
@@ -1001,6 +1005,10 @@ elif ana_line.is_reversal:
 elif ana_line.last_corrected_id:
     line_color = 'red'
 endif
+if ana_line.last_corrected_id and not ana_line.is_reversal:
+    last_exists.add(ana_line.last_corrected_id.id)
+elif ana_line.is_reallocated:
+    corrected[ana_line.id] = ana_line.move_id.id
 %>
       <Row>
         % if o.journal_id.type == 'cheque':
@@ -1035,15 +1043,26 @@ endif
           <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''} move_id ${ana_line.move_id.id} id:${ana_line.id} ${ana_line.last_corrected_id.id} ${ana_line.reversal_origin.id}</Data>
         </Cell>
       </Row>
 % endfor
 % endif
 
+<%
+if not found_ana:
+    check_no_ad_cor = getLinkedMoveLines(line.first_move_line_id.move_id.id, line.id)
+else:
+    check_no_ad_cor = []
+    for x in last_exists:
+        if x in corrected:
+            del(corrected[x])
+    check_no_ad_cor = list(corrected.values())
+endif
+%>
+
 <!-- G/L account corrected from Expense to B/S : no analytic line to display changes -->
- % if line.mirror_move_line_id:
-    % for corrected_no_ad in getMlCorNoAd(line.mirror_move_line_id.id):
+    % for corrected_no_ad in getMlCorNoAd(check_no_ad_cor):
       % if not corrected_no_ad.account_id.is_analytic_addicted:
         <%
         line_color = 'red'
@@ -1093,7 +1112,6 @@ endif
 
 
     % endfor
-  % endif
 <!-- Display analytic lines Free 1 and Free 2 linked to this register line -->
 <%
 a_lines = False
