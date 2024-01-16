@@ -20,8 +20,8 @@
 ##############################################################################
 
 import updater
-
 pool_dic = {}
+
 
 def get_db_and_pool(db_name, force_demo=False, status=None,
                     update_module=False, pooljobs=True, threaded=False, upgrade_modules=True, if_open=False):
@@ -59,6 +59,14 @@ def get_db_and_pool(db_name, force_demo=False, status=None,
         except Exception:
             del pool_dic[db_name]
             raise
+
+        from tools.config import config
+        if config.get('save_db_name_in_config') == 'Y':
+            try:
+                config.add_db_name(db_name)
+            except Exception:
+                import logging
+                logging.getLogger('server').exception('Add db_name in config, error %s')
 
         cr = db.cursor()
         try:

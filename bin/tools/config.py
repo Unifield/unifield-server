@@ -27,6 +27,8 @@ import netsvc
 import logging
 import release
 from base64 import b64decode, b64encode
+from threading import Lock
+
 
 def check_ssl():
     try:
@@ -37,7 +39,11 @@ def check_ssl():
     except:
         return False
 
+
 class configmanager(object):
+
+    __lock = Lock()
+
     def __init__(self, fname=None):
         self.options = {
             'email_from':False,
@@ -50,6 +56,8 @@ class configmanager(object):
             'db_host': False,
             'db_port': False,
             'db_name': False,
+            'db_name_file': False,
+            'save_db_name_in_config': 'Y',
             'db_user': False,
             'db_password': False,
             'db_maxconn': 64,
@@ -108,8 +116,9 @@ class configmanager(object):
             'sync_user_password': False,
         }
 
-        self.blacklist_for_save = set(["publisher_warranty_url", "load_language", "netrpc", "netrpc_gzip", "netrpc_interface", "netrpc_port", "xmlrpcs_port", "xmlrpcs_interface"])
+        self.blacklist_for_save = set(["publisher_warranty_url", "load_language", "netrpc", "netrpc_gzip", "netrpc_interface", "netrpc_port", "xmlrpcs_port", "xmlrpcs_interface", "db_name_file"])
 
+        self.rcfile = ""
         self.misc = {}
         self.config_file = fname
         self.has_ssl = check_ssl()
@@ -209,6 +218,7 @@ class configmanager(object):
 
         group = optparse.OptionGroup(parser, "Database related options")
         group.add_option("-d", "--database", dest="db_name", help="specify the database name")
+        group.add_option("--save_db_name_in_config", dest="save_db_name_in_config", type='choice', choices=['Y', 'N'], metavar='Y/N', help="update config file with db name [Y/N] (default Y)")
         group.add_option("-r", "--db_user", dest="db_user", help="specify the database user name")
         group.add_option("-w", "--db_password", dest="db_password", help="specify the database password")
         group.add_option("--pg_path", dest="pg_path", help="specify the pg executable path")
@@ -319,9 +329,15 @@ class configmanager(object):
                 'xmlrpcs_interface', 'xmlrpcs_port', 'xmlrpcs',
                 'secure_cert_file', 'secure_pkey_file',
                 'static_http_enable', 'static_http_document_root', 'static_http_url_prefix',
+                'save_db_name_in_config',
                 ]
 
+        # opt : command line option
+        # self.options: from config file
         for arg in keys:
+            if arg == 'db_name':
+                # id -d option is used, keep db_name from config
+                self.options['db_name_file'] = self.options.get('db_name')
             if getattr(opt, arg):
                 self.options[arg] = getattr(opt, arg)
 
@@ -540,6 +556,60 @@ class configmanager(object):
 
     def __getitem__(self, key):
         return self.options[key]
+
+    def _load_current(self):
+        config_file_parser = configparser.ConfigParser()
+        config_file_parser.read(self.rcfile)
+        if 'options' not in config_file_parser.sections():
+            config_file_parser['options'] = {'db_name': ''}
+
+        if not config_file_parser['options'].get('db_name'):
+            config_file_parser['options']['db_name'] = ''
+        return config_file_parser
+
+    def _save_config(self, config_file_parser, dbs_set):
+        for to_del in ['False', '']:
+            dbs_set.discard(to_del)
+
+        all_loaded_dbs = ','.join(dbs_set)
+        config_file_parser['options']['db_name'] = all_loaded_dbs
+        self['db_name_file'] = all_loaded_dbs
+
+        with open(self.rcfile, 'w') as configfile:
+            config_file_parser.write(configfile)
+
+    def add_db_name(self, db_name):
+        if not db_name or not self.rcfile or not os.path.exists(config.rcfile) or (config['db_name_file'] and db_name in config['db_name_file'].split(',')):
+            return False
+        locked = self.__lock.acquire(False)
+        if locked:
+            try:
+                config_file_parser = self._load_current()
+                dbs = set(config_file_parser['options']['db_name'].split(','))
+                dbs.add(db_name)
+                self._save_config(config_file_parser, dbs)
+                logging.getLogger('server').info('Add %s in %s', db_name, self.rcfile)
+            finally:
+                self.__lock.release()
+        else:
+            logging.getLogger('server').warning('Unbale to lock file %s, db %s not added', self.rcfile, db_name)
+
+    def delete_db_name(self, db_name):
+        if not db_name or not self.rcfile or not os.path.exists(config.rcfile):
+            return False
+        locked = self.__lock.acquire(False)
+        if locked:
+            try:
+                config_file_parser = self._load_current()
+                dbs = set(config_file_parser['options']['db_name'].split(','))
+                dbs.discard(db_name)
+                self._save_config(config_file_parser, dbs)
+                logging.getLogger('server').info('Delete %s in %s', db_name, self.rcfile)
+            finally:
+                self.__lock.release()
+        else:
+            logging.getLogger('server').warning('Unbale to lock file %s, db %s not added', config.rcfile, db_name)
+
 
 config = configmanager()
 
