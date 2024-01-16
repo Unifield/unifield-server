@@ -39,6 +39,7 @@
                     <field name="parent_id"/>
                     <field name="activity" allow_sort="1"/>
                     <field name="last_dateactivity" allow_sort="1"/>
+                    <field name="date_success_sync" />
                     <field name="country_id" />
                     <field name="mission" />
                     <field name="oc" />
@@ -75,6 +76,7 @@
                             <field name="state" readonly="1"/>
                             <field name="activity"/>
                             <field name="last_dateactivity"/>
+                            <field name="date_success_sync" />
                             <field name="last_sequence"/>
                         </group>
                         <group colspan="2" col="2">

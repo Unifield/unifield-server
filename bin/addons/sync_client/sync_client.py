@@ -1072,6 +1072,8 @@ class Entity(osv.osv):
         cr.commit()
 
         self._logger.info("Push messages :: Number of messages pushed: %d" % nb_msg)
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+        proxy.sync_success(entity.identifier, self._hardware_id)
         if logger:
             logger.info['nb_msg_push'] = nb_msg
         return True

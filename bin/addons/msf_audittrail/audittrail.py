@@ -532,8 +532,10 @@ class audittrail_rule(osv.osv):
                     _('Change audittrail depends -- Setting rule as DRAFT'))
 
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_audittrail', 'view_audittrail_log_line_search')
+            # to be exported by translation script
+            _('Track changes')
             val = {
-                "name": _('Track changes'),
+                "name": 'Track changes',
                 "res_model": 'audittrail.log.line',
                 "src_model": thisrule.object_id.model,
                 "search_view_id": search_view_id and search_view_id[1] or False,
@@ -567,15 +569,14 @@ class audittrail_rule(osv.osv):
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1])
 
             # search if the view does not already exists
-            search_domain = [('name', '=', val['name']),
-                             ('res_model', '=', val['res_model']),
+            search_domain = [('res_model', '=', val['res_model']),
                              ('src_model', '=', val['src_model'])]
             action_search = obj_action.search(cr, uid, search_domain)
             if action_search:
                 if len(action_search) > 1:
-                    logger = logging.getLogger('audittrail')
-                    logger.warn('There is already %s ir.actions.act_window matching the domain %r, the first one will be updated' % (len(action_search), search_domain))
+                    obj_action.unlink(cr, uid, action_search[1:])
                 action_id = action_search[0]
+                obj_action.write(cr, uid, [action_id], val)
             else:
                 action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})

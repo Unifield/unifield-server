@@ -25,4 +25,22 @@ def drop_view_if_exists(cr, viewname):
         cr.execute("DROP view %s" % (viewname,))  # not_a_user_entry
         cr.commit()
 
+SQL_VERSION = False
+
+def sql_version(cr):
+    global SQL_VERSION
+
+    if not SQL_VERSION:
+        cr.execute('SHOW SERVER_VERSION')
+        result = cr.fetchone()
+        SQL_VERSION = result and result[0] or False
+
+    return SQL_VERSION
+
+def is_pg14(cr):
+    version = sql_version(cr)
+    if version:
+        return version.startswith('14')
+
+    return False
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

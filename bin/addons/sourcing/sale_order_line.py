@@ -1613,7 +1613,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 elif sourcing_line.type == 'make_to_order':
                     if sourcing_line.po_cft in ('po', 'dpo', 'pli'):
                         po_to_use = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
-                        if not po_to_use: # then create new PO:
+                        if not po_to_use:  # then create new PO:
                             po_to_use = self.create_po_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new PO:
                             po = po_obj.browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id', 'partner_id', 'name'],  context=context)
@@ -1621,6 +1621,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             po_obj.infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                         else:
                             po = po_obj.browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id', 'partner_id'], context=context)
+                            po_obj.update_details_po(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
 
                         target_currency_id = po.pricelist_id.currency_id.id
                         # No AD on sourcing line if it comes from IR:
@@ -1695,6 +1696,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             po_obj.infolog(cr, uid, _('The Request for Quotation %s for supplier %s has been created.') % (rfq.name, rfq.partner_id.name))
                         else:
                             rfq = po_obj.browse(cr, uid, rfq_to_use, fields_to_fetch=['pricelist_id'], context=context)
+                            po_obj.update_details_po(cr, uid, rfq_to_use, sourcing_line.order_id.id, context=context)
 
                         target_currency_id = rfq.pricelist_id.currency_id.id
 

@@ -1016,6 +1016,13 @@
             <field name="method">us_9321_2_remove_location_colors</field>
         </record>
 
+        <record id="us_12071_gdpr_patch" model="patch.scripts">
+            <field name="method">us_12071_gdpr_patch</field>
+        </record>
+
+        <record id="us_12110_remove_sup_fin_read" model="patch.scripts">
+            <field name="method">us_12110_remove_sup_fin_read</field>
+        </record>
 
     </data>
 </openerp>

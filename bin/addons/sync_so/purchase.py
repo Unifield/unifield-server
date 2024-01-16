@@ -202,7 +202,7 @@ class purchase_order_line_sync(osv.osv):
         # update PO line:
         kind = ""
         pol_updated = False
-        if not pol_id: # then create new PO line
+        if not pol_id:  # then create new PO line
             kind = 'new line'
             pol_values['line_number'] = sol_dict['line_number']
             pol_values['created_by_sync'] = True
@@ -331,7 +331,7 @@ class purchase_order_line_sync(osv.osv):
                 #self.create_sol_from_pol(cr, uid, [new_pol], parent_so_id, context=context)
                 self.update_fo_lines(cr, uid, [new_pol], so_id=parent_so_id, context=context)
 
-        else: # regular update
+        else:  # regular update
             pol_updated = pol_id[0]
             kind = 'update'
             pol_to_update = [pol_updated]
@@ -350,6 +350,12 @@ class purchase_order_line_sync(osv.osv):
                     self.pool.get('account.invoice')._update_commitments_lines(cr, uid, [po_ids[0]], cvl_amount_dic={
                         po_line.cv_line_ids[0].id: round((po_line.product_qty - pol_values['product_qty'])*po_line.price_unit, 2)
                     }, from_cancel=True, context=context)
+                # US-12197: Don't update the PO line qty with a Done FO line
+                if sol_dict['state'] == 'done':
+                    if pol_values.get('product_qty'):
+                        pol_values.pop('product_qty')
+                    if pol_values.get('product_uom_qty'):
+                        pol_values.pop('product_uom_qty')
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
 
         if debug:

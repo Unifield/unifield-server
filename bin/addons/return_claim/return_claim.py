@@ -286,7 +286,8 @@ class return_claim(osv.osv):
             # Create the IN-replacement/-missing with gathered data
             new_claim_name = self.browse(cr, uid, new_claim_id, fields_to_fetch=["name"], context=context).name
             address = address_obj.search(cr, uid, [('partner_id', '=', original_in.partner_id.id)], context=context)[0] or False
-            inv_status = original_in.partner_id.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
+            original_in_from_scratch = original_in.type == 'in' and not original_in.purchase_id or False
+            inv_status = (original_in.partner_id.partner_type in ['internal', 'intermission'] or original_in_from_scratch) and 'none' or '2binvoiced'
             name_suffix = '-missing' if is_from_missing else '-replacement'
             in_values = {
                 'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + name_suffix,
@@ -1495,7 +1496,8 @@ class claim_event(osv.osv):
         picking_tools = self.pool.get('picking.tools')
         claim = event.return_claim_id_claim_event
         origin_picking = claim.picking_id_return_claim
-        inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
+        original_in_from_scratch = origin_picking.type == 'in' and not origin_picking.purchase_id or False
+        inv_status = (claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] or original_in_from_scratch) and 'none' or '2binvoiced'
 
         # we copy the event return picking
         new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + '-' + replace_type
