@@ -1009,6 +1009,7 @@ if ana_line.last_corrected_id and not ana_line.is_reversal:
     last_exists.add(ana_line.last_corrected_id.id)
 elif ana_line.is_reallocated:
     corrected[ana_line.id] = ana_line.move_id.id
+endif
 %>
       <Row>
         % if o.journal_id.type == 'cheque':
@@ -1043,7 +1044,7 @@ elif ana_line.is_reallocated:
           <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''} move_id ${ana_line.move_id.id} id:${ana_line.id} ${ana_line.last_corrected_id.id} ${ana_line.reversal_origin.id}</Data>
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
         </Cell>
       </Row>
 % endfor
