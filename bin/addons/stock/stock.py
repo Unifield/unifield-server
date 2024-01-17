@@ -2122,13 +2122,13 @@ class stock_picking(osv.osv):
             'standard': 'stock.action_picking_tree',
             'picking': 'msf_outgoing.action_picking_ticket',
             'ppl': 'msf_outgoing.action_ppl',
-            'packing': 'msf_outgoing.action_packing_form',
+            'packing': 'msf_outgoing.action_packing',
             'out': 'stock.action_picking_tree',
             'in': 'stock.action_picking_tree4',
             'internal': 'stock.action_picking_tree6',
         }
         if pick.type == 'out' and pick.subtype:
-            return action_list.get(pick.subtype, pick.type)
+            return action_list.get(pick.subtype, 'msf_outgoing.action_packing')
 
         return action_list.get(pick.type, 'stock.action_picking_tree6')
 
