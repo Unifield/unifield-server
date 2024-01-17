@@ -57,6 +57,16 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF32.0
+    def us_12076_remove_po_audittrail_rule_domain(self, cr, uid, *a, **b):
+        '''
+        Remove the restrictions on purchase.order's and purchase.order.line's Track Changes to allow RfQs
+        '''
+        cr.execute("""
+            UPDATE audittrail_rule SET domain_filter = '[]' 
+            WHERE object_id IN (SELECT id FROM ir_model WHERE model IN ('purchase.order', 'purchase.order.line'))
+        """)
+        return True
 
     def us_12071_gdpr_patch(self, cr, uid, *a, **b):
         cr.execute("""UPDATE hr_employee
