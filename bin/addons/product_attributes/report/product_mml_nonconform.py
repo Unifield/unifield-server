@@ -194,7 +194,7 @@ class common_non_conform(XlsxReportParser):
 
             # ctx change to include Cross Dock in PO pipe qty
             ctx = context.copy()
-            ctx['location_category'] = ['stock', 'consumption_unit', 'eprep', 'transition']
+            ctx['location_category'] = ['stock', 'consumption_unit', 'transition']
             ctx['location_usage'] = ['internal']
             for prod in prod_obj.browse(self.cr, self.uid, p_ids, fields_to_fetch=['default_code', 'name', 'international_status', 'standard_ok', 'state_ud', 'state', extra_col['field'], 'standard_price', 'incoming_qty'], context=ctx):
                 line = [

@@ -97,7 +97,7 @@ class replenishment_location_config(osv.osv):
         'synched': fields.boolean('Synched Locations'),
         'main_instance': fields.many2one('msf.instance', readonly=1, string="Main Instance"),
         'active': fields.boolean('Active'),
-        'local_location_ids': fields.many2many('stock.location', 'local_location_configuration_rel', 'config_id', 'location_id', 'Local Locations', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('used_in_config', '=', False)]"),
+        'local_location_ids': fields.many2many('stock.location', 'local_location_configuration_rel', 'config_id', 'location_id', 'Local Locations', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit']), ('used_in_config', '=', False)]"),
         'remote_location_ids': fields.many2many('stock.location.instance', 'remote_location_configuration_rel', 'config_id', 'location_id', 'Project Locations', domain="[('usage', '!=', 'view'), ('used_in_config', '=', False)]"),
 
         # inventory review
@@ -567,7 +567,7 @@ class replenishment_parent_segment(osv.osv):
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, ondelete='cascade'),
         'amc_location_txt': fields.function(_get_amc_location_ids, type='text', method=1, string='AMC locations'),
 
-        'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]", required=0),
+        'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit'])]", required=0),
         'ir_requesting_location_rdo': fields.function(_get_date, type='many2one', method=1, relation='stock.location', string='IR Requesting Location', multi='get_date'),
         'state_parent': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'State', readonly=1),
         'time_unit_lt': fields.selection([('d', 'days'), ('w', 'weeks'), ('m', 'months')], string='Unit of Time', required=1),
@@ -4260,7 +4260,7 @@ class product_stock_out(osv.osv):
 
     _columns = {
         'name': fields.char('Reference', size=64, readonly=1, select=1),
-        'location_id': fields.many2one('stock.location', 'Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]", required=1),
+        'location_id': fields.many2one('stock.location', 'Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit'])]", required=1),
         'state': fields.selection([('draft', 'Draft'), ('validated', 'Validated'), ('closed', 'Closed'), ('cancelled', 'Cancelled')], 'State', readonly=1),
         'line_ids': fields.one2many('product.stock_out.line', 'stock_out_id', 'Stock Out Lines'),
         'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', required=True, ondelete='cascade'),

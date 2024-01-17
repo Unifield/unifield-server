@@ -68,6 +68,27 @@ class patch_scripts(osv.osv):
         """)
         return True
 
+    def us_11907_12339_fix_locations_eprep_category(self, cr, uid, *a, **b):
+        '''
+        Change the Category to Stock, Eprep Location to True and search_color to lightpink to locations and instance
+        locations which have the Category EPrep
+        '''
+        loc_obj = self.pool.get('stock.location')
+        eprep_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations',
+                                                                            'stock_location_eprep_view')[1]
+        cr.execute("""UPDATE stock_location SET location_category = 'stock', eprep_location = 't', 
+            search_color = 'lightpink', location_id = %s WHERE location_category = 'eprep'""", (eprep_view_id,))
+        nb_locs = cr.rowcount
+        self.log_info(cr, uid, "US-11907-12339: %s EPrep Location(s) have been updated" % (nb_locs,))
+        if nb_locs and not loc_obj.read(cr, uid, eprep_view_id, ['active'])['active']:
+            loc_obj.write(cr, uid, eprep_view_id, {'active': True})
+            self.log_info(cr, uid, "US-11907-12339: The Location EPREP Stocks has been activated")
+
+        cr.execute("""UPDATE stock_location_instance SET location_category = 'stock' WHERE location_category = 'eprep'""")
+        self.log_info(cr, uid, "US-11907-12339: %s Instance EPrep Location(s) have been updated" % (cr.rowcount,))
+
+        return True
+
     def us_12071_gdpr_patch(self, cr, uid, *a, **b):
         cr.execute("""UPDATE hr_employee
         SET
