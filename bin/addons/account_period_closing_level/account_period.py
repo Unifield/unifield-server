@@ -230,8 +230,10 @@ class account_period(osv.osv):
 
                 # prevent period closing if one of the registers of the previous period
                 # has no corresponding register in the period to close while the register's journal is still active. (except for period 13..16)
+                # exclude check on liquidity journal on inactive instances
                 active_liquidity_journ_ids = journ_obj.search(cr, uid, [('type', 'in', ['cash', 'cheque', 'bank']),
-                                                                        ('is_active', '=', 't')], context=context)
+                                                                        ('is_active', '=', 't'),
+                                                                        ('instance_id.state', '=', 'active')], context=context)
                 if not period.special:
                     prev_period_id = register_tools.previous_period_id(self, cr, uid, period.id, context=context, raise_error=False)
                     if prev_period_id:
