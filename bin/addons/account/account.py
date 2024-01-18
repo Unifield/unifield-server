@@ -2939,8 +2939,8 @@ class account_bank_accounts_wizard(osv.osv_memory):
 
 account_bank_accounts_wizard()
 
-class change_code(osv.osv_memory):
-    _name = 'change.code'
+class journal_change_account(osv.osv_memory):
+    _name = 'journal.change.account'
 
     def _get_journal(self, cr, uid, context=None):
         if context is None:
@@ -3002,6 +3002,6 @@ class change_code(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 
-change_code()
+journal_change_account()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

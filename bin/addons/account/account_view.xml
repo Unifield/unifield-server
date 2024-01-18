@@ -2249,7 +2249,7 @@
 
         <record model="ir.ui.view" id="wizard_change_account_code">
             <field name="name">wizard.change.account.code.form</field>
-            <field name="model">change.code</field>
+            <field name="model">journal.change.account</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Change Account - Wizard">
@@ -2285,7 +2285,7 @@
            id="act_change_account_code"
            name="Change account code"
            context="{'search_default_journal_id':active_id,}"
-           res_model="change.code"
+           res_model="journal.change.account"
            src_model="account.journal"
            key2="client_action_multi"
            view_mode="form"
