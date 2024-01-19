@@ -2285,7 +2285,7 @@
 
         <act_window
            id="act_change_account_code"
-           name="Change account code"
+           name="Change default journal accounts"
            res_model="journal.change.account"
            src_model="account.journal"
            key2="client_action_multi"
