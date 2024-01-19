@@ -85,15 +85,6 @@ class account_journal(osv.osv):
             res[id] = bool(has_non_draft_reg(id))
         return res
 
-    def _get_has_closed_register(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        abs_obj = self.pool.get('account.bank.statement')
-        ids = context.get('active_ids', False)
-        if ids and len(ids) == 1:
-            return bool(abs_obj.search(cr, uid, [('journal_id', '=', ids[0]), ('state', '=', 'confirm')], context=context))
-        return False
-
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True, select=1),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),

@@ -2984,7 +2984,7 @@ class journal_change_account(osv.osv_memory):
         'is_current_instance': _get_instance,
     }
 
-    def change_code(self, cr, uid, ids, context=None):
+    def journal_change_account(self, cr, uid, ids, context=None):
         '''
         US-11269: Modify the default debit or credit account of the journal
         '''

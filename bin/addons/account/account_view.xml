@@ -2262,12 +2262,14 @@
                     <separator string="Change Default Credit Account" colspan="2" />
                     <newline />
                     <field name="is_current_instance" invisible="1"/>
-                    <field name="debit_account_id" attrs="{'readonly': [('is_current_instance', '!=', True)]}" colspan="2">
+                    <field name="debit_account_id" domain="[('type','!=','view')]"
+                           attrs="{'readonly': [('is_current_instance', '!=', True)]}" colspan="2">
                             <tree>
                                 <field name="name"/>
                             </tree>
                     </field>
-                    <field name="credit_account_id" attrs="{'readonly': [('is_current_instance', '!=', True)]}" colspan="2">
+                    <field name="credit_account_id" domain="[('type','!=','view')]"
+                           attrs="{'readonly': [('is_current_instance', '!=', True)]}" colspan="2">
                             <tree>
                                 <field name="name"/>
                             </tree>
@@ -2275,7 +2277,7 @@
                     <newline />
                     <group colspan="4">
                         <button string="Cancel" special="cancel" icon="gtk-cancel" />
-                        <button string="Confirm" icon="terp-check" name="change_code" attrs="{'readonly': [('is_current_instance', '!=', True)]}" type="object"/>
+                        <button string="Confirm" icon="terp-check" name="journal_change_account" attrs="{'readonly': [('is_current_instance', '!=', True)]}" type="object"/>
                     </group>
                 </form>
             </field>
@@ -2284,7 +2286,6 @@
         <act_window
            id="act_change_account_code"
            name="Change account code"
-           context="{'search_default_journal_id':active_id,}"
            res_model="journal.change.account"
            src_model="account.journal"
            key2="client_action_multi"
