@@ -58,6 +58,20 @@ class patch_scripts(osv.osv):
     }
 
     # UF32.0
+    def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level in ('coordo', 'project'):
+            cr.execute("""update res_users set never_expire='f'
+                where
+                    login!='admin'
+                    and never_expire='t'
+                    and coalesce(synchronize, 'f') = 'f'
+            """)
+            self.log_info(cr, uid, "US-12273: Users disable never_expire on %d users" % (cr.rowcount, ))
+
+        return True
+
+
     def us_12076_remove_po_audittrail_rule_domain(self, cr, uid, *a, **b):
         '''
         Remove the restrictions on purchase.order's and purchase.order.line's Track Changes to allow RfQs
@@ -85,7 +99,7 @@ class patch_scripts(osv.osv):
             self.log_info(cr, uid, "US-11907-12339: The Location EPREP Stocks has been activated")
 
         cr.execute("""UPDATE stock_location_instance SET location_category = 'stock' WHERE location_category = 'eprep'""")
-        self.log_info(cr, uid, "US-11907-12339: %s Instance EPrep Location(s) have been updated" % (cr.rowcount,))
+        self.log_info(cr, uid, "US-11909-12339: %s Instance EPrep Location(s) have been updated" % (cr.rowcount,))
 
         return True
 

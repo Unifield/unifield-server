@@ -835,6 +835,32 @@ class users(osv.osv):
                         super(users, self).write(cr, uid, user['id'], {'groups_id':
                                                                        [(6, 0, new_group_ids)]}, context=context)
 
+
+    def _remove_never_expire(self, cr, uid, ids=None, context=None):
+        if context is None:
+            context = {}
+
+        if not ids or context.get('sync_update_execution'):
+            return 0
+
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if self.pool.get('res.company')._get_instance_level(cr, uid) in ('coordo', 'project'):
+            query = """select id from res_users
+                where
+                    login!='admin'
+                    and never_expire='t'
+                    and id in %s
+            """
+            cr.execute(query, (tuple(ids), ))
+            user_ids = [x[0] for x in cr.fetchall()]
+            if user_ids:
+                super(users, self).write(cr, uid, user_ids, {'never_expire': False}, context=context)
+
+        return True
+
+
     def create(self, cr, uid, values, context=None):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
@@ -854,6 +880,8 @@ class users(osv.osv):
         if values.get('groups_id'):
             self.remove_higer_level_groups(cr, uid, user_id, context=context)
 
+        if values.get('never_expire'):
+            self._remove_never_expire(cr, uid, user_id, context=context)
         return user_id
 
     def write(self, cr, uid, ids, values, context=None):
@@ -904,6 +932,8 @@ class users(osv.osv):
 
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
+        if values.get('never_expire'):
+            self._remove_never_expire(cr, uid, ids, context=context)
         if values.get('signature_enabled') or values.get('groups_id'):
             self._check_signature_group(cr, uid, ids, context=context)
 
