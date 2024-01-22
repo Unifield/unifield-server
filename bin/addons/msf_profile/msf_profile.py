@@ -60,7 +60,7 @@ class patch_scripts(osv.osv):
 
     def us_12391_cleanup_rate_VEF_2016(self, cr, uid, *a, **b):
         # align OCB VEF 01/Jan/2016 rate ( 1st VEF entry is on 2016-02-29)
-        cr.execute("select * from res_currency_rate r, ir_model_data d where d.model='res.currency.rate' and d.res_id=r.id and d.name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243', '8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559')")
+        cr.execute("select * from ir_model_data d where d.model='res.currency.rate' and d.name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243', '8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559')")
         nb_rate = cr.rowcount
         if nb_rate == 1:
             cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243'")
