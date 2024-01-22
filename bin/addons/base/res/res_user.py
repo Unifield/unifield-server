@@ -737,6 +737,7 @@ class users(osv.osv):
         'synchronize': False,
         'last_password_change': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'never_expire': lambda self, cr, *a: cr.dbname == 'SYNC_SERVER',
+        'instance_level': lambda self, cr, uid, *a: _get_instance_level(self, cr, uid),
     }
 
     @tools.cache()
