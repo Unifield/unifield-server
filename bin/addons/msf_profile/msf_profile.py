@@ -57,6 +57,21 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
+    def us_12391_cleanup_rate_VEF_2016(self, cr, uid, *a, **b):
+        # align OCB VEF 01/Jan/2016 rate ( 1st VEF entry is on 2016-02-29)
+        cr.execute("select * from res_currency_rate r, ir_model_data d where d.model='res.currency.rate' and d.res_id=r.id and d.name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243'")
+        if cr.rowcount:
+            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243'")
+            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559')")
+            self.log_info(cr, uid, 'US-12391: VEF 01/Jan/2016 rate fixed')
+
+        # align OCB ZWL Jun/2016 rate sdref
+        cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/4586' where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094'")
+        if cr.rowcount:
+            self.log_info(cr, uid, 'US-12391: ZWL 01/Jun/2016 sdref name aligned')
+        return True
+
     # UF32.0
     def us_12076_remove_po_audittrail_rule_domain(self, cr, uid, *a, **b):
         '''

@@ -1029,6 +1029,10 @@
             <field name="method">us_12076_remove_po_audittrail_rule_domain</field>
         </record>
 
+        <record id="us_12391_cleanup_rate_VEF_2016" model="patch.scripts">
+            <field name="method">us_12391_cleanup_rate_VEF_2016</field>
+        </record>
+
 
     </data>
 </openerp>
