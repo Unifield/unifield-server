@@ -71,17 +71,29 @@ class patch_scripts(osv.osv):
             cr.execute("delete from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243'")
             self.log_info(cr, uid, 'US-12391: VEF 01/Jan/2016 rate duplicated')
 
+        # align OCBHT VEF 01/Feb/2016 rate ( no VEF entry on HT)
+        cr.execute("select * from ir_model_data d where d.model='res.currency.rate' and d.name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397', '8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560')")
+        nb_rate = cr.rowcount
+        if nb_rate == 1:
+            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397'")
+            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397')")
+            self.log_info(cr, uid, 'US-12391: VEF 01/Feb/2016 rate fixed')
+        elif nb_rate == 2:
+            cr.execute("delete from res_currency_rate where name='2016-02-01' and id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397')")
+            cr.execute("delete from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397'")
+            self.log_info(cr, uid, 'US-12391: VEF 01/Feb/2016 rate duplicated')
+
 
         # align OCB ZWL Jun/2016 rate sdref
         cr.execute("select res_id from ir_model_data where name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/4586', 'b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094')")
         nb_rate = cr.rowcount
-        if nb_rate == 2:
+        if nb_rate == 1:
+            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/4586' where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094'")
+            self.log_info(cr, uid, 'US-12391: ZWL 01/Jun/2016 sdref name aligned')
+        elif nb_rate == 2:
             cr.execute("delete from res_currency_rate where name='2016-06-01' and id in (select res_id from ir_model_data where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094')")
             cr.execute("delete from ir_model_data where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094'")
             self.log_info(cr, uid, 'US-12391: ZWL 01/Jun/2016 duplicated')
-        elif nb_rate == 1:
-            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/4586' where name='b32c686e-27d8-11e6-94fb-1002b58b8575/res_currency_rate/3094'")
-            self.log_info(cr, uid, 'US-12391: ZWL 01/Jun/2016 sdref name aligned')
         return True
 
     # UF32.0
