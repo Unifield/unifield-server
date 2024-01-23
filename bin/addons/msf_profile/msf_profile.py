@@ -75,8 +75,8 @@ class patch_scripts(osv.osv):
         cr.execute("select * from ir_model_data d where d.model='res.currency.rate' and d.name in ('8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397', '8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560')")
         nb_rate = cr.rowcount
         if nb_rate == 1:
-            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397'")
-            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397')")
+            cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397'")
+            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560')")
             self.log_info(cr, uid, 'US-12391: VEF 01/Feb/2016 rate fixed')
         elif nb_rate == 2:
             cr.execute("delete from res_currency_rate where name='2016-02-01' and id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397')")
