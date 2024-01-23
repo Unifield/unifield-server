@@ -64,9 +64,9 @@ class patch_scripts(osv.osv):
         nb_rate = cr.rowcount
         if nb_rate == 1:
             cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243'")
-            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559')")
             if cr.rowcount:
                 self.log_info(cr, uid, 'US-12391: VEF 01/Jan/2016 rate fixed')
+            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2559')")
         elif nb_rate == 2:
             cr.execute("delete from res_currency_rate where name='2016-01-01' and id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243')")
             cr.execute("delete from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2243'")
@@ -77,9 +77,9 @@ class patch_scripts(osv.osv):
         nb_rate = cr.rowcount
         if nb_rate == 1:
             cr.execute("update ir_model_data set name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560' where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397'")
-            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560')")
             if cr.rowcount:
                 self.log_info(cr, uid, 'US-12391: VEF 01/Feb/2016 rate fixed')
+            cr.execute("update res_currency_rate set rate=354.6056 where id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2560')")
         elif nb_rate == 2:
             cr.execute("delete from res_currency_rate where name='2016-02-01' and id in (select res_id from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397')")
             cr.execute("delete from ir_model_data where name='8461c7cf-a14a-11e4-8200-005056a95b32/res_currency_rate/2397'")
