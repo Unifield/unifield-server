@@ -2257,18 +2257,19 @@
                     <separator string="Current journal" colspan="2" />
                     <newline />
                     <field name="journal_id" nolabel="1" readonly="1" colspan="2"/>
+                    <field name="journal_type" invisible="1"/>
                     <newline />
                     <separator string="Change Default Debit Account" colspan="2" />
                     <separator string="Change Default Credit Account" colspan="2" />
                     <newline />
                     <field name="is_current_instance" invisible="1"/>
-                    <field name="debit_account_id" domain="[('type','=','liquidity')]"
+                    <field name="debit_account_id" domain="[('type','!=','view'), ('cash_domain', '=', journal_type)]"
                            attrs="{'readonly': [('is_current_instance', '!=', True)]}" colspan="2">
                             <tree>
                                 <field name="name"/>
                             </tree>
                     </field>
-                    <field name="credit_account_id" domain="[('type', '=', 'liquidity')]"
+                    <field name="credit_account_id" domain="[('type','!=','view'), ('cash_domain', '=', journal_type)]"
                            attrs="{'readonly': [('is_current_instance', '!=', True)]}" colspan="2">
                             <tree>
                                 <field name="name"/>

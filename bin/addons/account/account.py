@@ -2947,6 +2947,13 @@ class journal_change_account(osv.osv_memory):
             context = {}
         return context.get('active_id', False)
 
+    def _get_journal_type(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        if context.get('active_id', False):
+            return self.pool.get('account.journal').read(cr, uid, context['active_id'], ['type'], context=context)['type']
+        return False
+
     def _get_instance(self, cr, uid, context=None):
         if context is None:
             context = {}
@@ -2971,14 +2978,45 @@ class journal_change_account(osv.osv_memory):
             return self.pool.get('account.journal').read(cr, uid, ids[0], ['default_debit_account_id'], context=context)['default_debit_account_id']
         return []
 
+    def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Fake method for domain
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for cd_id in ids:
+            res[cd_id] = True
+        return res
+
+    def _search_cash_domain(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Return a given domain (defined in ACCOUNT_RESTRICTED_AREA variable)
+        """
+        if context is None:
+            context = {}
+        arg = []
+        for x in args:
+            if x[0] and x[1] == '=' and x[2]:
+                if x[2] in ['cash', 'bank', 'cheque']:
+                    arg.append(('restricted_area', '=', 'journals'))
+            else:
+                raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+        return arg
+
     _columns = {
         'journal_id': fields.many2one('account.journal', string="Current journal"),
+        'journal_type': fields.char("Current Journal Type", size=32),
         'debit_account_id': fields.many2one('account.account', 'Debit account'),
         'credit_account_id': fields.many2one('account.account', 'Credit account'),
-        'is_current_instance': fields.boolean('Is current instance?')
+        'is_current_instance': fields.boolean('Is current instance?'),
+        'cash_domain': fields.function(_get_fake_cash_domain, fnct_search=_search_cash_domain, method=True,
+                                       type='boolean', string="Domain used to search default accounts in the wizard"),
+
     }
     _defaults = {
         'journal_id': _get_journal,
+        'journal_type': _get_journal_type,
         'debit_account_id': _get_debit_account,
         'credit_account_id': _get_credit_account,
         'is_current_instance': _get_instance,
