@@ -10,7 +10,7 @@ import logging
 import os
 import posixpath
 import time
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 
 class ConnectionFailed(Exception):
@@ -36,7 +36,7 @@ class Client(object):
         self.login()
 
     def login(self):
-        self.request = ClientContext(self.url)
+        self.request = ClientContext(urljoin(self.url, self.path))
         self.request.with_user_credentials(self.username, self.password)
         if not isinstance(self.request.authentication_context._provider, SamlTokenProvider) or \
                 not self.request.authentication_context._provider.get_authentication_cookie():
@@ -46,22 +46,13 @@ class Client(object):
         if not self.path.startswith('/'):
             self.path = '/%s' % self.path
         options = RequestOptions(self.url)
-        options.method = HttpMethod.Get
-        options.set_header("X-HTTP-Method", "GET")
-        options.set_header('accept', 'application/json;odata=verbose')
-        self.request.authenticate_request(options)
         self.request.ensure_form_digest(options)
-        result = requests.post(url="%s/%s/_api/contextinfo" % (self.url, self.path), headers=options.headers, auth=options.auth)
-        if result.status_code not in (200, 201):
-            raise requests.exceptions.RequestException("Path %s not found" % self.path)
-        js = result.json()
-        baseurl = js.get('d', {}).get('GetContextWebInformation', {}).get('WebFullUrl')
-        if not baseurl.endswith('/'):
-            baseurl = '%s/' % baseurl
-        self.request._contextWebInformation.FormDigestValue = js.get('d', {}).get('GetContextWebInformation', {}).get('FormDigestValue')
+        baseurl = self.request._contextWebInformation.WebFullUrl
 
         if not baseurl:
             raise requests.exceptions.RequestException("Full Url not found %s" % self.path)
+        if not baseurl.endswith('/'):
+            baseurl = '%s/' % baseurl
         parsed_base = urlparse(baseurl).path
         self.baseurl = '%s%s' % (self.url, parsed_base)
         if not self.path.startswith('/'):
@@ -215,7 +206,7 @@ class Client(object):
     def list(self, remote_path):
         if not remote_path.startswith(self.path):
             remote_path = posixpath.join(self.path, remote_path)
-        request_url = "%s/_api/web/getfolderbyserverrelativeurl('%s')/files" % (self.baseurl, remote_path)
+        request_url = "%s_api/web/getfolderbyserverrelativeurl('%s')/files" % (self.baseurl, remote_path)
         options = RequestOptions(request_url)
         options.method = HttpMethod.Get
         options.set_header("X-HTTP-Method", "GET")
