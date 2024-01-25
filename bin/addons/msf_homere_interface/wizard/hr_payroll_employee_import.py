@@ -604,16 +604,16 @@ class hr_payroll_employee_import(osv.osv_memory):
                     staff_codes_seen.setdefault(code, []).append('%s, %s (%s)' % (ustr(data[1]), ustr(data[2]),_('Import File')))
 
 
-                if line.get('codeterrain') and line.get('id_staff'): # if not, error will be raised later
-                    codeterrain_id_staff_key = (line['codeterrain'], line['id_staff'])
-                    if codeterrain_id_staff_key in codeterrain_id_staff_seen:
-                        codeterrain_id_staff_duplicated[codeterrain_id_staff_key] = True
-                    codeterrain_id_staff_seen.setdefault(codeterrain_id_staff_key, []).append('%s, %s (%s)' % (ustr(data[1]), ustr(data[2]),_('Import File')))
+                    if line.get('codeterrain') and line.get('id_staff'): # if not, error will be raised later
+                        codeterrain_id_staff_key = (line['codeterrain'], line['id_staff'])
+                        if codeterrain_id_staff_key in codeterrain_id_staff_seen:
+                            codeterrain_id_staff_duplicated[codeterrain_id_staff_key] = True
+                        codeterrain_id_staff_seen.setdefault(codeterrain_id_staff_key, []).append('%s, %s (%s)' % (ustr(data[1]), ustr(data[2]),_('Import File')))
 
-                if line.get('uuid_key'): # if not, error raised later
-                    if line['uuid_key'] in uuid_seen:
-                        uuid_duplicated[line['uuid_key']] = True
-                    uuid_seen.setdefault(line['uuid_key'], []).append('%s, %s (%s)' % (ustr(data[1]), ustr(data[2]), _('Import File')))
+                    if line.get('uuid_key'): # if not, error raised later
+                        if line['uuid_key'] in uuid_seen:
+                            uuid_duplicated[line['uuid_key']] = True
+                        uuid_seen.setdefault(line['uuid_key'], []).append('%s, %s (%s)' % (ustr(data[1]), ustr(data[2]), _('Import File')))
 
             res = True
             if not staff_codes_duplicated and not codeterrain_id_staff_duplicated and not uuid_duplicated:
