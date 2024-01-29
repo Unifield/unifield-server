@@ -284,19 +284,21 @@ class purchase_order_line(osv.osv):
     def get_sub_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
 
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, fo_id=False, context=None):
-        fo_is_ir = fo_id and self.pool.get('sale.order').read(cr, uid, fo_id, ['procurement_request'])['procurement_request'] or False
-        nomen_srv_domain = [('name', '=', 'SRV'), ('type', '=', 'mandatory'), ('level', '=', 0)]
-        data_nomen_srv = self.pool.get('product.nomenclature').search(cr, uid, nomen_srv_domain, limit=1)
-        if isinstance(position, int) and position == 0 and nomen_manda_0 and fo_id and not fo_is_ir and \
-                data_nomen_srv and nomen_manda_0 == data_nomen_srv[0]:
-            return {
-                'value': {'nomen_manda_0': False},
-                'warning': {
-                    'title': _('Warning'),
-                    'message': _("You can not select SRV as Nomenclature Main Type if the line is linked to a FO"),
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, order_type=False, fo_id=False, instance_sync_order_ref=False, context=None):
+        if isinstance(position, int) and position == 0 and nomen_manda_0 and \
+                self.check_is_service_nomen(cr, uid, nomen_manda_0):
+            msg = False
+            if fo_id and order_type in ['regular', 'purchase_list'] and \
+                    not self.pool.get('sale.order').read(cr, uid, fo_id, ['procurement_request'])['procurement_request']:
+                msg = _("You can not select SRV as Nomenclature Main Type if the line is linked to a FO")
+            elif instance_sync_order_ref and 'FO' in self.pool.get('sync.order.label').read(cr, uid, instance_sync_order_ref)['name']:
+                msg = _("You can not select SRV as Nomenclature Main Type if the Order in sync. instance is a FO")
+            if msg:
+                return {
+                    'value': {'nomen_manda_0': False},
+                    'warning': {'title': _('Warning'), 'message': msg}
                 }
-            }
+
         return self.pool.get('sale.order.line').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
 
     def onChangeSubNom(self, cr, uid, id, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5, context=None):

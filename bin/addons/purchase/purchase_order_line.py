@@ -16,30 +16,6 @@ from msf_partner import PARTNER_TYPE
 from lxml import etree
 
 
-def check_is_service_nomen(obj, cr, uid, nomen=False):
-    """
-    Return True if the nomenclature seleced on the line is a service nomenclature
-    @param cr: Cursor to the database
-    @param uid: ID of the res.users that calls this method
-    @param nomen: ID of the nomenclature to check
-    @return: True or False
-    """
-    nomen_obj = obj.pool.get('product.nomenclature')
-
-    if not nomen:
-        return False
-
-    nomen_srv = nomen_obj.search(cr, uid, [
-        ('name', '=', 'SRV'),
-        ('type', '=', 'mandatory'),
-        ('level', '=', 0),
-    ], limit=1)
-    if not nomen_srv:
-        return False
-
-    return nomen_srv[0] == nomen
-
-
 class purchase_order_line(osv.osv):
     _table = 'purchase_order_line'
     _name = 'purchase.order.line'
@@ -1687,6 +1663,24 @@ class purchase_order_line(osv.osv):
 
         return False
 
+    def check_is_service_nomen(self, cr, uid, nomen=False):
+        """
+        Return True if the nomenclature selected on the line is a service nomenclature
+        """
+        nomen_obj = self.pool.get('product.nomenclature')
+
+        if not nomen:
+            return False
+
+        nomen_srv = nomen_obj.search(cr, uid, [
+            ('name', '=', 'SRV'),
+            ('type', '=', 'mandatory'),
+            ('level', '=', 0),
+        ], limit=1)
+        if not nomen_srv:
+            return False
+
+        return nomen_srv[0] == nomen
 
     msg_selected_po = _("Please ensure that you selected the correct Source document because once the line is saved you will not be able to edit this field anymore. In case of mistake, the only option will be to Cancel the line and Create a new one with the correct Source document.")
 
@@ -1703,8 +1697,8 @@ class purchase_order_line(osv.osv):
                     return {'warning': {'title': _('Error'),
                                         'message': _('A Service Product can not be linked to a FO on a Regular or a Purchase List PO/RfQ')},
                             'value': {'origin': False}}
-                elif not product_id and po_order_type in ['regular', 'purchase_list'] and not fo['procurement_request'] and \
-                        nomen_manda_0 and check_is_service_nomen(cr, uid, nomen_manda_0):
+                elif not product_id and po_order_type in ['regular', 'purchase_list'] and not fo['procurement_request'] \
+                        and self.check_is_service_nomen(cr, uid, nomen_manda_0):
                     return {'warning': {'title': _('Error'),
                                         'message': _('You can not link a Product by Nomenclature with SRV as Nomenclature Main Type to a FO on a Regular or a Purchase List PO/RfQ')},
                             'value': {'origin': False}}
@@ -1759,10 +1753,30 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def on_change_instance_sync_order_ref(self, cr, uid, ids, instance_sync_order_ref, product_id, nomen_manda_0, context=None):
+        if context is None:
+            context = {}
+
+        if instance_sync_order_ref:
+            # Check for service product/nomenclature
+            product_type = product_id and self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type'] or False
+            if (product_type == 'service_recep' or self.check_is_service_nomen(cr, uid, nomen_manda_0)) and \
+                    'FO' in self.pool.get('sync.order.label').read(cr, uid, instance_sync_order_ref)['name']:
+                return {
+                    'value': {'instance_sync_order_ref': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _("You can not select a FO as Order in sync. instance if the product is Service"),
+                    }
+                }
+
+        return {}
+
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom, partner_id, date_order=False,
                              fiscal_position=False, date_planned=False, name=False, price_unit=False, notes=False,
                              state=False, old_price_unit=False, nomen_manda_0=False, comment=False, context=None,
-                             categ=False, from_product=False, linked_sol_id=False, select_fo=False, po_order_type=False):
+                             categ=False, from_product=False, linked_sol_id=False, select_fo=False, po_order_type=False,
+                             instance_sync_order_ref=False):
         all_qty = qty
         partner_price = self.pool.get('pricelist.partnerinfo')
         product_obj = self.pool.get('product.product')
@@ -1782,6 +1796,17 @@ class purchase_order_line(osv.osv):
             return {'warning': {'title': _('Error'),
                                 'message': _('You can not select a Service Product on a Regular or a Purchase List PO/RfQ if the line has been sourced from a FO')},
                     'value': {'product_id': False}}
+
+        if instance_sync_order_ref:  # Check for service product
+            product_type = product and self.pool.get('product.product').read(cr, uid, product, ['type'], context=context)['type'] or False
+            if product_type == 'service_recep' and 'FO' in self.pool.get('sync.order.label').read(cr, uid, instance_sync_order_ref)['name']:
+                return {
+                    'value': {'product_id': False},
+                    'warning': {
+                        'title': _('Warning'),
+                        'message': _("You can not select a Service product if the Order in sync. instance is a FO"),
+                    }
+                }
 
         if product and not uom:
             uom = product_obj.read(cr, uid, product, ['uom_id'])['uom_id'][0]
