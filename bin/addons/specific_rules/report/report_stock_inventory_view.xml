@@ -61,7 +61,7 @@
                     <field name="prodlot_id"
                            on_change="onchange_prodlot(prodlot_id)"
                            domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': ['|', '|', '|', '|', ('state', '!=', 'draft'), ('product_list_id', '!=', False), ('nomen_family_id', '!=', False), ('mml_id', '!=', False), ('msl_id', '!=', False)]}" />
-                    <field name="expiry_date" attrs="{'readonly': ['|', '|', '|', '|', '|', ('prodlot_id', '!=', False), ('state', '!=', 'draft'), ('product_list_id', '!=', False), ('nomen_family_id', '!=', False), ('mml_id', '!=', False), ('msl_id', '!=', False)]}" />
+                    <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
                     <field name="product_list_id" on_change="onchange_reset_display_0(product_list_id)"
                            attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
                     <field name="nomen_family_id" on_change="onchange_reset_display_0(nomen_family_id)"
