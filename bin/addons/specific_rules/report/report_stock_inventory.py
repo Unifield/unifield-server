@@ -302,22 +302,22 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                     dom.append(('in_msl_instance', '=', report.msl_id.id))
                 mmlmsl_prod_list = prod_obj.search(self.cr, self.uid, dom, context=context)
 
-            if plist_prod_list and fam_prod_list and mmlmsl_prod_list:  # 1-1-1
+            if report.product_list_id and report.nomen_family_id and (report.mml_id or report.msl_id):  # 1-1-1
                 full_prod_list = list(set(plist_prod_list).intersection(fam_prod_list, mmlmsl_prod_list))
-            elif plist_prod_list and fam_prod_list and not mmlmsl_prod_list:  # 1-1-0
+            elif report.product_list_id and report.nomen_family_id and not (report.mml_id or report.msl_id):  # 1-1-0
                 full_prod_list = list(set(plist_prod_list).intersection(fam_prod_list))
-            elif plist_prod_list and not fam_prod_list and mmlmsl_prod_list:  # 1-0-1
+            elif report.product_list_id and not report.nomen_family_id and (report.mml_id or report.msl_id):  # 1-0-1
                 full_prod_list = list(set(plist_prod_list).intersection(mmlmsl_prod_list))
-            elif not plist_prod_list and fam_prod_list and mmlmsl_prod_list:  # 0-1-1
-                full_prod_list = list(set(fam_prod_list).intersection(mmlmsl_prod_list))
-            elif plist_prod_list and not fam_prod_list and not mmlmsl_prod_list:  # 1-0-0
+            elif not report.product_list_id and report.nomen_family_id and (report.mml_id or report.msl_id):  # 0-1-1
+                full_prod_list = list(set(report.nomen_family_id).intersection(mmlmsl_prod_list))
+            elif report.product_list_id and not report.nomen_family_id and not (report.mml_id or report.msl_id):  # 1-0-0
                 full_prod_list = plist_prod_list
-            elif not plist_prod_list and fam_prod_list and not mmlmsl_prod_list:  # 0-1-0
+            elif not report.product_list_id and report.nomen_family_id and not (report.mml_id or report.msl_id):  # 0-1-0
                 full_prod_list = fam_prod_list
-            elif not plist_prod_list and not fam_prod_list and mmlmsl_prod_list:  # 0-0-1
+            elif not report.product_list_id and not report.nomen_family_id and (report.mml_id or report.msl_id):  # 0-0-1
                 full_prod_list = mmlmsl_prod_list
 
-            if plist_prod_list or fam_prod_list or mmlmsl_prod_list:
+            if report.product_list_id or report.nomen_family_id or report.mml_id or report.msl_id:
                 if full_prod_list:
                     cond.append('product_id in %(product_ids)s')
                     values['product_ids'] = tuple(full_prod_list)
