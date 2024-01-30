@@ -58,6 +58,21 @@ class patch_scripts(osv.osv):
     }
 
     # UF32.0
+    def us_12534_bulk_open_to_draft(self, cr, uid, *a, **b):
+        '''
+        Turn all periods from May to P15 2024 from open to draft (done with US-12344)
+        '''
+        cr.execute("""
+            UPDATE account_period
+            SET state = 'created', state_sync_flag = 'created', field_process = 'f'
+            WHERE
+                date_start > '2024-04-30' AND date_stop < '2025-01-01' AND
+                code != 'Period 16 2024' AND
+                id NOT IN (SELECT distinct period_id FROM account_move) AND
+                id NOT IN (SELECT distinct period_id FROM account_bank_statement WHERE state != 'draft')
+        """)
+        return True
+
     def us_12076_remove_po_audittrail_rule_domain(self, cr, uid, *a, **b):
         '''
         Remove the restrictions on purchase.order's and purchase.order.line's Track Changes to allow RfQs

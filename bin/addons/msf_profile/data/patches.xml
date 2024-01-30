@@ -1031,6 +1031,9 @@
         <record id="us_11907_12339_fix_locations_eprep_category" model="patch.scripts">
             <field name="method">us_11907_12339_fix_locations_eprep_category</field>
         </record>
+        <record id="us_12534_bulk_open_to_draft" model="patch.scripts">
+            <field name="method">us_12534_bulk_open_to_draft</field>
+        </record>
 
 
 
