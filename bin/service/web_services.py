@@ -581,12 +581,10 @@ class common(_ObjectService):
             return res or False
         elif method == 'number_update_modules':
             return security.number_update_modules(params[0])
-        elif method == 'get_user_email':
-            return security.get_user_email(params[0], params[1], params[2])
         elif method == 'change_password':
             try:
                 security.change_password(params[0], params[1], params[2],
-                                         params[3], params[4], params[5])
+                                         params[3], params[4])
             except Exception as e:
                 if hasattr(e, 'value'):
                     msg = tools.ustr(e.value)
