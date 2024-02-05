@@ -135,6 +135,17 @@ msgstr "Voir "
 msgid "Report can not be stopped :"
 msgstr "Impossible d'arrêter le rapport :"
 
-msgid "Invalid Email address"
-msgstr "Adresse email invalide"
+msgid "Department is required."
+msgstr "Département obligatoire."
 
+msgid "Email is required."
+msgstr "Email obligatoire."
+
+msgid "Invalid Email address."
+msgstr "Adresse email invalide."
+
+msgid "Email must end with msf.org."
+msgstr "L'email doit finir par msf.org."
+
+msgid "Email address must end with msf.org."
+msgstr "L'adresse email doit finir par msf.org."

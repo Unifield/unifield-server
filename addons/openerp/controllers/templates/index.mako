@@ -207,8 +207,91 @@
         </table>
     </div>
 
+    % if dept_email_required:
+        <div id="survey">
+                <div id="survey_title">${_('Please fill your Department/Email')}</div>
+                 % if department_list:
+                     <div class="row">
+                     <div class="column" style="width: 30%;text-align: right">${_('Department')} *:</div>
+                     <div class="column" style="width: 66%; text-align: left"><select id="department" style="width: 66%;font-size:20px">
+                                <option value="" />
+                            % for dpt_id, dpt_name in department_list:
+                                <option value="${dpt_id}"
+                                    % if dpt_id == selected_department:
+                                        selected="selected"
+                                    % endif
+                                >${dpt_name}</option>
+                            % endfor
+                        </select>
+                      </div>
+                      </div>
+                 % endif
+                 <div class="row">
+                  <div class="column" style="width: 30%;text-align: right">Email *: </div>
+                  <div class="column" style="width: 66%;text-align: left"><input type="email" id="email" value="${email}" style="width: 66%;font-size:20px"/></div>
+                </div>
+                <div class="row">
+                    <div  id="error_box"></div>
+                </div>
+                  <div class="column"><div class="survey_button" onclick="click_dpt_answer('goto')">${_('Save')}</div></div>
+                </div>
+        </div>
+        <script type="text/javascript">
+            jQuery('#survey').fancybox({'modal': true, 'height': 280, 'width': 700, 'scrolling': 'no', 'autoDimensions': false, 'autoScale': false});
 
-    % if survey:
+            jQuery(document).ready(function() {
+                jQuery('#survey').trigger('click');
+                jQuery('#survey').show();
+                jQuery('#survey').unbind('click.fb');
+                jQuery('#department').focus()
+            });
+            function click_dpt_answer(answer) {
+                if (answer=='goto') {
+                    email_field = jQuery('#email')
+                    error_dpt = Array()
+                    % if department_list:
+                    dpt_field = jQuery('#department')
+                    dpt_value = dpt_field.val()
+                    if (!dpt_value) {
+                        error_dpt.push(_('Department is required.'));
+                    }
+                    % else:
+                    dpt_value = 'NONE'
+                    % endif
+                    if (!email_field.val()) {
+                        error_dpt.push(_('Email is required.'));
+                    } else {
+                        if (!email_field[0].checkValidity()) {
+                            error_dpt.push(_('Invalid Email address.'));
+                        }
+                        if (!email_field.val().endsWith('msf.org')) {
+                            error_dpt.push(_('Email must end with msf.org.'));
+                        }
+                    }
+                    if (error_dpt.length) {
+                        jQuery('#error_box').html(error_dpt.join(' '));
+                        return false;
+                    }
+
+                    jQuery.ajax({
+                        url: '/openerp/pref/save_dept_email',
+                        dataType: 'json',
+                        type: 'POST',
+                        data: {'dept': dpt_value, 'email': email_field.val()},
+                        success: function(obj) {
+                          if (!obj.result) {
+                            jQuery('#error_box').html(obj.message);
+                          } else {
+                              jQuery('#survey').hide();
+                              jQuery.fancybox.close();
+                         }
+                        },
+                    });
+            }
+        }
+        </script>
+
+    % elif survey:
         <div id="survey">
                 <div id="survey_title">${_('We welcome your feedback.')}</div>
                 <div>${_('Help us improve your experience by taking our short survey.')}</div>
@@ -304,98 +387,6 @@
             function click_answer(answer) {
                 if (answer=='goto') {
                     openAction('/openerp/pref/create_signature', 'new', false, false, '400px', '720px');
-                }
-                jQuery('#survey').hide();
-                jQuery.fancybox.close();
-            }
-        </script>
-    % elif department_required:
-        <div id="survey">
-                <div id="survey_title">${_('Please fill your Department')}</div>
-                 <div class="row">
-                  <div class="column" style="width: 50%">${_('Department')}: <select id="department" style="width: 50%; font-size:20px">
-                            <option value="" />
-                        % for dpt_id, dpt_name in department_list:
-                            <option value="${dpt_id}"
-                                % if dpt_id == selected_department:
-                                    selected="selected"
-                                % endif
-                            >${dpt_name}</option>
-                        % endfor
-                  </select></div>
-                  <div class="column"><div class="survey_button" onclick="click_dpt_answer('goto')">${_('Save')}</div></div>
-                </div>
-                % if nb_department_asked != -1:
-                     <div class="row">
-                      % if nb_department_asked < 2:
-                        <div class="column"><div class="survey_button" onclick="click_dpt_answer('later')">${_('Ask Later')}</div></div>
-                      % else:
-                        <div class="column"><div class="survey_button" onclick="click_dpt_answer('never')">${_('Do not ask again')}</div></div>
-                      % endif
-                    </div>
-                % endif
-        </div>
-        <script type="text/javascript">
-            jQuery('#survey').fancybox({'modal': true, 'height': 250, 'width': 700, 'scrolling': 'no', 'autoDimensions': false, 'autoScale': false});
-
-            jQuery(document).ready(function() {
-                jQuery('#survey').trigger('click');
-                jQuery('#survey').show();
-                jQuery('#survey').unbind('click.fb');
-                jQuery('#department').focus()
-            });
-            function click_dpt_answer(answer) {
-                if (answer=='goto') {
-                    dpt_field = jQuery('#department')
-                    console.log(dpt_field);
-                    console.log(dpt_field.val());
-                    jQuery.post('/openerp/pref/save_department', {'dpt': dpt_field.val()});
-                } else if (answer=='later') {
-                    jQuery.post('/openerp/pref/department_update_nb');
-                } else if (answer=='never') {
-                    jQuery.post('/openerp/pref/department_dontask');
-                }
-                jQuery('#survey').hide();
-                jQuery.fancybox.close();
-            }
-        </script>
-
-    % elif email_required:
-        <div id="survey">
-                <div id="survey_title">${_('Please fill your email address')}</div>
-                 <div class="row">
-                  <div class="column" style="width: 50%">Email: <input type="email" id="email" /></div>
-                  <div class="column"><div class="survey_button" onclick="click_email_answer('goto')">${_('Save email')}</div></div>
-                </div>
-                 <div class="row">
-                  % if nb_email_asked < 2:
-                    <div class="column"><div class="survey_button" onclick="click_email_answer('later')">${_('Ask Later')}</div></div>
-                  % else:
-                    <div class="column"><div class="survey_button" onclick="click_email_answer('never')">${_('Do not ask again')}</div></div>
-                  % endif
-                </div>
-        </div>
-        <script type="text/javascript">
-            jQuery('#survey').fancybox({'modal': true, 'height': 250, 'width': 700, 'scrolling': 'no', 'autoDimensions': false, 'autoScale': false});
-
-            jQuery(document).ready(function() {
-                jQuery('#survey').trigger('click');
-                jQuery('#survey').show();
-                jQuery('#survey').unbind('click.fb');
-                jQuery('#email').focus()
-            });
-            function click_email_answer(answer) {
-                if (answer=='goto') {
-                    email_field = jQuery('#email')
-                    if (!email_field[0].checkValidity()) {
-                        alert(_('Invalid Email address'));
-                        return false;
-                    }
-                    jQuery.post('/openerp/pref/save_email', {'email': email_field.val()});
-                } else if (answer=='later') {
-                    jQuery.post('/openerp/pref/email_update_nb');
-                } else if (answer=='never') {
-                    jQuery.post('/openerp/pref/email_dontask');
                 }
                 jQuery('#survey').hide();
                 jQuery.fancybox.close();

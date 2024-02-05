@@ -38,8 +38,6 @@ msgstr "Merci de saisir une adresse de courriel"
 msgid "An email address must contain a single @"
 msgstr "Une adresse de courriel doit contenir un seul @"
 
-msgid "Invalid Email address"
-msgstr "Adresse email invalide"
 
 #: validators.py:249
 #, python-format
@@ -1966,8 +1964,23 @@ msgid "Department"
 msgstr "Département"
 
 #: controllers/templates/index.mako:268
-msgid "Please fill your Department"
-msgstr "Veuillez saisir votre Département"
+msgid "Please fill your Department/Email"
+msgstr "Veuillez saisir votre Département/Email"
+
+msgid "Department is required."
+msgstr "Département obligatoire."
+
+msgid "Email is required."
+msgstr "Email obligatoire."
+
+msgid "Invalid Email address."
+msgstr "Adresse email invalide."
+
+msgid "Email must end with msf.org."
+msgstr "L'email doit finir par msf.org."
+
+msgid "Email address must end with msf.org."
+msgstr "L'adresse email doit finir par msf.org."
 
 #: controllers/templates/index.mako:268
 msgid "Save email"

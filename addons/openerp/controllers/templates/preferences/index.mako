@@ -16,17 +16,21 @@
         function validate_email() {
             var ok = true;
             jQuery("span[class=fielderror]").remove();
-            jQuery('#view_form').find('input[kind=email]').each(function () {
+            jQuery('#view_form').find('input[kind=email], input[kind=msf_email]').each(function () {
                 if (!this.checkValidity()) {
                     jQuery(this).addClass('errorfield');
-                    jQuery("<span class='fielderror'>${_('Invalid Email address')}</span>").insertAfter(jQuery(this));
+                    jQuery("<span class='fielderror'>${_('Invalid Email address.')}</span>").insertAfter(jQuery(this));
+                    ok = false;
+                } else if (jQuery(this).attr('kind') == 'msf_email' && !this.value.endsWith('msf.org')) {
+                    jQuery(this).addClass('errorfield');
+                    jQuery("<span class='fielderror'>${_('Email address must end with msf.org.')}</span>").insertAfter(jQuery(this));
                     ok = false;
                 } else {
                     jQuery(this).removeClass('errorfield');
                 }
             });
             if (ok) {
-                submit_form('ok');
+                submit_form('save');
             }
         }
     </script>
