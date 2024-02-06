@@ -1140,7 +1140,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
         coalesce(sum(-m.product_qty)::decimal, 0.0)
         ELSE
         coalesce(sum(-m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty,
-        pt.uom_id as uom_id
+        pt.uom_id as uom_id,
+        pt.nomen_manda_2 as nomen_family_id
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)
@@ -1153,7 +1154,7 @@ CREATE OR REPLACE view report_stock_inventory AS (
         pt.type='product'
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id,  m.location_dest_id,
-        m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id
+        m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id, pt.uom_id, pt.nomen_manda_2
 ) UNION ALL (
     SELECT
         -m.id as id, m.date as date,
@@ -1172,7 +1173,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
         coalesce(sum(m.product_qty)::decimal, 0.0)
         ELSE
         coalesce(sum(m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty,
-        pt.uom_id as uom_id
+        pt.uom_id as uom_id,
+        pt.nomen_manda_2 as nomen_family_id
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)
@@ -1185,7 +1187,7 @@ CREATE OR REPLACE view report_stock_inventory AS (
         pt.type='product'
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id, m.location_dest_id,
-        m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id
+        m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id, pt.uom_id, pt.nomen_manda_2
     )
 );
         """)
@@ -1193,6 +1195,7 @@ CREATE OR REPLACE view report_stock_inventory AS (
     _columns = {
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch', readonly=True),
         'expired_date': fields.date(string='Expiry Date',),
+        'nomen_family_id': fields.many2one('product.nomenclature', 'Specific Product family', domain=[('level', '=', 2)]),
     }
 
     def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):

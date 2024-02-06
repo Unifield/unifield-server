@@ -10,13 +10,14 @@
                 <tree string="Export Inventory Level" noteditable="1">
                     <field name="name" />
                     <field name="stock_level_date" />
-                    <field name="location_id" />
-                    <field name="product_list_id" />
-                    <field name="mml_id" />
-                    <field name="msl_id" />
                     <field name="product_id" />
+                    <field name="location_id" />
                     <field name="prodlot_id" />
                     <field name="expiry_date" />
+                    <field name="product_list_id" />
+                    <field name="nomen_family_id" />
+                    <field name="mml_id" />
+                    <field name="msl_id" />
                     <field name="state" />
                 </tree>
             </field>
@@ -30,7 +31,13 @@
                 <search string="Export Inventory Level">
                     <field name="name" />
                     <field name="stock_level_date" />
+                    <field name="product_id" />
                     <field name="location_id" />
+                    <field name="prodlot_id" />
+                    <field name="expiry_date" />
+                    <field name="product_list_id" />
+                    <newline/>
+                    <field name="nomen_family_id" widget="selection" />
                     <field name="mml_id" />
                     <field name="msl_id" />
                     <field name="state" />
@@ -49,22 +56,25 @@
                     <field name="company_id" />
                     <field name="stock_level_date" on_change="onchange_sl_date(stock_level_date)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <separator colspan="4" string="Advanced filters" />
-                    <field name="product_id" attrs="{'readonly': ['|', '|', '|', ('prodlot_id', '!=', False), ('state', '!=', 'draft'), ('mml_id', '!=', False), ('msl_id', '!=', False)]}" domain="[('type', '=', 'product')]" />
+                    <field name="product_id" attrs="{'readonly': ['|', '|', '|', '|', '|', ('prodlot_id', '!=', False), ('state', '!=', 'draft'), ('product_list_id', '!=', False), ('nomen_family_id', '!=', False), ('mml_id', '!=', False), ('msl_id', '!=', False)]}" domain="[('type', '=', 'product')]" />
                     <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('usage', '=', 'internal')]" />
-                    <field name="mml_id" on_change="onchange_product_list(mml_id)"
-                           attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
-                    <field name="msl_id" on_change="onchange_product_list(msl_id)"
-                           attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
-
                     <field name="prodlot_id"
                            on_change="onchange_prodlot(prodlot_id)"
-                           domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('mml_id', '!=', False), ('msl_id', '!=', False)]}" />
+                           domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': ['|', '|', '|', '|', ('state', '!=', 'draft'), ('product_list_id', '!=', False), ('nomen_family_id', '!=', False), ('mml_id', '!=', False), ('msl_id', '!=', False)]}" />
                     <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
+                    <field name="product_list_id" on_change="onchange_reset_display_0(product_list_id)"
+                           attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
+                    <field name="nomen_family_id" on_change="onchange_reset_display_0(nomen_family_id)"
+                           attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('product_id', '!=', False)]}" />
+                    <field name="mml_id" on_change="onchange_reset_display_0(mml_id)"
+                           attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
+                    <field name="msl_id" on_change="onchange_reset_display_0(msl_id)"
+                           attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
                     <newline/>
                     <group colspan="4" col="4">
-                    <field name="display_0" attrs="{'invisible': ['|', '|', '|', ('mml_id', '!=', False), ('msl_id', '!=', False), ('prodlot_id', '!=', False), ('expiry_date', '!=', False)]}" />
+                    <field name="display_0" attrs="{'invisible': ['|', '|', '|', '|', '|', ('mml_id', '!=', False), ('msl_id', '!=', False), ('prodlot_id', '!=', False), ('expiry_date', '!=', False), ('product_list_id', '!=', False), ('nomen_family_id', '!=', False)]}" />
                     <field name="in_last_x_months" nolabel="1" colspan="2"
-                           attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': ['|', '|', '|', '|', ('mml_id', '!=', False), ('msl_id', '!=', False), ('prodlot_id', '!=', False), ('expiry_date', '!=', False), ('display_0', '=', False)], 'required': [('display_0', '=', True), ('state', '=', 'draft')]}" />
+                           attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': ['|', '|', '|', '|', '|', '|', ('mml_id', '!=', False), ('msl_id', '!=', False), ('prodlot_id', '!=', False), ('expiry_date', '!=', False), ('product_list_id', '!=', False), ('nomen_family_id', '!=', False), ('display_0', '=', False)], 'required': [('display_0', '=', True), ('state', '=', 'draft')]}" />
 
                     </group>
                     <separator colspan="4" string="Actions" />
