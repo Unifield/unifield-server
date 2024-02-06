@@ -272,6 +272,7 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         cond = ['state=%(state)s']
         having = ['having round(sum(product_qty), 6) != 0']
 
+        full_prod_list = []
         date_prod_list = []  # List of products with moves within the date range of months selected
         batch_list = []
 
