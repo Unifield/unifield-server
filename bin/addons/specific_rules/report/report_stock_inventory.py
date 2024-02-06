@@ -286,12 +286,10 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             cond.append('product_id in %(product_ids)s')
             full_prod_list = [report.product_id.id]
             values['product_ids'] = (report.product_id.id,)
-        elif report.product_list_id or report.nomen_family_id or report.mml_id or report.msl_id:
+        elif report.product_list_id or report.mml_id or report.msl_id:
             dom = []
             if report.product_list_id:
                 dom.append(('list_ids', '=', report.product_list_id.id))
-            if report.nomen_family_id:
-                dom.append(('nomen_manda_2', '=', report.nomen_family_id.id))
             if report.mml_id:
                 dom.append(('in_mml_instance', '=', report.mml_id.id))
             if report.msl_id:
@@ -318,6 +316,10 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         if report.stock_level_date:
             cond.append('date<%(stock_level_date)s')
             values['stock_level_date'] = '%s 23:59:59' % report.stock_level_date
+
+        if report.nomen_family_id:
+            cond.append('nomen_family_id=%(nomen_family_id)s')
+            values['nomen_family_id'] = report.nomen_family_id.id
 
         if (not report.prodlot_id or not report.expiry_date or not report.product_list_id or not report.nomen_family_id) \
                 and report.display_0:
