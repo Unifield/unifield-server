@@ -977,7 +977,7 @@ class account_move(osv.osv):
         'status': fields.selection([('sys', 'system'), ('manu', 'manual')], string="Status", required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True,
                                      states={'posted':[('readonly',True)]},
-                                     domain="[('state', '=', 'draft')]", hide_default_menu=True),
+                                     domain="[('state', '=', 'draft')]", hide_default_menu=True, select=1),
         'journal_id': fields.many2one('account.journal', 'Journal',
                                       required=True, states={'posted':[('readonly',True)]},
                                       domain="[('type', 'not in', "

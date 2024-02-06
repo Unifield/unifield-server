@@ -1494,7 +1494,7 @@ class account_move(osv.osv):
     _columns = {
         'name': fields.char('Number', size=64, required=True),
         'ref': fields.char('Reference', size=64),
-        'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}),
+        'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}, select=1),
         'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear',
                                         string='Fiscal Year', store=False, write_relate=False),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}),

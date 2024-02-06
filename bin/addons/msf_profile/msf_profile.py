@@ -69,6 +69,33 @@ class patch_scripts(osv.osv):
             """)
             self.log_info(cr, uid, "US-12273: Users disable never_expire on %d users" % (cr.rowcount, ))
 
+    def us_12534_bulk_open_to_draft(self, cr, uid, *a, **b):
+        '''
+        Turn all periods from May to P15 2024 from open to draft (done with US-12344)
+        '''
+        # first check if open period exists
+        p_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '>=', '2024-04-30'), ('date_stop', '<', '2025-01-01'), ('number', '!=', 16), ('state', '=', 'draft')])
+        if p_ids:
+            cr.execute("select distinct period_id FROM account_move where period_id in %s", (tuple(p_ids), ))
+            p_ids = set(p_ids) - set([x[0] for x in cr.fetchall()])
+            if p_ids:
+                cr.execute("select distinct period_id FROM account_bank_statement where period_id in %s", (tuple(p_ids), ))
+                p_ids = set(p_ids) - set([x[0] for x in cr.fetchall()])
+                if p_ids:
+                    self.pool.get('account.period').write(cr, uid, list(p_ids), {'state': 'created', 'state_sync_flag': 'created', 'field_process': 'f'})
+                    self.log_info(cr, uid, "US-12534: %s periods set back to draft state" % (len(p_ids), ))
+        return True
+
+
+        cr.execute("""
+            UPDATE account_period
+            SET state = 'created', state_sync_flag = 'created', field_process = 'f'
+            WHERE
+                date_start > '2024-04-30' AND date_stop < '2025-01-01' AND
+                code != 'Period 16 2024' AND
+                id NOT IN (SELECT distinct period_id FROM account_move) AND
+                id NOT IN (SELECT distinct period_id FROM account_bank_statement WHERE state != 'draft')
+        """)
         return True
 
 
