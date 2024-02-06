@@ -336,8 +336,6 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             self.cr.execute("""
                 SELECT DISTINCT m.product_id, m.prodlot_id FROM stock_move m
                 LEFT JOIN product_product p ON m.product_id = p.id 
-                LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id 
-                LEFT JOIN product_nomenclature n2 ON pt.nomen_manda_2 = n2.id
                 WHERE""" + w_prod + """ m.state = 'done' AND m.product_qty != 0 AND p.active = 't' AND
                     (location_id IN %s OR location_dest_id IN %s) AND m.date >= %s AND m.date <= %s
                 """, (values['location_ids'], values['location_ids'], from_date, to_date))
