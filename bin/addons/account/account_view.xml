@@ -2248,6 +2248,53 @@
            res_model="account.move.line"
            src_model="account.journal"/>
 
+        <record model="ir.ui.view" id="wizard_change_account_code">
+            <field name="name">wizard.change.account.code.form</field>
+            <field name="model">journal.change.account</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Change Account - Wizard">
+                    <separator string="Wizard to modify the debit/credit accounts of current journal"/>
+                    <separator string="Current journal" colspan="2" />
+                    <newline />
+                    <field name="journal_id" nolabel="1" readonly="1" colspan="2"/>
+                    <field name="journal_type" invisible="1"/>
+                    <newline />
+                    <separator string="Change Default Debit Account" colspan="2" />
+                    <separator string="Change Default Credit Account" colspan="2" />
+                    <newline />
+                    <field name="is_current_instance" invisible="1"/>
+                    <field name="debit_account_id" domain="[('type','!=','view'), ('cash_domain', '=', journal_type)]"
+                           attrs="{'readonly': [('is_current_instance', '!=', True)]}" colspan="2">
+                            <tree>
+                                <field name="name"/>
+                            </tree>
+                    </field>
+                    <field name="credit_account_id" domain="[('type','!=','view'), ('cash_domain', '=', journal_type)]"
+                           attrs="{'readonly': [('is_current_instance', '!=', True)]}" colspan="2">
+                            <tree>
+                                <field name="name"/>
+                            </tree>
+                    </field>
+                    <newline />
+                    <group colspan="4">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                        <button string="Confirm" icon="terp-check" name="journal_change_account" attrs="{'readonly': [('is_current_instance', '!=', True)]}" type="object"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <act_window
+           id="act_change_account_code"
+           name="Change default journal accounts"
+           res_model="journal.change.account"
+           src_model="account.journal"
+           key2="client_action_multi"
+           view_mode="form"
+           view_type="form"
+           target="new" />
+
         <act_window context="{'search_default_reconcile_id':False, 'search_default_partner_id':[active_id]}" domain="[('account_id.reconcile', '=', True),('account_id.type', 'in', ['receivable', 'payable'])]" id="act_account_partner_account_move_all" name="Receivables &amp; Payables" res_model="account.move.line" src_model="res.partner" groups="base.group_extended"/>
 
         <act_window context="{'search_default_partner_id':[active_id]}" id="act_account_partner_account_move" name="Journal Items" res_model="account.move.line" src_model="res.partner" groups="account.group_account_user"/>

@@ -2939,4 +2939,80 @@ class account_bank_accounts_wizard(osv.osv_memory):
 
 account_bank_accounts_wizard()
 
+class journal_change_account(osv.osv_memory):
+    _name = 'journal.change.account'
+
+    def _get_journal(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        return context.get('active_id', False)
+
+    def _get_journal_type(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        if context.get('active_id', False):
+            return self.pool.get('account.journal').read(cr, uid, context['active_id'], ['type'], context=context)['type']
+        return False
+
+    def _get_instance(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        ids = context.get('active_ids', False)
+        if ids and len(ids) == 1:
+            return self.pool.get('account.journal').read(cr, uid, ids[0], ['is_current_instance'], context=context)['is_current_instance']
+        return False
+
+    def _get_credit_account(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        ids = context.get('active_ids', False)
+        if ids and len(ids) == 1:
+            return self.pool.get('account.journal').read(cr, uid, ids[0], ['default_credit_account_id'], context=context)['default_credit_account_id']
+        return []
+
+    def _get_debit_account(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        ids = context.get('active_ids', False)
+        if ids and len(ids) == 1:
+            return self.pool.get('account.journal').read(cr, uid, ids[0], ['default_debit_account_id'], context=context)['default_debit_account_id']
+        return []
+
+
+    _columns = {
+        'journal_id': fields.many2one('account.journal', string="Current journal"),
+        'journal_type': fields.char("Current Journal Type", size=32),
+        'debit_account_id': fields.many2one('account.account', 'Debit account'),
+        'credit_account_id': fields.many2one('account.account', 'Credit account'),
+        'is_current_instance': fields.boolean('Is current instance?'),
+
+    }
+    _defaults = {
+        'journal_id': _get_journal,
+        'journal_type': _get_journal_type,
+        'debit_account_id': _get_debit_account,
+        'credit_account_id': _get_credit_account,
+        'is_current_instance': _get_instance,
+    }
+
+    def journal_change_account(self, cr, uid, ids, context=None):
+        '''
+        US-11269: Modify the default debit or credit account of the journal
+        '''
+        if context is None:
+            context = {}
+        journ_obj = self.pool.get('account.journal')
+        active_ids = context.get('active_ids', False)
+        if active_ids:
+            debit_id = self.read(cr, uid, ids, ['debit_account_id'])[0]['debit_account_id']
+            credit_id = self.read(cr, uid, ids, ['credit_account_id'])[0]['credit_account_id']
+            if debit_id:
+                journ_obj.write(cr, uid, active_ids, {'default_debit_account_id': debit_id}, context=context)
+            if credit_id:
+                journ_obj.write(cr, uid, active_ids, {'default_credit_account_id': credit_id}, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+
+journal_change_account()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
