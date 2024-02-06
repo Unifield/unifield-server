@@ -285,7 +285,7 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             cond.append('product_id in %(product_ids)s')
             full_prod_list = [report.product_id.id]
             values['product_ids'] = (report.product_id.id,)
-        else:
+        elif report.product_list_id or report.nomen_family_id or report.mml_id or report.msl_id:
             dom = []
             if report.product_list_id:
                 dom.append(('list_ids', '=', report.product_list_id.id))
@@ -297,13 +297,12 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                 dom.append(('in_msl_instance', '=', report.msl_id.id))
             full_prod_list = prod_obj.search(self.cr, self.uid, dom, context=context)
 
-            if report.product_list_id or report.nomen_family_id or report.mml_id or report.msl_id:
-                if full_prod_list:
-                    cond.append('product_id in %(product_ids)s')
-                    values['product_ids'] = tuple(full_prod_list)
-                    with_zero = True
-                else:  # No need to continue if no product was found with the combined filters
-                    return 0, 0, []
+            if full_prod_list:
+                cond.append('product_id in %(product_ids)s')
+                values['product_ids'] = tuple(full_prod_list)
+                with_zero = True
+            else:  # No need to continue if no product was found with the combined filters
+                return 0, 0, []
 
         if report.prodlot_id:
             cond.append('prodlot_id=%(prodlot_id)s')
