@@ -272,7 +272,6 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         cond = ['state=%(state)s']
         having = ['having round(sum(product_qty), 6) != 0']
 
-        full_prod_list = []
         date_prod_list = []  # List of products with moves within the date range of months selected
         batch_list = []
 
@@ -287,35 +286,16 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             full_prod_list = [report.product_id.id]
             values['product_ids'] = (report.product_id.id,)
         else:
-            plist_prod_list = []
-            fam_prod_list = []
-            mmlmsl_prod_list = []
+            dom = []
             if report.product_list_id:
-                plist_prod_list = prod_obj.search(self.cr, self.uid, [('list_ids', '=', report.product_list_id.id)], context=context)
+                dom.append(('list_ids', '=', report.product_list_id.id))
             if report.nomen_family_id:
-                fam_prod_list = prod_obj.search(self.cr, self.uid, [('nomen_manda_2', '=', report.nomen_family_id.id)], context=context)
-            if report.mml_id or report.msl_id:
-                dom = []
-                if report.mml_id:
-                    dom.append(('in_mml_instance', '=', report.mml_id.id))
-                if report.msl_id:
-                    dom.append(('in_msl_instance', '=', report.msl_id.id))
-                mmlmsl_prod_list = prod_obj.search(self.cr, self.uid, dom, context=context)
-
-            if report.product_list_id and report.nomen_family_id and (report.mml_id or report.msl_id):  # 1-1-1
-                full_prod_list = list(set(plist_prod_list).intersection(fam_prod_list, mmlmsl_prod_list))
-            elif report.product_list_id and report.nomen_family_id and not (report.mml_id or report.msl_id):  # 1-1-0
-                full_prod_list = list(set(plist_prod_list).intersection(fam_prod_list))
-            elif report.product_list_id and not report.nomen_family_id and (report.mml_id or report.msl_id):  # 1-0-1
-                full_prod_list = list(set(plist_prod_list).intersection(mmlmsl_prod_list))
-            elif not report.product_list_id and report.nomen_family_id and (report.mml_id or report.msl_id):  # 0-1-1
-                full_prod_list = list(set(report.nomen_family_id).intersection(mmlmsl_prod_list))
-            elif report.product_list_id and not report.nomen_family_id and not (report.mml_id or report.msl_id):  # 1-0-0
-                full_prod_list = plist_prod_list
-            elif not report.product_list_id and report.nomen_family_id and not (report.mml_id or report.msl_id):  # 0-1-0
-                full_prod_list = fam_prod_list
-            elif not report.product_list_id and not report.nomen_family_id and (report.mml_id or report.msl_id):  # 0-0-1
-                full_prod_list = mmlmsl_prod_list
+                dom.append(('nomen_manda_2', '=', report.nomen_family_id.id))
+            if report.mml_id:
+                dom.append(('in_mml_instance', '=', report.mml_id.id))
+            if report.msl_id:
+                dom.append(('in_msl_instance', '=', report.msl_id.id))
+            full_prod_list = prod_obj.search(self.cr, self.uid, dom, context=context)
 
             if report.product_list_id or report.nomen_family_id or report.mml_id or report.msl_id:
                 if full_prod_list:

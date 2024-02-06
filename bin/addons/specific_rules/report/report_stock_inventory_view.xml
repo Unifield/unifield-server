@@ -65,7 +65,7 @@
                     <field name="product_list_id" on_change="onchange_reset_display_0(product_list_id)"
                            attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
                     <field name="nomen_family_id" on_change="onchange_reset_display_0(nomen_family_id)"
-                           attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('product_id', '!=', False)]}" widget="selection" />
+                           attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('product_id', '!=', False)]}" />
                     <field name="mml_id" on_change="onchange_reset_display_0(mml_id)"
                            attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
                     <field name="msl_id" on_change="onchange_reset_display_0(msl_id)"
