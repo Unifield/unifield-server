@@ -58,6 +58,10 @@ class patch_scripts(osv.osv):
     }
 
     # UF32.0
+    def us_12294_force_email_popup(self, cr, uid, *a, **b):
+        cr.execute("update res_users set force_dept_email_popup='t'")
+        return True
+
     def us_12076_remove_po_audittrail_rule_domain(self, cr, uid, *a, **b):
         '''
         Remove the restrictions on purchase.order's and purchase.order.line's Track Changes to allow RfQs
