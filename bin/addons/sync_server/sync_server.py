@@ -1017,7 +1017,7 @@ class sync_manager(osv.osv):
     @check_validated
     def sync_success(self, cr, uid, entity, context=None):
         self._logger.info("::::::::[%s] success sync" % (entity.name, ))
-        self.pool.get('sync.server.entity').write(cr, uid, entity.id, {'date_success_sync': fields.datetime.now()})
+        self.pool.get('sync.server.entity').write(cr, 1, entity.id, {'date_success_sync': fields.datetime.now()})
         return True
 
 sync_manager()
