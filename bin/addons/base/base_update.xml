@@ -111,7 +111,7 @@
                     <field name="new_password" password="True"/>
                     <group colspan="2" col="4">
                         <field name="force_password_change"/>
-                        <field name="never_expire" />
+                        <field name="never_expire" attrs="{'readonly': [('instance_level', 'in', ['coordo', 'project']), ('login', '!=', 'admin')]}"/>
                     </group>
                     <field name="last_password_change" />
                     <field name="log_xmlrpc" attrs="{'invisible': [('instance_level', '!=', 'hq')]}"/>
