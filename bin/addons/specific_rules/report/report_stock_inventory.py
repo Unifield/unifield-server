@@ -320,6 +320,7 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         if report.nomen_family_id:
             cond.append('nomen_family_id=%(nomen_family_id)s')
             values['nomen_family_id'] = report.nomen_family_id.id
+            with_zero = True
 
         if (not report.prodlot_id or not report.expiry_date or not report.product_list_id or not report.nomen_family_id) \
                 and report.display_0:
