@@ -85,8 +85,17 @@ class upgrade(osv.osv_memory):
             'state' : 'need-install',
         }, context=context)
 
+    def restore_cleaning(self):
+        self._max_count = config.get('osv_memory_count_limit')
+        self._max_hours = config.get('osv_memory_age_limit')
+
     def do_upgrade(self, cr, uid, ids, context=None, sync_type='manual'):
         """Actualy, prepare the upgrade to be done at server restart"""
+
+        # disable memory cleaning
+        self._max_count = 0
+        self._max_hours = 0
+
         # backup before patching
         self.pool.get('backup.config').exp_dump_for_state(cr, uid,
                                                           'beforepatching', context=context, force=True)
@@ -114,10 +123,12 @@ class upgrade(osv.osv_memory):
             if next_state == 'need-download' and automatic_patching:
                 self.download(cr, uid, ids, context)
             else:
-                return self.write(cr, uid, ids, {
+                self.write(cr, uid, ids, {
                     'message' : _("Cannot install now.\n\n%s") % self._generate(cr, uid, context=context),
                     'state' : next_state,
                 }, context=context)
+                self.restore_cleaning()
+                return True
         next_revisions = self.pool.get('sync_client.version')._get_next_revisions(cr, uid, context=context)
         ## Prepare
         (status, message, values) = updater.do_prepare(cr, next_revisions)
@@ -130,6 +141,8 @@ class upgrade(osv.osv_memory):
         ## Refresh the window
         if values: wiz_value['message'] = wiz_value['message'] % values
         res = self.write(cr, uid, ids, wiz_value, context=context)
+        self.restore_cleaning()
+
         if status != 'success':
             return res
         ## Restart automatically
