@@ -123,11 +123,12 @@ class upgrade(osv.osv_memory):
             if next_state == 'need-download' and automatic_patching:
                 self.download(cr, uid, ids, context)
             else:
-                self.restore_cleaning()
-                return self.write(cr, uid, ids, {
+                self.write(cr, uid, ids, {
                     'message' : _("Cannot install now.\n\n%s") % self._generate(cr, uid, context=context),
                     'state' : next_state,
                 }, context=context)
+                self.restore_cleaning()
+                return True
         next_revisions = self.pool.get('sync_client.version')._get_next_revisions(cr, uid, context=context)
         ## Prepare
         (status, message, values) = updater.do_prepare(cr, next_revisions)
