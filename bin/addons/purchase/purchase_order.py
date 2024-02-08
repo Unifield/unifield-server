@@ -2957,7 +2957,7 @@ class purchase_order(osv.osv):
         else:
             po_orign = rfq.name
 
-        # Set the PO order type to Purchase List if there is a service product used
+        # Set the PO order type to DPO if there is a service product used
         order_type = rfq.order_type
         nomen_srv = self.pool.get('product.nomenclature').search(cr, uid, [('name', '=', 'SRV'), ('type', '=', 'mandatory'),
                                                                            ('level', '=', 0)], limit=1)

@@ -658,7 +658,7 @@ class tender(osv.osv):
         if context is None:
             context = {}
 
-        po_obj = self.pool.get('purchase.order')
+        t_line_obj = self.pool.get('tender.line')
         po_to_use = False
 
         for tender in self.browse(cr, uid, ids, context=context):
@@ -668,22 +668,24 @@ class tender(osv.osv):
             if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids if line.line_state != 'cancel']):
                 raise osv.except_osv(_('Error !'), _('All tender lines must have been compared!'))
 
+            # Use the DPO order type if there is a service product used
+            order_type = 'regular'
+            if t_line_obj.search_exist(cr, uid, [('tender_id', '=', tender.id),
+                                                 ('product_id.type', '=', 'service_recep')], context=context):
+                order_type = 'direct'
+
             for tender_line in tender.tender_line_ids:
                 if tender_line.line_state == 'cancel':
                     continue
 
                 # search or create PO to use:
-                po_to_use = self.pool.get('tender.line').get_existing_po(cr, uid, [tender_line.id], context=context)
+                po_to_use = t_line_obj.get_existing_po(cr, uid, [tender_line.id], order_type, context=context)
                 if not po_to_use:
-                    po_to_use = self.pool.get('tender.line').create_po_from_tender_line(cr, uid, [tender_line.id], context=context)
+                    po_to_use = t_line_obj.create_po_from_tender_line(cr, uid, [tender_line.id], context=context)
                     # log new PO:
                     po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
                     self.pool.get('purchase.order').log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
                     self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
-                elif tender_line.product_id and tender_line.product_id.type == 'service_recep' and \
-                        po_obj.read(cr, uid, po_to_use, ['order_type'])['order_type'] in ['regular', 'purchase_list']:
-                    # Change the PO Order Type to DPO if the added product is service and the PO isn't DPO
-                    po_obj.write(cr, uid, po_to_use, {'order_type': 'direct'}, context=context)
 
                 anal_dist_to_copy = tender_line.sale_order_line_id and tender_line.sale_order_line_id.analytic_distribution_id.id or False
 
@@ -1240,8 +1242,7 @@ class tender_line(osv.osv):
                 'target': 'crush',
                 'context': context}
 
-
-    def get_existing_po(self, cr, uid, ids, context=None):
+    def get_existing_po(self, cr, uid, ids, order_type, context=None):
         """
         SOURCING PROCESS: Do we have to create new PO or use an existing one ?
         If an existing one can be used, then returns his ID, otherwise returns False
@@ -1261,7 +1262,7 @@ class tender_line(osv.osv):
                 ('state', 'in', ['draft']),
                 ('delivery_requested_date', '=', rfq_line.date_planned),
                 ('rfq_ok', '=', False),
-                ('order_type', '=', 'regular'),
+                ('order_type', '=', order_type),
             ]
             res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
 
