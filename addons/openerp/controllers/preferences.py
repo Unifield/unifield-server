@@ -65,32 +65,17 @@ class Preferences(Form):
         action_data['opened'] = True
         return actions.execute(action_data)
 
-    @expose()
-    def save_department(self, dpt):
-        rpc.RPCProxy('res.users').set_department(dpt, rpc.session.context)
+    @expose('json')
+    def save_dept_email(self, dept, email):
+        try:
+            rpc.RPCProxy('res.users').set_dept_email(dept, email, rpc.session.context)
+            return {'result': True}
+        except openobject.errors.TinyException as e:
+            return {'result': False, 'message': e.message}
+        except Exception as e:
+            return {'result': False, 'message': '%s'%e}
 
-    @expose()
-    def department_update_nb(self):
-        rpc.RPCProxy('res.users').set_nb_department_asked(rpc.session.context)
 
-    @expose()
-    def department_dontask(self):
-        rpc.RPCProxy('res.users').set_department_dontask(rpc.session.context)
-
-    @expose()
-    def save_email(self, email):
-        proxy = rpc.RPCProxy('res.users')
-        proxy.set_my_email(email, rpc.session.context)
-
-    @expose()
-    def email_dontask(self):
-        proxy = rpc.RPCProxy('res.users')
-        proxy.set_dont_ask_email(rpc.session.context)
-
-    @expose()
-    def email_update_nb(self):
-        proxy = rpc.RPCProxy('res.users')
-        proxy.set_nb_email_asked(rpc.session.context)
 
     @expose(template="/openerp/controllers/templates/preferences/index.mako")
     def create(self, saved=False):

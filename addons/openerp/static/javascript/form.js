@@ -275,17 +275,26 @@ function validate_required(form){
     }
 
     email_error = false;
-    jQuery('#view_form').find('input[kind=email]').each(function () {
+    jQuery('#view_form').find('input[kind=email], input[kind=msf_email]').each(function () {
         if (!this.checkValidity()) {
             jQuery(this).addClass('errorfield');
             if (!email_error) {
-                email_error = _('Invalid Email address')
+                email_error = _('Invalid Email address.')
                 if (err_msg) {
                     err_msg = err_msg + '\n' + email_error;
                 } else {
                     err_msg = email_error;
                 }
             }
+            result = false;
+        } else if (jQuery(this).attr('kind') == 'msf_email' && this.value && !this.value.endsWith('msf.org')) {
+            jQuery(this).addClass('errorfield');
+            msg_error = _('Email address must end with msf.org.')
+            if (err_msg) {
+                    err_msg = err_msg + '\n' + msg_error;
+                } else {
+                    err_msg = msg_error;
+                }
             result = false;
         } else {
             jQuery(this).removeClass('errorfield');

@@ -398,6 +398,7 @@ class Email(TinyInputWidget):
             self.default = value
 
 register_widget(Email, ["email"])
+register_widget(Email, ["msf_email"])
 
 
 class Text(TinyInputWidget):

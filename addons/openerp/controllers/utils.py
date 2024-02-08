@@ -140,11 +140,6 @@ def change_password(target, db=None, user=None, password=None,
     new_password = origArgs.get('new_password', None)
     confirm_password = origArgs.get('confirm_password', None)
 
-    if 'email' not in origArgs:
-        email = rpc.session.execute_noauth('common', 'get_user_email', db, user, password)
-    else:
-        email = origArgs['email']
-        origArgs.pop('email', None)
     info = None
     do_change_password_page = '/openerp/do_change_password'
     if target != do_change_password_page:
@@ -152,7 +147,7 @@ def change_password(target, db=None, user=None, password=None,
     return dict(target=do_change_password_page, url=url, dblist=dblist, db=db,
                 user=user, password=password, new_password=new_password,
                 confirm_password=confirm_password, action=action, message=message,
-                origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset, expired=expired, email=email)
+                origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset, expired=expired)
 
 def secured(fn):
     """A Decorator to make a SecuredController controller method secured.
@@ -168,12 +163,10 @@ def secured(fn):
             if k.startswith('login_'):
                 del kw[k]
 
-    def clear_change_password_fields(kw, keep_email=False):
+    def clear_change_password_fields(kw,):
         for k in ('db', 'user', 'password', 'new_password', 'confirm_password'):
             if k in kw:
                 kw.pop(k, None)
-        if not keep_email:
-            kw.pop('email', None)
         for k in list(kw.keys()):
             if k.startswith('login_'):
                 del kw[k]
@@ -235,9 +228,9 @@ def secured(fn):
                              db=db, user=user, action=action, origArgs=get_orig_args(kw))
             if action == 'login' and login_ret in (-5, -7):  # must change password
                 if 'confirm_password' in kw:
-                    message = rpc.session.change_password(db, user, password, kw['new_password'], kw['confirm_password'], kw['email'])
+                    message = rpc.session.change_password(db, user, password, kw['new_password'], kw['confirm_password'])
                     if message is not True:
-                        clear_change_password_fields(kw, keep_email=True)
+                        clear_change_password_fields(kw)
                         result = change_password(cherrypy.request.path_info,
                                                  message=message, db=db, user=user, password=password,
                                                  action=action, origArgs=get_orig_args(kw), expired=login_ret==-7)

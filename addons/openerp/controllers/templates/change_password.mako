@@ -13,15 +13,6 @@
             })
         }
         function disable_save() {
-            email = document.getElementById('email');
-            if (!email.checkValidity()) {
-                jQuery(email).addClass('errorfield');
-                alert(_('Invalid Email address'));
-                return false;
-            } else {
-                jQuery(email).removeClass('errorfield');
-            }
-
             var pass = $("#show_password").val()
             $("#password").val(pass);
             $("#show_password").val(false);
@@ -90,12 +81,6 @@
                                     <td class="label"><label for="show_password">${_("Confirm new password:")}</label></td>
                                     <td style="padding: 3px;"><input type="password" id="show_confirm_password" name="confirm_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
                                     <input id="confirm_password" type="text" class="db_user_pass" style="display:none;"/>
-                                    </td>
-
-                                </tr>
-                                <tr>
-                                    <td class="label"><label for="email">${_("Email address:")}</label></td>
-                                    <td style="padding: 3px;"><input type="email" id="email" name="email" class="db_user_pass" autocomplete="off" value="${email}">
                                     </td>
 
                                 </tr>
