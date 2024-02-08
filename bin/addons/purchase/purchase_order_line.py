@@ -1776,7 +1776,7 @@ class purchase_order_line(osv.osv):
                              fiscal_position=False, date_planned=False, name=False, price_unit=False, notes=False,
                              state=False, old_price_unit=False, nomen_manda_0=False, comment=False, context=None,
                              categ=False, from_product=False, linked_sol_id=False, select_fo=False, po_order_type=False,
-                             instance_sync_order_ref=False):
+                             instance_sync_order_ref=False, rfq_ok=False):
         all_qty = qty
         partner_price = self.pool.get('pricelist.partnerinfo')
         product_obj = self.pool.get('product.product')
@@ -1791,10 +1791,10 @@ class purchase_order_line(osv.osv):
         ir_sol = linked_sol_id and self.pool.get('sale.order.line').read(cr, uid, linked_sol_id, ['procurement_request'])['procurement_request'] or False
         ir_so = select_fo and self.pool.get('sale.order').read(cr, uid, select_fo, ['procurement_request'])['procurement_request'] or False
         if product and ((linked_sol_id and not ir_sol) or (select_fo and not ir_so)) and \
-                po_order_type in ['regular', 'purchase_list'] and \
+                po_order_type in ['regular', 'purchase_list'] and not rfq_ok and \
                 product_obj.read(cr, uid, product, ['type'])['type'] == 'service_recep':
             return {'warning': {'title': _('Error'),
-                                'message': _('You can not select a Service Product on a Regular or a Purchase List PO/RfQ if the line has been sourced from a FO')},
+                                'message': _('You can not select a Service Product on a Regular or a Purchase List PO if the line has been sourced from a FO')},
                     'value': {'product_id': False}}
 
         if instance_sync_order_ref:  # Check for service product
