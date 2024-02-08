@@ -904,13 +904,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     _("""You can only source a Donation line from stock.""")
                 )
 
-            cond1 = not line.order_id.procurement_request and line.po_cft == 'po'
-            cond2 = line.product_id and line.product_id.type in ('service', 'service_recep')
+            cond1 = not line.order_id.procurement_request and line.po_cft != 'dpo'
+            cond2 = line.product_id and line.product_id.type == 'service_recep'
             cond3 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
             if cond1 and (cond2 or cond3):
                 raise osv.except_osv(
                     _('Warning'),
-                    _("""'Purchase Order' is not allowed to source a 'Service' product."""),
+                    _("""Only 'Direct Purchase Order' is allowed to source a 'Service' product."""),
                 )
 
             if not line.product_id:
@@ -2081,7 +2081,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                 po_cft = 'po'
                 if line and \
-                    ((line.product_id and line.product_id.type in ('service', 'service_recep')) or \
+                    ((line.product_id and line.product_id.type == 'service_recep') or \
                      (not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id))) and \
                         line.order_id and not line.order_id.procurement_request:
                     po_cft = 'dpo'
@@ -2140,14 +2140,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         line = self.browse(cr, uid, line_id, context=context)
 
-        cond1 = line.product_id.type in ('service', 'service_recep')
+        cond1 = line.product_id.type == 'service_recep'
         cond2 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
-        cond3 = not line.order_id.procurement_request and po_cft == 'po'
+        cond3 = not line.order_id.procurement_request and po_cft != 'dpo'
 
         if (cond1 or cond2) and cond3:
             res['warning'] = {
                 'title': _('Warning'),
-                'message': _("""'Purchase Order' is not allowed to source a 'Service' product."""),
+                'message': _("""Only 'Direct Purchase Order' is allowed to source a 'Service' product."""),
             }
             res['value'].update({'po_cft': 'dpo'})
 
