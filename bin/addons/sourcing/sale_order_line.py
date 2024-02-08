@@ -904,13 +904,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     _("""You can only source a Donation line from stock.""")
                 )
 
-            cond1 = not line.order_id.procurement_request and line.po_cft != 'dpo'
+            cond1 = not line.order_id.procurement_request and line.po_cft in ['po', 'pli']
             cond2 = line.product_id and line.product_id.type == 'service_recep'
             cond3 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
             if cond1 and (cond2 or cond3):
                 raise osv.except_osv(
                     _('Warning'),
-                    _("""Only 'Direct Purchase Order' is allowed to source a 'Service' product."""),
+                    _("""'Purchase Order' and 'Purchase List' are not allowed to source a 'Service' product."""),
                 )
 
             if not line.product_id:
@@ -2142,12 +2142,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         cond1 = line.product_id.type == 'service_recep'
         cond2 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
-        cond3 = not line.order_id.procurement_request and po_cft != 'dpo'
+        cond3 = not line.order_id.procurement_request and po_cft in ['po', 'pli']
 
         if (cond1 or cond2) and cond3:
             res['warning'] = {
                 'title': _('Warning'),
-                'message': _("""Only 'Direct Purchase Order' is allowed to source a 'Service' product."""),
+                'message': _("""'Purchase Order' and 'Purchase List' are not allowed to source a 'Service' product."""),
             }
             res['value'].update({'po_cft': 'dpo'})
 

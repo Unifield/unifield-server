@@ -2956,8 +2956,19 @@ class purchase_order(osv.osv):
             po_orign = '%s:%s' % (rfq.origin, rfq.name)
         else:
             po_orign = rfq.name
+
+        # Set the PO order type to Purchase List if there is a service product used
+        order_type = rfq.order_type
+        nomen_srv = self.pool.get('product.nomenclature').search(cr, uid, [('name', '=', 'SRV'), ('type', '=', 'mandatory'),
+                                                                           ('level', '=', 0)], limit=1)
+        pol_domain = [('order_id', '=', rfq.id), '|', ('product_id.type', '=', 'service_recep'), ('nomen_manda_0', '=', nomen_srv)]
+        if order_type in ['regular', 'purchase_list'] and nomen_srv and \
+                self.pool.get('purchase.order.line').search_exist(cr, uid, pol_domain, context=context):
+            order_type = 'direct'
+
         context.update({'generate_po_from_rfq': True})
-        new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': po_orign}, context=dict(context, keepOrigin=True))
+        new_po_vals = {'name': False, 'rfq_ok': False, 'origin': po_orign, 'order_type': order_type}
+        new_po_id = self.copy(cr, uid, ids[0], new_po_vals, context=dict(context, keepOrigin=True))
         context.pop('generate_po_from_rfq')
 
         # Remove lines with 0.00 as unit price

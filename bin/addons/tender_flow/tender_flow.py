@@ -658,6 +658,7 @@ class tender(osv.osv):
         if context is None:
             context = {}
 
+        po_obj = self.pool.get('purchase.order')
         po_to_use = False
 
         for tender in self.browse(cr, uid, ids, context=context):
@@ -679,6 +680,10 @@ class tender(osv.osv):
                     po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
                     self.pool.get('purchase.order').log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
                     self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                elif tender_line.product_id and tender_line.product_id.type == 'service_recep' and \
+                        po_obj.read(cr, uid, po_to_use, ['order_type'])['order_type'] in ['regular', 'purchase_list']:
+                    # Change the PO Order Type to DPO if the added product is service and the PO isn't DPO
+                    po_obj.write(cr, uid, po_to_use, {'order_type': 'direct'}, context=context)
 
                 anal_dist_to_copy = tender_line.sale_order_line_id and tender_line.sale_order_line_id.analytic_distribution_id.id or False
 
@@ -1289,6 +1294,7 @@ class tender_line(osv.osv):
                 location_id = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0]
                 cross_docking_ok = False if tender.sale_order_id.location_requestor_id.usage != 'customer' else True
             po_values = {
+                'order_type': tender_line.product_id and tender_line.product_id.type == 'service_recep' and 'direct' or 'regular',
                 'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '; ' + tender.name,
                 'partner_id': tender_line.supplier_id.id,
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [tender_line.supplier_id.id], ['default'])['default'],

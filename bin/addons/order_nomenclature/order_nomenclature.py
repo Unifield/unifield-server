@@ -284,11 +284,11 @@ class purchase_order_line(osv.osv):
     def get_sub_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
 
-    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, order_type=False, fo_id=False, instance_sync_order_ref=False, context=None):
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, order_type=False, fo_id=False, instance_sync_order_ref=False, rfq_ok=False, context=None):
         if isinstance(position, int) and position == 0 and nomen_manda_0 and \
                 self.check_is_service_nomen(cr, uid, nomen_manda_0):
             msg = False
-            if fo_id and order_type in ['regular', 'purchase_list'] and \
+            if fo_id and order_type in ['regular', 'purchase_list'] and not rfq_ok and\
                     not self.pool.get('sale.order').read(cr, uid, fo_id, ['procurement_request'])['procurement_request']:
                 msg = _("You can not select SRV as Nomenclature Main Type if the line is linked to a FO")
             elif instance_sync_order_ref and 'FO' in self.pool.get('sync.order.label').read(cr, uid, instance_sync_order_ref)['name']:
