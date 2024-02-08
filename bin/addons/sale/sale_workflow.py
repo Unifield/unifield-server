@@ -709,10 +709,7 @@ class sale_order_line(osv.osv):
                                                               ('name', '=', 'res_partner_local_market'),
                                                               ('res_id', '=', supplier.id)], context=context)
                 if not is_loc_mar:
-                    if sol.product_id and sol.product_id.type == 'service_recep':
-                        to_write['po_cft'] = 'dpo'
-                    else:
-                        to_write['po_cft'] = 'po'
+                    to_write['po_cft'] = 'po'
 
             if sol.order_id.order_type in ['loan', 'loan_return']:
                 to_write['supplier'] = False
