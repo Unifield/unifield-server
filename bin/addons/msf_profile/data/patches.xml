@@ -1028,6 +1028,7 @@
         <record id="us_12076_remove_po_audittrail_rule_domain" model="patch.scripts">
             <field name="method">us_12076_remove_po_audittrail_rule_domain</field>
         </record>
+
         <record id="us_11907_12339_fix_locations_eprep_category" model="patch.scripts">
             <field name="method">us_11907_12339_fix_locations_eprep_category</field>
         </record>
@@ -1037,6 +1038,10 @@
 
         <record id="us_12273_remove_never_exp_password" model="patch.scripts">
             <field name="method">us_12273_remove_never_exp_password</field>
+        </record>
+
+        <record id="us_12294_force_email_popup" model="patch.scripts">
+            <field name="method">us_12294_force_email_popup</field>
         </record>
 
 
