@@ -182,8 +182,8 @@ class hq_report_oca(report_sxw.report_sxw):
 
         # list the journal types for which the rate used will always be 1
         # i.e. REVAL, Curr. Adjustment, and Accrual
-        no_rate_journal_types = ['revaluation', 'cur_adj', 'accrual']
-        no_rate_analytic_journal_types = ['revaluation', 'cur_adj', 'general']  # Analytic Accrual Journals have the type "general"
+        no_rate_journal_types = ['revaluation', 'cur_adj']
+        no_rate_analytic_journal_types = ['revaluation', 'cur_adj']
 
         # Initialize lists: one for the first report...
         first_result_lines = []
