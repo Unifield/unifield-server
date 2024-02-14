@@ -373,7 +373,7 @@ class automated_import_job(osv.osv):
                         )
 
                         report_file_name = remote.get_report_file_name(r_filename)
-                        fp_file = open(report_file_name, 'wb')
+                        fp_file = open(report_file_name, 'w')
                         fp_file.write("File: %s\r\nStart: %s\r\nEnd: %s\r\nState: %s\r\nFile lines processed: %s\r\nIIL Created: %s\r\nLines rejected: %s\r\n\r\n%s" % (
                             import_wiz_obj.filename,
                             import_wiz_obj.start_date,
@@ -402,7 +402,7 @@ class automated_import_job(osv.osv):
                                 rejected_fn = 'rejected_lines_%s' % filename
                                 rejected_full_filename = os.path.join(tmp_dir, rejected_fn)
                                 fp_rejected = open(rejected_full_filename, 'wb')
-                                fp_rejected.write(base64.decodestring(file_res.get('result')))
+                                fp_rejected.write(base64.b64decode(file_res.get('result')))
                                 fp_rejected.close()
                                 remote.move_to_process_path(rejected_fn, success=False, local_src=tmp_dir)
 
