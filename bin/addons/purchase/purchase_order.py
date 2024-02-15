@@ -2957,60 +2957,64 @@ class purchase_order(osv.osv):
         else:
             po_orign = rfq.name
 
-        # Set the PO order type to DPO if there is a service product used
-        order_type = rfq.order_type
-        nomen_srv = self.pool.get('product.nomenclature').search(cr, uid, [('name', '=', 'SRV'), ('type', '=', 'mandatory'),
-                                                                           ('level', '=', 0)], limit=1)
-        pol_domain = [('order_id', '=', rfq.id), '|', ('product_id.type', '=', 'service_recep'), ('nomen_manda_0', '=', nomen_srv)]
-        if order_type in ['regular', 'purchase_list'] and nomen_srv and \
-                self.pool.get('purchase.order.line').search_exist(cr, uid, pol_domain, context=context):
-            order_type = 'direct'
-
-        context.update({'generate_po_from_rfq': True})
-        new_po_vals = {'name': False, 'rfq_ok': False, 'origin': po_orign, 'order_type': order_type}
-        new_po_id = self.copy(cr, uid, ids[0], new_po_vals, context=dict(context, keepOrigin=True))
-        context.pop('generate_po_from_rfq')
-
-        # Remove lines with 0.00 as unit price
-        no_price_line_ids = pol_obj.search(cr, uid, [
-            ('order_id', '=', new_po_id),
-            ('price_unit', '=', 0.00),
-        ], order='NO_ORDER', context=context)
-        pol_obj.unlink(cr, uid, no_price_line_ids, context=context)
-
-        # set origin:
-        line_ids = pol_obj.search(cr, uid, [('order_id', '=', new_po_id)], context=context)
-        pol_obj.write(cr, uid, line_ids, {'origin': rfq.origin}, context=context)
-
-        # set cross_docking_ok:
+        # Check cross_docking_ok:
         cross_docking_ok = False
+        cr.execute("""SELECT pl.id FROM purchase_order_line pl 
+                        LEFT JOIN sale_order_line sl ON pl.linked_sol_id = sl.id 
+                        LEFT JOIN sale_order s ON sl.order_id = s.id 
+                        LEFT JOIN stock_location l ON s.location_requestor_id = l.id 
+                    WHERE pl.linked_sol_id IS NOT NULL AND (s.procurement_request = 'f' OR 
+                        (s.procurement_request = 't' AND l.usage = 'customer')) AND pl.order_id = %s""", (rfq.id,))
+        if cr.fetchone():
+            cross_docking_ok = True
+
+        # Create a PO and/or a DPO depending on if one or more lines has a service product and is sourced from a FO
+        new_po_id = False
+        context.update({'generate_po_from_rfq': True})
         for rfq_line in rfq.order_line:
-            if rfq_line.linked_sol_id and (not rfq_line.linked_sol_id.order_id.procurement_request or \
-                                           (rfq_line.linked_sol_id.order_id.procurement_request and
-                                            rfq_line.linked_sol_id.order_id.location_requestor_id.usage == 'customer')):
-                cross_docking_ok = True
-                break
-        self.write(cr, uid, [new_po_id], {'cross_docking_ok': cross_docking_ok}, context=context)
-
-        # set AD:
-        pol_no_ad = pol_obj.search(cr, uid, [
-            ('order_id', '=', new_po_id),
-            ('analytic_distribution_id', '=', False),
-            ('linked_sol_id', '!=', False),
-            ('linked_sol_id.order_id.procurement_request', '=', False),
-        ], order='NO_ORDER', context=context)
-        for pol in pol_obj.browse(cr, uid, pol_no_ad, context=context):
-            dist_sol = pol.linked_sol_id.analytic_distribution_id.id or pol.linked_sol_id.order_id.analytic_distribution_id.id or False
-            if not dist_sol:
+            # Ignore cancelled lines and lines with a price of 0
+            if rfq_line.state in ('cancel', 'cancel_r') or rfq_line.rfq_line_state in ('cancel', 'cancel_r') or \
+                    rfq_line.price_unit == 0.00:
                 continue
-            new_dist = self.pool.get('analytic.distribution').copy(cr, uid, dist_sol, {}, context=context)
-            pol_obj.write(cr, uid, [pol.id], {
-                'analytic_distribution_id': new_dist,
-            }, context=context)
 
-        # log message describing the previous action
-        new_po_data = self.read(cr, uid, new_po_id, ['name'], context=context)
-        self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.') % new_po_data['name'])
+            order_type = rfq.order_type
+            nomen_srv = self.pool.get('product.nomenclature').search(cr, uid, [('name', '=', 'SRV'), ('type', '=', 'mandatory'),
+                                                                               ('level', '=', 0)], limit=1)
+            if order_type in ['regular', 'purchase_list'] and nomen_srv and \
+                    ((rfq_line.linked_sol_id and not rfq_line.linked_sol_id.procurement_request) or
+                     (rfq_line.select_fo and not rfq_line.select_fo.procurement_request)) and \
+                    ((rfq_line.product_id and rfq_line.product_id.type == 'service_recep') or
+                     rfq_line.nomen_manda_0.id == nomen_srv):
+                order_type = 'direct'
+
+            po_domain = [
+                ('partner_id', '=', rfq.partner_id.id),
+                ('state', '=', 'draft'),
+                ('origin', '=', po_orign),
+                ('rfq_ok', '=', False),
+                ('order_type', '=', order_type),
+            ]
+            new_po_ids = self.search(cr, uid, po_domain, context=context)
+            if not new_po_ids:
+                new_po_vals = {'name': False, 'rfq_ok': False, 'origin': po_orign, 'order_type': order_type, 'order_line': False}
+                new_po_id = self.copy(cr, uid, ids[0], new_po_vals, context=dict(context, keepOrigin=True))
+                # log message describing the PO creation
+                new_po_data = self.read(cr, uid, new_po_id, ['name'], context=context)
+                self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.') % new_po_data['name'])
+            else:
+                new_po_id = new_po_ids[0]
+
+            pol_values = {'origin': rfq.origin, 'cross_docking_ok': cross_docking_ok, 'order_id': new_po_id}
+
+            # AD will be copied in copy_data for the PO line, the same AD should not and will not be re-used
+            if not rfq_line.analytic_distribution_id and rfq_line.linked_sol_id and\
+                    not rfq_line.linked_sol_id.procurement_request:
+                pol_values['analytic_distribution_id'] = rfq_line.linked_sol_id.analytic_distribution_id.id or rfq_line.linked_sol_id.order_id.analytic_distribution_id.id or False
+            elif rfq_line.analytic_distribution_id:
+                pol_values['analytic_distribution_id'] = rfq_line.analytic_distribution_id.id
+
+            pol_obj.copy(cr, uid, rfq_line.id, pol_values, context=context)
+        context.pop('generate_po_from_rfq')
 
         return new_po_id
 
@@ -3119,6 +3123,41 @@ class purchase_order(osv.osv):
                 to_process.append(po.id)
         self._finish_commitment(cr, uid, to_process, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
+
+    def check_continue_sourcing(self, cr, uid, ids, context=None):
+        '''
+        Warn the user if the RfQ, coming from an FO, has both service and non-service products
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        pol_obj = self.pool.get('purchase.order.line')
+
+        for rfq_id in ids:
+            has_srv_domain = [('order_id', '=', rfq_id), ('product_id.type', '=', 'service_recep'),
+                              '|', '&', ('linked_sol_id', '!=', False), ('linked_sol_id.procurement_request', '=', False),
+                                   '&', ('select_fo', '!=', False), ('select_fo.procurement_request', '=', False)]
+            srv_rfq_line_from_fo_ids = pol_obj.search(cr, uid, has_srv_domain, context=context)
+            has_not_srv_domain = [('order_id', '=', rfq_id), ('id', 'not in', srv_rfq_line_from_fo_ids)]
+            has_not_srv_prod = pol_obj.search_exist(cr, uid, has_not_srv_domain, context=context)
+            if srv_rfq_line_from_fo_ids and has_not_srv_prod:
+                wiz_id = self.pool.get('rfq.has.service.not.service.product.wizard').create(cr, uid, {'rfq_id': rfq_id}, context=context)
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'rfq_has_service_not_service_product_wizard_form_view')[1]
+
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'rfq.has.service.not.service.product.wizard',
+                    'res_id': wiz_id,
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'view_id': [view_id],
+                    'target': 'new',
+                    'context': context
+                }
+
+        return self.continue_sourcing(cr, uid, ids, context=context)
 
     def continue_sourcing(self, cr, uid, ids, context=None):
         '''
