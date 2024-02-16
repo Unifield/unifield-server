@@ -1490,6 +1490,7 @@ class purchase_order(osv.osv):
     def copy_web(self, cr, uid, id, defaults=None, context=None):
         if defaults is None:
             defaults = {}
+        defaults['from_procurement'] = False
         is_direct = False
         if self.search_exists(cr, uid, [('id', '=', id), ('order_type', '=', 'direct')], context=context):
             company_id = self.pool.get('res.users').get_current_company(cr, uid)[0][0]
@@ -2981,7 +2982,7 @@ class purchase_order(osv.osv):
             nomen_srv = self.pool.get('product.nomenclature').search(cr, uid, [('name', '=', 'SRV'), ('type', '=', 'mandatory'),
                                                                                ('level', '=', 0)], limit=1)
             if order_type in ['regular', 'purchase_list'] and nomen_srv and \
-                    ((not rfq_line.linked_sol_id and not rfq_line.select_fo) or
+                    ((rfq.from_procurement and not rfq_line.linked_sol_id and not rfq_line.select_fo) or
                      (rfq_line.linked_sol_id and not rfq_line.linked_sol_id.procurement_request) or
                      (rfq_line.select_fo and not rfq_line.select_fo.procurement_request)) and \
                     ((rfq_line.product_id and rfq_line.product_id.type == 'service_recep') or
@@ -3139,13 +3140,18 @@ class purchase_order(osv.osv):
         for rfq_id in ids:
             nomen_srv = self.pool.get('product.nomenclature').search(cr, uid, [('name', '=', 'SRV'), ('type', '=', 'mandatory'),
                                                                                ('level', '=', 0)], limit=1)
-            has_srv_domain = [('order_id', '=', rfq_id), '|', ('product_id.type', '=', 'service_recep'),
-                              ('nomen_manda_0', '=', nomen_srv[0]), '|', '|',
-                              '&', ('linked_sol_id', '=', False), ('select_fo', '=', False),
-                              '&', ('linked_sol_id', '!=', False), ('linked_sol_id.procurement_request', '=', False),
-                              '&', ('select_fo', '!=', False), ('select_fo.procurement_request', '=', False)]
+            has_srv_domain = [('order_id', '=', rfq_id), ('state', 'not in', ['cancel', 'cancel_r']),
+                              ('rfq_line_state', 'not in', ['cancel', 'cancel_r']), ('price_unit', '!=', 0.00),
+                              '|', ('product_id.type', '=', 'service_recep'), ('nomen_manda_0', '=', nomen_srv[0]),
+                              '|', '|',
+                                  '&', '&', ('order_id.from_procurement', '=', True), ('linked_sol_id', '=', False),
+                                            ('select_fo', '=', False),
+                                  '&', ('linked_sol_id', '!=', False), ('linked_sol_id.procurement_request', '=', False),
+                                  '&', ('select_fo', '!=', False), ('select_fo.procurement_request', '=', False)]
             srv_rfq_line_from_fo_ids = pol_obj.search(cr, uid, has_srv_domain, context=context)
-            has_not_srv_domain = [('order_id', '=', rfq_id), ('id', 'not in', srv_rfq_line_from_fo_ids)]
+            has_not_srv_domain = [('order_id', '=', rfq_id), ('id', 'not in', srv_rfq_line_from_fo_ids),
+                                  ('price_unit', '!=', 0.00), ('state', 'not in', ['cancel', 'cancel_r']),
+                                  ('rfq_line_state', 'not in', ['cancel', 'cancel_r'])]
             has_not_srv_prod = pol_obj.search_exist(cr, uid, has_not_srv_domain, context=context)
             if srv_rfq_line_from_fo_ids and has_not_srv_prod:
                 wiz_id = self.pool.get('rfq.has.service.not.service.product.wizard').create(cr, uid, {'rfq_id': rfq_id}, context=context)
