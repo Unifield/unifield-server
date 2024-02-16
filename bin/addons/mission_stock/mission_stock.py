@@ -1095,6 +1095,7 @@ class stock_mission_report(osv.osv):
                     pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                     po.id = pol.order_id and
                     po.partner_id = p.id and
+                    po.order_type != 'direct' and
                     pol.product_id is not null
                 GROUP BY pol.product_id, pol.product_uom, p.name
                 UNION ALL
