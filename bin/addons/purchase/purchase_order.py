@@ -2981,10 +2981,11 @@ class purchase_order(osv.osv):
             nomen_srv = self.pool.get('product.nomenclature').search(cr, uid, [('name', '=', 'SRV'), ('type', '=', 'mandatory'),
                                                                                ('level', '=', 0)], limit=1)
             if order_type in ['regular', 'purchase_list'] and nomen_srv and \
-                    ((rfq_line.linked_sol_id and not rfq_line.linked_sol_id.procurement_request) or
+                    ((not rfq_line.linked_sol_id and not rfq_line.select_fo) or
+                     (rfq_line.linked_sol_id and not rfq_line.linked_sol_id.procurement_request) or
                      (rfq_line.select_fo and not rfq_line.select_fo.procurement_request)) and \
                     ((rfq_line.product_id and rfq_line.product_id.type == 'service_recep') or
-                     rfq_line.nomen_manda_0.id == nomen_srv):
+                     rfq_line.nomen_manda_0.id == nomen_srv[0]):
                 order_type = 'direct'
 
             po_domain = [
@@ -3136,9 +3137,13 @@ class purchase_order(osv.osv):
         pol_obj = self.pool.get('purchase.order.line')
 
         for rfq_id in ids:
-            has_srv_domain = [('order_id', '=', rfq_id), ('product_id.type', '=', 'service_recep'),
-                              '|', '&', ('linked_sol_id', '!=', False), ('linked_sol_id.procurement_request', '=', False),
-                                   '&', ('select_fo', '!=', False), ('select_fo.procurement_request', '=', False)]
+            nomen_srv = self.pool.get('product.nomenclature').search(cr, uid, [('name', '=', 'SRV'), ('type', '=', 'mandatory'),
+                                                                               ('level', '=', 0)], limit=1)
+            has_srv_domain = [('order_id', '=', rfq_id), '|', ('product_id.type', '=', 'service_recep'),
+                              ('nomen_manda_0', '=', nomen_srv[0]), '|', '|',
+                              '&', ('linked_sol_id', '=', False), ('select_fo', '=', False),
+                              '&', ('linked_sol_id', '!=', False), ('linked_sol_id.procurement_request', '=', False),
+                              '&', ('select_fo', '!=', False), ('select_fo.procurement_request', '=', False)]
             srv_rfq_line_from_fo_ids = pol_obj.search(cr, uid, has_srv_domain, context=context)
             has_not_srv_domain = [('order_id', '=', rfq_id), ('id', 'not in', srv_rfq_line_from_fo_ids)]
             has_not_srv_prod = pol_obj.search_exist(cr, uid, has_not_srv_domain, context=context)
