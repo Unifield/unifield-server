@@ -719,29 +719,27 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if order['order_type'] in ['loan', 'loan_return']:
                     vals['related_sourcing_id'] = False
 
-        if product and vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
-            vals['supplier'] = product.seller_id and (product.seller_id.supplier or product.seller_id.manufacturer or
-                                                      product.seller_id.transporter) and product.seller_id.id or False
+        if product:
+            if vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
+                vals['supplier'] = product.seller_id and (product.seller_id.supplier or product.seller_id.manufacturer or
+                                                          product.seller_id.transporter) and product.seller_id.id or False
+            if product.type in ('consu', 'service', 'service_recep'):
+                vals['type'] = 'make_to_order'
 
-        if product and product.type in ('consu', 'service', 'service_recep'):
-            vals['type'] = 'make_to_order'
-
-        if product and product.type in ('service', 'service_recep'):
-            if ir and vals.get('po_cft', 'dpo') == 'dpo':
-                vals['po_cft'] = 'po'
-            elif not ir and vals.get('po_cft', 'po') == 'po':
-                vals['po_cft'] = 'dpo'
-        elif not product and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0', False)):
-            vals['po_cft'] = 'dpo'
-        elif product and product.state.code == 'forbidden':
-            vals['type'] = 'make_to_stock'
+            if product.type in ('service', 'service_recep'):
+                if ir and vals.get('po_cft', 'dpo') == 'dpo':
+                    vals['po_cft'] = 'po'
+                elif not ir and vals.get('po_cft', 'po') == 'po':
+                    vals['po_cft'] = 'dpo'
+            elif product.state.code == 'forbidden':
+                vals['type'] = 'make_to_stock'
 
         if not product:
             vals.update({
                 'type': 'make_to_order',
                 'po_cft': 'po',
             })
-            if vals.get('nomen_manda_0') and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
+            if not ir and vals.get('nomen_manda_0') and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
                 vals['po_cft'] = 'dpo'
 
         # If type is missing, set to make_to_stock and po_cft to False
