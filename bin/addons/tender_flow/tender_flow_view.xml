@@ -94,7 +94,7 @@
                         <button name="compare_rfqs" string="Compare RfQs" type="object" icon="gtk-find" attrs="{'invisible': ['|', ('state', '!=', 'comparison'), ('diff_nb_rfq_supplier', '=', True)]}" />
                         <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit"
                             attrs="{'invisible':['|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison')]}" />
-                        <button name="continue_sourcing" states="comparison" type="object" string="Continue Sourcing Process" icon="gtk-go-forward"
+                        <button name="check_continue_sourcing" states="comparison" type="object" string="Continue Sourcing Process" icon="gtk-go-forward"
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','=', False)]}" />
                         <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add"
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
@@ -383,7 +383,7 @@
                         <button name="check_rfq_updated" type="object" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': [('rfq_state', '!=', 'sent')]}" />
                         <button name="generate_po_from_rfq" type="object" string="Generate Po" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', True)], 'readonly': [('amount_total', '=', 0.00)]}" />
                         <button name="rfq_closed" string="RfQ Closed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', True)]}" />
-                        <button name="continue_sourcing" type="object" string="Continue sourcing" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', False)]}" />
+                        <button name="check_continue_sourcing" type="object" string="Continue sourcing" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', False)]}" />
                     </group>
                 </form>
             </field>
@@ -706,6 +706,25 @@
                     <newline />
                     <button name="yes_close_tender" string="Continue" type="object" icon="terp-check" colspan="1" />
                     <button name="no_close_tender" string="Return to previous screen" type="object" icon="gtk-cancel" colspan="1" />
+                </form>
+            </field>
+        </record>
+
+        <record id="tender_has_service_not_service_product_wizard_form_view" model="ir.ui.view">
+            <field name="name">Confirm PO creation from Tender</field>
+            <field name="model">tender.has.service.not.service.product.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Purchase Order creation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h3 style="text-align: center; margin: 13px"><translate>This Tender contains service and non-service products. This means 2 Purchase Orders will be created: A Direct PO for the Service products and a Regular PO for the non-service products.</translate></h3>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" />
+                    <button name="continue_continue_sourcing" string="Continue" type="object" icon="terp-camera_test" colspan="2" />
+                    <button name="close_wizard" string="Close" type="object" icon="gtk-close" colspan="2" />
                 </form>
             </field>
         </record>
