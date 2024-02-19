@@ -1031,7 +1031,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             product = product_obj.browse(cr, uid, vals['product_id'])
             if product.type in ('consu', 'service', 'service_recep'):
                 srv_product = True
-        elif vals.get('nomen_manda_0') and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
+        elif not context.get('procurement_request', False) and vals.get('nomen_manda_0') and \
+                check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
             srv_product = True
 
         if srv_product:
