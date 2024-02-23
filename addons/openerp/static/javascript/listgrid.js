@@ -647,7 +647,7 @@ MochiKit.Base.update(ListView.prototype, {
                   http://bugs.jquery.com/ticket/8148 (see comment 5)
             */
             $src[0].blur();
-            if ($src.is('.m2o')) {
+            if ($src.is('.m2o') || $src.is('.reference')) {
                 var k = $src.attr('id');
                 k = k.slice(0, k.length - 5);
 
