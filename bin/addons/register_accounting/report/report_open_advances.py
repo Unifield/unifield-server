@@ -96,7 +96,7 @@ class report_open_advances2(report_sxw.rml_parse):
         if obj.journal_id and obj.journal_id.currency:
             domain.append(('currency_id', '=', obj.journal_id.currency.id))
         ids = obj_line.search(self.cr, self.uid, domain, context={'check_advance_reconciled': True})
-        for line in obj_line.browse(self.cr, self.uid, ids, context={'lang': self.localcontext.get('lang')}):
+        for line in obj_line.browse(self.cr, 1, ids, context={'lang': self.localcontext.get('lang')}):
             ret.append(line)
         return ret
 
