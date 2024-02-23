@@ -1337,6 +1337,9 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'),
                                              _('Account: %s - %s. The journal used for the internal transfer must be different from the '
                                                'Journal Entry Journal.') % (ml.account_id.code, ml.account_id.name))
+                    if type_for_reg == 'payroll' and not ml.partner_id and not ml.employee_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('Account: %s - %s. The Third Party is required') % (ml.account_id.code, ml.account_id.name))
                     # Only Donation accounts are allowed with an ODX journal
                     if m.journal_id.type == 'extra' and type_for_reg != 'donation':
                         raise osv.except_osv(_('Warning'), _('The account %s - %s is not compatible with the '
