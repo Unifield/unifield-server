@@ -57,6 +57,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_12350_is_default_recompute_trigger(self, cr, uid, *a, **b):
+        all_journ_ids = self.pool.get('account.journal').search(cr, uid, [('is_current_instance', '=', True)])
+        # to trigger recompute of is_default stored field function
+        self.pool.get('account.journal').write(cr, uid, all_journ_ids, {})
+        return True
+
     # UF32.0
     def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id

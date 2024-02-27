@@ -1044,6 +1044,9 @@
             <field name="method">us_12294_force_email_popup</field>
         </record>
 
+        <record id="us_12350_is_default_recompute_trigger" model="patch.scripts">
+            <field name="method">us_12350_is_default_recompute_trigger</field>
+        </record>
 
     </data>
 </openerp>
