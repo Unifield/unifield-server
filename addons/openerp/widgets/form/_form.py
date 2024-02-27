@@ -267,7 +267,7 @@ class Notebook(TinyWidget):
     template = "/openerp/widgets/form/templates/notebook.mako"
     javascript = [JSLink("openerp", "javascript/notebook/notebook.js")]
 
-    params = ['fake_widget']
+    params = ['fake_widget', 'prefix']
     member_widgets = ['children']
 
     valign = "top"
@@ -276,7 +276,7 @@ class Notebook(TinyWidget):
         super(Notebook, self).__init__(**attrs)
         self.nolabel = True
         self.colspan = attrs.get('colspan', 3)
-
+        self.prefix = attrs.get('prefix') or ''
         self.fake_widget = '_fake'
         if attrs.get('prefix'):
             self.fake_widget = attrs['prefix'] + '/_fake'
@@ -285,8 +285,13 @@ register_widget(Notebook, ["notebook"])
 
 class Page(Frame):
 
+    params = ['view_id']
+
     def __init__(self, **attrs):
         super(Page, self).__init__(**attrs)
+        self.view_id = ''
+        if attrs.get('view_id'):
+            self.view_id = attrs['view_id']
         if self.invisible:
             self.attributes = "{'invisible': [1]}"
 

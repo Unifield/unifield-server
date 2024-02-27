@@ -35,6 +35,7 @@
  *  @arguments 'see show'
  *
  */
+
 var Notebook = function(element, options) {
 
     var cls = arguments.callee;
@@ -70,7 +71,8 @@ Notebook.prototype = {
             'closable': true,
             'scrollable': true,
             'remember': true,
-            'onclose': null
+            'onclose': null,
+            'prefix': '',
         }, options || {});
 
         this.prepare();
@@ -121,7 +123,7 @@ Notebook.prototype = {
                 help: help,
                 closable: closable,
                 activate: false,
-                css: page.className
+                css: page.className,
             });
         }
 
@@ -228,6 +230,36 @@ Notebook.prototype = {
         }
     },
 
+    loadtab: function(tab, view_id) {
+        tab = tab.tagName == "LI" ? tab : getFirstParentByTagAndClassName(evt.target(), 'li');
+        page = this.getPage(tab);
+        jQuery(page).empty();
+        var model = jQuery('[id*="'+this.options.prefix + '_terp_model'+'"]').val();
+        var id = jQuery('[id*="'+this.options.prefix + '_terp_id'+'"]').val()
+        if (!id || !page) {
+            return false;
+        }
+        var args = {
+            '_terp_model': model,
+            '_terp_id': id,
+            '_terp_view_mode': "['tree', 'form']",
+            '_terp_view_type': 'form',
+            '_terp_view_ids': "[False, "+view_id+"]",
+            'editable': jQuery('[id*="'+this.options.prefix + '_terp_editable'+'"]').val() || 'False',
+        }
+
+        jQuery.ajax({
+                url: '/openerp/form/get_form',
+                data: args,
+                dataType: 'json',
+                type: 'POST',
+                error: loadingError(),
+                success: function(obj) {
+                    jQuery(page).html(obj.view);
+            }
+        })
+    },
+
     add: function(content, options) {
         options = MochiKit.Base.update({
             text: "",                         // text of the tab
@@ -235,7 +267,7 @@ Notebook.prototype = {
             help: "",                         // help text for the tab
             closable: this.options.closable,  // make the tab closable
             activate: true,                   // activate the tab or not
-            css: null                         // additional css class
+            css: null,                         // additional css class
         }, options || {});
 
         var text = options.text ? options.text : 'Page ' + this.tabs.length;
@@ -317,6 +349,9 @@ Notebook.prototype = {
             var i = findIdentical(this.tabs, tab);
             var page = this.pages[i];
 
+            if (page.attributes.view_id.value) {
+                this.loadtab(tab, page.attributes.view_id.value);
+            }
             MochiKit.DOM.addElementClass(tab, 'notebook-tab-active');
             MochiKit.DOM.addElementClass(page, 'notebook-page-active');
         }
