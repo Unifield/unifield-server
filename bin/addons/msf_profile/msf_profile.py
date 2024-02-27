@@ -67,12 +67,7 @@ class patch_scripts(osv.osv):
             WHERE
                 name IN ('birthday', 'gender', 'marital', 'mobile_phone', 'notes', 'private_phone', 'work_email',
             'work_phone', 'country_id', 'ssnid', 'bank_name', 'bank_account_number') AND
-                object_id = (SELECT id FROM ir_model WHERE model = 'hr.employee') AND
-                field_id IN (SELECT id FROM ir_model_fields
-                            WHERE
-                                model_id = (SELECT id FROM ir_model WHERE model = 'hr.employee') AND
-                                name IN ('birthday', 'gender', 'marital', 'mobile_phone', 'notes', 'private_phone',
-                                'work_email', 'work_phone', 'country_id', 'ssnid', 'bank_name', 'bank_account_number'))
+                object_id = (SELECT id FROM ir_model WHERE model = 'resource.resource')
             """)
         return True
 
