@@ -1272,7 +1272,7 @@ class account_bank_statement_line(osv.osv):
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
         'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
         'type_for_register': fields.related('account_id','type_for_register', string="Type for register", type='selection', selection=[('none','None'),
-                                                                                                                                       ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
+                                                                                                                                       ('transfer', 'Internal Transfer (different currencies)'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
                                                                                                                                        ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
         'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
         'free_analytic_lines': fields.function(_get_free_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines Free 1 and Free 2 linked to the given register line(s). Correction(s) included."),
