@@ -233,7 +233,6 @@ Notebook.prototype = {
     loadtab: function(tab, view_id) {
         tab = tab.tagName == "LI" ? tab : getFirstParentByTagAndClassName(evt.target(), 'li');
         page = this.getPage(tab);
-        jQuery(page).empty();
         var model = jQuery('[id*="'+this.options.prefix + '_terp_model'+'"]').val();
         var id = jQuery('[id*="'+this.options.prefix + '_terp_id'+'"]').val()
         if (!id || !page) {
@@ -247,7 +246,22 @@ Notebook.prototype = {
             '_terp_view_ids': "[False, "+view_id+"]",
             'editable': jQuery('[id*="'+this.options.prefix + '_terp_editable'+'"]').val() || 'False',
         }
-
+        jQuery(page).find('table.one2many').each(function () {
+            var o2m_id =this.id.replace(/^(_o2m_)/,"");
+            args[o2m_id+'/_terp_limit'] =  jQuery('[id="'+o2m_id+'/_terp_limit"]').val();
+            args[o2m_id+'/_terp_offset'] = jQuery('[id="'+o2m_id+'/_terp_offset"]').val();
+            args[o2m_id+'/_terp_domain'] = jQuery('[id="'+o2m_id+'/_terp_domain"]').val();
+            var filter = jQuery('[id="'+o2m_id+'_filter"]')
+            if (filter && filter[0]) {
+                args[o2m_id+'/_terp_default_selector_value'] = filter[0].selectedIndex;
+            }
+            var lv = new ListView(o2m_id);
+            if (lv.sort_key) {
+                args[o2m_id+'/_terp_sort_key'] = lv.sort_key;
+                args[o2m_id+'/_terp_sort_order'] = lv.sort_order;
+            }
+        })
+        jQuery(page).empty();
         jQuery.ajax({
                 url: '/openerp/form/get_form',
                 data: args,

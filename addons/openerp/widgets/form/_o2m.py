@@ -148,9 +148,17 @@ class O2M(TinyInputWidget):
         current.offset = current.offset or 0
         current.limit = current.limit or 50
 
+        forced_order = False
+        if current.sort_key and current.sort_order:
+            params.sort_key = current.sort_key
+            params.sort_order = current.sort_order
+            forced_order = True
 
         self.filter_selector = attrs.get('filter_selector', None)
-        self.default_selector = 0
+        if current.default_selector_value:
+            self.default_selector = current.default_selector_value
+        else:
+            self.default_selector = 0
         if self.filter_selector:
             self.filter_selector = eval(self.filter_selector)
             # If we have a filter selector, and no domain yet, use the first
@@ -200,7 +208,7 @@ class O2M(TinyInputWidget):
 
         id = (ids or None) and ids[0]
 
-        if self.name == self.source or self.name == params.source or current.domain:
+        if self.name == self.source or self.name == params.source or current.domain or forced_order:
             if (params.sort_key or current.domain) and ids:
                 domain = (current.domain or []) + [('id', 'in', ids)]
 
