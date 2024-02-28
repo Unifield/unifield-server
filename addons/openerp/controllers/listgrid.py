@@ -245,7 +245,6 @@ class List(SecuredController):
     @expose('jsonp', methods=('POST',))
     def get(self, **kw):
         params, data = TinyDict.split(kw)
-
         if params.get('_terp_from_auto_refresh'):
             no_session_refresh()
         groupby = params.get('_terp_group_by_ctx')

@@ -82,12 +82,13 @@ class O2M(TinyInputWidget):
     template = "/openerp/widgets/form/templates/one2many.mako"
     params = ['id', 'parent_id', 'new_attrs', 'pager_info', 'switch_to',
               'default_get_ctx', 'source', 'view_type', 'default_value',
-              'edition', 'readonly_before_state', 'editable_style', 'scroll']
+              'edition', 'readonly_before_state', 'editable_style', 'scroll', 'parent_view_ids']
     member_widgets = ['screen']
 
     form = None
     valign = "top"
     default_value = []
+    parent_view_ids = None
 
     def __init__(self, **attrs):
         #FIXME: validation error in `Pricelist Version`

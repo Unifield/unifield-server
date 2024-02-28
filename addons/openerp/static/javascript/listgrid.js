@@ -50,6 +50,11 @@ ListView.prototype = {
         this.view_mode = jQuery('[id*="'+prefix + '_terp_view_mode'+'"]').get() ? jQuery('[id*="'+prefix + '_terp_view_mode'+'"]').val() : null;
         this.view_type = jQuery('[id*="'+prefix + '_terp_view_type'+'"]').get() ? jQuery('[id*="'+prefix + '_terp_view_type'+'"]').val() : null;
 
+        this.parent_view_ids = null;
+        var parent_view_ids = jQuery('[id*="'+prefix + '_terp_parent_view_ids'+'"]');
+        if (parent_view_ids.get()) {
+            this.parent_view_ids = parent_view_ids.val();
+        }
         // if o2m
 
         this.m2m = jQuery('[id*="'+ name + '_set' + '"]');
@@ -1063,7 +1068,6 @@ MochiKit.Base.update(ListView.prototype, {
                 });
             }
         }
-
         if(this.sort_key) {
             jQuery.extend(args, {
                 _terp_sort_key: this.sort_key,
@@ -1081,6 +1085,9 @@ MochiKit.Base.update(ListView.prototype, {
         if (ids_to_show) {
             args['_terp_ids_to_show'] = '['+ids_to_show.join(',')+']';
             args['_terp_offset'] = 0;
+        }
+        if (this.parent_view_ids) {
+            args['_terp_view_ids'] = this.parent_view_ids;
         }
         jQuery(idSelector(self.name) + ' .loading-list').show();
         current_search = jQuery.ajax({
