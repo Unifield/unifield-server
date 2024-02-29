@@ -58,7 +58,6 @@ class patch_scripts(osv.osv):
     }
 
     def us_12350_is_default_update(self, cr, uid, *a, **b):
-        all_journ_ids = self.pool.get('account.journal').search(cr, uid, [('is_current_instance', '=', True)])
         # update is_default field of journals EOY and IB
         cr.execute("""
                     UPDATE account_journal
