@@ -57,14 +57,16 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-    def us_12350_is_default_recompute_trigger(self, cr, uid, *a, **b):
+    def us_12350_is_default_update(self, cr, uid, *a, **b):
         all_journ_ids = self.pool.get('account.journal').search(cr, uid, [('is_current_instance', '=', True)])
-        # to trigger recompute of is_default stored field function in current instance
-        self.pool.get('account.journal').write(cr, uid, all_journ_ids, {})
-        # to trigger sync of updated is_default field to upper instances like HQs
-        cr.execute("""UPDATE ir_model_data SET touched ='[''is_default'']', last_modification=NOW()
-                      WHERE module='sd' AND model='account.journal'""")
-
+        # update is_default field of journals EOY and IB
+        cr.execute("""
+                    UPDATE account_journal
+                    SET is_default = 't'
+                    WHERE
+                        code IN ('EOY', 'IB') AND 
+                        type = 'system'
+                    """)
         return True
 
     # UF32.0
