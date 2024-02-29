@@ -100,6 +100,55 @@
             </field>
         </record>
 
+        <record id="purchase_order_form_catalogue" model="ir.ui.view">
+            <field name="name">purchase.order.form.catalogue.tab</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="priority" eval="201" />
+            <field name="arch" type="xml">
+                <form string="Purchase Order">
+                    <field name="catalogue_ratio_conform" />
+                    <field name="catalogue_ratio_no_catalogue" />
+                    <field name="catalogue_ratio_not_conform" />
+                    <field name="order_line_mismatch" colspan="4" nolabel="1" mode="tree"
+                        filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
+                        >
+                        <tree string="PO Lines Mismatch with Catalogues" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" button_attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p'])]}" editable="both">
+                            <field name="line_number" readonly="1"/>
+                            <field name="default_code" displayon="noteditable"/>
+                            <field name="default_name" displayon="noteditable"/>
+
+                            <field name="comment"  attrs="{'required': [('product_id', '=', False)]}"/>
+                            <field name="nomenclature_description" readonly="1" />
+                            <field name="supplier_code" displayon="noteditable" />
+                            <field name="inactive_error" invisible="1"/>
+                            <field name="inactive_product" invisible="1"/>
+                            <field name="to_correct_ok" invisible="1"/>
+                            <field name="red_color" invisible="1"/>
+                            <field name="origin" invisible="1"/>
+                            <field name="from_fo" invisible="1"/>
+                            <field name="fake_id" invisible="1"/>
+                            <field name="soq_updated" invisible="1"/>
+                            <field name="product_qty" string="Qty" />
+                            <field name="product_uom" />
+                            <field name="price_unit" />
+                            <field name="price_subtotal"/>
+                            <field name="original_changed" readonly="1" string="CHG"/>
+                            <field name="date_planned" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
+                            <field name="catalog_mismatch" />
+                            <field name="po_state_stored" invisible="True"/>
+                            <field name="state_to_display"/>
+                            <button string="Validate" icon="terp-check" name="validated" type="object" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
+                            <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated', 'validated_n'])]}" header="True"/>
+                            <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', '|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct'), '&amp;', ('dest_partner_type', 'in', ['internal', 'section', 'intermission']), ('po_version', '!=', 1)]}"/>
+                            <field name="mml_status" />
+                            <field name="msl_status" />
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
         <record id="purchase_order_form" model="ir.ui.view">
             <field name="name">purchase.order.form</field>
             <field name="model">purchase.order</field>
@@ -113,6 +162,8 @@
                         <field name="po_version" invisible="1"/>
                         <field name="msg_big_qty" invisible="1"/>
                         <field name="alert_msl_mml" invisible="1"/>
+                        <field name="catalogue_display_tab" invisible="1" />
+                        <field name="catalogue_exists_text" invisible="1" />
                         <group colspan="6">
                             <html>
                                 <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
@@ -147,6 +198,18 @@
                                 <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
 
                                 <script language="javascript">
+                                    function refresh_catalogue() {
+                                        var catalogue_text = $('#catalogue_exists_text').val() ||  $('#catalogue_exists_text').text();
+                                        if (catalogue_text) {
+                                             $('#order_line_extra_text').html(catalogue_text);
+                                        }
+                                    }
+                                    $(document).ready(function() {
+                                     new ListView('order_line').after_reload = refresh_catalogue;
+                                     $('#catalogue_exists_text').change(refresh_catalogue);
+                                     refresh_catalogue();
+                                    });
+
                                     var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
                                     if (alert_msl_mml) {
                                         $('#msl_mml').html(alert_msl_mml);
@@ -181,7 +244,10 @@
                                         $('#nr_ad_lines').append(has_ad_nr);
                                         $('#nr_ad_lines').show();
                                     }
-
+                                    var catalogue_text = $('#catalogue_exists_text').val() ||  $('#catalogue_exists_text').text();
+                                    if (catalogue_text) {
+                                         $('#order_line_extra_text').html(catalogue_text);
+                                    }
                                 </script>
                             </html>
                         </group>
@@ -457,6 +523,7 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="Supplier Catalogue" view_id="purchase.purchase_order_form_catalogue" attrs="{'invisible': [('catalogue_display_tab', '=', False)]}" />
                         &signature_template;
                     </notebook>
                     <group col="11" colspan="4">

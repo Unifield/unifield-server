@@ -868,6 +868,53 @@ class purchase_order(osv.osv):
 
         return ret
 
+    def _get_catalogue_ratio(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+        ret = {}
+        for _id in ids:
+            ret[_id] = {
+                'catalogue_ratio_conform': False,
+                'catalogue_ratio_no_catalogue': False,
+                'catalogue_ratio_not_conform': False,
+                'catalogue_exists': False,
+                'catalogue_display_tab': False,
+                'catalogue_exists_text': False,
+            }
+        self.pool.get('purchase.order.line')._compute_catalog_mismatch(cr, uid, order_id=ids, context=context)
+
+        cr.execute("""
+            select
+                order_id,
+                count(catalog_mismatch!='' or NULL),
+                count(catalog_mismatch='conform' or NULL),
+                count(catalog_mismatch='na' or NULL)
+            from
+                purchase_order_line
+            where
+                state not in ('cancel', 'cancel_r') and
+                order_id in %s
+            group by order_id""", (tuple(ids),))
+        for x in cr.fetchall():
+            if x[1]:
+                catalogue_ratio_conform = round(100*x[2]/x[1])
+                catalogue_ratio_no_catalogue = round(100*x[3]/x[1])
+                catalogue_ratio_not_conform = round(100 - catalogue_ratio_conform - catalogue_ratio_no_catalogue)
+
+                ret[x[0]] = {
+                    'catalogue_exists': True,
+                    'catalogue_ratio_conform': catalogue_ratio_conform,
+                    'catalogue_ratio_no_catalogue': catalogue_ratio_no_catalogue,
+                    'catalogue_ratio_not_conform': catalogue_ratio_not_conform,
+                    'catalogue_exists_text': "<h2>%d%% adherence to catalogue</h2>" % (catalogue_ratio_conform,),
+                }
+                if catalogue_ratio_conform != 100:
+                    ret[x[0]]['catalogue_display_tab'] = True
+            else:
+                ret[x[0]]['catalogue_exists_text'] = '<h2 style="color: red">No valid catalogue</h2>'
+        print(ret)
+        return ret
+
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -881,6 +928,7 @@ class purchase_order(osv.osv):
                             help="unique number of the purchase order,computed automatically when the purchase order is created", sort_column='id'),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=False),
+        'order_line_mismatch': fields.one2many('purchase.order.line', 'order_id', 'PO lines Mismatch with Catologues', readonly=1, domain=[('state', 'not in', ['cancel', 'cancel_r']), ('catalog_mismatch', 'not in', ['conform', ''])], context={'from_mismatch': True}),
         'partner_id': fields.many2one('res.partner', 'Supplier', required=True, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True, domain="[('partner_id', '=', partner_id)]"),
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner'),
@@ -1054,6 +1102,12 @@ class purchase_order(osv.osv):
         'ad_lines_message_nr': fields.function(_get_ad_lines_message_nr, type='char', size=1024, method=1, string='Line number of NR message for missing AD'),
         'tax_line': fields.one2many('account.invoice.tax', 'purchase_id', 'Tax Lines'),
         'alert_msl_mml': fields.function(_get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
+        'catalogue_ratio_conform': fields.function(_get_catalogue_ratio, method=True, type='integer', string='PO Lines Adherence', multi='catalogue'),
+        'catalogue_ratio_not_conform': fields.function(_get_catalogue_ratio, method=True, type='integer', string='PO Lines Mismatch', multi='catalogue'),
+        'catalogue_ratio_no_catalogue': fields.function(_get_catalogue_ratio, method=True, type='integer', string='Not in Catalogue', multi='catalogue'),
+        'catalogue_exists': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Has a valid catalogue', multi='catalogue'),
+        'catalogue_display_tab': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Display tab catalogue', multi='catalogue'),
+        'catalogue_exists_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Text', multi='catalogue'),
     }
     _defaults = {
         'po_version': 2,
@@ -1522,7 +1576,7 @@ class purchase_order(osv.osv):
         # if the copy comes from the button duplicate
         if context.get('from_button'):
             default.update({'is_a_counterpart': False})
-        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, 'po_confirmed': False, 'split_during_sll_mig': False, 'dest_partner_ids': False})
+        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, 'po_confirmed': False, 'split_during_sll_mig': False, 'dest_partner_ids': False, 'order_line_mismatch': False})
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
 
@@ -1553,7 +1607,7 @@ class purchase_order(osv.osv):
             'delivery_requested_date', 'delivery_requested_date_modified', 'ready_to_ship_date',
             'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date',
             'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date',
-            'show_default_msg'
+            'show_default_msg', 'order_line_mismatch'
         ]
         to_del = []
         for ftr in fields_to_reset:
@@ -2382,7 +2436,9 @@ class purchase_order(osv.osv):
             values = {'no_line': False}
 
         # Also update the 'state' of the purchase order
-        info = self.read(cr, uid, ids, ['state', 'not_beyond_validated', 'show_default_msg'])
+        info = self.read(cr, uid, ids, ['state', 'not_beyond_validated', 'show_default_msg', 'catalogue_exists_text', 'catalogue_display_tab'])
+        values['catalogue_exists_text'] = info[0]['catalogue_exists_text']
+        values['catalogue_display_tab'] = info[0]['catalogue_display_tab']
         values['state'] = info[0]['state']
         values['not_beyond_validated'] = info[0]['not_beyond_validated']
 

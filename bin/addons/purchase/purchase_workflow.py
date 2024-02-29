@@ -867,8 +867,8 @@ class purchase_order_line(osv.osv):
             # Confirm linked FO line:
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'confirmed', cr)
-
-            self.write(cr, uid, [pol.id], {'state': 'confirmed', 'confirmation_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
+            # TODO: test pol.catalog_mismatch with sync
+            self.write(cr, uid, [pol.id], {'state': 'confirmed', 'confirmation_date': datetime.now().strftime('%Y-%m-%d'), 'catalog_mismatch': pol.catalog_mismatch}, context=context)
 
             if pol.order_id.order_type == 'direct':
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
