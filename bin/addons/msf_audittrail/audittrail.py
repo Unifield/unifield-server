@@ -29,6 +29,41 @@ import tools
 import logging
 from tools.safe_eval import safe_eval as eval
 
+
+class account_subscription(osv.osv):
+    _name = 'account.subscription'
+    _inherit = 'account.subscription'
+    _trace = True
+
+
+account_subscription()
+
+class account_subscription_line(osv.osv):
+    _name = 'account.subscription.line'
+    _inherit = 'account.subscription.line'
+    _trace = True
+
+
+account_subscription_line()
+
+
+class account_model(osv.osv):
+    _name = 'account.model'
+    _inherit = 'account.model'
+    _trace = True
+
+
+account_model()
+
+class account_model_line(osv.osv):
+    _name = 'account.model.line'
+    _inherit = 'account.model.line'
+    _trace = True
+
+
+account_model_line()
+
+
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
