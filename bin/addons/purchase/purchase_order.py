@@ -880,6 +880,7 @@ class purchase_order(osv.osv):
                 'catalogue_exists': False,
                 'catalogue_display_tab': False,
                 'catalogue_exists_text': False,
+                'catalogue_ratio_text': '',
             }
         self.pool.get('purchase.order.line')._compute_catalog_mismatch(cr, uid, order_id=ids, context=context)
 
@@ -910,10 +911,50 @@ class purchase_order(osv.osv):
                 }
                 if catalogue_ratio_conform != 100:
                     ret[x[0]]['catalogue_display_tab'] = True
+                ret[x[0]]['catalogue_ratio_text'] = '<b>Catalogue Adherence Summary:</b><br />PO lines adherence: <span class="readonlyfield">%d%%</span> PO Lines Mismatch: <span class="readonlyfield">%d%%</span> of which Not in catalogue: <span class="readonlyfield">%d%%</span>' % (catalogue_ratio_conform, catalogue_ratio_not_conform, catalogue_ratio_no_catalogue)
             else:
                 ret[x[0]]['catalogue_exists_text'] = '<h2 style="color: red">No valid catalogue</h2>'
         print(ret)
         return ret
+
+    def _get_catalogue_description_text(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+        ret = {}
+        for _id in ids:
+            ret[_id] = ""
+
+        cr.execute("""
+            select
+                po.id, p.name, cat.name, cat.period_from, cat.period_to
+            from
+                purchase_order po
+                inner join res_partner p on p.id = po.partner_id
+                inner join product_pricelist curr_pricelist on curr_pricelist.id = po.pricelist_id
+                join lateral (
+                    select
+                        name, period_from, period_to
+                    from
+                        supplier_catalogue cat
+                    where
+                        cat.partner_id = po.partner_id and
+                        cat.active = 't' and
+                        cat.state = 'confirmed' and
+                        cat.period_from < NOW() and
+                        (cat.period_to is null or cat.period_to > NOW())
+                    order by
+                        cat.currency_id = curr_pricelist.currency_id, id desc
+                    limit 1
+                ) cat on true
+            where
+                po.id in %s
+            """, (tuple(ids), ))
+
+        date_obj = self.pool.get('date.tools')
+        for x in cr.fetchall():
+            ret[x[0]] = '<label>Status</label>: <span class="readonlyfield">active</span> <label>Supplier</label>: <span class="readonlyfield">%s</span> <label>Catalogue</label>: <span class="readonlyfield">%s</span> <label>From</label>: <span class="readonlyfield">%s</span> <label>To</label>: <span class="readonlyfield">%s</span>' % (x[1], x[2], date_obj.get_date_formatted(cr, uid, datetime=x[3]), x[4] and date_obj.get_date_formatted(cr, uid, datetime=x[4]) or '/')
+        return ret
+
 
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
@@ -1105,9 +1146,11 @@ class purchase_order(osv.osv):
         'catalogue_ratio_conform': fields.function(_get_catalogue_ratio, method=True, type='integer', string='PO Lines Adherence', multi='catalogue'),
         'catalogue_ratio_not_conform': fields.function(_get_catalogue_ratio, method=True, type='integer', string='PO Lines Mismatch', multi='catalogue'),
         'catalogue_ratio_no_catalogue': fields.function(_get_catalogue_ratio, method=True, type='integer', string='Not in Catalogue', multi='catalogue'),
+        'catalogue_ratio_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Ratio', multi='catalogue'),
         'catalogue_exists': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Has a valid catalogue', multi='catalogue'),
         'catalogue_display_tab': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Display tab catalogue', multi='catalogue'),
-        'catalogue_exists_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Text', multi='catalogue'),
+        'catalogue_exists_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Lines Status', multi='catalogue'),
+        'catalogue_description_text': fields.function(_get_catalogue_description_text,  method=True, type='char', string='Catalogue Text'),
     }
     _defaults = {
         'po_version': 2,
@@ -2334,7 +2377,7 @@ class purchase_order(osv.osv):
             context = {}
 
         if not part:
-            return {'value': {'partner_address_id': False, 'fiscal_position': False}}
+            return {'value': {'partner_address_id': False, 'fiscal_position': False, 'catalogue_exists_text': '', 'catalogue_display_tab': False}}
 
         addr = self.pool.get('res.partner').address_get(cr, uid, [part], ['default'])
         part = self.pool.get('res.partner').browse(cr, uid, part)
@@ -2359,8 +2402,9 @@ class purchase_order(osv.osv):
 
         res = common_onchange_partner_id(self, cr, uid, ids, part=part.id, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         # reset confirmed date
-        res.setdefault('value', {}).update({'delivery_confirmed_date': False})
+        res.setdefault('value', {}).update({'delivery_confirmed_date': False, 'catalogue_exists_text': '', 'catalogue_display_tab': False})
 
+        print(res)
         return res
 
     def onchange_warehouse_id(self, cr, uid, ids, warehouse_id, order_type, dest_address_id):
@@ -2426,7 +2470,7 @@ class purchase_order(osv.osv):
 
         return True
 
-    def order_line_change(self, cr, uid, ids, order_line, show_default_msg=None):
+    def order_line_change(self, cr, uid, ids, order_line, show_default_msg=None, partner_id=None):
 
         assert (len(ids) == 1)
 
@@ -2436,9 +2480,14 @@ class purchase_order(osv.osv):
             values = {'no_line': False}
 
         # Also update the 'state' of the purchase order
-        info = self.read(cr, uid, ids, ['state', 'not_beyond_validated', 'show_default_msg', 'catalogue_exists_text', 'catalogue_display_tab'])
-        values['catalogue_exists_text'] = info[0]['catalogue_exists_text']
-        values['catalogue_display_tab'] = info[0]['catalogue_display_tab']
+        info = self.read(cr, uid, ids, ['state', 'not_beyond_validated', 'show_default_msg', 'catalogue_exists_text', 'catalogue_display_tab', 'partner_id'])
+        if partner_id == info[0]['partner_id'][0]:
+            values['catalogue_exists_text'] = info[0]['catalogue_exists_text']
+            values['catalogue_display_tab'] = info[0]['catalogue_display_tab']
+        else:
+            values['catalogue_exists_text'] = ''
+            values['catalogue_display_tab'] = False
+
         values['state'] = info[0]['state']
         values['not_beyond_validated'] = info[0]['not_beyond_validated']
 

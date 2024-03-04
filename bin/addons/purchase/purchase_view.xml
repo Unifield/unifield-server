@@ -107,6 +107,7 @@
             <field name="priority" eval="201" />
             <field name="arch" type="xml">
                 <form string="Purchase Order">
+                    <field name="catalogue_description_text" widget="html_text" nolabel="1" />
                     <field name="catalogue_ratio_conform" />
                     <field name="catalogue_ratio_no_catalogue" />
                     <field name="catalogue_ratio_not_conform" />
@@ -198,16 +199,19 @@
                                 <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
 
                                 <script language="javascript">
+                                    var original_partner = false;
                                     function refresh_catalogue() {
-                                        var catalogue_text = $('#catalogue_exists_text').val() ||  $('#catalogue_exists_text').text();
-                                        if (catalogue_text) {
-                                             $('#order_line_extra_text').html(catalogue_text);
+                                        var catalogue_text = ''
+                                        if ($('#partner_id').val() == original_partner) {
+                                            catalogue_text = $('#catalogue_exists_text').val() ||  $('#catalogue_exists_text').text();
                                         }
+                                        $('#order_line_extra_text').html(catalogue_text);
                                     }
                                     $(document).ready(function() {
-                                     new ListView('order_line').after_reload = refresh_catalogue;
-                                     $('#catalogue_exists_text').change(refresh_catalogue);
-                                     refresh_catalogue();
+                                         original_partner = $('#partner_id').val();
+                                         new ListView('order_line').after_reload = refresh_catalogue;
+                                         $('#catalogue_exists_text').change(refresh_catalogue);
+                                         refresh_catalogue();
                                     });
 
                                     var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
@@ -329,7 +333,7 @@
                             </group>
                             <field name="order_line" colspan="4" nolabel="1" mode="tree,form"
                                 context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': False, 'from_fo': po_from_fo or po_from_ir or False}"
-                                on_change="order_line_change(order_line, show_default_msg)"
+                                on_change="order_line_change(order_line, show_default_msg, partner_id)"
                                 filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="'3'" o2m_selectable="2"
                                 >
