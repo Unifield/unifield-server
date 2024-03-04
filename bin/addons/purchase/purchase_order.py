@@ -914,7 +914,6 @@ class purchase_order(osv.osv):
                 ret[x[0]]['catalogue_ratio_text'] = '<b>Catalogue Adherence Summary:</b><br />PO lines adherence: <span class="readonlyfield">%d%%</span> PO Lines Mismatch: <span class="readonlyfield">%d%%</span> of which Not in catalogue: <span class="readonlyfield">%d%%</span>' % (catalogue_ratio_conform, catalogue_ratio_not_conform, catalogue_ratio_no_catalogue)
             else:
                 ret[x[0]]['catalogue_exists_text'] = '<h2 style="color: red">No valid catalogue</h2>'
-        print(ret)
         return ret
 
     def _get_catalogue_description_text(self, cr, uid, ids, name, arg, context=None):
@@ -2404,7 +2403,6 @@ class purchase_order(osv.osv):
         # reset confirmed date
         res.setdefault('value', {}).update({'delivery_confirmed_date': False, 'catalogue_exists_text': '', 'catalogue_display_tab': False})
 
-        print(res)
         return res
 
     def onchange_warehouse_id(self, cr, uid, ids, warehouse_id, order_type, dest_address_id):
