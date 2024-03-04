@@ -371,7 +371,7 @@ class composition_kit(osv.osv):
             request_context.update({ 'states': ('done',),
                                      'what': ('in', 'out'),
                                      'location_usage': ['internal'],
-                                     'location_category': ['stock', 'consumption_unit', 'eprep'] })
+                                     'location_category': ['stock', 'consumption_unit'] })
             if not kit.composition_reference and kit.composition_lot_id:
                 request_context['prodlot_id'] = kit.composition_lot_id.id
 

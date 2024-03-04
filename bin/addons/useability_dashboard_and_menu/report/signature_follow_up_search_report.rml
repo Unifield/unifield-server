@@ -54,13 +54,12 @@
         <para style="line"><font color="white"> </font></para>
         <para style="line"><font color="white"> </font></para>
 
-        <blockTable style="table_title" colWidths="115.0,165.0,80.0,70.0,70.0,70.0,50.0,100.0,62.0">
+        <blockTable style="table_title" colWidths="145.0,195.0,85.0,70.0,70.0,50.0,100.0,67.0">
             <tr>
                 <td><para style="title">User</para></td>
                 <td><para style="title">Document Name</para></td>
                 <td><para style="title">Document State</para></td>
                 <td><para style="title">Document Type</para></td>
-                <td><para style="title">Type of Signature</para></td>
                 <td><para style="title">Signature State</para></td>
                 <td><para style="title">Signed</para></td>
                 <td><para style="title">Signature Date</para></td>
@@ -72,7 +71,6 @@
                 <td><para style="line">[[ line.doc_name or '' ]]</para></td>
                 <td><para style="line">[[ getSel(line, 'doc_state') ]]</para></td>
                 <td><para style="line">[[ getSel(line, 'doc_type') ]]</para></td>
-                <td><para style="line">[[ getSel(line, 'subtype') ]]</para></td>
                 <td><para style="line">[[ getSel(line, 'status') ]]</para></td>
                 <td><para style="line">[[ line.signed > 0 and translate('Yes') or translate('No') ]]</para></td>
                 <td><para style="line">[[ line.signature_date and formatLang(line.signature_date, date_time=True) or '' ]]</para></td>

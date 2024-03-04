@@ -51,7 +51,7 @@ class freight_manifest(report_sxw.rml_parse):
             'get_sum_additionnal': self.get_sum_additionnal,
         })
 
-    def getFonCur(self,ligne):
+    def getFonCur(self):
         return self.cur
 
     def getTotM3(self):

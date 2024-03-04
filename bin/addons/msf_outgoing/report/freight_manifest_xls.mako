@@ -320,7 +320,7 @@
         <Cell ss:StyleID="header_right"><Data ss:Type="Number">${getTotKg() or 0|x}</Data></Cell>
         <Cell ss:StyleID="header_right"><Data ss:Type="Number">${getTotM3() or 0|x}</Data></Cell>
         <Cell ss:StyleID="header_right"><Data ss:Type="Number">${getTotValue() or 0|x}</Data></Cell>
-        <Cell ss:StyleID="header_left" ss:MergeAcross="2"><Data ss:Type="String">${getFonCur(line) or ''|x}</Data></Cell>
+        <Cell ss:StyleID="header_left" ss:MergeAcross="2"><Data ss:Type="String">${getFonCur() or ''|x}</Data></Cell>
     </Row>
 
     <Row></Row>

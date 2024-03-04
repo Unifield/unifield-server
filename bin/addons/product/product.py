@@ -588,7 +588,7 @@ class product_product(osv.osv):
             stock_location_obj = self.pool.get('stock.location')
             if not location_id:
                 default_locs_domain = ['|', ('eprep_location', '=', True), '&', ('usage', '=', 'internal'),
-                                       ('location_category', 'in', ('stock', 'consumption_unit', 'eprep'))]
+                                       ('location_category', 'in', ('stock', 'consumption_unit'))]
                 location_id = stock_location_obj.search(cr, uid, default_locs_domain, context=context)
 
             if isinstance(location_id, str):

@@ -51,12 +51,13 @@
             <field name="type">tree</field>
             <field name="priority">22</field>
             <field name="arch" type="xml">
-                <tree string="Stock Moves" hide_new_button="1">
+                <tree string="Stock Moves" hide_new_button="1" hide_delete_button="1">
                     <field name="product_uom" invisible="1" />
                     <field name="product_id" />
                     <field name="prodlot_id" />
                     <field name="expired_date" />
                     <field name="picking_id" />
+                    <button name="open_picking_view" string="Open Picking" type="object" icon="terp-stock_zoom" attrs="{'invisible': [('picking_id', '=', False)]}"/>
                     <field name="origin" />
                     <field name="date_expected" />
                     <field name="partner_id" />

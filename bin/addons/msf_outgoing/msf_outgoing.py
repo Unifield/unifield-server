@@ -2108,6 +2108,8 @@ class stock_picking(osv.osv):
             default['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
         else:
             default['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+        if pick_type == 'internal':  # Duplication of SYS-INT
+            default['subtype'] = 'standard'
 
         return self.copy(cr, uid, id, default, context=context)
 

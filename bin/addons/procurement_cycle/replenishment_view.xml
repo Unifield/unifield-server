@@ -324,7 +324,7 @@
                                 <field name="description" readonly="1" string="Location Config Description" colspan="4"/>
                                 <field name="main_instance" readonly="1" colspan="4"/>
                                 <group colspan="4" col="2">
-                                    <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state_parent', '!=', 'draft')], 'invisible': [('ir_requesting_location_rdo', '!=', False)]}" required="1"/>
+                                    <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state_parent', '!=', 'draft')], 'invisible': [('ir_requesting_location_rdo', '!=', False)]}" required="1"/>
                                     <field name="ir_requesting_location_rdo" attrs="{'invisible': ['|', ('ir_requesting_location_rdo', '=', False), ('_terp_editable', '=', 'False')]}" />
                                 </group>
                                 <field name="rr_amc" readonly="1" colspan="2"/>

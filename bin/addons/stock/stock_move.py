@@ -12,7 +12,7 @@ import decimal_precision as dp
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from kit import KIT_CREATION_STATE
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
-
+from tools.safe_eval import safe_eval
 
 class stock_move(osv.osv):
 
@@ -728,40 +728,29 @@ class stock_move(osv.osv):
          - GOODS RETURN UNIT
          - GOODS REPLACEMENT
          - OTHER
-        Only permet user to create/write a non-claim IN move from scratch with some reason types:
-         - EXTERNAL SUPPLY
-         - INTERNAL SUPPLY
-         - RETURN FROM UNIT
-         - LOSS
-         - SCRAP
+        Do not permit user to create/write an IN move from scratch with some reason types:
+         - OTHER
+         - STOCK INITIALIZATION
         """
         data_obj = self.pool.get('ir.model.data')
         res = True
         try:
             rt_replacement_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
-            rt_g_return_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
-            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
             rt_return_unit_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
-            int_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
-            ext_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
-            loss_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            scrp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+            rt_other_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+            rt_s_init_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_stock_initialization')[1]
         except ValueError:
             rt_replacement_id = 0
-            rt_g_return_id = 0
             rt_other_id = 0
             rt_return_unit_id = 0
-            int_rt_id = 0
-            ext_rt_id = 0
-            loss_rt_id = 0
-            scrp_rt_id = 0
+            rt_s_init_id = 0
 
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
                 pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
-                if not pick['purchase_id'] and not pick['sale_id'] and ((pick['type'] == 'in'
-                                                                         and sm['reason_type_id'][0] not in [int_rt_id, ext_rt_id, rt_return_unit_id, loss_rt_id, scrp_rt_id, rt_replacement_id, rt_g_return_id])
-                                                                        or (pick['type'] == 'out' and sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id])):
+                if not pick['purchase_id'] and not pick['sale_id'] and \
+                        ((pick['type'] == 'in' and sm['reason_type_id'][0] in [rt_other_id, rt_s_init_id])
+                         or (pick['type'] == 'out' and sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id, rt_other_id])):
                     return False
         return res
 
@@ -2519,6 +2508,32 @@ class stock_move(osv.osv):
         res['keep_open'] = True
         res['res_id'] = move.linked_incoming_move and move.linked_incoming_move.picking_id.id or move.picking_id.id
         return res
+
+    def open_picking_view(self, cr, uid, ids, context=None):
+        if not ids:
+            return False
+        move = self.browse(cr, uid, ids[0], fields_to_fetch=['picking_id'], context=context)
+        if not move.picking_id:
+            raise osv.except_osv(_('Info'), _('This record is not linked to any Picking.'))
+
+        xmlid = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, [move.picking_id.id], context=context, pick=move.picking_id)
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'],context=context)
+        res['res_id'] = move.picking_id.id
+        res['target'] = 'current'
+        res['domain'] = [('id', '=',move.picking_id.id)]
+        if isinstance(res.get('context'), str):
+            try:
+                res['context'] = safe_eval(res['context'])
+            except:
+                pass
+        if isinstance(res.get('context'), dict):
+            for x in list(res['context'].keys()):
+                if x.startswith('search_default'):
+                    del(res['context'][x])
+        res['name'] = '%s %s' % (res.get('name', ''), move.picking_id.name)
+        return res
+
+
 
 stock_move()
 

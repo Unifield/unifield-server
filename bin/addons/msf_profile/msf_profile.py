@@ -57,6 +57,105 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF32.0
+    def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level in ('coordo', 'project'):
+            cr.execute("""update res_users set never_expire='f'
+                where
+                    login!='admin'
+                    and never_expire='t'
+                    and coalesce(synchronize, 'f') = 'f'
+            """)
+            self.log_info(cr, uid, "US-12273: Users disable never_expire on %d users" % (cr.rowcount, ))
+
+    def us_12534_bulk_open_to_draft(self, cr, uid, *a, **b):
+        '''
+        Turn all periods from May to P15 2024 from open to draft (done with US-12344)
+        '''
+        # first check if open period exists
+        p_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '>=', '2024-04-30'), ('date_stop', '<', '2025-01-01'), ('number', '!=', 16), ('state', '=', 'draft')])
+        if p_ids:
+            cr.execute("select distinct period_id FROM account_move where period_id in %s", (tuple(p_ids), ))
+            p_ids = set(p_ids) - set([x[0] for x in cr.fetchall()])
+            if p_ids:
+                cr.execute("select distinct period_id FROM account_bank_statement where period_id in %s", (tuple(p_ids), ))
+                p_ids = set(p_ids) - set([x[0] for x in cr.fetchall()])
+                if p_ids:
+                    self.pool.get('account.period').write(cr, uid, list(p_ids), {'state': 'created', 'state_sync_flag': 'created', 'field_process': 'f'})
+                    self.log_info(cr, uid, "US-12534: %s periods set back to draft state" % (len(p_ids), ))
+        return True
+
+
+        cr.execute("""
+            UPDATE account_period
+            SET state = 'created', state_sync_flag = 'created', field_process = 'f'
+            WHERE
+                date_start > '2024-04-30' AND date_stop < '2025-01-01' AND
+                code != 'Period 16 2024' AND
+                id NOT IN (SELECT distinct period_id FROM account_move) AND
+                id NOT IN (SELECT distinct period_id FROM account_bank_statement WHERE state != 'draft')
+        """)
+        return True
+
+    def us_12294_force_email_popup(self, cr, uid, *a, **b):
+        cr.execute("update res_users set force_dept_email_popup='t'")
+        return True
+
+    def us_12076_remove_po_audittrail_rule_domain(self, cr, uid, *a, **b):
+        '''
+        Remove the restrictions on purchase.order's and purchase.order.line's Track Changes to allow RfQs
+        '''
+        cr.execute("""
+            UPDATE audittrail_rule SET domain_filter = '[]' 
+            WHERE object_id IN (SELECT id FROM ir_model WHERE model IN ('purchase.order', 'purchase.order.line'))
+        """)
+        return True
+
+    def us_11907_12339_fix_locations_eprep_category(self, cr, uid, *a, **b):
+        '''
+        Change the Category to Stock, Eprep Location to True and search_color to lightpink to locations and instance
+        locations which have the Category EPrep
+        '''
+        loc_obj = self.pool.get('stock.location')
+        eprep_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations',
+                                                                            'stock_location_eprep_view')[1]
+        cr.execute("""UPDATE stock_location SET location_category = 'stock', eprep_location = 't', 
+            search_color = 'lightpink', location_id = %s WHERE location_category = 'eprep'""", (eprep_view_id,))
+        nb_locs = cr.rowcount
+        self.log_info(cr, uid, "US-11907-12339: %s EPrep Location(s) have been updated" % (nb_locs,))
+        if nb_locs and not loc_obj.read(cr, uid, eprep_view_id, ['active'])['active']:
+            loc_obj.write(cr, uid, eprep_view_id, {'active': True})
+            self.log_info(cr, uid, "US-11907-12339: The Location EPREP Stocks has been activated")
+
+        cr.execute("""UPDATE stock_location_instance SET location_category = 'stock' WHERE location_category = 'eprep'""")
+        self.log_info(cr, uid, "US-11909-12339: %s Instance EPrep Location(s) have been updated" % (cr.rowcount,))
+
+        return True
+
+    def us_12071_gdpr_patch(self, cr, uid, *a, **b):
+        cr.execute("""UPDATE hr_employee
+        SET
+        payment_method_id = NULL,
+        bank_name = NULL,
+        bank_account_number = NULL
+        WHERE employee_type = 'local'
+        """)
+        cr.execute("""
+        DELETE FROM audittrail_log_line
+        WHERE
+            name IN ('payment_method_id', 'bank_name', 'bank_account_number') AND
+            object_id = (SELECT id FROM ir_model WHERE model = 'hr.employee')""")
+        return True
+
+    def us_12110_remove_sup_fin_read(self, cr, uid, *a, **b):
+        '''
+        Remove all Sup_Fin_Read groups from all users
+        '''
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            self.pool.get('sync.trigger.something').create(cr, uid, {'name': 'US-12110-Sup_Fin_Read'})
+        return True
 
     # python 3
     def us_9321_2_remove_location_colors(self, cr, uid, *a, **b):
@@ -1043,7 +1142,7 @@ class patch_scripts(osv.osv):
             return True
         model_obj = self.pool.get('ir.model')
         acl_obj = self.pool.get('ir.model.access')
-        for model in ['signature', 'signature.object', 'signature.line', 'signature.image', 'signature.follow_up', 'signature.users.allowed']:
+        for model in ['signature', 'signature.object', 'signature.line', 'signature.image', 'signature.follow_up']:
             model_id = model_obj.search(cr, uid, [('model', '=', model)])
             acl_obj.create(cr, uid, {
                 'name': 'common',
@@ -6653,6 +6752,11 @@ class sync_tigger_something(osv.osv):
                 )
             """)
             _logger.warn('Deletion of %d Dest CC Links created out of HQ' % (cr.rowcount,))
+
+        if vals.get('name') == 'US-12110-Sup_Fin_Read':
+            cr.execute("""
+            DELETE FROM res_groups_users_rel
+            WHERE gid=(SELECT id FROM res_groups WHERE name='Sup_Fin_Read')""")
 
         return super(sync_tigger_something, self).create(cr, uid, vals, context)
 

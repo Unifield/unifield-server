@@ -181,6 +181,7 @@ class ir_ui_view(osv.osv):
 
     def _write_button_objects(self, cr, uid, buttons):
         rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
+        to_write = []
         for button in buttons:
             xmlname = self._get_xmlname(cr, uid, button.get('type'), button['name'])
             existing_rule_search = rules_pool.search(cr, uid, [
@@ -190,5 +191,11 @@ class ir_ui_view(osv.osv):
             ])
             if not existing_rule_search:
                 rules_pool.create(cr, uid, button)
+            else:
+                to_write += existing_rule_search
+
+        if to_write:
+            rules_pool.write(cr, uid, to_write, {'deprecated': 'f'})
+
 
 ir_ui_view()

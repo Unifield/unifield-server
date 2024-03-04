@@ -41,6 +41,7 @@
         'data/account.tax.csv',
         'data/product.asset.useful.life.csv',
         'data/product.asset.event.type.csv',
+        'data/hr.department.csv',
     ],
     'demo_xml': [],
     'test':[],

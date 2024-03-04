@@ -1009,6 +1009,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if context is None:
             context = {}
+        self._check_active_product(cr, uid, ids, context=context)
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
         self.check_accounts_for_partner(cr, uid, ids, context=context)
         self._check_tax_allowed(cr, uid, ids, context=context)

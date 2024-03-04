@@ -57,10 +57,34 @@ class report_fully_report(report_sxw.rml_parse):
             'getManualFreeLines': self.getManualFreeLines,
             'getManualAalColor': self.getManualAalColor,
             'update_percent': self.update_percent,
+            'getMlCorNoAd': self.getMlCorNoAd,
+            'getLinkedMoveLines': self.getLinkedMoveLines,
         })
 
         self._cache_move = {}
         self._cache_ana = {}
+
+    def getLinkedMoveLines(self, st_line_record):
+        if not st_line_record or not st_line_record.first_move_line_id:
+            return []
+        return self.pool.get('account.move.line').search(self.cr, self.uid, [('move_id', '=', st_line_record.first_move_line_id.id), ('id', '!=', st_line_record.id), ('partner_register_line_id', '=', False)])
+
+    def getMlCorNoAd(self, move_line_ids):
+        if isinstance(move_line_ids, int):
+            move_line_ids = [move_line_ids]
+        if not move_line_ids:
+            return []
+
+        all_rev_cor_ids = []
+        prev = move_line_ids
+        while prev:
+            prev = self.pool.get('account.move.line').search(self.cr, self.uid, [
+                '|', '&', ('corrected_line_id', 'in', prev), ('reversal_line_id', '=', False), ('reversal_line_id', 'in', prev)
+            ], order='id')
+            all_rev_cor_ids += prev
+        if not  all_rev_cor_ids:
+            return []
+        return self.pool.get('account.move.line').browse(self.cr, self.uid, all_rev_cor_ids, context={'lang': self.localcontext.get('lang', 'en_US')})
 
     def translate_weasyprint(self, src):
         ir_translation = self.pool.get('ir.translation')

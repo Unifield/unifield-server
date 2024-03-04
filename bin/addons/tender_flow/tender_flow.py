@@ -466,6 +466,39 @@ class tender(osv.osv):
         self.write(cr, uid, ids, {'state': 'comparison'}, context=context)
         return True
 
+    def check_continue_sourcing(self, cr, uid, ids, context=None):
+        '''
+        Warn the user if the Tender, coming from an FO, has both service and non-service products
+        '''
+        if isinstance(ids, int):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        t_line_obj = self.pool.get('tender.line')
+
+        for tender in self.browse(cr, uid, ids, fields_to_fetch=['sale_order_id'], context=context):
+            if tender.sale_order_id and not tender.sale_order_id.procurement_request:
+                has_srv_prod = t_line_obj.search_exist(cr, uid, [('tender_id', '=', tender.id),
+                                                                 ('product_id.type', '=', 'service_recep')], context=context)
+                has_not_srv_prod = t_line_obj.search_exist(cr, uid, [('tender_id', '=', tender.id),
+                                                                     ('product_id.type', '!=', 'service_recep')], context=context)
+                if has_srv_prod and has_not_srv_prod:
+                    wiz_id = self.pool.get('tender.has.service.not.service.product.wizard').create(cr, uid, {'tender_id': tender.id}, context=context)
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'tender_has_service_not_service_product_wizard_form_view')[1]
+
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'tender.has.service.not.service.product.wizard',
+                        'res_id': wiz_id,
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'view_id': [view_id],
+                        'target': 'new',
+                        'context': context
+                    }
+
+        return self.continue_sourcing(cr, uid, ids, context=context)
 
     def continue_sourcing(self, cr, uid, ids, context=None):
         '''
@@ -648,7 +681,6 @@ class tender(osv.osv):
 
         return True
 
-
     def create_po(self, cr, uid, ids, context=None):
         '''
         create a po from the updated RfQs
@@ -658,6 +690,7 @@ class tender(osv.osv):
         if context is None:
             context = {}
 
+        t_line_obj = self.pool.get('tender.line')
         po_to_use = False
 
         for tender in self.browse(cr, uid, ids, context=context):
@@ -667,14 +700,19 @@ class tender(osv.osv):
             if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids if line.line_state != 'cancel']):
                 raise osv.except_osv(_('Error !'), _('All tender lines must have been compared!'))
 
+            # Use the DPO order type if there is a service product used
             for tender_line in tender.tender_line_ids:
                 if tender_line.line_state == 'cancel':
                     continue
 
                 # search or create PO to use:
-                po_to_use = self.pool.get('tender.line').get_existing_po(cr, uid, [tender_line.id], context=context)
+                order_type = 'regular'
+                if tender.sale_order_id and not tender.sale_order_id.procurement_request and \
+                        tender_line.product_id.type == 'service_recep':  # Only if coming from a FO
+                    order_type = 'direct'
+                po_to_use = t_line_obj.get_existing_po(cr, uid, [tender_line.id], order_type, context=context)
                 if not po_to_use:
-                    po_to_use = self.pool.get('tender.line').create_po_from_tender_line(cr, uid, [tender_line.id], context=context)
+                    po_to_use = t_line_obj.create_po_from_tender_line(cr, uid, [tender_line.id], order_type, context=context)
                     # log new PO:
                     po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
                     self.pool.get('purchase.order').log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
@@ -1235,8 +1273,7 @@ class tender_line(osv.osv):
                 'target': 'crush',
                 'context': context}
 
-
-    def get_existing_po(self, cr, uid, ids, context=None):
+    def get_existing_po(self, cr, uid, ids, order_type, context=None):
         """
         SOURCING PROCESS: Do we have to create new PO or use an existing one ?
         If an existing one can be used, then returns his ID, otherwise returns False
@@ -1256,7 +1293,7 @@ class tender_line(osv.osv):
                 ('state', 'in', ['draft']),
                 ('delivery_requested_date', '=', rfq_line.date_planned),
                 ('rfq_ok', '=', False),
-                ('order_type', '=', 'regular'),
+                ('order_type', '=', order_type),
             ]
             res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
 
@@ -1265,7 +1302,7 @@ class tender_line(osv.osv):
 
         return res_id or False
 
-    def create_po_from_tender_line(self, cr, uid, ids, context=None):
+    def create_po_from_tender_line(self, cr, uid, ids, order_type, context=None):
         '''
         SOURCING PROCESS: Create an new PO/DPO from tender line
         @return id of the newly created PO
@@ -1289,6 +1326,7 @@ class tender_line(osv.osv):
                 location_id = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0]
                 cross_docking_ok = False if tender.sale_order_id.location_requestor_id.usage != 'customer' else True
             po_values = {
+                'order_type': order_type,
                 'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '; ' + tender.name,
                 'partner_id': tender_line.supplier_id.id,
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [tender_line.supplier_id.id], ['default'])['default'],
@@ -1860,6 +1898,7 @@ class tender_line_cancel_wizard(osv.osv_memory):
 
         return self.just_cancel(cr, uid, ids, context=context)
 
+
 tender_line_cancel_wizard()
 
 
@@ -1958,7 +1997,43 @@ class tender_cancel_wizard(osv.osv_memory):
         '''
         return {'type': 'ir.actions.act_window_close'}
 
+
 tender_cancel_wizard()
+
+
+class tender_has_service_not_service_product_wizard(osv.osv_memory):
+    _name = 'tender.has.service.not.service.product.wizard'
+
+    _columns = {
+        'tender_id': fields.many2one('tender', string='Tender'),
+    }
+
+    def continue_continue_sourcing(self, cr, uid, ids, context=None):
+        '''
+        Continue the PO creation from the Tender
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            self.pool.get('tender').continue_sourcing(cr, uid, [wiz.tender_id.id], context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def close_wizard(self, cr, uid, ids, context=None):
+        '''
+        Just close the wizard
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        return {'type': 'ir.actions.act_window_close'}
+
+
+tender_has_service_not_service_product_wizard()
 
 
 class expected_sale_order_line(osv.osv):

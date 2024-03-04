@@ -15,6 +15,7 @@
                             <field name="is_current_instance" invisible="1"/>
                             <field name="is_coordo_editable" invisible="1"/>
                             <field name="has_entries" invisible="1"/>
+                            <field name="has_non_draft_register" invisible="1"/>
                             <field name="name" select="1"/>
                             <field name="code" select="1"
                                    attrs="{'readonly': [('has_entries', '=', True)]}"/>
@@ -26,9 +27,9 @@
                         <group col="2" colspan="2">
                                <separator string="Accounts" colspan="4"/>
                                <field name="default_debit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]"
-                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))]}"/>
+                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))], 'readonly': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj')), ('has_non_draft_register', '=', True)]}"/>
                                <field name="default_credit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]"
-                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))]}"/>
+                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))], 'readonly': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj')), ('has_non_draft_register', '=', True)]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Company" colspan="4"/>

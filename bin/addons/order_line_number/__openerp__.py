@@ -26,7 +26,7 @@
     "author" : "MSF, TeMPO Consulting",
     "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase","supplier_catalogue"],
+    "depends" : ["sale", "purchase","supplier_catalogue", "purchase_override"],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """

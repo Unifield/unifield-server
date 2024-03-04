@@ -24,6 +24,21 @@
       <field name="type">form</field>
       <field name="arch" type="xml">
         <form string="Backup configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+        <html colspan="4">
+<script language="javascript">
+$(document).ready(function() {
+orig_value =  $('#configpsql').html()
+
+    update_help = function() {
+    var wal_dir_value = $('#wal_directory').val().replaceAll('/', '\\').replaceAll('\\', '\\\\').replace(/\\+$/, '');
+    var configpsql = orig_value.replaceAll('D:\\\\WAL', wal_dir_value);
+    $('#configpsql').html(configpsql );
+};
+$('#help_wal_checkbox_').click(update_help);
+$('#wal_directory').change(update_help);
+});
+</script>
+</html>
             <group col="6" colspan="6">
             <field name="name"/>
             </group>
@@ -74,6 +89,7 @@
             <field name="help_wal" readonly="0"/>
             <group colspan="6" attrs="{'invisible': [('help_wal', '=', False)]}">
             <html>
+
                 <h4><translate>Steps to activate Continuous backup</translate></h4>
                 <ul>
                     <li><translate>Unzip your keys in in C:\Program Files (x86)\msf\</translate></li>
@@ -85,16 +101,15 @@ host    replication     openpg        ::1/128                 md5
 </li>
 
                     <li><translate>Edit postgresql.conf and set:</translate>
-<pre>
+<pre id="configpsql">
 wal_level = replica
 wal_compression = on
 archive_mode = on
-archive_command = 'copy "%%p" "C:\\WAL\\%%f" &amp;&amp; "C:\\Program Files (x86)\\msf\\Unifield\\Server\\rsync\\7za.exe" -bd -bso0 -sdel -w a "C:\\WAL\\%%f.7z" "C:\\WAL\\%%f"'
+archive_command = '"C:\\Program Files (x86)\\msf\\Unifield\\Server\\rsync\\7za.exe" -bd -bso0 -ssw -w"D:\\WAL" a "D:\\WAL\\%%f.7z" "%%p"'
 max_wal_senders = 3
-wal_keep_segments = 6
 archive_timeout = 43200
 </pre>
-<translate>Replace the 3 occurences of "C:\\WAL\\" with the path to the local WAL Archive directory.</translate>
+<translate>Replace the 3 occurences of "D:\\WAL\\" with the path to the local WAL Archive directory.</translate>
 </li>
 
                     <li><translate>Stop OpenERP server</translate></li>
