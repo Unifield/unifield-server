@@ -308,9 +308,9 @@ if (auto_field && auto_field.val()){
 	                                        % endif
                                         % endif
                                     </td>
+                                % endif
                                     <td class="pager-cell" id="${name}_extra_text" style="padding-left: 20px;">
                                     </td>
-                                % endif
                                 % if filter_selector:
                                 <td class="pager-cell" style="width: 90%">
                                     <div class="pager">
