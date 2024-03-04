@@ -139,9 +139,6 @@
                             <field name="catalog_mismatch" />
                             <field name="po_state_stored" invisible="True"/>
                             <field name="state_to_display"/>
-                            <button string="Validate" icon="terp-check" name="validated" type="object" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
-                            <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated', 'validated_n'])]}" header="True"/>
-                            <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', '|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct'), '&amp;', ('dest_partner_type', 'in', ['internal', 'section', 'intermission']), ('po_version', '!=', 1)]}"/>
                             <field name="mml_status" />
                             <field name="msl_status" />
                         </tree>
