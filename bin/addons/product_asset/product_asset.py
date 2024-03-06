@@ -856,6 +856,7 @@ class product_asset_event(osv.osv):
     _rec_name = 'asset_id'
     _description = "Event for asset follow up"
     _order = 'date desc, id desc'
+    _trace = True
 
     eventTypeSelection = [('reception', 'Reception'),
                           ('startUse', 'Start Use'),
@@ -975,6 +976,7 @@ class product_asset_line(osv.osv):
     _rec_name = 'date'
     _order = 'date, id'
     _description = "Depreciation Lines"
+    _trace = True
 
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
@@ -1233,6 +1235,7 @@ class product_asset_disposal(osv.osv_memory):
     _name = 'product.asset.disposal'
     _description = 'Asset Dispose'
     _rec_name = 'asset_id'
+    _trace = True
     _columns = {
         'asset_id': fields.many2one('product.asset', 'Asset', required=1),
         'event_type_id': fields.many2one('product.asset.event.type', 'Event Type', required=1, domain=[('is_disposal', '=', True)], add_empty=True),
