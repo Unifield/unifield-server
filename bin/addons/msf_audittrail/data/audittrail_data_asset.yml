@@ -103,7 +103,7 @@
         # Create the rule
         fields = ['date','event_type_id', 'asset_id', 'location', 'proj_code', 'product_id', 'comment']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.asset.event'), ('name', 'in', fields)], context=context)
-        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.event'), ('name', '=', 'date')], context=context)      
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.event'), ('name', '=', 'asset_id')], context=context)      
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.event'), ('name', '=', 'asset_id')], context=context)
       
         name_id = False
