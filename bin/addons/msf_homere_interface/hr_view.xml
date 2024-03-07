@@ -24,6 +24,7 @@
                     <field name="employee_type" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}" on_change="onchange_type(employee_type)"/>
                     <newline/>
                     <field name="department_id" widget="selection" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                    <field name="section_code" attrs="{'invisible': [('employee_type', '=', 'local')]}" />
                 </group>
                 <group colspan="4" col="8">
                     <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
@@ -123,6 +124,7 @@
                   <field name="identification_id" attrs="{'required': [('employee_type', '=', 'local')]}"/>
                 </field>
                 <field name="job_name" position="after">
+                    <field name="section_code" />
                     <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
@@ -148,6 +150,7 @@
                 <field name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                 <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)], 'required': [('employee_type', '=', 'local')]}"/>
                 <field name="job_name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                <field name="section_code" attrs="{'invisible': [('employee_type', '=', 'local')]}" />
                 <field name="destination_id" domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                 <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                 <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>

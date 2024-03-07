@@ -74,16 +74,22 @@ class hr_employee(osv.osv):
 
         to_modify = []
         name = vals.get('name', False)
+        new_name = {}
         if name:
             for id in ids:
-                oldname = self.browse(cr, uid, id, context=context).name
-                if name != oldname:
+                oldemp = self.browse(cr, uid, id, fields_to_fetch=['name', 'section_code'], context=context)
+                if name != oldemp.name:
                     to_modify.append(id)
+                    section_code = vals.get('section_code', oldemp.section_code)
+                    if section_code:
+                        name = '%s %s' % (section_code, name)
+                    new_name[id] = name
+
                     # BKLG-80: Populate changes to account.move.line and account.analytic when the name got updated
 
         res = super(hr_employee, self).write(cr, uid, ids, vals, context)
         for id in to_modify:
-            _populate_third_party_name(self, cr, uid, id, 'employee_id', name, context)
+            _populate_third_party_name(self, cr, uid, id, 'employee_id', new_name[id], context)
 
         return res
 

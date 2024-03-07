@@ -253,6 +253,8 @@ class hr_employee(osv.osv):
             vals['identification_id'] = vals['identification_id'].strip()
         if vals.get('job_name', False):
             vals['job_name'] = vals['job_name'].strip()
+        if vals.get('employee_type') == 'local':
+            vals['section_code'] = False
         allow_edition = False
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
             # Search Payroll functionnality preference (activated or not)
@@ -306,6 +308,7 @@ class hr_employee(osv.osv):
         if vals.get('employee_type', False):
             if vals.get('employee_type') == 'local':
                 local = True
+                vals['section_code'] = False
             elif vals.get('employee_type') == 'ex':
                 ex = True
         if (context.get('from', False) and context.get('from') in ['yaml', 'import']) or context.get('sync_update_execution', False):
