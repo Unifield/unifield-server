@@ -4,7 +4,7 @@
   !python {model: audittrail.rule}: |
     name = 'Asset Forms'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.asset')], context=context)
-    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids), ('log_write', '=', True)], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
         fields = ['name', 'state', 'product_id', 'instance_id', 'asset_type_id', 'useful_life_id', 'description', 'hq_ref', 'local_ref', 'serial_nb', 'brand', 'type', 'model', 'year', 'comment', 'project_po', 'international_po', 'arrival_date', 'receipt_place', 'move_line_id', 'quantity_divisor', 'invo_value', 'invo_currency', 'invo_date', 'invo_supplier_id', 'invo_donator_code', 'invo_certif_depreciation', 'from_invoice', 'state', 'start_date', 'depreciation_amount', 'disposal_amount', 'asset_pl_account_id']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset'), ('name', 'in', fields)], context=context)
