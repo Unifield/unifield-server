@@ -994,7 +994,7 @@ class account_move(osv.osv):
                                              "('code', '!=', 'ISI'), "
                                              "('is_active', '=', True), "
                                              "('instance_filter', '=', True)]",
-                                      hide_default_menu=True),
+                                      hide_default_menu=True, select=1),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
                                        help="This indicates which Journal Type is attached to this Journal Entry", write_relate=False),
