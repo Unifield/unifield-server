@@ -281,22 +281,27 @@ class sale_order(osv.osv):
             return {}
         res = {}
 
-        for order in self.browse(cr, uid, ids, context=context):
-            res[order.id] = 0.00
+        for so_id in ids:
+            res[so_id] = 0.00
             amount_total = 0.00
             amount_received = 0.00
-            for line in order.order_line:
-                if line.state in ('cancel', 'cancel_r'):
-                    continue
-
-                amount_total += line.product_uom_qty*line.price_unit
-                for move in line.move_ids:
-                    if move.state == 'done' and move.location_dest_id.usage == 'customer':
-                        move_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
-                        amount_received += move_qty*line.price_unit
+            cr.execute("""
+                SELECT id, product_uom_qty, price_unit, product_uom FROM sale_order_line
+                WHERE state NOT IN ('cancel', 'cancel_r') AND order_id = %s
+            """, (so_id,))
+            sol_data = cr.fetchall()
+            for sol in sol_data:
+                amount_total += sol[1] * sol[2]
+                cr.execute("""
+                    SELECT m.state, m.product_uom, m.product_qty, l.usage
+                    FROM stock_move m LEFT JOIN stock_location l ON m.location_dest_id = l.id
+                    WHERE m.state = 'done' AND l.usage = 'customer' AND m.sale_line_id = %s
+                """, (sol[0],))
+                for m in cr.fetchall():
+                    amount_received += uom_obj._compute_qty(cr, uid, m[1], m[2], sol[3]) * sol[2]
 
             if amount_total:
-                res[order.id] = (amount_received/amount_total)*100
+                res[so_id] = (amount_received/amount_total)*100
 
         return res
 
