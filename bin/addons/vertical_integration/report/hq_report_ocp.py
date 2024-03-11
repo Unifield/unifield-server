@@ -609,12 +609,11 @@ class hq_report_ocp_workday(hq_report_ocp):
         excluded_journal_types = ['hq', 'migration', 'inkind', 'extra']  # journal types that should not be used to take lines
 
         form = data.get('form')
-        fy_id = form.get('fiscalyear_id', False)
         period_id = form.get('period_id', False)
         instance_ids = form.get('instance_ids', False)
         instance_id = form.get('instance_id', False)
         all_missions = form.get('all_missions', False)
-        if not fy_id or not period_id or not instance_ids or (not instance_id and not all_missions):
+        if not period_id or not instance_ids or (not instance_id and not all_missions):
             raise osv.except_osv(_('Warning'), _('Some information is missing: either fiscal year or period or instance.'))
 
         period = period_obj.browse(cr, uid, period_id, context=context,
@@ -922,7 +921,10 @@ class hq_report_ocp_workday(hq_report_ocp):
                 writer.writerow(row)
         balances_file.close()
 
-        null1, tmpzipname = tempfile.mkstemp()
+        if data.get('output_file'):
+            tmpzipname = data['output_file']
+        else:
+            null1, tmpzipname = tempfile.mkstemp()
         zf = zipfile.ZipFile(tmpzipname, 'w')
 
         if all_missions:
@@ -939,7 +941,9 @@ class hq_report_ocp_workday(hq_report_ocp):
         zf.write(lines_file_name, lines_file_zip_name)
         zf.write(balances_file_name, balances_file_zip_name)
         zf.close()
-        os.close(null1)
+
+        if not data.get('output_file'):
+            os.close(null1)
 
         new_cr.commit()
         new_cr.close(True)

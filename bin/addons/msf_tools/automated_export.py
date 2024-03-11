@@ -126,7 +126,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
     }
 
     _defaults = {
-        'pause': 120,
+        'pause': 10,
         'interval': lambda *a: 1,
         'interval_unit': lambda *a: 'hours',
         'active': lambda *a: False,

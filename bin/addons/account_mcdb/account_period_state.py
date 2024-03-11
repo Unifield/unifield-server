@@ -52,7 +52,8 @@ class account_period_state(osv.osv):
         '''
         if context is None:
             context = {}
-        if context.get('sync_update_execution') and vals and vals.get('state') == 'mission-closed' and 'auto_export_vi' not in vals and self.pool.get('wizard.hq.report.oca').get_active_export_ids(cr, uid, context=context):
+        if context.get('sync_update_execution') and vals and vals.get('state') == 'mission-closed' and 'auto_export_vi' not in vals and \
+                ( self.pool.get('wizard.hq.report.oca').get_active_export_ids(cr, uid, context=context) or self.pool.get('ocp.export.wizard').get_active_export_ids(cr, uid, context=context) ):
             vals['auto_export_vi'] = False
 
     def create(self, cr, uid, vals, context=None):

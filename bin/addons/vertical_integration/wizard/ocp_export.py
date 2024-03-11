@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import fields
-from osv import osv
 from tools.translate import _
 from account_override import finance_export
 
@@ -28,8 +27,16 @@ import time
 from time import strftime
 from time import strptime
 
-class ocp_export_wizard(osv.osv_memory):
+#from . import wizard_export_vi_finance
+from . import wizard_hq_report_oca
+
+class ocp_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
     _name = "ocp.export.wizard"
+    _export_filename = '{instance}_Y{year}P{month:02d}_formatted_data_workday_{date}.zip'
+    _export_report_name = 'report.hq.ocp.workday'
+    _export_extra_data = {
+        'export_type': 'workday'
+    }
 
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance'),
