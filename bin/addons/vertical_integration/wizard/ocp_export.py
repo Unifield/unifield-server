@@ -39,12 +39,14 @@ class ocp_export_wizard(osv.osv_memory):
         # a warning is displayed in case the DB name is not "OCP_HQ" (export done from a coordo or from a test environment),
         # as this impacts the DB ID column
         'warning_db_name': fields.boolean('Display a warning on database name', invisible=True, readonly=True),
+        'export_type': fields.selection([('arcole', 'Arcole'), ('workday', 'Workday')], string='export type', readonly=True),
     }
 
     _defaults = {
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=c),
         'all_missions': False,
         'warning_db_name': lambda self, cr, uid, c: cr.dbname != 'OCP_HQ',
+        'export_type': lambda self, cr, uid, c: c and c.get('export_type') or 'arcole',
     }
 
     def onchange_instance_id(self, cr, uid, ids, instance_id, context=None):
@@ -120,9 +122,14 @@ class ocp_export_wizard(osv.osv_memory):
         current_time = time.strftime('%d%m%y%H%M%S')
         data['target_filename'] = '%s_%s_%s_Formatted_data_UF_to_OCP_HQ_System' % (prefix, selected_period, current_time)
 
+
+        internal_report_name = 'hq.ocp'
+        if wizard.export_type == 'workday':
+            internal_report_name = 'hq.ocp.workday'
+
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': data['target_filename'],
-            'report_name': 'hq.ocp',
+            'report_name': internal_report_name,
         }, context=context)
         context['background_id'] = background_id
         context['background_time'] = 2
@@ -133,7 +140,7 @@ class ocp_export_wizard(osv.osv_memory):
         data['context'] = context
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'hq.ocp',
+            'report_name': internal_report_name,
             'datas': data,
             'context': context,
         }

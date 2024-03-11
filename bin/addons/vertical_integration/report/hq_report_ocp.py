@@ -25,12 +25,16 @@ import pooler
 import time
 from time import strftime
 from time import strptime
-
+from datetime import datetime
 from account_override import finance_export
 from . import hq_report_ocb
 
 from report import report_sxw
-
+import csv
+import zipfile
+import tempfile
+from tools.misc import Path
+import os
 
 class finance_archive(finance_export.finance_archive):
     """
@@ -264,6 +268,7 @@ account_balances_per_currency_sql = """
     INNER JOIN msf_instance i ON req.instance_id = i.id
     WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0);
     """
+
 
 
 class hq_report_ocp(report_sxw.report_sxw):
@@ -584,3 +589,362 @@ class hq_report_ocp(report_sxw.report_sxw):
         return fe.archive(cr, uid)
 
 hq_report_ocp('report.hq.ocp', 'account.move.line', False, parser=False)
+
+class hq_report_ocp_workday(hq_report_ocp):
+
+    def create(self, cr, uid, ids, data, context=None):
+
+        if not data.get('form', False):
+            raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
+
+        if context is None:
+            context = {}
+
+        pool = pooler.get_pool(cr.dbname)
+
+        new_cr = pooler.get_db(cr.dbname).cursor()
+
+        mi_obj = pool.get('msf.instance')
+        period_obj = pool.get('account.period')
+        excluded_journal_types = ['hq', 'migration', 'inkind', 'extra']  # journal types that should not be used to take lines
+
+        form = data.get('form')
+        fy_id = form.get('fiscalyear_id', False)
+        period_id = form.get('period_id', False)
+        instance_ids = form.get('instance_ids', False)
+        instance_id = form.get('instance_id', False)
+        all_missions = form.get('all_missions', False)
+        if not fy_id or not period_id or not instance_ids or (not instance_id and not all_missions):
+            raise osv.except_osv(_('Warning'), _('Some information is missing: either fiscal year or period or instance.'))
+
+        period = period_obj.browse(cr, uid, period_id, context=context,
+                                   fields_to_fetch=['date_start', 'date_stop', 'number', 'fiscalyear_id'])
+        first_day_of_period = period.date_start
+        tm = strptime(first_day_of_period, '%Y-%m-%d')
+        year_num = tm.tm_year
+        period_yyyymm = '%d%02d' % (year_num, tm.tm_mon)
+        include_period_opening = [0]
+        exclude_period_closing = [0]
+        if period.number in (13, 14, 15):
+            include_period_opening = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('number', 'in', [12, 13, 14]), ('number', '<', period.number)], context=context)
+            if not include_period_opening:
+                include_period_opening = [0]
+
+        if period.number in (12, 13, 14):
+            exclude_period_closing = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('special', '=', 't'), ('number', '>', period.number)], context=context)
+            if not exclude_period_closing:
+                exclude_period_closing = [0]
+
+        journal_type = dict(pool.get('account.journal').fields_get(cr, uid)['type']['selection'])
+
+        sql_params = {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'min_date': period.date_start,
+            'max_date':  period.date_stop,
+            'j_type': tuple(excluded_journal_types),
+            'period_yyymm': period_yyyymm,
+            'first_day_of_period': period.date_start,
+            'last_day_of_period': period.date_stop,
+            'include_period_opening': tuple(include_period_opening),
+            'exclude_period_closing': tuple(exclude_period_closing),
+        }
+
+
+
+        # analytic lines raw_data
+        analytic_query = """
+                SELECT
+                    al.id, -- 0
+                    i.instance, -- 1
+                    al.entry_sequence, -- 2
+                    al.date, -- 3
+                    CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type, -- 4
+                    CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS book_debit, -- 5
+                    CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS book_credit, -- 6
+                    c.name AS "booking_currency", -- 7
+                    CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS func_debit, -- 8
+                    CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS func_credit, -- 9
+                    al.name as description, -- 10
+                    al.ref, -- 11
+                    al.document_date, -- 12
+                    aa2.code AS cost_center, -- 13
+                    aml.partner_id, -- 14
+                    j.code as journal_code, -- 15
+                    a.code as account_code, -- 16
+                    hr.identification_id as "emplid", -- 17
+                    aml.id as move_id -- 18
+                FROM
+                    account_analytic_line AS al,
+                    account_account AS a,
+                    account_analytic_account AS aa,
+                    account_analytic_account AS aa2,
+                    res_currency AS c,
+                    account_analytic_journal AS j,
+                    account_move_line aml
+                        left outer join hr_employee hr on hr.id = aml.employee_id,
+                    account_move am,
+                    account_journal AS aj,
+                    account_period p,
+                    msf_instance AS i
+                WHERE
+                    aa.id = al.destination_id
+                    AND aa2.id = al.cost_center_id
+                    AND a.id = al.general_account_id
+                    AND c.id = al.currency_id
+                    AND j.id = al.journal_id
+                    AND aml.id = al.move_id
+                    AND am.id = aml.move_id
+                    AND p.id = am.period_id
+                    AND p.number not in (0, 16)
+                    AND (
+                        al.real_period_id = %(period_id)s
+                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                    )
+                    AND am.state = 'posted'
+                    AND al.instance_id = i.id
+                    AND aml.journal_id = aj.id
+                    AND j.type not in %(j_type)s
+                    AND al.instance_id in %(instance_ids)s
+        """
+
+        # B/S lines no shrink
+        move_line_query = """
+                SELECT
+                    aml.id,  -- 0
+                    i.instance,  -- 1
+                    m.name as entry_sequence, -- 2
+                    aml.date,  -- 3
+                    j.type,  -- 4
+                    aml.debit_currency as book_debit,  -- 5
+                    aml.credit_currency as book_credit,  -- 6
+                    c.name AS "booking_currency",  -- 7
+                    ROUND(aml.debit, 2) as func_debit, -- 8
+                    ROUND(aml.credit, 2) as func_credit,  -- 9
+                    aml.name as description, -- 10
+                    aml.ref,  -- 11
+                    aml.document_date,  -- 12
+                    '', -- 13
+                    aml.partner_id,  -- 14
+                    j.code as journal_code, -- 15
+                    a.code as account_code,  -- 16
+                    hr.identification_id as "emplid"  -- 17
+                FROM
+                    account_move_line aml
+                    INNER JOIN account_move AS m ON aml.move_id = m.id
+                    LEFT JOIN hr_employee hr ON hr.id = aml.employee_id
+                    INNER JOIN account_account AS a ON aml.account_id = a.id
+                    INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                    INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                    INNER JOIN msf_instance AS i ON aml.instance_id = i.id
+                    LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+                WHERE
+                    aal.id IS NULL
+                    AND aml.period_id = %(period_id)s
+                    AND a.shrink_entries_for_hq != 't'
+                    AND j.type NOT IN %(j_type)s
+                    AND aml.instance_id IN %(instance_ids)s
+                    AND m.state = 'posted'
+                ORDER BY
+                    aml.id
+        """
+
+        col_header = [
+            'DB-ID',
+            'Instance',
+            'Entry Sequence',
+            'Valeur fixe',
+            'Func. Currency',
+            'Posting date',
+            'Journal Type',
+            'Booking Debit',
+            'Booking Credit',
+            'Book. Currency',
+            'Func. Debit',
+            'Func. Credit',
+            'Description',
+            'Reference',
+            'Document Date',
+            'Cost Center',
+            'Partner DB ID',
+            'Journal',
+            'Journal',
+            'G/L Account',
+            'EMPLID',
+            'Entry Sequence'
+        ]
+
+        lines_file = tempfile.NamedTemporaryFile('w', delete=False, newline='')
+        lines_file_name = lines_file.name
+        writer = csv.writer(lines_file, quoting=csv.QUOTE_ALL, delimiter=",")
+        writer.writerow(col_header)
+
+        for sql, obj in [
+                (analytic_query, 'account.analytic.line'),
+                (move_line_query, 'account.move.line')]:
+            cr.execute(sql, sql_params)
+            while True:
+                ajis = set()
+                amls = set()
+                rows = cr.fetchmany(500)
+                if not rows:
+                    break
+                for row in rows:
+                    if obj == 'account.analytic.line':
+                        ajis.add(row[0])
+                        amls.add(row[18])
+                    else:
+                        amls.add(row[0])
+                    writer.writerow([
+                        finance_archive._get_hash(cr, uid, ids='%s'%row[0], model=obj), # DB-ID
+                        row[1], # Instance
+                        row[2], # Entry Sequence
+                        'Company_Reference_ID', # Valeur fixe
+                        'EUR', # Func. Currency
+                        datetime.strptime(row[3], '%Y-%m-%d').strftime('%d/%m/%Y'), # Posting date
+                        journal_type.get(row[4], row[4]), # Journal Type
+                        row[5], # Booking Debit
+                        row[6], # Booking Credit
+                        row[7], # Book. Currency
+                        row[8], # Func. Debit
+                        row[9], # Func. Credit
+                        row[10], # Description
+                        row[11], # Reference
+                        datetime.strptime(row[12], '%Y-%m-%d').strftime('%d/%m/%Y'), # Document Date
+                        row[13] or '',# Cost Center
+                        row[14] or '', # Partner DB ID
+                        row[15] if row[4] == 'cash' else '', # Journal Cash
+                        row[15] if row[4] in ('bank', 'cheque') else '', # Journal Cash
+                        row[16], # G/L Account,
+                        row[17], # EMPLID
+                        row[2][0:3], # 3 digits seq.
+                    ])
+                if ajis:
+                    new_cr.execute("update account_analytic_line set exported='t' where id in %s", (tuple(ajis), ))
+                if amls:
+                    new_cr.execute("update account_move_line set exported='t' where id in %s", (tuple(amls), ))
+
+        # B/S lines consolidated
+        cr.execute("""
+                SELECT
+                    array_agg(aml.id ORDER BY aml.id) AS concat,  -- 0
+                    i.instance, -- 1
+                    j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS entry_sequence,  -- 2
+                    p.date_stop AS posting_date, -- 3
+                    j.type,  -- 4
+                    SUM(aml.amount_currency) as book_amount, -- 5
+                    c.name AS "booking_currency", -- 6
+                    SUM(aml.debit - aml.credit) as func_amount, -- 7
+                    'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS description,  -- 8
+                    p.date_stop AS document_date,  -- 9
+                    j.code as journal_code,  -- 10
+                    a.code as account_code, -- 11
+                    i.code as instance_code -- 12
+                FROM
+                    account_move_line aml
+                    INNER JOIN account_move AS m ON aml.move_id = m.id
+                    LEFT JOIN hr_employee hr ON hr.id = aml.employee_id
+                    INNER JOIN account_account AS a ON aml.account_id = a.id
+                    INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                    INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                    INNER JOIN msf_instance AS i ON aml.instance_id = i.id
+                    LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+                    INNER JOIN account_period p ON p.id = aml.period_id
+                    INNER JOIN account_fiscalyear f ON f.id = p.fiscalyear_id
+                WHERE
+                    aal.id IS NULL
+                    AND aml.period_id = %(period_id)s
+                    AND a.shrink_entries_for_hq = 't'
+                    AND j.type NOT IN %(j_type)s
+                    AND aml.instance_id IN %(instance_ids)s
+                    AND m.state = 'posted'
+                GROUP BY
+                    i.instance,
+                    i.code,
+                    j.code,
+                    p.code,
+                    f.code,
+                    a.code,
+                    c.name,
+                    p.date_stop,
+                    j.type,
+                    p.date_stop
+        """, sql_params)
+        while True:
+            rows = cr.fetchmany(500)
+            if not rows:
+                break
+            amls = set()
+            for row in rows:
+                amls.update(row[0])
+                writer.writerow([
+                    finance_archive._get_hash(cr, uid, ids=row[0], model='account.move.line'), # DB-ID
+                    row[1], # Instance
+                    row[2], # Entry Sequence
+                    'Company_Reference_ID', # Valeur fixe
+                    'EUR', # Func. Currency
+                    row[3], # Posting date
+                    journal_type.get(row[4], row[4]), # Journal Type
+                    -1*row[5] if row[5] < 0 else 0, # Booking Debit
+                    row[5] if row[5] > 0 else 0, # Booking Credit
+                    row[6], # Book. Currency
+                    -1 * row[7] if row[7] < 0 else 0, # Func. Debit
+                    row[7] if row[7] > 0 else 0, # Func. Credit
+                    row[8], # Description
+                    '', # Reference
+                    '',# Cost Center
+                    '', # Partner DB ID
+                    row[10] if row[4] == 'cash' else '', # Journal Cash
+                    row[10] if row[4] in ('bank', 'cheque') else '', # Journal Cash
+                    row[11], # G/L Account,
+                    row[17], # EMPLID
+                    row[12][0:3], # 3 digits seq.
+                ])
+            if amls:
+                new_cr.execute("update account_move_line set exported='t' where id in %s", (tuple(amls),))
+
+        lines_file.close()
+
+        balances_file = tempfile.NamedTemporaryFile('w', delete=False, newline='')
+        balances_file_name = balances_file.name
+        writer = csv.writer(balances_file, quoting=csv.QUOTE_ALL, delimiter=",")
+        writer.writerow([
+            'Instance', 'Account', 'Account Name', 'Period', 'Starting balance',
+            'Calculated balance', 'Closing balance', 'Booking Currency'
+        ])
+
+        cr.execute(account_balances_per_currency_sql, sql_params)
+        while True:
+            rows = cr.fetchmany(500)
+            if not rows:
+                break
+            for row in rows:
+                writer.writerow(row)
+        balances_file.close()
+
+        null1, tmpzipname = tempfile.mkstemp()
+        zf = zipfile.ZipFile(tmpzipname, 'w')
+
+        if all_missions:
+            prefix = 'Allinstances'
+        elif instance_id:
+            inst = mi_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
+            prefix = inst and inst.code[:3] or ''
+        else:
+            prefix = ''
+        selected_period = strftime('%Y%m', strptime(first_day_of_period, '%Y-%m-%d')) or ''
+        current_time = time.strftime('%d%m%y%H%M%S')
+        lines_file_zip_name = '%s_%s_%s_Monthly_Export.csv' % (prefix, period_yyyymm, current_time)
+        balances_file_zip_name = '%s_%s_%s_Account_Balances.csv' % (prefix, selected_period, current_time)
+        zf.write(lines_file_name, lines_file_zip_name)
+        zf.write(balances_file_name, balances_file_zip_name)
+        zf.close()
+        os.close(null1)
+
+        new_cr.commit()
+        new_cr.close(True)
+        return (Path(tmpzipname, delete=True), 'zip')
+
+
+
+hq_report_ocp_workday('report.hq.ocp.workday', 'account.move.line', False, parser=False)
