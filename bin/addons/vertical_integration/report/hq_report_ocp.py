@@ -654,14 +654,14 @@ class hq_report_ocp_workday(hq_report_ocp):
         # analytic lines raw_data
         analytic_query = """
                 SELECT
-                    al.id, -- 0
-                    i.instance, -- 1
+                    al.id as id, -- 0
+                    i.instance as instance, -- 1
                     al.entry_sequence, -- 2
-                    al.date, -- 3
+                    al.date as posting_date, -- 3
                     CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type, -- 4
                     CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS book_debit, -- 5
                     CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS book_credit, -- 6
-                    c.name AS "booking_currency", -- 7
+                    c.name AS booking_currency, -- 7
                     CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS func_debit, -- 8
                     CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS func_credit, -- 9
                     al.name as description, -- 10
@@ -669,10 +669,10 @@ class hq_report_ocp_workday(hq_report_ocp):
                     al.document_date, -- 12
                     aa2.code AS cost_center, -- 13
                     aml.partner_id, -- 14
-                    j.code as journal_code, -- 15
+                    aj.code as journal_code, -- 15
                     a.code as account_code, -- 16
-                    hr.identification_id as "emplid", -- 17
-                    aml.id as move_id -- 18
+                    hr.identification_id as emplid, -- 17
+                    aml.id as account_move_line_id -- 18
                 FROM
                     account_analytic_line AS al,
                     account_account AS a,
@@ -710,24 +710,24 @@ class hq_report_ocp_workday(hq_report_ocp):
         # B/S lines no shrink
         move_line_query = """
                 SELECT
-                    aml.id,  -- 0
-                    i.instance,  -- 1
+                    aml.id as id,  -- 0
+                    i.instance as instance,  -- 1
                     m.name as entry_sequence, -- 2
-                    aml.date,  -- 3
-                    j.type,  -- 4
+                    aml.date as posting_date,  -- 3
+                    j.type as journal_type,  -- 4
                     aml.debit_currency as book_debit,  -- 5
                     aml.credit_currency as book_credit,  -- 6
-                    c.name AS "booking_currency",  -- 7
+                    c.name AS booking_currency,  -- 7
                     ROUND(aml.debit, 2) as func_debit, -- 8
                     ROUND(aml.credit, 2) as func_credit,  -- 9
                     aml.name as description, -- 10
                     aml.ref,  -- 11
                     aml.document_date,  -- 12
-                    '', -- 13
+                    '' as cost_center, -- 13
                     aml.partner_id,  -- 14
                     j.code as journal_code, -- 15
                     a.code as account_code,  -- 16
-                    hr.identification_id as "emplid"  -- 17
+                    hr.identification_id as emplid  -- 17
                 FROM
                     account_move_line aml
                     INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -785,38 +785,47 @@ class hq_report_ocp_workday(hq_report_ocp):
             while True:
                 ajis = set()
                 amls = set()
-                rows = cr.fetchmany(500)
+                rows = cr.dictfetchmany(500)
                 if not rows:
                     break
                 for row in rows:
                     if obj == 'account.analytic.line':
-                        ajis.add(row[0])
-                        amls.add(row[18])
+                        ajis.add(row['id'])
+                        amls.add(row['account_move_line_id'])
+                        #if row[15] == 'ODHQ':
+                        #    aal = aal_obj.browse(cr, uid, row[0], fields_to_fetch=['last_corrected_id', 'reversal_origin'])
+                        #    cor_or_rev = aal.last_corrected_id or aal.reversal_origin
+                        #    while cor_or_rev:
+                        #        cor_or_rev = last_corrected_id
+                        #    if cor_or_rev and cor_or_rev.journal_id.type == 'hq':
+                        #        original_ref = cor_or_rev.ref or ''
+                        #        seq = original_ref.startswith('EAUD') and 'EAUD' or 'SIEG'
+                        #        journal = original_ref[8:11] or ''
                     else:
-                        amls.add(row[0])
+                        amls.add(row['id'])
                     writer.writerow([
-                        finance_archive._get_hash(cr, uid, ids='%s'%row[0], model=obj), # DB-ID
-                        row[1], # Instance
-                        row[2], # Entry Sequence
+                        finance_archive._get_hash(cr, uid, ids='%s'%row['id'], model=obj), # DB-ID
+                        row['instance'], # Instance
+                        row['entry_sequence'], # Entry Sequence
                         'Company_Reference_ID', # Valeur fixe
                         'EUR', # Func. Currency
-                        datetime.strptime(row[3], '%Y-%m-%d').strftime('%d/%m/%Y'), # Posting date
-                        journal_type.get(row[4], row[4]), # Journal Type
-                        row[5], # Booking Debit
-                        row[6], # Booking Credit
-                        row[7], # Book. Currency
-                        row[8], # Func. Debit
-                        row[9], # Func. Credit
-                        row[10], # Description
-                        row[11], # Reference
-                        datetime.strptime(row[12], '%Y-%m-%d').strftime('%d/%m/%Y'), # Document Date
-                        row[13] or '',# Cost Center
-                        row[14] or '', # Partner DB ID
-                        row[15] if row[4] == 'cash' else '', # Journal Cash
-                        row[15] if row[4] in ('bank', 'cheque') else '', # Journal Cash
-                        row[16], # G/L Account,
-                        row[17], # EMPLID
-                        row[2][0:3], # 3 digits seq.
+                        datetime.strptime(row['posting_date'], '%Y-%m-%d').strftime('%d/%m/%Y'), # Posting date
+                        journal_type.get(row['journal_type'], row['journal_type']), # Journal Type
+                        row['book_debit'], # Booking Debit
+                        row['book_credit'], # Booking Credit
+                        row['booking_currency'], # Book. Currency
+                        row['func_debit'], # Func. Debit
+                        row['func_credit'], # Func. Credit
+                        row['description'], # Description
+                        row['ref'], # Reference
+                        datetime.strptime(row['document_date'], '%Y-%m-%d').strftime('%d/%m/%Y'), # Document Date
+                        row['cost_center'] or '',# Cost Center
+                        row['partner_id'] or '', # Partner DB ID
+                        row['journal_code'] if row['journal_type'] == 'cash' else '', # Journal Cash
+                        row['journal_code'] if row['journal_type'] in ('bank', 'cheque') else '', # Journal Cash
+                        row['account_code'], # G/L Account,
+                        row['emplid'], # EMPLID
+                        row['entry_sequence'][0:3], # 3 digits seq.
                     ])
                 if ajis:
                     new_cr.execute("update account_analytic_line set exported='t' where id in %s", (tuple(ajis), ))

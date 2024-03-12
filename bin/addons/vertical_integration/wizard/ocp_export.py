@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import fields
+from osv import fields, osv
 from tools.translate import _
 from account_override import finance_export
 
@@ -29,6 +29,85 @@ from time import strptime
 
 #from . import wizard_export_vi_finance
 from . import wizard_hq_report_oca
+
+import uuid
+
+class ocp_fin_sync(osv.osv):
+    _name = 'ocp.fin.sync'
+    _order = 'id desc'
+    _columns = {
+        'model': fields.char('model', size=256, required=1),
+        'confirmed': fields.boolean('Confirmed'),
+        'max_auditrail_id': fields.integer('Last auditrail log'),
+        'previous_auditrail_id': fields.integer('Last auditrail log'),
+        'client_key': fields.char('Client Key', size=256, select=1),
+        'session_name': fields.char('Session Name', size=256, select=1),
+    }
+
+    def generate_session(self, cr, uid, model, client_key, full=False):
+        if model not in ('res.partner', 'hr.employee'):
+            raise osv.except_osv('Error', 'Incorrect model name %s, must be res.partner or hr.employee' % model)
+
+        new_session = '%s'%uuid.uuid4()
+        prev_id = False
+        if not full:
+            prev_id = self.search(cr, 1, [('model', '=', model), ('client_key', '=', client_key), ('confirmed', '=', True)], order='id desc', limit=1)
+
+        max_audit_id = self.pool.get('audittrail.log.line').search(cr, 1, [], order='id desc', limit=1)
+        data = {
+            'session_name': new_session,
+            'client_key': client_key,
+            'confirmed': False,
+            'max_auditrail_id': max_audit_id and max_audit_id[0] or False,
+            'model': model,
+            'previous_auditrail_id': 0,
+        }
+        if prev_id:
+            prev_session = self.browse(cr, uid, prev_id[0])
+            data['previous_auditrail_id'] = prev_session.max_auditrail_id
+
+        self.create(cr, 1, data)
+        return new_session
+
+    def get_record(self, cr, uid, session_name, page=0):
+        sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False)])
+        if not sess_ids:
+            raise osv.except_osv('Error', 'Session %s not found' % session_name)
+
+        limit = 200
+        sess = self.browse(cr, 1, sess_ids[0])
+        if sess.model == 'res.partner':
+            model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.partner')])[0]
+            field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', '=', 'name')])
+
+            cr.execute('''
+                select
+                    p.id, p.name
+                from
+                    res_partner p
+                left join
+                    audittrail_log_line l on l.field_id in %s and l.res_id = p.id and l.object_id=%s
+                where
+                    l.id > %s and
+                    l.id <= %s
+                group by
+                    p.id, p.name
+                order by p.id
+                offset %s
+                limit %s
+            ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit))
+            return {'page': page, 'limit': 200, 'partners': [{'id': x[0], 'name': x[1]} for x in cr.fetchall()]}
+
+    def confirm_session(self, cr, uid, session_name):
+        sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False)])
+        if not sess_ids:
+            raise osv.except_osv('Error', 'Session %s not found' % session_name)
+        self.write(cr, 1, sess_ids, {'confirmed': True})
+        return True
+
+ocp_fin_sync()
+
+
 
 class ocp_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
     _name = "ocp.export.wizard"
