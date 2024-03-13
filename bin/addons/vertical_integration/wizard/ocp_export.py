@@ -162,8 +162,8 @@ class ocp_fin_sync(osv.osv):
                         l.id <= %s and
                         j.type = 'cash'
                     group by
-                        j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
-                    order by j.code
+                        j.id, j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
+                    order by j.code, j.id
                     offset %s
                     limit %s
                 ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit))
