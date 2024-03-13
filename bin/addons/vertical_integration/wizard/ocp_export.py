@@ -153,7 +153,7 @@ class ocp_fin_sync(osv.osv):
                     select
                         j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
                     from
-                        account_journal j,
+                        account_journal j
                         inner join res_currency c on c.id = j.currency
                         inner join msf_instance i on i.id = j.instance_id
                         left join audittrail_log_line l on l.field_id in %s and l.res_id = j.id and l.object_id = %s
