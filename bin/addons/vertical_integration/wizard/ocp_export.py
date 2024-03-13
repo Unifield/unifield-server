@@ -214,6 +214,7 @@ class ocp_fin_sync(osv.osv):
 
         if data.get('section_code').lower() not in ('fr', 'nofr'):
             raise osv.except_osv('Error', '"section_code" value must be FR or NOFR (identification_id: %s)' % (identification_id, ))
+
         expat_id = hr_obj.search(cr, uid, [('identification_id', '=ilike', identification_id), ('employee_type', '=', 'ex'), ('active', 'in', ['t','f'])])
         data = {
             'name': name,
@@ -225,7 +226,6 @@ class ocp_fin_sync(osv.osv):
             data['active'] = False
             hr_obj.create(cr, uid, data)
             return 'created'
-
 
         if not hr_obj.search_exists(cr, uid, [('id', '=', expat_id[0]), ('name', '=', data['name']), ('section_code', '=', data['section_code']), ('active', 'in', ['t','f'])]):
             hr_obj.write(cr, uid, expat_id[0], data)
@@ -250,6 +250,7 @@ class ocp_fin_sync(osv.osv):
                 'nb_updated': 0,
                 'nb_processed': 0,
             }
+
         for data in datas:
             try:
                 cr.execute("SAVEPOINT import_expat")
@@ -285,7 +286,6 @@ class ocp_fin_sync(osv.osv):
         }
 
 ocp_fin_sync()
-
 
 
 class ocp_export_wizard(wizard_hq_report_oca.wizard_export_vi_finance):
