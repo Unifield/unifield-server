@@ -921,12 +921,21 @@ class hq_report_ocp_workday(hq_report_ocp):
             'Calculated balance', 'Closing balance', 'Booking Currency'
         ])
 
+        rounded_currencies = pool.get('ir.config_parameter').get_param(cr, 1, 'OCP_BALANCE_ROUNDED_CUR')
+        rounded_currencies_code = []
+        if rounded_currencies:
+            rounded_currencies_code = rounded_currencies.split(',')
+
         cr.execute(account_balances_per_currency_sql, sql_params)
         while True:
             rows = cr.fetchmany(500)
             if not rows:
                 break
             for row in rows:
+                if rounded_currencies_code and row[7] in rounded_currencies_code:
+                    row = list(row)
+                    for idx in [4, 5, 6]:
+                        row[idx] = round(row[idx])
                 writer.writerow(row)
         balances_file.close()
 

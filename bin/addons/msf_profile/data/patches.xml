@@ -1044,6 +1044,10 @@
             <field name="method">us_12294_force_email_popup</field>
         </record>
 
+        <record id="us_12472_rounded_vi_cur" model="patch.scripts">
+            <field name="method">us_12472_rounded_vi_cur</field>
+        </record>
+
 
     </data>
 </openerp>
