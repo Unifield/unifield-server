@@ -27,12 +27,13 @@ import time
 from time import strftime
 from time import strptime
 
-#from . import wizard_export_vi_finance
+import logging
 from . import wizard_hq_report_oca
 
 import uuid
 
 class ocp_fin_sync(osv.osv):
+    __logger = logging.getLogger('ocp.fin.sync')
     _name = 'ocp.fin.sync'
     _order = 'id desc'
     _columns = {
@@ -46,7 +47,7 @@ class ocp_fin_sync(osv.osv):
 
     def generate_session(self, cr, uid, model, client_key, full=False):
         ret = {
-            'result': 'OK'
+            'success': True
         }
         try:
             models = ['res.partner', 'hr.employee', 'account.journal.cash']
@@ -75,8 +76,9 @@ class ocp_fin_sync(osv.osv):
             ret['session'] = new_session
 
         except Exception as e:
+            self.__logger.exception(e)
             cr.rollback()
-            ret['result'] = 'KO'
+            ret['success'] = False
             ret['error'] = '%s'%e
 
         return ret
@@ -88,7 +90,7 @@ class ocp_fin_sync(osv.osv):
             'limit': limit,
             'model': False,
             'session': session_name,
-            'result': 'OK',
+            'success': True,
             'records': [],
         }
         try:
@@ -171,15 +173,16 @@ class ocp_fin_sync(osv.osv):
                 ret['records'] = [{'code': x[0] or '', 'name': x[1] or '', 'mission': x[2] and x[2][0:3] or '', 'currency': x[3] or '', 'active': x[4], 'inactivation_date': x[5] or False} for x in cr.fetchall()]
 
         except Exception as e:
+            self.__logger.exception(e)
             cr.rollback()
-            ret['result'] = 'KO'
+            ret['success'] = False
             ret['error'] = '%s'%e
 
         return ret
 
     def confirm_session(self, cr, uid, session_name):
         ret = {
-            'result': 'OK'
+            'success': True
         }
         try:
             sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False)])
@@ -187,11 +190,99 @@ class ocp_fin_sync(osv.osv):
                 raise osv.except_osv('Error', 'Session %s not found' % session_name)
             self.write(cr, 1, sess_ids, {'confirmed': True})
         except Exception as e:
+            self.__logger.exception(e)
             cr.rollback()
-            ret['result'] = 'KO'
+            ret['success'] = False
             ret['error'] = '%s'%e
 
         return ret
+
+    def _import_employee(self, cr, uid, data):
+        hr_obj = self.pool.get('hr.employee')
+        if not isinstance(data, dict):
+            raise osv.except_osv('Error', "A dictionnary must by used: {'name': XXX, 'identification_id': YYY, 'section_code': 'FR'}")
+
+        if not data.get('identification_id') or not data['identification_id'].strip():
+            raise osv.except_osv('Error', '"identification_id" value cannot be empty (name: %s)' % (data.get('name'), ))
+        identification_id = data['identification_id'].strip()
+
+        if not data.get('name') or not data['name'].strip():
+            raise osv.except_osv('Error', '"name" value cannot be empty (identification_id: %s)' % (identification_id, ))
+        name = data['name'].strip()
+        if not data.get('section_code'):
+            raise osv.except_osv('Error', '"section_code" value cannot be empty (identification_id: %s)' % (identification_id, ))
+
+        if data.get('section_code').lower() not in ('fr', 'nofr'):
+            raise osv.except_osv('Error', '"section_code" value must be FR or NOFR (identification_id: %s)' % (identification_id, ))
+        expat_id = hr_obj.search(cr, uid, [('identification_id', '=ilike', identification_id), ('employee_type', '=', 'ex'), ('active', 'in', ['t','f'])])
+        data = {
+            'name': name,
+            'section_code': data['section_code'].upper(),
+            'employee_type': 'ex',
+        }
+        if not expat_id:
+            data['identification_id'] = identification_id
+            data['active'] = False
+            hr_obj.create(cr, uid, data)
+            return 'created'
+
+
+        if not hr_obj.search_exists(cr, uid, [('id', '=', expat_id[0]), ('name', '=', data['name']), ('section_code', '=', data['section_code']), ('active', 'in', ['t','f'])]):
+            hr_obj.write(cr, uid, expat_id[0], data)
+            return 'updated'
+
+        return ''
+
+    def import_employees(self, cr, uid, datas):
+        updated = 0
+        created = 0
+        error = 0
+        errors = []
+        record = 0
+        if isinstance(datas, dict):
+            datas = [datas]
+        elif not isinstance(datas, list):
+            return {
+                'success': False,
+                'error': "Datas attribute must be a list of dictionnaries [{'name': XXX, 'identification_id': YYY, 'section_code': 'FR'}] or a single dictionnary {'name': XXX, 'identification_id': YYY, 'section_code': 'FR'}",
+                'nb_errors': 1,
+                'nb_created': 0,
+                'nb_updated': 0,
+                'nb_processed': 0,
+            }
+        for data in datas:
+            try:
+                cr.execute("SAVEPOINT import_expat")
+                record += 1
+                action = self._import_employee(cr, uid, data)
+                if action == 'created':
+                    created += 1
+                elif action == 'updated':
+                    updated += 1
+                cr.execute("RELEASE SAVEPOINT import_expat")
+            except Exception as e:
+                self.__logger.exception('Record %d: %s' % (record, e))
+                error += 1
+                errors.append('Record %d: %s' % (record, e))
+                cr.execute("ROLLBACK TO SAVEPOINT import_expat")
+
+        if error:
+            cr.rollback()
+            return {
+                'success': False,
+                'nb_errors': error,
+                'nb_created': 0,
+                'nb_updated': 0,
+                'nb_processed': record,
+                'error': '\n'.join(errors),
+            }
+        return {
+            'success': True,
+            'nb_created': created,
+            'nb_updated': updated,
+            'nb_processed': record,
+            'nb_errors': 0,
+        }
 
 ocp_fin_sync()
 
