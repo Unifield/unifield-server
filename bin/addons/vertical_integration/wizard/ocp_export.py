@@ -45,65 +45,153 @@ class ocp_fin_sync(osv.osv):
     }
 
     def generate_session(self, cr, uid, model, client_key, full=False):
-        if model not in ('res.partner', 'hr.employee'):
-            raise osv.except_osv('Error', 'Incorrect model name %s, must be res.partner or hr.employee' % model)
-
-        new_session = '%s'%uuid.uuid4()
-        prev_id = False
-        if not full:
-            prev_id = self.search(cr, 1, [('model', '=', model), ('client_key', '=', client_key), ('confirmed', '=', True)], order='id desc', limit=1)
-
-        max_audit_id = self.pool.get('audittrail.log.line').search(cr, 1, [], order='id desc', limit=1)
-        data = {
-            'session_name': new_session,
-            'client_key': client_key,
-            'confirmed': False,
-            'max_auditrail_id': max_audit_id and max_audit_id[0] or False,
-            'model': model,
-            'previous_auditrail_id': 0,
+        ret = {
+            'result': 'OK'
         }
-        if prev_id:
-            prev_session = self.browse(cr, uid, prev_id[0])
-            data['previous_auditrail_id'] = prev_session.max_auditrail_id
+        try:
+            models = ['res.partner', 'hr.employee', 'account.journal.cash']
+            if model not in models:
+                raise osv.except_osv('Error', 'Incorrect model name %s, must be %s' % (model, ' or '.join(models)))
 
-        self.create(cr, 1, data)
-        return new_session
+            new_session = '%s'%uuid.uuid4()
+            prev_id = False
+            if not full:
+                prev_id = self.search(cr, 1, [('model', '=', model), ('client_key', '=', client_key), ('confirmed', '=', True)], order='id desc', limit=1)
+
+            max_audit_id = self.pool.get('audittrail.log.line').search(cr, 1, [], order='id desc', limit=1)
+            data = {
+                'session_name': new_session,
+                'client_key': client_key,
+                'confirmed': False,
+                'max_auditrail_id': max_audit_id and max_audit_id[0] or False,
+                'model': model,
+                'previous_auditrail_id': 0,
+            }
+            if prev_id:
+                prev_session = self.browse(cr, uid, prev_id[0])
+                data['previous_auditrail_id'] = prev_session.max_auditrail_id
+
+            self.create(cr, 1, data)
+            ret['session'] = new_session
+
+        except Exception as e:
+            cr.rollback()
+            ret['result'] = 'KO'
+            ret['error'] = '%s'%e
+
+        return ret
 
     def get_record(self, cr, uid, session_name, page=0):
-        sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False)])
-        if not sess_ids:
-            raise osv.except_osv('Error', 'Session %s not found' % session_name)
-
         limit = 200
-        sess = self.browse(cr, 1, sess_ids[0])
-        if sess.model == 'res.partner':
-            model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.partner')])[0]
-            field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', '=', 'name')])
+        ret = {
+            'page': page,
+            'limit': limit,
+            'model': False,
+            'session': session_name,
+            'result': 'OK',
+            'records': [],
+        }
+        try:
+            sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False)])
+            if not sess_ids:
+                raise osv.except_osv('Error', 'Session %s not found' % session_name)
 
-            cr.execute('''
-                select
-                    p.id, p.name
-                from
-                    res_partner p
-                left join
-                    audittrail_log_line l on l.field_id in %s and l.res_id = p.id and l.object_id=%s
-                where
-                    l.id > %s and
-                    l.id <= %s
-                group by
-                    p.id, p.name
-                order by p.id
-                offset %s
-                limit %s
-            ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit))
-            return {'page': page, 'limit': 200, 'partners': [{'id': x[0], 'name': x[1]} for x in cr.fetchall()]}
+            sess = self.browse(cr, 1, sess_ids[0])
+            ret['model'] = sess.model
+            if sess.model == 'res.partner':
+                model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.partner')])[0]
+                field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', '=', 'name')])
+
+                cr.execute('''
+                    select
+                        p.id, p.name
+                    from
+                        res_partner p
+                    left join
+                        audittrail_log_line l on l.field_id in %s and l.res_id = p.id and l.object_id = %s
+                    where
+                        l.id > %s and
+                        l.id <= %s
+                    group by
+                        p.id, p.name
+                    order by p.id
+                    offset %s
+                    limit %s
+                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit))
+
+                ret['records'] = [{'id': x[0] or '', 'name': x[1] or ''} for x in cr.fetchall()]
+
+            elif sess.model == 'hr.employee':
+                ressource_model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'resource.resource')])[0]
+                field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model', 'in', ['resource.resource', 'hr.employee']), ('name', 'in', ['name', 'homere_uuid_key', 'identification_id'])])
+
+                cr.execute('''
+                    select
+                        e.identification_id, e.homere_uuid_key, r.name
+                    from
+                        hr_employee e
+                        inner join resource_resource r on r.id = e.resource_id
+                        left join audittrail_log_line l on l.field_id in %s and l.res_id = r.id and l.object_id = %s
+                    where
+                        l.id > %s and
+                        l.id <= %s and
+                        e.employee_type = 'local'
+                    group by
+                        e.id, e.identification_id, e.homere_uuid_key, r.name
+                    order by e.id
+                    offset %s
+                    limit %s
+                ''', (tuple(field_ids), ressource_model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit))
+
+                ret['records'] = [{'identification_id': x[0] or '', 'uuid': x[1] or '', 'name': x[2] or ''} for x in cr.fetchall()]
+
+            elif sess.model == 'account.journal.cash':
+                model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'account.journal')])[0]
+                field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', 'in', ['name', 'code', 'currency', 'is_active', 'inactivation_date', 'instance_id'])])
+
+                cr.execute('''
+                    select
+                        j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
+                    from
+                        account_journal j,
+                        inner join res_currency c on c.id = j.currency
+                        inner join msf_instance i on i.id = j.instance_id
+                        left join audittrail_log_line l on l.field_id in %s and l.res_id = j.id and l.object_id = %s
+                    where
+                        l.id > %s and
+                        l.id <= %s and
+                        j.type = 'cash'
+                    group by
+                        j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
+                    order by j.code
+                    offset %s
+                    limit %s
+                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit))
+
+                ret['records'] = [{'code': x[0] or '', 'name': x[1] or '', 'mission': x[2] and x[2][0:3] or '', 'currency': x[3] or '', 'active': x[4], 'inactivation_date': x[5] or False} for x in cr.fetchall()]
+
+        except Exception as e:
+            cr.rollback()
+            ret['result'] = 'KO'
+            ret['error'] = '%s'%e
+
+        return ret
 
     def confirm_session(self, cr, uid, session_name):
-        sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False)])
-        if not sess_ids:
-            raise osv.except_osv('Error', 'Session %s not found' % session_name)
-        self.write(cr, 1, sess_ids, {'confirmed': True})
-        return True
+        ret = {
+            'result': 'OK'
+        }
+        try:
+            sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False)])
+            if not sess_ids:
+                raise osv.except_osv('Error', 'Session %s not found' % session_name)
+            self.write(cr, 1, sess_ids, {'confirmed': True})
+        except Exception as e:
+            cr.rollback()
+            ret['result'] = 'KO'
+            ret['error'] = '%s'%e
+
+        return ret
 
 ocp_fin_sync()
 
