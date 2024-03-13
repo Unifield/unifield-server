@@ -2,7 +2,7 @@
 <openerp>
 <data>
 
-    <menuitem name="Assets" id="product_asset.asset_configuration" parent="account.menu_configuration_misc" sequence="50"/>
+    <menuitem name="Assets" id="product_asset.asset_configuration" parent="account.menu_configuration_misc" sequence="50" active_config="fixed_asset_ok"/>
     <!-- product -->
     <record id="product_normal_form_view" model="ir.ui.view">
         <field name="name">product.normal.form</field>
