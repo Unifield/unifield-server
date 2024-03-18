@@ -281,27 +281,42 @@ class sale_order(osv.osv):
             return {}
         res = {}
 
-        for so_id in ids:
-            res[so_id] = 0.00
-            amount_total = 0.00
-            amount_received = 0.00
-            cr.execute("""
-                SELECT id, product_uom_qty, price_unit, product_uom FROM sale_order_line
-                WHERE state NOT IN ('cancel', 'cancel_r') AND order_id = %s
-            """, (so_id,))
-            sol_data = cr.fetchall()
-            for sol in sol_data:
-                amount_total += sol[1] * sol[2]
-                cr.execute("""
-                    SELECT m.state, m.product_uom, m.product_qty, l.usage
-                    FROM stock_move m LEFT JOIN stock_location l ON m.location_dest_id = l.id
-                    WHERE m.state = 'done' AND l.usage = 'customer' AND m.sale_line_id = %s
-                """, (sol[0],))
-                for m in cr.fetchall():
-                    amount_received += uom_obj._compute_qty(cr, uid, m[1], m[2], sol[3]) * sol[2]
+        cr.execute("""
+            SELECT s.id, sl.id, sl.product_uom_qty, sl.price_unit, sl.product_uom, SUM(m.product_qty), m.product_uom
+            FROM sale_order_line sl 
+                LEFT JOIN sale_order s ON sl.order_id = s.id
+                LEFT JOIN stock_move m ON m.sale_line_id = sl.id  
+                    AND m.id in (SELECT m2.id FROM stock_move m2 LEFT JOIN stock_location l ON m2.location_dest_id = l.id 
+                        WHERE m2.state = 'done' AND l.usage = 'customer' AND m2.sale_line_id = sl.id)
+            WHERE s.id IN %s AND sl.state NOT IN ('cancel', 'cancel_r')
+            GROUP BY s.id, sl.id, m.product_uom
+        """, (tuple(ids),))
+        amount_total, amount_received = {}, {}
+        treated_sol = []
+        for sol in cr.fetchall():
+            if amount_total.get(sol[0]):
+                if sol[1] not in treated_sol:
+                    amount_total[sol[0]] += sol[2] * sol[3]
+                    treated_sol.append(sol[1])
+            else:
+                amount_total[sol[0]] = sol[2] * sol[3]
+                treated_sol.append(sol[1])
+            l_amount_received = 0
+            if sol[5]:
+                if sol[4] != sol[6]:
+                    l_amount_received = uom_obj._compute_qty(cr, uid, sol[6], sol[5], sol[4]) * sol[3]
+                else:
+                    l_amount_received = sol[5] * sol[3]
+            if amount_received.get(sol[0]):
+                amount_received[sol[0]] += l_amount_received
+            else:
+                amount_received[sol[0]] = l_amount_received
 
-            if amount_total:
-                res[so_id] = (amount_received/amount_total)*100
+        for so_id in ids:
+            if amount_total.get(so_id) and amount_total[so_id] != 0:
+                res[so_id] = (amount_received[so_id]/amount_total[so_id]) * 100
+            else:
+                res[so_id] = 0
 
         return res
 
