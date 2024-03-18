@@ -40,7 +40,7 @@ class validate_account_move_lines(osv.osv_memory):
                 moves.append(line.move_id)
         moves = list(set(moves))
         if not moves:
-            raise osv.except_osv(_('Warning'), _('Selected Entry Lines does not have any account move enties in draft state'))
+            raise osv.except_osv(_('Warning'), _('Selected Entry Lines does not have any account move entries in draft state'))
         # check G/L account validity
         for am in moves:
             for aml in am.line_id:
