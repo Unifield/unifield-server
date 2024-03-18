@@ -312,8 +312,6 @@ class finance_archive(finance_export.finance_archive):
             tmp_l = list(line)  # convert from tuple to list
             if tmp_l[col_nbr]:
                 journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
-                if type(journal_name) == str:
-                    journal_name = journal_name.encode('utf-8')
                 tmp_l[col_nbr] = journal_name
             tmp_l = tuple(tmp_l)  # restore back the initial format
             new_data.append(tmp_l)
@@ -371,7 +369,7 @@ liquidity_sql = """
             """
 
 
-def postprocess_liquidity_balances(self, cr, uid, data, encode=True, context=None):
+def postprocess_liquidity_balances(self, cr, uid, data, encode=False, context=None):
     """
     Returns data after having replaced the Journal ID by the Journal Name in the current language
     (the language code should be stored in context['lang']).
