@@ -421,6 +421,15 @@ class ir_module(osv.osv):
 ir_module()
 
 
+class ir_cron(osv.osv):
+    _name = 'ir.cron'
+    _inherit = 'ir.cron'
+    _trace = True
+
+
+ir_cron()
+
+
 class audittrail_log_sequence(osv.osv):
     _name = 'audittrail.log.sequence'
     _rec_name = 'model'

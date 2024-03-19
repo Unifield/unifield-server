@@ -1595,6 +1595,7 @@ class Connection(osv.osv):
     _name = "sync.client.sync_server_connection"
     _description = "Connection to sync server information and tools"
     _rec_name = 'host'
+    _trace = True
 
     _columns = {
         'active': fields.boolean('Active'),
