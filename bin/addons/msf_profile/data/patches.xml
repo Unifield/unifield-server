@@ -1044,5 +1044,9 @@
             <field name="method">us_12294_force_email_popup</field>
         </record>
 
+        <record id="us_12472_hr_populate_expat_creation_date" model="patch.scripts">
+            <field name="method">us_12472_hr_populate_expat_creation_date</field>
+        </record>
+
     </data>
 </openerp>

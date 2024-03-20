@@ -26,6 +26,7 @@ from osv import fields
 from lxml import etree
 from tools.translate import _
 from msf_field_access_rights.osv_override import _get_instance_level
+import time
 
 class hr_payment_method(osv.osv):
     _name = 'hr.payment.method'
@@ -151,6 +152,7 @@ class hr_employee(osv.osv):
         'bank_name': fields.char('Bank Name', size=256, required=False),
         'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
         'instance_creator': fields.char('Instance creator of the employee', size=64, readonly=1),
+        'expat_creation_date': fields.date('Creation Date', readonly=1),
     }
 
     _defaults = {
@@ -160,6 +162,7 @@ class hr_employee(osv.osv):
         'homere_id_unique': lambda *a: '',
         'gender': lambda *a: 'unknown',
         'ex_allow_edition': lambda *a: True,
+        'expat_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
     def _set_sync_update_as_run(self, cr, uid, data, sdref, context=None):

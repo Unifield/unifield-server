@@ -57,6 +57,10 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_12472_hr_populate_expat_creation_date(self, cr, uid, *a, **b):
+        cr.execute('''update hr_employee set expat_creation_date=create_date where employee_type='ex' ''')
+        return True
+
     # UF32.0
     def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
