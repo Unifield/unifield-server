@@ -38,7 +38,7 @@ class wizard_export_vi_finance(osv.osv_memory):
             return []
 
         coordo_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
-        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16)], context=context)
+        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16), ('already_exported', '=', False)], context=context)
 
 
     def get_active_export_ids(self, cr, uid, context=None):
@@ -86,9 +86,13 @@ class wizard_export_vi_finance(osv.osv_memory):
             disable_generation=True when we only want to push files to remote
         """
 
-        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+        instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+        if not instance or instance.level != 'section':
             raise osv.except_osv(_('Warning'), _('Export is only available at HQ level.'))
 
+        set_as_already_exported = False
+        if instance.name == 'OCP_HQ':
+            set_as_already_exported = True
         p_state_obj = self.pool.get('account.period.state')
         export_job_obj = self.pool.get('automated.export.job')
         nb_ok = 0
@@ -132,7 +136,7 @@ class wizard_export_vi_finance(osv.osv_memory):
                     obj = netsvc.LocalService(self._export_report_name)
                     obj.create(cr, uid, [], report_data, context=context)
                     out_file.close()
-                    p_state_obj.write(cr, uid, period_state.id, {'auto_export_vi': True}, context=context)
+                    p_state_obj.write(cr, uid, period_state.id, {'auto_export_vi': True, 'already_exported': set_as_already_exported}, context=context)
                     nb_ok += 1
                     msg.append('[%s] %s done' % (time.strftime('%Y-%m-%d %H:%M:%S'), period_state.instance_id.code))
                     cr.commit()
@@ -143,7 +147,7 @@ class wizard_export_vi_finance(osv.osv_memory):
 
             for period_state_ids in list(instance_seen.items()):
                 # overkill ? just in case of duplicates period_id / coordo_id
-                p_state_obj.write(cr, uid, period_state_ids, {'auto_export_vi': True}, context=context)
+                p_state_obj.write(cr, uid, period_state_ids, {'auto_export_vi': True, 'already_exported': set_as_already_exported}, context=context)
 
 
         if nb_ok and export_wiz.pause:
