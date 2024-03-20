@@ -215,20 +215,30 @@ class ocp_fin_sync(osv.osv):
         if data.get('section_code').lower() not in ('fr', 'nofr'):
             raise osv.except_osv('Error', '"section_code" value must be FR or NOFR (identification_id: %s)' % (identification_id, ))
 
-        expat_id = hr_obj.search(cr, uid, [('identification_id', '=ilike', identification_id), ('employee_type', '=', 'ex'), ('active', 'in', ['t','f'])])
-        data = {
+
+        c_data = {
             'name': name,
             'section_code': data['section_code'].upper(),
             'employee_type': 'ex',
         }
+
+        if data.get('creation_date'):
+            try:
+                time.strptime(data['creation_date'], '%Y-%m-%d')
+                c_data['expat_creation_date'] = data['creation_date']
+            except:
+                raise osv.except_osv('Error', '"creation_date %s must be a date in fomat YYYY-MM-DD' % (data['creation_date'], ))
+
+        expat_id = hr_obj.search(cr, uid, [('identification_id', '=ilike', identification_id), ('employee_type', '=', 'ex'), ('active', 'in', ['t','f'])])
+
         if not expat_id:
-            data['identification_id'] = identification_id
-            data['active'] = False
-            hr_obj.create(cr, uid, data)
+            c_data['identification_id'] = identification_id
+            c_data['active'] = False
+            hr_obj.create(cr, uid, c_data)
             return 'created'
 
-        if not hr_obj.search_exists(cr, uid, [('id', '=', expat_id[0]), ('name', '=', data['name']), ('section_code', '=', data['section_code']), ('active', 'in', ['t','f'])]):
-            hr_obj.write(cr, uid, expat_id[0], data)
+        if not hr_obj.search_exists(cr, uid, [('id', '=', expat_id[0]), ('name', '=', c_data['name']), ('section_code', '=', c_data['section_code']), ('active', 'in', ['t','f'])]):
+            hr_obj.write(cr, uid, expat_id[0], c_data)
             return 'updated'
 
         return ''
