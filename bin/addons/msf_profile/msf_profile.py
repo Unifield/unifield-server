@@ -57,12 +57,6 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-    def us_12472_rounded_vi_cur(self, cr, uid, *a, **b):
-        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if instance and instance.instance == 'OCP_HQ':
-            self.pool.get('ir.config_parameter').set_param(cr, 1, 'OCP_BALANCE_ROUNDED_CUR', 'JPY,BIF,RWF,DJF,UGX,XAF,XOF')
-        return True
-
     # UF32.0
     def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
