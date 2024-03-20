@@ -283,7 +283,7 @@ class import_data(osv.osv_memory):
             for iv in cr.dictfetchall():
                 self._cache[dbname]['product.international.status']['name'].update({iv['name']: iv['id']})
 
-        errorfile = TemporaryFile('w+')
+        errorfile = TemporaryFile('w+', newline='')
         writer = False
         if not auto_import:
             writer = csv.writer(errorfile, quotechar='"', delimiter=';')
