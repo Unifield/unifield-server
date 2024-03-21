@@ -6,7 +6,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'ir.cron')], context=context)
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
-        fields = ['name', 'active', 'user_id', 'priority', 'internal_number', 'interval_type', 'nextcall', 'numbercall', 'model', 'function', 'args']
+        fields = ['name', 'active', 'user_id', 'priority', 'interval_number', 'interval_type', 'nextcall', 'numbercall', 'model', 'function', 'args']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'ir.cron'), ('name', 'in', fields)], context=context)
 
         vals = {
@@ -33,7 +33,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'backup.config')], context=context)
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
-        fields = ['name', 'beforemanualsync', 'beforeautomaticsync', 'aftermanualsync', 'afterautomaticsync', 'scheduledbackup', 'backup_type', 'wal_directory', 'ssh_config_dir', 'remote_user', 'remote_host']
+        fields = ['name', 'beforemanualsync', 'beforeautomaticsync', 'aftermanualsync', 'afterautomaticsync', 'scheduledbackup', 'backup_type', 'wal_directory', 'ssh_config_dir', 'remote_user', 'remote_host', 'basebackup_date', 'rsync_date', 'cloud_date']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'backup.config'), ('name', 'in', fields)], context=context)
 
         vals = {
@@ -60,7 +60,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sync.client.sync_server_connection')], context=context)
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
-        fields = ['host', 'port', 'protocol', 'database', 'login', 'max_size', 'timeout', 'xmlrpc_rety', 'automatic_patching', 'automatic_patching_hour_from', 'automatic_patching_hour_to']
+        fields = ['host', 'port', 'protocol', 'database', 'login', 'password', 'max_size', 'timeout', 'xmlrpc_rety', 'automatic_patching', 'automatic_patching_hour_from', 'automatic_patching_hour_to']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'sync.client.sync_server_connection'), ('name', 'in', fields)], context=context)
 
         vals = {

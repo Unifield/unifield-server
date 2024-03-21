@@ -809,6 +809,9 @@ class audittrail_rule(osv.osv):
                             # UTP-360
                             if description == 'Pricelist':
                                 description = 'Currency'
+                            # Prevent password field to be plainly stored in Connection Manager
+                            if field == 'password':
+                                old_value, new_value = '********', '********'
                             line.update({
                                 'field_id': fields_to_trace[field].id,
                                 'field_description': description,
