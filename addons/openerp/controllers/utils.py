@@ -39,22 +39,10 @@ def get_db_list():
     dblist = []
 
     result = {
-        'bad_regional':'',
         'tz_offset':'',
         'dblist': []
     }
 
-    if os.name == 'nt':
-        try:
-            import winreg
-            reg = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                 "Control Panel\\International", 0, winreg.KEY_READ)
-            value, regtype = winreg.QueryValueEx(reg, "LocaleName")
-            winreg.CloseKey(reg)
-            if value != 'en-US':
-                result['bad_regional'] = _("On the server system user account must have English (United States) as Format in the regional settings")
-        except:
-            pass
     try:
         dblist = rpc.session.listdb()
         result['tz_offset'] = rpc.session.gateway.execute_noauth('db', 'check_timezone')
@@ -109,7 +97,6 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
 
     result = get_db_list()
     dblist = result['dblist']
-    bad_regional = result['bad_regional']
     tz_offset = result['tz_offset']
 
     info = None
@@ -121,7 +108,7 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
     if target != do_login_page:
         origArgs['target'] = target
     return dict(target=do_login_page, url=url, dblist=dblist, db=db, user=user, password=password,
-                action=action, message=message, origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset)
+                action=action, message=message, origArgs=origArgs, info=info, tz_offset=tz_offset)
 
 @expose(template="/openerp/controllers/templates/change_password.mako")
 def change_password(target, db=None, user=None, password=None,
@@ -134,7 +121,6 @@ def change_password(target, db=None, user=None, password=None,
 
     result = get_db_list()
     dblist = result['dblist']
-    bad_regional = result['bad_regional']
     tz_offset = result['tz_offset']
 
     new_password = origArgs.get('new_password', None)
@@ -147,7 +133,7 @@ def change_password(target, db=None, user=None, password=None,
     return dict(target=do_change_password_page, url=url, dblist=dblist, db=db,
                 user=user, password=password, new_password=new_password,
                 confirm_password=confirm_password, action=action, message=message,
-                origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset, expired=expired)
+                origArgs=origArgs, info=info, tz_offset=tz_offset, expired=expired)
 
 def secured(fn):
     """A Decorator to make a SecuredController controller method secured.
