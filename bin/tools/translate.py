@@ -24,7 +24,6 @@ import csv
 import fnmatch
 import inspect
 import itertools
-import locale
 import os
 import pooler
 import re
@@ -985,13 +984,6 @@ def trans_update_res_ids(cr):
                 AND ir_translation.res_id = 0;
     """)
 
-
-def resetlocale():
-    for ln in [('C.UTF-8', 'C')]:
-        try:
-            return locale.setlocale(locale.LC_ALL, ln)
-        except locale.Error:
-            continue
 
 def load_language(cr, lang):
     """Loads a translation terms for a language.
