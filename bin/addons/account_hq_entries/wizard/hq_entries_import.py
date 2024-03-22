@@ -105,9 +105,6 @@ class hq_entries_import_wizard(osv.osv_memory):
         acc_obj = self.pool.get('account.account')
         anacc_obj = self.pool.get('account.analytic.account')
         hq_obj = self.pool.get('hq.entries')
-        ### TO USE IF DATE HAVE some JAN or MAR or OCT instead of 01 ####
-        ### Set locale 'C' because of period
-        ## locale.setlocale(locale.LC_ALL, 'C')
         # Check period
         if not date:
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
