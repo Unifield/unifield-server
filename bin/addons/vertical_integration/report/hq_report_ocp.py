@@ -205,7 +205,7 @@ class finance_archive(finance_export.finance_archive):
 # request used for OCP VI only (removed from OCG VI in US-6516)
 # Journals excluded from the Account Balances: Migration, In-kind Donation, OD-Extra Accounting
 account_balances_per_currency_sql = """
-    SELECT i.code AS instance, acc.code, acc.name, %(period_yyymm)s AS period, req.opening, req.calculated, req.closing, 
+    SELECT i.code AS instance, acc.code, acc.name, %(period_yyymm)s AS period, req.opening, req.calculated, req.closing,
            c.name AS currency
     FROM
     (
@@ -667,17 +667,18 @@ class hq_report_ocp_workday(hq_report_ocp):
                     al.name as description, -- 10
                     al.ref, -- 11
                     al.document_date, -- 12
-                    aa2.code AS cost_center, -- 13
+                    cost_center.code AS cost_center, -- 13
                     aml.partner_id, -- 14
                     aj.code as journal_code, -- 15
                     a.code as account_code, -- 16
                     hr.identification_id as emplid, -- 17
-                    aml.id as account_move_line_id -- 18
+                    aml.id as account_move_line_id, -- 18
+                    dest.code as destination_code -- 19
                 FROM
                     account_analytic_line AS al,
                     account_account AS a,
-                    account_analytic_account AS aa,
-                    account_analytic_account AS aa2,
+                    account_analytic_account AS dest,
+                    account_analytic_account AS cost_center,
                     res_currency AS c,
                     account_analytic_journal AS j,
                     account_move_line aml
@@ -687,8 +688,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     account_period p,
                     msf_instance AS i
                 WHERE
-                    aa.id = al.destination_id
-                    AND aa2.id = al.cost_center_id
+                    dest.id = al.destination_id
+                    AND cost_center.id = al.cost_center_id
                     AND a.id = al.general_account_id
                     AND c.id = al.currency_id
                     AND j.id = al.journal_id
@@ -770,7 +771,8 @@ class hq_report_ocp_workday(hq_report_ocp):
             'Journal',
             'G/L Account',
             'EMPLID',
-            'Entry Sequence'
+            'Entry Sequence',
+            'Destination',
         ]
 
         lines_file = tempfile.NamedTemporaryFile('w', delete=False, newline='')
@@ -826,6 +828,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                         row['account_code'], # G/L Account,
                         row['emplid'], # EMPLID
                         row['entry_sequence'][0:3], # 3 digits seq.
+                        row.get('destination_code') or '',
                     ])
                 if ajis:
                     new_cr.execute("update account_analytic_line set exported='t' where id in %s", (tuple(ajis), ))
