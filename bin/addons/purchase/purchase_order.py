@@ -921,18 +921,18 @@ class purchase_order(osv.osv):
             return {}
         ret = {}
         for _id in ids:
-            ret[_id] = ""
+            ret[_id] = {'catalogue_description_text': '', 'catalogue_id': False}
 
         cr.execute("""
             select
-                po.id, p.name, cat.name, cat.period_from, cat.period_to
+                po.id, p.name, cat.name, cat.period_from, cat.period_to, cat.id
             from
                 purchase_order po
                 inner join res_partner p on p.id = po.partner_id
                 inner join product_pricelist curr_pricelist on curr_pricelist.id = po.pricelist_id
                 join lateral (
                     select
-                        name, period_from, period_to
+                        name, period_from, period_to, id
                     from
                         supplier_catalogue cat
                     where
@@ -951,7 +951,10 @@ class purchase_order(osv.osv):
 
         date_obj = self.pool.get('date.tools')
         for x in cr.fetchall():
-            ret[x[0]] = '<label>Status</label>: <span class="readonlyfield">active</span> <label>Supplier</label>: <span class="readonlyfield">%s</span> <label>Catalogue</label>: <span class="readonlyfield">%s</span> <label>From</label>: <span class="readonlyfield">%s</span> <label>To</label>: <span class="readonlyfield">%s</span>' % (x[1], x[2], date_obj.get_date_formatted(cr, uid, datetime=x[3]), x[4] and date_obj.get_date_formatted(cr, uid, datetime=x[4]) or '/')
+            ret[x[0]] = {
+                'catalogue_description_text': '<label>Status</label>: <span class="readonlyfield">Active</span> <label>Supplier</label>: <span class="readonlyfield">%s</span> <label>Catalogue</label>: <span class="readonlyfield">%s</span> <label>From</label>: <span class="readonlyfield">%s</span> <label>To</label>: <span class="readonlyfield">%s</span>' % (x[1], x[2], date_obj.get_date_formatted(cr, uid, datetime=x[3]), x[4] and date_obj.get_date_formatted(cr, uid, datetime=x[4]) or '/'),
+                'catalogue_id': x[5],
+            }
         return ret
 
 
@@ -968,7 +971,7 @@ class purchase_order(osv.osv):
                             help="unique number of the purchase order,computed automatically when the purchase order is created", sort_column='id'),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=False),
-        'order_line_mismatch': fields.one2many('purchase.order.line', 'order_id', 'PO lines Mismatch with Catologues', readonly=1, domain=[('state', 'not in', ['cancel', 'cancel_r']), ('catalog_mismatch', 'not in', ['conform', ''])], context={'from_mismatch': True}),
+        'order_line_mismatch': fields.one2many('purchase.order.line', 'order_id', 'PO lines Mismatch with Catologues', readonly=1, domain=[('product_id', '!=', False), ('state', 'not in', ['cancel', 'cancel_r']), ('catalog_mismatch', 'not in', ['conform', ''])], context={'from_mismatch': True}),
         'partner_id': fields.many2one('res.partner', 'Supplier', required=True, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True, domain="[('partner_id', '=', partner_id)]"),
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner'),
@@ -1149,7 +1152,8 @@ class purchase_order(osv.osv):
         'catalogue_exists': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Has a valid catalogue', multi='catalogue'),
         'catalogue_display_tab': fields.function(_get_catalogue_ratio, method=True, type='boolean', string='Display tab catalogue', multi='catalogue'),
         'catalogue_exists_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Lines Status', multi='catalogue'),
-        'catalogue_description_text': fields.function(_get_catalogue_description_text,  method=True, type='char', string='Catalogue Text'),
+        'catalogue_description_text': fields.function(_get_catalogue_description_text,  method=True, type='char', string='Catalogue Text', multi='cat_info'),
+        'catalogue_id': fields.function(_get_catalogue_description_text,  method=True, type='many2one', relation='supplier.catalogue', string='Catalogue', multi='cat_info'),
     }
     _defaults = {
         'po_version': 2,
@@ -3370,6 +3374,13 @@ class purchase_order(osv.osv):
         }
         audit_line_obj.create(cr, uid, vals, context=context)
 
+
+    def export_line_mismatch(self, cr, uid, ids, context=None):
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'report_line_mismatch',
+            'context': context
+        }
 
 purchase_order()
 

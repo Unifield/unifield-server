@@ -555,7 +555,8 @@ class purchase_order_line(osv.osv):
             args = (tuple(pol_id), )
         print('Compute _compute_catalog_mismatch', args)
         cr.execute("""
-            update purchase_order_line pol1 set catalog_mismatch=
+            update purchase_order_line pol1 set
+                catalog_mismatch=
                     case
                         when catl.catalogue_id is null then ''
                         when catl.id is null then 'na'
@@ -563,7 +564,13 @@ class purchase_order_line(osv.osv):
                         when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and catl.soq_rounding!=0 and pol.product_qty%%catl.soq_rounding!=0 then 'price_soq'
                         when catl.soq_rounding!=0 and pol.product_qty%%catl.soq_rounding!=0 then  'soq'
                         else 'conform'
-                    end
+                    end,
+                catalog_price_unit=
+                    case
+                        when catl.catalogue_id is null or catl.id is null  then null
+                        else catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)
+                    end,
+                catalog_soq=catl.soq_rounding
             from purchase_order_line pol
                 left join purchase_order po on po.id = pol.order_id
                 left join product_pricelist curr_pricelist on curr_pricelist.id = po.pricelist_id
@@ -765,6 +772,8 @@ class purchase_order_line(osv.osv):
         'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
 
         'catalog_mismatch': fields.selection([('conform', 'Conform'), ('na', 'N/A'),('soq', 'SOQ') ,('price', 'Unit Price'), ('price_soq', 'Unit Price & SOQ')], 'Catalog Mismatch', size=64, readonly=1, select=1),
+        'catalog_price_unit': fields.float_null('Catalogue Price Unit', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
+        'catalog_soq': fields.float_null('Catalogue QoQ', digits=(16,2), readonly=1),
     }
 
     _defaults = {
