@@ -263,7 +263,7 @@ class report_reception(report_sxw.rml_parse):
         for line in o.move_lines:
             pack_info.setdefault(line.pack_info_id or False, []).append(line)
 
-        return sorted(list(pack_info.items()), key=lambda x: x[0] and (x[0].ppl_name, x[0].packing_list, x[0].parcel_from))
+        return sorted(list(pack_info.items()), key=lambda x: x[0] and (x[0].ppl_name or '', x[0].packing_list or '', x[0].parcel_from or 0) or ('', '', 0))
 
 
 report_sxw.report_sxw('report.msf.report_reception_in', 'stock.picking', 'addons/msf_printed_documents/report/report_reception.rml', parser=report_reception, header=False)
