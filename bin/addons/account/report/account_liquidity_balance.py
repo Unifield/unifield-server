@@ -48,15 +48,13 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         """
         Applies the following changes to the reg_data:
         - adds the journal status
-        - removes the lines for which the journal is inactive only if the Starting Balance, the Movements, and the Closing Balance are all 0.00
         """
         journal_obj = self.pool.get('account.journal')
         new_reg_data = []
         for reg in reg_data:
             journal_active = journal_obj.read(self.cr, self.uid, reg['id'], ['is_active'])['is_active']
-            if journal_active or reg['opening'] or reg['calculated'] or reg['closing']:
-                reg['journal_status'] = journal_active and _('Active') or _('Inactive')
-                new_reg_data.append(reg)
+            reg['journal_status'] = journal_active and _('Active') or _('Inactive')
+            new_reg_data.append(reg)
         return new_reg_data
 
     def _get_register_data(self):
