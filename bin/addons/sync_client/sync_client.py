@@ -419,7 +419,8 @@ def get_hardware_id():
 
             # write the new hwid in the registry
             try:
-                winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE, sub_key)
+                with winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE, sub_key):
+                    pass
                 with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, sub_key,
                                     0, winreg.KEY_ALL_ACCESS) as registry_key:
                     winreg.SetValueEx(registry_key, "HardwareId", 0, winreg.REG_SZ, hw_hash)
