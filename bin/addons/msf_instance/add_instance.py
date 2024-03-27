@@ -459,6 +459,10 @@ class account_bank_statement(osv.osv):
             # if the End-of-the-Month Balance has already been confirmed for a register, ignore changes on fields that
             # should be read-only in that case (cover the use case of concurrent changes by 2 users)
             newvals = vals.copy()
+            if context.get('sync_update_execution', False) and newvals.get('state', False) == 'confirm':
+                for regline in reg.line_ids:
+                    if regline.state == 'draft':
+                        raise osv.except_osv(_('Warning'), _('You cannot close a project register at coordo level if we have draft entries at coordo level.'))
             if reg.closing_balance_frozen and not context.get('sync_update_execution', False):
                 # remove the values for each register with a confirmed balance
                 # Note: at Cashbox closing the balance_end_real is set to the reg.balance_end value: keep this change
