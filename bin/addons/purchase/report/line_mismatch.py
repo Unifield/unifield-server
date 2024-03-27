@@ -40,8 +40,9 @@ class line_mismatch(XlsxReportParser):
         for key, value in [
                 (_('PO Reference'), po.name),
                 (_('Supplier'), po.partner_id.name),
-                (_('Catalogue name:'), po.catalogue_id.name),
-                (_('Catalogue currency:'), po.catalogue_id.currency_id.name),
+                (_('Catalogue name:'), po.catalogue_id and po.catalogue_id.name or ''),
+                (_('Catalogue currency:'), po.catalogue_id and po.catalogue_id.currency_id and po.catalogue_id.currency_id.name or ''),
+
         ]:
             sheet.merged_cells.ranges.append("A%(row_idx)d:B%(row_idx)d" % {'row_idx': row_idx})
             sheet.append([self.cell_ro(key, 'header_style'), self.cell_ro('', 'header_style'), self.cell_ro(value, 'header_style')])
@@ -79,7 +80,7 @@ class line_mismatch(XlsxReportParser):
 
         for line in po.order_line_mismatch:
             catalog_price_unit = ''
-            if isinstance(line.catalog_price_unit, (int, float)):
+            if not isinstance(line.catalog_price_unit, bool) and line.catalog_price_unit is not None:
                 catalog_price_unit = line.catalog_price_unit
 
             sheet.append([

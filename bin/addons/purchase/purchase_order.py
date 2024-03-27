@@ -939,7 +939,7 @@ class purchase_order(osv.osv):
                         cat.partner_id = po.partner_id and
                         cat.active = 't' and
                         cat.state = 'confirmed' and
-                        cat.period_from < NOW() and
+                        (cat.period_from is null or cat.period_from < NOW()) and
                         (cat.period_to is null or cat.period_to > NOW())
                     order by
                         cat.currency_id = curr_pricelist.currency_id, id desc
@@ -952,7 +952,7 @@ class purchase_order(osv.osv):
         date_obj = self.pool.get('date.tools')
         for x in cr.fetchall():
             ret[x[0]] = {
-                'catalogue_description_text': '<label>Status</label>: <span class="readonlyfield">Active</span> <label>Supplier</label>: <span class="readonlyfield">%s</span> <label>Catalogue</label>: <span class="readonlyfield">%s</span> <label>From</label>: <span class="readonlyfield">%s</span> <label>To</label>: <span class="readonlyfield">%s</span>' % (x[1], x[2], date_obj.get_date_formatted(cr, uid, datetime=x[3]), x[4] and date_obj.get_date_formatted(cr, uid, datetime=x[4]) or '/'),
+                'catalogue_description_text': '<label>Status</label>: <span class="readonlyfield">Active</span> <label>Supplier</label>: <span class="readonlyfield">%s</span> <label>Catalogue</label>: <span class="readonlyfield">%s</span> <label>From</label>: <span class="readonlyfield">%s</span> <label>To</label>: <span class="readonlyfield">%s</span>' % (x[1], x[2], x[3] and date_obj.get_date_formatted(cr, uid, datetime=x[3]) or '/', x[4] and date_obj.get_date_formatted(cr, uid, datetime=x[4]) or '/'),
                 'catalogue_id': x[5],
             }
         return ret

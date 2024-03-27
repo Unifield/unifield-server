@@ -584,7 +584,7 @@ class purchase_order_line(osv.osv):
                         cat.partner_id = po.partner_id and
                         cat.active = 't' and
                         cat.state = 'confirmed' and
-                        cat.period_from < NOW() and
+                        (cat.period_from is null or cat.period_from < NOW()) and
                         (cat.period_to is null or cat.period_to > NOW()) and
                         coalesce(cat_line.min_qty,0) <= pol.product_qty
                     order by
