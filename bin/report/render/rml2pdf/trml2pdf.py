@@ -42,6 +42,12 @@ from io import BytesIO
 
 encoding = 'utf-8'
 
+# in case of overflow, reportlab squeezes words with &nbsp;
+# disable this "feature"
+def local_nbspCount(w):
+    return 0
+platypus.paragraph._nbspCount = local_nbspCount
+
 class ParaWrap(platypus.Paragraph):
     def wrap(self, availWidth, availHeight):
         # work out widths array for breaking
