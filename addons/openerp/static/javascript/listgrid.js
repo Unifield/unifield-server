@@ -1087,6 +1087,7 @@ MochiKit.Base.update(ListView.prototype, {
             args['_terp_offset'] = 0;
         }
         if (this.parent_view_ids) {
+            args['_terp_view_mode'] = "['tree', 'form']";
             args['_terp_view_ids'] = this.parent_view_ids;
         }
         jQuery(idSelector(self.name) + ' .loading-list').show();
