@@ -154,7 +154,8 @@ class patch_scripts(osv.osv):
                 pol1.id = pol.id and
                 pol1.confirmation_date is not null and
                 pol.product_id is not null and
-                pol.state in ('confirmed', 'done')
+                pol.state in ('confirmed', 'done') and
+                po.state not in ('done', 'cancel', 'confirmed')
         """)
 
         return True

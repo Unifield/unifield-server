@@ -581,6 +581,8 @@ class purchase_order(osv.osv):
                 'confirmed_p': 40,
                 'done': 50
             }
+
+            po_update_date_confirm = []
             if po.empty_po_cancelled:
                 res[po.id] = 'cancel'
             else:
@@ -617,6 +619,7 @@ class purchase_order(osv.osv):
                             else:
                                 res[po.id] = 'sourced'
                         elif res[po.id] == 'confirmed': # set the confirmed-p state ?
+                            po_update_date_confirm.append(po.id)
                             confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'confirmed', context=context)
                             # do we have a line further then confirmed in our FO ?
                             if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in pol_states]):
@@ -635,6 +638,25 @@ class purchase_order(osv.osv):
             if po.state != res[po.id]:
                 self.add_audit_line(cr, uid, po.id, po.state, res[po.id], context=context)
 
+        if po_update_date_confirm:
+            cr.execute('''
+                update purchase_order po
+                    set date_confirm=max_pol.confirmation_date
+                from
+                    (
+                        select
+                            pol.order_id, max(pol.confirmation_date) as confirmation_date
+                        from
+                            purchase_order_line pol
+                        where
+                            pol.order_id in %(po_ids)s
+                        group by
+                            pol.order_id
+                    ) max_pol
+                where
+                    max_pol.order_id = po.id and
+                    po.id in %(po_ids)s
+                ''', {'po_ids': tuple(po_update_date_confirm)})
         return res
 
     def _is_fixed_type(self, cr, uid, ids, field_name, args, context=None):
@@ -893,8 +915,8 @@ class purchase_order(osv.osv):
             from
                 purchase_order_line
             where
-                state not in ('cancel', 'cancel_r') and
-                order_id in %s
+                order_id in %s and
+                (state not in ('cancel', 'cancel_r') or confirmation_date is not null)
             group by order_id""", (tuple(ids),))
         for x in cr.fetchall():
             if x[1]:
@@ -912,6 +934,7 @@ class purchase_order(osv.osv):
                 if catalogue_ratio_conform != 100:
                     ret[x[0]]['catalogue_display_tab'] = True
                 ret[x[0]]['catalogue_ratio_text'] = '<b>Catalogue Adherence Summary:</b><br />PO lines adherence: <span class="readonlyfield">%d%%</span> PO Lines Mismatch: <span class="readonlyfield">%d%%</span> of which Not in catalogue: <span class="readonlyfield">%d%%</span>' % (catalogue_ratio_conform, catalogue_ratio_not_conform, catalogue_ratio_no_catalogue)
+
             else:
                 ret[x[0]]['catalogue_exists_text'] = '<h2 style="color: red">No valid catalogue</h2>'
         return ret
@@ -925,24 +948,24 @@ class purchase_order(osv.osv):
 
         cr.execute("""
             select
-                po.id, p.name, cat.name, cat.period_from, cat.period_to, cat.id
+                po.id, p.name, cat.name, cat.period_from, cat.period_to, cat.id, cat.active
             from
                 purchase_order po
                 inner join res_partner p on p.id = po.partner_id
                 inner join product_pricelist curr_pricelist on curr_pricelist.id = po.pricelist_id
                 join lateral (
                     select
-                        name, period_from, period_to, id
+                        name, period_from, period_to, id, active
                     from
                         supplier_catalogue cat
                     where
                         cat.partner_id = po.partner_id and
-                        cat.active = 't' and
+                        case when po.date_confirm is null then active = 't' else true end and
                         cat.state = 'confirmed' and
-                        (cat.period_from is null or cat.period_from < NOW()) and
-                        (cat.period_to is null or cat.period_to > NOW())
+                        (cat.period_from is null or cat.period_from < coalesce(po.date_confirm, NOW())) and
+                        (cat.period_to is null or cat.period_to > coalesce(po.date_confirm, NOW()))
                     order by
-                        cat.currency_id = curr_pricelist.currency_id, id desc
+                        cat.currency_id = curr_pricelist.currency_id, cat.active, id desc
                     limit 1
                 ) cat on true
             where
@@ -952,7 +975,18 @@ class purchase_order(osv.osv):
         date_obj = self.pool.get('date.tools')
         for x in cr.fetchall():
             ret[x[0]] = {
-                'catalogue_description_text': '<label>Status</label>: <span class="readonlyfield">Active</span> <label>Supplier</label>: <span class="readonlyfield">%s</span> <label>Catalogue</label>: <span class="readonlyfield">%s</span> <label>From</label>: <span class="readonlyfield">%s</span> <label>To</label>: <span class="readonlyfield">%s</span>' % (x[1], x[2], x[3] and date_obj.get_date_formatted(cr, uid, datetime=x[3]) or '/', x[4] and date_obj.get_date_formatted(cr, uid, datetime=x[4]) or '/'),
+                'catalogue_description_text': '''
+                    <label>Status</label>: <span class="readonlyfield">%(status)s</span>
+                    <label>Supplier</label>: <span class="readonlyfield">%(supplier)s</span>
+                    <label>Catalogue</label>: <span class="readonlyfield">%(catalogue)s</span>
+                    <label>From</label>: <span class="readonlyfield">%(date_from)s</span>
+                    <label>To</label>: <span class="readonlyfield">%(date_to)s</span>''' % {
+                    'status': x[6] and _('Active') or _('Inactive'),
+                    'supplier': x[1],
+                    'catalogue': x[2],
+                    'date_from': x[3] and date_obj.get_date_formatted(cr, uid, datetime=x[3]) or '/',
+                    'date_to': x[4] and date_obj.get_date_formatted(cr, uid, datetime=x[4]) or '/'
+                },
                 'catalogue_id': x[5],
             }
         return ret
@@ -971,7 +1005,7 @@ class purchase_order(osv.osv):
                             help="unique number of the purchase order,computed automatically when the purchase order is created", sort_column='id'),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=False),
-        'order_line_mismatch': fields.one2many('purchase.order.line', 'order_id', 'PO lines Mismatch with Catologues', readonly=1, domain=[('product_id', '!=', False), ('state', 'not in', ['cancel', 'cancel_r']), ('catalog_mismatch', 'not in', ['conform', ''])], context={'from_mismatch': True}),
+        'order_line_mismatch': fields.one2many('purchase.order.line', 'order_id', 'PO lines Mismatch with Catologues', readonly=1, domain=['&', '&', ('product_id', '!=', False), ('catalog_mismatch', 'not in', ['conform', '']), '|', ('state', 'not in', ['cancel', 'cancel_r']), ('confirmation_date', '!=', False)], context={'from_mismatch': True}),
         'partner_id': fields.many2one('res.partner', 'Supplier', required=True, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True, domain="[('partner_id', '=', partner_id)]"),
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner'),
