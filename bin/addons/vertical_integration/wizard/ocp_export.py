@@ -43,6 +43,7 @@ class ocp_fin_sync(osv.osv):
         'previous_auditrail_id': fields.integer('Last auditrail log'),
         'client_key': fields.char('Client Key', size=256, select=1),
         'session_name': fields.char('Session Name', size=256, select=1),
+        'has_next_page': fields.boolean('Has next page'),
     }
 
     def generate_session(self, cr, uid, model, client_key, full=False):
@@ -67,6 +68,7 @@ class ocp_fin_sync(osv.osv):
                 'max_auditrail_id': max_audit_id and max_audit_id[0] or False,
                 'model': model,
                 'previous_auditrail_id': 0,
+                'has_next_page': True,
             }
             if prev_id:
                 prev_session = self.browse(cr, uid, prev_id[0])
@@ -119,7 +121,7 @@ class ocp_fin_sync(osv.osv):
                     order by p.id
                     offset %s
                     limit %s
-                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit))
+                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit+1))
 
                 ret['records'] = [{'id': x[0] or '', 'name': x[1] or ''} for x in cr.fetchall()]
 
@@ -143,7 +145,7 @@ class ocp_fin_sync(osv.osv):
                     order by e.id
                     offset %s
                     limit %s
-                ''', (tuple(field_ids), ressource_model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit))
+                ''', (tuple(field_ids), ressource_model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit+1))
 
                 ret['records'] = [{'identification_id': x[0] or '', 'uuid': x[1] or '', 'name': x[2] or ''} for x in cr.fetchall()]
 
@@ -168,10 +170,17 @@ class ocp_fin_sync(osv.osv):
                     order by j.code, j.id
                     offset %s
                     limit %s
-                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit))
+                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit+1))
 
                 ret['records'] = [{'code': x[0] or '', 'name': x[1] or '', 'mission': x[2] and x[2][0:3] or '', 'currency': x[3] or '', 'active': x[4], 'inactivation_date': x[5] or False} for x in cr.fetchall()]
 
+            if len(ret['records']) > limit:
+                ret['records'].pop()
+                ret['has_next_page'] = True
+            else:
+                ret['has_next_page'] = False
+
+            self.write(cr, 1, sess_ids[0], {'has_next_page': ret['has_next_page']})
         except Exception as e:
             self.__logger.exception(e)
             cr.rollback()
@@ -188,6 +197,10 @@ class ocp_fin_sync(osv.osv):
             sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False)])
             if not sess_ids:
                 raise osv.except_osv('Error', 'Session %s not found' % session_name)
+            sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False), ('has_next_page', '=', False)])
+            if not sess_ids:
+                raise osv.except_osv('Error', 'Session %s has more records to retrieve.' % session_name)
+
             self.write(cr, 1, sess_ids, {'confirmed': True})
         except Exception as e:
             self.__logger.exception(e)
