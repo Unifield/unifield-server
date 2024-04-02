@@ -767,11 +767,11 @@ class hq_report_ocp_workday(hq_report_ocp):
             'Document Date',
             'Cost Center',
             'Partner DB ID',
-            'Journal',
-            'Journal',
+            'Journal_PCash',
+            'Journal_BBank',
             'G/L Account',
             'EMPLID',
-            'Entry Sequence',
+            'Code-Mission',
             'Destination',
         ]
 
