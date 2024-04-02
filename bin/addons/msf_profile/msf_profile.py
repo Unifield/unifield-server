@@ -58,6 +58,11 @@ class patch_scripts(osv.osv):
     }
 
     def us_11135_set_pol_confirmation_date(self, cr, uid, *a, **b):
+
+        cr.execute('''
+            update purchase_order set catalogue_not_applicable='t' where state in ('done', 'cancel', 'confirmed')
+        ''')
+
         cr.execute('''
             update
                 purchase_order_line pol
@@ -78,7 +83,7 @@ class patch_scripts(osv.osv):
             from
                 audittrail_log_line audit_line, ir_model_fields f, ir_model m
             where
-                pol.state in ('done', 'confirmed') and
+                pol.state in ('done', 'confirmed', 'cancel', 'cancel_r') and
                 pol.confirmation_date is null and
                 audit_line.field_id = f.id and
                 audit_line.object_id = m.id and
@@ -154,7 +159,7 @@ class patch_scripts(osv.osv):
                 pol1.id = pol.id and
                 pol1.confirmation_date is not null and
                 pol.product_id is not null and
-                pol.state in ('confirmed', 'done') and
+                pol.state in ('confirmed', 'done', 'cancel', 'cancel_r') and
                 po.state not in ('done', 'cancel', 'confirmed')
         """)
 

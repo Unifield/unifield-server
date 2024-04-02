@@ -908,15 +908,17 @@ class purchase_order(osv.osv):
 
         cr.execute("""
             select
-                order_id,
-                count(catalog_mismatch!='' or NULL),
-                count(catalog_mismatch='conform' or NULL),
-                count(catalog_mismatch='na' or NULL)
+                pol.order_id,
+                count(pol.catalog_mismatch!='' or NULL),
+                count(pol.catalog_mismatch='conform' or NULL),
+                count(pol.catalog_mismatch='na' or NULL),
             from
-                purchase_order_line
+                purchase_order_line pol, purchase_order po
             where
-                order_id in %s and
-                (state not in ('cancel', 'cancel_r') or confirmation_date is not null)
+                pol.order_id in %s and
+                po.id = pol.order_id and
+                po.catalogue_not_applicable != 't'
+                (pol.state not in ('cancel', 'cancel_r') or confirmation_date is not null)
             group by order_id""", (tuple(ids),))
         for x in cr.fetchall():
             if x[1]:
@@ -1188,6 +1190,7 @@ class purchase_order(osv.osv):
         'catalogue_exists_text': fields.function(_get_catalogue_ratio, method=True, type='char', string='Catalogue Lines Status', multi='catalogue'),
         'catalogue_description_text': fields.function(_get_catalogue_description_text,  method=True, type='char', string='Catalogue Text', multi='cat_info'),
         'catalogue_id': fields.function(_get_catalogue_description_text,  method=True, type='many2one', relation='supplier.catalogue', string='Catalogue', multi='cat_info'),
+        'catalogue_not_applicable': fields.boolean('PO confirmed before pol catalogue', readonly=1),
     }
     _defaults = {
         'po_version': 2,
@@ -1222,6 +1225,7 @@ class purchase_order(osv.osv):
         'empty_po_cancelled': False,
         'show_default_msg': False,
         'not_beyond_validated': True,
+        'catalogue_not_applicable': False,
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
@@ -1656,7 +1660,9 @@ class purchase_order(osv.osv):
         # if the copy comes from the button duplicate
         if context.get('from_button'):
             default.update({'is_a_counterpart': False})
-        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, 'po_confirmed': False, 'split_during_sll_mig': False, 'dest_partner_ids': False, 'order_line_mismatch': False})
+        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False,
+                        'po_confirmed': False, 'split_during_sll_mig': False, 'dest_partner_ids': False, 'order_line_mismatch': False,
+                        'catalogue_not_applicable': False})
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
 

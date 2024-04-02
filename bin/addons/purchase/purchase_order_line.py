@@ -619,7 +619,8 @@ class purchase_order_line(osv.osv):
                 """ + cond + """ and
                 pol1.id = pol.id and
                 pol.product_id is not null and
-                pol.state not in ('confirmed', 'done', 'cancel', 'cancel_r')
+                pol.state not in ('confirmed', 'done', 'cancel', 'cancel_r') and
+                po.catalogue_not_applicable='f'
         """, args) # not_a_user_entry
 
     _columns = {
