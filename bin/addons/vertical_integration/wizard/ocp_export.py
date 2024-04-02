@@ -110,6 +110,11 @@ class ocp_fin_sync(osv.osv):
                 model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'res.partner')])[0]
                 field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', '=', 'name')])
 
+                cond = ''
+                if not sess.previous_auditrail_id:
+                    # no TC entry for Local Market
+                    cond = " or p.name = 'Local Market' "
+
                 cr.execute('''
                     select
                         p.id, p.name
@@ -120,12 +125,13 @@ class ocp_fin_sync(osv.osv):
                     where
                         l.id > %s and
                         l.id <= %s
+                        ''' + cond + '''
                     group by
                         p.id, p.name
                     order by p.id
                     offset %s
                     limit %s
-                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*limit, limit+1))
+                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*limit, limit+1)) # not_a_user_entry
 
                 ret['records'] = [{'id': x[0] or '', 'name': x[1] or ''} for x in cr.fetchall()]
 
