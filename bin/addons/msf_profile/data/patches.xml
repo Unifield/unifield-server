@@ -1044,6 +1044,10 @@
             <field name="method">us_12294_force_email_popup</field>
         </record>
 
+        <record id="us_11135_set_pol_confirmation_date" model="patch.scripts">
+            <field name="method">us_11135_set_pol_confirmation_date</field>
+        </record>
+
 
     </data>
 </openerp>
