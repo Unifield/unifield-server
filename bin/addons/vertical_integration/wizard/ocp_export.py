@@ -85,7 +85,7 @@ class ocp_fin_sync(osv.osv):
 
         return ret
 
-    def get_record(self, cr, uid, session_name, page=0):
+    def get_record(self, cr, uid, session_name, page=1):
         limit = 200
         ret = {
             'page': page,
@@ -96,6 +96,10 @@ class ocp_fin_sync(osv.osv):
             'records': [],
         }
         try:
+            if not isinstance(page, int) or not page > 0:
+                raise osv.except_osv('Error', 'Page attribute must be a positive integer and not zero')
+
+            page_offset = page - 1
             sess_ids = self.search(cr, 1, [('session_name', '=', session_name), ('confirmed', '=', False)])
             if not sess_ids:
                 raise osv.except_osv('Error', 'Session %s not found' % session_name)
@@ -121,7 +125,7 @@ class ocp_fin_sync(osv.osv):
                     order by p.id
                     offset %s
                     limit %s
-                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit+1))
+                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*limit, limit+1))
 
                 ret['records'] = [{'id': x[0] or '', 'name': x[1] or ''} for x in cr.fetchall()]
 
@@ -145,7 +149,7 @@ class ocp_fin_sync(osv.osv):
                     order by e.id
                     offset %s
                     limit %s
-                ''', (tuple(field_ids), ressource_model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit+1))
+                ''', (tuple(field_ids), ressource_model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*limit, limit+1))
 
                 ret['records'] = [{'identification_id': x[0] or '', 'uuid': x[1] or '', 'name': x[2] or ''} for x in cr.fetchall()]
 
@@ -170,7 +174,7 @@ class ocp_fin_sync(osv.osv):
                     order by j.code, j.id
                     offset %s
                     limit %s
-                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page*limit, limit+1))
+                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*limit, limit+1))
 
                 ret['records'] = [{'code': x[0] or '', 'name': x[1] or '', 'mission': x[2] and x[2][0:3] or '', 'currency': x[3] or '', 'active': x[4], 'inactivation_date': x[5] or False} for x in cr.fetchall()]
 
