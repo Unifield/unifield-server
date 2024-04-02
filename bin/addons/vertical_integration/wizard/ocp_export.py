@@ -250,7 +250,7 @@ class ocp_fin_sync(osv.osv):
                 time.strptime(data['creation_date'], '%Y-%m-%d')
                 c_data['expat_creation_date'] = data['creation_date']
             except:
-                raise osv.except_osv('Error', '"creation_date %s must be a date in fomat YYYY-MM-DD' % (data['creation_date'], ))
+                raise osv.except_osv('Error', '"creation_date %s must be a date, format: YYYY-MM-DD' % (data['creation_date'], ))
 
         expat_id = hr_obj.search(cr, uid, [('identification_id', '=ilike', identification_id), ('employee_type', '=', 'ex'), ('active', 'in', ['t','f'])])
 
