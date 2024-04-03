@@ -329,7 +329,7 @@ liquidity_sql = """
                     (
                         SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
                         FROM account_move_line AS aml 
-                        LEFT JOIN account_journal j 
+                        RIGHT JOIN account_journal j 
                             ON aml.journal_id = j.id 
                         WHERE j.type IN %s
                         AND aml.date < %s
@@ -340,7 +340,7 @@ liquidity_sql = """
                     (
                         SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3
                         FROM account_move_line AS aml 
-                        LEFT JOIN account_journal j 
+                        RIGHT JOIN account_journal j 
                             ON aml.journal_id = j.id 
                         WHERE j.type IN %s
                         AND aml.date >= %s AND aml.date <= %s
@@ -351,7 +351,7 @@ liquidity_sql = """
                     (
                         SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, 0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
                         FROM account_move_line AS aml 
-                        LEFT JOIN account_journal j 
+                        RIGHT JOIN account_journal j 
                             ON aml.journal_id = j.id 
                         WHERE j.type IN %s
                         AND aml.date <= %s
