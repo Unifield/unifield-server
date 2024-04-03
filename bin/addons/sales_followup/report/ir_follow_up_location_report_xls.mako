@@ -203,6 +203,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Line Status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
+        ## IR Details
+        <Column ss:AutoFitWidth="1" ss:Width="200.0" />
         ## Received
         <Column ss:AutoFitWidth="1" ss:Width="54.75" />
         ## Requested Delivery Date
@@ -322,6 +324,7 @@
                 _('PO Supplier'),
                 _('Doc. Status'),
                 _('Line Status'),
+                _('IR Details'),
                 _('Received'),
                 _('RDD'),
                 _('Item'),
@@ -360,6 +363,7 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('po_supplier', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
                     % if o.date_order and isDate(o.date_order):
                         % if getLang() == 'fr_MF':
                         <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
@@ -446,6 +450,7 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_supplier', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
                     % if o.date_order and isDate(o.date_order):
                         % if getLang() == 'fr_MF':
                         <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
