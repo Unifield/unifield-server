@@ -911,13 +911,13 @@ class purchase_order(osv.osv):
                 pol.order_id,
                 count(pol.catalog_mismatch!='' or NULL),
                 count(pol.catalog_mismatch='conform' or NULL),
-                count(pol.catalog_mismatch='na' or NULL),
+                count(pol.catalog_mismatch='na' or NULL)
             from
                 purchase_order_line pol, purchase_order po
             where
                 pol.order_id in %s and
                 po.id = pol.order_id and
-                po.catalogue_not_applicable != 't'
+                po.catalogue_not_applicable != 't' and
                 (pol.state not in ('cancel', 'cancel_r') or confirmation_date is not null)
             group by order_id""", (tuple(ids),))
         for x in cr.fetchall():
