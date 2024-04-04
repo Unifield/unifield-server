@@ -1121,6 +1121,7 @@ class signature_setup(osv.osv_memory):
                             'is_active': role[2],
                             'name': role[1],
                             'name_key': role[0],
+                            'prio': role[3],
                         })
             setup_obj.write(cr, uid, [setup.id], {'signature': wiz.signature}, context=context)
 
