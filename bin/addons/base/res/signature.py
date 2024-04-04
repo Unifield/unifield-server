@@ -1113,8 +1113,8 @@ class signature_setup(osv.osv_memory):
 
                     for role in list_sign[obj]:
                         cr.execute("""
-                            insert into signature_line (signature_id, is_active, name, name_key, prio)
-                                    select o.signature_id, %%(is_active)s, %%(name)s, %%(name_key)s, %%(prio)s from
+                            insert into signature_line (signature_id, is_active, name, name_key, prio, signed)
+                                    select o.signature_id, %%(is_active)s, %%(name)s, %%(name_key)s, %%(prio)s, 'f' from
                                     %s
                             on conflict on constraint signature_line_unique_signature_name_key do nothing
                         """ % cond, { # not_a_user_entry
