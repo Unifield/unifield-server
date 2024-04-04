@@ -368,6 +368,18 @@ liquidity_sql = """
                         AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
                         GROUP BY aml.journal_id, aml.account_id
                     )
+                UNION
+                    (
+                        SELECT j.id AS journal_id, NULL AS account_id, 0.00 as col1, 0.00 as col2, 0.00 as col3
+                        FROM account_journal AS j LEFT JOIN account_move_line AS aml ON j.id = aml.journal_id
+                        WHERE aml.id IS NULL
+                        AND j.type IN ('cash', 'bank')
+                        AND j.id IN (SELECT journal_id FROM account_bank_statement
+                                     WHERE period_id IN (SELECT id FROM account_period
+                                                         WHERE special = 'f'
+                                                         AND date_start >= date_trunc('month', %s::date)::date
+                                                         AND date_stop <= (date_trunc('month', %s::date) + INTERVAL '1 MONTH - 1 day')::date))
+                    )
                 ) AS ssreq
                 GROUP BY journal_id, account_id
                 ORDER BY journal_id, account_id
