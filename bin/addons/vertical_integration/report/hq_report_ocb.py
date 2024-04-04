@@ -324,6 +324,16 @@ liquidity_sql = """
             SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
             FROM res_currency c,
             (
+                SELECT id, code, type, default_debit_account_id, default_credit_account_id, instance_id, currency
+                FROM account_journal
+                WHERE id IN (SELECT journal_id FROM account_bank_statement
+                             WHERE period_id IN (SELECT id FROM account_period
+                                                 WHERE
+                                                    special = 'f' AND
+                                                    date_start >= date_trunc('month', %s::date)::date AND
+                                                    date_stop <= (date_trunc('month', %s::date) + INTERVAL '1 MONTH - 1 day')::date))
+            ) as j,
+            (
                 SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
                 FROM (
                     (
@@ -361,7 +371,7 @@ liquidity_sql = """
                 ) AS ssreq
                 GROUP BY journal_id, account_id
                 ORDER BY journal_id, account_id
-            ) AS req, account_journal j, msf_instance i
+            ) AS req, msf_instance i
             WHERE req.journal_id = j.id
             AND j.instance_id = i.id
             AND j.currency = c.id

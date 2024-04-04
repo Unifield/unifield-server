@@ -85,7 +85,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         period_title = self.period_title or ''
         # Cash and Bank registers
         reg_types = ('cash', 'bank')
-        params = (period_title, reg_types, date_from, reg_types, date_from, date_to, reg_types, date_to, tuple(self.instance_ids))
+        params = (period_title, date_from, date_to, reg_types, date_from, reg_types, date_from, date_to, reg_types, date_to, tuple(self.instance_ids))
         self.cr.execute(self.liquidity_sql, params)
         cash_bank_res = self.cr.dictfetchall()
         cash_bank_res = self._filter_journal_status(cash_bank_res)
