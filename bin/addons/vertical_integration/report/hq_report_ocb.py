@@ -321,18 +321,27 @@ class finance_archive(finance_export.finance_archive):
 # request & postprocess method used for OCP VI, and for Liquidity Balances report
 # NOTE: the Liquidity Bal. report is actually not included in OCB VI anymore, so all liquidity-related code in this file could sometime be moved
 liquidity_sql = """
-            SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
+            WITH curr_instance_level AS (SELECT level FROM msf_instance
+                                         WHERE id = (SELECT instance_id FROM res_company
+                                                     WHERE id = (SELECT company_id FROM res_users WHERE id = %s))),
+            journals_with_registers_in_period AS (SELECT distinct journal_id FROM 
+                                                    ((SELECT id as journal_id FROM account_journal,curr_instance_level WHERE level = 'section')
+                                                    UNION
+                                                    (SELECT absl.journal_id
+                                                     FROM account_bank_statement absl, curr_instance_level curr, account_period p
+                                                     WHERE
+                                                        curr.level IN ('coordo', 'project') AND
+                                                        absl.period_id = p.id AND
+                                                        p.special = 'f' AND
+                                                        p.date_start >= date_trunc('month', %s::date)::date AND
+                                                        p.date_stop <= (date_trunc('month', %s::date) + INTERVAL '1 MONTH - 1 day')::date)) AS journals)
+            SELECT i.code AS instance, jj.code, jj.id, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
             FROM res_currency c,
             (
                 SELECT id, code, type, default_debit_account_id, default_credit_account_id, instance_id, currency
                 FROM account_journal
-                WHERE id IN (SELECT journal_id FROM account_bank_statement
-                             WHERE period_id IN (SELECT id FROM account_period
-                                                 WHERE
-                                                    special = 'f' AND
-                                                    date_start >= date_trunc('month', %s::date)::date AND
-                                                    date_stop <= (date_trunc('month', %s::date) + INTERVAL '1 MONTH - 1 day')::date))
-            ) as j,
+                WHERE id IN (SELECT journal_id FROM journals_with_registers_in_period)
+            ) as jj,
             (
                 SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
                 FROM (
@@ -374,20 +383,16 @@ liquidity_sql = """
                         FROM account_journal AS j LEFT JOIN account_move_line AS aml ON j.id = aml.journal_id
                         WHERE aml.id IS NULL
                         AND j.type IN ('cash', 'bank')
-                        AND j.id IN (SELECT journal_id FROM account_bank_statement
-                                     WHERE period_id IN (SELECT id FROM account_period
-                                                         WHERE special = 'f'
-                                                         AND date_start >= date_trunc('month', %s::date)::date
-                                                         AND date_stop <= (date_trunc('month', %s::date) + INTERVAL '1 MONTH - 1 day')::date))
+                        AND j.id IN (SELECT journal_id FROM journals_with_registers_in_period)
                     )
                 ) AS ssreq
                 GROUP BY journal_id, account_id
                 ORDER BY journal_id, account_id
             ) AS req, msf_instance i
-            WHERE req.journal_id = j.id
-            AND j.instance_id = i.id
-            AND j.currency = c.id
-            AND j.instance_id IN %s;
+            WHERE req.journal_id = jj.id
+            AND jj.instance_id = i.id
+            AND jj.currency = c.id
+            AND jj.instance_id IN %s;
             """
 
 
