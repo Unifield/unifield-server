@@ -1440,9 +1440,8 @@ class stock_move(osv.osv):
                                     context=context)
             vals['subtype'] = product['subtype']
 
-            if not context.get('non_stock_noupdate') and vals.get('picking_id') \
-                    and product['type'] == 'consu' \
-                    and vals.get('location_dest_id') != id_cross:
+            if not context.get('non_stock_noupdate') and not context.get('packing_screen') and vals.get('picking_id') \
+                    and product['type'] == 'consu' and vals.get('location_dest_id') != id_cross:
                 if vals.get('sale_line_id'):
                     if picking['type'] == 'out':
                         vals['location_id'] = id_cross

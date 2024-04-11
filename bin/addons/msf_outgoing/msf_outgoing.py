@@ -3485,6 +3485,9 @@ class stock_picking(osv.osv):
         assert len(ids) == 1, 'do_create_picking_bg can only process 1 object'
 
         for picking_id in ids:
+            pick_data = self.read(cr, uid, picking_id, ['type', 'subtype'], context=context)
+            if pick_data['type'] != 'out' or pick_data['subtype'] != 'picking':
+                raise osv.except_osv(_('Warning'), _('This action can only be done on a Picking'))
             self.check_integrity(cr, uid, picking_id, context)
 
         nb_lines = self.pool.get('stock.move').search(cr, uid, [('qty_to_process', '>=', 0), ('state', '=', 'assigned'),('product_qty', '>', 0), ('picking_id', 'in', ids)], count=True)
@@ -3511,6 +3514,8 @@ class stock_picking(osv.osv):
 
         for picking in self.browse(cr, uid, ids, context=context):
             res = False
+            if picking.type != 'out' or picking.subtype != 'picking':
+                raise osv.except_osv(_('Warning'), _('This action can only be done on a Picking'))
             if not job_id:
                 self.check_integrity(cr, uid, picking.id, context)
 
@@ -3717,6 +3722,9 @@ class stock_picking(osv.osv):
         assert len(ids) == 1, 'do_validate_picking_bg can only process 1 object'
 
         for picking_id in ids:
+            pick_data = self.read(cr, uid, picking_id, ['type', 'subtype'], context=context)
+            if pick_data['type'] != 'out' or pick_data['subtype'] != 'picking':
+                raise osv.except_osv(_('Warning'), _('This action can only be done on a Picking'))
             self.check_integrity(cr, uid, picking_id, context)
             # Check if the processed sub-Pick has at least a non-fully processed line and there is a signature
             if not context.get('partial_process_sign'):
@@ -3777,6 +3785,8 @@ class stock_picking(osv.osv):
                     _('Error'),
                     _('The picking ticket is not in \'Available\' state. Please check this and re-try')
                 )
+            if picking.type != 'out' or picking.subtype != 'picking':
+                raise osv.except_osv(_('Warning'), _('This action can only be done on a Picking'))
 
             if not job_id:
                 self.check_integrity(cr, uid, picking.id, context)

@@ -103,7 +103,6 @@ class account_balance_landscape(report_sxw.rml_parse):
         self.done_total=0
 
         for t1 in range(0,len(form['fiscalyear'])):
-            locale.setlocale(locale.LC_ALL, '')
             self.result_total["sum_credit" + str(t1)]=locale.format("%.2f", self.result_total["sum_credit" + str(t1)], grouping=True)
             self.result_total["sum_debit" + str(t1)]=locale.format("%.2f", self.result_total["sum_debit" + str(t1)], grouping=True)
 
@@ -254,7 +253,6 @@ class account_balance_landscape(report_sxw.rml_parse):
 
                 for j in range(0,len(entry)):
 
-                    locale.setlocale(locale.LC_ALL, '')
                     res["debit"+str(j)]=locale.format("%.2f", entry[j].debit, grouping=True)
                     res["credit"+str(j)]=locale.format("%.2f", entry[j].credit, grouping=True)
                     res["balance"+str(j)]=locale.format("%.2f", entry[j].balance, grouping=True)

@@ -221,9 +221,7 @@ class import_data(osv.osv_memory):
                 objname = sel[1]
                 break
 
-        fileobj = TemporaryFile('w+')
-        print(type(obj['file']))
-        print(type(base64.b64decode(obj['file'])))
+        fileobj = TemporaryFile('w+', newline='')
         fileobj.write(base64.b64decode(obj['file']).decode('utf8'))
         fileobj.seek(0)
         impobj = self.pool.get(obj['object'])
@@ -283,7 +281,7 @@ class import_data(osv.osv_memory):
             for iv in cr.dictfetchall():
                 self._cache[dbname]['product.international.status']['name'].update({iv['name']: iv['id']})
 
-        errorfile = TemporaryFile('w+')
+        errorfile = TemporaryFile('w+', newline='')
         writer = False
         if not auto_import:
             writer = csv.writer(errorfile, quotechar='"', delimiter=';')
