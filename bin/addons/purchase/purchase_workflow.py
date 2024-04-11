@@ -90,6 +90,52 @@ class purchase_order_line(osv.osv):
                 'width': '520px',
             }
 
+        # Also check the Product Creators if the Partner is Intermision or Inter-section
+        partner_type = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context).order_id.partner_type
+        if partner_type in ['intermission', 'section']:
+            data_obj = self.pool.get('ir.model.data')
+            if partner_type == 'section':  # Non-UD products
+                creator_check = ' pp.international_status != %s AND' % data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+            else:  # Local products
+                creator_check = ' pp.international_status = %s AND' % data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            cr.execute("""
+                SELECT pl.line_number, pp.default_code FROM purchase_order_line pl 
+                    LEFT JOIN product_product pp ON pl.product_id = pp.id
+                WHERE""" + creator_check + """ pl.id IN %s""", (tuple(ids),))
+            lines_pb = []
+            for x in cr.fetchall():
+                lines_pb.append(_('line #') + str(x[0]) + _(' product ') + x[1])
+
+            if lines_pb:
+                # checks before validating the line:
+                ids_to_check = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context)
+                self.check_origin_for_validation(cr, uid, ids_to_check, context=context)
+                self.check_analytic_distribution(cr, uid, ids_to_check, context=context)
+                self.check_if_stock_take_date_with_esc_partner(cr, uid, ids_to_check, context=context)
+                self.check_unit_price(cr, uid, ids_to_check, context=context)
+                self.check_pol_tax(cr, uid, ids_to_check, context=context)
+                if partner_type == 'section':
+                    msg = _('''%s are non-Unidata product(s). These cannot be on order to an Intersectional partner. 
+Please exchange for UniData type product(s) or if none exists, add a product by nomenclature or contact your help-desk for further support''') \
+                          % (', '.join(lines_pb),)
+                else:
+                    msg = _('''%s are Local product(s) (which may not synchronise). 
+Please check if these can be switched for UniData type product(s) instead, or contact your help-desk for further support''') \
+                          % (', '.join(lines_pb),)
+                wiz_data = {'source': 'purchase', 'partner_type': partner_type, 'pol_ids': [(6, 0, ids)], 'message': msg}
+                wiz_id = self.pool.get('sol.pol.intermission.section.validation.wizard').create(cr, uid, wiz_data, context=context)
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'sol.pol.intermission.section.validation.wizard',
+                    'res_id': wiz_id,
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': context,
+                    'height': '300px',
+                    'width': '780px',
+                }
+
         return netsvc.LocalService("workflow").trg_validate(uid, 'purchase.order.line', ids, 'validated', cr)
 
 

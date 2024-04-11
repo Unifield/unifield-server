@@ -38,6 +38,7 @@
     "update_xml": [
         "partner_view.xml",
         "product_view.xml",
+        "wizard/sol_pol_intermission_section_validation_view.xml",
     ],
     "demo_xml": [
         "partner_demo.xml",

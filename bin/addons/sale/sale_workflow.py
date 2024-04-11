@@ -647,6 +647,59 @@ class sale_order_line(osv.osv):
             if fo_line.tax_id and fo_line.order_id.partner_type in ('intermission', 'section'):
                 raise osv.except_osv(_('Error'), _("Taxes are forbidden with Intermission and Intersection partners."))
 
+    def validated(self, cr, uid, ids, context=None):
+        '''
+        Method to call to validate a line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if not ids:
+            return True
+
+        # Check the Product Creators if the Partner is Intermision or Inter-section
+        so = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context).order_id
+        if not so.procurement_request and so.partner_type in ['intermission', 'section']:
+            data_obj = self.pool.get('ir.model.data')
+            if so.partner_type == 'section':  # Non-UD products
+                creator_check = ' pp.international_status != %s AND' % data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+            else:  # Local products
+                creator_check = ' pp.international_status = %s AND' % data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            cr.execute("""
+                SELECT sl.line_number, pp.default_code FROM sale_order_line sl 
+                    LEFT JOIN product_product pp ON sl.product_id = pp.id
+                WHERE""" + creator_check + """ sl.id IN %s""", (tuple(ids),))
+            lines_pb = []
+            for x in cr.fetchall():
+                lines_pb.append(_('line #') + str(x[0]) + _(' product ') + x[1])
+
+            if lines_pb:
+                if so.partner_type == 'section':
+                    msg = _('''%s are non-Unidata product(s). These cannot be on order to an Intersectional partner. 
+Please exchange for UniData type product(s) or if none exists, add a product by nomenclature or contact your help-desk for further support''') \
+                          % (', '.join(lines_pb),)
+                else:
+                    msg = _('''%s are Local product(s) (which may not synchronise). 
+Please check if these can be switched for UniData type product(s) instead, or contact your help-desk for further support''') \
+                          % (', '.join(lines_pb),)
+                wiz_data = {'source': 'sale', 'partner_type': so.partner_type, 'sol_ids': [(6, 0, ids)], 'message': msg}
+                wiz_id = self.pool.get('sol.pol.intermission.section.validation.wizard').create(cr, uid, wiz_data, context=context)
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'sol.pol.intermission.section.validation.wizard',
+                    'res_id': wiz_id,
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': context,
+                    'height': '300px',
+                    'width': '780px',
+                }
+
+        return netsvc.LocalService("workflow").trg_validate(uid, 'sale.order.line', ids, 'validated', cr)
+
     def action_validate(self, cr, uid, ids, context=None):
         '''
         Workflow method called when validating the sale.order.line
@@ -890,8 +943,6 @@ class sale_order(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        wf_service = netsvc.LocalService("workflow")
-
         for so in self.browse(cr, uid, ids, context=context):
             if so.procurement_request and not so.location_requestor_id:
                 raise osv.except_osv(_('Warning !'),
@@ -899,8 +950,8 @@ class sale_order(osv.osv):
             if not so.delivery_requested_date:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate \'%s\' without a Requested date.') % (so.name))
-            for sol_id in [sol.id for sol in so.order_line]:
-                wf_service.trg_validate(uid, 'sale.order.line', sol_id, 'validated', cr)
+
+            return self.pool.get('sale.order.line').validated(cr, uid, [sol.id for sol in so.order_line], context=context)
 
         return True
 
