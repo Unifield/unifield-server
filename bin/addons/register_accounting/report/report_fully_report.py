@@ -177,7 +177,7 @@ class report_fully_report(report_sxw.rml_parse):
             aml_ids = aml_obj.search(self.cr, self.uid, domain)
             if aml_ids:
                 res = aml_obj.browse(self.cr, self.uid, aml_ids, context={'lang': self.localcontext.get('lang')})
-            self._cache_move[key] = sorted(res, key=lambda x: (x.invoice.number, x.line_number))
+            self._cache_move[key] = sorted(res, key=lambda x: (x.invoice.number or '', x.line_number))
         return self._cache_move[key]
 
     def getMoveLines(self, move_brs, regline_br):
