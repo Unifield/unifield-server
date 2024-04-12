@@ -101,7 +101,7 @@ class purchase_order_line(osv.osv):
             cr.execute("""
                 SELECT pl.line_number, pp.default_code FROM purchase_order_line pl 
                     LEFT JOIN product_product pp ON pl.product_id = pp.id
-                WHERE""" + creator_check + """ pl.id IN %s""", (tuple(ids),))
+                WHERE""" + creator_check + """ pl.id IN %s AND pl.state = 'draft'""", (tuple(ids),))
             lines_pb = []
             for x in cr.fetchall():
                 lines_pb.append(_('line #') + str(x[0]) + _(' product ') + x[1])

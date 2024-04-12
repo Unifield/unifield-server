@@ -670,7 +670,7 @@ class sale_order_line(osv.osv):
             cr.execute("""
                 SELECT sl.line_number, pp.default_code FROM sale_order_line sl 
                     LEFT JOIN product_product pp ON sl.product_id = pp.id
-                WHERE""" + creator_check + """ sl.id IN %s""", (tuple(ids),))
+                WHERE""" + creator_check + """ sl.id IN %s AND sl.state = 'draft'""", (tuple(ids),))
             lines_pb = []
             for x in cr.fetchall():
                 lines_pb.append(_('line #') + str(x[0]) + _(' product ') + x[1])
