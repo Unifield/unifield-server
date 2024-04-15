@@ -47,7 +47,7 @@ def parse_http_accept_header(accept):
             item = item.strip()
             if item:
                 items.append((item, q))
-    items.sort(key=lambda i1: i1[1])
+    items.sort(key=lambda i1: i1[1], reverse=1)
     return [item[0] for item in items]
 
 def get_accept_languages(accept):
@@ -56,7 +56,7 @@ def get_accept_languages(accept):
     (http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html) for specification.
     """
     return list(map(lang_in_gettext_format,
-               parse_http_accept_header(accept)))
+                    parse_http_accept_header(accept)))
 
 def get_locale(locale=None):
 
