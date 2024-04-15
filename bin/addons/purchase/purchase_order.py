@@ -1233,40 +1233,43 @@ class purchase_order(osv.osv):
                 to_curr_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], fields_to_fetch=['currency_id'], context=context).currency_id.id
 
             for order in self.browse(cr, uid, ids, fields_to_fetch=['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id', 'tax_line'], context=context):
-                line_changed= False
-                if order.state in ('draft', 'draft_p', 'validated') and vals['partner_id'] != order.partner_id.id:
-                    for line in order.order_line:
-                        if line.state in ('draft', 'validated_n', 'validated'):
-                            if line.product_id:
-                                to_suppinf_ids = suppinf_obj.search(cr, uid, [('name', '=', partner.id), ('product_id', '=', line.product_id.id)], context=context)
-                                price_to_convert = line.product_id.standard_price
-                                from_curr_id = line.product_id.currency_id.id
-                                if to_suppinf_ids:
-                                    domain = [('uom_id', '=', line.product_uom.id), ('suppinfo_id', 'in', to_suppinf_ids),
-                                              '|', ('valid_from', '<=', order.date_order), ('valid_from', '=', False),
-                                              '|', ('valid_till', '>=', order.date_order), ('valid_till', '=', False)]
-                                    domain_cur = [('currency_id', '=', to_curr_id)]
-                                    domain_cur.extend(domain)
+                line_changed = False
+                if vals['partner_id'] != order.partner_id.id:
+                    if order.state != 'draft':
+                        raise osv.except_osv(_('Error !'), _('The Partner can not be modified if the Purchase Order is not in Draft state. Please refresh the page'))
+                    else:
+                        for line in order.order_line:
+                            if line.state in ('draft', 'validated_n'):
+                                if line.product_id:
+                                    to_suppinf_ids = suppinf_obj.search(cr, uid, [('name', '=', partner.id), ('product_id', '=', line.product_id.id)], context=context)
+                                    price_to_convert = line.product_id.standard_price
+                                    from_curr_id = line.product_id.currency_id.id
+                                    if to_suppinf_ids:
+                                        domain = [('uom_id', '=', line.product_uom.id), ('suppinfo_id', 'in', to_suppinf_ids),
+                                                  '|', ('valid_from', '<=', order.date_order), ('valid_from', '=', False),
+                                                  '|', ('valid_till', '>=', order.date_order), ('valid_till', '=', False)]
+                                        domain_cur = [('currency_id', '=', to_curr_id)]
+                                        domain_cur.extend(domain)
 
-                                    part_inf_ids = partinf_obj.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
-                                    if not part_inf_ids:
-                                        part_inf_ids = partinf_obj.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
-                                    if part_inf_ids:
-                                        partinf_line = partinf_obj.browse(cr, uid, part_inf_ids[0], fields_to_fetch=['price', 'currency_id'], context=context)
-                                        price_to_convert = partinf_line.price
-                                        from_curr_id = partinf_line.currency_id.id
-                            else:
-                                from_curr_id = order.pricelist_id.currency_id.id
-                                price_to_convert = line.price_unit
+                                        part_inf_ids = partinf_obj.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+                                        if not part_inf_ids:
+                                            part_inf_ids = partinf_obj.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+                                        if part_inf_ids:
+                                            partinf_line = partinf_obj.browse(cr, uid, part_inf_ids[0], fields_to_fetch=['price', 'currency_id'], context=context)
+                                            price_to_convert = partinf_line.price
+                                            from_curr_id = partinf_line.currency_id.id
+                                else:
+                                    from_curr_id = order.pricelist_id.currency_id.id
+                                    price_to_convert = line.price_unit
 
-                            line_changed = True
-                            new_price = cur_obj.compute(cr, uid, from_curr_id, to_curr_id, price_to_convert, round=False)
-                            pol_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=context)
-                    if line_changed:
-                        tax_line_obj = self.pool.get('account.invoice.tax')
-                        for tax_line in order.tax_line:
-                            new_price = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id, to_curr_id, tax_line.amount, round=False)
-                            tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=context)
+                                line_changed = True
+                                new_price = cur_obj.compute(cr, uid, from_curr_id, to_curr_id, price_to_convert, round=False)
+                                pol_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=context)
+                        if line_changed:
+                            tax_line_obj = self.pool.get('account.invoice.tax')
+                            for tax_line in order.tax_line:
+                                new_price = cur_obj.compute(cr, uid, order.pricelist_id.currency_id.id, to_curr_id, tax_line.amount, round=False)
+                                tax_line_obj.write(cr, uid, tax_line.id, {'amount': new_price}, context=context)
 
 
         return super(purchase_order, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
