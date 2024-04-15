@@ -1236,7 +1236,7 @@ class purchase_order(osv.osv):
                 line_changed = False
                 if vals['partner_id'] != order.partner_id.id:
                     if order.state != 'draft':
-                        raise osv.except_osv(_('Error !'), _('The Partner can not be modified if the Purchase Order is not in Draft state. Please refresh the page'))
+                        raise osv.except_osv(_('Error !'), _('The Partner can not be modified if the Purchase Order is not in Draft state. Please refresh the page to continue using this PO'))
                     else:
                         for line in order.order_line:
                             if line.state in ('draft', 'validated_n'):
