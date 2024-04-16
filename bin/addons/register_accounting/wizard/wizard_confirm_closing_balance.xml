@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+      <data>
+            <record model="ir.ui.view" id="wizard_confirm_closing_balance">
+                  <field name='name'>wizard.confirm.closing.balance</field>
+                  <field name='model'>wizard.confirm.closing.balance</field>
+                  <field name='type'>form</field>
+                  <field name='arch' type='xml'>
+                        <form>
+                              <separator string="Warning message"/>
+                              <field name="is_prev_reg_open" invisible="1"/>
+                              <field name="display_normal" attrs="{'invisible': [('is_prev_reg_open', '=', True)]}"/>
+                              <field name="display_override" attrs="{'invisible': [('is_prev_reg_open', '=', False)]}"/>
+                              <group colspan="4">
+                                    <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2" />
+                                    <button name="button_confirm_closing_balance" string="Confirm" attrs="{'readonly': [('display_normal', '=', False), ('display_override', '=', False)]}" type="object" icon="gtk-apply" colspan="2" />
+                              </group>
+                        </form>
+                  </field>
+            </record>
+      </data>
+</openerp>
