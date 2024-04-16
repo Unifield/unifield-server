@@ -973,4 +973,28 @@ class unidata_sync(osv.osv):
 
 unidata_sync()
 
+class unidata_default_product_value(osv.osv):
+    _name = 'unidata.default_product_value'
+    _columns = {
+        'field': fields.selection([('perishable', 'Expiry Date Mandatory'), ('batch_management', 'Batch Number Mandatory'), ('procure_method','Procurement Method'), ('type', 'Product Type'), ('subtype', 'Product SubType')], 'Field Name', required=1, select=1),
+        'value': fields.char('Value', size=256, required=1, select=1),
+        'nomenclature': fields.many2one('product.nomenclature', required=1),
+    }
 
+    _sql_constraints = [
+        ('unique_nomenclature_field', 'unique(field, nomenclature)', 'Field / nomenclature already exists')
+    ]
+unidata_default_product_value()
+
+class unidata_pull_product_log(osv.osv):
+    _name = 'unidata.pull_product.log'
+    _columns = {
+        'msfid': fields.integer('MSF ID', required=1),
+        'code': fields.char('UD Code', size=64, select=1),
+        'former_codes': fields.char('Former Code', size=1024, select=1),
+        'date': fields.datetime('Date', required=1, select=1),
+        'status': fields.selection([('create', 'Create'), ('Update', 'Update'), ('error', 'Error')], 'Status', select=1),
+        'log': fields.text('Log'),
+    }
+
+unidata_pull_product_log()
