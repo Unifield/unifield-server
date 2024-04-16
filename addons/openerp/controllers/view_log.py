@@ -104,9 +104,11 @@ class View_Log(SecuredController):
                         fields.append(('xmlid', _('Internal module data ID')))
 
             if model == 'product.product':
-                xmlid = rpc.session.execute('object', 'execute', model, 'read', [id], ['xmlid_code'], rpc.session.context)
+                xmlid = rpc.session.execute('object', 'execute', model, 'read', [id], ['xmlid_code', 'msfid'], rpc.session.context)
                 values['xmlid_code'] = xmlid[0]['xmlid_code']
                 fields.append(('xmlid_code', _('xmlid_code')))
+                values['msfid'] = xmlid[0]['msfid']
+                fields.append(('msfid', _('MSFID')))
 
             if rpc.session.uid == 1:
                 model_ids = rpc.session.execute('object', 'execute', 'ir.model', 'search', [('model', '=', model)])
