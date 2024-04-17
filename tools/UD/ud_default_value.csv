@@ -1,0 +1,184 @@
+Identifier,MSF Entity,Attribute,OC Rules,Default Value
+96,OCA,perishable,[OCA] D - Drugs | ,Yes
+98,OCA,perishable,[OCA] K - Kits | MED - Medical kits,Yes
+99,OCA,perishable,[OCA] N - Nutrition | FOO - Food commodities,Yes
+100,OCA,perishable,[OCA] N - Nutrition | FOS - Specialized food,Yes
+101,OCA,perishable,"[OCA] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
+102,OCA,perishable,[OCA] S - Renewable medical supplies | INS - Injection supplies,Yes
+103,OCA,perishable,[OCA] S - Renewable medical supplies | LAS - Laboratory reagents,Yes
+104,OCA,perishable,[OCA] S - Renewable medical supplies | SDT - Stand-alone diagnostic tests,Yes
+105,OCA,perishable,[OCA] S - Renewable medical supplies | SUT - Sutures,Yes
+106,OCA,batch_management,[OCA] D - Drugs | ,Yes
+107,OCA,batch_management,[OCA] K - Kits | MED - Medical kits,Yes
+108,OCA,batch_management,[OCA] N - Nutrition | FOO - Food commodities,Yes
+109,OCA,batch_management,[OCA] N - Nutrition | FOS - Specialized food,Yes
+110,OCA,batch_management,"[OCA] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
+111,OCA,batch_management,[OCA] S - Renewable medical supplies | INS - Injection supplies,Yes
+112,OCA,batch_management,[OCA] S - Renewable medical supplies | LAS - Laboratory reagents,Yes
+113,OCA,batch_management,[OCA] S - Renewable medical supplies | SDT - Stand-alone diagnostic tests,Yes
+114,OCA,batch_management,[OCA] S - Renewable medical supplies | SUT - Sutures,Yes
+115,OCA,type,[OCA] X - Services | ,Service with Reception
+116,OCA,subtype,[OCA] K - Kits | ,Kit/Module
+117,OCA,procure_method,[OCA] X - Services | ,Make to Order
+196,OCA,procure_method,[OCA] L - Library | ,Make to Order
+197,OCA,perishable,[OCA] S - Renewable medical supplies | AST - Antibiotic Susceptibility Testing Items,Yes
+198,OCA,perishable,[OCA] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
+199,OCA,perishable,[OCA] S - Renewable medical supplies | BID - Bacterial identification system,Yes
+200,OCA,perishable,[OCA] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
+201,OCA,perishable,[OCA] S - Renewable medical supplies | DIS - Disinfectants,Yes
+202,OCA,batch_management,[OCA] S - Renewable medical supplies | AST - Antibiotic Susceptibility Testing Items,Yes
+203,OCA,batch_management,[OCA] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
+204,OCA,batch_management,[OCA] S - Renewable medical supplies | BID - Bacterial identification system,Yes
+205,OCA,batch_management,[OCA] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
+206,OCA,batch_management,[OCA] S - Renewable medical supplies | DIS - Disinfectants,Yes
+6,OCB,perishable,[OCB] D - Drugs | ,Yes
+7,OCB,batch_management,[OCB] D - Drugs | ,Yes
+25,OCB,subtype,[OCB] K - Kits | ,Kit/Module
+26,OCB,perishable,[OCB] N - Nutrition | ,Yes
+27,OCB,batch_management,[OCB] N - Nutrition | ,Yes
+31,OCB,perishable,"[OCB] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
+32,OCB,batch_management,"[OCB] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
+51,OCB,perishable,[OCB] S - Renewable medical supplies | INS - Injection supplies,Yes
+52,OCB,batch_management,[OCB] S - Renewable medical supplies | INS - Injection supplies,Yes
+56,OCB,perishable,[OCB] S - Renewable medical supplies | LAS - Laboratory reagents,Yes
+57,OCB,batch_management,[OCB] S - Renewable medical supplies | LAS - Laboratory reagents,Yes
+66,OCB,perishable,[OCB] S - Renewable medical supplies | MSU - Small medical supplies,Yes
+67,OCB,batch_management,[OCB] S - Renewable medical supplies | MSU - Small medical supplies,Yes
+71,OCB,perishable,[OCB] S - Renewable medical supplies | SUT - Sutures,Yes
+72,OCB,batch_management,[OCB] S - Renewable medical supplies | SUT - Sutures,Yes
+93,OCB,procure_method,[OCB] X - Services | ,Make to Order
+94,OCB,type,[OCB] X - Services | ,Service with Reception
+95,OCB,subtype,[OCB] X - Services | ,
+136,OCB,batch_management,[OCB] K - Kits | MED - Medical kits,Yes
+137,OCB,batch_management,[OCB] K - Kits | SUD - Dental surgical instruments sets,Yes
+138,OCB,batch_management,[OCB] K - Kits | SUI - Internal fixation instruments set,Yes
+139,OCB,batch_management,[OCB] K - Kits | SUO - Ophthalmic instruments boxes,Yes
+140,OCB,batch_management,[OCB] K - Kits | SUR - Surgical instruments sets,Yes
+141,OCB,perishable,[OCB] K - Kits | MED - Medical kits,Yes
+142,OCB,perishable,[OCB] K - Kits | SUD - Dental surgical instruments sets,Yes
+143,OCB,perishable,[OCB] K - Kits | SUI - Internal fixation instruments set,Yes
+144,OCB,perishable,[OCB] K - Kits | SUO - Ophthalmic instruments boxes,Yes
+145,OCB,perishable,[OCB] K - Kits | SUR - Surgical instruments sets,Yes
+146,OCB,perishable,[OCB] S - Renewable medical supplies | AST - Antibiotic Susceptibility Testing Items,Yes
+147,OCB,perishable,[OCB] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
+148,OCB,perishable,[OCB] S - Renewable medical supplies | BID - Bacterial identification system,Yes
+149,OCB,perishable,[OCB] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
+150,OCB,perishable,"[OCB] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
+151,OCB,perishable,[OCB] S - Renewable medical supplies | INS - Injection supplies,Yes
+152,OCB,perishable,[OCB] S - Renewable medical supplies | LAS - Laboratory reagents,Yes
+153,OCB,perishable,[OCB] S - Renewable medical supplies | MSU - Small medical supplies,Yes
+154,OCB,perishable,[OCB] S - Renewable medical supplies | SCO - Surgical consumables,Yes
+155,OCB,perishable,[OCB] S - Renewable medical supplies | SDT - Stand-alone diagnostic tests,Yes
+156,OCB,perishable,[OCB] S - Renewable medical supplies | SUR - Surgical instruments for single use,Yes
+157,OCB,perishable,[OCB] S - Renewable medical supplies | SUT - Sutures,Yes
+158,OCB,perishable,"[OCB] S - Renewable medical supplies | TSS - Transport, storage and sampling systems of biological specim",Yes
+159,OCB,perishable,[OCB] S - Renewable medical supplies | DIS - Disinfectants,Yes
+160,OCB,batch_management,[OCB] S - Renewable medical supplies | AST - Antibiotic Susceptibility Testing Items,Yes
+161,OCB,batch_management,[OCB] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
+162,OCB,batch_management,[OCB] S - Renewable medical supplies | BID - Bacterial identification system,Yes
+163,OCB,batch_management,[OCB] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
+164,OCB,batch_management,"[OCB] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
+165,OCB,batch_management,[OCB] S - Renewable medical supplies | SCO - Surgical consumables,Yes
+166,OCB,batch_management,[OCB] S - Renewable medical supplies | SDT - Stand-alone diagnostic tests,Yes
+167,OCB,batch_management,[OCB] S - Renewable medical supplies | SUR - Surgical instruments for single use,Yes
+168,OCB,batch_management,"[OCB] S - Renewable medical supplies | TSS - Transport, storage and sampling systems of biological specim",Yes
+169,OCB,batch_management,[OCB] S - Renewable medical supplies | DIS - Disinfectants,Yes
+263,OCB,procure_method,[OCB] L - Library | ,Make to Order
+118,OCG,batch_management,[OCG] D - Drugs | ,Yes
+119,OCG,batch_management,[OCG] K - Kits | MED - Medical kits,Yes
+120,OCG,batch_management,[OCG] N - Nutrition | FOO - Food commodities,Yes
+121,OCG,batch_management,[OCG] N - Nutrition | ,Yes
+122,OCG,batch_management,"[OCG] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
+123,OCG,batch_management,[OCG] S - Renewable medical supplies | INS - Injection supplies,Yes
+124,OCG,batch_management,[OCG] S - Renewable medical supplies | LAS - Laboratory reagents,Yes
+125,OCG,batch_management,[OCG] S - Renewable medical supplies | MSU - Small medical supplies,Yes
+126,OCG,batch_management,[OCG] S - Renewable medical supplies | SUT - Sutures,Yes
+127,OCG,perishable,[OCG] D - Drugs | ,Yes
+128,OCG,perishable,[OCG] K - Kits | MED - Medical kits,Yes
+129,OCG,perishable,[OCG] N - Nutrition | ,Yes
+131,OCG,perishable,"[OCG] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
+132,OCG,perishable,[OCG] S - Renewable medical supplies | INS - Injection supplies,Yes
+133,OCG,perishable,[OCG] S - Renewable medical supplies | LAS - Laboratory reagents,Yes
+134,OCG,perishable,[OCG] S - Renewable medical supplies | MSU - Small medical supplies,Yes
+135,OCG,perishable,[OCG] S - Renewable medical supplies | SUT - Sutures,Yes
+170,OCG,batch_management,[OCG] S - Renewable medical supplies | DRE - Dressings,Yes
+171,OCG,batch_management,[OCG] S - Renewable medical supplies | SDT - Stand-alone diagnostic tests,Yes
+172,OCG,perishable,[OCG] S - Renewable medical supplies | DRE - Dressings,Yes
+173,OCG,perishable,[OCG] S - Renewable medical supplies | SDT - Stand-alone diagnostic tests,Yes
+174,OCG,procure_method,[OCG] L - Library | ,Make to Order
+175,OCG,procure_method,[OCG] X - Services | ,Make to Order
+176,OCG,subtype,[OCG] K - Kits | ,Kit/Module
+177,OCG,type,[OCG] X - Services | ,Service with Reception
+178,OCG,batch_management,[OCG] S - Renewable medical supplies | AST - Antibiotic Susceptibility Testing Items,Yes
+179,OCG,batch_management,[OCG] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
+180,OCG,batch_management,[OCG] S - Renewable medical supplies | BID - Bacterial identification system,Yes
+181,OCG,batch_management,[OCG] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
+182,OCG,batch_management,[OCG] S - Renewable medical supplies | DRE - Dressings,Yes
+183,OCG,batch_management,[OCG] S - Renewable medical supplies | SCO - Surgical consumables,Yes
+184,OCG,batch_management,[OCG] S - Renewable medical supplies | SUR - Surgical instruments for single use,Yes
+185,OCG,batch_management,"[OCG] S - Renewable medical supplies | TSS - Transport, storage and sampling systems of biological specim",Yes
+186,OCG,batch_management,[OCG] S - Renewable medical supplies | DIS - Disinfectants,Yes
+187,OCG,perishable,[OCG] S - Renewable medical supplies | AST - Antibiotic Susceptibility Testing Items,Yes
+188,OCG,perishable,[OCG] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
+189,OCG,perishable,[OCG] S - Renewable medical supplies | BID - Bacterial identification system,Yes
+190,OCG,perishable,[OCG] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
+191,OCG,perishable,[OCG] S - Renewable medical supplies | SCO - Surgical consumables,Yes
+192,OCG,perishable,[OCG] S - Renewable medical supplies | SUR - Surgical instruments for single use,Yes
+193,OCG,perishable,"[OCG] S - Renewable medical supplies | TSS - Transport, storage and sampling systems of biological specim",Yes
+194,OCG,perishable,[OCG] S - Renewable medical supplies | DIS - Disinfectants,Yes
+207,OCP,type,[OCP] X - Services | ,Service with Reception
+208,OCP,subtype,[OCP] X - Services | ,
+209,OCP,subtype,[OCP] K - Kits | ,Kit/Module
+210,OCP,procure_method,[OCP] X - Services | ,Make to Order
+211,OCP,perishable,[OCP] D - Drugs | ,Yes
+212,OCP,perishable,[OCP] E - Medical equipment | ANE - Anaesthesia equipment,Yes
+213,OCP,perishable,[OCP] E - Medical equipment | DIM - Diagnostic Imaging equipment,Yes
+214,OCP,perishable,[OCP] E - Medical equipment | LAB - Laboratory equipment,Yes
+215,OCP,perishable,[OCP] E - Medical equipment | LAE - Electrical laboratory equipment,Yes
+216,OCP,perishable,[OCP] E - Medical equipment | SUR - Surgical instruments,Yes
+217,OCP,perishable,[OCP] K - Kits | MED - Medical kits,Yes
+218,OCP,perishable,[OCP] N - Nutrition | FOO - Food commodities,Yes
+219,OCP,perishable,[OCP] N - Nutrition | FOS - Specialized food,Yes
+220,OCP,perishable,[OCP] S - Renewable medical supplies | AST - Antibiotic Susceptibility Testing Items,Yes
+221,OCP,perishable,[OCP] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
+222,OCP,perishable,[OCP] S - Renewable medical supplies | BID - Bacterial identification system,Yes
+223,OCP,perishable,[OCP] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
+224,OCP,perishable,"[OCP] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
+225,OCP,perishable,[OCP] S - Renewable medical supplies | DIM - Diagnostic imaging supplies,Yes
+226,OCP,perishable,[OCP] S - Renewable medical supplies | DIS - Disinfectants,Yes
+227,OCP,perishable,[OCP] S - Renewable medical supplies | DRE - Dressings,Yes
+228,OCP,perishable,[OCP] S - Renewable medical supplies | INS - Injection supplies,Yes
+229,OCP,perishable,[OCP] S - Renewable medical supplies | LAS - Laboratory reagents,Yes
+230,OCP,perishable,[OCP] S - Renewable medical supplies | MSU - Small medical supplies,Yes
+231,OCP,perishable,[OCP] S - Renewable medical supplies | PPE - Personal protective equipment for medical activities,Yes
+232,OCP,perishable,[OCP] S - Renewable medical supplies | SCO - Surgical consumables,Yes
+233,OCP,perishable,[OCP] S - Renewable medical supplies | SDT - Stand-alone diagnostic tests,Yes
+234,OCP,perishable,[OCP] S - Renewable medical supplies | SUR - Surgical instruments for single use,Yes
+235,OCP,perishable,[OCP] S - Renewable medical supplies | SUT - Sutures,Yes
+236,OCP,perishable,"[OCP] S - Renewable medical supplies | TSS - Transport, storage and sampling systems of biological specim",Yes
+237,OCP,batch_management,[OCP] D - Drugs | ,Yes
+238,OCP,batch_management,[OCP] E - Medical equipment | ANE - Anaesthesia equipment,Yes
+239,OCP,batch_management,[OCP] E - Medical equipment | DIM - Diagnostic Imaging equipment,Yes
+240,OCP,batch_management,[OCP] E - Medical equipment | LAB - Laboratory equipment,Yes
+241,OCP,batch_management,[OCP] E - Medical equipment | LAE - Electrical laboratory equipment,Yes
+242,OCP,batch_management,[OCP] E - Medical equipment | SUR - Surgical instruments,Yes
+243,OCP,batch_management,[OCP] K - Kits | MED - Medical kits,Yes
+244,OCP,batch_management,[OCP] N - Nutrition | FOO - Food commodities,Yes
+245,OCP,batch_management,[OCP] N - Nutrition | FOS - Specialized food,Yes
+246,OCP,batch_management,[OCP] S - Renewable medical supplies | AST - Antibiotic Susceptibility Testing Items,Yes
+247,OCP,batch_management,[OCP] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
+248,OCP,batch_management,[OCP] S - Renewable medical supplies | BID - Bacterial identification system,Yes
+249,OCP,batch_management,[OCP] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
+250,OCP,batch_management,"[OCP] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
+251,OCP,batch_management,[OCP] S - Renewable medical supplies | DIM - Diagnostic imaging supplies,Yes
+252,OCP,batch_management,[OCP] S - Renewable medical supplies | DIS - Disinfectants,Yes
+253,OCP,batch_management,[OCP] S - Renewable medical supplies | DRE - Dressings,Yes
+254,OCP,batch_management,[OCP] S - Renewable medical supplies | INS - Injection supplies,Yes
+255,OCP,batch_management,[OCP] S - Renewable medical supplies | LAS - Laboratory reagents,Yes
+256,OCP,batch_management,[OCP] S - Renewable medical supplies | MSU - Small medical supplies,Yes
+257,OCP,batch_management,[OCP] S - Renewable medical supplies | PPE - Personal protective equipment for medical activities,Yes
+258,OCP,batch_management,[OCP] S - Renewable medical supplies | SCO - Surgical consumables,Yes
+259,OCP,batch_management,[OCP] S - Renewable medical supplies | SDT - Stand-alone diagnostic tests,Yes
+260,OCP,batch_management,[OCP] S - Renewable medical supplies | SUR - Surgical instruments for single use,Yes
+261,OCP,batch_management,[OCP] S - Renewable medical supplies | SUT - Sutures,Yes
+262,OCP,batch_management,"[OCP] S - Renewable medical supplies | TSS - Transport, storage and sampling systems of biological specim",Yes
