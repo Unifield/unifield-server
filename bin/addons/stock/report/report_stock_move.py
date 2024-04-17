@@ -153,20 +153,21 @@ class report_stock_inventory(osv.osv):
     _auto = False
     _columns = {
         'date': fields.datetime('Date', readonly=True),
-        'partner_id':fields.many2one('res.partner.address', 'Partner', readonly=True),
-        'product_id':fields.many2one('product.product', 'Product', readonly=True),
-        'product_categ_id':fields.many2one('product.category', 'Product Category', readonly=True),
+        'partner_id': fields.many2one('res.partner.address', 'Partner', readonly=True),
+        'product_id': fields.many2one('product.product', 'Product', readonly=True),
+        'product_categ_id': fields.many2one('product.category', 'Product Category', readonly=True),
         'location_id': fields.many2one('stock.location', 'Location', readonly=True),
         'prodlot_id': fields.many2one('stock.production.lot', 'Lot', readonly=True),
         'company_id': fields.many2one('res.company', 'Company', readonly=True),
-        'product_qty':fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='uom_id'),
+        'product_qty': fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='uom_id'),
         'uom_id': fields.many2one('product.uom', 'UoM', readonly=True, group_operator='max'),
-        'value' : fields.float('Total Value',  digits_compute=dp.get_precision('Account'), required=True),
+        'value': fields.float('Total Value',  digits_compute=dp.get_precision('Account'), required=True),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Confirmed'), ('assigned', 'Available'), ('done', 'Done'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
                                   help='When the stock move is created it is in the \'Draft\' state.\n After that it is set to \'Confirmed\' state.\n If stock is available state is set to \'Avaiable\'.\n When the picking it done the state is \'Done\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
         'location_type': fields.selection([('supplier', 'Supplier Location'), ('view', 'View'), ('internal', 'Internal Location'), ('customer', 'Customer Location'), ('inventory', 'Inventory'), ('procurement', 'Procurement'), ('production', 'Production'), ('transit', 'Transit Location for Inter-Companies Transfers')], 'Location Type', required=True),
     }
+
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'report_stock_inventory')
         cr.execute("""

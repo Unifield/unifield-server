@@ -5,6 +5,112 @@
 
 <openerp>
     <data>
+        <record id="stock.view_default_picking_form" model="ir.ui.view">
+            <field name="name">view.default.picking.form</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="priority" eval="4" />
+            <field name="arch" type="xml">
+                <form string="Stock Picking">
+                    <group colspan="4" col="6">
+                        <group colspan="4" col="4">
+                            <field name="name" readonly="1"/>
+                            <field name="origin" readonly="1"/> 
+                            <field name="backorder_id" readonly="1"/>
+                            <field name="details" readonly="1" />
+                            <field name="reason_type_id" widget="selection" readonly="1" />
+                            <field name="order_category" readonly="1" />
+                            <field name="incoming_id" readonly="1" />
+                        </group>
+                        <group colspan="2" col="2">
+                            <field name="date" readonly="1" />
+                       </group>
+                    </group>
+                    <notebook colspan="4">
+                        <page string="Products">
+                            <field name="move_lines" readonly="1"
+                                colspan="4"
+                                nolabel="1"
+                                >
+                                <tree string="Stock Moves">
+                                    <field name="line_number"/>
+                                    <field name="product_id" />
+                                    <field name="comment" />
+                                    <field name="composition_list_id" />
+                                    <field name="product_qty" />
+                                    <field name="product_uom" string="UoM"/>
+                                    <field name="asset_id"/>
+                                    <field name="prodlot_id"/>
+                                    <field name="expired_date"/>
+                                    <field name="location_id"/>
+                                    <field name="location_dest_id"/>
+                                    <field name="date" string="Actual Move Date"/>
+                                    <field name="state"/>
+                                    <field name="lot_check"/>
+                                    <field name="exp_check"/>
+                                    <field name="kc_check" widget="null_boolean" />
+                                    <field name="ssl_check" invisible="True" widget="null_boolean" />
+                                    <field name="dg_check" widget="null_boolean" />
+                                    <field name="np_check" widget="null_boolean" />
+                                    <field name="mml_status" />
+                                    <field name="msl_status" />
+                                </tree>
+
+                                <form string="Stock Moves">
+                                    <group colspan="2" col="4">
+                                        <separator colspan="4" string="Move Information"/>
+                                        <field name="product_id" colspan="4" />
+                                        <field name="product_qty" colspan="2"  />
+                                        <field name="product_uom" string="Unit Of Measure" colspan="2" />
+                                        <field name="comment" colspan="4" />
+                                    </group>
+
+                                    <group colspan="2" col="2">
+                                        <separator string="Locations" colspan="2"/>
+                                        <field name="location_id" />
+                                       <field name="location_dest_id" />
+                                    </group>
+
+                                    <group colspan="2" col="4">
+                                        <separator string="Traceability" colspan="4"/>
+                                        <field name="asset_id" colspan="4" />
+                                        <field name="prodlot_id" colspan="2" />
+                                        <field name="expired_date" />
+                                        <group colspan="4" col="10">
+                                            <field name="lot_check" />
+                                            <field name="exp_check" />
+                                            <field name="kc_check" widget="null_boolean" />
+                                            <field name="dg_check" widget="null_boolean" />
+                                            <field name="np_check" widget="null_boolean" />
+                                        </group>
+                                        <field name="reason_type_id" widget="selection" />
+                                    </group>
+
+                                    <group colspan="2" col="2">
+                                        <separator string="Dates" colspan="2"/>
+                                        <field name="date" string="Actual Move Date"/>
+                                        <field name="date_expected" string="Expected Move Date"/>
+                                    </group>
+
+                                    <label string="" colspan="4"/>
+                                    <field name="state"/>
+                                </form>
+                            </field>
+                            <group col="10" colspan="4">
+                                <field name="state" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="Additional info">
+                            <field name="date_done" readonly="1"/>
+                        </page>
+                        <page string="Notes">
+                            <field colspan="4" name="note" nolabel="1" readonly="1"/>
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+
 
         <record id="stock_location_chained_nomen_form_view" model="ir.ui.view">
             <field name="name">stock.location.chained.nomen.form.view</field>
@@ -211,7 +317,7 @@
                         <group colspan="2" col="2">
                             <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
                             <field name="min_date" string="Expected Move Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel', 'import'])]}"
-                            		on_change="change_min_date()" required="1"/>
+                                on_change="change_min_date()" required="1"/>
                             <field name="min_date_manually" invisible="1" />
                        </group>
                     </group>
@@ -450,7 +556,7 @@
                             <field name="reason_type_id" widget="selection"
                                    domain="[('incoming_ok', '=', True), ('is_fs_in', '=', True)]" get_selection="list_reason_type_incoming"
                                    on_change="on_change_reason_type_id(reason_type_id)"
-                                   attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                                   attrs="{'readonly': ['|', '|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('claim', '=', True)]}"/>
                             <field name="customers" readonly="1" />
                             <field name="change_reason"/>
                             <field name="order_category"/>
@@ -706,6 +812,7 @@
                         <filter icon="terp-camera_test" string="Ready" name="ready" domain="[('state','=','assigned')]" help="Stock moves that are Available (Ready to process)"/>
                         <separator orientation="vertical"/>
                         <field name="name" string="Name" />
+                        <field name="picking_id" widget="char" />
                         <field name="origin"/>
                         <field name="address_id" string="Partner" context="{'contact_display':'partner'}" filter_domain="[('picking_id.address_id','ilike',self)]"/>
                         <field name="product_id"/>

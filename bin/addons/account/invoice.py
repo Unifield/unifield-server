@@ -1298,6 +1298,10 @@ class account_invoice(osv.osv):
         return self.name_get(cr, user, ids, context)
 
     def _refund_cleanup_lines(self, cr, uid, lines, is_account_inv_line=False, context=None):
+        """
+            Warning: lines can be account.invoice.line or account.invoice.tax
+        """
+
         if context is None:
             context = {}
         account_obj = self.pool.get('account.account')
@@ -1313,7 +1317,8 @@ class account_invoice(osv.osv):
                     line['reversed_invoice_line_id'] = line['id']  # store a link to the original invoice line
             del line['id']
             del line['invoice_id']
-            del line['is_asset']
+            if 'is_asset' in line:
+                del line['is_asset']
             if line.get('move_lines',False):
                 del line['move_lines']
             if line.get('import_invoice_id',False):

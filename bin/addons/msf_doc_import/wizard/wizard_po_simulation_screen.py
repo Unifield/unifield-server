@@ -1575,10 +1575,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     errors.append(p_msg)
                 else:
                     if line.po_line_id and line.po_line_id.linked_sol_id and not line.po_line_id.linked_sol_id.procurement_request \
-                            and line.po_line_id.po_order_type == 'regular' \
+                            and line.po_line_id.po_order_type in ['regular', 'purchase_list'] \
                             and prod_obj.browse(cr, uid, write_vals['imp_product_id'], fields_to_fetch=['type'], context=context).type == 'service_recep':
                         write_vals['type_change'] = 'error'
-                        errors.append(_('You can not select the Service Product %s on a Regular PO if the line has been sourced from a FO') % values[2])
+                        errors.append(_('You can not select the Service Product %s on a Regular or a Purchase List PO if the line has been sourced from a FO') % values[2])
             else:
                 write_vals['type_change'] = 'error'
 

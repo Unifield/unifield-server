@@ -801,10 +801,10 @@
                   <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
-                  <para style="TextInformation" alignment="LEFT">Received by :</para>
+                  <para style="TextInformation" alignment="LEFT">[[ translate('Received by') ]] [[ getSign(objects[0], 'tr', 'backup') ]]:</para>
                 </td>
                 <td>
-                  <para style="TextInformation" alignment="LEFT">Controlled by :</para>
+                  <para style="TextInformation" alignment="LEFT">[[ translate('Controlled by') ]] [[ getSign(objects[0], 'sr', 'backup') ]]:</para>
                 </td>
                 <td>
                   <para style="TextInformation" alignment="LEFT"></para>

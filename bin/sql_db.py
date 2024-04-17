@@ -208,7 +208,7 @@ class Cursor(object):
            safe for IN conditions, after uniquifying them."""
         if max_split is None:
             max_split = self.IN_MAX
-        return tools.misc.split_every(max_split, set(ids))
+        return tools.misc.split_every(max_split, list(dict.fromkeys(ids)))
 
     def print_log(self):
         global sql_counter

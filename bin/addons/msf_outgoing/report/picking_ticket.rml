@@ -626,13 +626,13 @@
                     <para style="LFooter"> </para>
                 </td>
                 <td>
-                    <para style="LFooter">Approved by :</para>
+                    <para style="LFooter">[[ translate('Approved by') ]] [[ getSign(objects[0], 'sr', 'backup') ]]:</para>
                 </td>
                 <td>
-                    <para style="LFooter">Picked by :</para>
+                    <para style="LFooter">[[ translate('Picked by') ]] [[ getSign(objects[0], 'tr', 'backup') ]]:</para>
                 </td>
                 <td>
-                    <para style="LFooter">Validated by :</para>
+                    <para style="LFooter">[[ translate('Validated by') ]] [[ getSign(objects[0], 'fr', 'backup') ]]:</para>
                 </td>
             </tr>
             <tr>

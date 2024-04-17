@@ -146,7 +146,7 @@ class esc_line_import_wizard(osv.osv):
     def auto_import(self, cr, uid, file_to_import, context=None):
 
         import_id = self.create(cr, uid, {
-            'file': base64.b64encode(bytes(open(file_to_import, 'rb').read(), 'utf8')),
+            'file': base64.b64encode(open(file_to_import, 'rb').read()),
             'filename': os.path.split(file_to_import)[1],
             'state': 'inprogress',
         })

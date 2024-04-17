@@ -10,8 +10,8 @@
                 <search>
                     <filter name="my_sign" string="My Signatures" icon="terp-personal" domain="[('user_id', '=', uid)]" />
                     <separator orientation="vertical"/>
-                    <filter name="to_sign" string="To be signed" icon="gtk-paste"  domain="['&amp;', ('signed', '=', 0), ('signature_is_closed', '=', False)]"  />
-                    <filter name="signed" string="Signed" icon="gtk-paste-v"  domain="[('signed', '&gt;', 0)]"  />
+                    <filter name="to_sign" string="To be signed" icon="gtk-paste"  domain="['&amp;', ('signed', '=', False), ('signature_is_closed', '=', False)]"  />
+                    <filter name="signed" string="Signed" icon="gtk-paste-v"  domain="[('signed', '=', True)]"  />
                     <separator orientation="vertical"/>
                     <filter name="open" string="Open" icon="terp-check" domain="[('status', '=', 'open')]" />
                     <filter name="partial" string="Partially Signed" icon="terp-document-new" domain="[('status', '=', 'partial')]" />
@@ -40,7 +40,7 @@
                     <field name="doc_state" />
                     <button name="open_doc" string="Open Document" type="object" icon="terp-gtk-go-back-rtl" />
                     <field name="doc_type" />
-                    <field name="subtype" />
+                    <field name="roles" />
                     <field name="status" />
                     <field name="signed" widget="boolean"/>
                     <field name="signature_date" />
@@ -79,7 +79,7 @@
                         <field name="new_signature_required" invisible="1" />
                         <field name="has_valid_signature" invisible="1" />
                         <button type="object" string="Replace Signature" name="replace_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': [('new_signature_required', '=', True), ('has_valid_signature', '=', False)]}"/>
-                        <button type="object" string="Delete Signature" name="delete_signature" icon="gtk-del" colspan="2" attrs="{'invisible': [('new_signature_required', '=', True), ('has_valid_signature', '=', False)]}"/>
+                        <button type="object" string="Inactivate Signature" name="delete_signature" icon="gtk-del" colspan="2" attrs="{'invisible': [('new_signature_required', '=', True), ('has_valid_signature', '=', False)]}"/>
                         <button type="object" string="Create Signature" name="add_signature" icon="gtk-edit" colspan="2" attrs="{'invisible': ['|', ('new_signature_required', '=', False), ('has_valid_signature', '=', True)]}" />
 
                         <field name="signature_history_ids" colspan="4" mode="tree" readonly="1" nolabel="1">

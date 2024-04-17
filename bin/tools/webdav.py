@@ -10,7 +10,7 @@ import logging
 import os
 import posixpath
 import time
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 
 class ConnectionFailed(Exception):
@@ -29,16 +29,14 @@ class Client(object):
         self.username = username
         self.password = password
 
-        if not port:
-            port = 443 if protocol == 'https' else 80
         self.path = path or ''
 
-        self.url = '{0}://{1}:{2}'.format(protocol, host, port)
+        self.url = '{0}://{1}'.format(protocol, host)
 
         self.login()
 
     def login(self):
-        self.request = ClientContext(self.url)
+        self.request = ClientContext(urljoin(self.url, self.path))
         self.request.with_user_credentials(self.username, self.password)
         if not isinstance(self.request.authentication_context._provider, SamlTokenProvider) or \
                 not self.request.authentication_context._provider.get_authentication_cookie():
@@ -48,22 +46,13 @@ class Client(object):
         if not self.path.startswith('/'):
             self.path = '/%s' % self.path
         options = RequestOptions(self.url)
-        options.method = HttpMethod.Get
-        options.set_header("X-HTTP-Method", "GET")
-        options.set_header('accept', 'application/json;odata=verbose')
-        self.request.authenticate_request(options)
         self.request.ensure_form_digest(options)
-
-        result = requests.post(url="%s/%s/_api/contextinfo" % (self.url, self.path), headers=options.headers, auth=options.auth)
-        if result.status_code not in (200, 201):
-            raise requests.exceptions.RequestException("Path %s not found" % self.path)
-        js = result.json()
-        baseurl = js.get('d', {}).get('GetContextWebInformation', {}).get('WebFullUrl')
-        if not baseurl.endswith('/'):
-            baseurl = '%s/' % baseurl
+        baseurl = self.request._contextWebInformation.WebFullUrl
 
         if not baseurl:
             raise requests.exceptions.RequestException("Full Url not found %s" % self.path)
+        if not baseurl.endswith('/'):
+            baseurl = '%s/' % baseurl
         parsed_base = urlparse(baseurl).path
         self.baseurl = '%s%s' % (self.url, parsed_base)
         if not self.path.startswith('/'):
@@ -71,8 +60,6 @@ class Client(object):
         if not self.path.endswith('/') and len(self.path) > 1:
             self.path = '%s/' % (self.path, )
 
-        # set auth ctx with the full correct url or move fails
-        self.request.context = ClientContext(self.baseurl)
 
     def format_request(self, url, method='POST', data="", session=False):
         assert(method in ['POST', 'DELETE'])
@@ -87,7 +74,6 @@ class Client(object):
         options.set_header('Content-Type', 'application/json')
         self.request.authenticate_request(options)
         self.request.ensure_form_digest(options)
-
 
         if session:
             return session.post(url, data=data, headers=options.headers, auth=options.auth, timeout=self.requests_timeout)
@@ -113,17 +99,17 @@ class Client(object):
 
     def create_folder(self, remote_path):
         webUri = '%s%s' % (self.path, remote_path)
-        request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')" % (self.baseurl, webUri)
+        request_url = "%s_api/web/GetFolderByServerRelativeUrl('%s')" % (self.baseurl, webUri)
         result = self.format_request(request_url, 'POST')
         if result.status_code not in (200, 201):
-            result = self.format_request("%s/_api/Web/Folders/add('%s')" % (self.baseurl, webUri), 'POST')
+            result = self.format_request("%s_api/Web/Folders/add('%s')" % (self.baseurl, webUri), 'POST')
             if result.status_code not in (200, 201):
                 raise Exception(self.parse_error(result))
         return True
 
     def delete(self, remote_path):
         webUri = '%s%s' % (self.path, remote_path)
-        request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')" % (self.baseurl, webUri)
+        request_url = "%s_api/web/getfilebyserverrelativeurl('%s')" % (self.baseurl, webUri)
         result = self.format_request(request_url, 'DELETE')
         if result.status_code not in (200, 201):
             raise Exception(self.parse_error(result))
@@ -180,7 +166,7 @@ class Client(object):
         while True:
             if self.session_offset == -1:
                 # first loop create an empty file
-                request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, path, new_file)
+                request_url = "%s_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, path, new_file)
                 self.session_offset = 0
             else:
                 x = fileobj.read(buffer_size)
@@ -190,14 +176,14 @@ class Client(object):
                     # 2nd loop
                     if len(x) == buffer_size:
                         # split needed
-                        request_url="%s/_api/web/getfilebyserverrelativeurl('%s')/startupload(uploadId=guid'%s')" % (self.baseurl, webUri, self.session_uuid)
+                        request_url="%s_api/web/getfilebyserverrelativeurl('%s')/startupload(uploadId=guid'%s')" % (self.baseurl, webUri, self.session_uuid)
                     else:
                         # file size < buffer: no need to split
-                        request_url = "%s/_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, path, new_file)
+                        request_url = "%s_api/web/GetFolderByServerRelativeUrl('%s')/Files/add(url='%s',overwrite=true)" % (self.baseurl, path, new_file)
                 elif len(x) == buffer_size:
-                    request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')/continueupload(uploadId=guid'%s',fileOffset=%s)" % (self.baseurl, webUri, self.session_uuid, self.session_offset)
+                    request_url = "%s_api/web/getfilebyserverrelativeurl('%s')/continueupload(uploadId=guid'%s',fileOffset=%s)" % (self.baseurl, webUri, self.session_uuid, self.session_offset)
                 else:
-                    request_url = "%s/_api/web/getfilebyserverrelativeurl('%s')/finishupload(uploadId=guid'%s',fileOffset=%s)" % (self.baseurl, webUri, self.session_uuid, self.session_offset)
+                    request_url = "%s_api/web/getfilebyserverrelativeurl('%s')/finishupload(uploadId=guid'%s',fileOffset=%s)" % (self.baseurl, webUri, self.session_uuid, self.session_offset)
 
             result = self.format_request(request_url, method='POST', data=x, session=s)
             if result.status_code not in (200, 201):
@@ -220,7 +206,7 @@ class Client(object):
     def list(self, remote_path):
         if not remote_path.startswith(self.path):
             remote_path = posixpath.join(self.path, remote_path)
-        request_url = "%s/_api/web/getfolderbyserverrelativeurl('%s')/files" % (self.baseurl, remote_path)
+        request_url = "%s_api/web/getfolderbyserverrelativeurl('%s')/files" % (self.baseurl, remote_path)
         options = RequestOptions(request_url)
         options.method = HttpMethod.Get
         options.set_header("X-HTTP-Method", "GET")

@@ -62,7 +62,7 @@ def _get_number_modules(cr, testlogin=False):
         return True
     return False
 
-def change_password(db_name, login, password, new_password, confirm_password, email=None):
+def change_password(db_name, login, password, new_password, confirm_password):
     '''
     Call the res.user change_password method
     '''
@@ -71,7 +71,7 @@ def change_password(db_name, login, password, new_password, confirm_password, em
     try:
         user_obj = pool.get('res.users')
         result = user_obj.change_password(db_name, login, password, new_password,
-                                          confirm_password, email=email)
+                                          confirm_password)
     finally:
         cr.close()
     return result

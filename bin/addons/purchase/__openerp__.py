@@ -47,6 +47,7 @@
         'wizard/purchase_line_invoice_view.xml',
         'wizard/purchase_line_cancel_view.xml',
         'wizard/purchase_line_manually_confirmed.xml',
+        'wizard/rfq_has_service_not_service_product_view.xml',
         'purchase_view.xml',
         'purchase_report.xml',
         'stock_view.xml',

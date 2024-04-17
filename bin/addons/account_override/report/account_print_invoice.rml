@@ -240,7 +240,7 @@
     <para style="terp_header">Refund [[ (o.doc_type in ('cr', 'str') or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
     <para style="terp_header">Supplier Refund [[ (o.doc_type == 'sr' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
     <para style="terp_header">Intersection Supplier Refund [[ (o.doc_type == 'isr' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
-    <para style="terp_header">[[ o.doc_type == 'donation' and translate('In-kind Donation') or o.doc_type == 'ivi' and translate('Intermission Voucher IN') or o.doc_type == 'si' and translate('Supplier Invoice') or o.doc_type == 'isi' and translate('Intersection Supplier Invoice') or translate('Supplier Direct Invoice') ]] [[ o.number ]]
+    <para style="terp_header">[[ o.doc_type == 'donation' and translate('Donation received in-kind') or o.doc_type == 'ivi' and translate('Intermission Voucher IN') or o.doc_type == 'si' and translate('Supplier Invoice') or o.doc_type == 'isi' and translate('Intersection Supplier Invoice') or translate('Supplier Direct Invoice') ]] [[ o.number ]]
     [[ (o.type == 'in_invoice' and (not o.is_inkind_donation or o.state != 'cancel') or removeParentNode('para')) and '' ]]</para>
     <para style="DW">
       <font color="white"> </font>
@@ -479,16 +479,16 @@
                     <para style="terp_default_9"> </para>
                 </td>
                 <td>
-                    <para style="terp_default_9" alignment="CENTER">Supply Responsible</para>
+                    <para style="terp_default_9" alignment="CENTER">[[ getSign(o, 'sr', 'backup') ]]Supply Responsible</para>
                 </td>
                 <td>
-                    <para style="terp_default_9" alignment="CENTER">Technical Responsible</para>
+                    <para style="terp_default_9" alignment="CENTER">[[ getSign(o, 'tr', 'backup') ]]Technical Responsible</para>
                 </td>
                 <td>
-                    <para style="terp_default_9" alignment="CENTER">Financial Responsible</para>
+                    <para style="terp_default_9" alignment="CENTER">[[ getSign(o, 'fr', 'backup') ]]Financial Responsible</para>
                 </td>
                 <td>
-                    <para style="terp_default_9" alignment="CENTER">Mission Responsible</para>
+                    <para style="terp_default_9" alignment="CENTER">[[ getSign(o, 'mr', 'backup') ]]Mission Responsible</para>
                 </td>
             </tr>
             <tr>

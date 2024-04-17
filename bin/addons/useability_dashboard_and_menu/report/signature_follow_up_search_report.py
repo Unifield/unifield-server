@@ -131,15 +131,14 @@ class signature_follow_up_search_report_xlsx(XlsxReportParser):
         sheet = self.workbook.active
         sheet.sheet_view.showGridLines = False
 
-        sheet.column_dimensions['A'].width = 25.0
-        sheet.column_dimensions['B'].width = 30.0
-        sheet.column_dimensions['C'].width = 20.0
+        sheet.column_dimensions['A'].width = 35.0
+        sheet.column_dimensions['B'].width = 35.0
+        sheet.column_dimensions['C'].width = 25.0
         sheet.column_dimensions['D'].width = 20.0
         sheet.column_dimensions['E'].width = 20.0
-        sheet.column_dimensions['F'].width = 20.0
-        sheet.column_dimensions['G'].width = 10.0
-        sheet.column_dimensions['H'].width = 30.0
-        sheet.column_dimensions['I'].width = 20.0
+        sheet.column_dimensions['F'].width = 10.0
+        sheet.column_dimensions['G'].width = 30.0
+        sheet.column_dimensions['H'].width = 20.0
 
         # Styles
         self.create_style_from_template('default_style', 'A2')
@@ -161,7 +160,7 @@ class signature_follow_up_search_report_xlsx(XlsxReportParser):
         cell_title.style = big_title_style
         self.apply_template_style('A1', cell_title)
         sheet.append([cell_title])
-        sheet.merged_cells.ranges.append("A1:I1")
+        sheet.merged_cells.ranges.append("A1:H1")
 
         sheet.append([])
         sheet.append([])
@@ -188,7 +187,6 @@ class signature_follow_up_search_report_xlsx(XlsxReportParser):
             (_('User')),
             (_('Document Name')),
             (_('Document State')),
-            (_('Document Type')),
             (_('Type of Signature')),
             (_('Signature State')),
             (_('Signed')),
@@ -215,7 +213,6 @@ class signature_follow_up_search_report_xlsx(XlsxReportParser):
             self.add_cell(sign.doc_name or '', line_style)
             self.add_cell(self.getSel(sign, 'doc_state') or '', line_style)
             self.add_cell(self.getSel(sign, 'doc_type') or '', line_style)
-            self.add_cell(self.getSel(sign, 'subtype') or '', line_style)
             self.add_cell(self.getSel(sign, 'status') or '', line_style)
             self.add_cell(sign.signed > 0 and _('Yes') or _('No'), line_style)
             self.add_cell(sign.signature_date and datetime.strptime(sign.signature_date, '%Y-%m-%d %H:%M:%S') or '',

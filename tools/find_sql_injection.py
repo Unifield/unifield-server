@@ -65,9 +65,10 @@ class Checker(ast.NodeVisitor):
         super(Checker, self).__init__(*args, **kwargs)
 
     def ignore_sql_check(self, node):
+        debug('++ignore_sql_check', node)
         lines = []
-        if isinstance(node, ast.BinOp):
-            lines = [node.lineno, node.right.lineno]
+        if isinstance(node, (ast.Call, ast.BinOp, ast.Constant)):
+            lines = range(node.lineno, node.end_lineno+1)
         elif isinstance(node, ast.Str):
             lines = [node.lineno]
         elif isinstance(node, ast.Subscript):
@@ -75,7 +76,9 @@ class Checker(ast.NodeVisitor):
         elif isinstance(node, (ast.Name, ast.Attribute)):
             pass
         elif node.args:
+            debug('Args found', node.args)
             if isinstance(node.args[-1], ast.BinOp):
+                debug('BinOp node.args[-1].right', node.args[-1].right)
                 if isinstance(node.args[-1].right, ast.Tuple):
                     lines = [node.lineno, node.args[-1].right.elts[-1].lineno]
                 else:
@@ -85,9 +88,11 @@ class Checker(ast.NodeVisitor):
                     lines = [node.lineno, node.args[-1].elts[-1].lineno]
                 else:
                     lines = [node.lineno, node.args[-1].lineno]
+        debug('Lines found', node, lines)
         for line_number in lines:
             file_text_line = linecache.getline(self.filename, line_number)
             res = re.search(' # (.*)', file_text_line)
+            debug(line_number, file_text_line)
             if res and (res.group(1).startswith('ignore_sql_check') or
                         res.group(1).startswith('not_a_user_entry')):
                 return True
@@ -151,18 +156,26 @@ def check(filename):
             raise
     return c.errors
 
+def debug(*a):
+    global print_debug
+    if print_debug:
+        print(*a)
 
+print_debug = False
 def main():
+    global print_debug
     parser = argparse.ArgumentParser(
         description='Look for patterns in python source files that might indicate SQL injection vulnerabilities',
         epilog='Exit status is 0 if all files are okay, 1 if any files have an error. Errors are printed to stdout'
     )
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
+    parser.add_argument('--debug', action='store_true')
     parser.add_argument('files', nargs='+', help='file(s) or folder(s) to check. Folders are scanned recursivly.')
     args = parser.parse_args()
 
     errors = []
     file_list = []
+    print_debug = args.debug
     for fname in args.files:
         if not os.path.exists(fname):
             errors.extend('%s don\'t exists' % fname)
@@ -175,6 +188,7 @@ def main():
             file_list.append(fname)
 
     for fname in file_list:
+        debug('File', fname)
         these_errors = check(fname)
         if these_errors:
             print('\n'.join(str(e) for e in these_errors))

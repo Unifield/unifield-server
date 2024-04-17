@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="rfq_has_service_not_service_product_wizard_form_view" model="ir.ui.view">
+            <field name="name">Confirm PO creation from RfQ</field>
+            <field name="model">rfq.has.service.not.service.product.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Purchase Order creation">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h3 style="text-align: center; margin: 13px"><translate>This RfQ contains service and non-service products. This means 2 Purchase Orders will be created: A Direct PO for the Service products and a Regular PO for the non-service products.</translate></h3>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" />
+                    <button name="continue_continue_sourcing" string="Continue" type="object" icon="terp-camera_test" colspan="2" />
+                    <button name="close_wizard" string="Close" type="object" icon="gtk-close" colspan="2" />
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>
+

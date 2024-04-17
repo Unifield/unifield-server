@@ -220,7 +220,7 @@ class product_product(osv.osv):
                                                     ('usage', 'in', location_usage)], order='NO_ORDER', context=context)
         else:
             default_locs_domain = ['|', ('eprep_location', '=', True), '&', ('usage', '=', 'internal'),
-                                   ('location_category', 'in', ('stock', 'consumption_unit', 'eprep'))]
+                                   ('location_category', 'in', ('stock', 'consumption_unit'))]
             location_ids = loc_obj.search(cr, uid, default_locs_domain, context=context)
 
         # build the list of ids of children of the location given by id
@@ -305,11 +305,13 @@ class product_product(osv.osv):
                 cr.execute('''
                     select sum(pol.product_qty) as qty, pol.product_id, pol.product_uom, t.uom_id
                     from
-                      purchase_order_line pol, product_product p, product_template t
+                      purchase_order_line pol, product_product p, product_template t, purchase_order po
                     where
                       p.id = pol.product_id and
                       t.id = p.product_tmpl_id and
+                      po.id = pol.order_id and
                       p.id in %%(product_id)s and
+                      po.order_type != 'direct' and
                       pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                       location_dest_id in %%(location_id)s
                       %s
