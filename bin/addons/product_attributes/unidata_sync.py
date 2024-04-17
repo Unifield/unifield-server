@@ -509,6 +509,159 @@ class ud_sync():
                 llevel = logging.INFO
             self.logger.log(llevel, msg)
 
+    def map_ud_fields(self, ud_data):
+        uf_config = {
+            'name': {
+                'lang': {
+                    'en_MF': {'ud': 'labels/english'},
+                    'fr_MF': {'ud': 'labels/french'},
+                    'es_MF': {'ud': 'labels/spanish'},
+                }
+            },
+            'closed_article': {
+                'ud': 'closedInfo/closed',
+                'mapping': {
+                    'Open': 'no',
+                    'Closed': 'yes',
+                    'Restricted to': 'recommanded',
+                }
+            },
+            'justification_code_id': {
+                'ud': 'supply/justification/code',
+                'relation': 'product.justification.code',
+                'key_field': 'code',
+            },
+            'controlled_substance ': {
+                'ud': 'medical/controlledSubstanceGroup/controlledSubstanceInfo/code',
+                'mapping': {
+                    '!': '!',
+                    'N1': 'N1',
+                    'N2': 'N2',
+                    'P1': 'P1',
+                    'P2': 'P2',
+                    'P3': 'P3',
+                    'P4': 'P4',
+                    'DP': 'DP',
+                    'Y': 'Y',
+                    'True': 'True',
+                    '': False
+                }
+            },
+            'default_code': {
+                'ud': 'code'
+            },
+            'fit_value': {
+                'lang': {
+                    'en_MF': {'ud': 'description/fitEnglishtext'},
+                    'fr_MF': {'ud': 'description/fitFrenchtext'},
+                }
+            },
+            'form_value': {
+                'lang': {
+                    'en_MF': {'ud': 'description/formEnglishtext'},
+                    'fr_MF': {'ud': 'description/formFrenchtext'},
+                }
+            },
+            'function_value': {
+                'lang': {
+                    'en_MF': {'ud': 'description/functionEnglishtext'},
+                    'fr_MF': {'ud': 'description/functionFrenchtext'},
+                }
+            },
+            'cold_chain': {
+                'ud': 'thermosensitiveGroup/thermosensitiveInfo/code',
+                'relation': 'product.cold.chain',
+                'key_field': 'code',
+            },
+            'heat_sensitive_item': {
+                'ud': 'thermosensitiveGroup/thermosensitive',
+                'relation': 'product.heat.sensitive',
+                'key_field': 'code',
+                'mapping': {
+                    False: 'tbd',
+                    'No': 'no',
+                    'Yes': 'yes',
+                },
+            },
+            'manufacturer_ref': {
+                'ud': 'closedInfo/manufacturerRef',
+            },
+            'manufacturer_txt': {
+                'ud': 'closedInfo/manufacturer',
+            },
+            'msfid': {
+                'ud': 'id',
+            },
+            'product_international_status': {
+                'value': self.pool.get('product.international.status').search(cr, uid, [('code', '=', 'unidata')])[0],
+            },
+            #'name_template': tbc
+            # nomen + account codes: tbc + default OC values
+            # xmlid_code 
+            'old_code': {
+                'ud': 'formerCodes',
+                'function': lambda a: a.split(','),
+            },
+            'product_catalog_path ': {
+                'ud': 'product_catalog_path',
+            },
+            'short_shelf_life': {
+                'ud': 'medical/shortShelfLifeGroup/shortShelfLife',
+                'mapping': {
+                    'Yes': 'True',
+                    'No': 'False',
+                    "Don't know": 'no_know',
+                },
+            },
+            'single_use': {
+                'ud': 'medical/singleUse',
+                'mapping': {
+                    'Reusable': 'no',
+                    'Single use': 'yes',
+                    "Don't know": 'no_know',
+                }
+            },
+            'standard_ok': {
+                'ud': 'standardizationLevel',
+                'mapping': {
+                    'NST': 'non_standard',
+                    'STD': 'standard',
+                    'NSL': 'non_standard_local',
+                }
+            },
+            'standard_price': {
+                'value': 1.0,
+                'on_update': False,
+            },
+            'state_ud': {
+                'ud': 'lifeCycleStatus',
+                'mapping': {
+                    '01. Preparation': 'valid',
+                    '02. Valid': 'valid',
+                    '03. Outdated': 'outdated',
+                    '04. Discontinued': 'discontinued',
+                    '05. Forbidden': 'forbidden',
+                    '06. Rejected': 'stopped',
+                    '08. Archived': 'archived',
+                    '01. Temporary Golden:': 'stopped',
+                    '01. Temporary Merge': 'stopped',
+                    '07. Parked': 'archived',
+                },
+            },
+            'sterilized': {
+                'ud': 'medical/sterile',
+                'mapping': {
+                    'Yes': 'yes',
+                    'No': 'no',
+                    "Don't know": 'no_know'
+                }
+            },
+            'un_code': {
+                'ud': 'supply/dangerousGroup/dangerousInfo/number',
+            }
+        }
+        uf_values = {}
+
     def update_products(self, q_filter, record_date):
         country_obj = self.pool.get('unidata.country')
         project_obj = self.pool.get('unidata.project')
@@ -531,10 +684,19 @@ class ud_sync():
             for x in js.get('rows'):
                 self.log('UD: %s' % x)
                 rows_seen += 1
-                prod_id = prod_obj.search(self.cr, self.uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], order='active desc, id', context=self.context)
-                if not prod_id:
-                    self.log('Product not found in UF, msfid: %s, code: %s' % (x['id'], x['code'], ), 'warn')
-                    continue
+                #prod_id = prod_obj.search(self.cr, self.uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], order='active desc, id', context=self.context)
+                prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active', 'in', ['t', 'f'])], order='active desc, id', context=self.context)
+                if len(prod_ids) == 1:
+                    print('Product found')
+                elif len(prod_ids) == 0:
+                    print('To created')
+                else:
+                    prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active','=', 't')])
+                    if len(prod_ids) == 1:
+                        print('Product found by active')
+                    else:
+                        print('ISSSSSSSU')
+
 
                 oc_data = x.get('ocValidations', {}).get(self.oc, {})
                 data = {
