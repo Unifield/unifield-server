@@ -84,4 +84,7 @@ with open('ud_default_value.csv', 'r', newline='') as f:
         if error:
             continue
         for n_id in parent_id:
-            print(str(cr.mogrify("insert into unidata_default_product_value (field, value, nomenclature) values (%s, %s, %s);", (line[2], n_id, values_mapping[line[4]])), 'utf8'))
+            query = "insert into unidata_default_product_value (field, value, nomenclature) values (%s, %s, %s);"
+            values = (line[2], values_mapping[line[4]], n_id)
+            print(str(cr.mogrify(query, values), 'utf8'))
+            cr.execute(query, values)
