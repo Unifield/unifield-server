@@ -42,7 +42,7 @@ class wizard_confirm_closing_balance(osv.osv_memory):
         res = False
         reg_id = context.get('active_id', False) or context.get('active_ids')[0] or False
         if not reg_id:
-            raise osv.except_osv(_("Error"), _("Source register lost"))
+            raise osv.except_osv(_("Error"), _("Source register lost. Please contact an administrator to solve this problem."))
         res = self.pool.get('account.bank.statement').button_confirm_closing_balance(cr, uid, reg_id, context=context)
         if res:
             return {'type': 'ir.actions.act_window_close'}
