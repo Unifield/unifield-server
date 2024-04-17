@@ -285,13 +285,14 @@ class ud_sync():
 
         sync_id = self.pool.get('ir.model.data').get_object_reference(self.cr, self.uid, 'product_attributes', 'unidata_sync_config')[1]
         config = self.pool.get('unidata.sync').read(self.cr, self.uid, sync_id, context=self.context)
+        self.unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
 
         self.page_size = config['page_size'] or 500
         self.ud_params = {
             'login': config['login'],
             'password': config['password'],
             'size': self.page_size,
-            'publishonweb': False,
+            #'publishonweb': False,
         }
         self.url = config['url']
         self.url_msl = config['url_msl']
@@ -301,6 +302,7 @@ class ud_sync():
         self.project_cache = {}
         self.msf_intance_cache = {}
         self.uf_instance_cache = {}
+        self.uf_product_cache = {}
 
         if self.pool.get('res.company')._get_instance_level(self.cr, self.uid) != 'section':
             raise osv.except_osv(_('Error'), _('UD/MSL sync can only be started at HQ level.'))
@@ -510,7 +512,33 @@ class ud_sync():
             self.logger.log(llevel, msg)
 
     def map_ud_fields(self, ud_data):
+
+        
         uf_config = {
+            'nomen_manda_0': {
+                'ud': 'type',
+                'relation': 'product.nomenclature',
+                'key_field': 'msfid',
+                'domain': [('level', '=', 0)],
+            },
+            'nomen_manda_1': {
+                'ud': 'group/code',
+                'relation': 'product.nomenclature',
+                'key_field': 'msfid',
+                'domain': [('level', '=', 1)],
+            },
+            'nomen_manda_2': {
+                'ud': 'family/code',
+                'relation': 'product.nomenclature',
+                'key_field': 'msfid',
+                'domain': [('level', '=', 2)],
+            },
+            'nomen_manda_3': {
+                'ud': 'root/code',
+                'relation': 'product.nomenclature',
+                'key_field': 'msfid',
+                'domain': [('level', '=', 3)],
+            },
             'name': {
                 'lang': {
                     'en_MF': {'ud': 'labels/english'},
@@ -524,12 +552,14 @@ class ud_sync():
                     'Open': 'no',
                     'Closed': 'yes',
                     'Restricted to': 'recommanded',
+                    False: 'no',
                 }
             },
             'justification_code_id': {
                 'ud': 'supply/justification/code',
                 'relation': 'product.justification.code',
                 'key_field': 'code',
+                'ignored_values': ['SPM', 'PMFE'], # tbc with Raff
             },
             'controlled_substance ': {
                 'ud': 'medical/controlledSubstanceGroup/controlledSubstanceInfo/code',
@@ -544,7 +574,7 @@ class ud_sync():
                     'DP': 'DP',
                     'Y': 'Y',
                     'True': 'True',
-                    '': False
+                    False: False
                 }
             },
             'default_code': {
@@ -570,15 +600,15 @@ class ud_sync():
             },
             'cold_chain': {
                 'ud': 'thermosensitiveGroup/thermosensitiveInfo/code',
-                'relation': 'product.cold.chain',
+                'relation': 'product.cold_chain',
                 'key_field': 'code',
             },
             'heat_sensitive_item': {
                 'ud': 'thermosensitiveGroup/thermosensitive',
-                'relation': 'product.heat.sensitive',
+                'relation': 'product.heat_sensitive',
                 'key_field': 'code',
                 'mapping': {
-                    False: 'tbd',
+                    False: 'no_know',
                     'No': 'no',
                     'Yes': 'yes',
                 },
@@ -593,14 +623,14 @@ class ud_sync():
                 'ud': 'id',
             },
             'product_international_status': {
-                'value': self.pool.get('product.international.status').search(cr, uid, [('code', '=', 'unidata')])[0],
+                'value': self.unidata_id,
             },
             #'name_template': tbc
             # nomen + account codes: tbc + default OC values
             # xmlid_code 
             'old_code': {
                 'ud': 'formerCodes',
-                'function': lambda a: a.split(','),
+                'function': lambda a: ','.join(a),
             },
             'product_catalog_path ': {
                 'ud': 'product_catalog_path',
@@ -619,6 +649,9 @@ class ud_sync():
                     'Reusable': 'no',
                     'Single use': 'yes',
                     "Don't know": 'no_know',
+                    'Not Applicable': 'no', # tbc with Raff
+                    'Implantable Device': 'yes', # tbc with Raff
+                    'Single patient multiple use': 'no', # tbc with Raff
                 }
             },
             'standard_ok': {
@@ -653,19 +686,97 @@ class ud_sync():
                 'mapping': {
                     'Yes': 'yes',
                     'No': 'no',
-                    "Don't know": 'no_know'
+                    "Don't know": 'no_know',
+                    False: 'no',
                 }
             },
             'un_code': {
                 'ud': 'supply/dangerousGroup/dangerousInfo/number',
             }
         }
-        uf_values = {}
+        specifc_lang = {}
+        uf_values = {'en_MF': {}}
+        for uf_key in uf_config:
+            for lang in uf_config[uf_key].get('lang', ['default']):
+                if lang == 'default':
+                    lang_values = uf_values['en_MF']
+                    field_desc = uf_config[uf_key]
+                else:
+                    lang_values = uf_values.get(lang, {})
+                    field_desc = uf_config[uf_key]['lang'][lang]
+
+                if field_desc.get('value'):
+                    lang_values[uf_key] = field_desc['value']
+                    continue
+
+                uf_value = ud_data
+                for key in field_desc['ud'].split('/'):
+                    uf_value = uf_value.get(key, {})
+                if not uf_value:
+                    uf_value = False
+
+                if field_desc.get('mapping'):
+                    if uf_value not in field_desc['mapping']:
+                        print('Mapping error, uf_key: %s, value:%s , full: %s' % (uf_key, uf_value, ud_data))
+                        continue
+                    else:
+                        uf_value =  field_desc['mapping'][uf_value]
+
+                if 'ignored_values' in field_desc and uf_value in field_desc.get('ignored_values'):
+                    lang_values[uf_key] = False
+                if uf_key in ['nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']:
+                    previous_nom = {
+                        'nomen_manda_1': 'nomen_manda_0',
+                        'nomen_manda_2': 'nomen_manda_1',
+                        'nomen_manda_3': 'nomen_manda_2',
+                    }[uf_key]
+                    self.uf_product_cache.setdefault(uf_key, {})
+
+                    if uf_key == 'nomen_manda_1':
+                        msfid = '%s-%s' % (ud_data['type'], ud_data['group']['code'])
+                    elif uf_key == 'nomen_manda_2':
+                        msfid = '%s-%s-%s%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'])
+                    else:
+                       msfid = '%s-%s-%s%s-%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'], ud_data['root']['code'])
+
+                    if previous_nom not in lang_values:
+                        continue
+                    cache_key = (uf_key, lang_values[previous_nom], msfid)
+                    
+                    if cache_key not in self.uf_product_cache[uf_key]:
+                        domain = field_desc['domain'] + [('parent_id', '=', uf_values['en_MF'][previous_nom]), ('msfid', '=', msfid)]
+                        self.uf_product_cache[uf_key][cache_key] = self.pool.get('product.nomenclature').search(self.cr, self.uid, domain, context=self.context)
+
+                    if not self.uf_product_cache[uf_key][cache_key] or len(self.uf_product_cache[uf_key][cache_key]) != 1:
+                        print('%s error %s not found %s' % (uf_key, cache_key, ud_data))
+                        continue
+                    lang_values[uf_key] = self.uf_product_cache[uf_key][cache_key][0]
+
+                elif field_desc.get('relation'):
+                    self.uf_product_cache.setdefault(uf_key, {})
+                    if not uf_value:
+                        self.uf_product_cache[uf_key][uf_value] = [False]
+                    if uf_value not in self.uf_product_cache[uf_key]:
+                        domain = [(field_desc['key_field'], '=', uf_value)]
+                        if field_desc.get('domain'):
+                            domain += field_desc['domain']
+                        self.uf_product_cache[uf_key][uf_value] = self.pool.get(field_desc['relation']).search(self.cr, self.uid, domain, context=self.context)
+                    if not self.uf_product_cache[uf_key][uf_value] or len(self.uf_product_cache[uf_key][uf_value]) > 1:
+                        print('Field error %s %s %s %s' % (uf_key, uf_value, self.uf_product_cache[uf_key][uf_value], ud_data))
+                        continue
+                    else:
+                        lang_values[uf_key] = self.uf_product_cache[uf_key][uf_value][0]
+                elif field_desc.get('function'):
+                    lang_values[uf_key] = field_desc['function'](uf_value)
+                else:
+                    lang_values[uf_key] = uf_value
+        print(uf_values)
 
     def update_products(self, q_filter, record_date):
         country_obj = self.pool.get('unidata.country')
         project_obj = self.pool.get('unidata.project')
         prod_obj = self.pool.get('product.product')
+
 
         page = 1
         date_to_record = False
@@ -685,18 +796,28 @@ class ud_sync():
                 self.log('UD: %s' % x)
                 rows_seen += 1
                 #prod_id = prod_obj.search(self.cr, self.uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], order='active desc, id', context=self.context)
-                prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active', 'in', ['t', 'f'])], order='active desc, id', context=self.context)
+                if x.get('state') == 'Golden':
+                    continue
+                if not x.get('formerCodes'):
+                    print('NO FORMER %s' % x)
+                    continue
+                prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active', 'in', ['t', 'f']), ('international_status', '=', self.unidata_id)], order='active desc, id', context=self.context)
                 if len(prod_ids) == 1:
-                    print('Product found')
+                    continue
+                    print('Product found %s' % x['formerCodes'])
                 elif len(prod_ids) == 0:
-                    print('To created')
+                    if x.get('ocSubscriptions').get('OCP'):
+                        print('To created %s' % x)
                 else:
-                    prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active','=', 't')])
+                    prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active','=', 't'), ('international_status', '=', self.unidata_id)])
                     if len(prod_ids) == 1:
+                        continue
                         print('Product found by active')
                     else:
-                        print('ISSSSSSSU')
+                        print('ISSSSSSSU %s %s' % (prod_ids, x))
 
+                self.map_ud_fields(x)
+                continue
 
                 oc_data = x.get('ocValidations', {}).get(self.oc, {})
                 data = {
