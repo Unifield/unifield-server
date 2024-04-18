@@ -120,11 +120,29 @@
                     <newline />
                     <field name="number_products_pulled" />
                     <field name="number_products_updated" />
+                    <field name="number_products_created" />
+                    <field name="number_products_errors" />
                     <field name="msfid_min" />
                     <field name="last_date" />
                     <field name="sync_type" />
                     <field name="state" />
                     <field name="error" colspan="4" />
+                    <field name="sync_error" colspan="4" nolabel="1">
+                    <tree string="Product Errors">
+                        <field name="msfid" />
+                            <field name="code" />
+                            <field name="former_codes" />
+                            <field name="log" />
+                            <field name="date" />
+                    </tree>
+                    <form string="Product Errors">
+                        <field name="msfid" />
+                        <field name="code" />
+                        <field name="former_codes" />
+                        <field name="log" />
+                        <field name="json_data_formated" colspan="4" widget="full_text" nolabel="1"/>
+                    </form>
+                    </field>
                 </form>
             </field>
         </record>
@@ -139,7 +157,9 @@
                     <field name="end_date"  />
                     <field name="page_size" />
                     <field name="number_products_pulled" />
-                    <field name="number_products_updated" />
+		    <field name="number_products_updated" />
+		    <field name="number_products_created" />
+	            <field name="number_products_errors" />
                     <field name="sync_type" />
                     <field name="state" />
                     <field name="log_exists" invisible="1" />
