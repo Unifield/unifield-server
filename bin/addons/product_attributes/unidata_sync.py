@@ -435,7 +435,6 @@ class ud_sync():
                 'value': self.unidata_id,
             },
             #'name_template': tbc
-            # nomen + account codes: tbc + default OC values
             # xmlid_code
             'old_code': {
                 'ud': 'formerCodes',
@@ -886,7 +885,7 @@ class ud_sync():
                     if not x.get('formerCodes'):
                         raise UDException('NO formerCodes code')
                     if not x.get('type') or not x.get('group', {}).get('code') or not x.get('family', {}).get('code') or not x.get('root', {}).get('code'):
-                        raise UDException('Nomenclature not set')
+                        raise UDException('Nomenclature not set in UD')
 
                     prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active', 'in', ['t', 'f']), ('international_status', '=', self.unidata_id)], order='active desc, id', context=self.context)
                     if len(prod_ids) == 1:
