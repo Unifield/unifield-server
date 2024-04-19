@@ -86,5 +86,14 @@ with open('ud_default_value.csv', 'r', newline='') as f:
         for n_id in parent_id:
             query = "insert into unidata_default_product_value (field, value, nomenclature) values (%s, %s, %s);"
             values = (line[2], values_mapping[line[4]], n_id)
+            print('-- %s' %line)
             print(str(cr.mogrify(query, values), 'utf8'))
             cr.execute(query, values)
+
+query = "update product_cold_chain set ud_code=code;"
+print(query)
+cr.execute(query)
+query = "update product_cold_chain set ud_code='CT3+' where id in (select res_id from ir_model_data where name='product_attributes_cold_20');"
+print(query)
+cr.execute(query)
+conn.commit()

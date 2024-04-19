@@ -268,6 +268,7 @@ class unidata_sync_log(osv.osv):
         'error': fields.text('Error', readonly=1),
         'page_size': fields.integer('page size', readonly=1),
         'state': fields.selection([('running', 'Running'), ('error', 'Error'), ('done', 'Done')], 'State', readonly=1),
+        'manual_single': fields.boolean('Single sync'),
         'sync_type': fields.selection([('full', 'Full'), ('cont', 'Continuation'), ('diff', 'Based on last modification date')], 'Sync Type', readonly=1),
         'msfid_min': fields.integer('Min Msfid', readonly=1),
         'last_date': fields.char('Last Date', size=64, readonly=1),
@@ -276,6 +277,10 @@ class unidata_sync_log(osv.osv):
         'start_uid': fields.many2one('res.users', 'Started by', readonly=1),
         'server': fields.selection([('msl', 'MSL'), ('ud', 'unidata')], 'Server', readonly=1),
         'number_lists_pulled': fields.integer('# projects pulled', readonly=1),
+    }
+
+    _defaults = {
+        'manual_single': False,
     }
 
 unidata_sync_log()
@@ -317,6 +322,12 @@ class ud_sync():
         self.default_oc_values = {}
         default_ids = self.pool.get('unidata.default_product_value').search(self.cr, self.uid, [])
         for default in self.pool.get('unidata.default_product_value').browse(self.cr, self.uid, default_ids):
+            if default.field in ('perishable', 'batch_management'):
+                if default.value == 't':
+                    default.value = True
+                else:
+                    default.value = False
+
             self.default_oc_values.setdefault(default.nomenclature.id, {}).update({default.field: default.value})
 
         if self.pool.get('res.company')._get_instance_level(self.cr, self.uid) != 'section':
@@ -352,7 +363,8 @@ class ud_sync():
                     'en_MF': {'ud': 'labels/english'},
                     'fr_MF': {'ud': 'labels/french'},
                     'es_MF': {'ud': 'labels/spanish'},
-                }
+                },
+                'function': lambda a: a.strip(),
             },
             'closed_article': {
                 'ud': 'closedInfo/closed',
@@ -409,7 +421,7 @@ class ud_sync():
             'cold_chain': {
                 'ud': 'supply/thermosensitiveGroup/thermosensitiveInfo/code',
                 'relation': 'product.cold_chain',
-                'key_field': 'code',
+                'key_field': 'ud_code',
             },
             'heat_sensitive_item': {
                 'ud': 'supply/thermosensitiveGroup/thermosensitive',
@@ -449,6 +461,7 @@ class ud_sync():
                     'Yes': 'True',
                     'No': 'False',
                     "Don't know": 'no_know',
+                    False: 'no_know',
                 },
             },
             'single_use': {
@@ -460,6 +473,7 @@ class ud_sync():
                     'Not Applicable': 'no', # tbc with Raff
                     'Implantable Device': 'yes', # tbc with Raff
                     'Single patient multiple use': 'no', # tbc with Raff
+                    False: 'no',
                 }
             },
             'standard_ok': {
@@ -830,10 +844,7 @@ class ud_sync():
                             domain += field_desc['domain']
                         self.uf_product_cache[uf_key][uf_value] = self.pool.get(field_desc['relation']).search(self.cr, self.uid, domain, context=self.context)
                     if not self.uf_product_cache[uf_key][uf_value] or len(self.uf_product_cache[uf_key][uf_value]) > 1:
-                        if uf_key == 'cold_chain' and len(self.uf_product_cache[uf_key][uf_value]) == 2 and uf_value == 'CT30':
-                            self.uf_product_cache[uf_key][uf_value] = [self.uf_product_cache[uf_key][uf_value][0]]
-                        else:
-                            raise UDException('Field error %s: uf_value: %s, records found in UF: %d, %s' % (uf_key, uf_value, len(self.uf_product_cache[uf_key][uf_value]), self.uf_product_cache[uf_key][uf_value]))
+                        raise UDException('Field error %s: uf_value: %s, records found in UF: %d, %s' % (uf_key, uf_value, len(self.uf_product_cache[uf_key][uf_value]), self.uf_product_cache[uf_key][uf_value]))
                     else:
                         if new_prod or field_desc.get('on_update', True):
                             lang_values[uf_key] = self.uf_product_cache[uf_key][uf_value][0]
@@ -846,10 +857,13 @@ class ud_sync():
 
                     if new_prod or field_desc.get('on_update', True):
                         lang_values[uf_key] = uf_value
+        if new_prod:
+            for nomen in ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']:
+                if uf_values['en_MF'].get(nomen) and uf_values['en_MF'][nomen] in self.default_oc_values:
+                    uf_values['en_MF'].update(self.default_oc_values[uf_values['en_MF'][nomen]])
 
-        for nomen in ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']:
-            if uf_values['en_MF'].get(nomen) and uf_values['en_MF'][nomen] in self.default_oc_values:
-                uf_values['en_MF'].update(self.default_oc_values[nomen])
+        if uf_values['en_MF'].get('batch_management'):
+            uf_values['en_MF']['perishable'] = True
 
         return uf_values
 
@@ -882,22 +896,29 @@ class ud_sync():
                     #prod_id = prod_obj.search(self.cr, self.uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], order='active desc, id', context=self.context)
                     #if x.get('state') == 'Golden':
                     #    continue
+                    prod_ids = []
                     if not x.get('formerCodes'):
-                        raise UDException('NO formerCodes code')
+                        raise UDException('No formerCodes code')
                     if not x.get('type') or not x.get('group', {}).get('code') or not x.get('family', {}).get('code') or not x.get('root', {}).get('code'):
                         raise UDException('Nomenclature not set in UD')
 
                     prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active', 'in', ['t', 'f']), ('international_status', '=', self.unidata_id)], order='active desc, id', context=self.context)
+                    total_prod_ids = prod_ids[:]
                     if len(prod_ids) == 1:
-                        self.log('%s product found %s' % (x['formerCodes'], prod_ids[0]))
+                        self.log('%s product found id:%s' % (x['formerCodes'], prod_ids[0]))
                     elif len(prod_ids) == 0:
                         if not x.get('ocSubscriptions').get('OCP'):
                             self.log('%s product ignored: ocSubscriptions False' % x['formerCodes'])
                             continue
+                        self.log('%s product to create' % (x['formerCodes'], ))
                     else:
                         prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active','=', 't'), ('international_status', '=', self.unidata_id)])
-                        if len(prod_ids) != 1:
-                            raise UDException('%d products founds: %s' % (len(prod_ids), prod_obj.read(self.cr, self.uid, prod_ids, ['default_code', 'msfid'])))
+                        if len(prod_ids) > 1:
+                            raise UDException('%d active only products found %s' % (len(prod_ids), prod_obj.read(self.cr, self.uid, prod_ids, ['default_code', 'msfid'])))
+                        if not prod_ids:
+                            prod_ids = total_prod_ids
+                            raise UDException('No active product found, %d inactive products found: %s' % (len(total_prod_ids), prod_obj.read(self.cr, self.uid, total_prod_ids, ['default_code', 'msfid'])))
+                        self.log('%s product active found %s (other inactive exist)' % (x['formerCodes'], prod_ids[0]))
 
                     product_values = self.map_ud_fields(x, new_prod=not bool(prod_ids))
 
@@ -937,26 +958,32 @@ class ud_sync():
 
                     if prod_ids:
                         diff = []
-                        current_value = prod_obj.browse(self.cr, self.uid, prod_ids[0], fields_to_fetch=product_values['en_MF'].keys(), context={'lang': 'en_MF'})
-                        for key, value in product_values['en_MF'].items():
-                            tmp_diff = False
-                            if key in ('oc_country_restrictions', 'oc_project_restrictions'):
-                                if set(value[0][2]) != set([x.id for x in current_value[key]]):
-                                    self.log('Field diff %s, uf: *%s*, ud: *%s*'% (key, [x.id for x in current_value[key]], value[0][2]))
+                        for lang in ['en_MF', 'fr_MF', 'sp_MF']:
+                            if not product_values.get(lang):
+                                continue
+                            current_value = prod_obj.browse(self.cr, self.uid, prod_ids[0], fields_to_fetch=product_values[lang].keys(), context={'lang': lang})
+                            for key, value in product_values[lang].items():
+                                tmp_diff = False
+                                if key in ('oc_country_restrictions', 'oc_project_restrictions'):
+                                    if set(value[0][2]) != set([x.id for x in current_value[key]]):
+                                        self.log('Field diff %s, uf: *%s*, ud: *%s*'% (key, [x.id for x in current_value[key]], value[0][2]))
+                                        tmp_diff = True
+                                elif isinstance(current_value[key], browse_record):
+                                    if current_value[key]['id'] != value:
+                                        self.log('Field diff m2o empty %s, uf: *%s*, ud: *%s*'% (key, current_value[key]['id'], value))
+                                        tmp_diff = True
+                                elif isinstance(current_value[key], browse_null):
+                                    if value:
+                                        self.log('Field diff m2o %s, uf: *%s*, ud: *%s*'% (key, current_value[key]['id'], value))
+                                        tmp_diff = True
+                                elif current_value[key] != value and ( value is False and current_value[key] or value is not False):
+                                    self.log('Field diff %s, uf: *%s*, ud: *%s*'% (key, current_value[key], value))
                                     tmp_diff = True
-                            elif isinstance(current_value[key], browse_record):
-                                if current_value[key]['id'] != value:
-                                    self.log('Field diff m2o empty %s, uf: *%s*, ud: *%s*'% (key, current_value[key]['id'], value))
-                                    tmp_diff = True
-                            elif isinstance(current_value[key], browse_null):
-                                if value:
-                                    self.log('Field diff m2o %s, uf: *%s*, ud: *%s*'% (key, current_value[key]['id'], value))
-                                    tmp_diff = True
-                            elif current_value[key] != value and ( value is False and current_value[key] or value is not False):
-                                self.log('Field diff %s, uf: *%s*, ud: *%s*'% (key, current_value[key], value))
-                                tmp_diff = True
-                            if tmp_diff:
-                                diff.append(key)
+                                if tmp_diff:
+                                    diff.append(key)
+                            if diff:
+                                # not not check fr/sp
+                                break
 
                         if not diff:
                             self.log('==== same values')
@@ -964,29 +991,49 @@ class ud_sync():
                         else:
                             self.log('==== diff values, key: %s' % diff)
 
-                    if prod_ids:
-                        prod_updated += 1
-                        self.log('==== write product id: %d, code: %s, msfid: %s, data: %s' % (prod_ids[0], x['code'], x['id'], product_values['en_MF']))
-                        prod_obj.write(self.cr, self.uid, prod_ids[0], product_values['en_MF'], context={'lang': 'en_MF'})
-                    else:
-                        nb_created += 1
-                        prod_ids = [prod_obj.create(self.cr, self.uid, product_values['en_MF'], context={'lang': 'en_MF'})]
-                        self.log('==== create product id: %d, code: %s, msfid: %s, data: %s' % (prod_ids[0], x['code'], x['id'], product_values['en_MF']))
+                    try:
+                        self.cr.execute("SAVEPOINT prod_ud_update")
+                        if prod_ids:
+                            self.log('==== write product id: %d, code: %s, msfid: %s, data: %s' % (prod_ids[0], x['code'], x['id'], product_values['en_MF']))
+                            prod_obj.write(self.cr, self.uid, prod_ids[0], product_values['en_MF'], context={'lang': 'en_MF'})
+                            prod_updated += 1
+                        else:
+                            prod_ids = [prod_obj.create(self.cr, self.uid, product_values['en_MF'], context={'lang': 'en_MF'})]
+                            self.log('==== create product id: %d, code: %s, msfid: %s, data: %s' % (prod_ids[0], x['code'], x['id'], product_values['en_MF']))
+                            nb_created += 1
 
-                    for lang in ['fr_MF', 'sp_MF']:
-                        if product_values.get(lang):
-                            prod_obj.write(self.cr, self.uid, prod_ids[0], product_values['lang'], context={'lang': 'lang'})
+                        for lang in ['fr_MF', 'sp_MF']:
+                            if product_values.get(lang):
+                                prod_obj.write(self.cr, self.uid, prod_ids[0], product_values['lang'], context={'lang': 'lang'})
+                    except Exception as e:
+                        self.cr.execute("ROLLBACK TO SAVEPOINT prod_ud_update")
+                        raise UDException(tools.misc.get_traceback(e))
+                    else:
+                        self.cr.execute("RELEASE SAVEPOINT prod_ud_update")
 
                 except UDException as e:
-                    self.pool.get('unidata.pull_product.log').create(self.cr, self.uid, {
-                        'msfid': x.get('id', ''),
-                        'code': x.get('code', ''),
-                        'former_codes': x.get('formerCodes', ''),
-                        'status': 'error',
-                        'log': e.args[0],
-                        'json_data': x,
-                        'session_id': session_id,
-                    })
+                    self.log('ERROR %s'% e.args[0])
+                    if session_id:
+                        self.pool.get('unidata.pull_product.log').create(self.cr, self.uid, {
+                            'msfid': x.get('id', ''),
+                            'code': x.get('code', ''),
+                            'former_codes': x.get('formerCodes', ''),
+                            'log': e.args[0],
+                            'json_data': x,
+                            'session_id': session_id,
+                        })
+                    if x.get('id', ''):
+                        self.cr.execute('''insert into unidata_products_error (msfid, code, former_codes, date, log, uf_product_id, json_data)
+                            values (%(msfid)s, %(code)s, %(former_codes)s, NOW(), %(log)s, %(uf_product_id)s, %(json_data)s)
+                            on conflict (msfid)  do update SET code = %(code)s, former_codes=%(former_codes)s, date=NOW(), log=%(log)s, uf_product_id=%(uf_product_id)s, json_data=%(json_data)s
+                        ''', {
+                            'msfid': x.get('id'),
+                            'code': x.get('code', ''),
+                            'former_codes': '%s' % x.get('formerCodes', ''),
+                            'log': e.args[0],
+                            'uf_product_id': ','.join([str(x) for x in prod_ids]),
+                            'json_data': '%s'%x,
+                        })
                     nb_errors += 1
 
             page += 1
@@ -1011,7 +1058,7 @@ class unidata_sync(osv.osv):
     def _get_log(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        cr.execute("select start_date, end_date, state, sync_type from unidata_sync_log where server='ud' order by id desc limit 1")
+        cr.execute("select start_date, end_date, state, sync_type from unidata_sync_log where server='ud' and coalesce(manual_single, 'f')='f' order by id desc limit 1")
         one = cr.fetchone()
         if one:
             last_execution_start_date = one[0]
@@ -1317,15 +1364,30 @@ class unidata_sync(osv.osv):
         logger.info('Sync start, page size: %s, last msfid: %s, last date: %s' % (page_size, min_msfid, last_ud_date_sync))
 
         try:
-            while True:
+            last_loop = False
+            max_id = 0
+            # first tries previous errors
+            cr.execute('select msfid from unidata_products_error where fixed_date is null')
+            query = []
+            all_msfids = [x[0] for x in cr.fetchall()]
+            for x in all_msfids:
+                query.append("msfIdentifier=%s" % x)
+            if query:
+                cr.execute('update unidata_products_error set fixed_date=NOW() where id in %s', (tuple(all_msfids),))
+                trash1, nb_prod, updated, total_nb_created, total_nb_errors = sync_obj.update_products(" or ".join(query), False, session_id)
+            while not last_loop:
                 cr.execute('SAVEPOINT unidata_sync_log')
                 cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
                 min_id, max_id = cr.fetchone()
                 min_msfid = max_id
                 if not min_id:
-                    break
+                    last_loop = True
+                    cr.execute("select max(msfid) from product_product p")
+                    min_msfid = cr.fetchone()[0]
+                    q_filter = "(msfIdentifier>=%s)" % min_msfid
+                else:
+                    q_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
 
-                q_filter = "(msfIdentifier>=%s and msfIdentifier<=%s)"%(min_id, max_id)
                 if last_ud_date_sync:
                     lastsync = (datetime.strptime(last_ud_date_sync.split('T')[0], '%Y-%m-%d') + relativedelta(hours=-24)).strftime('%Y-%m-%dT00:00:00')
                     createdOn = (datetime.strptime(last_ud_date_sync.split('T')[0], '%Y-%m-%d') + relativedelta(days=-3)).strftime('%Y-%m-%dT00:00:00')
@@ -1396,7 +1458,7 @@ unidata_default_product_value()
 
 class unidata_pull_product_log(osv.osv):
     _name = 'unidata.pull_product.log'
-
+    _order = 'id desc'
     def _get_json_data_formated(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -1412,7 +1474,6 @@ class unidata_pull_product_log(osv.osv):
         'code': fields.char('UD Code', size=64, select=1),
         'former_codes': fields.char('Former Code', size=1024, select=1),
         'date': fields.datetime('Date', required=1, select=1),
-        'status': fields.selection([('create', 'Create'), ('Update', 'Update'), ('error', 'Error')], 'Status', select=1),
         'log': fields.text('Log'),
         'json_data': fields.text('UD Json'),
         'json_data_formated': fields.function(_get_json_data_formated, method=1, type='text',string='UD Json'),
@@ -1423,3 +1484,36 @@ class unidata_pull_product_log(osv.osv):
         'date': lambda *a, **b: fields.datetime.now(),
     }
 unidata_pull_product_log()
+
+class unidata_products_error(osv.osv):
+    _name = 'unidata.products_error'
+    _order = 'date desc, msfid'
+    def _get_json_data_formated(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        for j in self.browse(cr, uid, ids, fields_to_fetch=['json_data'], context=context):
+            try:
+                res[j.id] = pprint.pformat(safe_eval(j.json_data), width=160)
+            except:
+                res[j.id] = False
+        return res
+
+    _columns = {
+        'msfid': fields.integer('MSF ID', required=1, select=1),
+        'code': fields.char('UD Code', size=64, select=1),
+        'former_codes': fields.char('Former Code', size=1024),
+        'date': fields.datetime('Date of last error', required=1, select=1),
+        'fixed_date': fields.datetime('Fixed at',  select=1),
+        'log': fields.text('Log'),
+        'uf_product_id': fields.text('UF product db id'),
+        'json_data': fields.text('UD Json'),
+        'json_data_formated': fields.function(_get_json_data_formated, method=1, type='text',string='UD Json'),
+    }
+
+    _sql_constraints = [
+        ('unique_msfid', 'unique(msfid)', 'msfid already exists.'),
+    ]
+    _defaults = {
+        'date': lambda *a, **b: fields.datetime.now(),
+    }
+unidata_products_error()

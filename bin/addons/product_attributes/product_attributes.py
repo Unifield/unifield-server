@@ -186,6 +186,7 @@ class product_cold_chain(osv.osv):
     _name = "product.cold_chain"
     _columns = {
         'code': fields.char('Code', size=256),
+        'ud_code': fields.char(string='Code', size=256),
         'name': fields.char('Name', size=256, required=True, translate=1),
         'cold_chain': fields.boolean('Cold Chain'),
         'mapped_to': fields.many2one('product.cold_chain', string='Mapped to', readonly=1),
@@ -1079,7 +1080,7 @@ class product_attributes(osv.osv):
         ),
         'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
-        'un_code': fields.char('UN Code', size=7),
+        'un_code': fields.char('UN Code', size=32),
         'gmdn_code' : fields.char('GMDN Code', size=5),
         'gmdn_description' : fields.char('GMDN Description', size=64),
         'life_time': fields.integer('Product Life Time',

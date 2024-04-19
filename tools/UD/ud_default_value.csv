@@ -63,21 +63,15 @@ Identifier,MSF Entity,Attribute,OC Rules,Default Value
 147,OCB,perishable,[OCB] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
 148,OCB,perishable,[OCB] S - Renewable medical supplies | BID - Bacterial identification system,Yes
 149,OCB,perishable,[OCB] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
-150,OCB,perishable,"[OCB] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
-151,OCB,perishable,[OCB] S - Renewable medical supplies | INS - Injection supplies,Yes
-152,OCB,perishable,[OCB] S - Renewable medical supplies | LAS - Laboratory reagents,Yes
-153,OCB,perishable,[OCB] S - Renewable medical supplies | MSU - Small medical supplies,Yes
 154,OCB,perishable,[OCB] S - Renewable medical supplies | SCO - Surgical consumables,Yes
 155,OCB,perishable,[OCB] S - Renewable medical supplies | SDT - Stand-alone diagnostic tests,Yes
 156,OCB,perishable,[OCB] S - Renewable medical supplies | SUR - Surgical instruments for single use,Yes
-157,OCB,perishable,[OCB] S - Renewable medical supplies | SUT - Sutures,Yes
 158,OCB,perishable,"[OCB] S - Renewable medical supplies | TSS - Transport, storage and sampling systems of biological specim",Yes
 159,OCB,perishable,[OCB] S - Renewable medical supplies | DIS - Disinfectants,Yes
 160,OCB,batch_management,[OCB] S - Renewable medical supplies | AST - Antibiotic Susceptibility Testing Items,Yes
 161,OCB,batch_management,[OCB] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
 162,OCB,batch_management,[OCB] S - Renewable medical supplies | BID - Bacterial identification system,Yes
 163,OCB,batch_management,[OCB] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
-164,OCB,batch_management,"[OCB] S - Renewable medical supplies | CTD - Catheters, tubes and drains",Yes
 165,OCB,batch_management,[OCB] S - Renewable medical supplies | SCO - Surgical consumables,Yes
 166,OCB,batch_management,[OCB] S - Renewable medical supplies | SDT - Stand-alone diagnostic tests,Yes
 167,OCB,batch_management,[OCB] S - Renewable medical supplies | SUR - Surgical instruments for single use,Yes
@@ -113,7 +107,6 @@ Identifier,MSF Entity,Attribute,OC Rules,Default Value
 179,OCG,batch_management,[OCG] S - Renewable medical supplies | BCM - Bacteriological culture media,Yes
 180,OCG,batch_management,[OCG] S - Renewable medical supplies | BID - Bacterial identification system,Yes
 181,OCG,batch_management,[OCG] S - Renewable medical supplies | BQC - Bacterial strains Quality Control,Yes
-182,OCG,batch_management,[OCG] S - Renewable medical supplies | DRE - Dressings,Yes
 183,OCG,batch_management,[OCG] S - Renewable medical supplies | SCO - Surgical consumables,Yes
 184,OCG,batch_management,[OCG] S - Renewable medical supplies | SUR - Surgical instruments for single use,Yes
 185,OCG,batch_management,"[OCG] S - Renewable medical supplies | TSS - Transport, storage and sampling systems of biological specim",Yes
