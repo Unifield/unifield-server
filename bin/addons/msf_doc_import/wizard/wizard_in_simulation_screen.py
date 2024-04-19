@@ -541,7 +541,7 @@ the date has a wrong format: %s') % (index+1, str(e)))
             ''', (tuple(sol_id_sum.keys()),))
         extra_qty = {}
         for x in cr.fetchall():
-            if x[1] < sol_id_sum[x[0]]:
+            if sol_id_sum[x[0]] and x[1] < sol_id_sum[x[0]]:
                 extra_qty[x[0]] = sol_id_sum[x[0]] -  x[1]
 
         already_process = {}

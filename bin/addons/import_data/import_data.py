@@ -221,9 +221,7 @@ class import_data(osv.osv_memory):
                 objname = sel[1]
                 break
 
-        fileobj = TemporaryFile('w+')
-        print(type(obj['file']))
-        print(type(base64.b64decode(obj['file'])))
+        fileobj = TemporaryFile('w+', newline='')
         fileobj.write(base64.b64decode(obj['file']).decode('utf8'))
         fileobj.seek(0)
         impobj = self.pool.get(obj['object'])
