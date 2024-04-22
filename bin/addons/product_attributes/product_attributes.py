@@ -669,6 +669,30 @@ class product_attributes(osv.osv):
                     dom += [ '&', ('batch_management', '=', False), ('perishable', '=', True)]
         return dom
 
+    def _search_incompatible_oc_default_values(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        for arg in args:
+            if arg[1] != '=' or not arg[2]:
+                raise osv.except_osv(_('Warning'), _('This filter is not implemented yet'))
+
+            oc_def = self.pool.get('unidata.default_product_value')
+            oc_def_ids = oc_def.search(cr, uid, [], context=context)
+
+            temp_dom = []
+            for oc_val in oc_def.browse(cr, uid, oc_def_ids, context=context):
+                temp_dom.append(['&', ('nomen_manda_%d' % oc_val.nomenclature.level, '=', oc_val.nomenclature.id), (oc_val.field, '!=', oc_val.value)])
+
+            ud_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+            if temp_dom:
+                dom += temp_dom[0]
+                for d in temp_dom[1:]:
+                    dom.insert(0, '|')
+                    dom += d
+                dom = ['&', ('international_status', '=', ud_id)] + dom
+
+        print(dom)
+        return dom
+
     def _search_show_ud(self, cr, uid, obj, name, args, context=None):
         dom = []
         for arg in args:
@@ -1215,6 +1239,8 @@ class product_attributes(osv.osv):
         'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance', domain=[('state', '=', 'active'), ('level', '!=', 'section')]),
         'mml_restricted_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Restricted to instance', domain=[('state', '=', 'active'), ('level', '!=', 'section')]),
         'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unifield.instance', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
+
+        'incompatible_oc_default_values': fields.function(tools.misc.get_fake, method=True, type='boolean', string='Incompatible OC default', fnct_search=_search_incompatible_oc_default_values),
     }
 
 
