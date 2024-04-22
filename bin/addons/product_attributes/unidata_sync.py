@@ -268,8 +268,7 @@ class unidata_sync_log(osv.osv):
         'error': fields.text('Error', readonly=1),
         'page_size': fields.integer('page size', readonly=1),
         'state': fields.selection([('running', 'Running'), ('error', 'Error'), ('done', 'Done')], 'State', readonly=1),
-        'manual_single': fields.boolean('Single sync'),
-        'sync_type': fields.selection([('full', 'Full'), ('cont', 'Continuation'), ('diff', 'Based on last modification date')], 'Sync Type', readonly=1),
+        'sync_type': fields.selection([('full', 'Full'), ('cont', 'Continuation'), ('diff', 'Based on last modification date'),('single', 'Single MSFID')], 'Sync Type', readonly=1),
         'msfid_min': fields.integer('Min Msfid', readonly=1),
         'last_date': fields.char('Last Date', size=64, readonly=1),
         'log_file': fields.char('Path to log file', size=128, readonly=1),
@@ -280,7 +279,6 @@ class unidata_sync_log(osv.osv):
     }
 
     _defaults = {
-        'manual_single': False,
     }
 
 unidata_sync_log()
@@ -1076,7 +1074,7 @@ class unidata_sync(osv.osv):
     def _get_log(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        cr.execute("select start_date, end_date, state, sync_type from unidata_sync_log where server='ud' and coalesce(manual_single, 'f')='f' order by id desc limit 1")
+        cr.execute("select start_date, end_date, state, sync_type from unidata_sync_log where server='ud' and coalesce(sync_type, '')!='single' order by id desc limit 1")
         one = cr.fetchone()
         if one:
             last_execution_start_date = one[0]

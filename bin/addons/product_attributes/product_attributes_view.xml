@@ -136,7 +136,7 @@
                                    <button name="reactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': ['|', '|', ('active', '=', True), ('nsl_merged', '=', True), ('unidata_merged', '=', True)]}" />
                                    <button name="open_merge_product_wizard" icon="gtk-convert" string="Merge product" type="object"  attrs="{'invisible': ['|', '|', '|', ('int_status_code', '!=', 'local'), ('nsl_merged', '=', True), ('active', '=', False), ('instance_level', '!=', 'coordo')]}"/>
                                    <button name="open_merge_hq_product_wizard" icon="gtk-convert" string="HQ Merge product" type="object"  attrs="{'invisible': [('can_be_hq_merged', '!=', 'True')]}"/>
-                                   <button name="pull_ud" icon="unidata.png" string="Pull UD OC Validation" type="object"  attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('instance_level', '!=', 'section')]}" />
+                                   <button name="pull_ud" icon="unidata.png" string="Pull UD Product" type="object"  attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('instance_level', '!=', 'section')]}" />
                                    <button name="debug_ud" icon="debug.png" string="Display MML API result" type="object"  attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('instance_level', '!=', 'section')]}" invisible="1"/>
                                 </group>
                             </group>
@@ -1113,6 +1113,21 @@ action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.act
                         <separator string="Actions" colspan="2" />
                         <button name="do_activate_product" string="OK" type="object" icon="gtk-ok" colspan="1" />
                         <button name="button_close" string="Cancel" type="object" icon="gtk-cancel" colspan="1" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="product_pull_single_ud_view" model="ir.ui.view">
+            <field name="name">product.pull_single_ud.view</field>
+            <field name="model">product.pull_single_ud</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Pull msfid">
+                    <field name="msfid" colspan="2" required="1"/>
+                    <group colspan="4">
+                        <button name="cancel" type="object" string="Cancel" icon="gtk-cancel" />
+                        <button name="pull_product" type="object" string="Pull Product" icon="gtk-go-forward" />
                     </group>
                 </form>
             </field>

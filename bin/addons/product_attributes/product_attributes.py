@@ -3464,22 +3464,21 @@ class product_attributes(osv.osv):
         return True
 
     def pull_ud(self, cr, uid, ids, context=None):
-        ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+        for x in self.read(cr, uid, ids, ['msfid'] , context=context):
+            wiz_id = self.pool.get('product.pull_single_ud').create(cr, uid, {'msfid': x['msfid'] or False}, context=context)
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'product.pull_single_ud',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+                'height': '190px',
+                'width': '420px',
+            }
 
-        code_updated = []
-        update = False
-        for x in self.read(cr, uid, ids, ['msfid', 'default_code'], context=context):
-            if x['msfid']:
-                try:
-                    ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False)
-                    code_updated.append(x['default_code'])
-                    if not update:
-                        update = x['id']
-                except requests.exceptions.HTTPError as e:
-                    raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
-        if code_updated:
-            self.log(cr, uid, update, _('%s updated from UniData') % ', '.join(code_updated))
-        return True
+
 
     def open_mml_nonconform_report(self, cr, uid, ids, context=None):
         instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
@@ -3835,5 +3834,44 @@ class product_ask_activate_wizard(osv.osv_memory):
 
 product_ask_activate_wizard()
 
+class product_pull_single_ud(osv.osv_memory):
+    _name = 'product.pull_single_ud'
+    rec_name = 'msfid'
+    _columns = {
+        'msfid': fields.integer_null('MSFID'),
+    }
+
+    def pull_product(self, cr, uid, ids, context=None):
+        session_obj = self.pool.get('unidata.sync.log')
+        act_obj = self.pool.get('ir.actions.act_window')
+        for x in self.read(cr, uid, ids, ['msfid'], context=context):
+            if x['msfid']:
+                session_id = session_obj.create(cr, uid, {'manual_single': True, 'server': 'ud', 'start_date': fields.datetime.now(), 'state': 'running', 'sync_type': 'single', 'msfid_min': x['msfid']}, context=context)
+                ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+                try:
+                    trash1, nb_prod, updated, total_nb_created, total_nb_errors = ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False, session_id=session_id)
+                except requests.exceptions.HTTPError as e:
+                    raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
+                except Exception:
+                    raise
+            else:
+                raise osv.except_osv(_('Error'), _('Error: msfid is required'))
+
+        session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'number_products_updated': updated, 'number_products_created': total_nb_created, 'number_products_errors': total_nb_errors}, context=context)
+
+        p_ids = self.pool.get('product.product').search(cr, uid, [('msfid', '=', x['msfid'])], context=context)
+        if p_ids:
+            if len(p_ids) == 1:
+                view = act_obj.open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['form', 'tree'], context=context)
+                view['res_id'] = p_ids[0]
+            else:
+                view = act_obj.open_view_from_xmlid(cr, uid, 'product.product_normal_action', context=context)
+                view['domain'] = [('id','in', p_ids)]
+        else:
+            view = act_obj.open_view_from_xmlid(cr, uid, 'product_attributes.unidata_sync_log_action', ['form', 'tree'], new_tab=True, context=context)
+            view['res_id'] = session_id
+        return view
+
+product_pull_single_ud()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
