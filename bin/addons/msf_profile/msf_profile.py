@@ -57,6 +57,71 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_12826_unidata_pull_info(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if entity_obj and instance and instance.level == 'section':
+            if instance.instance in ('OCPHQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ'):
+                ent = entity_obj.get_entity(cr, uid)
+                oc = ent.oc.upper()
+                values_mapping = {
+                    'Yes': 't',
+                    'Kit/Module': 'kit',
+                    'Make to Order': 'make_to_order',
+                    'Service with Reception': 'service_recep',
+                    '': '',
+                }
+                csv_file_name = os.path.join(os.path.abspath(tools.config['root_path']), 'addons/msf_profile/data/ud_default_oc_value.csv')
+                line_number = 0
+                with open(csv_file_name, 'r', newline='') as f:
+                    c = csv.reader(f, quotechar='"', delimiter=',')
+                    for line in c:
+                        line_number += 1
+                        if not line or line[1] != oc:
+                            continue
+                        nomen = line[3][5:].strip()
+                        all_nom = nomen.split('|')
+                        level = 1
+                        parent_id = False
+
+                        if line[4] not in values_mapping:
+                            self._logger.warn('Line number %s, value %s not found' % (line_number, line[4]))
+                            return False
+                        for nom in all_nom:
+                            nom = nom.strip()[0:63]
+                            if nom:
+                                cond = ''
+                                params = [nom.strip(), level]
+                                if parent_id:
+                                    cond = ' and n.parent_id in %s'
+                                    params.append(tuple(parent_id))
+                                    params[0] = '%%%s' % nom
+
+                                cr.execute("""
+                                    select
+                                        n.id
+                                    from
+                                        product_nomenclature n
+                                    left join ir_translation t on t.lang='en_MF' and t.name='product.nomenclature,name' and t.res_id = n.id
+                                    where
+                                        coalesce(t.value, n.name) like %s and
+                                        n.level=%s
+                                    """+cond, tuple(params)) # not_a_user_entry
+                                if not cr.rowcount:
+                                    self._logger.warn('Line number %s, nomen %s not found' % (line_number, nom))
+                                    return False
+                                parent_id = [x[0] for x in cr.fetchall()]
+                                level += 1
+                        for n_id in parent_id:
+                            query = "insert into unidata_default_product_value (field, value, nomenclature) values (%s, %s, %s);"
+                            values = (line[2], values_mapping[line[4]], n_id)
+                            cr.execute(query, values)
+
+            cr.execute("update product_cold_chain set ud_code=code")
+            cr.execute("update product_cold_chain set ud_code='CT3+' where id in (select res_id from ir_model_data where name='product_attributes_cold_20')")
+
+        return True
+
     # UF32.0
     def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id

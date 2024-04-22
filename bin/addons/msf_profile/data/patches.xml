@@ -1044,6 +1044,9 @@
             <field name="method">us_12294_force_email_popup</field>
         </record>
 
+        <record id="us_12826_unidata_pull_info" model="patch.scripts">
+            <field name="method">us_12826_unidata_pull_info</field>
+        </record>
 
     </data>
 </openerp>
