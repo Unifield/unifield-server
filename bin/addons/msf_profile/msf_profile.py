@@ -61,7 +61,7 @@ class patch_scripts(osv.osv):
         entity_obj = self.pool.get('sync.client.entity')
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if entity_obj and instance and instance.level == 'section':
-            if instance.instance in ('OCPHQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ'):
+            if instance.instance in ('OCP_HQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ'):
                 ent = entity_obj.get_entity(cr, uid)
                 oc = ent.oc.upper()
                 values_mapping = {
