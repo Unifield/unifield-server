@@ -210,6 +210,8 @@ class product_asset(osv.osv):
             'line_ids': [],
             'depreciation_amount': False,
             'disposal_amount': False,
+            'start_date': False,
+            'depreciation_method': False,
         })
         return super(product_asset, self).copy_data(cr, uid, id, default, context=context)
 
@@ -506,13 +508,13 @@ class product_asset(osv.osv):
         'arrival_date': fields.date('Arrival Date'), # required=True),
         'receipt_place': fields.char('Receipt Place', size=128), # required=True),
         # Invoice
-        'invo_date': fields.date('Invoice Date', required=True, readonly=1),
-        'invo_value': fields.float('Value', required=True, readonly=1),
+        'invo_date': fields.date('Invoice Date', readonly=1),
+        'invo_value': fields.float('Value', readonly=1),
         'invoice_id': fields.many2one('account.invoice', 'Invoice'),
-        'move_line_id': fields.many2one('account.move.line', 'Journal Item', domain="['&', '&', '&', ('journal_id.type', 'in', ['purchase', 'correction_hq', 'hq', 'intermission']), ('debit', '>', 0), ('move_id.state', '=', 'posted'), ('account_id.user_type_code', 'in', ['asset', 'expense'])]", required=1),
+        'move_line_id': fields.many2one('account.move.line', 'Journal Item', domain="['&', '&', '&', ('journal_id.type', 'in', ['purchase', 'correction_hq', 'hq', 'intermission']), ('debit', '>', 0), ('move_id.state', '=', 'posted'), ('account_id.user_type_code', 'in', ['asset', 'expense'])]"),
         'quantity_divisor': fields.integer_null('Divisor Quantity', help='This quantity will divide the total invoice value.'),
         'invoice_line_id': fields.many2one('account.invoice.line', 'Invoice Line'),
-        'invo_currency': fields.many2one('res.currency', 'Currency', required=True, readonly=1),
+        'invo_currency': fields.many2one('res.currency', 'Currency', readonly=1),
         'invo_supplier_id': fields.many2one('res.partner', 'Supplier', readonly=1),
         'invo_donator_code': fields.char('Donator Code', size=128),
         'invo_certif_depreciation': fields.char('Certificate of Depreciation', size=128),
@@ -527,7 +529,7 @@ class product_asset(osv.osv):
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
         'useful_life_id': fields.many2one('product.asset.useful.life', 'Useful Life', ondelete='restrict'),
-        'start_date': fields.date('Start Date', required=1),
+        'start_date': fields.date('Start Date'),
         'line_ids': fields.one2many('product.asset.line', 'asset_id', 'Depreciation Lines'),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'depreciation_amount': fields.function(_get_book_value, string='Depreciation', type='float', method=True, help="Sum of all Asset journal item lines", multi='get_book', with_null=True),
@@ -538,7 +540,7 @@ class product_asset(osv.osv):
         'can_be_disposed': fields.function(_get_can_be_disposed, string='Can be diposed', type='boolean', method=True),
         'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', method=True),
         'prorata': fields.boolean('Prorata Temporis'),
-        'depreciation_method': fields.selection([('straight', 'Straight Line')], 'Depreciation Method', required=True),
+        'depreciation_method': fields.selection([('straight', 'Straight Line')], 'Depreciation Method'),
         'period_id': fields.function(misc.get_fake, fnct_search=_search_period_id, method=True, type='many2one', relation='account.period', string='Start Period', domain=[('special', '=', False)]),
     }
 

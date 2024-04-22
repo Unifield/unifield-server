@@ -112,11 +112,11 @@
 
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
-                            <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
+                            <field name="move_line_id" required="1" colspan="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
                             <field name="quantity_divisor"  attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_quantity_divisor(quantity_divisor, move_line_id)"/>
-                            <field name="invo_value" />
-                            <field name="invo_currency"  />
-                            <field name="invo_date" />
+                            <field name="invo_value" required="1"/>
+                            <field name="invo_currency" required="1"/>
+                            <field name="invo_date" required="1"/>
                             <field name="invo_supplier_id" colspan="4" />
                             <field name="invo_donator_code" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
                             <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
@@ -141,8 +141,8 @@
                         </group>
                     </page>
                     <page string="Depreciation">
-                        <field name="start_date" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
-                        <field name="depreciation_method" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}"/>
+                        <field name="start_date" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                        <field name="depreciation_method" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}"/>
                         <newline />
                         <field name="depreciation_amount" />
                         <field name="disposal_amount" />
