@@ -883,6 +883,7 @@ class ud_sync():
         country_obj = self.pool.get('unidata.country')
         project_obj = self.pool.get('unidata.project')
         prod_obj = self.pool.get('product.product')
+        pull_log = self.pool.get('unidata.pull_product.log')
 
 
         page = 1
@@ -1028,14 +1029,22 @@ class ud_sync():
                     self.cr.execute("ROLLBACK TO SAVEPOINT nom_ud_update")
                     self.log('ERROR %s'% e.args[0])
                     if session_id:
-                        self.pool.get('unidata.pull_product.log').create(self.cr, self.uid, {
+                        data_log = {
                             'msfid': x.get('id', ''),
                             'code': x.get('code', ''),
                             'former_codes': x.get('formerCodes', ''),
                             'log': e.args[0],
                             'json_data': x,
                             'session_id': session_id,
-                        })
+                        }
+                        to_write = []
+                        if x.get('id', ''):
+                            to_write =  pull_log.search(self.cr, self.uid,[('msfid', '=', x.get('id', '')), ('session_id', '=', session_id)])
+
+                        if to_write:
+                            pull_log.write(self.cr, self.uid, to_write, data_log)
+                        else:
+                            pull_log.create(self.cr, self.uid, data_log)
                     if x.get('id', ''):
                         self.cr.execute('''insert into unidata_products_error (msfid, code, former_codes, date, log, uf_product_id, json_data)
                             values (%(msfid)s, %(code)s, %(former_codes)s, NOW(), %(log)s, %(uf_product_id)s, %(json_data)s)
@@ -1341,7 +1350,8 @@ class unidata_sync(osv.osv):
             sync_type = 'diff'
 
 
-        logger = logging.getLogger('unidata-sync')
+        oc = self.pool.get('sync.client.entity').get_entity(self.cr, self.uid, context).oc
+        logger = logging.getLogger('unidata-sync-%s'% oc)
         sync_obj = ud_sync(cr, uid, self.pool, logger=logger, context=context)
         page_size = sync_obj.page_size
 
@@ -1381,7 +1391,7 @@ class unidata_sync(osv.osv):
             last_loop = False
             max_id = 0
             # first tries previous errors
-            cr.execute('select msfid from unidata_products_error where fixed_date is null')
+            cr.execute('select distinct(msfid) from unidata_products_error where fixed_date is null')
             query = []
             all_msfids = [x[0] for x in cr.fetchall()]
             for x in all_msfids:
