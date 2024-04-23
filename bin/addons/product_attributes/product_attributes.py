@@ -700,7 +700,6 @@ class product_attributes(osv.osv):
                     dom += d
                 dom = ['&', ('international_status', '=', ud_id)] + dom
 
-        print(dom)
         return dom
 
     def _search_show_ud(self, cr, uid, obj, name, args, context=None):
