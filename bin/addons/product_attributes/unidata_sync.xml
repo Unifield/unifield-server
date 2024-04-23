@@ -814,5 +814,57 @@
         </record>
 
         <menuitem name="UD Products incompatible with OC values" action="unidata_products_not_oc_value_action" id="unidata_products_not_oc_value_menu" parent="unidata_main_menu" sequence="27"/>
+
+        <record id="unidata_default_product_value_action" model="ir.actions.act_window">
+            <field name="name">OC Default values</field>
+            <field name="res_model">unidata.default_product_value</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_default_product_value_form">
+            <field name="name">unidata.default_product_value.form</field>
+            <field name="model">unidata.default_product_value</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+             <form string="OC Default Values" hide_duplicate_button="1">
+                    <field name="nomenclature" />
+                    <field name="field" />
+                    <field name="value" />
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_default_product_value_tree">
+            <field name="name">unidata.default_product_value.tree</field>
+            <field name="model">unidata.default_product_value</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <tree string="OC Default Values">
+                    <field name="nomenclature" />
+                    <field name="field"  />
+                    <field name="value" />
+                    <field name="number_incompatible_products" />
+                    <button name="open_products" string="View products" icon="gtk-go-forward" type="object" attrs="{'invisible': [('number_incompatible_products', '=', 0)]}" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_default_product_value_search">
+            <field name="name">unidata.default_product_value.search</field>
+            <field name="model">unidata.default_product_value</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="OC Default Values">
+                    <field name="nomenclature" />
+                    <field name="field"  />
+                    <field name="value" />
+                </search>
+            </field>
+        </record>
+        <menuitem name="OC Default Values" action="unidata_default_product_value_action" id="unidata_default_product_value_menu" parent="unidata_main_menu" sequence="27"/>
     </data>
 </openerp>

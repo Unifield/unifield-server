@@ -671,16 +671,26 @@ class product_attributes(osv.osv):
 
     def _search_incompatible_oc_default_values(self, cr, uid, obj, name, args, context=None):
         dom = []
+        oc_def = self.pool.get('unidata.default_product_value')
         for arg in args:
-            if arg[1] != '=' or not arg[2]:
-                raise osv.except_osv(_('Warning'), _('This filter is not implemented yet'))
+            if arg[1] == '=':
+                if not arg[2]:
+                    raise osv.except_osv(_('Warning'), _('This filter is not implemented'))
 
-            oc_def = self.pool.get('unidata.default_product_value')
-            oc_def_ids = oc_def.search(cr, uid, [], context=context)
+                oc_def_ids = oc_def.search(cr, uid, [], context=context)
+            elif arg[1] == 'in':
+                if not isinstance(arg[2], list):
+                    raise osv.except_osv(_('Warning'), _('This filter is not implemented'))
+                oc_def_ids = arg[2]
+            else:
+                raise osv.except_osv(_('Warning'), _('This filter is not implemented'))
 
             temp_dom = []
             for oc_val in oc_def.browse(cr, uid, oc_def_ids, context=context):
-                temp_dom.append(['&', ('nomen_manda_%d' % oc_val.nomenclature.level, '=', oc_val.nomenclature.id), (oc_val.field, '!=', oc_val.value)])
+                value = oc_val.value
+                if value == 'f':
+                    value = False
+                temp_dom.append(['&', ('nomen_manda_%d' % oc_val.nomenclature.level, '=', oc_val.nomenclature.id), (oc_val.field, '!=', value)])
 
             ud_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
             if temp_dom:

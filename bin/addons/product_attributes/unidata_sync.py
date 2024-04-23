@@ -1461,15 +1461,65 @@ unidata_sync()
 
 class unidata_default_product_value(osv.osv):
     _name = 'unidata.default_product_value'
+    _description = 'OC Default values'
+
+    def _get_number_incompatible_products(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        ud_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+        prod_obj = self.pool.get('product.product')
+        for oc_val in self.browse(cr, uid, ids, fields_to_fetch=['nomenclature', 'value', 'field'], context=context):
+            value = oc_val.value
+            if value == 'f':
+                value = False
+            res[oc_val.id] = prod_obj.search(cr, uid, [('international_status', '=', ud_id), ('nomen_manda_%d' % oc_val.nomenclature.level, '=', oc_val.nomenclature.id), (oc_val.field, '!=', value)], count=True, context=context)
+
+        return res
+
     _columns = {
         'field': fields.selection([('perishable', 'Expiry Date Mandatory'), ('batch_management', 'Batch Number Mandatory'), ('procure_method','Procurement Method'), ('type', 'Product Type'), ('subtype', 'Product SubType')], 'Field Name', required=1, select=1),
         'value': fields.char('Value', size=256, required=1, select=1),
-        'nomenclature': fields.many2one('product.nomenclature', required=1),
+        'nomenclature': fields.many2one('product.nomenclature', required=1, string="Nomenclature"),
+        'number_incompatible_products': fields.function(_get_number_incompatible_products, method=True, type='integer', string='Nb inconsistent prod'),
     }
 
     _sql_constraints = [
         ('unique_nomenclature_field', 'unique(field, nomenclature)', 'Field / nomenclature already exists')
     ]
+
+    def _check_value(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+        for oc in self.browse(cr, uid, ids, context=context):
+            if oc.field in ['perishable', 'batch_management'] and oc.value not in ['t', 'f']:
+                raise osv.except_osv(_('Error'), _('Expiry Date Mandatory and Batch Number Mandatory: only t or f are allowed'))
+            if oc.field == 'procure_method' and oc.value not in ['make_to_stock', 'make_to_order']:
+                raise osv.except_osv(_('Error'), _('Procurement Method: only make_to_stock or make_to_order are allowed'))
+            if oc.field == 'type' and oc.value not in ['product', 'consu', 'service_recep']:
+                raise osv.except_osv(_('Error'), _('Product Type only product, consu or service_recep are allowed'))
+            if oc.field == 'subtype' and oc.value not in ['single', 'kit', 'asset', '']:
+                raise osv.except_osv(_('Error'), _("Product SubType only single, kit, asset or '' are allowed"))
+
+        return True
+
+
+    _constraints = [
+        (_check_value, 'Value not allowed', [])
+    ]
+
+    def open_products(self, cr, uid, ids, context=None):
+        txt = []
+        for d in self.browse(cr, uid, ids, context=context):
+            txt.append('%s %s not %s' % (d.nomenclature.name, d.field, d.value))
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.product',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'domain': [('incompatible_oc_default_values', 'in', ids)],
+            'name': ' or '.join(txt)
+        }
+
 unidata_default_product_value()
 
 class unidata_pull_product_log(osv.osv):
