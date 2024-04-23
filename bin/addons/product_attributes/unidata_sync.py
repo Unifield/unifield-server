@@ -469,7 +469,7 @@ class ud_sync():
                     'Single use': 'yes',
                     "Don't know": 'no_know',
                     'Not Applicable': 'no', # tbc with Raff
-                    'Implantable Device': 'yes', # tbc with Raff
+                    'Implantable Device': 'no_know', # tbc with Raff
                     'Single patient multiple use': 'yes', # tbc with Raff
                     False: 'no',
                 }
@@ -1308,7 +1308,7 @@ class unidata_sync(osv.osv):
         new_thread.start()
         new_thread.join(3.0)
         if not new_thread.is_alive() and self._error:
-            raise self._error
+            raise Exception(self._error)
         return True
 
     def start_ud_sync(self, cr, uid, context=None):
@@ -1350,7 +1350,7 @@ class unidata_sync(osv.osv):
             sync_type = 'diff'
 
 
-        oc = self.pool.get('sync.client.entity').get_entity(self.cr, self.uid, context).oc
+        oc = self.pool.get('sync.client.entity').get_entity(cr, uid, context).oc
         logger = logging.getLogger('unidata-sync-%s'% oc)
         sync_obj = ud_sync(cr, uid, self.pool, logger=logger, context=context)
         page_size = sync_obj.page_size
