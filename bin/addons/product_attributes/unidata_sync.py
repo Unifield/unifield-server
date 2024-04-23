@@ -470,7 +470,7 @@ class ud_sync():
                     "Don't know": 'no_know',
                     'Not Applicable': 'no', # tbc with Raff
                     'Implantable Device': 'yes', # tbc with Raff
-                    'Single patient multiple use': 'no', # tbc with Raff
+                    'Single patient multiple use': 'yes', # tbc with Raff
                     False: 'no',
                 }
             },
