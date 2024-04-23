@@ -67,8 +67,11 @@
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Asset">
-                    <field name="name" />
-                    <field name="instance_id" readonly='1'/>
+                        <field name="name" />
+                    <group colspan="2" col="4">
+                        <field name="external_asset_id"/>
+                        <field name="instance_id" readonly='1'/>
+                    </group>
                     <field name="journal_id" />
                     <group colspan="2" col="4">
                         <field name="asset_type_id" on_change="change_asset_type_id(asset_type_id, useful_life_id)" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
