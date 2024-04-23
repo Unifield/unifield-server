@@ -67,9 +67,9 @@
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Asset">
-                        <field name="name" />
+                    <field name="name" />
                     <group colspan="2" col="4">
-                        <field name="external_asset_id"/>
+                        <field name="external_asset_id" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'not in', ['draft', 'open'])]}"/>
                         <field name="instance_id" readonly='1'/>
                     </group>
                     <field name="journal_id" />

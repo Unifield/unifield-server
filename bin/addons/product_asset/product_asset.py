@@ -483,7 +483,7 @@ class product_asset(osv.osv):
 
     _columns = {
         # asset
-        'name': fields.char('Asset Code', size=64, readonly=True),
+        'name': fields.char('Asset Code', size=128, readonly=True),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type'), # from product
         'description': fields.char('Asset Description', size=128),
         'product_id': fields.many2one('product.product', 'Product', required=True, ondelete='cascade'),
