@@ -6,8 +6,18 @@
             <field name="model">sol.pol.intermission.section.validation.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Warning! This document contains non-conform products for validation">
+                <form string="Warning!">
                     <field name="partner_type" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': [('partner_type', '!=', 'section')]}">
+                        <html colspan="4">
+                            <translate>This document contains non-conforming products for intersectional partner.</translate>
+                        </html>
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('partner_type', '!=', 'intermission')]}">
+                        <html colspan="4">
+                            <translate>This document contains non-conforming products for intermission partner.</translate>
+                        </html>
+                    </group>
                     <html colspan="4">
                         <br />
                     </html>
