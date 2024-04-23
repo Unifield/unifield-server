@@ -114,7 +114,7 @@
                         <label colspan="3" />
                     </group>
                     <field name="order_line_mismatch" colspan="4" nolabel="1" mode="tree"
-                        filter_selector="[('Show all', []),  ('Hide Confirmed', [('state', 'not in', ['confirmed'])]), ('Hide Closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Hide Confirmed &amp; Closed', [('state', 'not in', ['confirmed', 'done', 'cancel', 'cancel_r'])]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])])]"
+                        filter_selector="[('Show all', []),  ('Hide Confirmed', [('state', 'not in', ['confirmed'])]), ('Hide Closed', [('state', 'not in', ['done'])]), ('Hide Confirmed, Closed &amp; Cancelled', [('state', 'not in', ['confirmed', 'done', 'cancel', 'cancel_r'])]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])])]"
                         >
                         <tree string="PO Lines Mismatch with Catalogues" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
                             <field name="line_number" />

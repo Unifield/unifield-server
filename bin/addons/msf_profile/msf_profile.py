@@ -119,7 +119,7 @@ class patch_scripts(osv.osv):
                         cat.id as catalogue_id, cat_line.id, cat.currency_id as cat_currency_id, cat_line.unit_price as cat_unit_price, cat_line.rounding as soq_rounding
                     from
                         supplier_catalogue cat
-                        left join supplier_catalogue_line cat_line on cat_line.catalogue_id = cat.id and cat_line.product_id = pol.product_id and cat_line.line_uom_id = pol.product_uom and coalesce(cat_line.min_qty,0) <= pol.product_qty
+                        left join supplier_catalogue_line cat_line on cat_line.catalogue_id = cat.id and cat_line.product_id = pol.product_id and cat_line.line_uom_id = pol.product_uom
                     where
                         cat.partner_id = po.partner_id and
                         cat.active = 't' and
@@ -127,7 +127,7 @@ class patch_scripts(osv.osv):
                         (cat.period_from is null or cat.period_from < pol.confirmation_date) and
                         (cat.period_to is null or cat.period_to > pol.confirmation_date)
                     order by
-                        cat.currency_id = curr_pricelist.currency_id, cat_line.min_qty desc, cat_line.id desc
+                        cat.currency_id = curr_pricelist.currency_id, coalesce(cat_line.min_qty,0) <= pol.product_qty desc, abs(pol.product_qty - coalesce(cat_line.min_qty,0)) asc, cat_line.id
                     limit 1
                 ) catl on true
                 left join lateral (
