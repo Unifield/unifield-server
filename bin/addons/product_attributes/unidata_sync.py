@@ -451,7 +451,7 @@ class ud_sync():
                 'function': lambda a: ';'.join(a),
             },
             'product_catalog_path': {
-                'ud': 'product_catalog_path',
+                'ud': 'unicatURL',
             },
             'short_shelf_life': {
                 'ud': 'medical/shortShelfLifeGroup/shortShelfLife',
