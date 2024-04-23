@@ -1045,6 +1045,9 @@ class ud_sync():
                             pull_log.write(self.cr, self.uid, to_write, data_log)
                         else:
                             pull_log.create(self.cr, self.uid, data_log)
+                            nb_errors += 1
+                    else:
+                        nb_errors += 1
                     if x.get('id', ''):
                         self.cr.execute('''insert into unidata_products_error (msfid, code, former_codes, date, log, uf_product_id, json_data)
                             values (%(msfid)s, %(code)s, %(former_codes)s, NOW(), %(log)s, %(uf_product_id)s, %(json_data)s)
@@ -1057,7 +1060,6 @@ class ud_sync():
                             'uf_product_id': ','.join([str(x) for x in prod_ids]),
                             'json_data': '%s'%x,
                         })
-                    nb_errors += 1
                 else:
                     self.cr.execute("RELEASE SAVEPOINT nom_ud_update")
 
