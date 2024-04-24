@@ -310,14 +310,23 @@ MochiKit.Base.update(ListView.prototype, {
 
     update_filter: function() {
 
-        var filter = $(openobject.dom.get(this.name + '_filter'))[0];
-        var selected_filter_index = filter.selectedIndex;
-        var selected_filter_domain = filter[selected_filter_index].getAttribute("domain");
+        var new_domains = [];
+        var filters = jQuery($("select[id^='" + this.name + "_filter']"));
+        for (var i = 0; i < filters.length; i++) {
+            var filter = filters[i];
+            var selected_filter_index = filter.selectedIndex;
+            var selected_filter_domain = filter[selected_filter_index].getAttribute('domain');
+            if (selected_filter_domain !==  '[]') {
+                // Remove [] from the domain's string
+                new_domains.push(selected_filter_domain.slice(1, -1));
+            }
+        }
+        var new_domains_text = '[]';
+        if (new_domains.length > 0) {
+            // Reconstruct the whole domain as text
+            new_domains_text = '[' + new_domains.join(',') + ']';
+        }
         var terp_domains = openobject.dom.get(this.name + '/_terp_domain');
-
-        // TODO : in the future, if needed, properly add the domain to the
-        // existing domain list to be able to support multiple filters ?
-        var new_domains = selected_filter_domain;
 
         // If we don't need to update anything, return immediately...
         if (new_domains == terp_domains.value)
@@ -325,7 +334,7 @@ MochiKit.Base.update(ListView.prototype, {
             return;
         }
 
-        terp_domains.value = selected_filter_domain;
+        terp_domains.value = new_domains_text;
 
         if(this.ids.length) {
             this.reload();

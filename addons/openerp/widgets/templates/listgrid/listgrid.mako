@@ -310,19 +310,38 @@ if (auto_field && auto_field.val()){
                                     </td>
                                 % endif
                                 % if filter_selector:
-                                <td class="pager-cell" style="width: 90%">
-                                    <div class="pager">
-                                         <select id="${name}_filter" 
-                                                class="paging ignore_changes_when_leaving_page" 
-                                                onchange="new ListView('${name}').update_filter()" 
-                                                onload="new ListView('${name}').update_filter()">
-                                    </div>
-                                    <% i = 0 %>
-                                    % for filtername, domain in filter_selector:
-                                        <option domain="${domain}" ${i == default_selector and 'selected="selected"' or ""}>${filtername}</option>
-                                        <% i += 1 %>
-                                    % endfor
-                                </td>
+                                    % if isinstance(filter_selector[0], list):
+                                        % for iter, filter in enumerate(filter_selector):
+                                            <div>${default_selector[iter]}</div>
+                                            <td class="pager-cell" style="width: 90%">
+                                                <div class="pager">
+                                                    <select id="${name}_filter_${iter}"
+                                                        class="paging ignore_changes_when_leaving_page"
+                                                        onchange="new ListView('${name}').update_filter()"
+                                                        onload="new ListView('${name}').update_filter()">
+                                                </div>
+                                                <% i = 0 %>
+                                                % for filtername, domain in filter:
+                                                    <option domain="${domain}" ${i == default_selector[iter] and 'selected="selected"' or ""}>${filtername}</option>
+                                                    <% i += 1 %>
+                                                % endfor
+                                            </td>
+                                        % endfor
+                                    % else:
+                                        <td class="pager-cell" style="width: 90%">
+                                            <div class="pager">
+                                                 <select id="${name}_filter"
+                                                    class="paging ignore_changes_when_leaving_page"
+                                                    onchange="new ListView('${name}').update_filter()"
+                                                    onload="new ListView('${name}').update_filter()">
+                                            </div>
+                                            <% i = 0 %>
+                                            % for filtername, domain in filter_selector:
+                                                <option domain="${domain}" ${i == default_selector and 'selected="selected"' or ""}>${filtername}</option>
+                                                <% i += 1 %>
+                                            % endfor
+                                        </td>
+                                    % endif
                                 % else:
                                 <td class="pager-cell" style="width: 90%">
                                 </td>
