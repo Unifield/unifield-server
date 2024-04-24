@@ -672,22 +672,19 @@ class sale_order_line(osv.osv):
                     LEFT JOIN product_product pp ON sl.product_id = pp.id
                 WHERE""" + creator_check + """ sl.id IN %s AND sl.state = 'draft'
                 ORDER BY sl.line_number""", (tuple(ids),))
-            lines_pb, prods_pb = [], []
+            lines_pb = []
             for x in cr.fetchall():
-                if x[0] not in lines_pb:
-                    lines_pb.append(str(x[0]))
-                if x[1] not in prods_pb:
-                    prods_pb.append(x[1])
+                lines_pb.append(_('line #') + str(x[0]) + _(' product ') + x[1])
 
             if lines_pb:
                 if so.partner_type == 'section':
-                    msg = _('''The line numbers in order %s with product codes %s are Local/ITC/ESC product(s). These cannot be on order to an Intersectional partner. 
-Please exchange for UniData type product or if none exists, add a product by nomenclature or contact your help-desk for further support.''') \
-                          % (', '.join(lines_pb), ', '.join(prods_pb))
+                    msg = _('''%s are Local/ITC/ESC product(s). These cannot be on order to an Intersectional partner. 
+Please exchange for UniData type product(s) or if none exists, add a product by nomenclature or contact your help-desk for further support''') \
+                          % (', '.join(lines_pb),)
                 else:
-                    msg = _('''The line numbers in order %s with product codes %s are Local product(s) (which may not synchronise). 
-Please check if these can be switched for UniData type product(s) instead, or contact your help-desk for further support.''') \
-                          % (', '.join(lines_pb), ', '.join(prods_pb))
+                    msg = _('''%s are Local product(s) (which may not synchronise). 
+Please check if these can be switched for UniData type product(s) instead, or contact your help-desk for further support''') \
+                          % (', '.join(lines_pb),)
                 wiz_data = {'source': 'sale', 'partner_type': so.partner_type, 'sol_ids': [(6, 0, ids)], 'message': msg}
                 wiz_id = self.pool.get('sol.pol.intermission.section.validation.wizard').create(cr, uid, wiz_data, context=context)
                 return {
