@@ -445,7 +445,10 @@ class ud_sync():
                 'value': self.unidata_id,
             },
             #'name_template': tbc
-            # xmlid_code
+            'xmlid_code': {
+                'ud': 'id',
+                'on_update': False,
+            },
             'old_code': {
                 'ud': 'formerCodes',
                 'function': lambda a: ';'.join(a),
