@@ -113,12 +113,19 @@ class patch_scripts(osv.osv):
                                 parent_id = [x[0] for x in cr.fetchall()]
                                 level += 1
                         for n_id in parent_id:
-                            query = "insert into unidata_default_product_value (field, value, nomenclature) values (%s, %s, %s);"
+                            query = "insert into unidata_default_product_value (field, value, nomenclature, create_date) values (%s, %s, %s, NOW());"
                             values = (line[2], values_mapping[line[4]], n_id)
                             cr.execute(query, values)
 
             cr.execute("update product_cold_chain set ud_code=code")
             cr.execute("update product_cold_chain set ud_code='CT3+' where id in (select res_id from ir_model_data where name='product_attributes_cold_20')")
+
+            # set next UD sync as full sync
+            param_obj = self.pool.get('ir.config_parameter')
+            param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
+            param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
+
+
 
         return True
 
