@@ -516,6 +516,9 @@ class ud_sync():
             'un_code': {
                 'ud': 'supply/dangerousGroup/dangerousInfo/number',
             },
+            'hs_code': {
+                'ud': 'supply/hsCode',
+            },
             'oc_validation': {
                 'ud': 'ocValidations/%s/valid' % self.oc,
             },

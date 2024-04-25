@@ -201,6 +201,7 @@
                                 <separator string="Transport" colspan="2"/>
                                 <field name="dangerous_goods" colspan="2"/>
                                 <field name="un_code" colspan="2"/>
+                                <field name="hs_code" colspan="2" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}"/>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>

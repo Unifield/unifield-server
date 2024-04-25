@@ -1114,6 +1114,7 @@ class product_attributes(osv.osv):
         'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=32),
+        'hs_code': fields.char('HS Code', size=12, readonly=1),
         'gmdn_code' : fields.char('GMDN Code', size=5),
         'gmdn_description' : fields.char('GMDN Description', size=64),
         'life_time': fields.integer('Product Life Time',
