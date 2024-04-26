@@ -149,7 +149,10 @@ class O2M(TinyInputWidget):
 
 
         self.filter_selector = attrs.get('filter_selector', None)
-        self.default_selector = 0
+        if isinstance(attrs.get('default_selector'), list):
+            self.default_selector = [0 for s in attrs.get('default_selector')]
+        else:
+            self.default_selector = 0
         if self.filter_selector:
             self.filter_selector = eval(self.filter_selector)
             # If we have a filter selector, and no domain yet, use the first

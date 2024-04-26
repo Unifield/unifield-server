@@ -312,7 +312,6 @@ if (auto_field && auto_field.val()){
                                 % if filter_selector:
                                     % if isinstance(filter_selector[0], list):
                                         % for iter, filter in enumerate(filter_selector):
-                                            <div>${default_selector[iter]}</div>
                                             <td class="pager-cell" style="width: 90%">
                                                 <div class="pager">
                                                     <select id="${name}_filter_${iter}"
