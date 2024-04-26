@@ -1009,10 +1009,10 @@ class ud_sync():
                                 break
 
                         if not diff:
-                            self.log('==== same values')
+                            self.log('==== same values %s %s' % (product_values.get('en_MF', {}).get('default_code'), prod_ids[0]))
                             continue
                         else:
-                            self.log('==== diff values, key: %s' % diff)
+                            self.log('==== diff values %s %s, key: %s' % (product_values.get('en_MF', {}).get('default_code'), prod_ids[0], diff))
 
                     try:
                         self.cr.execute("SAVEPOINT prod_ud_update")

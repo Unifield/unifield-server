@@ -6,7 +6,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.product')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['default_code', 'old_code', 'new_code', 'type', 'subtype', 'categ_id', 'international_status', 'state', 'active', 'perishable', 'batch_management', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods', 'standard_ok', 'justification_code_id', 'restricted_country', 'country_restriction', 'form_value', 'fit_value', 'function_value', 'procure_delay', 'soq_volume', 'soq_weight', 'soq_quantity', 'valuation', 'donation_expense_account', 'replace_product_id', 'replaced_by_product_id', 'oc_subscription', 'state_ud', 'un_code', 'hs_code', 'msfid', 'oc_validation', 'oc_validation_date', 'oc_devalidation_date', 'oc_devalidation_reason', 'oc_comments', 'oc_project_restrictions', 'oc_country_restrictions']
+        fields = ['default_code', 'old_code', 'new_code', 'type', 'subtype', 'categ_id', 'international_status', 'state', 'active', 'perishable', 'batch_management', 'heat_sensitive_item', 'controlled_substance', 'dangerous_goods', 'standard_ok', 'justification_code_id', 'restricted_country', 'country_restriction', 'form_value', 'fit_value', 'function_value', 'procure_delay', 'soq_volume', 'soq_weight', 'soq_quantity', 'valuation', 'donation_expense_account', 'replace_product_id', 'replaced_by_product_id', 'oc_subscription', 'state_ud', 'un_code', 'hs_code', 'msfid', 'oc_validation', 'oc_validation_date', 'oc_devalidation_date', 'oc_devalidation_reason', 'oc_comments', 'oc_project_restrictions', 'oc_country_restrictions', 'closed_article', 'cold_chain', 'manufacturer_ref', 'manufacturer_txt', 'xmlid_code', 'product_catalog_path', 'short_shelf_life', 'single_use', 'sterilized']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.product'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
@@ -31,7 +31,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.template')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['state', 'type', 'name', 'subtype', 'categ_id', 'uom_id', 'volume', 'weight', 'property_stock_account_input', 'property_stock_account_output', 'property_account_income', 'property_account_expense']
+        fields = ['state', 'type', 'name', 'subtype', 'categ_id', 'uom_id', 'volume', 'weight', 'property_stock_account_input', 'property_stock_account_output', 'property_account_income', 'property_account_expense', 'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.template'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
