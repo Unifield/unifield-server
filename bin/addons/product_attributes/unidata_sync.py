@@ -448,6 +448,7 @@ class ud_sync():
             'xmlid_code': {
                 'ud': 'id',
                 'on_update': False,
+                'function': lambda a: a and '%s'%a or False,
             },
             'old_code': {
                 'ud': 'formerCodes',
