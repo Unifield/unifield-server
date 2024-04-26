@@ -917,28 +917,30 @@ class ud_sync():
                     #if x.get('state') == 'Golden':
                     #    continue
                     prod_ids = []
+                    if not x.get('id'):
+                        raise UDException('No msfid in API')
+
                     if not x.get('formerCodes'):
                         raise UDException('No formerCodes code')
                     if not x.get('type') or not x.get('group', {}).get('code') or not x.get('family', {}).get('code') or not x.get('root', {}).get('code'):
                         raise UDException('Nomenclature not set in UD')
 
-                    prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active', 'in', ['t', 'f']), ('international_status', '=', self.unidata_id)], order='active desc, id', context=self.context)
-                    total_prod_ids = prod_ids[:]
-                    if len(prod_ids) == 1:
-                        self.log('%s product found id:%s' % (x['formerCodes'], prod_ids[0]))
-                    elif len(prod_ids) == 0:
+                    prod_ids = prod_obj.search(self.cr, self.uid, [('msfid', '=', x.get('id')), ('active', 'in', ['t', 'f']), ('international_status', '=', self.unidata_id)], context=self.context)
+                    if len(prod_ids) > 1:
+                        raise UDException('%s products found for msfid %s: %s' % (len(prod_ids), x.get('id'), prod_obj.read(self.cr, self.uid, prod_ids, ['default_code'])))
+
+                    if len(prod_ids) == 0:
                         if not x.get('ocSubscriptions').get(self.oc):
                             self.log('%s product ignored: ocSubscriptions False' % x['formerCodes'])
                             continue
                         self.log('%s product to create' % (x['formerCodes'], ))
                     else:
-                        prod_ids = prod_obj.search(self.cr, self.uid, [('default_code', 'in', x['formerCodes']), ('active','=', 't'), ('international_status', '=', self.unidata_id)])
-                        if len(prod_ids) > 1:
-                            raise UDException('%d active only products found %s' % (len(prod_ids), prod_obj.read(self.cr, self.uid, prod_ids, ['default_code', 'msfid'])))
-                        if not prod_ids:
-                            prod_ids = total_prod_ids
-                            raise UDException('No active product found, %d inactive products found: %s' % (len(total_prod_ids), prod_obj.read(self.cr, self.uid, total_prod_ids, ['default_code', 'msfid'])))
-                        self.log('%s product active found %s (other inactive exist)' % (x['formerCodes'], prod_ids[0]))
+                        if not x.get('ocSubscriptions').get(self.oc):
+                            if not prod_obj.search(self.cr, self.uid, [('id', 'in', prod_ids), ('oc_subscription', '=', True), ('active', 'in', ['t', 'f'])], context=self.context):
+                                self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
+                                continue
+
+                        self.log('%s product found %s' % (x['formerCodes'], prod_ids[0]))
 
                     product_values = self.map_ud_fields(x, new_prod=not bool(prod_ids))
 
