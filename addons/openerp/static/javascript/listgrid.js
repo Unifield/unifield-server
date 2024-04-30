@@ -329,7 +329,7 @@ MochiKit.Base.update(ListView.prototype, {
         var terp_domains = openobject.dom.get(this.name + '/_terp_domain');
 
         // If we don't need to update anything, return immediately...
-        if (new_domains == terp_domains.value)
+        if (new_domains_text == terp_domains.value)
         {
             return;
         }
@@ -1030,6 +1030,7 @@ MochiKit.Base.update(ListView.prototype, {
         var current_id = edit_inline ? (parseInt(edit_inline) || 0) : edit_inline;
 
 
+        // For filters (filter_selector) on fields
         o2m_filter = {}
         jQuery('#'+this.name + '_o2m_filter input').each(function() {
             if (this.value) {
@@ -1042,6 +1043,9 @@ MochiKit.Base.update(ListView.prototype, {
                 o2m_filter[this.id] = j_this.val();
             }
         });
+
+        // For filters (filter_selector) on lines
+        var filters = jQuery($("select[id^='" + self.name + "_filter']"));
 
 
         var args = jQuery.extend(this.makeArgs(), {
@@ -1250,19 +1254,17 @@ MochiKit.Base.update(ListView.prototype, {
                             )}));
                 }
 
-
-                var filter = $(openobject.dom.get(self.name + '_filter'))[0];
-                var terp_domains = openobject.dom.get(self.name + '/_terp_domain');
-                if ((filter) && (terp_domains.value))
-                {
+                // Selected indexes for lines filters
+                for (var i = 0; i < filters.length; i++) {
+                    var filter = filters[i];
                     $(filter).find('option').each(function(index, element) {
-                        if (element.getAttribute('domain') == terp_domains.value)
-                        {
-                            filter.selectedIndex = index;
+                        if (element.value == $(filter).val()) {
+                            $(openobject.dom.get($(filter).attr('id')))[0].selectedIndex = index;
                         }
                     })
                 }
 
+                // Selected values for fields filters
                 for(var o2m_filed_filter in o2m_filter) {
                     $('#'+o2m_filed_filter).val(o2m_filter[o2m_filed_filter]);
                 }
