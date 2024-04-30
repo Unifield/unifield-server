@@ -1045,8 +1045,7 @@ MochiKit.Base.update(ListView.prototype, {
         });
 
         // For filters (filter_selector) on lines
-        var filters = jQuery($("select[id^='" + self.name + "_filter']"));
-
+        var filters = openobject.dom.get($("select[id^='" + self.name + "_filter']"));
 
         var args = jQuery.extend(this.makeArgs(), {
             _terp_source: this.name,
@@ -1258,7 +1257,7 @@ MochiKit.Base.update(ListView.prototype, {
                 for (var i = 0; i < filters.length; i++) {
                     var filter = filters[i];
                     $(filter).find('option').each(function(index, element) {
-                        if (element.value == $(filter).val()) {
+                        if (index == filter.selectedIndex) {
                             $(openobject.dom.get($(filter).attr('id')))[0].selectedIndex = index;
                         }
                     })
