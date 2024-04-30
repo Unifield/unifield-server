@@ -520,6 +520,9 @@ class ud_sync():
             'hs_code': {
                 'ud': 'supply/hsCode',
             },
+            'oc_subscription': {
+                'ud': 'ocSubscriptions/%s' % self.oc,
+            },
             'oc_validation': {
                 'ud': 'ocValidations/%s/valid' % self.oc,
             },
