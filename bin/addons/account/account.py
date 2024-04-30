@@ -646,7 +646,6 @@ class account_journal(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
         res = {}
-        DEFAULT_JOURNALS.extend([('EOY', 'system'), ('IB', 'system')])
         for j in self.browse(cr, uid, ids, fields_to_fetch=['code', 'type'], context=context):
             res[j.id] = (j.code, j.type) in DEFAULT_JOURNALS
         return res
