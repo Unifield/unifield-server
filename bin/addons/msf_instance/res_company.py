@@ -127,15 +127,16 @@ class res_company(osv.osv):
 
     def _get_instance_level(self, cr, uid):
         instance = self._get_instance_record(cr, uid)
-        return instance and instance.level
+        return instance and instance.level or False
 
     def _get_instance_id(self, cr, uid):
         instance = self._get_instance_record(cr, uid)
-        return instance and instance.id
+        return instance and instance.id or False
 
     def _get_instance_record(self, cr, uid):
         user = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'])
-        return user.company_id and user.company_id.instance_id
+        return user and user.company_id and user.company_id.instance_id or False
+
 
 res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
