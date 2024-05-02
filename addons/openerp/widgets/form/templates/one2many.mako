@@ -65,6 +65,9 @@
             % if default_value:
                 <input type="hidden" name="_terp_default_o2m/${name}" id="_terp_default_o2m/${name}" value="${default_value}"/>
             %endif
+            % if parent_view_ids:
+                <input type="hidden" name="${name}/_terp_parent_view_ids" id="${name}/_terp_parent_view_ids" value="${parent_view_ids}"/>
+            % endif
             ${screen.display()}
         % if scroll:
             </div>

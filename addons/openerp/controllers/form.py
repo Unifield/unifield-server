@@ -211,6 +211,18 @@ class Form(SecuredController):
 
         return tw.form_view.ViewForm(params, name="view_form", action="/openerp/form/save")
 
+    @expose('json')
+    def get_form(self, **kw):
+        params, data = TinyDict.split(kw)
+        data['editable'] = data.get('editable') == 'True'
+        cherrypy.request.terp_params = params
+        screen = tw.screen.Screen(params, name="view_form", **data)
+        if params.view_ids:
+            for x in screen.widget.frame.children:
+                if x.__class__.__name__ == 'O2M':
+                    x.parent_view_ids = params.view_ids
+        return {'view': str(screen.widget.render())}
+
     @expose(template="/openerp/controllers/templates/form.mako")
     def create(self, params, tg_errors=None):
         params.view_type = params.view_type or params.view_mode[0]
