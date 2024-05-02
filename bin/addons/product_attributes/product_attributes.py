@@ -697,14 +697,17 @@ class product_attributes(osv.osv):
 
     def _get_local_activation_from_merge(self, cr, uid, ids, field_name, args, context=None):
         '''
-            used by sync to not sync down active=True from coo to proj, activation of UD prod from COO will be done by the sync merge update
+        Used by sync to not sync down active=True from coo to proj.
+        Activation of UD prod from COO will be done by the sync merge update for non non-standard local products
         '''
         res = {}
         for _id in ids:
             res[_id] = False
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
-            for _id in self.search(cr, uid, [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', '=', True), ('replace_product_id', '!=', False)], context=context):
+            prod_domain = [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', '=', True),
+                           ('replace_product_id', '!=', False), ('standard_ok', '!=', 'non_standard_local')]
+            for _id in self.search(cr, uid, prod_domain, context=context):
                 res[_id] = True
 
         return res
