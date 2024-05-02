@@ -1233,10 +1233,13 @@ class purchase_order(osv.osv):
                 to_curr_id = self.pool.get('product.pricelist').browse(cr, uid, vals['pricelist_id'], fields_to_fetch=['currency_id'], context=context).currency_id.id
 
             for order in self.browse(cr, uid, ids, fields_to_fetch=['state', 'date_order', 'partner_id', 'order_line', 'pricelist_id', 'tax_line'], context=context):
-                line_changed= False
-                if order.state in ('draft', 'draft_p', 'validated') and vals['partner_id'] != order.partner_id.id:
+                line_changed = False
+                if vals['partner_id'] != order.partner_id.id:
+                    if order.state != 'draft':
+                        raise osv.except_osv(_('Error !'), _('The Partner can not be modified if the Purchase Order is not in Draft state. Please refresh the page to continue using this PO'))
+
                     for line in order.order_line:
-                        if line.state in ('draft', 'validated_n', 'validated'):
+                        if line.state in ('draft', 'validated_n'):
                             if line.product_id:
                                 to_suppinf_ids = suppinf_obj.search(cr, uid, [('name', '=', partner.id), ('product_id', '=', line.product_id.id)], context=context)
                                 price_to_convert = line.product_id.standard_price
