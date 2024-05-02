@@ -181,7 +181,14 @@
                                         $('#nr_ad_lines').append(has_ad_nr);
                                         $('#nr_ad_lines').show();
                                     }
-
+                                    // Hide the ESC Confirmed filter if the PO does not have an ESC Partner
+                                    var partner_type = $('#partner_type').val() || $('#partner_type').text().trim();
+                                    if (partner_type == 'esc' || partner_type == 'ESC') {
+                                        $('#order_line_filter_0').show();
+                                    }
+                                    else {
+                                        $('#order_line_filter_0').hide();
+                                    }
                                 </script>
                             </html>
                         </group>
