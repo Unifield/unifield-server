@@ -43,7 +43,8 @@
         function close_error_window() {
             if (jQuery('div#fancybox-wrap').is(':visible')) {
                 % if all_params and all_params.get('_terp_id'):
-                    if(jQuery('#_terp_ids').length) {
+                    parent_id = jQuery('#_terp_id').val();
+                    if(parent_id == 'False' && jQuery('#_terp_ids').length) {
                         jQuery('#_terp_ids').val('${all_params.get('_terp_ids')}')
                         jQuery('#_terp_id').val('${all_params.get('_terp_id')}')
                     }
