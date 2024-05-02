@@ -579,6 +579,10 @@ msgstr "SDref"
 msgid "xmlid_code"
 msgstr "xmlid_code"
 
+#: controllers/view_log.py:111
+msgid "MSFID"
+msgstr "MSFID"
+
 #: controllers/view_log.py:107
 msgid "Internal module data ID"
 msgstr "ID du module de données interne"
