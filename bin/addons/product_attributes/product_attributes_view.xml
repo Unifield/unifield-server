@@ -528,6 +528,7 @@
                     </group>
                    <field name="in_mml_instance" />
                    <field name="in_msl_instance" widget="many2one"/>
+                   <field name="msfid"/>
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>
