@@ -931,14 +931,14 @@ class purchase_order(osv.osv):
                     'catalogue_ratio_conform': catalogue_ratio_conform,
                     'catalogue_ratio_no_catalogue': catalogue_ratio_no_catalogue,
                     'catalogue_ratio_not_conform': catalogue_ratio_not_conform,
-                    'catalogue_exists_text': "<h2>%d%% adherence to catalogue</h2>" % (catalogue_ratio_conform,),
+                    'catalogue_exists_text': "<h2>%d%% %s</h2>" % (catalogue_ratio_conform, _('adherence to catalogue')),
                 }
                 if catalogue_ratio_conform != 100:
                     ret[x[0]]['catalogue_display_tab'] = True
-                ret[x[0]]['catalogue_ratio_text'] = '<b>Catalogue Adherence Summary:</b><br />PO lines adherence: <span class="readonlyfield">%d%%</span> PO Lines Mismatch: <span class="readonlyfield">%d%%</span> of which Not in catalogue: <span class="readonlyfield">%d%%</span>' % (catalogue_ratio_conform, catalogue_ratio_not_conform, catalogue_ratio_no_catalogue)
+                ret[x[0]]['catalogue_ratio_text'] = _('<b>Catalogue Adherence Summary:</b><br />PO lines adherence: <span class="readonlyfield">%d%%</span> PO Lines Mismatch: <span class="readonlyfield">%d%%</span> of which Not in catalogue: <span class="readonlyfield">%d%%</span>') % (catalogue_ratio_conform, catalogue_ratio_not_conform, catalogue_ratio_no_catalogue)
 
             else:
-                ret[x[0]]['catalogue_exists_text'] = '<h2 style="color: red">No valid catalogue</h2>'
+                ret[x[0]]['catalogue_exists_text'] = '<h2 style="color: red">%s</h2>' % _('No valid catalogue')
         return ret
 
     def _get_catalogue_description_text(self, cr, uid, ids, name, arg, context=None):
@@ -978,11 +978,16 @@ class purchase_order(osv.osv):
         for x in cr.fetchall():
             ret[x[0]] = {
                 'catalogue_description_text': '''
-                    <label>Status</label>: <span class="readonlyfield">%(status)s</span>
-                    <label>Supplier</label>: <span class="readonlyfield">%(supplier)s</span>
-                    <label>Catalogue</label>: <span class="readonlyfield">%(catalogue)s</span>
-                    <label>From</label>: <span class="readonlyfield">%(date_from)s</span>
-                    <label>To</label>: <span class="readonlyfield">%(date_to)s</span>''' % {
+                    <label>%(status_text)s</label>: <span class="readonlyfield">%(status)s</span>
+                    <label>%(supplier_text)s</label>: <span class="readonlyfield">%(supplier)s</span>
+                    <label>%(catalogue_text)s</label>: <span class="readonlyfield">%(catalogue)s</span>
+                    <label>%(from_text)s</label>: <span class="readonlyfield">%(date_from)s</span>
+                    <label>%(to_text)s</label>: <span class="readonlyfield">%(date_to)s</span>''' % {
+                    'status_text': _('Status'),
+                    'supplier_text': _('Supplier'),
+                    'catalogue_text': _('Catalogue'),
+                    'from_text': _('From'),
+                    'to_text': _('To'),
                     'status': x[6] and _('Active') or _('Inactive'),
                     'supplier': x[1],
                     'catalogue': x[2],
