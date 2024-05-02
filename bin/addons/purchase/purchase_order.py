@@ -1007,7 +1007,7 @@ class purchase_order(osv.osv):
                             help="unique number of the purchase order,computed automatically when the purchase order is created", sort_column='id'),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=False),
-        'order_line_mismatch': fields.one2many('purchase.order.line', 'order_id', 'PO lines Mismatch with Catologues', readonly=1, domain=['&', '&', ('product_id', '!=', False), ('catalog_mismatch', 'not in', ['conform', '']), '|', ('state', 'not in', ['cancel', 'cancel_r']), ('confirmation_date', '!=', False)], context={'from_mismatch': True}),
+        'order_line_mismatch': fields.one2many('purchase.order.line', 'order_id', 'PO Lines Mismatch with Catalogues', readonly=1, domain=['&', '&', ('product_id', '!=', False), ('catalog_mismatch', 'not in', ['conform', '']), '|', ('state', 'not in', ['cancel', 'cancel_r']), ('confirmation_date', '!=', False)], context={'from_mismatch': True}),
         'partner_id': fields.many2one('res.partner', 'Supplier', required=True, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True, domain="[('partner_id', '=', partner_id)]"),
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner'),

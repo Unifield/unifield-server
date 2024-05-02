@@ -773,7 +773,7 @@ class purchase_order_line(osv.osv):
 
         'catalog_mismatch': fields.selection([('conform', 'Conform'), ('na', 'N/A'),('soq', 'SOQ') ,('price', 'Unit Price'), ('price_soq', 'Unit Price & SOQ')], 'Catalog Mismatch', size=64, readonly=1, select=1),
         'catalog_price_unit': fields.float_null('Catalogue Price Unit', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
-        'catalog_soq': fields.float_null('Catalogue QoQ', digits=(16,2), readonly=1),
+        'catalog_soq': fields.float_null('Catalogue SoQ', digits=(16,2), readonly=1),
     }
 
     _defaults = {
