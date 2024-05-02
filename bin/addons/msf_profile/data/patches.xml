@@ -1049,6 +1049,10 @@
             <field name="method">us_12074_gdpr_remove_personal_data_from_track_changes</field>
         </record>
 
+        <record id="us_11135_set_pol_confirmation_date" model="patch.scripts">
+            <field name="method">us_11135_set_pol_confirmation_date</field>
+        </record>
+
 
     </data>
 </openerp>

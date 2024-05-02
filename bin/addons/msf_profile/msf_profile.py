@@ -72,6 +72,113 @@ class patch_scripts(osv.osv):
             """)
         return True
 
+    def us_11135_set_pol_confirmation_date(self, cr, uid, *a, **b):
+
+        cr.execute('''
+            update purchase_order set catalogue_not_applicable='t' where state in ('done', 'cancel', 'confirmed')
+        ''')
+
+        cr.execute('''
+            update
+                purchase_order_line pol
+            set confirmation_date = po.date_confirm
+            from
+                purchase_order po
+            where
+                pol.order_id = po.id and
+                pol.state in ('done', 'confirmed') and
+                pol.confirmation_date is null and
+                po.date_confirm is not null
+        ''')
+
+        cr.execute('''
+            update
+                purchase_order_line pol
+            set confirmation_date = audit_line.timestamp
+            from
+                audittrail_log_line audit_line, ir_model_fields f, ir_model m
+            where
+                pol.state in ('done', 'confirmed', 'cancel', 'cancel_r') and
+                pol.confirmation_date is null and
+                audit_line.field_id = f.id and
+                audit_line.object_id = m.id and
+                m.model='purchase.order' and
+                f.model='purchase.order.line' and
+                f.name='state_to_display' and
+                audit_line.fct_res_id = pol.id and
+                audit_line.new_value in ('Confirmed', 'Resourced-c')
+        ''')
+
+        cr.execute("""
+            update purchase_order_line pol1 set
+                catalog_mismatch=
+                    case
+                        when catl.catalogue_id is null then ''
+                        when catl.id is null then 'na'
+                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding=0 or pol.product_qty%catl.soq_rounding=0) then 'price'
+                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and catl.soq_rounding!=0 and pol.product_qty%catl.soq_rounding!=0 then 'price_soq'
+                        when catl.soq_rounding!=0 and pol.product_qty%catl.soq_rounding!=0 then  'soq'
+                        else 'conform'
+                    end,
+                catalog_price_unit=
+                    case
+                        when catl.catalogue_id is null or catl.id is null  then null
+                        else catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)
+                    end,
+                catalog_soq=catl.soq_rounding
+            from purchase_order_line pol
+                left join purchase_order po on po.id = pol.order_id
+                left join product_pricelist curr_pricelist on curr_pricelist.id = po.pricelist_id
+                left join lateral (
+                    select
+                        cat.id as catalogue_id, cat_line.id, cat.currency_id as cat_currency_id, cat_line.unit_price as cat_unit_price, cat_line.rounding as soq_rounding
+                    from
+                        supplier_catalogue cat
+                        left join supplier_catalogue_line cat_line on cat_line.catalogue_id = cat.id and cat_line.product_id = pol.product_id and cat_line.line_uom_id = pol.product_uom
+                    where
+                        cat.partner_id = po.partner_id and
+                        cat.active = 't' and
+                        cat.state = 'confirmed' and
+                        (cat.period_from is null or cat.period_from < pol.confirmation_date) and
+                        (cat.period_to is null or cat.period_to > pol.confirmation_date)
+                    order by
+                        cat.currency_id = curr_pricelist.currency_id, coalesce(cat_line.min_qty,0) <= pol.product_qty desc, abs(pol.product_qty - coalesce(cat_line.min_qty,0)) asc, cat_line.id
+                    limit 1
+                ) catl on true
+                left join lateral (
+                    select
+                        rate
+                    from
+                        res_currency_rate
+                    where
+                        currency_id = curr_pricelist.currency_id and
+                        name <= pol.confirmation_date
+                    order by
+                        name desc
+                    limit 1
+                ) po_rate on true
+                left join lateral (
+                    select
+                        rate
+                    from
+                        res_currency_rate
+                    where
+                        currency_id = catl.cat_currency_id and
+                        name <= pol.confirmation_date
+                    order by
+                        name desc
+                    limit 1
+                ) cat_rate on true
+            where
+                pol1.id = pol.id and
+                pol1.confirmation_date is not null and
+                pol.product_id is not null and
+                pol.state in ('confirmed', 'done', 'cancel', 'cancel_r') and
+                po.state not in ('done', 'cancel', 'confirmed')
+        """)
+
+        return True
+
 
     # UF32.0
     def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):

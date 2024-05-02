@@ -915,6 +915,7 @@ Please check if these can be switched for UniData type product(s) instead, or co
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'confirmed', cr)
 
+            self._compute_catalog_mismatch(cr, uid, pol_id=pol.id, context=context)
             self.write(cr, uid, [pol.id], {'state': 'confirmed', 'confirmation_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
 
             if pol.order_id.order_type == 'direct':
