@@ -413,10 +413,10 @@ class hq_report_ocp(report_sxw.report_sxw):
                        CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.code ELSE aj.code END AS journal,
                        al.entry_sequence, al.name, al.ref, al.document_date, al.date,
                        a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, 
-                       CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, 
-                       CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit, 
-                       c.name AS "booking_currency", 
-                       CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, 
+                       CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit,
+                       CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit,
+                       c.name AS "booking_currency",
+                       CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit,
                        CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit,
                        cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id, hr.name_resource as hr_name,
                        CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type
@@ -740,7 +740,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     a.code as account_code, -- 16
                     hr.identification_id as emplid, -- 17
                     aml.id as account_move_line_id, -- 18
-                    dest.code as destination_code -- 19
+                    dest.code as destination_code, -- 19
+                    c.ocp_workday_decimal = 0 as no_decimal -- 20
                 FROM
                     account_analytic_line AS al,
                     account_account AS a,
@@ -795,7 +796,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     aml.partner_id,  -- 14
                     j.code as journal_code, -- 15
                     a.code as account_code,  -- 16
-                    hr.identification_id as emplid  -- 17
+                    hr.identification_id as emplid,  -- 17
+                    c.ocp_workday_decimal = 0 as no_decimal -- 18
                 FROM
                     account_move_line aml
                     INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -826,6 +828,9 @@ class hq_report_ocp_workday(hq_report_ocp):
             'Journal Type',
             'Booking Debit',
             'Booking Credit',
+            'Booking Debit Arrondi',
+            'Booking Credit Arrondi',
+            'Ecart',
             'Book. Currency',
             'Func. Debit',
             'Func. Credit',
@@ -872,6 +877,19 @@ class hq_report_ocp_workday(hq_report_ocp):
                         #        journal = original_ref[8:11] or ''
                     else:
                         amls.add(row['id'])
+
+                    if row['no_decimal']:
+                        book_debit_round = round(row['book_debit'])
+                        if row['book_debit'] > 0 and not book_debit_round:
+                            book_debit_round = 1
+                        book_credit_round = round(row['book_credit'])
+                        if row['book_credit'] > 0 and not book_credit_round:
+                            book_credit_round = 1
+                        ecart = round( (book_credit_round - book_debit_round) - (row['book_credit'] - row['book_debit']), 2)
+                    else:
+                        book_debit_round = row['book_debit']
+                        book_credit_round = row['book_credit']
+                        ecart = 0
                     writer.writerow([
                         finance_archive._get_hash(cr, uid, ids='%s'%row['id'], model=obj), # DB-ID
                         row['instance'], # Instance
@@ -882,6 +900,9 @@ class hq_report_ocp_workday(hq_report_ocp):
                         journal_type.get(row['journal_type'], row['journal_type']), # Journal Type
                         row['book_debit'], # Booking Debit
                         row['book_credit'], # Booking Credit
+                        book_debit_round,
+                        book_credit_round,
+                        ecart,
                         row['booking_currency'], # Book. Currency
                         row['func_debit'], # Func. Debit
                         row['func_credit'], # Func. Credit
@@ -917,7 +938,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     p.date_stop AS document_date,  -- 9
                     j.code as journal_code,  -- 10
                     a.code as account_code, -- 11
-                    i.code as instance_code -- 12
+                    i.code as instance_code, -- 12
+                    c.ocp_workday_decimal = 0 as no_decimal -- 13
                 FROM
                     account_move_line aml
                     INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -946,7 +968,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     c.name,
                     p.date_stop,
                     j.type,
-                    p.date_stop
+                    p.date_stop,
+                    c.ocp_workday_decimal
         """, sql_params)
         while True:
             rows = cr.fetchmany(500)
@@ -955,6 +978,17 @@ class hq_report_ocp_workday(hq_report_ocp):
             amls = set()
             for row in rows:
                 amls.update(row[0])
+                if row[13]:
+                    amount_currency_round = round(row[5])
+                    if row[5] > 0 and not amount_currency_round:
+                        amount_currency_round = 1
+                    elif row[5] < 0 and not amount_currency_round:
+                        amount_currency_round = -1
+                    ecart =  round(amount_currency_round - row[5], 2)
+                else:
+                    amount_currency_round = row[5]
+                    ecart = 0
+
                 writer.writerow([
                     finance_archive._get_hash(cr, uid, ids=row[0], model='account.move.line'), # DB-ID
                     row[1], # Instance
@@ -965,6 +999,9 @@ class hq_report_ocp_workday(hq_report_ocp):
                     journal_type.get(row[4], row[4]), # Journal Type
                     -1*row[5] if row[5] < 0 else 0, # Booking Debit
                     row[5] if row[5] > 0 else 0, # Booking Credit
+                    -1*amount_currency_round if row[5] < 0 else 0,
+                    amount_currency_round if row[5] > 0 else 0,
+                    ecart,
                     row[6], # Book. Currency
                     -1 * row[7] if row[7] < 0 else 0, # Func. Debit
                     row[7] if row[7] > 0 else 0, # Func. Credit

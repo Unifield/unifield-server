@@ -308,11 +308,13 @@ class res_currency(osv.osv):
                                             type='boolean', string='transport PO currencies'),
         'partner_currency': fields.function(_get_partner_currency, fnct_search=_src_partner_currency, type='boolean', method=True,
                                             string='Partner currency', store=False, help='Only technically to filter currencies according to partner type'),
+        'ocp_workday_decimal': fields.integer('OCP Workday decimal'),
     }
     _defaults = {
         'active': lambda *a: 0,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'res.currency', context=c),
         'accuracy': 4,
+        'ocp_workday_decimal': 2,
     }
 
     _sql_constraints = [

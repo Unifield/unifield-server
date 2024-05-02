@@ -57,6 +57,28 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_12472_currency_workday_set_no_decimal(self, cr, uid, *a, **b):
+        cr.execute('''update res_currency set ocp_workday_decimal=0 where currency_table_id is null and name in (
+                        'BIF',
+                        'BYR'
+                        'CLP',
+                        'DJF',
+                        'GNF',
+                        'ISK',
+                        'JPY',
+                        'KMF',
+                        'KRW',
+                        'PYG',
+                        'RWF',
+                        'UGX',
+                        'UYI',
+                        'VND',
+                        'VUV',
+                        'XAF',
+                        'XOF',
+                        'XPF'
+                    )''')
+        return True
     def us_12472_hr_populate_expat_creation_date(self, cr, uid, *a, **b):
         cr.execute('''update hr_employee set expat_creation_date=create_date where employee_type='ex' ''')
         return True
