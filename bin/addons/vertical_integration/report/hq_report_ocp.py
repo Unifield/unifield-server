@@ -209,15 +209,15 @@ account_balances_per_currency_sql = """
            c.name AS currency
     FROM
     (
-        SELECT instance_id, account_id, currency_id, SUM(col1) AS opening, 
+        SELECT instance_id, account_id, currency_id, SUM(col1) AS opening,
                SUM(col2) AS calculated, SUM(col3) AS closing
         FROM (
             (
-                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
                        aml.currency_id AS currency_id,
                 ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
-                FROM account_move_line AS aml 
-                LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id
                 LEFT JOIN account_account acc ON aml.account_id = acc.id
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
                 WHERE acc.active = 't'
@@ -229,11 +229,11 @@ account_balances_per_currency_sql = """
             )
         UNION
             (
-                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
                        aml.currency_id AS currency_id,
                 0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3
-                FROM account_move_line AS aml 
-                LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id
                 LEFT JOIN account_account acc ON aml.account_id = acc.id
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
                 WHERE acc.active = 't'
@@ -245,11 +245,11 @@ account_balances_per_currency_sql = """
             )
         UNION
             (
-                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
                        aml.currency_id AS currency_id,
                 0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
-                FROM account_move_line AS aml 
-                LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id
                 LEFT JOIN account_account acc ON aml.account_id = acc.id
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
                 WHERE acc.active = 't'
@@ -269,6 +269,73 @@ account_balances_per_currency_sql = """
     WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0);
     """
 
+account_balances_per_currency_with_euro_sql = """
+    SELECT i.code AS instance, acc.code, acc.name, %(period_yyymm)s AS period, c.name AS currency, req.opening, req.calculated, req.closing, req.opening_eur, req.calculated_eur, req.closing_eur
+    FROM
+    (
+        SELECT instance_id, account_id, currency_id, SUM(col1) AS opening,
+               SUM(col2) AS calculated, SUM(col3) AS closing,
+               sum(col4) as opening_eur, sum(col5) as calculated_eur, sum(col6) as closing_eur
+        FROM (
+            (
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
+                       aml.currency_id AS currency_id,
+                ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3,
+                ROUND(SUM(coalesce(debit, 0) - coalesce(credit, 0)), 2) as col4, 0.00 as col5, 0.00 as col6
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id
+                LEFT JOIN account_account acc ON aml.account_id = acc.id
+                LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                WHERE acc.active = 't'
+                AND curr.active = 't'
+                AND ( aml.date < %(first_day_of_period)s or aml.period_id in %(include_period_opening)s )
+                AND j.instance_id IN %(instance_ids)s
+                AND j.type NOT IN ('migration', 'inkind', 'extra')
+                GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+            )
+        UNION
+            (
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
+                       aml.currency_id AS currency_id,
+                0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3,
+                0.00 as col4, ROUND(SUM(coalesce(debit, 0) - coalesce(credit, 0)), 2) as col5, 0.00 as col6
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                LEFT JOIN account_account acc ON aml.account_id = acc.id
+                LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                WHERE acc.active = 't'
+                AND curr.active = 't'
+                AND aml.period_id = %(period_id)s
+                AND j.instance_id IN %(instance_ids)s
+                AND j.type NOT IN ('migration', 'inkind', 'extra')
+                GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+            )
+        UNION
+            (
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
+                       aml.currency_id AS currency_id,
+                0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3,
+                0.00 as col4, 0.00 as col5, ROUND(SUM(coalesce(debit, 0) - coalesce(credit, 0)), 2) as col6
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id
+                LEFT JOIN account_account acc ON aml.account_id = acc.id
+                LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                WHERE acc.active = 't'
+                AND curr.active = 't'
+                AND ( aml.date <= %(last_day_of_period)s and aml.period_id not in %(exclude_period_closing)s )
+                AND j.instance_id IN %(instance_ids)s
+                AND j.type NOT IN ('migration', 'inkind', 'extra')
+                GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+            )
+        ) AS ssreq
+        GROUP BY instance_id, account_id, currency_id
+        ORDER BY instance_id, account_id, currency_id
+    ) AS req
+    INNER JOIN account_account acc ON req.account_id = acc.id
+    INNER JOIN res_currency c ON req.currency_id = c.id
+    INNER JOIN msf_instance i ON req.instance_id = i.id
+    WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0);
+    """
 
 
 class hq_report_ocp(report_sxw.report_sxw):
@@ -920,11 +987,12 @@ class hq_report_ocp_workday(hq_report_ocp):
         balances_file_name = balances_file.name
         writer = csv.writer(balances_file, quoting=csv.QUOTE_ALL, delimiter=",")
         writer.writerow([
-            'Instance', 'Account', 'Account Name', 'Period', 'Starting balance',
-            'Calculated balance', 'Closing balance', 'Booking Currency'
+            'Instance', 'Account', 'Account Name', 'Period', 'Booking Currency',
+            'Starting balance', 'Calculated balance', 'Closing balance',
+            'Starting balance in EUR', 'Calculated balance in EUR', 'Closing balance in EUR'
         ])
 
-        cr.execute(account_balances_per_currency_sql, sql_params)
+        cr.execute(account_balances_per_currency_with_euro_sql, sql_params)
         while True:
             rows = cr.fetchmany(500)
             if not rows:
