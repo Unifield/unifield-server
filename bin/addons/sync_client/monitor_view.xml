@@ -123,7 +123,7 @@ res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client',
 action = {
 'res_model' : 'ir.cron',
 'view_type' : 'form',
-'view_mode' : 'form',
+'view_mode' : 'form,tree',
 'type': 'ir.actions.act_window',
 'res_id' : res[1],
 }</field>
