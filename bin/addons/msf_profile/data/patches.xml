@@ -1048,5 +1048,9 @@
             <field name="method">us_12472_hr_populate_expat_creation_date</field>
         </record>
 
+        <record id="us_12472_currency_workday_set_no_decimal" model="patch.scripts">
+            <field name="method">us_12472_currency_workday_set_no_decimal</field>
+        </record>
+
     </data>
 </openerp>
