@@ -57,6 +57,22 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF33.0
+    def us_12074_gdpr_remove_personal_data_from_track_changes(self, cr, uid, *a, **b):
+        '''
+        GDPR - Remove from staff track changes the fields removed from US-7791
+        '''
+        cr.execute(
+            """
+            DELETE FROM audittrail_log_line
+            WHERE
+                name IN ('birthday', 'gender', 'marital', 'mobile_phone', 'notes', 'private_phone', 'work_email',
+            'work_phone', 'country_id', 'ssnid', 'bank_name', 'bank_account_number') AND
+                object_id = (SELECT id FROM ir_model WHERE model = 'resource.resource')
+            """)
+        return True
+
+
     # UF32.0
     def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
