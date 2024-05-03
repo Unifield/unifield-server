@@ -57,6 +57,13 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_12195_deactivate_asset_creation_rule(self, cr, uid, *a, **b):
+        asset_obj = self.pool.get('audittrail.rule')
+        asset_ids = asset_obj.search(cr, uid, [('name', '=', 'Asset Form Creation')])
+        if asset_ids:
+            asset_obj.write(cr, uid, asset_ids, {'state': 'draft'})
+        return True
+
     # UF32.0
     def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
