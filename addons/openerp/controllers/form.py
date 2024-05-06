@@ -855,7 +855,7 @@ class Form(SecuredController):
         elif params.id:
             proxy = rpc.RPCProxy(params.model)
             res = proxy.read([params.id],[params.field, 'path', 'datas_fname'], rpc.session.context)
-            if res[0]['path']:
+            if res[0].get('path'):
                 return serve_file.serve_file(res[0]['path'],
                                              "application/x-download", 'attachment',
                                              res[0]['datas_fname'])
