@@ -31,9 +31,8 @@
                             <field name="balance_start" readonly="1"/>
                             <group col="3" colspan="4">
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}" string="Bank statement balance"/>
-                                <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-Month Balance" icon="gtk-apply"
-                                    colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                    confirm="Are you sure you want to freeze closing balance?"/>
+                                <button name="wiz_confirm_closing_balance" type="object" string="Confirm End-of-Month Balance" icon="gtk-apply"
+                                    colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"/>
                             </group>
                             <field name="balance_end" readonly="1"/>
                             <group col="3" colspan="4">
@@ -372,9 +371,8 @@
                                             <field name="subtotal"/>
                                         </form>
                                     </field>
-                                    <button name="button_confirm_closing_balance" type="object" string="Confirm month-end cash count" icon="gtk-apply"
-                                        colspan="4" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                        confirm="Are you sure you want to freeze closing balance?"/>
+                                    <button name="wiz_confirm_closing_balance" type="object" string="Confirm month-end cash count" icon="gtk-apply"
+                                        colspan="4" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"/>
                                     <button name="button_cancel_closing_balance_confirmation" type="object"
                                             string="Re-open month-end cash count" icon="gtk-undo" colspan="4"
                                             attrs="{'invisible': ['|', ('closing_balance_frozen', '=', False), ('state', '!=', 'open')]}"/>
