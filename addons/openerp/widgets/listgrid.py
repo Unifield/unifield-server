@@ -543,12 +543,11 @@ class List(TinyWidget):
                                     rounding = row_value.get(fields[name]['related_uom'])
                                 cell = CELLTYPES[kind](value=row_value.get(name, False), rounding=self.rounding_values.get(rounding), **fields[name])
                             else:
-                                cell = CELLTYPES[kind](value=row_value.get(name, False), **fields[name])
+                                cell = CELLTYPES[kind](value=row_value.get(name, False), row_value=row_value, **fields[name])
 
                         for color, expr in list(self.colors.items()):
                             try:
-                                if expr_eval(expr,
-                                             dict(row_value, active_id=rpc.session.active_id or False)):
+                                if expr_eval(expr, dict(row_value, active_id=rpc.session.active_id or False)):
                                     cell.color = color
                                     break
                             except:
@@ -590,6 +589,17 @@ class Char(TinyWidget):
         self.truncate = attrs.get('truncate', False)
 
         self.color = None
+        for color_spec in attrs.get('colors', '').split(';'):
+            if color_spec:
+                color, expr = color_spec.split(':')
+                try:
+                    if attrs.get('row_value', {}) and \
+                            expr_eval(expr, dict(attrs['row_value'], active_id=rpc.session.active_id or False)):
+                        self.color = color
+                        break
+                except:
+                    pass
+
         self.onclick = None
 
     def get_text(self):

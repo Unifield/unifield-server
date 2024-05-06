@@ -710,7 +710,7 @@ _NODES = {
 
 _PROPERTIES = {
     'field' : ['name', 'string', 'required', 'readonly', 'select', 'domain', 'context', 'nolabel', 'completion',
-               'colspan', 'widget', 'eval', 'ref', 'on_change', 'attrs', 'groups'],
+               'colspan', 'widget', 'eval', 'ref', 'on_change', 'attrs', 'groups', 'colors'],
     'form' : ['string', 'col', 'link'],
     'notebook' : ['colspan', 'position', 'groups'],
     'page' : ['string', 'states', 'attrs', 'groups'],
