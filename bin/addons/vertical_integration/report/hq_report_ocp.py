@@ -659,6 +659,11 @@ hq_report_ocp('report.hq.ocp', 'account.move.line', False, parser=False)
 
 class hq_report_ocp_workday(hq_report_ocp):
 
+    def update_percent(self, cr, uid, percent):
+        if self.bk_id:
+            self.pool.get('memory.background.report').write(cr, uid, self.bk_id, {'percent': percent})
+
+
     def create(self, cr, uid, ids, data, context=None):
 
         if not data.get('form', False):
@@ -670,6 +675,9 @@ class hq_report_ocp_workday(hq_report_ocp):
         pool = pooler.get_pool(cr.dbname)
 
         new_cr = pooler.get_db(cr.dbname).cursor()
+
+        self.bk_id = context.get('background_id')
+        self.pool = pool
 
         mi_obj = pool.get('msf.instance')
         period_obj = pool.get('account.period')
@@ -717,7 +725,7 @@ class hq_report_ocp_workday(hq_report_ocp):
         }
 
 
-
+        self.update_percent(cr, uid, 0.05)
         # analytic lines raw_data
         analytic_query = """
                 SELECT
@@ -923,6 +931,10 @@ class hq_report_ocp_workday(hq_report_ocp):
                 if amls:
                     new_cr.execute("update account_move_line set exported='t' where id in %s", (tuple(amls), ))
 
+                self.update_percent(cr, uid, 0.45)
+
+        self.update_percent(cr, uid, 0.80)
+
         # B/S lines consolidated
         cr.execute("""
                 SELECT
@@ -1018,6 +1030,8 @@ class hq_report_ocp_workday(hq_report_ocp):
             if amls:
                 new_cr.execute("update account_move_line set exported='t' where id in %s", (tuple(amls),))
 
+        self.update_percent(cr, uid, 0.90)
+
         lines_file.close()
 
         balances_file = tempfile.NamedTemporaryFile('w', delete=False, newline='')
@@ -1037,6 +1051,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             for row in rows:
                 writer.writerow(row)
         balances_file.close()
+        self.update_percent(cr, uid, 0.75)
 
         if data.get('output_file'):
             tmpzipname = data['output_file']

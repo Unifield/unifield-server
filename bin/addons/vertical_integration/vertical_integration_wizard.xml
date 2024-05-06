@@ -227,10 +227,12 @@
                        on_change="onchange_instance_id(instance_id)"
                        attrs="{'required': [('all_missions', '=', False)]}"
                 />
-                <field name="fiscalyear_id"/>
+            <field name="fiscalyear_id"/>
+            <field name="export_type" invisible="1" />
                 <field name="all_missions"
                        string="or All Missions"
                        on_change="onchange_all_missions(all_missions)"
+                       attrs="{'invisible': [('export_type', '!=', 'arcole')]}"
                 />
                 <field name="period_id"
                        domain="[('period_visible', '=', [fiscalyear_id, instance_id, all_missions])]"
