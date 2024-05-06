@@ -157,6 +157,8 @@ class O2M(TinyInputWidget):
         self.filter_selector = attrs.get('filter_selector', None)
         if current.default_selector_value:
             self.default_selector = current.default_selector_value
+        elif attrs.get('default_selector') and isinstance(attrs.get('default_selector'), list):
+            self.default_selector = [0 for sel in attrs.get('default_selector')]
         else:
             self.default_selector = 0
         if self.filter_selector:
@@ -165,17 +167,29 @@ class O2M(TinyInputWidget):
             # filter as default
             # _terp_filter_action set means pager action: next, previous ... so domain must be computed again
             if current.domain == None or params.get('_terp_filter_action'):
-                # Expect filter_selector to be a non-empty list
-                # of (name, domain)
+                # Expect filter_selector to be a non-empty list of (name, domain)
                 assert len(self.filter_selector) > 0
-                assert len(self.filter_selector[0]) == 2
-                if attrs.get('default_selector'):
-                    try:
-                        self.default_selector = int(attrs.get('default_selector'))
-                    except:
-                        pass
+                if isinstance(self.filter_selector[0], list):
+                    # Check if there is the same number of filters and default selectors
+                    assert len(self.filter_selector) == len(attrs.get('default_selector'))
+                    if attrs.get('default_selector'):
+                        try:
+                            self.default_selector = [int(sel) for sel in attrs.get('default_selector')]
+                        except:
+                            pass
+                    default_domain = []
+                    for i, filter in enumerate(self.filter_selector):
+                        assert len(filter[0]) == 2
+                        default_domain.extend(filter[self.default_selector[i]][1])
+                else:
+                    assert len(self.filter_selector[0]) == 2
+                    if attrs.get('default_selector'):
+                        try:
+                            self.default_selector = int(attrs.get('default_selector'))
+                        except:
+                            pass
 
-                default_domain = self.filter_selector[self.default_selector][1]
+                    default_domain = self.filter_selector[self.default_selector][1]
                 current.domain = default_domain
 
 
