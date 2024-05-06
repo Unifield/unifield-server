@@ -502,9 +502,9 @@ class hr_payroll_employee_import(osv.osv_memory):
         Read lines from reader and update database
         """
         res = []
-        if not contract_reader or not job_reader:
-            return res
-        libelle_dict = self.get_job_libelles(cr, uid, job_reader, context=context)
+        libelle_dict = {}
+        if job_reader:
+            libelle_dict = self.get_job_libelles(cr, uid, job_reader, context=context)
         for line in contract_reader:
             if not line.get('contratencours'): #or not line.get('contratencours') == 'O':
                 continue
