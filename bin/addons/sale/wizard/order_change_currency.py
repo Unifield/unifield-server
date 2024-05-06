@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -79,7 +79,10 @@ class sale_order_change_currency(osv.osv_memory):
         line_obj = self.pool.get('sale.order.line')
         order_obj = self.pool.get('sale.order')
 
-        for wiz in self.browse(cr, uid, ids, context=context):            
+        for wiz in self.browse(cr, uid, ids, context=context):
+            # US-12248: Prevent currency change if the partner has changed
+            if wiz.partner_id.id != wiz.order_id.partner_id.id:
+                raise osv.except_osv(_('Error'), _('The document\'s Customer has been changed since you have opened this popup. Please refresh/reload the page before trying to change the currency'))
             for line in wiz.order_id.order_line:
                 new_price = currency_obj.compute(cr, uid, wiz.old_pricelist_id.currency_id.id, wiz.new_pricelist_id.currency_id.id, line.price_unit, round=False, context=context)
                 line_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=c)

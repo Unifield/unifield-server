@@ -3151,7 +3151,7 @@ class sale_order_line(osv.osv):
 
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty=0, uom=False, qty_uos=0, uos=False, name='',
                              partner_id=False, lang=False, update_tax=True, date_order=False, packaging=False,
-                             fiscal_position=False, flag=False, categ=False, context=None):
+                             fiscal_position=False, flag=False, categ=False, instance_sync_order_ref=False, context=None):
         """
         Call sale_order_line.product_id_change() method and check if the selected product is consistent
         with order category.
@@ -3173,6 +3173,7 @@ class sale_order_line(osv.osv):
         :param fiscal_position: Fiscal position selected on the order of the line
         :param flag: ???
         :param categ: Category of the FO
+        :param instance_sync_order_ref: Order in the customer instance
         :param context: Context of the call
         :return: Result of the sale_order_line.product_id_change() method
         """
@@ -3208,6 +3209,17 @@ class sale_order_line(osv.osv):
 
                 res['warning']['message'] = '%s \n %s' % \
                     (res.get('warning', {}).get('message', ''), consistency_message)
+
+        if instance_sync_order_ref and product and \
+                'FO' in self.pool.get('sync.order.label').read(cr, uid, instance_sync_order_ref)['name'] and \
+                prod_obj.read(cr, uid, product, ['type'], context=context)['type'] == 'service_recep':
+            return {
+                'value': {'product_id': False},
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _("You can not select a Service product if the Order in sync. instance is a FO"),
+                }
+            }
 
         return res
 
@@ -3402,14 +3414,34 @@ class sale_order_line(osv.osv):
 
         return res
 
-    def on_change_instance_sync_order_ref(self, cr, uid, ids, instance_sync_order_ref, context=None):
+    def on_change_instance_sync_order_ref(self, cr, uid, ids, instance_sync_order_ref, product_id, nomen_manda_0, context=None):
+        if context is None:
+            context = {}
+
         if instance_sync_order_ref:
-            return {'warning':
-                    {
+            # Check for service product/nomenclature
+            product_type = product_id and self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type'] or False
+            nomen_srv = False
+            if not product_id and nomen_manda_0:
+                nomen_srv_domain = [('name', '=', 'SRV'), ('type', '=', 'mandatory'), ('level', '=', 0)]
+                data_nomen_srv = self.pool.get('product.nomenclature').search(cr, uid, nomen_srv_domain, limit=1)
+                nomen_srv = data_nomen_srv and nomen_manda_0 == data_nomen_srv[0] or False
+            if (product_type == 'service_recep' or nomen_srv) and \
+                    'FO' in self.pool.get('sync.order.label').read(cr, uid, instance_sync_order_ref)['name']:
+                return {
+                    'value': {'instance_sync_order_ref': False},
+                    'warning': {
                         'title': _('Warning'),
-                        'message': _("Please ensure that you selected the correct Source document because once the line is saved you will not be able to edit this field anymore. In case of mistake, the only option will be to Cancel the line and Create a new one with the correct Source document."),
+                        'message': _("You can not select a FO as Order in sync. instance if the product is Service"),
                     }
-                    }
+                }
+
+            return {
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _("Please ensure that you selected the correct Source document because once the line is saved you will not be able to edit this field anymore. In case of mistake, the only option will be to Cancel the line and Create a new one with the correct Source document."),
+                }
+            }
         return {}
 
     def get_error(self, cr, uid, ids, context=None):

@@ -365,16 +365,16 @@
                     <para style="LFooter"> </para>
                 </td>
                 <td>
-                    <para style="LFooter">Approved by :</para>
+                    <para style="LFooter">[[ translate('Approved by') ]] [[ getSign(objects[0], 'sr', 'backup') ]]:</para>
                 </td>
                 <td>
-                    <para style="LFooter">Logistics / Supply :</para>
+                    <para style="LFooter">[[ getSign(objects[0], 'tr', 'backup') ]]Logistics / Supply :</para>
                 </td>
                 <td>
-                    <para style="LFooter">Storekeeper :</para>
+                    <para style="LFooter">[[ getSign(objects[0], 'fr', 'backup') ]]Storekeeper :</para>
                 </td>
                 <td>
-                    <para style="LFooter">Receiver :</para>
+                    <para style="LFooter">[[ getSign(objects[0], 'mr', 'backup') ]]Receiver :</para>
                 </td>
             </tr>
             <tr>

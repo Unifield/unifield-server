@@ -38,20 +38,25 @@ class account_invoice(osv.osv):
         inactive_lines = invoice_line.search(cr, uid, [
             ('product_id.active', '=', False),
             ('invoice_id', 'in', ids),
-            ('invoice_id.state', 'not in', ['draft', 'cancel', 'done'])
         ], context=context)
 
         if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            prod = {}
+            for line in invoice_line.browse(cr, uid, inactive_lines[0:5], fields_to_fetch=['product_id'], context=context):
+                if line.product_id:
+                    prod[line.product_id.default_code] = True
+            if len(prod) == 1:
+                plural= _('Product %s has') % list(prod.keys())[0]
+            else:
+                if len(inactive_lines) > 5:
+                    prod['...'] = True
+                plural= _('Products %s have') % (','. join(prod.keys()), )
+
             l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
             p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
             return False
         return True
-
-    _constraints = [
-        (_check_active_product, "You cannot validate this invoice because it contains a line with an inactive product", ['invoice_line', 'state'])
-    ]
 
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select="1"), # select: optimisation purpose

@@ -849,12 +849,14 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
     if cr:
         cr.execute("SELECT relname FROM pg_class WHERE relkind='r' AND relname='ir_module_module'")
         if len(cr.fetchall())==0:
+            if not tools.config["init"] and not tools.config["update"]:
+                cr.close()
+                raise Exception('Emtpy DB')
             logger.notifyChannel("init", netsvc.LOG_INFO, "init db")
             tools.init_db(cr)
             tools.config["init"]["all"] = 1
             tools.config['update']['all'] = 1
-            if not tools.config['without_demo']:
-                tools.config["demo"]['all'] = 1
+
     force = []
     if force_demo:
         force.append('demo')

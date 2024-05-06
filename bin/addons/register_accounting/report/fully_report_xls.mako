@@ -930,6 +930,61 @@ endif
       </Row>
 % endfor
 % endif
+<!-- G/L account corrected from Expense to B/S : no analytic line to display changes -->
+    % for corrected_no_ad in getMlCorNoAd(inv_line.id):
+      % if not corrected_no_ad.account_id.is_analytic_addicted:
+        <%
+        line_color = 'red'
+        if corrected_no_ad.reversal:
+            line_color = 'green'
+        elif corrected_no_ad.corrected:
+            line_color = 'purple'
+        endif
+        %>
+      <Row>
+        <Cell ss:Index="5" />
+        <Cell ss:StyleID="${line_color}_ana_left">
+            <Data ss:Type="String">${corrected_no_ad.move_id.name}</Data>
+        </Cell>
+        % if o.journal_id.type == 'cheque':
+            <Cell ss:StyleID="${line_color}_ana_left" />
+        % endif
+        <Cell ss:StyleID="${line_color}_ana_left" />
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${corrected_no_ad.account_id.code + ' ' + corrected_no_ad.account_id.name|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${corrected_no_ad.partner_txt or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_amount">
+          <Data ss:Type="Number">${corrected_no_ad.amount_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${(corrected_no_ad.reversal and _('Reversal') or corrected_no_ad.corrected and _('Corrected') or '')}</Data>
+        </Cell>
+      </Row>
+      % endif
+
+
+    % endfor
 % endfor
 
 <!-- Display analytic lines linked to this register line -->
@@ -938,10 +993,14 @@ endif
 a_lines = False
 if not line.invoice_id and not line.imported_invoice_line_ids and line.fp_analytic_lines:
     a_lines = line.fp_analytic_lines
+corrected = {}
+last_exists = set()
+found_ana = False
 %>
 % if a_lines:
 % for ana_line in [x for x in sorted(a_lines, key=lambda x: x.id) if not x.free_account]:
 <%
+found_ana = True
 line_color = 'blue'
 if ana_line.is_reallocated:
     line_color = 'purple'
@@ -949,6 +1008,11 @@ elif ana_line.is_reversal:
     line_color = 'green'
 elif ana_line.last_corrected_id:
     line_color = 'red'
+endif
+if ana_line.last_corrected_id and not ana_line.is_reversal:
+    last_exists.add(ana_line.last_corrected_id.id)
+elif ana_line.is_reallocated:
+    corrected[ana_line.id] = ana_line.move_id.id
 endif
 %>
       <Row>
@@ -990,6 +1054,73 @@ endif
 % endfor
 % endif
 
+<%
+if not found_ana:
+    check_no_ad_cor = getLinkedMoveLines(line)
+else:
+    check_no_ad_cor = []
+    for x in last_exists:
+        if x in corrected:
+            del(corrected[x])
+    check_no_ad_cor = list(corrected.values())
+endif
+%>
+
+<!-- G/L account corrected from Expense to B/S : no analytic line to display changes -->
+    % for corrected_no_ad in getMlCorNoAd(check_no_ad_cor):
+      % if not corrected_no_ad.account_id.is_analytic_addicted:
+        <%
+        line_color = 'red'
+        if corrected_no_ad.reversal:
+            line_color = 'green'
+        elif corrected_no_ad.corrected:
+            line_color = 'purple'
+        endif
+        %>
+      <Row>
+          <Cell ss:Index="5" />
+        <Cell ss:StyleID="${line_color}_ana_left">
+            <Data ss:Type="String">${corrected_no_ad.move_id.name}</Data>
+        </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="${line_color}_ana_left" />
+        % endif
+        <Cell ss:StyleID="${line_color}_ana_left" />
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${corrected_no_ad.account_id.code + ' ' + corrected_no_ad.account_id.name|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${corrected_no_ad.partner_txt or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_amount">
+          <Data ss:Type="Number">${corrected_no_ad.amount_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${(corrected_no_ad.reversal and _('Reversal') or corrected_no_ad.corrected and _('Corrected') or '')}</Data>
+        </Cell>
+      </Row>
+      % endif
+
+
+    % endfor
 <!-- Display analytic lines Free 1 and Free 2 linked to this register line -->
 <%
 a_lines = False

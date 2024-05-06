@@ -1549,6 +1549,9 @@ class res_users(osv.osv):
         if context is None:
             context = {}
         model_data_obj = self.pool.get('ir.model.data')
+        if view_type == 'tree' and context.get('from_sign_view'):
+            view_id = model_data_obj.get_object_reference(cr, uid, 'board', 'view_user_signature_tree')[1]
+
         if view_type == 'search' and context.get('user_with_active_filter'):
             view_id = model_data_obj.get_object_reference(cr, uid, 'account_mcdb', 'user_search_with_active_filter')
             view_id = view_id and view_id[1] or False

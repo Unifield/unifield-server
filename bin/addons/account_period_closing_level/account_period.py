@@ -85,6 +85,7 @@ class account_period(osv.osv):
         curr_rate_obj = self.pool.get('res.currency.rate')
         user_obj = self.pool.get('res.users')
         move_line_obj = self.pool.get('account.move.line')
+        journ_obj = self.pool.get('account.journal')
 
         # previous state of the period
         ap_dict = self.read(cr, uid, ids, ['state'])[0]
@@ -228,24 +229,26 @@ class account_period(osv.osv):
                 self._check_asset(cr, uid, period, context=context)
 
                 # prevent period closing if one of the registers of the previous period
-                # has no corresponding register in the period to close AND has a non 0 balance. (except for period 13..16)
+                # has no corresponding register in the period to close while the register's journal is still active. (except for period 13..16)
+                # exclude check on liquidity journal on inactive instances
+                active_liquidity_journ_ids = journ_obj.search(cr, uid, [('type', 'in', ['cash', 'cheque', 'bank']),
+                                                                        ('is_active', '=', 't'),
+                                                                        ('instance_id.state', '=', 'active')], context=context)
                 if not period.special:
                     prev_period_id = register_tools.previous_period_id(self, cr, uid, period.id, context=context, raise_error=False)
                     if prev_period_id:
-                        # get the registers of the previous period which are NOT linked to a register of the period to close
-                        all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id), ('journal_id.type', 'in', ['bank', 'cash']), ('journal_id', 'not in', journal_ok)], order='NO_ORDER', context=context)
-                        reg_ko = []
-                        for reg in reg_obj.browse(cr, uid, all_prev_reg_ids,
-                                                  fields_to_fetch=['balance_end', 'balance_end_real', 'balance_end_cash', 'name'],
-                                                  context=context):
-                            if abs(reg.balance_end) > 10**-3 or abs(reg.balance_end_real) > 10**-3 or abs(reg.balance_end_cash) > 10**-3:
-                                reg_ko.append(reg)
-                        if len(reg_ko) > 0:
-                            # note: regs on inactive journals are always supposed to have a zero balance.
+                        # get the registers of the previous period which are NOT linked to a register of the period to close and which journals are active
+                        all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id),
+                                                                    ('journal_id.type', 'in', ['bank', 'cash', 'cheque']),
+                                                                    ('journal_id', 'not in', journal_ok),
+                                                                    ('journal_id', 'in', active_liquidity_journ_ids)], order='NO_ORDER', context=context)
+                        if len(all_prev_reg_ids) > 0:
+                            reg_ko = reg_obj.browse(cr, uid, all_prev_reg_ids, fields_to_fetch=['name'], context=context)
                             raise osv.except_osv(_('Warning'),
-                                                 _("One or several registers have not been generated for the period "
-                                                   "to close and have a balance which isn't equal to 0:\n"
-                                                   "%s") % ", ".join([r.name for r in reg_ko]))
+                                                 _("Period '%s' could not be closed because one or several registers\n"
+                                                   "have not been created/opened/closed for this period.\n"
+                                                   "Please either create/open/close the register(s) or inactivate the related journal(s):\n"
+                                                   "%s") % (period.name, ", ".join([r.name for r in reg_ko])))
 
                 # for subscription lines generated check if some related recurring entries haven't been created yet
                 if sub_line_obj.search_exist(cr, uid, [('date', '<=', period.date_stop), ('move_id', '=', False)], context=context):
@@ -422,8 +425,7 @@ class account_period(osv.osv):
                 vals['state_sync_flag'] = 'none'
 
         res = super(account_period, self).write(cr, uid, ids, vals, context=context)
-        self.pool.get('account.period.state').update_state(cr, uid, ids,
-                                                           context=context)
+        self.pool.get('account.period.state').update_state(cr, uid, ids, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):

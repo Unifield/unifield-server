@@ -90,8 +90,8 @@
             <field eval="18" name="priority"/>
             <field name="arch" type="xml">
                 <form string="Users">
-                    <field name="user_email" readonly="0" colspan="4" widget="email"/>
-                    <field name="context_department_id" widget="selection" readonly="0" />
+                    <field name="user_email" readonly="0" colspan="4" widget="msf_email" required="1"/>
+                    <field name="context_department_id" widget="selection" readonly="0" required="1" />
                     <newline />
                     <field name="context_lang" completion="1" readonly="0"/>
                     <field name="menu_tips" colspan="2" readonly="0"/>
@@ -111,7 +111,7 @@
                     <field name="new_password" password="True"/>
                     <group colspan="2" col="4">
                         <field name="force_password_change"/>
-                        <field name="never_expire" />
+                        <field name="never_expire" attrs="{'readonly': [('instance_level', 'in', ['coordo', 'project']), ('login', '!=', 'admin')]}"/>
                     </group>
                     <field name="last_password_change" />
                     <field name="log_xmlrpc" attrs="{'invisible': [('instance_level', '!=', 'hq')]}"/>
@@ -130,7 +130,7 @@
                                     groups="base.group_multi_company"
                                     />
                                 <field name="address_id"/>
-                                <field name="user_email" widget="email"/>
+                                <field name="user_email" widget="msf_email"/>
                             </group>
                             <group colspan="1" col="2" groups="base.group_extended">
                                 <separator string="Action" colspan="2"/>

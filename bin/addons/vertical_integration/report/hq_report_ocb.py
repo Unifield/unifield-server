@@ -312,8 +312,6 @@ class finance_archive(finance_export.finance_archive):
             tmp_l = list(line)  # convert from tuple to list
             if tmp_l[col_nbr]:
                 journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
-                if type(journal_name) == str:
-                    journal_name = journal_name.encode('utf-8')
                 tmp_l[col_nbr] = journal_name
             tmp_l = tuple(tmp_l)  # restore back the initial format
             new_data.append(tmp_l)
@@ -371,7 +369,7 @@ liquidity_sql = """
             """
 
 
-def postprocess_liquidity_balances(self, cr, uid, data, encode=True, context=None):
+def postprocess_liquidity_balances(self, cr, uid, data, encode=False, context=None):
     """
     Returns data after having replaced the Journal ID by the Journal Name in the current language
     (the language code should be stored in context['lang']).
@@ -516,12 +514,14 @@ class hq_report_ocb(report_sxw.report_sxw):
                         """
         sqlrequests = {
             'partner': partner_sql,
+
             'employee': """
                 SELECT r.name, e.identification_id, r.active, e.employee_type
             """ + add_column_employee_sql + """
                 FROM hr_employee AS e, resource_resource AS r
                 WHERE e.resource_id = r.id;
             """,
+
             'journal': """
                 SELECT i.code, j.code, j.id, j.type, c.name
             """ + add_column_journal + """
@@ -529,8 +529,9 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE j.instance_id = i.id
                 AND j.instance_id in %s;
                 """,
+
             'costcenter': """
-            SELECT tr.value, aa.code, aa.type, 
+            SELECT tr.value, aa.code, aa.type,
             CASE WHEN aa.date_start < %s AND (aa.date IS NULL OR aa.date > %s) THEN 'Active' ELSE 'Inactive' END AS Status
                 FROM account_analytic_account aa, ir_translation tr 
                 WHERE tr.res_id = aa.id 
@@ -557,6 +558,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     and tr.lang = 'en_MF' 
                     and tr.name = 'account.analytic.account,name');
                 """,
+
             'fxrate': """
                 SELECT req.name, req.code, req.rate, req.period
                 FROM (
@@ -573,6 +575,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE req.date >= %s
                 AND req.date <= %s;
                 """,
+
             'register': """
                 SELECT i.name AS instance, st.name, p.name AS period, st.balance_start, st.id, CASE WHEN st.balance_end_real IS NOT NULL THEN st.balance_end_real ELSE 0.0 END AS balance_end_real, st.state, j.code AS "journal_code"
                 FROM account_bank_statement AS st, msf_instance AS i, account_period AS p, account_journal AS j
@@ -582,7 +585,9 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND p.id = %s
                 ORDER BY st.name, p.number;
                 """,
+
             'liquidity': liquidity_sql,
+
             'contract': """
                 SELECT c.name, c.code, d.code, c.grant_amount, rc.name, c.state
                 FROM financing_contract_contract AS c, financing_contract_donor AS d, res_currency AS rc
@@ -591,6 +596,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND c.instance_id in %s
                 AND c.state != 'draft';
                 """,
+
             # get only the analytic lines which are not booked on the excluded journals
             'rawdata': """
                 FROM account_analytic_line AS al
@@ -620,6 +626,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.instance_id in %s
                 #OCB_VI_COND#
                 """,
+
             # Ignore the lines booked on the excluded journals
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
             # Don't include the lines that have analytic lines. This is to not retrieve expense/income accounts
@@ -636,6 +643,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND aml.exported in %s
                 AND aml.instance_id in %s;
                 """,
+
             # Ignore the lines booked on the excluded journals
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
             'bs_entries': """
@@ -661,6 +669,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 #OCB_VI_COND#
                 ORDER BY aml.id
                 """,
+
             'balance_previous_month': balance_previous_month_sql,
         }
 
@@ -758,7 +767,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                        hr.identification_id as "emplid", -- 19
                        aml.partner_id, -- 20
                        hr.name_resource as hr_name -- 21
-                       """ + add_column_rawdata
+                       """ + add_column_rawdata,
+                'numbering_cond': ' ABS(round(al.amount_currency,2)) > 0  ',
             },
             {
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
@@ -802,6 +812,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                         aml.partner_id, -- 20
                         hr.name_resource as hr_name -- 21
                 """ + add_column_bs_entries,
+                'numbering_cond': ' (round(aml.debit_currency,2) > 0 or round(aml.credit_currency, 2) > 0 ) ',
             },
             {
                 'headers': ['G/L Account', 'Booking currency', 'Balance'],

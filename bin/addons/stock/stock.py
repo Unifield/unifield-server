@@ -242,7 +242,7 @@ class stock_location(osv.osv):
         if not company or not company.instance_id or company.instance_id.level != 'project':
             return [('id', '=', 0)]
 
-        return [('active', 'in', ['t', 'f']), ('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]
+        return [('active', 'in', ['t', 'f']), ('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit'])]
 
 
     def _get_loc_ids_to_hide(self, cr, uid, ids, context=None):
@@ -291,6 +291,8 @@ class stock_location(osv.osv):
 
     def _search_from_config(self, cr, uid, obj, name, args, context=None):
         for arg in args:
+            if not arg[2]:
+                return []
             if arg[1] != '=' or not isinstance(arg[2], int):
                 raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
 
@@ -2122,13 +2124,13 @@ class stock_picking(osv.osv):
             'standard': 'stock.action_picking_tree',
             'picking': 'msf_outgoing.action_picking_ticket',
             'ppl': 'msf_outgoing.action_ppl',
-            'packing': 'msf_outgoing.action_packing_form',
+            'packing': 'msf_outgoing.action_packing',
             'out': 'stock.action_picking_tree',
             'in': 'stock.action_picking_tree4',
             'internal': 'stock.action_picking_tree6',
         }
         if pick.type == 'out' and pick.subtype:
-            return action_list.get(pick.subtype, pick.type)
+            return action_list.get(pick.subtype, 'msf_outgoing.action_packing')
 
         return action_list.get(pick.type, 'stock.action_picking_tree6')
 
@@ -2308,22 +2310,23 @@ class stock_warehouse(osv.osv):
 
 stock_warehouse()
 
+
 class stock_location_instance(osv.osv):
     _name = 'stock.location.instance'
     _description = 'Instance Location'
-
 
     _columns = {
         'name': fields.char('Name', size=64, required=True, translate=True),
         'active': fields.boolean('Active'),
         'parent_id': fields.many2one('stock.location.instance', 'Parent'),
         'usage': fields.selection([('supplier', 'Supplier Location'), ('view', 'View'), ('internal', 'Internal Location'), ('customer', 'Customer Location'), ('inventory', 'Inventory'), ('procurement', 'Procurement'), ('production', 'Production'), ('transit', 'Transit Location for Inter-Companies Transfers')], string='Usage'),
-        'location_category': fields.selection( [('stock', 'Stock'), ('consumption_unit', 'Consumption Unit'), ('transition', 'Transition'), ('eprep', 'EPrep'), ('other', 'Other')], string='Location Category', required=True),
+        'location_category': fields.selection( [('stock', 'Stock'), ('consumption_unit', 'Consumption Unit'), ('transition', 'Transition'), ('other', 'Other')], string='Location Category', required=True),
         'instance_id': fields.many2one('msf.instance', 'Instance', select=1),
         'instance_db_id': fields.integer('DB Id in the instance'),
         'full_name': fields.char('Name', size=256, readonly=1),
         'used_in_config': fields.function(_get_used_in_config, method=True, fnct_search=_search_used_in_config, string="Used in Loc.Config"),
     }
+
     def create_record(self, cr, uid, source, data_obj, context=None):
         data = data_obj.to_dict()
         instance_obj = self.pool.get('msf.instance')
@@ -2351,5 +2354,7 @@ class stock_location_instance(osv.osv):
         return self.create(cr, uid, values, context)
 
     _sql_constraints = [('unique_instance_id_db_id', 'unique(instance_id,instance_db_id)', 'Instance / Db id not unique')]
+
+
 stock_location_instance()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

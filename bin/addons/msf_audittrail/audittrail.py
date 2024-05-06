@@ -532,21 +532,17 @@ class audittrail_rule(osv.osv):
                     _('Change audittrail depends -- Setting rule as DRAFT'))
 
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_audittrail', 'view_audittrail_log_line_search')
+            # to be exported by translation script
+            _('Track changes')
             val = {
-                "name": _('Track changes'),
+                "name": 'Track changes',
                 "res_model": 'audittrail.log.line',
                 "src_model": thisrule.object_id.model,
                 "search_view_id": search_view_id and search_view_id[1] or False,
                 "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
             }
             view_ids = []
-            if thisrule.object_id.model in ('purchase.order', 'purchase.order.line'):
-                # not Track changes on RfQ
-                view_ids.append(obj_model.get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1])
-                view_ids.append(obj_model.get_object_reference(cr, uid, 'purchase', 'purchase_order_tree')[1])
-
-            elif thisrule.object_id.model == 'account.bank.statement.line' or\
-                    thisrule.object_id.model == 'account.move.line':
+            if thisrule.object_id.model == 'account.bank.statement.line' or thisrule.object_id.model == 'account.move.line':
                 # for register line we allow to select many lines in track changes view
                 # it is required to use fct_object_id and fct_res_id instead
                 # of object_id and res_id because account.bank.statement.line are sub object of
@@ -567,15 +563,14 @@ class audittrail_rule(osv.osv):
                 view_ids.append(obj_model.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')[1])
 
             # search if the view does not already exists
-            search_domain = [('name', '=', val['name']),
-                             ('res_model', '=', val['res_model']),
+            search_domain = [('res_model', '=', val['res_model']),
                              ('src_model', '=', val['src_model'])]
             action_search = obj_action.search(cr, uid, search_domain)
             if action_search:
                 if len(action_search) > 1:
-                    logger = logging.getLogger('audittrail')
-                    logger.warn('There is already %s ir.actions.act_window matching the domain %r, the first one will be updated' % (len(action_search), search_domain))
+                    obj_action.unlink(cr, uid, action_search[1:])
                 action_id = action_search[0]
+                obj_action.write(cr, uid, [action_id], val)
             else:
                 action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
@@ -908,7 +903,8 @@ class audittrail_log_line(osv.osv):
             obj_to_log = line.fct_object_id or line.object_id
 
             # translate value of fields.selection
-            to_compute = line.field_id.name in ('state_to_display', 'state', 'state_hidden_sale_order') and obj_to_log.model in ('sale.order', 'sale.order.line', 'purchase.order', 'purchase.order.line')
+            to_compute = line.field_id.name in ('state_to_display', 'state', 'state_hidden_sale_order', 'rfq_state', 'rfq_line_state')\
+                and obj_to_log.model in ('sale.order', 'sale.order.line', 'purchase.order', 'purchase.order.line')
             if line.method == 'create':
                 res[line.id]['old_value_fct'] = False
             elif to_compute or not line.old_value_text:
@@ -978,9 +974,21 @@ class audittrail_log_line(osv.osv):
 
             # rename 'Field Order' to 'Order' in case of IR
             if line.object_id.model == 'sale.order':
-                so = self.pool.get('sale.order').browse(cr, uid, line.res_id)
-                if so.procurement_request and res[line.id].find('Field Order') != -1:
-                    res[line.id] = res[line.id].replace('Field Order', 'Order')
+                so = self.pool.get('sale.order').browse(cr, uid, line.res_id, fields_to_fetch=['procurement_request'], context=context)
+                if so.procurement_request:
+                    if res[line.id].find('Commande de Terrain') != -1:
+                        res[line.id] = res[line.id].replace('Commande de Terrain', 'Commande')
+                    elif res[line.id].find('Field Order') != -1:
+                        res[line.id] = res[line.id].replace('Field Order', 'Order')
+
+            # rename 'Purchase Order' to 'Request for Quotation' in case of RfQ
+            if line.object_id.model == 'purchase.order':
+                po = self.pool.get('purchase.order').browse(cr, uid, line.res_id, fields_to_fetch=['rfq_ok'], context=context)
+                if po.rfq_ok:
+                    if res[line.id].find('Bon de Commande') != -1:
+                        res[line.id] = res[line.id].replace('Bon de Commande', 'Demande de Devis')
+                    elif res[line.id].find('Purchase Order') != -1:
+                        res[line.id] = res[line.id].replace('Purchase Order', 'Request for Quotation')
 
         return res
 

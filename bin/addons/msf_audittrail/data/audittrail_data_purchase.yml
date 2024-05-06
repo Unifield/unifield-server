@@ -10,7 +10,6 @@
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
-                'domain_filter': "[('rfq_ok', '=', False)]",
                 'log_create': True,
                 'log_write': False,
                 'log_unlink': False,
@@ -32,11 +31,10 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['partner_ref', 'details', 'delivery_requested_date', 'delivery_confirmed_date', 'partner_id', 'notes', 'order_type', 'categ', 'priority', 'shipped', 'state', 'pricelist_id', 'origin', 'transport_type', 'cross_docking_ok', 'unallocation_ok']
+        fields = ['partner_ref', 'details', 'delivery_requested_date', 'delivery_confirmed_date', 'partner_id', 'notes', 'order_type', 'categ', 'priority', 'shipped', 'state', 'rfq_state', 'pricelist_id', 'origin', 'transport_type', 'cross_docking_ok', 'unallocation_ok']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
         vals= {'name': name,
                'object_id': object_ids[0],
-               'domain_filter': "[('rfq_ok', '=', False)]",
                'log_create': False,
                'log_write': True,
                'log_unlink': False,
@@ -61,7 +59,6 @@
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
-                'domain_filter': "[('rfq_ok', '=', False)]",
                 'log_create': False,
                 'log_write': False,
                 'log_unlink': True,
@@ -119,7 +116,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['confirmed_delivery_date', 'date_planned', 'default_code', 'name', 'notes', 'price_unit', 'product_qty', 'product_uom', 'line_number', 'state_to_display']
+        fields = ['confirmed_delivery_date', 'date_planned', 'default_code', 'name', 'notes', 'price_unit', 'product_qty', 'product_uom', 'line_number', 'state_to_display', 'rfq_line_state']
         
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order.line'), ('name', 'in', fields)], context=context)
         field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'purchase.order.line'), ('name', '=', 'line_number')], context=context)

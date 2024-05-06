@@ -20,7 +20,6 @@
 ##############################################################################
 
 import locale
-import logging
 
 from osv import fields, osv
 from locale import localeconv
@@ -50,20 +49,7 @@ class lang(osv.osv):
 
     def load_lang(self, cr, uid, lang, lang_name=None):
         # create the language with locale information
-        fail = True
-        logger = logging.getLogger('i18n')
         iso_lang = tools.get_iso_codes(lang)
-        for ln in tools.get_locales(lang):
-            try:
-                locale.setlocale(locale.LC_ALL, str(ln))
-                fail = False
-                break
-            except locale.Error:
-                continue
-        if fail:
-            lc = locale.getdefaultlocale()[0]
-            msg = 'Unable to get information for locale %s. Information from the default locale (%s) have been used.'
-            logger.warning(msg, lang, lc)
 
         if not lang_name:
             lang_name = tools.get_languages().get(lang, lang)
@@ -98,10 +84,7 @@ class lang(osv.osv):
             'thousands_sep' : fix_xa0(str(locale.localeconv()['thousands_sep'])),
         }
         lang_id = False
-        try:
-            lang_id = self.create(cr, uid, lang_info)
-        finally:
-            tools.resetlocale()
+        lang_id = self.create(cr, uid, lang_info)
         return lang_id
 
     def _check_format(self, cr, uid, ids, context=None):

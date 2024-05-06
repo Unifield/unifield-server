@@ -88,6 +88,24 @@ class account_cash_statement(osv.osv):
             vals['responsible_ids'] = [(6, 0, [x.id for x in prev_reg.responsible_ids])]
 
         res_id = super(account_cash_statement, self).create(cr, uid, vals, context=context)
+
+        if prev_reg and prev_reg.signature_id:
+            cr.execute("""
+                update signature_line l
+                    set user_id=o.user_id, backup=o.backup, user_name=u.name
+                from
+                    signature sign, signature_line o, signature o_sign, res_users u
+                where
+                    o.signature_id = o_sign.id
+                    and o_sign.signature_res_model = 'account.bank.statement'
+                    and o_sign.signature_res_id = %s
+                    and o.name_key = l.name_key
+                    and sign.signature_res_id = %s
+                    and sign.signature_res_model = 'account.bank.statement'
+                    and l.signature_id = sign.id
+                    and u.id = o.user_id
+
+            """, (prev_reg.id, res_id))
         # take on previous lines if exists (or discard if they come from sync)
         if prev_reg_id and not sync_update:
             create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)

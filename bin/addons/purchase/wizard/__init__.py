@@ -24,6 +24,7 @@ from . import purchase_installer
 from . import purchase_line_invoice
 from . import purchase_line_cancel
 from . import purchase_line_manually_confirmed
+from . import rfq_has_service_not_service_product
 from . import purchase_line_nsl_validation
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

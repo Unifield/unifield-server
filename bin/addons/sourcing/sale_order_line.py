@@ -719,29 +719,27 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if order['order_type'] in ['loan', 'loan_return']:
                     vals['related_sourcing_id'] = False
 
-        if product and vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
-            vals['supplier'] = product.seller_id and (product.seller_id.supplier or product.seller_id.manufacturer or
-                                                      product.seller_id.transporter) and product.seller_id.id or False
+        if product:
+            if vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
+                vals['supplier'] = product.seller_id and (product.seller_id.supplier or product.seller_id.manufacturer or
+                                                          product.seller_id.transporter) and product.seller_id.id or False
+            if product.type in ('consu', 'service', 'service_recep'):
+                vals['type'] = 'make_to_order'
 
-        if product and product.type in ('consu', 'service', 'service_recep'):
-            vals['type'] = 'make_to_order'
-
-        if product and product.type in ('service', 'service_recep'):
-            if ir and vals.get('po_cft', 'dpo') == 'dpo':
-                vals['po_cft'] = 'po'
-            elif not ir and vals.get('po_cft', 'po') == 'po':
-                vals['po_cft'] = 'dpo'
-        elif not product and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0', False)):
-            vals['po_cft'] = 'dpo'
-        elif product and product.state.code == 'forbidden':
-            vals['type'] = 'make_to_stock'
+            if product.type in ('service', 'service_recep'):
+                if ir and vals.get('po_cft', 'dpo') == 'dpo':
+                    vals['po_cft'] = 'po'
+                elif not ir and vals.get('po_cft', 'po') == 'po':
+                    vals['po_cft'] = 'dpo'
+            elif product.state.code == 'forbidden':
+                vals['type'] = 'make_to_stock'
 
         if not product:
             vals.update({
                 'type': 'make_to_order',
                 'po_cft': 'po',
             })
-            if vals.get('nomen_manda_0') and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
+            if not ir and vals.get('nomen_manda_0') and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
                 vals['po_cft'] = 'dpo'
 
         # If type is missing, set to make_to_stock and po_cft to False
@@ -904,13 +902,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     _("""You can only source a Donation line from stock.""")
                 )
 
-            cond1 = not line.order_id.procurement_request and line.po_cft == 'po'
-            cond2 = line.product_id and line.product_id.type in ('service', 'service_recep')
+            cond1 = not line.order_id.procurement_request and line.po_cft in ['po', 'pli']
+            cond2 = line.product_id and line.product_id.type == 'service_recep'
             cond3 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
             if cond1 and (cond2 or cond3):
                 raise osv.except_osv(
                     _('Warning'),
-                    _("""'Purchase Order' is not allowed to source a 'Service' product."""),
+                    _("""'Purchase Order' and 'Purchase List' are not allowed to source a 'Service' product."""),
                 )
 
             if not line.product_id:
@@ -1031,7 +1029,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             product = product_obj.browse(cr, uid, vals['product_id'])
             if product.type in ('consu', 'service', 'service_recep'):
                 srv_product = True
-        elif vals.get('nomen_manda_0') and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
+        elif not context.get('procurement_request', False) and vals.get('nomen_manda_0') and \
+                check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
             srv_product = True
 
         if srv_product:
@@ -2081,7 +2080,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                 po_cft = 'po'
                 if line and \
-                    ((line.product_id and line.product_id.type in ('service', 'service_recep')) or \
+                    ((line.product_id and line.product_id.type == 'service_recep') or \
                      (not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id))) and \
                         line.order_id and not line.order_id.procurement_request:
                     po_cft = 'dpo'
@@ -2140,14 +2139,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         line = self.browse(cr, uid, line_id, context=context)
 
-        cond1 = line.product_id.type in ('service', 'service_recep')
+        cond1 = line.product_id.type == 'service_recep'
         cond2 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
-        cond3 = not line.order_id.procurement_request and po_cft == 'po'
+        cond3 = not line.order_id.procurement_request and po_cft in ['po', 'pli']
 
         if (cond1 or cond2) and cond3:
             res['warning'] = {
                 'title': _('Warning'),
-                'message': _("""'Purchase Order' is not allowed to source a 'Service' product."""),
+                'message': _("""'Purchase Order' and 'Purchase List' are not allowed to source a 'Service' product."""),
             }
             res['value'].update({'po_cft': 'dpo'})
 

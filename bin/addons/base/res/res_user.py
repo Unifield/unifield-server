@@ -35,7 +35,6 @@ from service import http_server
 from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from lxml import etree
-from datetime import datetime
 from tools.misc import fakeUid
 
 class groups(osv.osv):
@@ -476,27 +475,17 @@ class users(osv.osv):
 
     def _get_display_email_popup(self, cr, uid, ids, name=None, arg=None, context=None):
         ret = {}
-        if datetime.now() > datetime(2023, 11, 4):
-            for x in ids:
-                ret[x] = False
-            return ret
-
-        for x in self.browse(cr, uid, ids, fields_to_fetch=['synchronize', 'dont_ask_email'], context=context):
-            ret[x.id] = x.id != 1 and not x['synchronize'] and not x['dont_ask_email']
-        return ret
-
-    def _get_display_department_popup(self, cr, uid, ids, name=None, arg=None, context=None):
-        ret = {}
-
-        for x in self.browse(cr, uid, ids, fields_to_fetch=['synchronize', 'dont_ask_department', 'context_department_id', 'nb_department_asked'], context=context):
+        has_dpt = self.pool.get('hr.department').search_exists(cr, 1, [], context=context)
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['synchronize', 'force_dept_email_popup', 'context_department_id', 'user_email'], context=context):
             if x.id == 1 or x.synchronize:
                 ret[x.id] = False
-            elif x.nb_department_asked == -1: # forced after password change
+            elif x.force_dept_email_popup or not x.context_department_id or not x.user_email:
                 ret[x.id] = True
-            elif x.context_department_id or x.dont_ask_department:
-                ret[x.id] = False
+            elif not x.context_department_id and has_dpt:
+                ret[x.id] = True
             else:
-                ret[x.id] = True
+                ret[x.id] = False
+
         return ret
 
     _columns = {
@@ -521,6 +510,7 @@ class users(osv.osv):
         'signature_enabled': fields.boolean('Enable Signature'),
         'esignature_id': fields.many2one('signature.image', 'Current Signature'),
         'current_signature': fields.related('esignature_id', 'pngb64', string='Signature', type='text', readonly=1),
+        'current_legal_name': fields.related('esignature_id', 'legal_name', string='Legal Name', type='char', size=64, readonly=1),
         'signature_from': fields.date('Signature Start Date'),
         'signature_to': fields.date('Signature End Date'),
         'has_signature': fields.function(_get_has_signature, type='boolean', string='Has Signature', method=1, multi='sign_state'),
@@ -564,12 +554,12 @@ class users(osv.osv):
         'nb_shortcut_used': fields.integer('Number of shortcut used', help="Number of time a shortcut has been used by this user", readonly=True),
         'last_password_change': fields.datetime('Last Password Change', readonly=1),
         'never_expire': fields.boolean('Password never expires', help="If unticked, the password must be changed every 6 months"),
-        'dont_ask_email': fields.boolean("Don't ask for email", readonly=1),
-        'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1),
-        'display_email_popup': fields.function(_get_display_email_popup, type='boolean', method=True, string='Display popup at login'),
-        'dont_ask_department': fields.boolean("Don't ask for department", readonly=1),
-        'nb_department_asked': fields.integer('Nb department popup displayed', readonly=1),
-        'display_department_popup': fields.function(_get_display_department_popup, type='boolean', method=True, string='Display department at login'),
+        'display_dept_email_popup': fields.function(_get_display_email_popup, type='boolean', method=True, string='Display popup at login'),
+        'force_dept_email_popup': fields.boolean('Force Popup'),
+        'dont_ask_department': fields.boolean("Don't ask for department", readonly=1), # deprecated
+        'nb_department_asked': fields.integer('Nb department popup displayed', readonly=1), # deprecated
+        'dont_ask_email': fields.boolean("Don't ask for email", readonly=1), # deprecated
+        'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1), # deprecated
     }
 
     def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
@@ -736,6 +726,7 @@ class users(osv.osv):
         'synchronize': False,
         'last_password_change': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'never_expire': lambda self, cr, *a: cr.dbname == 'SYNC_SERVER',
+        'instance_level': lambda self, cr, uid, *a: _get_instance_level(self, cr, uid),
     }
 
     @tools.cache()
@@ -745,9 +736,9 @@ class users(osv.osv):
     # User can write to a few of her own fields (but not her groups for example)
     SELF_WRITEABLE_FIELDS = [
         'menu_tips','view', 'password', 'signature', 'action_id', 'company_id',
-        'user_email', 'dont_ask_email', 'nb_email_asked', 'context_department_id',
+        'user_email', 'context_department_id',
         'context_tz', 'context_lang',
-        'nb_department_asked', 'dont_ask_email', 'dont_ask_department'
+        'force_dept_email_popup'
     ]
 
     def list_department(self, cr, uid, context=None):
@@ -759,46 +750,11 @@ class users(osv.osv):
                 dpt_list.append((dpt['id'], dpt['name']))
         return dpt_list
 
-    def set_department(self, cr, uid, department, context=None):
-        to_write = {'context_department_id': department}
-        user_data = self.read(cr, 1, uid, ['nb_department_asked', 'nb_department_asked'], context=context)
-        if user_data['nb_department_asked'] == -1:
-            to_write['nb_department_asked'] = 2
-            to_write['dont_ask_department'] = True
-        elif department:
-            to_write['dont_ask_department'] = True
-        else:
-            to_write['nb_department_asked'] = (user_data['nb_department_asked'] or 0) + 1
-
-        self.write(cr, uid, uid, to_write, context=context)
-        return True
-
-    def set_nb_department_asked(self, cr, uid, context=None):
-        if uid:
-            if self.read(cr, 1, uid, ['nb_department_asked'], context=context)['nb_department_asked'] == -1:
-                cr.execute('update res_users set nb_department_asked=2 where id=%s', (uid, ))
-            else:
-                cr.execute('update res_users set nb_department_asked=coalesce(nb_department_asked, 0)+1 where id=%s', (uid, ))
-        return True
-
-    def set_department_dontask(self, cr, uid, context=None):
-        self.write(cr, 1, uid, {'dont_ask_department': True}, context=context)
-        return True
-
-    def set_dont_ask_email(self, cr, uid, context=None):
-        self.write(cr, 1, uid, {'dont_ask_email': True}, context=context)
-        return True
-
-    def set_nb_email_asked(self, cr, uid, nb, context=None):
-        if uid:
-            cr.execute('update res_users set nb_email_asked=coalesce(nb_email_asked, 0)+1 where id=%s', (uid, ))
-        return True
-
-    def set_my_email(self, cr, uid, email, context=None):
-        value = {'user_email': email}
-        if email:
-            value['dont_ask_email'] = True
-        self.write(cr, 1, uid, value, context=context)
+    def set_dept_email(self, cr, uid, department, email, context=None):
+        value = {'user_email': email, 'force_dept_email_popup': False}
+        if department != 'NONE':
+            value['context_department_id'] = department
+        self.write(cr, uid, uid, value, context=context)
         return True
 
     def remove_higer_level_groups(self, cr, uid, ids, context=None):
@@ -834,6 +790,41 @@ class users(osv.osv):
                         super(users, self).write(cr, uid, user['id'], {'groups_id':
                                                                        [(6, 0, new_group_ids)]}, context=context)
 
+
+    def _remove_never_expire(self, cr, uid, ids=None, context=None):
+        if context is None:
+            context = {}
+
+        if not ids or context.get('sync_update_execution'):
+            return 0
+
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if self.pool.get('res.company')._get_instance_level(cr, uid) in ('coordo', 'project'):
+            query = """select id from res_users
+                where
+                    login!='admin'
+                    and never_expire='t'
+                    and id in %s
+            """
+            cr.execute(query, (tuple(ids), ))
+            user_ids = [x[0] for x in cr.fetchall()]
+            if user_ids:
+                super(users, self).write(cr, uid, user_ids, {'never_expire': False}, context=context)
+
+        return True
+
+    def _check_email_format(self, cr, uid, values, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution') and values.get('user_email'):
+            if '@' not in values['user_email']:
+                raise osv.except_osv(_('Warning'), _('User email must contain an @'))
+            if not values['user_email'].endswith('msf.org'):
+                raise osv.except_osv(_('Warning'), _('User email must end with "msf.org"'))
+
     def create(self, cr, uid, values, context=None):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
@@ -845,6 +836,7 @@ class users(osv.osv):
         if values.get('signature_enabled') or values.get('groups_id'):
             self._check_signature_group(cr, uid, user_id, context=context)
 
+        self._check_email_format(cr, uid, values, context=context)
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log
             xmlrpc_uid_cache = http_server.XMLRPCRequestHandler.xmlrpc_uid_cache
@@ -853,11 +845,17 @@ class users(osv.osv):
         if values.get('groups_id'):
             self.remove_higer_level_groups(cr, uid, user_id, context=context)
 
+        if values.get('never_expire'):
+            self._remove_never_expire(cr, uid, user_id, context=context)
         return user_id
 
     def write(self, cr, uid, ids, values, context=None):
         if not ids:
             return True
+
+        if context is None:
+            context = {}
+
         if not isinstance(ids, list):
             ids = [ids]
         if ids == [uid]:
@@ -868,11 +866,11 @@ class users(osv.osv):
                 if 'company_id' in values:
                     if not (values['company_id'] in self.read(cr, 1, uid, ['company_ids'], context=context)['company_ids']):
                         del values['company_id']
-                if values.get('user_email'):
-                    values['dont_ask_email'] = True # disable pop up
                 if not hasattr(uid, 'realUid'):
                     uid = fakeUid(1, uid) # safe fields only, so we write as super-user to bypass access rights
 
+
+        self._check_email_format(cr, uid, values, context=context)
         if values.get('active') and self._get_unidata_pull_user_id(cr) in ids:
             raise osv.except_osv(_('Error'), _('Activation of UniData_pull user is not allowed.'))
 
@@ -903,6 +901,8 @@ class users(osv.osv):
 
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
+        if values.get('never_expire'):
+            self._remove_never_expire(cr, uid, ids, context=context)
         if values.get('signature_enabled') or values.get('groups_id'):
             self._check_signature_group(cr, uid, ids, context=context)
 
@@ -982,6 +982,7 @@ class users(osv.osv):
                        signature_to=False,
                        signature_history_ids=False,
                        dont_ask_email=False,
+                       force_dept_email_popup=False,
                        nb_email_asked=False,
                        dont_ask_department=False,
                        nb_department_asked=False
@@ -1132,7 +1133,7 @@ class users(osv.osv):
                                     confirm_passwd, context=context)
 
     def change_password(self, db_name, login, old_passwd, new_passwd,
-                        confirm_passwd, email=None, context=None):
+                        confirm_passwd, context=None):
         """Change current user password. Old password must be provided explicitly
         to prevent hijacking an existing user session, or for cases where the cleartext
         password is not used to authenticate requests.
@@ -1168,12 +1169,8 @@ class users(osv.osv):
                     'last_password_change': time.strftime('%Y-%m-%d %H:%M:%S'),
                 }
                 if force_password_change or expired_password:
-                    vals['nb_department_asked'] = -1
+                    vals['force_dept_email_popup'] = True
                 self.check(db_name, uid, tools.ustr(old_passwd))
-                if email is not None:
-                    vals['user_email'] = email
-                if email:
-                    vals['dont_ask_email'] = True
                 result = self.write(cr, 1, uid, vals)
                 cr.commit()
             finally:

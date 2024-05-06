@@ -72,6 +72,19 @@ class account_journal(osv.osv):
             res[id] = bool(count_entries(id))
         return res
 
+    def _get_has_non_draft_register(self, cr, uid, ids, field_name, arg, context=None):
+        def has_non_draft_reg(journal_id):
+            return abs_obj.search(cr, uid, [('journal_id', '=', journal_id), ('state', '!=', 'draft')], limit=1, context=context)
+        res = {}
+        if not ids:
+            return res
+        abs_obj = self.pool.get('account.bank.statement')
+        if isinstance(ids, int):
+            ids = [ids]
+        for id in ids:
+            res[id] = bool(has_non_draft_reg(id))
+        return res
+
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True, select=1),
         'code': fields.char('Code', size=10, required=True, help="The code will be used to generate the numbers of the journal entries of this journal."),
@@ -79,6 +92,7 @@ class account_journal(osv.osv):
                                            domain="[('type', '=', 'bank'), ('currency', '=', currency), ('is_active', '=', True)]"),
         'cheque_journal_id': fields.one2many('account.journal', 'bank_journal_id', 'Linked cheque'),
         'has_entries': fields.function(_get_has_entries, type='boolean', method=True, string='Has journal entries'),
+        'has_non_draft_register': fields.function(_get_has_non_draft_register, type='boolean', method=True, string='Has non-draft register'),
     }
 
     _defaults = {

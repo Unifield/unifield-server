@@ -63,7 +63,7 @@ def _check_db_name(name):
 
 def export_csv(fields, result, result_file_path):
     try:
-        with open(result_file_path, 'w') as result_file:
+        with open(result_file_path, 'w', newline='') as result_file:
             writer = csv.writer(result_file, quoting=csv.QUOTE_ALL)
             writer.writerow(fields)
             for data in result:
@@ -249,13 +249,14 @@ class db(netsvc.ExportService):
                                                          'state', 'error'])
 
             # get the last sync_monitor informations:
-            monitor_obj = pool.get('sync.monitor')
-            monitor_id = monitor_obj.search(cr, 1, [], order='start desc', limit=1)
-            monitor_id = monitor_id and monitor_id[0] or False
             monitor_status = ''
-            if monitor_id:
-                result = monitor_obj.read(cr, 1, monitor_id, ['status', 'error'])
-                monitor_status = 'Synchronisation status: %s : %s' % (result['status'], result['error'])
+            monitor_obj = pool.get('sync.monitor')
+            if monitor_obj and pool._ready:
+                monitor_id = monitor_obj.search(cr, 1, [], order='start desc', limit=1)
+                monitor_id = monitor_id and monitor_id[0] or False
+                if monitor_id:
+                    result = monitor_obj.read(cr, 1, monitor_id, ['status', 'error'])
+                    monitor_status = 'Synchronisation status: %s : %s' % (result['status'], result['error'])
         finally:
             cr.close()
         return res['resume'], res['progress'], res['state'], res['error'], monitor_status
@@ -316,6 +317,9 @@ class db(netsvc.ExportService):
             cr.close()
             if drop_db and db_name in pooler.pool_dic:
                 del pooler.pool_dic[db_name]
+                if tools.config.get('save_db_name_in_config') == 'Y':
+                    tools.config.delete_db_name(db_name)
+
         return True
 
     def _set_pg_psw_env_var(self):
@@ -577,12 +581,10 @@ class common(_ObjectService):
             return res or False
         elif method == 'number_update_modules':
             return security.number_update_modules(params[0])
-        elif method == 'get_user_email':
-            return security.get_user_email(params[0], params[1], params[2])
         elif method == 'change_password':
             try:
                 security.change_password(params[0], params[1], params[2],
-                                         params[3], params[4], params[5])
+                                         params[3], params[4])
             except Exception as e:
                 if hasattr(e, 'value'):
                     msg = tools.ustr(e.value)

@@ -619,19 +619,19 @@
                     <para style="Standard"> </para>
                 </td>
                 <td>
-                    <para style="Standard" alignment="CENTER">Supply Responsible</para>
+                    <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'sr', 'backup') ]]Supply Responsible</para>
                 </td>
                 <td>
-                    <para style="Standard" alignment="CENTER">Technical Responsible</para>
+                    <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'tr', 'backup') ]]Technical Responsible</para>
                 </td>
                 <td>
-                    <para style="Standard" alignment="CENTER">Financial Responsible</para>
+                    <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'fr', 'backup') ]]Financial Responsible</para>
                 </td>
                 <td>
-                    <para style="Standard" alignment="CENTER">Mission Responsible</para>
+                    <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'mr', 'backup') ]]Mission Responsible</para>
                 </td>
                 <td>
-                    <para style="Standard" alignment="CENTER">HQ</para>
+                    <para style="Standard" alignment="CENTER">[[ getSign(objects[0], 'hq', 'backup') ]]HQ</para>
                 </td>
             </tr>
             <tr>
