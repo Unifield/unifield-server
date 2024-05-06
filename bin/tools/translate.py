@@ -487,9 +487,15 @@ def trans_parse_view(de):
     if de.get("filter_selector"):
         try:
             eval_filter = safe_eval(de.get('filter_selector'))
-            if eval_filter and isinstance(eval_filter, list):
-                for x in eval_filter:
-                    res.append(x[0])
+            if eval_filter:
+                if isinstance(eval_filter, list):
+                    for x in eval_filter:
+                        res.append(x[0])
+                elif isinstance(eval_filter, tuple):
+                    for t_filter in eval_filter:
+                        if isinstance(t_filter, list):
+                            for x in t_filter:
+                                res.append(x[0])
         except Exception:
             logger.warning('Unable to translate filter_selector: %s' % de.get('filter_selector'))
     if de.tag == 'translate':
