@@ -51,7 +51,7 @@ class signature_follow_up(osv.osv):
 
                 left join stock_picking pick on pick.id =  s.signature_res_id and s.signature_res_model='stock.picking'
                 where
-                    l.user_id is not null
+                    l.user_id is not null and s.signed_off_line = 'f'
                 group by
                     l.user_id, s.signature_res_id, s.signature_state, s.signature_res_model, s.signature_is_closed, po.name, so.name, jour.code, jour.type, per.name, pick.name,
                     invoice.real_doc_type, invoice.type, invoice.is_debit_note, invoice.is_inkind_donation, invoice.is_direct_invoice, invoice.is_intermission, invoice.number, invoice.name,
