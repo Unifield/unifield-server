@@ -6,6 +6,11 @@ from tools.translate import _
 from tools import misc
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import threading
+import pooler
+from tempfile import NamedTemporaryFile
+from base64 import b64decode
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 
 #----------------------------------------------------------
@@ -264,12 +269,12 @@ class product_asset(osv.osv):
             vals['state'] = 'open'
 
         # fetch the product
-        if 'product_id' in vals:
+        if 'product_id' in vals and not context.get('from_import'):
             productId = vals['product_id']
             # add readonly fields to vals
             vals.update(self._getRelatedProductFields(cr, uid, productId, update_account=not from_sync))
 
-        if not from_sync and not vals.get('from_invoice') and 'move_line_id' in vals:
+        if not from_sync and not vals.get('from_invoice') and not context.get('from_import') and 'move_line_id' in vals:
             vals.update(self._getRelatedMoveLineFields(cr, uid, vals['move_line_id'], divisor=vals.get('quantity_divisor'), context=context))
 
         # UF-1617: set the current instance into the new object if it has not been sent from the sync
@@ -1378,6 +1383,361 @@ class product_asset_generate_entries(osv.osv_memory):
 
 
 product_asset_generate_entries()
+
+
+class product_asset_import_entries(osv.osv_memory):
+    _name = 'product.asset.import.entries'
+    _description = 'Import Asset Entries'
+    _columns = {
+        'file': fields.binary(string="File", filters='*.xml, *.xls', required=True),
+        'filename': fields.char(string="Imported filename", size=256),
+        'progression': fields.float(string="Progression", readonly=True),
+        'message': fields.char(string="Message", size=256, readonly=True),
+        'state': fields.selection(
+            [('draft', 'Created'), ('inprogress', 'In Progress'), ('error', 'Error'), ('done', 'Done')], string="State",
+            readonly=True, required=True),
+        'error_ids': fields.one2many('product.asset.import.entries.errors', 'wizard_id', "Errors", readonly=True),
+    }
+    _defaults = {
+        'progression': lambda *a: 0.0,
+        'state': lambda *a: 'draft',
+        'message': lambda *a: _('Initialization...'),
+    }
+
+    def _import(self, dbname, uid, ids, context=None):
+        if context is None:
+            context = {}
+        cr = pooler.get_db(dbname).cursor()
+        created = 0
+        processed = 0
+        errors = []
+        current_line_num = None
+        try:
+            # Update wizard
+            self.write(cr, uid, ids, {'message': _('Cleaning up old imports...'), 'progression': 1.00})
+            # Clean up old temporary imported lines
+            old_lines_ids = self.pool.get('product.asset.import.entries.lines').search(cr, uid, [])
+            self.pool.get('product.asset.import.entries.lines').unlink(cr, uid, old_lines_ids)
+
+            for wiz in self.browse(cr, uid, ids):
+                # Check that a file was given
+                if not wiz.file:
+                    raise osv.except_osv(_('Error'), _('Nothing to import.'))
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Copying file...'), 'progression': 2.00})
+                fileobj = NamedTemporaryFile('w+b', delete=False)
+                fileobj.write(b64decode(wiz.file))
+                fileobj.close()
+                content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
+                if not content:
+                    raise osv.except_osv(_('Warning'), _('No content'))
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Processing line...'), 'progression': 4.00})
+                rows = content.getRows()
+                nb_rows = len([x for x in content.getRows()])
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Reading headers...'), 'progression': 5.00})
+                # Use the first row to find which column to use
+                cols = {}
+                col_names = ['External Asset ID', 'Product Code', 'Asset Type', 'Useful Life', 'Serial Number', 'Brand',
+                             'Type', 'Model', 'Year', 'Journal Item', 'Asset B/S Depreciation Account',
+                             'Asset P&L Depreciation Account']
+                for num, r in enumerate(rows):
+                    header = [x and x.data for x in r.iter_cells()]
+                    for el in col_names:
+                        if el in header:
+                            cols[el] = header.index(el)
+                    break
+                # Number of line to bypass in line's count
+                base_num = 2
+                for el in col_names:
+                    if el not in cols:
+                        raise osv.except_osv(_('Error'), _("'%s' column not found in file.") % (el or '',))
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Reading lines...'), 'progression': 6.00})
+                # Check file's content
+                for num, r in enumerate(rows):
+                    # Update wizard
+                    progression = ((float(num + 1) * 94) / float(nb_rows)) + 6
+                    self.write(cr, uid, [wiz.id], {'message': _('Checking file...'), 'progression': progression})
+                    # Prepare some values
+                    r_prod = False
+                    r_asset_type = False
+                    r_use_life = False
+                    r_ji = False
+                    r_bs_acc = False
+                    r_pl_acc = False
+
+                    current_line_num = num + base_num
+                    # Fetch all XML row values
+                    line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r, context=context)
+
+                    # ignore empty lines
+                    if not self.pool.get('msf.doc.import.accounting')._check_has_data(line):
+                        continue
+
+                    # Check line length and fill the cropped empty/missing cells at end of line with False
+                    if len(line) < len(col_names):
+                        line.extend([False] * (len(col_names) - len(line)))
+
+                    line = self.pool.get('msf.doc.import.accounting')._format_special_char(line)
+
+                    # Check Product Code
+                    if not line[cols['Product Code']]:
+                        errors.append(
+                            _('Line %s: No Product Code specified! (External Asset ID: %s, Serial Number: %s)') %
+                             (current_line_num, line[cols['External Asset ID']] or '_', line[cols['Serial Number']] or '_'))
+                    else:
+                        product_ids = self.pool.get('product.product').search(cr, uid, [('default_code', '=', line[cols['Product Code']])])
+                        if not product_ids:
+                            errors.append(
+                                _('Line %s: Product Code "%s" not found!') % (current_line_num, line[cols['Product Code']],))
+                        else:
+                            r_prod = product_ids[0]
+
+                    # Check Asset Type
+                    if not line[cols['Asset Type']]:
+                        errors.append(
+                            _('Line %s: No Asset Type specified! (External Asset ID: %s, Serial Number: %s)') %
+                            (current_line_num, line[cols['External Asset ID']] or '_', line[cols['Serial Number']] or '_'))
+                    else:
+                        asset_type_ids = self.pool.get('product.asset.type').search(cr, uid, [('name', '=', line[cols['Asset Type']])])
+                        if not asset_type_ids:
+                            errors.append(
+                                _('Line %s: Asset Type "%s" not found!') % (current_line_num, line[cols['Asset Type']],))
+                        else:
+                            r_asset_type = asset_type_ids[0]
+
+                    # Check Useful Life
+                    use_life_ids = False
+                    if not line[cols['Useful Life']]:
+                        errors.append(
+                            _('Line %s: No Useful Life specified! (External Asset ID: %s, Serial Number: %s)') %
+                            (current_line_num, line[cols['External Asset ID']] or '_', line[cols['Serial Number']] or '_'))
+                    elif line[cols['Useful Life']] and r_asset_type:
+                        use_life_ids = self.pool.get('product.asset.useful.life').search(cr, uid, [('asset_type_id', '=', r_asset_type), ('year', '=', line[cols['Useful Life']])])
+                        if not use_life_ids:
+                            errors.append(
+                                _('Line %s: The "%s" year(s) Useful Life of Asset Type "%s" not found!') % (current_line_num, line[cols['Useful Life']], line[cols['Asset Type']],))
+                        else:
+                            r_use_life = use_life_ids[0]
+
+                    # Check Journal Item
+                    move_ids = False
+                    aml_ids = False
+                    if line[cols['Journal Item']]:
+                        move_ids = self.pool.get('account.move').search(cr, uid, [('name', '=', line[cols['Journal Item']])])
+                        if move_ids and move_ids[0]:
+                            if r_prod:
+                                product = self.pool.get('product.product').browse(cr, uid, r_prod, context=context)
+                                aml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', '=', move_ids[0]), ('product_id', '=', product.id)])
+                        if not move_ids or not aml_ids:
+                            errors.append(_('Line %s: Journal Item "%s" not found!\nPlease check if that JI exists or has the product specified') % (current_line_num, line[cols['Journal Item']],))
+                        elif aml_ids:
+                            ji_error = False
+                            # Apply the same restrictions as in the asset form view
+                            aml = self.pool.get('account.move.line').browse(cr, uid, aml_ids[0], context=context)
+                            if aml.journal_id.type not in ['purchase', 'correction_hq', 'hq', 'intermission']:
+                                errors.append(_('Line %s: The journal of Journal Item "%s" has to be of type Purchase, Correction HQ, HQ or Intermission!') % (current_line_num, line[cols['Journal Item']],))
+                                ji_error = True
+                            if not (aml.debit > 0):
+                                errors.append(_('Line %s: The debit of Journal Item "%s" has to be greater than 0.') % (current_line_num, line[cols['Journal Item']],))
+                                ji_error = True
+                            if aml.move_id.state != 'posted':
+                                errors.append(_('Line %s: The Journal Entry "%s" has to be in "posted" state.') % (current_line_num, line[cols['Journal Item']],))
+                                ji_error = True
+                            if aml.account_id.user_type_code not in ['asset', 'expense']:
+                                errors.append(_('Line %s: The account type of Journal Item "%s" has to be either Asset or Expense.') % (current_line_num, line[cols['Journal Item']],))
+                                ji_error = True
+                            if not ji_error:
+                                r_ji = aml_ids[0]
+
+                    # Check Asset B/S Depreciation Account
+                    bs_ids = False
+                    if line[cols['Asset B/S Depreciation Account']]:
+                        bs_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', line[cols['Asset B/S Depreciation Account']])])
+                        if not bs_ids:
+                            errors.append(_('Line %s: Asset B/S Depreciation Account "%s" not found!') % (current_line_num, line[cols['Asset B/S Depreciation Account']],))
+                        else:
+                            bs_account = self.pool.get('account.account').browse(cr, uid, bs_ids[0], context=context)
+                            if bs_account.type != 'other' or bs_account.user_type_code != 'asset':
+                                errors.append(_('Line %s: Asset B/S Depreciation Account "%s" must have "Regular" as Internal Type and "Asset" as Account Type') %
+                                              (current_line_num, line[cols['Asset B/S Depreciation Account']],))
+                            else:
+                                r_bs_acc = bs_ids[0]
+
+                    # Check Asset P&L Depreciation Account
+                    pl_ids = False
+                    if line[cols['Asset P&L Depreciation Account']]:
+                        pl_ids = self.pool.get('account.account').search(cr, uid, [
+                            ('code', '=', line[cols['Asset P&L Depreciation Account']])])
+                        if not pl_ids:
+                            errors.append(_('Line %s: Asset P&L Depreciation Account "%s" not found!') %
+                                          (current_line_num, line[cols['Asset P&L Depreciation Account']],))
+                        else:
+                            pl_account = self.pool.get('account.account').browse(cr, uid, pl_ids[0], context=context)
+                            if pl_account.user_type_code not in ['expense', 'income']:
+                                errors.append(
+                                    _('Line %s: Asset P&L Depreciation Account "%s" must have "Expense" or "Income" as Account Type') %
+                                    (current_line_num, line[cols['Asset P&L Depreciation Account']],))
+                            else:
+                                r_pl_acc = pl_ids[0]
+
+                    vals = {
+                        'external_asset_id': line[cols['External Asset ID']] or '',
+                        'prod_int_code': line[cols['Product Code']],
+                        'product_id': r_prod,
+                        'asset_type_id': r_asset_type,
+                        'useful_life_id': r_use_life,
+                        'serial_nb': line[cols['Serial Number']] or '',
+                        'brand': line[cols['Brand']],
+                        'type': line[cols['Type']] or '',
+                        'model': line[cols['Model']] or '',
+                        'year': line[cols['Year']] or '',
+                        'move_line_id': r_ji,
+                        'asset_bs_depreciation_account_id': r_bs_acc,
+                        'asset_pl_account_id': r_pl_acc,
+                        'wizard_id': wiz.id,
+                    }
+
+                    if not errors:
+                        line_res = self.pool.get('product.asset.import.entries.lines').create(cr, uid, vals, context=context)
+                        if not line_res:
+                            errors.append(_('Line %s: A problem occurred for line registration. Please contact an Administrator.') % (current_line_num,))
+                            continue
+                        created += 1
+
+            # Update wizard
+            self.write(cr, uid, ids,
+                       {'message': _('Check complete. Reading potential errors or write needed changes.'),
+                        'progression': 100.0})
+
+            wiz_state = 'done'
+            # If errors, cancel probable modifications
+            if errors:
+                cr.rollback()
+                created = 0
+                message = _('Import FAILED.')
+                # Delete old errors
+                error_ids = self.pool.get('product.asset.import.entries.errors').search(cr, uid, [], context)
+                if error_ids:
+                    self.pool.get('product.asset.import.entries.errors').unlink(cr, uid, error_ids, context)
+                # create errors lines
+                for e in errors:
+                    self.pool.get('product.asset.import.entries.errors').create(cr, uid,
+                                                                             {'wizard_id': wiz.id, 'name': e},
+                                                                             context)
+                wiz_state = 'error'
+            else:
+                # Update wizard
+                self.write(cr, uid, ids, {'message': _('Writing changes...'), 'progression': 0.0})
+                # Create all asset entries
+                import_lines_ids = self.pool.get('product.asset.import.entries.lines').search(cr, uid, [('wizard_id', '=', wiz.id)], context=context)
+                import_lines = self.pool.get('product.asset.import.entries.lines').browse(cr, uid, import_lines_ids, context=context)
+                context.update({'from_import': True})
+                try:
+                    for asset in import_lines:
+                        asset_vals = {
+                            'external_asset_id': asset.external_asset_id,
+                            'prod_int_code': asset.prod_int_code,
+                            'product_id': asset.product_id.id,
+                            'asset_type_id': asset.asset_type_id.id,
+                            'useful_life_id': asset.useful_life_id.id,
+                            'serial_nb': asset.serial_nb,
+                            'brand': asset.brand,
+                            'type': asset.type,
+                            'model': asset.model,
+                            'year': asset.year,
+                            'move_line_id': asset.move_line_id.id,
+                            'asset_bs_depreciation_account_id': asset.asset_bs_depreciation_account_id.id,
+                            'asset_pl_account_id': asset.asset_pl_account_id.id,
+                        }
+                        asset_id = self.pool.get('product.asset').create(cr, uid, asset_vals, context=context)
+                    message = _('Import successful.')
+                except osv.except_osv as osv_error:
+                    cr.rollback()
+                    self.write(cr, uid, ids,
+                               {'message': _("An error occurred. %s: %s") % (osv_error.name, osv_error.value,),
+                                'state': 'done', 'progression': 100.0})
+                    cr.close(True)
+
+            # Update wizard
+            self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
+
+            # Close cursor
+            cr.commit()
+            cr.close(True)
+
+        except osv.except_osv as osv_error:
+            cr.rollback()
+            self.write(cr, uid, ids, {'message': _("An error occurred. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
+            cr.close(True)
+        except Exception as e:
+            cr.rollback()
+            if current_line_num is not None:
+                message = _("An error occurred on line %s: %s") % (current_line_num, e.args and e.args[0] or '')
+            else:
+                message = _("An error occurred: %s") % (e.args and e.args[0] or '',)
+            self.write(cr, uid, ids, {'message': message, 'state': 'done', 'progression': 100.0})
+            cr.close(True)
+        return True
+
+    def button_validate(self, cr, uid, ids, context=None):
+        """
+        Launch process in a thread and return a wizard
+        """
+        if not context:
+            context = {}
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
+        return self.write(cr, uid, ids, {'state': 'inprogress'}, context=context)
+
+    def button_update(self, cr, uid, ids, context=None):
+        """
+        Update view
+        """
+        return False
+
+
+product_asset_import_entries()
+
+
+class product_asset_import_entries_lines(osv.osv):
+    _name = 'product.asset.import.entries.lines'
+
+    _columns = {
+        'external_asset_id': fields.char('External Asset ID', size=32, readonly=True),
+        'prod_int_code': fields.char('Product Code', size=128, readonly=True, required=True),
+        'product_id': fields.many2one('product.product', 'Product', required=True),
+        'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True, required=True),
+        'useful_life_id': fields.many2one('product.asset.useful.life', 'Useful Life', ondelete='restrict', readonly=True, required=True),
+        'serial_nb': fields.char('Serial Number', size=128, readonly=True),
+        'brand': fields.char('Brand', size=128, readonly=True),
+        'type': fields.char('Type', size=128, readonly=True),
+        'model': fields.char('Model', size=128, readonly=True),
+        'year': fields.char('Year', size=4, readonly=True),
+        'move_line_id': fields.many2one('account.move.line', 'Journal Item', readonly=True),
+        'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', readonly=True),
+        'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', readonly=True),
+        'wizard_id': fields.integer("Wizard", required=True, readonly=True),
+    }
+
+
+product_asset_import_entries_lines()
+
+
+class product_asset_import_entries_errors(osv.osv_memory):
+    _name = 'product.asset.import.entries.errors'
+    _description = 'Asset Entries Import - Error List'
+
+    _columns = {
+        'name': fields.text("Description", readonly=True, required=True),
+        'wizard_id': fields.many2one('product.asset.import.entries', "Wizard", required=True, readonly=True),
+    }
+
+
+product_asset_import_entries_errors()
+
 
 #----------------------------------------------------------
 # Products
