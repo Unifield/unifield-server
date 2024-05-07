@@ -105,9 +105,6 @@ class hq_entries_import_wizard(osv.osv_memory):
         acc_obj = self.pool.get('account.account')
         anacc_obj = self.pool.get('account.analytic.account')
         hq_obj = self.pool.get('hq.entries')
-        ### TO USE IF DATE HAVE some JAN or MAR or OCT instead of 01 ####
-        ### Set locale 'C' because of period
-        ## locale.setlocale(locale.LC_ALL, 'C')
         # Check period
         if not date:
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
@@ -330,10 +327,16 @@ class hq_entries_import_wizard(osv.osv_memory):
         if not wiz['file']:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
         # Decode file string
-        fileobj = NamedTemporaryFile('w+', delete=False)
-        fileobj.write(str(b64decode(wiz['file']),'utf8'))
+        fileobj = NamedTemporaryFile('w+', delete=False, newline='')
+        try:
+            fileobj.write(str(b64decode(wiz['file']),'utf8'))
+        except:
+            fileobj.write(str(b64decode(wiz['file']).decode('latin1').encode('utf-8'),'utf8'))
+
         # now we determine the file format
         fileobj.seek(0)
+
+
         # Read CSV file
         try:
             reader = csv.reader(fileobj, delimiter=',', quotechar='"')
