@@ -206,11 +206,27 @@
                                         }
                                         $('#order_line_extra_text').html(catalogue_text);
                                     }
+
+                                    function hide_esc_selector() {
+                                        // Hide the ESC Confirmed filter if the PO does not have an ESC Partner
+                                        var partner_type = $('#partner_type').val() || $('#partner_type').text().trim();
+                                        if (partner_type == 'esc' || partner_type == 'ESC') {
+                                            $('#order_line_filter_0').show();
+                                        }
+                                        else {
+                                            $('#order_line_filter_0').hide();
+                                        }
+                                    }
+
+                                    function on_reload_order_line() {
+                                        hide_esc_selector();
+                                        refresh_catalogue():
+                                    }
                                     $(document).ready(function() {
                                          original_partner = $('#partner_id').val();
-                                         new ListView('order_line').after_reload = refresh_catalogue;
+                                         new ListView('order_line').after_reload = on_reload_order_line;
                                          $('#catalogue_exists_text').change(refresh_catalogue);
-                                         refresh_catalogue();
+                                         on_reload_order_line();
                                     });
 
                                     var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
@@ -252,14 +268,6 @@
                                          $('#order_line_extra_text').html(catalogue_text);
                                     }
 
-                                    // Hide the ESC Confirmed filter if the PO does not have an ESC Partner
-                                    var partner_type = $('#partner_type').val() || $('#partner_type').text().trim();
-                                    if (partner_type == 'esc' || partner_type == 'ESC') {
-                                        $('#order_line_filter_0').show();
-                                    }
-                                    else {
-                                        $('#order_line_filter_0').hide();
-                                    }
                                 </script>
                             </html>
                         </group>
