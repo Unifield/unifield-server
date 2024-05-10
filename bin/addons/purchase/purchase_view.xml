@@ -220,7 +220,7 @@
 
                                     function on_reload_order_line() {
                                         hide_esc_selector();
-                                        refresh_catalogue():
+                                        refresh_catalogue();
                                     }
                                     $(document).ready(function() {
                                          original_partner = $('#partner_id').val();
