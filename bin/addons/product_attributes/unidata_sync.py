@@ -427,7 +427,7 @@ class ud_sync():
                 'key_field': 'code',
                 'mapping': {
                     "Don't know": 'no_know',
-                    False: 'no_know',
+                    False: 'no',
                     'No': 'no',
                     'Yes': 'yes',
                 },
@@ -469,12 +469,12 @@ class ud_sync():
             'single_use': {
                 'ud': 'medical/singleUse',
                 'mapping': {
-                    'Reusable': 'no',
                     'Single use': 'yes',
+                    'Single patient multiple use': 'yes',
+                    'Reusable': 'no',
+                    'Implantable Device': 'no_know',
                     "Don't know": 'no_know',
-                    'Not Applicable': 'no', # tbc with Raff
-                    'Implantable Device': 'no_know', # tbc with Raff
-                    'Single patient multiple use': 'yes', # tbc with Raff
+                    'Not Applicable': 'no_know',
                     False: 'no',
                 }
             },
@@ -511,7 +511,16 @@ class ud_sync():
                     'Yes': 'yes',
                     'No': 'no',
                     "Don't know": 'no_know',
-                    False: 'no',
+                    False: 'no_know',
+                }
+            },
+            'dangerous_good': {
+                'ud': 'supply/dangerousGroup/dangerous',
+                'mapping': {
+                    "Don't know": 'no_know',
+                    'Yes': 'True',
+                    'No': 'False',
+                    False: 'False',
                 }
             },
             'un_code': {
@@ -787,10 +796,13 @@ class ud_sync():
 
                     if uf_key == 'nomen_manda_1':
                         msfid = '%s-%s' % (ud_data['type'], ud_data['group']['code'])
+                        ud_key = 'group'
                     elif uf_key == 'nomen_manda_2':
                         msfid = '%s-%s-%s%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'])
+                        ud_key = 'family'
                     else:
                         msfid = '%s-%s-%s%s-%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'], ud_data['root']['code'])
+                        ud_key = 'root'
 
                     #if previous_nom not in lang_values:
                     #    continue
@@ -804,14 +816,14 @@ class ud_sync():
                             created_nomen = True
                             self.log('==== create nomenclature %s'%msfid)
                             nomen_data = {
-                                'name': ud_data['labels']['english'],
+                                'name': ud_data[ud_key]['labels']['english'],
                                 'msfid': msfid,
                                 'parent_id':  uf_values['en_MF'][previous_nom],
                                 'level': self.uf_config[uf_key]['nomen_level'],
                             }
                             nomen_id = [self.pool.get('product.nomenclature').create(self.cr, self.uid, nomen_data, context={'lang': 'en_MF'})]
-                            if ud_data['labels']['french']:
-                                self.pool.get('product.nomenclature').write(self.cr, self.uid, nomen_id, {'name': ud_data['labels']['french']}, context={'lang': 'fr_MF'})
+                            if ud_data.get(ud_key, {}).get('labels', {}).get('french'):
+                                self.pool.get('product.nomenclature').write(self.cr, self.uid, nomen_id, {'name': ud_data[ud_key]['labels']['french']}, context={'lang': 'fr_MF'})
                             if uf_key == 'nomen_manda_2':
                                 self.log('===== create category %s'%msfid)
                                 account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', ud_data.get('accountCode', {}).get('code'))])
@@ -819,21 +831,21 @@ class ud_sync():
                                     raise UDException('Account code %s not found' % (ud_data.get('accountCode', {}).get('code')))
                                 account_id = account_ids[0]
                                 categ_id = self.pool.get('product.category').create(self.cr, self.uid, {
-                                    'name': ud_data['labels']['english'],
+                                    'name': ud_data['family']['labels']['english'],
                                     'msfid': msfid,
                                     'family_id': nomen_id[0],
                                     'property_account_income_categ': account_id,
                                     'property_account_expense_categ': account_id,
                                 }, context={'lang': 'en_MF'})
-                                if ud_data['labels']['french']:
-                                    self.pool.get('product.category').write(self.cr, self.uid, categ_id, {'name': ud_data['labels']['french']}, context={'lang': 'fr_MF'})
+                                if ud_data.get('family', {}).get('labels', {}).get('french'):
+                                    self.pool.get('product.category').write(self.cr, self.uid, categ_id, {'name': ud_data['family']['labels']['french']}, context={'lang': 'fr_MF'})
                         else:
                             self.uf_product_cache[uf_key][cache_key] = nomen_id
                     else:
                         nomen_id = self.uf_product_cache[uf_key][cache_key]
                     if not nomen_id or len(nomen_id) != 1:
                         raise UDException('%s error %s not found %s' % (uf_key, cache_key, nomen_id))
-                    if uf_key == 'nomen_manda_2':
+                    if False and uf_key == 'nomen_manda_2':
                         if msfid not in self.categ_account_cache:
                             if not created_nomen:
                                 self.categ_account_cache[msfid] = self.pool.get('product.nomenclature').browse(self.cr, self.uid, nomen_id[0]).category_id.property_account_income_categ.code
