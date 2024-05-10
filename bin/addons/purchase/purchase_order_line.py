@@ -25,6 +25,15 @@ class purchase_order_line(osv.osv):
     _max_amount = 10**10
     _max_msg = _('The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if context is None:
+            context = {}
+        if context.get('from_mismatch'):
+            for arg in args:
+                if arg[0] == 'order_id' and arg[2]:
+                    self._compute_catalog_mismatch(cr, uid, order_id=arg[2], context=context)
+        return super(purchase_order_line, self).search( cr, uid, args, offset, limit, order, context, count)
+
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return True if the system configuration VAT management is set to True
@@ -531,6 +540,88 @@ class purchase_order_line(osv.osv):
         return res
 
 
+    def _compute_catalog_mismatch(self, cr, uid, order_id=None, pol_id=None, context=None):
+        if order_id and pol_id or (not order_id and not pol_id):
+            raise osv.except_osv(_('Error'), _('_compute_catalog_mismatch must be called with either order_id or pol_id set'))
+        if order_id:
+            cond = 'pol1.order_id in %s'
+            if isinstance(order_id, int):
+                order_id = [order_id]
+            args = (tuple(order_id), )
+        if pol_id:
+            cond = 'pol1.id in %s'
+            if isinstance(pol_id, int):
+                pol_id = [pol_id]
+            args = (tuple(pol_id), )
+
+        cr.execute("""
+            update purchase_order_line pol1 set
+                catalog_mismatch=
+                    case
+                        when catl.catalogue_id is null then ''
+                        when catl.id is null then 'na'
+                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding=0 or pol.product_qty%%catl.soq_rounding=0) then 'price'
+                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and catl.soq_rounding!=0 and pol.product_qty%%catl.soq_rounding!=0 then 'price_soq'
+                        when catl.soq_rounding!=0 and pol.product_qty%%catl.soq_rounding!=0 then  'soq'
+                        else 'conform'
+                    end,
+                catalog_price_unit=
+                    case
+                        when catl.catalogue_id is null or catl.id is null  then null
+                        else catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)
+                    end,
+                catalog_soq=catl.soq_rounding
+            from purchase_order_line pol
+                left join purchase_order po on po.id = pol.order_id
+                left join product_pricelist curr_pricelist on curr_pricelist.id = po.pricelist_id
+                left join lateral (
+                    select
+                        cat.id as catalogue_id, cat_line.id, cat.currency_id as cat_currency_id, cat_line.unit_price as cat_unit_price, cat_line.rounding as soq_rounding
+                    from
+                        supplier_catalogue cat
+                        left join supplier_catalogue_line cat_line on cat_line.catalogue_id = cat.id and cat_line.product_id = pol.product_id and cat_line.line_uom_id = pol.product_uom
+                    where
+                        cat.partner_id = po.partner_id and
+                        cat.active = 't' and
+                        cat.state = 'confirmed' and
+                        (cat.period_from is null or cat.period_from < NOW()) and
+                        (cat.period_to is null or cat.period_to > NOW())
+                    order by
+                        cat.currency_id = curr_pricelist.currency_id, coalesce(cat_line.min_qty,0) <= pol.product_qty desc, abs(pol.product_qty - coalesce(cat_line.min_qty,0)) asc, cat_line.id
+                    limit 1
+                ) catl on true
+                left join lateral (
+                    select
+                        rate
+                    from
+                        res_currency_rate
+                    where
+                        currency_id = curr_pricelist.currency_id and
+                        name <= NOW()
+                    order by
+                        name desc
+                    limit 1
+                ) po_rate on true
+                left join lateral (
+                    select
+                        rate
+                    from
+                        res_currency_rate
+                    where
+                        currency_id = catl.cat_currency_id and
+                        name <= NOW()
+                    order by
+                        name desc
+                    limit 1
+                ) cat_rate on true
+            where
+                """ + cond + """ and
+                pol1.id = pol.id and
+                pol.product_id is not null and
+                pol.state not in ('confirmed', 'done', 'cancel', 'cancel_r') and
+                po.catalogue_not_applicable='f'
+        """, args) # not_a_user_entry
+
     _columns = {
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
@@ -679,6 +770,10 @@ class purchase_order_line(osv.osv):
 
         'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
         'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+
+        'catalog_mismatch': fields.selection([('conform', 'Conform'), ('na', 'N/A'),('soq', 'SOQ') ,('price', 'Unit Price'), ('price_soq', 'Unit Price & SOQ')], 'Catalog Mismatch', size=64, readonly=1, select=1),
+        'catalog_price_unit': fields.float_null('Catalogue Price Unit', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
+        'catalog_soq': fields.float_null('Catalogue SoQ', digits=(16,2), readonly=1),
     }
 
     _defaults = {
@@ -706,6 +801,7 @@ class purchase_order_line(osv.osv):
         'cancelled_by_sync': False,
         'mml_status': 'na',
         'msl_status': 'na',
+        'catalog_mismatch': '',
     }
 
     def _check_max_price(self, cr, uid, ids, context=None):
@@ -1356,6 +1452,7 @@ class purchase_order_line(osv.osv):
             'cancelled_by_sync': False,
             'from_dpo_line_id': False,
             'dates_modified': False,
+            'catalog_mismatch': '',
         })
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
@@ -1381,7 +1478,7 @@ class purchase_order_line(osv.osv):
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': [], 'cv_line_ids': [], 'dates_modified': False, 'rfq_line_state': 'draft'})
 
-        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import', 'external_ref']:
+        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol', 'created_by_vi_import', 'external_ref', 'catalog_mismatch']:
             if field not in default:
                 default[field] = False
 
@@ -2525,3 +2622,4 @@ class purchase_order_line_state(osv.osv):
 
 
 purchase_order_line_state()
+

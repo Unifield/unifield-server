@@ -22,6 +22,7 @@
 from . import order
 from . import request_quotation
 from . import purchase_report
+from . import line_mismatch
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

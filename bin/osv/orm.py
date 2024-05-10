@@ -1693,6 +1693,11 @@ class orm_template(object):
     def __view_look_dom_arch(self, cr, user, node, view_id, context=None):
         fields_def = self.__view_look_dom(cr, user, node, view_id, context=context)
         node = self._disable_workflow_buttons(cr, user, node)
+        #for page_view_id in node.getiterator('page'):
+        for page_view_id in node.iterfind(".//page[@view_id]"):
+            if page_view_id.get('view_id'):
+                module, xml_id = page_view_id.get('view_id').rsplit('.', 1)
+                page_view_id.set('view_id', '%d'%self.pool.get('ir.model.data').get_object_reference(cr, user, module, xml_id)[1])
         arch = etree.tostring(node, encoding="unicode").replace('\t', '')
         fields = {}
         if node.tag == 'diagram':

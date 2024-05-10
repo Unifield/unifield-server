@@ -731,14 +731,17 @@ class product_attributes(osv.osv):
 
     def _get_local_activation_from_merge(self, cr, uid, ids, field_name, args, context=None):
         '''
-            used by sync to not sync down active=True from coo to proj, activation of UD prod from COO will be done by the sync merge update
+        Used by sync to not sync down active=True from coo to proj.
+        Activation of UD prod from COO will be done by the sync merge update for non non-standard local products
         '''
         res = {}
         for _id in ids:
             res[_id] = False
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
-            for _id in self.search(cr, uid, [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', '=', True), ('replace_product_id', '!=', False)], context=context):
+            prod_domain = [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', '=', True),
+                           ('replace_product_id', '!=', False), ('standard_ok', '!=', 'non_standard_local')]
+            for _id in self.search(cr, uid, prod_domain, context=context):
                 res[_id] = True
 
         return res
@@ -3327,27 +3330,27 @@ class product_attributes(osv.osv):
             self.pool.get('product.merged').create(cr, 1, merge_data, context=new_ctx)
 
         # reset mission stock on nsl + old to 0, will be computed on next mission stock update
-        mission_stock_fields_reset = [
-            'stock_qty', 'stock_val',
-            'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
-            'secondary_qty', 'secondary_val',
-            'eprep_qty',
-            'cu_qty', 'cu_val',
-            'cross_qty', 'cross_val',
-            'wh_qty', 'internal_qty',
-            'quarantine_qty', 'input_qty', 'opdd_qty'
-        ]
-        cr.execute('''
-            update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field  for field in mission_stock_fields_reset]) + '''
-                where
-                mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
-                product_id in %(product_ids)s
-        ''', {'zero': 0, 'local_instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),  'product_ids': (kept_id, old_prod_id)}) # not_a_user_entry
-        cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (kept_id, ))
+        instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+        if instance_id:  # US-12845: To prevent issues during first synch when the instance has not been fully created
+            mission_stock_fields_reset = [
+                'stock_qty', 'stock_val',
+                'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
+                'secondary_qty', 'secondary_val',
+                'eprep_qty',
+                'cu_qty', 'cu_val',
+                'cross_qty', 'cross_val',
+                'wh_qty', 'internal_qty',
+                'quarantine_qty', 'input_qty', 'opdd_qty'
+            ]
+            cr.execute('''
+                update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field for field in mission_stock_fields_reset]) + '''
+                    where
+                    mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
+                    product_id in %(product_ids)s
+            ''', {'zero': 0, 'local_instance_id': instance_id,  'product_ids': (kept_id, old_prod_id)})  # not_a_user_entry
+            cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (kept_id, ))
 
         return True
-
-
 
     def merge_product(self, cr, uid, nsl_prod_id, local_id, context=None):
         """
@@ -3439,23 +3442,25 @@ class product_attributes(osv.osv):
             self.pool.get('product.merged').create(cr, 1, {'new_product_id': nsl_prod_id, 'old_product_id': local_id}, context=context)
 
         # reset mission stock on nsl + old to 0, will be computed on next mission stock update
-        mission_stock_fields_reset = [
-            'stock_qty', 'stock_val',
-            'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
-            'secondary_qty', 'secondary_val',
-            'eprep_qty',
-            'cu_qty', 'cu_val',
-            'cross_qty', 'cross_val',
-            'wh_qty', 'internal_qty',
-            'quarantine_qty', 'input_qty', 'opdd_qty'
-        ]
-        cr.execute('''
-            update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field  for field in mission_stock_fields_reset]) + '''
-                where
-                mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
-                product_id in %(product_ids)s
-        ''', {'zero': 0, 'local_instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),  'product_ids': (nsl_prod_id, local_id)}) # not_a_user_entry
-        cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (nsl_prod_id, ))
+        instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+        if instance_id:  # US-12845: To prevent issues during first synch when the instance has not been fully created
+            mission_stock_fields_reset = [
+                'stock_qty', 'stock_val',
+                'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
+                'secondary_qty', 'secondary_val',
+                'eprep_qty',
+                'cu_qty', 'cu_val',
+                'cross_qty', 'cross_val',
+                'wh_qty', 'internal_qty',
+                'quarantine_qty', 'input_qty', 'opdd_qty'
+            ]
+            cr.execute('''
+                update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field for field in mission_stock_fields_reset]) + '''
+                    where
+                    mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
+                    product_id in %(product_ids)s
+            ''', {'zero': 0, 'local_instance_id': instance_id,  'product_ids': (nsl_prod_id, local_id)})  # not_a_user_entry
+            cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (nsl_prod_id, ))
 
         return True
 

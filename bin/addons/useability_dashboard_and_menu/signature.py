@@ -35,10 +35,12 @@ class signature_follow_up(osv.osv):
                     coalesce(po.name, so.name, invoice.number, invoice.name, pick.name, jour.code|| ' ' ||per.name) as doc_name,
                     min(case when l.signed then l.date else NULL end) as signature_date,
                     coalesce(po.state, so.state, invoice.state, st.state, pick.state) as doc_state,
-                    s.signature_is_closed as signature_is_closed
+                    s.signature_is_closed as signature_is_closed,
+                    coalesce(min(priol.prio) < min(l.prio), 'f') as wait_prio
                 from
                     signature s
                 inner join signature_line l on l.signature_id = s.id
+                left join signature_line priol on priol.signature_id = l.signature_id and priol.prio < l.prio and priol.signed='f' and priol.is_active='t' and priol.user_id != l.user_id
                 left join purchase_order po on po.id = s.signature_res_id and s.signature_res_model='purchase.order'
                 left join sale_order so on so.id = s.signature_res_id and s.signature_res_model='sale.order'
                 left join account_invoice invoice on invoice.id = s.signature_res_id and s.signature_res_model='account.invoice'
@@ -80,6 +82,7 @@ class signature_follow_up(osv.osv):
         'signature_date': fields.datetime('Signature Date', readonly=1),
         'roles': fields.char('Roles', size=256, readonly=1),
         'signature_is_closed': fields.boolean('Signature Closed', readonly=1),
+        'wait_prio': fields.boolean('Has signature before this one.'),
     }
 
     def open_doc(self, cr, uid, ids, context=None):

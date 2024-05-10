@@ -71,12 +71,12 @@ class product_msl_rel(osv.osv):
 
 product_msl_rel()
 
+
 class unifield_instance(osv.osv):
     _name = 'unifield.instance'
     _description = 'UniField Instance'
     _rec_name = 'instance_name'
     _order = 'instance_name'
-
 
     def _get_is_published(self, cr, uid, ids, field_name, args, context=None):
         if not ids:
@@ -109,6 +109,21 @@ class unifield_instance(osv.osv):
                 ''')
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
+    def _get_msl_product_count(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        Count the number of msl products
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        for obj in self.browse(cr, uid, ids, fields_to_fetch=['msl_product_ids'], context=context):
+            res[obj.id] = len(obj.msl_product_ids)
+
+        return res
+
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1, domain=[('level', '!=', 'section')]),
         'instance_name': fields.related('instance_id', 'code', type='char', size=64, string='Instance', store=True, readonly=1),
@@ -117,6 +132,7 @@ class unifield_instance(osv.osv):
         'msl_product_ids': fields.many2many('product.product', 'product_msl_rel', 'unifield_instance_id', 'product_id', 'Product Code', readonly=1, order_by='default_code', sql_rel_domain="product_msl_rel.creation_date is not null"),
         'unidata_project_ids': fields.one2many('unidata.project', 'unifield_instance_id', 'UniData Project', readonly=1),
         'is_published': fields.function(_get_is_published, type='boolean', method=True, string='Published', fnct_search=_search_is_published),
+        'msl_product_count': fields.function(_get_msl_product_count, type='integer', method=True, string='Product Count'),
     }
 
     def _ud_project_uf_active(self, cr, uid, ids, value, context=None):
@@ -124,7 +140,6 @@ class unifield_instance(osv.osv):
         proj_ids = unidata_project_obj.search(cr, uid, [('unifield_instance_id', 'in', ids)], context=context)
         if proj_ids:
             unidata_project_obj.write(cr, uid, proj_ids, {'uf_active': value}, context=context)
-
 
     def activate(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'uf_active': True}, context=context)
@@ -141,10 +156,10 @@ class unifield_instance(osv.osv):
         self.write(cr, uid, ids, {'uf_active': state=='active'}, context=context)
         return {'type': 'ir.actions.refresh_o2m', 'o2m_refresh': '_terp_list'}
 
-
     _sql_constraints = [
         ('unique_instance_id', 'unique(instance_id)', 'Instance already exists.'),
     ]
+
 
 unifield_instance()
 

@@ -517,7 +517,7 @@ class account_bank_statement(osv.osv):
         if register.journal_id and register.journal_id.currency:
             # prepare some values
             name += ' - ' + register.journal_id.code + ' - '+ register.journal_id.currency.name
-            domain.append(('statement_id.journal_id.currency', '=', register.journal_id.currency.id))
+            domain.append(('currency_id', '=', register.journal_id.currency.id))
         # Prepare view
         view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
         view_id = view and view[1] or False
@@ -1188,11 +1188,14 @@ class account_bank_statement_line(osv.osv):
         for id in ids:
             result[id] = {'red_on_supplier': False}
 
-        for out in self.browse(cr, uid, ids, context=context):
-            type_for_register = out.account_id.type_for_register
-            if type_for_register in ['advance','transfer_same','down_payment','transfer']:
-                if out.partner_id.id is False and out.employee_id.id is False and out.transfer_journal_id.id is False:
-                    result[out.id]['red_on_supplier'] = True
+        if not ids:
+            return {}
+
+        for _id in self.search(cr, uid, [
+            ('id', 'in', ids), ('account_id.type_for_register', 'in', ['advance','transfer_same','down_payment','transfer', 'payroll']),
+            ('partner_id', '=', False), ('employee_id', '=', False), ('transfer_journal_id', '=', False)
+        ], context=context):
+            result[_id]['red_on_supplier'] = True
         return result
 
     def _get_number_imported_account_invoices(self, cr, uid, ids, field_name=None, args=None, context=None):
@@ -1272,7 +1275,7 @@ class account_bank_statement_line(osv.osv):
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
         'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
         'type_for_register': fields.related('account_id','type_for_register', string="Type for register", type='selection', selection=[('none','None'),
-                                                                                                                                       ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
+                                                                                                                                       ('transfer', 'Internal Transfer (different currencies)'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
                                                                                                                                        ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
         'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
         'free_analytic_lines': fields.function(_get_free_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines Free 1 and Free 2 linked to the given register line(s). Correction(s) included."),
@@ -2419,6 +2422,8 @@ class account_bank_statement_line(osv.osv):
                 ## Employee presence for operational advance
                 if absl.account_id.type_for_register == 'advance' and not absl.employee_id:
                     raise osv.except_osv(_('Error'), _('Please give an employee!'))
+                if absl.account_id.type_for_register == 'payroll' and not absl.employee_id and not absl.partner_id:
+                    raise osv.except_osv(_('Error'), _('Payroll account requires a Third Party'))
                 ## Analytic distribution presence
                 if self.analytic_distribution_is_mandatory(cr, uid, absl, context=context):
                     raise osv.except_osv(_('Error'), _('Analytic distribution is mandatory for this line: %s') % (absl.name or '',))

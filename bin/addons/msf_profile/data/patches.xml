@@ -1044,9 +1044,20 @@
             <field name="method">us_12294_force_email_popup</field>
         </record>
 
+
+        <!-- UF33.0 -->
+        <record id="us_12074_gdpr_remove_personal_data_from_track_changess" model="patch.scripts">
+            <field name="method">us_12074_gdpr_remove_personal_data_from_track_changes</field>
+        </record>
+
+        <record id="us_11135_set_pol_confirmation_date" model="patch.scripts">
+            <field name="method">us_11135_set_pol_confirmation_date</field>
+        </record>
+
         <record id="us_12826_unidata_pull_info" model="patch.scripts">
             <field name="method">us_12826_unidata_pull_info</field>
         </record>
+
 
     </data>
 </openerp>
