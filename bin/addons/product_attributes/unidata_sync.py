@@ -413,24 +413,24 @@ class ud_sync():
             'default_code': {
                 'ud': 'code'
             },
-            'fit_value': {
-                'lang': {
-                    'en_MF': {'ud': 'description/fitEnglishtext'},
-                    'fr_MF': {'ud': 'description/fitFrenchtext'},
-                }
-            },
-            'form_value': {
-                'lang': {
-                    'en_MF': {'ud': 'description/formEnglishtext'},
-                    'fr_MF': {'ud': 'description/formFrenchtext'},
-                }
-            },
-            'function_value': {
-                'lang': {
-                    'en_MF': {'ud': 'description/functionEnglishtext'},
-                    'fr_MF': {'ud': 'description/functionFrenchtext'},
-                }
-            },
+            #'fit_value': {
+            #    'lang': {
+            #        'en_MF': {'ud': 'description/fitEnglishtext'},
+            #        'fr_MF': {'ud': 'description/fitFrenchtext'},
+            #    }
+            #},
+            #'form_value': {
+            #    'lang': {
+            #        'en_MF': {'ud': 'description/formEnglishtext'},
+            #        'fr_MF': {'ud': 'description/formFrenchtext'},
+            #    }
+            #},
+            #'function_value': {
+            #    'lang': {
+            #        'en_MF': {'ud': 'description/functionEnglishtext'},
+            #        'fr_MF': {'ud': 'description/functionFrenchtext'},
+            #    }
+            #},
             'cold_chain': {
                 'ud': 'supply/thermosensitiveGroup/thermosensitiveInfo/code',
                 'relation': 'product.cold_chain',
