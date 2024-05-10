@@ -1412,6 +1412,10 @@ class product_asset_import_entries(osv.osv_memory):
         processed = 0
         errors = []
         current_line_num = None
+        acc_cache = {}
+        prod_cache = {}
+        asset_type_cache = {}
+        use_life_cache = {}
         try:
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Cleaning up old imports...'), 'progression': 1.00})
@@ -1488,12 +1492,13 @@ class product_asset_import_entries(osv.osv_memory):
                             _('Line %s: No Product Code specified! (External Asset ID: %s, Serial Number: %s)') %
                              (current_line_num, line[cols['External Asset ID']] or '_', line[cols['Serial Number']] or '_'))
                     else:
-                        product_ids = self.pool.get('product.product').search(cr, uid, [('default_code', '=', line[cols['Product Code']])])
-                        if not product_ids:
-                            errors.append(
-                                _('Line %s: Product Code "%s" not found!') % (current_line_num, line[cols['Product Code']],))
-                        else:
-                            r_prod = product_ids[0]
+                        if not prod_cache.get(line[cols['Product Code']], False):
+                            product_ids = self.pool.get('product.product').search(cr, uid, [('default_code', '=', line[cols['Product Code']])])
+                            if product_ids:
+                                prod_cache[line[cols['Product Code']]] = product_ids[0]
+                            else:
+                                errors.append(_('Line %s: Product Code "%s" not found!') % (current_line_num, line[cols['Product Code']],))
+                        r_prod = prod_cache.get(line[cols['Product Code']], False)
 
                     # Check Asset Type
                     if not line[cols['Asset Type']]:
@@ -1501,26 +1506,29 @@ class product_asset_import_entries(osv.osv_memory):
                             _('Line %s: No Asset Type specified! (External Asset ID: %s, Serial Number: %s)') %
                             (current_line_num, line[cols['External Asset ID']] or '_', line[cols['Serial Number']] or '_'))
                     else:
-                        asset_type_ids = self.pool.get('product.asset.type').search(cr, uid, [('name', '=', line[cols['Asset Type']])])
-                        if not asset_type_ids:
-                            errors.append(
-                                _('Line %s: Asset Type "%s" not found!') % (current_line_num, line[cols['Asset Type']],))
-                        else:
-                            r_asset_type = asset_type_ids[0]
+                        if not asset_type_cache.get(line[cols['Asset Type']], False):
+                            asset_type_ids = self.pool.get('product.asset.type').search(cr, uid, [('name', '=', line[cols['Asset Type']])])
+                            if asset_type_ids:
+                                asset_type_cache[line[cols['Asset Type']]] = asset_type_ids[0]
+                            else:
+                                errors.append(_('Line %s: Asset Type "%s" not found!') % (current_line_num, line[cols['Asset Type']],))
+                        r_asset_type = asset_type_cache.get(line[cols['Asset Type']], False)
 
                     # Check Useful Life
-                    use_life_ids = False
                     if not line[cols['Useful Life']]:
                         errors.append(
                             _('Line %s: No Useful Life specified! (External Asset ID: %s, Serial Number: %s)') %
                             (current_line_num, line[cols['External Asset ID']] or '_', line[cols['Serial Number']] or '_'))
                     elif line[cols['Useful Life']] and r_asset_type:
-                        use_life_ids = self.pool.get('product.asset.useful.life').search(cr, uid, [('asset_type_id', '=', r_asset_type), ('year', '=', line[cols['Useful Life']])])
-                        if not use_life_ids:
-                            errors.append(
-                                _('Line %s: The "%s" year(s) Useful Life of Asset Type "%s" not found!') % (current_line_num, line[cols['Useful Life']], line[cols['Asset Type']],))
-                        else:
-                            r_use_life = use_life_ids[0]
+                        if not use_life_cache.get((line[cols['Useful Life']], r_asset_type), False):
+                            use_life_ids = self.pool.get('product.asset.useful.life').search(cr, uid, [('asset_type_id', '=', r_asset_type), ('year', '=', line[cols['Useful Life']])])
+                            if use_life_ids:
+                                use_life_cache[(line[cols['Useful Life']], r_asset_type)] = use_life_ids[0]
+                            else:
+                                errors.append(
+                                    _('Line %s: The "%s" year(s) Useful Life of Asset Type "%s" not found!') %
+                                    (current_line_num, line[cols['Useful Life']], line[cols['Asset Type']],))
+                        r_use_life = use_life_cache.get((line[cols['Useful Life']], r_asset_type), False)
 
                     # Check Journal Item
                     move_ids = False
@@ -1555,33 +1563,38 @@ class product_asset_import_entries(osv.osv_memory):
                     # Check Asset B/S Depreciation Account
                     bs_ids = False
                     if line[cols['Asset B/S Depreciation Account']]:
-                        bs_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', line[cols['Asset B/S Depreciation Account']])])
-                        if not bs_ids:
-                            errors.append(_('Line %s: Asset B/S Depreciation Account "%s" not found!') % (current_line_num, line[cols['Asset B/S Depreciation Account']],))
-                        else:
-                            bs_account = self.pool.get('account.account').browse(cr, uid, bs_ids[0], context=context)
-                            if bs_account.type != 'other' or bs_account.user_type_code != 'asset':
-                                errors.append(_('Line %s: Asset B/S Depreciation Account "%s" must have "Regular" as Internal Type and "Asset" as Account Type') %
-                                              (current_line_num, line[cols['Asset B/S Depreciation Account']],))
+                        if not acc_cache.get((line[cols['Asset B/S Depreciation Account']], 'bs'), False):
+                            bs_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', line[cols['Asset B/S Depreciation Account']])])
+                            if not bs_ids:
+                                errors.append(_('Line %s: Asset B/S Depreciation Account "%s" not found!') % (current_line_num, line[cols['Asset B/S Depreciation Account']],))
                             else:
-                                r_bs_acc = bs_ids[0]
+                                bs_account = self.pool.get('account.account').browse(cr, uid, bs_ids[0], context=context)
+                                if bs_account.type != 'other' or bs_account.user_type_code != 'asset':
+                                    errors.append(_('Line %s: Asset B/S Depreciation Account "%s" must have "Regular" as Internal Type and "Asset" as Account Type') %
+                                                  (current_line_num, line[cols['Asset B/S Depreciation Account']],))
+                                else:
+                                    acc_cache[(line[cols['Asset B/S Depreciation Account']], 'bs')] = bs_ids[0]
+                        else:
+                            r_bs_acc = acc_cache.get((line[cols['Asset B/S Depreciation Account']], 'bs'), False)
 
                     # Check Asset P&L Depreciation Account
                     pl_ids = False
                     if line[cols['Asset P&L Depreciation Account']]:
-                        pl_ids = self.pool.get('account.account').search(cr, uid, [
-                            ('code', '=', line[cols['Asset P&L Depreciation Account']])])
-                        if not pl_ids:
-                            errors.append(_('Line %s: Asset P&L Depreciation Account "%s" not found!') %
-                                          (current_line_num, line[cols['Asset P&L Depreciation Account']],))
-                        else:
-                            pl_account = self.pool.get('account.account').browse(cr, uid, pl_ids[0], context=context)
-                            if pl_account.user_type_code not in ['expense', 'income']:
-                                errors.append(
-                                    _('Line %s: Asset P&L Depreciation Account "%s" must have "Expense" or "Income" as Account Type') %
-                                    (current_line_num, line[cols['Asset P&L Depreciation Account']],))
+                        if not acc_cache.get((line[cols['Asset P&L Depreciation Account']], 'pl'), False):
+                            pl_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', line[cols['Asset P&L Depreciation Account']])])
+                            if not pl_ids:
+                                errors.append(_('Line %s: Asset P&L Depreciation Account "%s" not found!') %
+                                              (current_line_num, line[cols['Asset P&L Depreciation Account']],))
                             else:
-                                r_pl_acc = pl_ids[0]
+                                pl_account = self.pool.get('account.account').browse(cr, uid, pl_ids[0], context=context)
+                                if pl_account.user_type_code not in ['expense', 'income']:
+                                    errors.append(
+                                        _('Line %s: Asset P&L Depreciation Account "%s" must have "Expense" or "Income" as Account Type') %
+                                        (current_line_num, line[cols['Asset P&L Depreciation Account']],))
+                                else:
+                                    acc_cache[(line[cols['Asset P&L Depreciation Account']], 'pl')] = pl_ids[0]
+                        else:
+                            r_pl_acc = acc_cache.get((line[cols['Asset P&L Depreciation Account']], 'pl'), False)
 
                     vals = {
                         'external_asset_id': line[cols['External Asset ID']] or '',
