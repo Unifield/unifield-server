@@ -508,7 +508,10 @@ class account_bank_statement(osv.osv):
         context.update({'active_ids': ids, 'active_id': ids[0]})
         st = self.browse(cr, uid, ids[0], context=context)
         prev_reg_id = previous_register_id(self, cr, uid, st.period_id.id, st.journal_id.id)
-        prev_reg_state = self.browse(cr, uid, prev_reg_id, context=context).state
+        if prev_reg_id:
+            prev_reg_state = self.browse(cr, uid, prev_reg_id, context=context).state
+        else:
+            prev_reg_state = False
         i = self.pool.get('wizard.confirm.closing.balance').create(cr, uid, {'is_prev_reg_open': prev_reg_state == 'open'}, context=context)
 
         return {'name': _('Closing balance freezing warning!'),
