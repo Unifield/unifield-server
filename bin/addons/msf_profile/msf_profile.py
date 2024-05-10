@@ -121,6 +121,8 @@ class patch_scripts(osv.osv):
             cr.execute("update product_cold_chain set ud_code=code")
             cr.execute("update product_cold_chain set ud_code='CT3+' where id in (select res_id from ir_model_data where name='product_attributes_cold_20')")
 
+            cr.execute("update unidata_sync set is_active='f'")
+            cr.execute("update ir_cron set active='f' where model='unidata.sync'")
             # set next UD sync as full sync
             param_obj = self.pool.get('ir.config_parameter')
             param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
