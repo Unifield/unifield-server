@@ -529,7 +529,7 @@ class ud_sync():
                     False: 'no_know',
                 }
             },
-            'dangerous_good': {
+            'dangerous_goods': {
                 'ud': 'supply/dangerousGroup/dangerous',
                 'mapping': {
                     "Don't know": 'no_know',
