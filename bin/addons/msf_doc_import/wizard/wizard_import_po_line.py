@@ -329,9 +329,7 @@ class wizard_import_po_line(osv.osv_memory):
                                 if not price_value['price_unit_defined']:
                                     raise osv.except_osv(_('Error'), _("Price must be defined in the RfQ import file."))
 
-                                # in case of update we do not want to update qty and uom values :
-                                if 'product_qty' in to_write:
-                                    to_write.pop('product_qty')
+                                # in case of update we do not want to update uom values :
                                 if 'product_uom' in to_write:
                                     to_write.pop('product_uom')
 
