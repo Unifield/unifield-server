@@ -68,7 +68,10 @@
         <field name="arch" type="xml">
             <form string="Asset">
                     <field name="name" />
-                    <field name="instance_id" readonly='1'/>
+                    <group colspan="2" col="4">
+                        <field name="external_asset_id" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'not in', ['draft', 'open'])]}"/>
+                        <field name="instance_id" readonly='1'/>
+                    </group>
                     <field name="journal_id" />
                     <group colspan="2" col="4">
                         <field name="asset_type_id" on_change="change_asset_type_id(asset_type_id, useful_life_id)" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
@@ -112,11 +115,11 @@
 
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
-                            <field name="move_line_id" colspan="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
+                            <field name="move_line_id" required="1" colspan="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
                             <field name="quantity_divisor"  attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_quantity_divisor(quantity_divisor, move_line_id)"/>
-                            <field name="invo_value" />
-                            <field name="invo_currency"  />
-                            <field name="invo_date" />
+                            <field name="invo_value" required="1"/>
+                            <field name="invo_currency" required="1"/>
+                            <field name="invo_date" required="1"/>
                             <field name="invo_supplier_id" colspan="4" />
                             <field name="invo_donator_code" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
                             <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
@@ -141,8 +144,8 @@
                         </group>
                     </page>
                     <page string="Depreciation">
-                        <field name="start_date" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
-                        <field name="depreciation_method" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}"/>
+                        <field name="start_date" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                        <field name="depreciation_method" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}"/>
                         <newline />
                         <field name="depreciation_amount" />
                         <field name="disposal_amount" />
@@ -584,6 +587,82 @@ action = self.open_asset_account_move(cr, uid, ids, context=context)
     </record>
 
     <menuitem sequence="200" action="action_product_asset_generate_entries" id="menu_product_asset_generate_entries" parent="product_asset.menu_asset_sales" />
+
+    <record id="view_product_asset_import_entries" model="ir.ui.view">
+            <field name="name">product.asset.import.entries.form</field>
+            <field name="model">product.asset.import.entries</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Asset Entries">
+                    <separator string="This will import Entries from an XML file." colspan="4"/>
+                    <field name="file" filename="filename" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <field name="filename" invisible="1"/>
+                    <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
+                    <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    <newline/>
+                    <button name="button_update" type="object" string="Update" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
+                    <newline />
+                    <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
+                    <group col="4" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                        <separator string="Import template"/>
+                        <newline />
+                        <html>
+                          <br />
+                          <table style="margin: 0 auto;">
+                            <thead>
+                              <tr style='background-color: #ccc;font-size:1.2em;'>
+                                <th class='external_asset_id' style='border: thin solid black; text-transform: none;'>External Asset ID</th>
+                                <th class='prod_int_code' style='border: thin solid black; font-weigth:bold; border-left: none; text-transform: none;'>Product Code</th>
+                                <th class='asset_type_id' style='border: thin solid black; font-weigth:bold; border-left: none; text-transform: none;'>Asset Type</th>
+                                <th class='useful_life_id' style='border: thin solid black; font-weigth:bold; border-left: none; text-transform: none;'>Useful Life</th>
+                                <th class='serial_nb' style="border: thin solid black; border-left: none; text-transform: none;">Serial Number</th>
+                                <th class='brand' style='border: thin solid black; border-left: none; text-transform: none;'>Brand</th>
+                                <th class='type' style='border: thin solid black; border-left: none; text-transform: none;'>Type</th>
+                                <th class='model' style='border: thin solid black; border-left: none; text-transform: none;'>Model</th>
+                                <th class='year' style='border: thin solid black; border-left: none; text-transform: none;'>Year</th>
+                                <th class='move_line_id' style='border: thin solid black; border-left: none; text-transform: none;'>Journal Item</th>
+                                <th class='asset_bs_depreciation_account_id' style='border: thin solid black; border-left: none; text-transform: none;'>Asset B/S Depreciation Account</th>
+                                <th class='asset_pl_account_id' style='border: thin solid black; border-left: none; text-transform: none;'>Asset P&amp;L Depreciation Account</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <th style="border: thin solid black; border-top: none;"></th>
+                                <th style="border: thin solid black; color:red; font-weigth:bold; font-size:1.2em; border-left: none; border-top: none;">Mandatory</th>
+                                <th style="border: thin solid black; color:red; font-weigth:bold; font-size:1.2em; border-left: none; border-top: none;">Mandatory</th>
+                                <th style="border: thin solid black; color:red; font-weigth:bold; font-size:1.2em; border-left: none; border-top: none;">Mandatory</th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <br />
+                        </html>
+                    </group>
+                    <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Import" icon="terp-camera_test"/>
+                    </group>
+                    <field name="state" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    <record id="action_product_asset_import_entries" model="ir.actions.act_window">
+        <field name="name">Import Asset Entries</field>
+        <field name="res_model">product.asset.import.entries</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem sequence="300" action="action_product_asset_import_entries" id="menu_product_asset_import_entries" parent="product_asset.menu_asset_sales" />
 
 
 
