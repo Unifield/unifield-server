@@ -43,7 +43,7 @@ class wizard_export_vi_finance(osv.osv_memory):
 
     def get_active_export_ids(self, cr, uid, context=None):
         instance = self.pool.get('res.company')._get_instance_record(cr, uid)
-        if not instance or instance.name not in ('HQ_OCA', 'OCP_HQ'):
+        if not instance or instance.instance not in ('HQ_OCA', 'OCP_HQ'):
             return False
 
         return self.pool.get('automated.export').search(cr, uid, [('active', '=', True), ('function_id.model_id', '=', self._name)], context=context)
@@ -91,7 +91,7 @@ class wizard_export_vi_finance(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('Export is only available at HQ level.'))
 
         set_as_already_exported = False
-        if instance.name == 'OCP_HQ':
+        if instance.instance == 'OCP_HQ':
             set_as_already_exported = True
         p_state_obj = self.pool.get('account.period.state')
         export_job_obj = self.pool.get('automated.export.job')
