@@ -319,7 +319,7 @@ class ud_sync():
             'login': config['login'],
             'password': config['password'],
             'size': self.page_size,
-            #'publishonweb': False,
+            'publishonweb': False,
         }
         self.url = config['url']
         self.url_msl = config['url_msl']
