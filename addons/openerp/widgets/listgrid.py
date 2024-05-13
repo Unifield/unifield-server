@@ -507,6 +507,13 @@ class List(TinyWidget):
 
                     fields[name].update(attrs)
 
+                    cell_colors = {}
+                    if fields[name].get('colors'):
+                        for color_spec in fields[name].get('colors', '').split(';'):
+                            if color_spec:
+                                colour, test_c = color_spec.split(':')
+                                cell_colors[colour] = test_c
+
                     try:
                         visval = fields[name].get('invisible', 'False')
                         invisible = visval if isinstance(visval, bool) \
@@ -545,7 +552,7 @@ class List(TinyWidget):
                             else:
                                 cell = CELLTYPES[kind](value=row_value.get(name, False), **fields[name])
 
-                        for color, expr in list(self.colors.items()):
+                        for color, expr in list(self.colors.items()) or list(cell_colors.items()):
                             try:
                                 if expr_eval(expr,
                                              dict(row_value, active_id=rpc.session.active_id or False)):
