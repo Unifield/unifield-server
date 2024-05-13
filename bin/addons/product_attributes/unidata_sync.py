@@ -489,7 +489,7 @@ class ud_sync():
                     'Reusable': 'no',
                     'Implantable Device': 'no_know',
                     "Don't know": 'no_know',
-                    'Not Applicable': 'no_know',
+                    'Not Applicable': 'no',
                     False: 'no',
                 }
             },
