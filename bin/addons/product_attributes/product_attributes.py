@@ -186,6 +186,7 @@ class product_cold_chain(osv.osv):
     _name = "product.cold_chain"
     _columns = {
         'code': fields.char('Code', size=256),
+        'ud_code': fields.char(string='Code', size=256),
         'name': fields.char('Name', size=256, required=True, translate=1),
         'cold_chain': fields.boolean('Cold Chain'),
         'mapped_to': fields.many2one('product.cold_chain', string='Mapped to', readonly=1),
@@ -668,6 +669,39 @@ class product_attributes(osv.osv):
                     dom += [ '&', ('batch_management', '=', False), ('perishable', '=', True)]
         return dom
 
+    def _search_incompatible_oc_default_values(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        oc_def = self.pool.get('unidata.default_product_value')
+        for arg in args:
+            if arg[1] == '=':
+                if not arg[2]:
+                    raise osv.except_osv(_('Warning'), _('This filter is not implemented'))
+
+                oc_def_ids = oc_def.search(cr, uid, [], context=context)
+            elif arg[1] == 'in':
+                if not isinstance(arg[2], list):
+                    raise osv.except_osv(_('Warning'), _('This filter is not implemented'))
+                oc_def_ids = arg[2]
+            else:
+                raise osv.except_osv(_('Warning'), _('This filter is not implemented'))
+
+            temp_dom = []
+            for oc_val in oc_def.browse(cr, uid, oc_def_ids, context=context):
+                value = oc_val.value
+                if value == 'f':
+                    value = False
+                temp_dom.append(['&', ('nomen_manda_%d' % oc_val.nomenclature.level, '=', oc_val.nomenclature.id), (oc_val.field, '!=', value)])
+
+            ud_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+            if temp_dom:
+                dom += temp_dom[0]
+                for d in temp_dom[1:]:
+                    dom.insert(0, '|')
+                    dom += d
+                dom = ['&', ('international_status', '=', ud_id)] + dom
+
+        return dom
+
     def _search_show_ud(self, cr, uid, obj, name, args, context=None):
         dom = []
         for arg in args:
@@ -1082,7 +1116,8 @@ class product_attributes(osv.osv):
         ),
         'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
-        'un_code': fields.char('UN Code', size=7),
+        'un_code': fields.char('UN Code', size=32),
+        'hs_code': fields.char('HS Code', size=12, readonly=1),
         'gmdn_code' : fields.char('GMDN Code', size=5),
         'gmdn_description' : fields.char('GMDN Description', size=64),
         'life_time': fields.integer('Product Life Time',
@@ -1217,6 +1252,8 @@ class product_attributes(osv.osv):
         'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance', domain=[('state', '=', 'active'), ('level', '!=', 'section')]),
         'mml_restricted_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Restricted to instance', domain=[('state', '=', 'active'), ('level', '!=', 'section')]),
         'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unifield.instance', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
+
+        'incompatible_oc_default_values': fields.function(tools.misc.get_fake, method=True, type='boolean', string='Incompatible OC default', fnct_search=_search_incompatible_oc_default_values),
     }
 
 
@@ -3472,22 +3509,21 @@ class product_attributes(osv.osv):
         return True
 
     def pull_ud(self, cr, uid, ids, context=None):
-        ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+        for x in self.read(cr, uid, ids, ['msfid'] , context=context):
+            wiz_id = self.pool.get('product.pull_single_ud').create(cr, uid, {'msfid': x['msfid'] or False}, context=context)
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'product.pull_single_ud',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+                'height': '190px',
+                'width': '420px',
+            }
 
-        code_updated = []
-        update = False
-        for x in self.read(cr, uid, ids, ['msfid', 'default_code'], context=context):
-            if x['msfid']:
-                try:
-                    ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False)
-                    code_updated.append(x['default_code'])
-                    if not update:
-                        update = x['id']
-                except requests.exceptions.HTTPError as e:
-                    raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
-        if code_updated:
-            self.log(cr, uid, update, _('%s updated from UniData') % ', '.join(code_updated))
-        return True
+
 
     def open_mml_nonconform_report(self, cr, uid, ids, context=None):
         instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
@@ -3843,5 +3879,44 @@ class product_ask_activate_wizard(osv.osv_memory):
 
 product_ask_activate_wizard()
 
+class product_pull_single_ud(osv.osv_memory):
+    _name = 'product.pull_single_ud'
+    rec_name = 'msfid'
+    _columns = {
+        'msfid': fields.integer_null('MSFID'),
+    }
+
+    def pull_product(self, cr, uid, ids, context=None):
+        session_obj = self.pool.get('unidata.sync.log')
+        act_obj = self.pool.get('ir.actions.act_window')
+        for x in self.read(cr, uid, ids, ['msfid'], context=context):
+            if x['msfid']:
+                session_id = session_obj.create(cr, uid, {'manual_single': True, 'server': 'ud', 'start_date': fields.datetime.now(), 'state': 'running', 'sync_type': 'single', 'msfid_min': x['msfid']}, context=context)
+                ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+                try:
+                    trash1, nb_prod, updated, total_nb_created, total_nb_errors = ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False, session_id=session_id)
+                except requests.exceptions.HTTPError as e:
+                    raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
+                except Exception:
+                    raise
+            else:
+                raise osv.except_osv(_('Error'), _('Error: msfid is required'))
+
+        session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'number_products_updated': updated, 'number_products_created': total_nb_created, 'number_products_errors': total_nb_errors}, context=context)
+
+        p_ids = self.pool.get('product.product').search(cr, uid, [('msfid', '=', x['msfid'])], context=context)
+        if p_ids:
+            if len(p_ids) == 1:
+                view = act_obj.open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['form', 'tree'], context=context)
+                view['res_id'] = p_ids[0]
+            else:
+                view = act_obj.open_view_from_xmlid(cr, uid, 'product.product_normal_action', context=context)
+                view['domain'] = [('id','in', p_ids)]
+        else:
+            view = act_obj.open_view_from_xmlid(cr, uid, 'product_attributes.unidata_sync_log_action', ['form', 'tree'], new_tab=True, context=context)
+            view['res_id'] = session_id
+        return view
+
+product_pull_single_ud()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

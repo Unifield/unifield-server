@@ -120,11 +120,29 @@
                     <newline />
                     <field name="number_products_pulled" />
                     <field name="number_products_updated" />
+                    <field name="number_products_created" />
+                    <field name="number_products_errors" />
                     <field name="msfid_min" />
                     <field name="last_date" />
                     <field name="sync_type" />
                     <field name="state" />
                     <field name="error" colspan="4" />
+                    <field name="sync_error" colspan="4" nolabel="1">
+                    <tree string="Product Errors">
+                        <field name="msfid" />
+                            <field name="code" />
+                            <field name="former_codes" />
+                            <field name="log" />
+                            <field name="date" />
+                    </tree>
+                    <form string="Product Errors">
+                        <field name="msfid" />
+                        <field name="code" />
+                        <field name="former_codes" />
+                        <field name="log" />
+                        <field name="json_data_formated" colspan="4" widget="full_text" nolabel="1"/>
+                    </form>
+                    </field>
                 </form>
             </field>
         </record>
@@ -139,7 +157,9 @@
                     <field name="end_date"  />
                     <field name="page_size" />
                     <field name="number_products_pulled" />
-                    <field name="number_products_updated" />
+		    <field name="number_products_updated" />
+		    <field name="number_products_created" />
+	            <field name="number_products_errors" />
                     <field name="sync_type" />
                     <field name="state" />
                     <field name="log_exists" invisible="1" />
@@ -708,5 +728,143 @@
             key2="client_action_multi"
             search_view_id="product_msl_rel_search"
             context="{'search_default_product_id': active_id}"/>
+
+        <record id="unidata_sync_log_msl_action" model="ir.actions.act_window">
+            <field name="name">MSL Sync report</field>
+            <field name="res_model">unidata.sync.log</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="unidata_sync_log_msl_search" />
+            <field name="view_id" ref="unidata_sync_log_msl_tree" />
+            <field name="domain">[('server', '=', 'msl')]</field>
+        </record>
+
+        <record id="unidata_products_error_action" model="ir.actions.act_window">
+            <field name="name">UniData linkage errors</field>
+            <field name="res_model">unidata.products_error</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{'search_default_hidde_fixed': True}</field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_products_error_form">
+            <field name="name">unidata.products_error.form</field>
+            <field name="model">unidata.products_error</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+             <form string="UniData linkage error" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <field name="date" />
+                    <field name="fixed_date" />
+                    <field name="msfid" />
+                    <field name="uf_product_id" />
+                    <field name="code"  />
+                    <field name="former_codes" />
+                    <field name="log" colspan="4" nolabel="1" />
+                    <field name="json_data_formated" widget="full_text" nolabel="1" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_products_error_tree">
+            <field name="name">unidata.products_error.tree</field>
+            <field name="model">unidata.products_error</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <tree string="UniData linkage errors" hide_new_button="1" hide_delete_button="1" noteditable="1" colors="red:not fixed_date">
+                    <field name="date" />
+                    <field name="fixed_date"  />
+                    <field name="msfid" />
+                    <field name="uf_product_id" />
+                    <field name="code" />
+                    <field name="former_codes" />
+                    <field name="log" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_products_error_search">
+            <field name="name">unidata.products_error.search</field>
+            <field name="model">unidata.products_error</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="UniData linkage errors">
+                    <filter name="hidde_fixed" string="Hide Fixed" domain="[('fixed_date', '=', False)]" icon="terp-check" />
+                    <field name="date" />
+                    <field name="fixed_date"  />
+                    <field name="msfid" />
+                    <newline />
+                            <field name="uf_product_id" />
+                            <field name="code" />
+                    <field name="former_codes" />
+                    <field name="log" />
+                </search>
+            </field>
+        </record>
+        <menuitem name="UniData linkage errors" action="unidata_products_error_action" id="unidata_products_error_menu" parent="unidata_main_menu" sequence="26"/>
+
+        <record id="unidata_products_not_oc_value_action" model="ir.actions.act_window">
+            <field name="name">UD Products incompatible with OC values</field>
+            <field name="res_model">product.product</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('incompatible_oc_default_values', '=', True)]</field>
+            <field name="context">{}</field>
+        </record>
+
+        <menuitem name="UD Products incompatible with OC values" action="unidata_products_not_oc_value_action" id="unidata_products_not_oc_value_menu" parent="unidata_main_menu" sequence="27"/>
+
+        <record id="unidata_default_product_value_action" model="ir.actions.act_window">
+            <field name="name">OC Default values</field>
+            <field name="res_model">unidata.default_product_value</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_default_product_value_form">
+            <field name="name">unidata.default_product_value.form</field>
+            <field name="model">unidata.default_product_value</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+             <form string="OC Default Values" hide_duplicate_button="1">
+                    <field name="nomenclature" />
+                    <field name="field" />
+                    <field name="value" />
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_default_product_value_tree">
+            <field name="name">unidata.default_product_value.tree</field>
+            <field name="model">unidata.default_product_value</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <tree string="OC Default Values">
+                    <field name="nomenclature" />
+                    <field name="field"  />
+                    <field name="value" />
+                    <field name="number_incompatible_products" />
+                    <button name="open_products" string="View products" icon="gtk-go-forward" type="object" attrs="{'invisible': [('number_incompatible_products', '=', 0)]}" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="unidata_default_product_value_search">
+            <field name="name">unidata.default_product_value.search</field>
+            <field name="model">unidata.default_product_value</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="OC Default Values">
+                    <field name="nomenclature" />
+                    <field name="field"  />
+                    <field name="value" />
+                </search>
+            </field>
+        </record>
+        <menuitem name="OC Default Values" action="unidata_default_product_value_action" id="unidata_default_product_value_menu" parent="unidata_main_menu" sequence="27"/>
     </data>
 </openerp>
