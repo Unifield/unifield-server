@@ -27,8 +27,8 @@
                 <field name="date" />
                 <field name="format_value" />
                 <field name="ready_to_sign" invisible="True" />
-                <button name="open_sign_wizard" string="Sign" icon="gtk-paste-v" attrs="{'invisible': ['|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('ready_to_sign', '=', False)]}" type="object" />
-                <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('signed', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
+                <button name="open_sign_wizard" string="Sign" icon="gtk-paste-v" attrs="{'invisible': ['|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('ready_to_sign', '=', False), ('signed_off_line', '=', True)]}" type="object" />
+                <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('signed', '=', False), ('signed_off_line', '=', True)]}" type="object" confirm="Do you want to reset this signature ?"/>
                 <field name="backup" />
                 <field name="signed" />
             </tree>

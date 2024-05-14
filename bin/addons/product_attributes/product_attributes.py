@@ -1759,6 +1759,10 @@ class product_attributes(osv.osv):
             for prd_data in data_obj.browse(cr, uid, prd_data_ids, context=context):
                 update_existing_translations('product.product', res, prd_data.name)
                 update_existing_translations('product.template', product_tmpl_id, prd_data.name)
+            # US-12147: Update existing translations before the ir_model_data for the product has been fully created
+            if not prd_data_ids and context.get('product_sdref'):
+                update_existing_translations('product.product', res, context['product_sdref'])
+                update_existing_translations('product.template', product_tmpl_id, context['product_sdref'])
 
         sptc_obj.track_change(cr, uid, res, _('Product creation'), vals,
                               context=context)

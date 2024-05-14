@@ -253,6 +253,16 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_12350_is_default_update(self, cr, uid, *a, **b):
+        # update is_default field of journals EOY and IB
+        cr.execute("""
+                    UPDATE account_journal
+                    SET is_default = 't'
+                    WHERE
+                        code IN ('EOY', 'IB') AND
+                        type = 'system'
+                    """)
+        return True
 
     # UF32.0
     def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):

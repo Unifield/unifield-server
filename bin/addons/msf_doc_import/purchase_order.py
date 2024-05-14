@@ -412,9 +412,9 @@ class purchase_order(osv.osv):
             msg = _('No PO to export !')
             self.infolog(cr, uid, msg)
             context.update({'po_not_found': True})
-            return [], [], ['PO id', 'PO name']
+            return [], [], ['PO id', 'PO name'], []
 
-        processed, rejected = [], []
+        processed, rejected, filenames = [], [], []
         cr.execute('select id from purchase_order where id in %s for update skip locked', (tuple(po_ids),))
         index = 0
         for po_id, in cr.fetchall():
@@ -435,6 +435,7 @@ class purchase_order(osv.osv):
                 'xls' if export_wiz.export_format == 'excel' else 'xml',
             )
             path_to_file = os.path.join(export_wiz.dest_path, filename)
+            filenames.append(filename)
             if export_wiz.ftp_ok and export_wiz.ftp_dest_ok and export_wiz.ftp_protocol == 'ftp':
                 ftp_connec = None
                 context.update({'no_raise_if_ok': True})
@@ -482,7 +483,7 @@ class purchase_order(osv.osv):
             self.infolog(cr, uid, _('%s successfully exported') % po_name)
             index += 1
 
-        return processed, rejected, ['PO id', 'PO name']
+        return processed, rejected, ['PO id', 'PO name'], filenames
 
     def copy(self, cr, uid, id, defaults=None, context=None):
         '''

@@ -1636,7 +1636,7 @@ class purchase_order(osv.osv):
     def copy_web(self, cr, uid, id, defaults=None, context=None):
         if defaults is None:
             defaults = {}
-        defaults['from_procurement'] = False
+        defaults.update({'from_procurement': False, 'tender_id': False})
         is_direct = False
         if self.search_exists(cr, uid, [('id', '=', id), ('order_type', '=', 'direct')], context=context):
             company_id = self.pool.get('res.users').get_current_company(cr, uid)[0][0]

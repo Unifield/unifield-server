@@ -1054,6 +1054,10 @@
             <field name="method">us_11135_set_pol_confirmation_date</field>
         </record>
 
+        <record id="us_12350_is_default_update" model="patch.scripts">
+            <field name="method">us_12350_is_default_update</field>
+        </record>
+
         <record id="us_12826_unidata_pull_info" model="patch.scripts">
             <field name="method">us_12826_unidata_pull_info</field>
         </record>

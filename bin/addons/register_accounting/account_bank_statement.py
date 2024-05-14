@@ -31,6 +31,7 @@ from .register_tools import _get_third_parties
 from .register_tools import _set_third_parties
 from .register_tools import create_cashbox_lines
 from .register_tools import open_register_view
+from .register_tools import previous_register_id
 from base import currency_date
 import time
 import datetime
@@ -486,6 +487,42 @@ class account_bank_statement(osv.osv):
             if (abs(round(reg.balance_end_real, 2) - round(reg.balance_end, 2))) > 10**-3:
                 raise osv.except_osv(_('Warning'), _('Bank statement balance is not equal to Calculated balance.'))
         return self.button_confirm_closing_balance(cr, uid, ids, context=context)
+
+    def wiz_confirm_closing_balance(self, cr, uid, ids, context=None):
+        """
+        When pressing the button to confirm register's month end balance, a wizard window pop up with a checkbox
+        with a warning message depending if the previous month register is still open
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if context.get('journal_type', False) and context.get('journal_type') == 'bank':
+            for reg in self.browse(cr, uid, ids):
+                # Verify that the closing balance (balance_end_real) correspond to the calculated balance (balance_end)
+                # NB: UTP-187 reveals that some difference appears between balance_end_real and balance_end. These fields are float. And balance_end_real is calculated. In python this imply some difference.
+                # Because of fields values with 2 digits, we compare the two fields difference with 0.001 (10**-3)
+                if (abs(round(reg.balance_end_real, 2) - round(reg.balance_end, 2))) > 10 ** -3:
+                    raise osv.except_osv(_('Warning'), _('Bank statement balance is not equal to Calculated balance.'))
+        context.update({'active_ids': ids, 'active_id': ids[0]})
+        st = self.browse(cr, uid, ids[0], context=context)
+        prev_reg_id = previous_register_id(self, cr, uid, st.period_id.id, st.journal_id.id)
+        if prev_reg_id:
+            prev_reg_state = self.browse(cr, uid, prev_reg_id, context=context).state
+        else:
+            prev_reg_state = False
+        i = self.pool.get('wizard.confirm.closing.balance').create(cr, uid, {'is_prev_reg_open': prev_reg_state == 'open'}, context=context)
+
+        return {'name': _('Closing balance freezing warning!'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.confirm.closing.balance',
+                'res_id': [i],
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+                }
 
     def button_open_advances(self, cr, uid, ids, context=None):
         """

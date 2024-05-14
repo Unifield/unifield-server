@@ -206,11 +206,27 @@
                                         }
                                         $('#order_line_extra_text').html(catalogue_text);
                                     }
+
+                                    function hide_esc_selector() {
+                                        // Hide the ESC Confirmed filter if the PO does not have an ESC Partner
+                                        var partner_type = $('#partner_type').val() || $('#partner_type').text().trim();
+                                        if (partner_type == 'esc' || partner_type == 'ESC') {
+                                            $('#order_line_filter_0').show();
+                                        }
+                                        else {
+                                            $('#order_line_filter_0').hide();
+                                        }
+                                    }
+
+                                    function on_reload_order_line() {
+                                        hide_esc_selector();
+                                        refresh_catalogue();
+                                    }
                                     $(document).ready(function() {
                                          original_partner = $('#partner_id').val();
-                                         new ListView('order_line').after_reload = refresh_catalogue;
+                                         new ListView('order_line').after_reload = on_reload_order_line;
                                          $('#catalogue_exists_text').change(refresh_catalogue);
-                                         refresh_catalogue();
+                                         on_reload_order_line();
                                     });
 
                                     var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
@@ -251,6 +267,7 @@
                                     if (catalogue_text) {
                                          $('#order_line_extra_text').html(catalogue_text);
                                     }
+
                                 </script>
                             </html>
                         </group>
@@ -333,8 +350,8 @@
                             <field name="order_line" colspan="4" nolabel="1" mode="tree,form"
                                 context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': False, 'from_fo': po_from_fo or po_from_ir or False}"
                                 on_change="order_line_change(order_line, show_default_msg, partner_id)"
-                                filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
-                                default_selector="'3'" o2m_selectable="2"
+                                filter_selector="[('Show all', []), ('ESC Confirmed', [('esc_confirmed', '=', True)]), ('ESC Unconfirmed', [('esc_confirmed', '=', False)])], [('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
+                                default_selector="['0', '3']" o2m_selectable="2"
                                 >
                                 <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p'])]}" editable="both">
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
