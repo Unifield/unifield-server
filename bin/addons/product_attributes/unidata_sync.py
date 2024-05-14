@@ -16,6 +16,7 @@ import sys
 import threading
 import pooler
 from dateutil.relativedelta import relativedelta
+from bs4 import BeautifulSoup
 
 import requests
 
@@ -320,6 +321,7 @@ class ud_sync():
             'password': config['password'],
             'size': self.page_size,
             'publishonweb': False,
+            'mode': 2,
         }
         self.url = config['url']
         self.url_msl = config['url_msl']
@@ -770,8 +772,31 @@ class ud_sync():
                 llevel = logging.INFO
             self.logger.log(llevel, msg)
 
+    def remove_tag(self, text):
+        if not text:
+            return text
+        return BeautifulSoup(text, 'html.parser').get_text(' ', strip=True)
+
     def map_ud_fields(self, ud_data, new_prod):
-        uf_values = {'en_MF': {}}
+        uf_values = {'en_MF': {}, 'fr_MF': {}}
+        map_ff_fields = {
+            'Form': 'form_value',
+            'Function': 'function_value',
+            'Fit': 'fit_value',
+        }
+
+        for k, v in map_ff_fields.items():
+            uf_values['en_MF'][v] = False
+            uf_values['fr_MF'][v] = False
+
+        for part in ud_data.get('description', {}).get('parts', []):
+            if part.get('header', {}).get('english') in map_ff_fields:
+                uf_values['en_MF'][map_ff_fields[part['header']['english']]] = self.remove_tag(part.get('text', {}).get('english', False))
+                fr_text = self.remove_tag(part.get('text', {}).get('french', False))
+                if not fr_text:
+                    fr_text = uf_values['en_MF'][map_ff_fields[part['header']['english']]]
+                uf_values['fr_MF'][map_ff_fields[part['header']['english']]] = fr_text
+
         for uf_key in self.uf_config:
             for lang in self.uf_config[uf_key].get('lang', ['default']):
                 if lang == 'default':
@@ -1057,7 +1082,8 @@ class ud_sync():
 
                         for lang in ['fr_MF', 'sp_MF']:
                             if product_values.get(lang):
-                                prod_obj.write(self.cr, self.uid, prod_ids[0], product_values['lang'], context={'lang': 'lang'})
+                                self.log('==== write [%s] product id: %d, code: %s, msfid: %s, data: %s' % (lang, prod_ids[0], x['code'], x['id'], product_values[lang]))
+                                prod_obj.write(self.cr, self.uid, prod_ids[0], product_values[lang], context={'lang': lang})
                     except Exception as e:
                         self.cr.execute("ROLLBACK TO SAVEPOINT prod_ud_update")
                         raise UDException(tools.misc.get_traceback(e))
