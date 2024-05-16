@@ -1016,7 +1016,8 @@ class related(function):
             res = {}.fromkeys(ids, False)
 
         objlst = obj.browse(cr, 1, ids, context=context,
-                            fields_to_fetch=self.arg)
+                            fields_to_fetch=self.arg, subfields_to_fetch=self.arg[1:])
+
         for data in objlst:
             if not data:
                 continue
