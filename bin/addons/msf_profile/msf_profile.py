@@ -58,6 +58,33 @@ class patch_scripts(osv.osv):
     }
 
     # UF33.0
+    def us_12598_ocb_group_user_manager(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
+            user_obj = self.pool.get('res.users')
+            group_obj = self.pool.get('res.groups')
+            list_users = [
+                'FAC_7', 'PCAR', 'PCAR_MISSION', 'UFFR',
+                'UFFR4COORDO', 'UFR', 'UFR_COORDO', 'FINDEV',
+                'FAC_4', 'POWERUSER', 'UFR4HQ', 'RSISSOEASA',
+                'SISTO', 'SISSO', 'SISOTL', 'UFR_COORDO',
+                'UFR3FIELD', 'UFFR4COORDO', 'ADMIN', 'UFR3HQ',
+                'APM_HQ', 'APM_MISSION', 'SISOTL_HQ', 'SISTO_HQ',
+                'SISSO_HQ'
+            ]
+
+            group_id = group_obj.search(cr, uid, [('name', 'ilike', 'User_Manager')])
+            if not group_id:
+                return True
+            cr.execute('select id from res_users where upper(login) in %s', (tuple(list_users), ))
+            white_list = [x[0] for x in cr.fetchall()]
+            removed = user_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('groups_id', '=', group_id[0]), ('id', 'not in', white_list)])
+            to_keep = user_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('groups_id', '=', group_id[0]), ('id', 'in', white_list)])
+            group_obj.write(cr, uid, group_id[0], {'users': [(6, 0, to_keep)]})
+            self.log_info(cr, uid, "US-12598: Group User_Manager, %d users kept %d removed" % (len(to_keep), len(removed)))
+
+        return True
+
     def us_12826_unidata_pull_info(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
