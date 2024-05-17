@@ -142,7 +142,7 @@
 
 
     <!-- LINES LIST -->
-        <blockTable colWidths="33.0,100.0,100.0,80.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0" style="ProductList">
+        <blockTable colWidths="30.0,100.0,100.0,80.0,50.0,50.0,40.0,50.0,90.0,60.0,43.0" style="ProductList">
         <tr>
             <td>
                 <para style="InformationHeader">Line</para>
@@ -181,7 +181,7 @@
         </tr>
    </blockTable>
     <pto_header>
-    <blockTable colWidths="33.0,100.0,100.0,80.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0" style="ProductList">
+    <blockTable colWidths="30.0,100.0,100.0,80.0,50.0,50.0,40.0,50.0,90.0,60.0,43.0" style="ProductList">
         <tr>
             <td>
                 <para style="InformationHeader">Line</para>
@@ -224,7 +224,7 @@
 
    <section>
    [[ repeatIn(get_data(o.id), 'line') ]]
-   <blockTable colWidths="33.0,100.0,100.0,80.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0" style="ProductList">
+   <blockTable colWidths="30.0,100.0,100.0,80.0,50.0,50.0,40.0,50.0,90.0,60.0,43.0" style="ProductList">
         <tr>
             <td>
                 <para style="Information">[[ line[0] ]]</para>
@@ -264,7 +264,7 @@
    </section>
 
    <!-- TOTAL -->
-   <blockTable colWidths="33.0,100.0,100.0,80.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0" style="ProductList">
+   <blockTable colWidths="30.0,100.0,100.0,80.0,50.0,50.0,40.0,50.0,90.0,60.0,43.0" style="ProductList">
         <tr>
             <td>
                 <para style="Information"></para>
