@@ -80,7 +80,8 @@ class patch_scripts(osv.osv):
             white_list = [x[0] for x in cr.fetchall()]
             removed = user_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('groups_id', '=', group_id[0]), ('id', 'not in', white_list)])
             to_keep = user_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('groups_id', '=', group_id[0]), ('id', 'in', white_list)])
-            group_obj.write(cr, uid, group_id[0], {'users': [(6, 0, to_keep)]})
+            if removed:
+                user_obj.write(cr, uid, removed, {'groups_id': [(3, group_id[0])]})
             self.log_info(cr, uid, "US-12598: Group User_Manager, %d users kept %d removed" % (len(to_keep), len(removed)))
 
         return True
