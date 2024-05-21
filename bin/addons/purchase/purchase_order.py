@@ -3011,8 +3011,8 @@ class purchase_order(osv.osv):
                 if good_quantity and good_quantity != pol.product_qty:
                     data_to_write['product_qty'] = good_quantity
 
-                if good_price and good_price != pol.price_unit:
-                    data_to_write['price_unit'] = good_price
+                    if good_price and good_price != pol.price_unit:
+                        data_to_write['price_unit'] = good_price
 
                 if data_to_write:
                     pol_obj.write(cr, uid, pol.id, data_to_write, context=context)
