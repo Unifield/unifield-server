@@ -562,7 +562,7 @@ class purchase_order_line(osv.osv):
                         when catl.id is null then 'na'
                         when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding=0 or pol.product_qty%%catl.soq_rounding=0) then 'price'
                         when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and catl.soq_rounding!=0 and pol.product_qty%%catl.soq_rounding!=0 then 'price_soq'
-                        when catl.soq_rounding!=0 and pol.product_qty%%catl.soq_rounding!=0 then  'soq'
+                        when catl.soq_rounding!=0 and pol.product_qty%%catl.soq_rounding!=0 or catl.soq_rounding=0 and coalesce(catl.min_order_qty, 0) > pol.product_qty then  'soq'
                         else 'conform'
                     end,
                 catalog_price_unit=
@@ -576,7 +576,7 @@ class purchase_order_line(osv.osv):
                 left join product_pricelist curr_pricelist on curr_pricelist.id = po.pricelist_id
                 left join lateral (
                     select
-                        cat.id as catalogue_id, cat_line.id, cat.currency_id as cat_currency_id, cat_line.unit_price as cat_unit_price, cat_line.rounding as soq_rounding
+                        cat.id as catalogue_id, cat_line.id, cat.currency_id as cat_currency_id, cat_line.unit_price as cat_unit_price, cat_line.rounding as soq_rounding, cat_line.min_order_qty as min_order_qty
                     from
                         supplier_catalogue cat
                         left join supplier_catalogue_line cat_line on cat_line.catalogue_id = cat.id and cat_line.product_id = pol.product_id and cat_line.line_uom_id = pol.product_uom
