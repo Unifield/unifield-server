@@ -137,6 +137,7 @@ order by rec.name;
 from sync_client_update_received s
 where s.run=FALSE AND
 s.model in ('account.bank.statement.line', 'account.move','account.move.line','account.analytic.line')
+%s
 order by s.model;"""
     },
 ]

@@ -14,6 +14,8 @@ class integrity_finance(report_sxw.rml_parse):
         self.sql_params = []
         self.sql_rec_additional = ""  # specific to queries related to reconciliations
         self.sql_rec_params = []
+        self.sql_nr_additional = ""  # specific to queries related to not runs
+        self.sql_nr_params = []
         self.localcontext.update({
             'get_title': self.get_title,
             'list_checks': self.list_checks,
@@ -61,6 +63,8 @@ class integrity_finance(report_sxw.rml_parse):
                 self.sql_params.append(tuple(instance_ids,))
                 self.sql_rec_additional += " AND l.instance_id IN %s "
                 self.sql_rec_params.append(tuple(instance_ids,))
+                self.sql_nr_additional += " AND source IN (SELECT instance FROM msf_instance WHERE id IN %s) "
+                self.sql_nr_params.append(tuple(instance_ids, ))
             # FY
             fiscalyear_id = data['form'].get('fiscalyear_id', False)
             if fiscalyear_id:
@@ -140,7 +144,11 @@ class integrity_finance(report_sxw.rml_parse):
                 self.cr.execute(sql)
         # not run entries query
         if query_ref == 'not_runs_entries':
-            self.cr.execute(sql)
+            sql = sql % self.sql_nr_additional
+            if self.sql_nr_params:
+                self.cr.execute(sql, tuple(self.sql_nr_params))
+            else:
+                self.cr.execute(sql)
         # other queries
         elif query_ref in ('mismatch_ji_aji_fctal', 'mismatch_ji_aji_booking', 'ji_unbalanced_fctal', 'ji_unbalanced_booking'):
             sql = sql % self.sql_additional
