@@ -2958,7 +2958,7 @@ class purchase_order(osv.osv):
                               '|', ('valid_till', '>=', po.date_order),
                               ('valid_till', '=', False)]
 
-                    pl_ids = partnerprice_obj.search(cr, uid, domain, order='min_order_qty asc, id', context=context)
+                    pl_ids = partnerprice_obj.search(cr, uid, domain, order='min_quantity asc, id desc', context=context)
 
                     if pl_ids:
 
@@ -2978,31 +2978,45 @@ class purchase_order(osv.osv):
                                 rounding_conv = uom_obj._compute_qty_obj(cr, uid, pl.uom_id, pl.rounding, pol.product_uom, context=context)
                                 min_order_qty = uom_obj._compute_qty_obj(cr, uid, pl.uom_id, pl.min_order_qty, pol.product_uom, context=context)
 
+                            if pl_minqty in t_min_qty_price:
+                                # duplicated min qty lines
+                                continue
+
                             t_min_qty_price[pl_minqty] = price_conv
                             if first and pol.product_qty < min_order_qty:
+                                # if po qty is less than the 1st min_order_qty
                                 good_quantity = min_order_qty
                                 tmp_qty = min_order_qty
                                 good_price = price_conv
                                 initial_rounding = rounding_conv
                                 min_applied = True
 
-                            if not min_applied and pol.product_qty >= min_order_qty:
+                            if not min_applied and pol.product_qty >= pl_minqty:
+                                # several lines may apply, the last one is the good one
                                 initial_rounding = rounding_conv
+                                initial_min_order_qty = min_order_qty
 
                             first = False
 
                         if not min_applied:
                             tmp_qty = pol.product_qty
+                            if pol.product_qty < initial_min_order_qty:
+                                # we found a line, apply min_order_qty
+                                tmp_qty = initial_min_order_qty
+                                good_quantity = initial_min_order_qty
 
                         if initial_rounding:
                             if tmp_qty % initial_rounding:
+                                # apply rounding
                                 good_quantity = (tmp_qty - (tmp_qty % initial_rounding)) + initial_rounding
-                                l_key = list(t_min_qty_price.keys())
-                                l_key.sort()
-                                for min_qty in l_key:
-                                    if good_quantity >= min_qty:
-                                        good_price = t_min_qty_price[min_qty]
-                                        break
+
+                        if good_quantity:
+                            # quantiy changed by soq or by min order qty
+                            l_key = list(t_min_qty_price.keys())
+                            l_key.sort()
+                            for min_qty in l_key:
+                                if good_quantity >= min_qty:
+                                    good_price = t_min_qty_price[min_qty]
 
                         if good_price and pl.currency_id != po.currency_id:
                             good_price = rescur_obj.compute(cr, uid, pl.currency_id.id, po.currency_id.id, good_price, False, context=context)

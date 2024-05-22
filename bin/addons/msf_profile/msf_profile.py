@@ -189,9 +189,9 @@ class patch_scripts(osv.osv):
                     case
                         when catl.catalogue_id is null then ''
                         when catl.id is null then 'na'
-                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding=0 or pol.product_qty%catl.soq_rounding=0) then 'price'
-                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and catl.soq_rounding!=0 and pol.product_qty%catl.soq_rounding!=0 then 'price_soq'
-                        when catl.soq_rounding!=0 and pol.product_qty%catl.soq_rounding!=0 or catl.soq_rounding=0 and coalesce(catl.min_order_qty, 0) > pol.product_qty then 'soq'
+                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding=0 or pol.product_qty%%catl.soq_rounding=0) and coalesce(catl.min_order_qty, 0) <= pol.product_qty then 'price'
+                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding!=0 and pol.product_qty%%catl.soq_rounding!=0 or coalesce(catl.min_order_qty, 0) > pol.product_qty) then 'price_soq'
+                        when (catl.soq_rounding!=0 and pol.product_qty%%catl.soq_rounding!=0) or coalesce(catl.min_order_qty, 0) > pol.product_qty then  'soq'
                         else 'conform'
                     end,
                 catalog_price_unit=
@@ -216,7 +216,7 @@ class patch_scripts(osv.osv):
                         (cat.period_from is null or cat.period_from < pol.confirmation_date) and
                         (cat.period_to is null or cat.period_to > pol.confirmation_date)
                     order by
-                        cat.currency_id = curr_pricelist.currency_id, coalesce(cat_line.min_qty,0) <= pol.product_qty desc, abs(pol.product_qty - coalesce(cat_line.min_qty,0)) asc, cat_line.id
+                        cat.currency_id = curr_pricelist.currency_id, coalesce(cat_line.min_qty,0) <= pol.product_qty desc, abs(pol.product_qty - coalesce(cat_line.min_qty,0)) asc, cat_line.partner_info_id desc, cat_line.id
                     limit 1
                 ) catl on true
                 left join lateral (
