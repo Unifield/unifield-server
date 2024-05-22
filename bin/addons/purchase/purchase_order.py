@@ -2985,7 +2985,7 @@ class purchase_order(osv.osv):
                                 min_applied = True
                                 break
 
-                            if pol.product_qty > min_order_qty:
+                            if pol.product_qty >= min_order_qty:
                                 initial_rounding = rounding_conv
 
                             first = False
