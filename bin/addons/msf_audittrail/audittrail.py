@@ -802,7 +802,13 @@ class audittrail_rule(osv.osv):
                                 continue
 
                         if old_value != new_value:
-                            if fields_to_trace[field].ttype == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10]:
+                            # Prevent log to be created for datetime fields if only the time changes, but not in auto import/export
+                            if fields_to_trace[field].ttype == 'datetime' and old_value and new_value and \
+                                    old_value[:10] == new_value[:10] and \
+                                    (model_name_tolog not in ['automated.import', 'automated.export'] or field != 'start_time'):
+                                continue
+                            # US-13017: Skip the log creation when the field is emptied
+                            if model_name_tolog == 'automated.import' and field == 'start_time' and old_value and not new_value:
                                 continue
                             line = vals.copy()
                             description = fields_to_trace[field].field_description
@@ -1002,6 +1008,13 @@ class audittrail_log_line(osv.osv):
                     elif res[line.id].find('Purchase Order') != -1:
                         res[line.id] = res[line.id].replace('Purchase Order', 'Request for Quotation')
 
+            # rename 'Force Date and time of next execution' to 'Next Execution Date' in the Auto Import
+            if line.object_id.model == 'automated.import':
+                if res[line.id].find('Date et heure forcée de la prochaine exécution planifiée') != -1:
+                    res[line.id] = res[line.id].replace('Date et heure forcée de la prochaine exécution planifiée', 'Prochaine date d\'exécution')
+                elif res[line.id].find('Force Date and time of next execution') != -1:
+                    res[line.id] = res[line.id].replace('Force Date and time of next execution', 'Next Execution Date')
+
         return res
 
     def _src_field_name(self, cr, uid, obj, name, args, context=None):
@@ -1145,7 +1158,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         field_id = field_ids and field_ids[0] or False
 
     if field_id:
-        field = field_pool.read(cr, uid, field_id, ['relation', 'ttype', 'name'])
+        field = field_pool.read(cr, uid, field_id, ['relation', 'ttype', 'name', 'model'])
         relation_model = field['relation']
         relation_model_pool = relation_model and pool.get(relation_model) or False
 
@@ -1190,7 +1203,9 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 except ValueError:
                     res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S.%f')
                 finally:
-                    res = datetime.strftime(res, date_format)
+                    if (field['model'] != 'automated.import' and field['name'] not in ['next_scheduled_task', 'start_time']) \
+                            or not res:
+                        res = datetime.strftime(res, date_format)
             return res
         elif field['ttype'] == 'selection':
             res = False
