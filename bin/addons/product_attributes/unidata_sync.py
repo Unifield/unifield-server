@@ -394,7 +394,6 @@ class ud_sync():
                 'ud': 'supply/justification/code',
                 'relation': 'product.justification.code',
                 'key_field': 'code',
-                'ignored_values': ['SPM', 'PMFE'], # tbc with Raff
             },
             'controlled_substance': {
                 'ud': 'medical/controlledSubstanceGroup/controlledSubstanceInfo/code',
@@ -415,23 +414,11 @@ class ud_sync():
             'default_code': {
                 'ud': 'code'
             },
-            #'fit_value': {
-            #    'lang': {
-            #        'en_MF': {'ud': 'description/fitEnglishtext'},
-            #        'fr_MF': {'ud': 'description/fitFrenchtext'},
-            #    }
+            #'fit_value': { # see def map_ud_fields
             #},
-            #'form_value': {
-            #    'lang': {
-            #        'en_MF': {'ud': 'description/formEnglishtext'},
-            #        'fr_MF': {'ud': 'description/formFrenchtext'},
-            #    }
+            #'form_value': { # see def map_ud_fields
             #},
-            #'function_value': {
-            #    'lang': {
-            #        'en_MF': {'ud': 'description/functionEnglishtext'},
-            #        'fr_MF': {'ud': 'description/functionFrenchtext'},
-            #    }
+            #'function_value': { # see def map_ud_fields
             #},
             'cold_chain': {
                 'ud': 'supply/thermosensitiveGroup/thermosensitiveInfo/code',
