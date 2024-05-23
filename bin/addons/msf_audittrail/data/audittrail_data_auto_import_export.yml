@@ -1,0 +1,99 @@
+-
+  For Automated import, rule for the CREATE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'AUTO IMPORT CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'automated.import')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['name', 'function_id', 'active', 'disable_checksum', 'partner_id', 'ftp_ok', 'ftp_protocol', 'ftp_url', 'ftp_login', 'ftp_port', 'ftp_password', 'src_path', 'dest_path', 'dest_path_failure', 'report_path', 'ftp_source_ok', 'ftp_dest_ok', 'ftp_dest_fail_ok', 'ftp_report_ok', 'priority', 'interval', 'interval_unit', 'next_scheduled_task']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'automated.import'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+               }
+        if not rule_id:
+            # Create the rule
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+-
+  For Automated import, rule for the WRITE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'AUTO IMPORT WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'automated.import')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['name', 'function_id', 'active', 'disable_checksum', 'partner_id', 'ftp_ok', 'ftp_protocol', 'ftp_url', 'ftp_login', 'ftp_port', 'ftp_password', 'src_path', 'dest_path', 'dest_path_failure', 'report_path', 'ftp_source_ok', 'ftp_dest_ok', 'ftp_dest_fail_ok', 'ftp_report_ok', 'priority', 'interval', 'interval_unit', 'start_time']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'automated.import'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+               'object_id': object_ids[0],
+               'log_create': False,
+               'log_write': True,
+               'log_unlink': False,
+               'field_ids': [(6, 0, fields_ids)],
+               }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        if rule_id:
+            self.write(cr, uid, rule_id, vals,context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+-
+  For Automated export, rule for the CREATE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'AUTO EXPORT CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'automated.export')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['name', 'function_id', 'active', 'pause', 'export_format', 'partner_id', 'ftp_ok', 'ftp_protocol', 'ftp_url', 'ftp_login', 'ftp_port', 'ftp_password', 'dest_path', 'destination_local_path', 'report_path', 'report_local_path', 'ftp_dest_ok', 'ftp_report_ok', 'priority', 'interval', 'interval_unit', 'start_time']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'automated.export'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+               }
+        if not rule_id:
+            # Create the rule
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+-
+  For Automated export, rule for the WRITE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'AUTO EXPORT WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'automated.export')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['name', 'function_id', 'active', 'pause', 'export_format', 'partner_id', 'ftp_ok', 'ftp_protocol', 'ftp_url', 'ftp_login', 'ftp_port', 'ftp_password', 'dest_path', 'destination_local_path', 'report_path', 'report_local_path', 'ftp_dest_ok', 'ftp_report_ok', 'priority', 'interval', 'interval_unit', 'start_time']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'automated.export'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+               'object_id': object_ids[0],
+               'log_create': False,
+               'log_write': True,
+               'log_unlink': False,
+               'field_ids': [(6, 0, fields_ids)],
+               }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        if rule_id:
+            self.write(cr, uid, rule_id, vals,context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
