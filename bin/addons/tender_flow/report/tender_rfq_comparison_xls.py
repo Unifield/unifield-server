@@ -58,9 +58,10 @@ class tender_rfq_comparison(report_sxw.rml_parse):
                     ('tender_line_id', '=', line.id),
                 ])
                 rfql = None
-                pu = 0.00
+                qty, pu = 0.00, 0.00
                 if rfql_ids:
                     rfql = pol_obj.browse(self.cr, self.uid, rfql_ids[0])
+                    qty = rfql.product_qty
                     pu = rfql.price_unit
                     to_cur = rfql.order_id.tender_id.currency_id and rfql.order_id.tender_id.currency_id.id or \
                         self.localcontext['company'].currency_id.id
@@ -69,7 +70,8 @@ class tender_rfq_comparison(report_sxw.rml_parse):
 
                 line_vals.update({
                     'name_%s' % sid: sup.name,
-                    'unit_price_%s' % sid: pu,
+                    'qty_%s' % sid: rfql and qty or 0.00,
+                    'unit_price_%s' % sid: rfql and pu or 0.00,
                     'comment_%s' % sid: rfql and rfql.comment or '',
                     'confirmed_delivery_date_%s' % sid: rfql and rfql.confirmed_delivery_date or False,
                 })

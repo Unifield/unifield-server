@@ -343,6 +343,18 @@ class hr_payroll_employee_import(osv.osv_memory):
                 return False
         return True
 
+    def get_job_libelles(self, cr, uid, job_reader, context=None):
+        '''
+        US-12690: Only for retro-compatibility with Homere v4 file format
+        '''
+        lib_dict = {}
+        if not job_reader:
+            return {}
+        for job_line in job_reader:
+            if job_line.get('code', False) and job_line.get('libelle', False):
+                lib_dict.update({job_line.get('code'): job_line.get('libelle')})
+        return lib_dict
+
     def read_employee_infos(self, cr, uid, line='', context=None):
         """
         Read each line to extract infos (code, name and surname)
@@ -485,14 +497,15 @@ class hr_payroll_employee_import(osv.osv_memory):
 
         return True, created, updated
 
-    def update_contract(self, cr, uid, ids, reader, context=None):
+    def update_contract(self, cr, uid, ids, contract_reader, job_reader, context=None):
         """
         Read lines from reader and update database
         """
         res = []
-        if not reader:
-            return res
-        for line in reader:
+        libelle_dict = {}
+        if job_reader:
+            libelle_dict = self.get_job_libelles(cr, uid, job_reader, context=context)
+        for line in contract_reader:
             if not line.get('contratencours'): #or not line.get('contratencours') == 'O':
                 continue
             vals = {
@@ -515,6 +528,10 @@ class hr_payroll_employee_import(osv.osv_memory):
             # Update values for job
             if line.get('libfonction', False):
                 vals.update({'job_name': line.get('libfonction')})
+            else:
+                job_code = line.get('fonction', False)
+                if job_code:
+                    vals.update({'job_name': libelle_dict.get(job_code)})
             # Add entry to database
             new_line = self.pool.get('hr.contract.msf').create(cr, uid, vals)
             if new_line:
@@ -537,7 +554,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         contract_file = 'contrat.csv'
         job_file = 'fonction.csv'
         ini_file = 'envoi.ini'
-        job_reader =False
+        job_reader = False
         contract_reader = False
         staff_reader = False
         config_parser = False
@@ -637,7 +654,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             # read the contract file
             contract_ids = False
             if contract_reader:
-                contract_ids = self.update_contract(cr, uid, ids, contract_reader, context=context)
+                contract_ids = self.update_contract(cr, uid, ids, contract_reader, job_reader, context=context)
             # UF-2472: Read all lines to check employee's code before importing
             staff_data = []
             staff_codes = []

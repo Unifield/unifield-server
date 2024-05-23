@@ -39,6 +39,8 @@ DEFAULT_JOURNALS = [
     ('ODM', 'correction_manual'),
     ('ODHQ', 'correction_hq'),
     ('ISI', 'purchase'),
+    ('EOY', 'system'),
+    ('IB', 'system')
 ]
 
 from . import account

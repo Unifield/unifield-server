@@ -248,7 +248,7 @@
         % endfor
         </Row>
 
-        % for move in sorted(getMoves(r.moves_ids), key=lambda x: (x['shipped_date'], x['ref'], x['line_num'], x['prod_code'])):
+        % for move in sorted(getMoves(r.moves_ids), key=lambda x: (x['shipped_date'] or '', x['ref'] or '', x['line_num'], x['prod_code'])):
             <Row ss:Height="12.0">
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['ref']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>

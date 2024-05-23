@@ -276,29 +276,47 @@ class sale_order(osv.osv):
         return res
 
     def _picked_rate(self, cr, uid, ids, name, arg, context=None):
-        uom_obj = self.pool.get('product.uom')
         if not ids:
             return {}
-        res = {}
+        res1 = {}
+        for x in ids:
+            res1[x] = 0
 
-        for order in self.browse(cr, uid, ids, context=context):
-            res[order.id] = 0.00
-            amount_total = 0.00
-            amount_received = 0.00
-            for line in order.order_line:
-                if line.state in ('cancel', 'cancel_r'):
-                    continue
+        sent = {}
+        cr.execute('''
+            select sol.order_id, sum(m.product_qty / move_uom.factor * sale_uom.factor * sol.price_unit)
+                from stock_move m , stock_location l, sale_order_line sol, product_uom sale_uom, product_uom move_uom
+            where
+                sol.state NOT IN ('cancel', 'cancel_r')
+                and sale_uom.id = sol.product_uom
+                and move_uom.id = m.product_uom
+                and m.location_dest_id = l.id
+                and m.sale_line_id = sol.id
+                and m.state = 'done'
+                and l.usage = 'customer'
+                and sol.order_id in %s
+            group by sol.order_id
+        ''', (tuple(ids), ))
 
-                amount_total += line.product_uom_qty*line.price_unit
-                for move in line.move_ids:
-                    if move.state == 'done' and move.location_dest_id.usage == 'customer':
-                        move_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
-                        amount_received += move_qty*line.price_unit
+        for x in cr.fetchall():
+            sent[x[0]] = x[1]
 
-            if amount_total:
-                res[order.id] = (amount_received/amount_total)*100
+        cr.execute('''SELECT
+            order_id, sum(product_uom_qty*price_unit)
+            from sale_order_line
+            where
+                state NOT IN ('cancel', 'cancel_r')
+                and order_id in %s
+            group by order_id
+        ''', (tuple(ids),))
 
-        return res
+        for x in cr.fetchall():
+            if x[1] <= sent.get(x[0], 0):
+                res1[x[0]] = 100
+            elif x[1]:
+                res1[x[0]] = (sent.get(x[0], 0) / x[1]) * 100
+
+        return res1
 
     def _get_order(self, cr, uid, ids, context=None):
         result = {}

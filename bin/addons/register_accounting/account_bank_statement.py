@@ -31,6 +31,7 @@ from .register_tools import _get_third_parties
 from .register_tools import _set_third_parties
 from .register_tools import create_cashbox_lines
 from .register_tools import open_register_view
+from .register_tools import previous_register_id
 from base import currency_date
 import time
 import datetime
@@ -487,6 +488,42 @@ class account_bank_statement(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Bank statement balance is not equal to Calculated balance.'))
         return self.button_confirm_closing_balance(cr, uid, ids, context=context)
 
+    def wiz_confirm_closing_balance(self, cr, uid, ids, context=None):
+        """
+        When pressing the button to confirm register's month end balance, a wizard window pop up with a checkbox
+        with a warning message depending if the previous month register is still open
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if context.get('journal_type', False) and context.get('journal_type') == 'bank':
+            for reg in self.browse(cr, uid, ids):
+                # Verify that the closing balance (balance_end_real) correspond to the calculated balance (balance_end)
+                # NB: UTP-187 reveals that some difference appears between balance_end_real and balance_end. These fields are float. And balance_end_real is calculated. In python this imply some difference.
+                # Because of fields values with 2 digits, we compare the two fields difference with 0.001 (10**-3)
+                if (abs(round(reg.balance_end_real, 2) - round(reg.balance_end, 2))) > 10 ** -3:
+                    raise osv.except_osv(_('Warning'), _('Bank statement balance is not equal to Calculated balance.'))
+        context.update({'active_ids': ids, 'active_id': ids[0]})
+        st = self.browse(cr, uid, ids[0], context=context)
+        prev_reg_id = previous_register_id(self, cr, uid, st.period_id.id, st.journal_id.id)
+        if prev_reg_id:
+            prev_reg_state = self.browse(cr, uid, prev_reg_id, context=context).state
+        else:
+            prev_reg_state = False
+        i = self.pool.get('wizard.confirm.closing.balance').create(cr, uid, {'is_prev_reg_open': prev_reg_state == 'open'}, context=context)
+
+        return {'name': _('Closing balance freezing warning!'),
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.confirm.closing.balance',
+                'res_id': [i],
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+                }
+
     def button_open_advances(self, cr, uid, ids, context=None):
         """
         Open a list of open advances
@@ -517,7 +554,7 @@ class account_bank_statement(osv.osv):
         if register.journal_id and register.journal_id.currency:
             # prepare some values
             name += ' - ' + register.journal_id.code + ' - '+ register.journal_id.currency.name
-            domain.append(('statement_id.journal_id.currency', '=', register.journal_id.currency.id))
+            domain.append(('currency_id', '=', register.journal_id.currency.id))
         # Prepare view
         view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'view_account_bank_statement_line_tree')
         view_id = view and view[1] or False
@@ -1188,11 +1225,14 @@ class account_bank_statement_line(osv.osv):
         for id in ids:
             result[id] = {'red_on_supplier': False}
 
-        for out in self.browse(cr, uid, ids, context=context):
-            type_for_register = out.account_id.type_for_register
-            if type_for_register in ['advance','transfer_same','down_payment','transfer']:
-                if out.partner_id.id is False and out.employee_id.id is False and out.transfer_journal_id.id is False:
-                    result[out.id]['red_on_supplier'] = True
+        if not ids:
+            return {}
+
+        for _id in self.search(cr, uid, [
+            ('id', 'in', ids), ('account_id.type_for_register', 'in', ['advance','transfer_same','down_payment','transfer', 'payroll']),
+            ('partner_id', '=', False), ('employee_id', '=', False), ('transfer_journal_id', '=', False)
+        ], context=context):
+            result[_id]['red_on_supplier'] = True
         return result
 
     def _get_number_imported_account_invoices(self, cr, uid, ids, field_name=None, args=None, context=None):
@@ -1272,7 +1312,7 @@ class account_bank_statement_line(osv.osv):
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
         'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
         'type_for_register': fields.related('account_id','type_for_register', string="Type for register", type='selection', selection=[('none','None'),
-                                                                                                                                       ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
+                                                                                                                                       ('transfer', 'Internal Transfer (different currencies)'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
                                                                                                                                        ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
         'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
         'free_analytic_lines': fields.function(_get_free_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines Free 1 and Free 2 linked to the given register line(s). Correction(s) included."),
@@ -2419,6 +2459,8 @@ class account_bank_statement_line(osv.osv):
                 ## Employee presence for operational advance
                 if absl.account_id.type_for_register == 'advance' and not absl.employee_id:
                     raise osv.except_osv(_('Error'), _('Please give an employee!'))
+                if absl.account_id.type_for_register == 'payroll' and not absl.employee_id and not absl.partner_id:
+                    raise osv.except_osv(_('Error'), _('Payroll account requires a Third Party'))
                 ## Analytic distribution presence
                 if self.analytic_distribution_is_mandatory(cr, uid, absl, context=context):
                     raise osv.except_osv(_('Error'), _('Analytic distribution is mandatory for this line: %s') % (absl.name or '',))

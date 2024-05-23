@@ -755,7 +755,7 @@ class field_balance_spec_parser(XlsxReportParser):
                     if abs(partner_txt_lines[emp_id]['amount']) > 0.001:
                         all_lines.append(partner_txt_lines[emp_id])
 
-                for emp in sorted(all_lines, key=lambda x: x[2] or 0):
+                for emp in sorted(all_lines, key=lambda x: x[2] if x[2] and isinstance(x[2], int) else 0):
                     self.append_line(
                         [(emp[0], 'line_account')] +
                         [('', 'line_text')] * 6 +

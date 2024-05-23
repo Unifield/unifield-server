@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from lxml import etree
-from datetime import datetime
 from tools.translate import _
 from osv import osv
 import csv
 from . import SPECIAL_CHAR
 import fileinput
 import re
+from dateutil import parser
 
 # example to read a Excel XML file in consumption_calculation/wizard/wizard_import_rac.py
 class SpreadsheetTools():
@@ -45,7 +45,7 @@ class SpreadsheetCell(SpreadsheetTools):
                     self.type = 'bool'
                 elif dtype == 'DateTime' and self.data:
                     try:
-                        self.data = datetime.fromisoformat(self.data)
+                        self.data = parser.isoparse(self.data)
                         self.type = 'datetime'
                     except Exception as e:
                         self.data = str(e)
@@ -135,7 +135,7 @@ class SpreadsheetXML(SpreadsheetTools):
             if xmlfile:
                 if context.get('from_je_import') or context.get('from_regline_import'):
                     # replace any invalid xml 1.0 &#x; where x<32 by a special code
-                    for line in fileinput.input(xmlfile, inplace=1):
+                    for line in fileinput.FileInput(xmlfile, inplace=1):
                         print(re.sub('&#([0-9]|[0-2][0-9]|3[01]);', '%s_\\1' % SPECIAL_CHAR, line))
 
                 self.xmlobj = etree.parse(xmlfile)

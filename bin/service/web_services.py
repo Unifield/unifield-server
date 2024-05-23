@@ -63,7 +63,7 @@ def _check_db_name(name):
 
 def export_csv(fields, result, result_file_path):
     try:
-        with open(result_file_path, 'w') as result_file:
+        with open(result_file_path, 'w', newline='') as result_file:
             writer = csv.writer(result_file, quoting=csv.QUOTE_ALL)
             writer.writerow(fields)
             for data in result:

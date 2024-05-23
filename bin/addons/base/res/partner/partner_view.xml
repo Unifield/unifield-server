@@ -386,7 +386,7 @@
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">res.partner</field>
             <field name="view_type">form</field>
-            <field name="domain">[('customer', '=', 1), ('active', 'in', ['t', 'f'])]</field>
+            <field name="domain">[('active', 'in', ['t', 'f'])]</field>
             <field name="context">{'default_customer': 1, 'search_default_customer': 1, 'search_default_active': 1, 'show_button_show_inactive': 1}</field>
             <field name="filter" eval="True"/>
         </record>
