@@ -505,6 +505,23 @@ class analytic_account(osv.osv):
             }
         return res
 
+    def _get_has_ajis(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Returns a dict with key = the id of the account_analytic_account,
+        and value = True if at least one AJI use that analytic account, or False otherwise.
+        """
+        res = {}
+        if not ids:
+            return res
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        aal_obj = self.pool.get('account.analytic.line')
+        for aac_id in ids:
+            res[aac_id] = aal_obj.search_exist(cr, uid, ['|', '|', ('account_id', '=', aac_id), ('destination_id', '=', aac_id), ('cost_center_id', '=', aac_id)], context=context) or False
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True),
         'code': fields.char('Code', size=24),
@@ -577,6 +594,7 @@ class analytic_account(osv.osv):
                                            help="G/L accounts linked to the Funding Pool", order_by='code'),
         'selected_in_dest': fields.function(_get_selected_in_dest, string='Selected in Destination', method=True,
                                             type='boolean', store=False),
+        'has_ajis': fields.function(_get_has_ajis, type='boolean', method=True, string='Has Analytic Journal Items', store=False),
     }
 
     _defaults ={

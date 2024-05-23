@@ -79,6 +79,7 @@
             <field name="arch" type="xml">
                 <form string="Analytic account">
                     <group colspan="4" col="6">
+                        <field name="has_ajis" invisible="1"/>
                         <field name="name" select="1" colspan="4"/>
                         <field name="code" select="1"/>
                         <field name="parent_id" on_change="on_change_parent(parent_id)" groups="base.group_extended"/>
