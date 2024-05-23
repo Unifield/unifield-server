@@ -2286,10 +2286,10 @@ class product_attributes(osv.osv):
                     account_invoice_line l, account_invoice i, account_account a
                 where
                     l.invoice_id = i.id and
-                    l.account_id = a.id and
+                    i.account_id = a.id and
                     l.product_id = %s and
                     i.state not in ('paid', 'inv_close', 'done', 'proforma', 'proforma2', 'cancel') and
-                    ( i.state != 'open' or coalesce(a.reconcile, 'f') = 'f' )
+                    ( i.state != 'open' or coalesce(a.reconcile, 'f') != 'f' )
                 ''', (product.id, ))
             has_invoice_line = [x[0] for x in cr.fetchall()]
 
