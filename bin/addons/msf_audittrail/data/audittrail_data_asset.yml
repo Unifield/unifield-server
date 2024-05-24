@@ -114,6 +114,11 @@
           if field_name:
             name_id = field_name[0]
 
+        field_other_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.event'), ('name', '=', 'asset_name')], context=context)
+        field_other_id = False
+        if field_other_name:
+          field_other_id = field_other_name[0]
+
         vals = {
           'name': name,
           'object_id': object_ids[0],
@@ -123,6 +128,7 @@
           'field_ids': [ (6, 0, fields_ids) ],
           'parent_field_id': parent_id,
           'name_get_field_id': name_id,
+          'field_other_id': field_other_id,
         }
 
         if not rule_id:

@@ -990,7 +990,7 @@ class product_asset_event(osv.osv):
         'brand': fields.char('Brand', size=128, readonly=True), # from asset
         'model': fields.char('Model', size=128, readonly=True), # from asset
         'comment': fields.text('Comment'),
-
+        'asset_name': fields.related('asset_id', 'name', type='char', readonly=True, size=128, store=False, write_relate=False, string="Asset"),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
         'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], readonly=1),
     }

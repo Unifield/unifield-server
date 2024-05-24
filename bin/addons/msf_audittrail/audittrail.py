@@ -551,7 +551,8 @@ class audittrail_rule(osv.osv):
                 "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
             }
             view_ids = []
-            if thisrule.object_id.model == 'account.bank.statement.line' or thisrule.object_id.model == 'account.move.line':
+            if thisrule.object_id.model == 'account.bank.statement.line' or thisrule.object_id.model == 'account.move.line' or\
+                    thisrule.object_id.model == 'product.asset.event':
                 # for register line we allow to select many lines in track changes view
                 # it is required to use fct_object_id and fct_res_id instead
                 # of object_id and res_id because account.bank.statement.line are sub object of
