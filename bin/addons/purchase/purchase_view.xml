@@ -100,6 +100,55 @@
             </field>
         </record>
 
+        <record id="purchase_order_form_catalogue" model="ir.ui.view">
+            <field name="name">purchase.order.form.catalogue.tab</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="priority" eval="201" />
+            <field name="arch" type="xml">
+                <form string="Purchase Order">
+                    <field name="catalogue_description_text" widget="html_text" nolabel="1" />
+                    <field name="catalogue_ratio_text" widget="html_text" nolabel="1"/>
+                    <group colspan="4">
+                        <button string="Export Lines" type="object" icon="gtk-execute" name="export_line_mismatch" colspan="1" />
+                        <label colspan="3" />
+                    </group>
+                    <field name="order_line_mismatch" colspan="4" nolabel="1" mode="tree"
+                        filter_selector="[('Show all', []),  ('Hide Confirmed', [('state', 'not in', ['confirmed'])]), ('Hide Closed', [('state', 'not in', ['done'])]), ('Hide Confirmed, Closed &amp; Cancelled', [('state', 'not in', ['confirmed', 'done', 'cancel', 'cancel_r'])]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])])]"
+                        >
+                        <tree string="PO Lines Mismatch with Catalogues" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
+                            <field name="line_number" />
+                            <field name="default_code" />
+                            <field name="default_name" />
+
+                            <field name="comment"  />
+                            <field name="nomenclature_description" />
+                            <field name="supplier_code"  />
+                            <field name="inactive_error" invisible="1"/>
+                            <field name="inactive_product" invisible="1"/>
+                            <field name="to_correct_ok" invisible="1"/>
+                            <field name="red_color" invisible="1"/>
+                            <field name="origin" invisible="1"/>
+                            <field name="from_fo" invisible="1"/>
+                            <field name="fake_id" invisible="1"/>
+                            <field name="soq_updated" invisible="1"/>
+                            <field name="product_qty" string="Qty" />
+                            <field name="product_uom" />
+                            <field name="price_unit" />
+                            <field name="price_subtotal"/>
+                            <field name="original_changed" string="CHG"/>
+                            <field name="date_planned" />
+                            <field name="catalog_mismatch" />
+                            <field name="po_state_stored" invisible="True"/>
+                            <field name="state_to_display"/>
+                            <field name="mml_status" />
+                            <field name="msl_status" />
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
         <record id="purchase_order_form" model="ir.ui.view">
             <field name="name">purchase.order.form</field>
             <field name="model">purchase.order</field>
@@ -113,6 +162,8 @@
                         <field name="po_version" invisible="1"/>
                         <field name="msg_big_qty" invisible="1"/>
                         <field name="alert_msl_mml" invisible="1"/>
+                        <field name="catalogue_display_tab" invisible="1" />
+                        <field name="catalogue_exists_text" invisible="1" />
                         <group colspan="6">
                             <html>
                                 <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
@@ -147,6 +198,37 @@
                                 <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
 
                                 <script language="javascript">
+                                    var original_partner = false;
+                                    function refresh_catalogue() {
+                                        var catalogue_text = ''
+                                        if ($('#partner_id').val() == original_partner) {
+                                            catalogue_text = $('#catalogue_exists_text').val() ||  $('#catalogue_exists_text').text();
+                                        }
+                                        $('#order_line_extra_text').html(catalogue_text);
+                                    }
+
+                                    function hide_esc_selector() {
+                                        // Hide the ESC Confirmed filter if the PO does not have an ESC Partner
+                                        var partner_type = $('#partner_type').val() || $('#partner_type').text().trim();
+                                        if (partner_type == 'esc' || partner_type == 'ESC') {
+                                            $('#order_line_filter_0').show();
+                                        }
+                                        else {
+                                            $('#order_line_filter_0').hide();
+                                        }
+                                    }
+
+                                    function on_reload_order_line() {
+                                        hide_esc_selector();
+                                        refresh_catalogue();
+                                    }
+                                    $(document).ready(function() {
+                                         original_partner = $('#partner_id').val();
+                                         new ListView('order_line').after_reload = on_reload_order_line;
+                                         $('#catalogue_exists_text').change(refresh_catalogue);
+                                         on_reload_order_line();
+                                    });
+
                                     var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
                                     if (alert_msl_mml) {
                                         $('#msl_mml').html(alert_msl_mml);
@@ -180,6 +262,10 @@
                                     if (has_ad_nr) {
                                         $('#nr_ad_lines').append(has_ad_nr);
                                         $('#nr_ad_lines').show();
+                                    }
+                                    var catalogue_text = $('#catalogue_exists_text').val() ||  $('#catalogue_exists_text').text();
+                                    if (catalogue_text) {
+                                         $('#order_line_extra_text').html(catalogue_text);
                                     }
 
                                 </script>
@@ -263,9 +349,9 @@
                             </group>
                             <field name="order_line" colspan="4" nolabel="1" mode="tree,form"
                                 context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': False, 'from_fo': po_from_fo or po_from_ir or False}"
-                                on_change="order_line_change(order_line, show_default_msg)"
-                                filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
-                                default_selector="'3'" o2m_selectable="2"
+                                on_change="order_line_change(order_line, show_default_msg, partner_id)"
+                                filter_selector="[('Show all', []), ('ESC Confirmed', [('esc_confirmed', '=', True)]), ('ESC Unconfirmed', [('esc_confirmed', '=', False)])], [('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
+                                default_selector="['0', '3']" o2m_selectable="2"
                                 >
                                 <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated']" button_attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p'])]}" editable="both">
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
@@ -457,6 +543,7 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="Supplier Catalogue" view_id="purchase.purchase_order_form_catalogue" attrs="{'invisible': [('catalogue_display_tab', '=', False)]}" />
                         &signature_template;
                     </notebook>
                     <group col="11" colspan="4">

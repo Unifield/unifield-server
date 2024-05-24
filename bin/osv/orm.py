@@ -1640,12 +1640,23 @@ class orm_template(object):
             if node.get('filter_selector'):
                 try:
                     filter_eval = eval(node.get('filter_selector'))
-                    if filter_eval and isinstance(filter_eval, list):
-                        trans_filter_eval = []
-                        for x in filter_eval:
-                            trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
-                            trans_filter_eval.append((trans_x, x[1]))
-                        node.set('filter_selector', '%s'%trans_filter_eval)
+                    if filter_eval:
+                        if isinstance(filter_eval, list):
+                            trans_filter_eval = []
+                            for x in filter_eval:
+                                trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
+                                trans_filter_eval.append((trans_x, x[1]))
+                            node.set('filter_selector', '%s' % trans_filter_eval)
+                        elif isinstance(filter_eval, tuple):
+                            trans_filter_eval = []
+                            for t_filter in filter_eval:
+                                if filter_eval and isinstance(t_filter, list):
+                                    sub_trans_filter_eval = []
+                                    for x in t_filter:
+                                        trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
+                                        sub_trans_filter_eval.append((trans_x, x[1]))
+                                    trans_filter_eval.append(sub_trans_filter_eval)
+                            node.set('filter_selector', '%s' % trans_filter_eval)
                 except:
                     logger = netsvc.Logger()
                     logger.notifyChannel("translate.view", netsvc.LOG_WARNING, "Unable to translate %s" % node.get('filter_selector'))
@@ -1693,6 +1704,11 @@ class orm_template(object):
     def __view_look_dom_arch(self, cr, user, node, view_id, context=None):
         fields_def = self.__view_look_dom(cr, user, node, view_id, context=context)
         node = self._disable_workflow_buttons(cr, user, node)
+        #for page_view_id in node.getiterator('page'):
+        for page_view_id in node.iterfind(".//page[@view_id]"):
+            if page_view_id.get('view_id'):
+                module, xml_id = page_view_id.get('view_id').rsplit('.', 1)
+                page_view_id.set('view_id', '%d'%self.pool.get('ir.model.data').get_object_reference(cr, user, module, xml_id)[1])
         arch = etree.tostring(node, encoding="unicode").replace('\t', '')
         fields = {}
         if node.tag == 'diagram':

@@ -16,6 +16,7 @@
                     <field name="export_id" />
                     <field name="start_time" />
                     <field name="end_time" />
+                    <field name="filenames" string="File name" />
                 </search>
             </field>
         </record>
@@ -29,6 +30,7 @@
                     <field name="export_id" />
                     <field name="start_time" />
                     <field name="end_time" />
+                    <field name="filenames" truncate="100" />
                     <field name="nb_processed_records" />
                     <field name="nb_rejected_records" />
                     <field name="state" />
@@ -45,6 +47,8 @@
                     <field name="export_id" />
                     <field name="start_time" />
                     <field name="end_time" />
+                    <separator colspan="4" string="Export files" />
+                    <field name="filenames" colspan="4" widget="full_text" />
                     <separator colspan="4" string="Export results" />
                     <field name="nb_processed_records" />
                     <field name="nb_rejected_records" />

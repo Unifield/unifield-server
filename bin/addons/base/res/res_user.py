@@ -479,7 +479,7 @@ class users(osv.osv):
         for x in self.browse(cr, uid, ids, fields_to_fetch=['synchronize', 'force_dept_email_popup', 'context_department_id', 'user_email'], context=context):
             if x.id == 1 or x.synchronize:
                 ret[x.id] = False
-            elif x.force_dept_email_popup or not x.context_department_id or not x.user_email:
+            elif x.force_dept_email_popup or (not x.context_department_id and has_dpt) or not x.user_email:
                 ret[x.id] = True
             elif not x.context_department_id and has_dpt:
                 ret[x.id] = True

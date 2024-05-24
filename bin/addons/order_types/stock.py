@@ -279,7 +279,8 @@ class stock_picking(osv.osv):
                     'target': 'new',
                 }
 
-                if not context.get('force_process', False) and pick.type == 'in' and not pick.in_dpo and pick.state != 'shipped' \
+                if not context.get('force_process', False) and pick.type == 'in' and not pick.in_dpo \
+                        and pick.state != 'shipped' and (pick.state != 'updated' or not pick.dpo_incoming) \
                         and pick.partner_id and pick.partner_id.partner_type in ('internal', 'section', 'intermission') \
                         and pick.company_id.partner_id.id != pick.partner_id.id \
                         and self.pool.get('stock.move').search_exists(cr, uid, [('picking_id', '=', pick.id), ('in_forced', '=', False)], context=context):
