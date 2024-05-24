@@ -589,6 +589,18 @@ class signature_line(osv.osv):
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
         return True
 
+    def super_action_unsign(self, cr, uid, ids, context=None):
+        '''
+        To allow the users in the groups Sign_document_creator_finance and/or Sign_document_creator_supply to remove
+        signatures they haven't signed
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        return self.action_unsign(cr, uid, ids, context=context, check_ur=False)
+
     def action_unsign(self, cr, uid, ids, context=None, check_ur=True):
         # check_ur: used when sign off line by sign creator
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name', 'user_name', 'value', 'unit'], context=context)
