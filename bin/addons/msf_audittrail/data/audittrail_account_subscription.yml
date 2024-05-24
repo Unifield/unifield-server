@@ -9,6 +9,21 @@
         # Create the rule
         fields = ['model_id', 'period_nbr', 'name', 'date_start', 'period_total', 'state', 'period_type', 'ref']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription'), ('name', '=', 'name')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription'), ('name', '=', 'model_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+          parent_id = field_parent[0]
+          if field_name:
+            name_id = field_name[0]
+
+        field_other_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription'), ('name', '=', 'model_name')], context=context)
+        field_other_id = False
+        if field_other_name:
+          field_other_id = field_other_name[0]
 
         vals = {
             'name': name,
@@ -17,6 +32,7 @@
             'log_unlink': True,
             'log_create': True,
             'field_ids': [(6, 0, fields_ids)],
+            'field_other_id': field_other_id,
         }
 
         if not rule_id:
@@ -39,7 +55,7 @@
         fields = ['date', 'subscription_id', 'move_id']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', 'in', fields)], context=context)
         field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', '=', 'name')], context=context)
-        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', '=', 'model_id')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', '=', 'subscription_id')], context=context)
       
         name_id = False
         parent_id = False

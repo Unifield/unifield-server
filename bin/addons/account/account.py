@@ -2694,6 +2694,7 @@ class account_subscription(osv.osv):
         'has_unposted_entries': fields.function(_get_has_unposted_entries, method=True, type='boolean',
                                                 store=False, string='Has unposted entries'),
         'frozen_model': fields.function(_is_frozen_model, method=True, type='boolean', store=False, string='Frozen model'),
+        'model_name': fields.related('model_id', 'name', type='char', readonly=True, size=128, store=False, write_relate=False, string="Model"),
     }
     _defaults = {
         'date_start': lambda *a: time.strftime('%Y-%m-%d'),
