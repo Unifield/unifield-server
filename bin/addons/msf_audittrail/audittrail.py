@@ -456,6 +456,15 @@ class ir_module(osv.osv):
 ir_module()
 
 
+class ir_cron(osv.osv):
+    _name = 'ir.cron'
+    _inherit = 'ir.cron'
+    _trace = True
+
+
+ir_cron()
+
+
 class audittrail_log_sequence(osv.osv):
     _name = 'audittrail.log.sequence'
     _rec_name = 'model'
@@ -577,7 +586,8 @@ class audittrail_rule(osv.osv):
                 "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
             }
             view_ids = []
-            if thisrule.object_id.model == 'account.bank.statement.line' or thisrule.object_id.model == 'account.move.line':
+            if thisrule.object_id.model == 'account.bank.statement.line' or thisrule.object_id.model == 'account.move.line' or\
+                    thisrule.object_id.model == 'product.asset.event':
                 # for register line we allow to select many lines in track changes view
                 # it is required to use fct_object_id and fct_res_id instead
                 # of object_id and res_id because account.bank.statement.line are sub object of
@@ -835,6 +845,9 @@ class audittrail_rule(osv.osv):
                             # UTP-360
                             if description == 'Pricelist':
                                 description = 'Currency'
+                            # Prevent password field to be plainly stored in Connection Manager
+                            if field == 'password':
+                                old_value, new_value = '********', '********'
                             line.update({
                                 'field_id': fields_to_trace[field].id,
                                 'field_description': description,

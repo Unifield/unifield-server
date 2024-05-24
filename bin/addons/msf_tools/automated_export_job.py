@@ -105,6 +105,7 @@ class automated_export_job(osv.osv):
             required=True,
         ),
         'disable_generation': fields.boolean('Do not generate reports, push only to remote'),
+        'filenames': fields.text(string='Files Names', readonly=1),
     }
 
     _defaults = {
@@ -146,12 +147,11 @@ class automated_export_job(osv.osv):
                     sftp = self.pool.get('automated.export').sftp_test_connection(cr, uid, job.export_id.id, context=context)
                 context.pop('no_raise_if_ok')
                 # Process export
-                error_message = []
+                error_message, filenames = [], []
                 state = 'done'
 
-
                 if job.export_id.function_id.model_id.model != 'wizard.hq.report.oca':
-                    processed, rejected, headers = getattr(
+                    processed, rejected, headers, filenames = getattr(
                         self.pool.get(job.export_id.function_id.model_id.model),
                         job.export_id.function_id.method_to_call
                     )(cr, uid, job.export_id, context=context)
@@ -184,6 +184,7 @@ class automated_export_job(osv.osv):
                     'nb_rejected_records': nb_rejected,
                     'comment': '\n'.join(error_message),
                     'state': state,
+                    'filenames': filenames and '; '.join(filenames) or '',
                 }, context=context)
             except Exception as e:
                 self.logger.error('Unable to process export Job %s (%s)' % (job.id, job.name), exc_info=True)
@@ -194,6 +195,7 @@ class automated_export_job(osv.osv):
                     'nb_rejected_records': 0,
                     'comment': str(e),
                     'state': 'error',
+                    'filenames': '',
                 }, context=context)
 
         return {

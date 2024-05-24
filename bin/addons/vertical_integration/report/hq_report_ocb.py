@@ -312,8 +312,6 @@ class finance_archive(finance_export.finance_archive):
             tmp_l = list(line)  # convert from tuple to list
             if tmp_l[col_nbr]:
                 journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
-                if type(journal_name) == str:
-                    journal_name = journal_name.encode('utf-8')
                 tmp_l[col_nbr] = journal_name
             tmp_l = tuple(tmp_l)  # restore back the initial format
             new_data.append(tmp_l)
@@ -323,18 +321,31 @@ class finance_archive(finance_export.finance_archive):
 # request & postprocess method used for OCP VI, and for Liquidity Balances report
 # NOTE: the Liquidity Bal. report is actually not included in OCB VI anymore, so all liquidity-related code in this file could sometime be moved
 liquidity_sql = """
-            SELECT i.code AS instance, j.code, j.id, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
+            SELECT i.code AS instance, j.code, j.id, %(period_title)s AS period, req.opening, req.calculated, req.closing, c.name AS currency
             FROM res_currency c,
             (
                 SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
                 FROM (
                     (
+                    -- export new register with no lines
+                        SELECT j.id AS journal_id, j.default_debit_account_id  AS account_id, 0 as col1, 0 as col2, 0 as col3
+                        FROM account_bank_statement st, account_journal j, account_period p
+                        WHERE
+                            st.journal_id = j.id
+                            AND st.period_id = p.id
+                            AND j.type IN %(j_type)s
+                            AND p.date_start >= %(date_from)s
+                            AND p.date_stop <= %(date_to)s
+                        GROUP BY j.id, j.default_debit_account_id
+                    )
+                UNION
+                    (
                         SELECT aml.journal_id AS journal_id, aml.account_id AS account_id, ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
                         FROM account_move_line AS aml 
                         LEFT JOIN account_journal j 
                             ON aml.journal_id = j.id 
-                        WHERE j.type IN %s
-                        AND aml.date < %s
+                        WHERE j.type IN %(j_type)s
+                        AND aml.date < %(date_from)s
                         AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
                         GROUP BY aml.journal_id, aml.account_id
                     )
@@ -344,8 +355,8 @@ liquidity_sql = """
                         FROM account_move_line AS aml 
                         LEFT JOIN account_journal j 
                             ON aml.journal_id = j.id 
-                        WHERE j.type IN %s
-                        AND aml.date >= %s AND aml.date <= %s
+                        WHERE j.type IN %(j_type)s
+                        AND aml.date >= %(date_from)s AND aml.date <= %(date_to)s
                         AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
                         GROUP BY aml.journal_id, aml.account_id
                     )
@@ -355,8 +366,8 @@ liquidity_sql = """
                         FROM account_move_line AS aml 
                         LEFT JOIN account_journal j 
                             ON aml.journal_id = j.id 
-                        WHERE j.type IN %s
-                        AND aml.date <= %s
+                        WHERE j.type IN %(j_type)s
+                        AND aml.date <= %(date_to)s
                         AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
                         GROUP BY aml.journal_id, aml.account_id
                     )
@@ -367,11 +378,11 @@ liquidity_sql = """
             WHERE req.journal_id = j.id
             AND j.instance_id = i.id
             AND j.currency = c.id
-            AND j.instance_id IN %s;
+            AND j.instance_id IN %(instance_ids)s;
             """
 
 
-def postprocess_liquidity_balances(self, cr, uid, data, encode=True, context=None):
+def postprocess_liquidity_balances(self, cr, uid, data, encode=False, context=None):
     """
     Returns data after having replaced the Journal ID by the Journal Name in the current language
     (the language code should be stored in context['lang']).

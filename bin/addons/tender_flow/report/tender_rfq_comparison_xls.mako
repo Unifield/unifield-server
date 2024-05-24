@@ -51,6 +51,19 @@
    <NumberFormat/>
    <Protection/>
   </Style>
+  <Style ss:ID="s67red">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#ff0000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
   <Style ss:ID="s68">
    <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
    <Borders>
@@ -202,6 +215,18 @@
    <NumberFormat/>
    <Protection/>
   </Style>
+  <Style ss:ID="s87red">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#ff0000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
   <Style ss:ID="s88">
    <Alignment ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -210,6 +235,18 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat ss:Format="Fixed"/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s88red">
+   <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#ff0000"/>
    <Interior/>
    <NumberFormat ss:Format="Fixed"/>
    <Protection/>
@@ -236,6 +273,18 @@
    <NumberFormat/>
    <Protection/>
   </Style>
+  <Style ss:ID="s90red">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#ff0000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
   <Style ss:ID="s91">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -244,6 +293,19 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s91red">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#ff0000"/>
    <Interior/>
    <NumberFormat/>
    <Protection/>
@@ -287,7 +349,7 @@
    <Protection/>
   </Style>
   <Style ss:ID="s98">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -404,6 +466,17 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
 </Style>
+<Style ss:ID="sShortDateRed">
+<NumberFormat ss:Format="Short Date"/>
+<Alignment ss:Vertical="Bottom" ss:Horizontal="Left" ss:WrapText="1"/>
+    <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#ff0000"/>
+</Style>
 <Style ss:ID="mSupHeader">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
     <Borders>
@@ -421,6 +494,18 @@
     <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+    <NumberFormat/>
+    <Protection/>
+</Style>
+<Style ss:ID="mSupQty">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+    <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
@@ -499,10 +584,11 @@
    <Column ss:AutoFitWidth="0" ss:Width="50"/>
    <Column ss:AutoFitWidth="0" ss:Width="80"/>
    <Column ss:AutoFitWidth="0" ss:Width="250"/>
-   <Column ss:Width="40"/>
+   <Column ss:Width="50"/>
    <Column ss:AutoFitWidth="0" ss:Width="50"/>
    % for numsup in range(0, len(o.supplier_ids)):
    <Column ss:AutoFitWidth="0" ss:Width="120"/>
+   <Column ss:Width="50"/>
    <Column ss:AutoFitWidth="0" ss:Width="70"/>
    <Column ss:AutoFitWidth="0" ss:Width="90"/>
    <Column ss:Width="120" ss:Span="1"/>
@@ -562,7 +648,7 @@
      <Cell />
      <Cell />
     % for numsup in range(0, len(o.supplier_ids)):
-    <Cell ss:MergeAcross="3" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Supplier')} ${numsup+1}</Data></Cell>
+    <Cell ss:MergeAcross="4" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Supplier')} ${numsup+1}</Data></Cell>
     % endfor
     <Cell ss:MergeDown="1" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Selected Supplier')}</Data></Cell>
    </Row>
@@ -570,10 +656,11 @@
     <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Line nr.')}</Data></Cell>
     <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Product Code')}</Data></Cell>
     <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Product Description')}</Data></Cell>
-    <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Quantity')}</Data></Cell>
+    <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Tender Quantity')}</Data></Cell>
     <Cell ss:StyleID="s98"><Data ss:Type="String">${_('UoM')}</Data></Cell>
     % for numsup in range(0, len(o.supplier_ids)):
     <Cell ss:StyleID="mSupName"><Data ss:Type="String">${_('Name')}</Data></Cell>
+    <Cell ss:StyleID="mSupQty"><Data ss:Type="String">${_('Supplier Quantity')}</Data></Cell>
     <Cell ss:StyleID="mSupUnit"><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
     <Cell ss:StyleID="mSupConfDate"><Data ss:Type="String">${_('Confirmed Delivery Date')}</Data></Cell>
     <Cell ss:StyleID="mSupComment"><Data ss:Type="String">${_('Comment')}</Data></Cell>
@@ -590,19 +677,33 @@
     % for supplier in o.supplier_ids:
         <%
         sup_name = 'name_%s' % supplier.id
+        sup_qty = 'qty_%s' % supplier.id
         sup_price = 'unit_price_%s' % supplier.id
         sup_comment = 'comment_%s' % supplier.id
         sup_confirmed_delivery_date = 'confirmed_delivery_date_%s' % supplier.id
       %>
-    <Cell ss:StyleID="s87"><Data ss:Type="String">${line.get(sup_name, '')|x}</Data></Cell>
-    <Cell ss:StyleID="s88"><Data ss:Type="Number">${line.get(sup_price, 0.00)}</Data></Cell>
-    % if isDate(line.get(sup_confirmed_delivery_date, False)):
-        <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${line.get(sup_confirmed_delivery_date, '')|x}T00:00:00.000</Data></Cell>
-    % else:
-        <Cell ss:StyleID="s87"><Data ss:Type="String"></Data></Cell>
-    % endif
-    <Cell ss:StyleID="s90"><Data ss:Type="String">${line.get(sup_comment, '')|x}</Data></Cell>
-      % endfor
+      % if line.get(sup_qty, 0.00) != line.quantity:
+        <Cell ss:StyleID="s87red"><Data ss:Type="String">${line.get(sup_name, '')|x}</Data></Cell>
+        <Cell ss:StyleID="s67red"><Data ss:Type="Number">${line.get(sup_qty, 0.00)}</Data></Cell>
+        <Cell ss:StyleID="s88red"><Data ss:Type="Number">${line.get(sup_price, 0.00)}</Data></Cell>
+        % if isDate(line.get(sup_confirmed_delivery_date, False)):
+            <Cell ss:StyleID="sShortDateRed"><Data ss:Type="DateTime">${line.get(sup_confirmed_delivery_date, '')|x}T00:00:00.000</Data></Cell>
+        % else:
+            <Cell ss:StyleID="s87red"><Data ss:Type="String"></Data></Cell>
+        % endif
+        <Cell ss:StyleID="s90red"><Data ss:Type="String">${line.get(sup_comment, '')|x}</Data></Cell>
+      % else:
+        <Cell ss:StyleID="s87"><Data ss:Type="String">${line.get(sup_name, '')|x}</Data></Cell>
+        <Cell ss:StyleID="s67"><Data ss:Type="Number">${line.get(sup_qty, 0.00)}</Data></Cell>
+        <Cell ss:StyleID="s88"><Data ss:Type="Number">${line.get(sup_price, 0.00)}</Data></Cell>
+        % if isDate(line.get(sup_confirmed_delivery_date, False)):
+            <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${line.get(sup_confirmed_delivery_date, '')|x}T00:00:00.000</Data></Cell>
+        % else:
+            <Cell ss:StyleID="s87"><Data ss:Type="String"></Data></Cell>
+        % endif
+        <Cell ss:StyleID="s90"><Data ss:Type="String">${line.get(sup_comment, '')|x}</Data></Cell>
+      % endif
+    % endfor
     <Cell ss:StyleID="s91"><Data ss:Type="String">${line.choosen_supplier_id or ''|x}</Data></Cell>
    </Row>
    % endfor

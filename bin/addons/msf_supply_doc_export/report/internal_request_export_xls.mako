@@ -159,7 +159,7 @@
     <Range>R4C2:R4C2</Range>
     <Type>List</Type>
     <CellRangeList/>
-    <Value>&quot;${_('Medical,Log,Service,Transport,Other')|x}&quot;</Value>
+    <Value>&quot;${_('Medical,Logistic,Service,Transport,Other')|x}&quot;</Value>
 </DataValidation>
 <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
     <Range>R5C2:R5C2</Range>

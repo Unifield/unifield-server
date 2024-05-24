@@ -236,9 +236,6 @@ class OpsEventsHandler(logging.Handler):
             self._logging = False
 
 def init_logger():
-    from tools.translate import resetlocale
-    resetlocale()
-
     # create a format for log messages and dates
     format = '[%(asctime)s][%(dbname)s] %(levelname)s:%(name)s:%(message)s'
 

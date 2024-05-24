@@ -26,6 +26,7 @@ from tools.translate import _
 
 from account_override import ACCOUNT_RESTRICTED_AREA
 from msf_field_access_rights.osv_override import _get_instance_level
+from tools.misc import fakeUid
 
 class account_journal(osv.osv):
     _inherit = "account.journal"
@@ -384,10 +385,14 @@ class account_journal(osv.osv):
             # US-265: Check account bank statements if name change
             if not context.get('sync_update_execution'):
                 if vals.get('name', False):
+                    if hasattr(uid, 'realUid'):
+                        fake_uid = uid
+                    else:
+                        fake_uid = fakeUid(1, uid)
                     abs_obj = self.pool.get('account.bank.statement')
-                    s_ids = abs_obj.search(cr, uid, [('journal_id', '=', j.id)], context=context)
+                    s_ids = abs_obj.search(cr, fake_uid, [('journal_id', '=', j.id), ('name', '!=', vals['name'])], context=context)
                     if s_ids:
-                        abs_obj.write(cr, uid, s_ids, {'name': vals['name']}, context=context)
+                        abs_obj.write(cr, fake_uid, s_ids, {'name': vals['name']}, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):

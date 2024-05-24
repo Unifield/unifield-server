@@ -416,7 +416,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
         ),
         'quantity': fields.float(
             digits=(16,2),
-            string='Qty',
+            string='Tender Qty',
         ),
         'uom_id': fields.many2one(
             'product.uom',
@@ -467,6 +467,13 @@ class wizard_compare_rfq_line(osv.osv_memory):
                     'size': 128,
                     'string': _('Supplier'),
                 },
+                # Quantity on the related RfQ line
+                'qty_%s' % sid: {
+                    'selectable': True,
+                    'type': 'float',
+                    'digits': (16,2),
+                    'string': _('Supplier Qty'),
+                },
                 # Unit price on the related RfQ line
                 'unit_price_%s' % sid: {
                     'selectable': True,
@@ -485,6 +492,12 @@ class wizard_compare_rfq_line(osv.osv_memory):
                     'selectable': True,
                     'type': 'text',
                     'string': _('Comment'),
+                },
+                # Check to see if the RfQ line qty is different than the one on the related Tender line
+                'qty_discr_%s' % sid: {
+                    'selectable': True,
+                    'type': 'boolean',
+                    'string': _('Quantity Discrepancy'),
                 },
             })
 
@@ -529,9 +542,10 @@ class wizard_compare_rfq_line(osv.osv_memory):
                     ('tender_line_id', '=', r['tender_line_id']),
                 ], context=context)
                 rfql = None
-                pu = 0.00
+                qty, pu = 0.00, 0.00
                 if rfql_ids:
                     rfql = pol_obj.browse(cr, uid, rfql_ids[0], context=context)
+                    qty = rfql.product_qty
                     pu = rfql.price_unit
                     same_cur = rfql.order_id.pricelist_id.currency_id.id == cur_id
                     if not same_cur:
@@ -539,28 +553,26 @@ class wizard_compare_rfq_line(osv.osv_memory):
 
                 r.update({
                     'name_%s' % sid: sup.name,
+                    'qty_%s' % sid: rfql and qty or 0.00,
                     'unit_price_%s' % sid: rfql and pu or 0.00,
                     'confirmed_delivery_date_%s' % sid: rfql and rfql.confirmed_delivery_date or False,
                     'comment_%s' % sid: rfql and rfql.comment or '',
+                    'qty_discr_%s' % sid: rfql and rfql.tender_line_id and rfql.tender_line_id.qty != qty or False,
                 })
 
         return res
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form',
-                        context=None, toolbar=False, submenu=False):
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Display the computed fields according to number of suppliers in the
-        tender.
+        Display the computed fields according to number of suppliers in the tender.
         """
         t_obj = self.pool.get('tender')
 
         if context is None:
             context = {}
 
-        res = super(wizard_compare_rfq_line, self).fields_view_get(
-            cr, uid, view_id, view_type,
-            context=context, toolbar=toolbar,
-            submenu=submenu)
+        res = super(wizard_compare_rfq_line, self).fields_view_get(cr, uid, view_id, view_type, context=context,
+                                                                   toolbar=toolbar, submenu=submenu)
 
         if view_type == 'tree':
             tree_view = """<tree string="Compared products" editable="top">
@@ -570,12 +582,11 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 <field name="quantity" readonly="1" />
                 <field name="uom_id" readonly="1" />
             """
-            fld_to_add = ['name', 'unit_price', 'comment', 'confirmed_delivery_date']
+            fld_to_add = ['qty_discr', 'name', 'qty', 'unit_price', 'comment', 'confirmed_delivery_date']
             t_id = context.get('tender_id', False)
             s_ids = []
             if t_id:
-                s_ids = t_obj.\
-                    browse(cr, uid, t_id, context=context).supplier_ids
+                s_ids = t_obj.browse(cr, uid, t_id, context=context).supplier_ids
 
             for sup in s_ids:
                 tree_view += """
@@ -595,9 +606,12 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 """ % {'sid': sup.id}
 
                 for fld in fld_to_add:
-                    tree_view += """
-                        <field name="%s_%s" readonly="1" not_sortable="1"/>
-                     """ % (fld, sup.id)
+                    if fld == 'qty_discr':
+                        tree_view += """<field name="%s_%s" readonly="1" not_sortable="1" invisible="1"/>""" % (fld, sup.id)
+                    else:
+                        tree_view += """
+                            <field name="%s_%s" readonly="1" not_sortable="1" colors="red:qty_discr_%s==True"/>
+                        """ % (fld, sup.id, sup.id)
 
             if s_ids:
                 tree_view += """

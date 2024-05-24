@@ -139,7 +139,7 @@ class hr_employee(osv.osv):
         'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=False),
         'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=False),
         'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=False),
-        'homere_uuid_key': fields.char(string='Homere field: UUID_key', size=64, readonly=True, required=False),
+        'homere_uuid_key': fields.char(string='Homere UUID', size=64, readonly=True, required=False),
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True, write_relate=False),

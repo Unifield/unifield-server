@@ -523,7 +523,7 @@ class automated_import_job(osv.osv):
 
         report_file_name = remote.get_report_file_name(filename)
         self.infolog(cr, uid, _('Writing file report at %s') % report_file_name)
-        csvfile = open(report_file_name, 'w')
+        csvfile = open(report_file_name, 'w', newline='')
         spamwriter = csv.writer(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
 
         headers_row = [_('Line number')] + headers

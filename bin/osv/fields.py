@@ -975,7 +975,7 @@ class related(function):
             if domain:
                 where = [(self._arg[i],x[1], x[2]) for x in domain]
                 domain = []
-            sarg = obj.pool.get(self._relations[i]['object']).search(cr, uid, where, context=context)
+            sarg = obj.pool.get(self._relations[i]['object']).search(cr, 1, where, context=context)
             i -= 1
         return [(self._arg[0], 'in', sarg)]
 
