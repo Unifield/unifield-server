@@ -1062,6 +1062,9 @@
             <field name="method">us_12826_unidata_pull_info</field>
         </record>
 
+        <record id="us_12598_ocb_group_user_manager" model="patch.scripts">
+            <field name="method">us_12598_ocb_group_user_manager</field>
+        </record>
 
     </data>
 </openerp>
