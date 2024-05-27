@@ -33,6 +33,8 @@
             'log_create': True,
             'field_ids': [(6, 0, fields_ids)],
             'field_other_id': field_other_id,
+            'parent_field_id': parent_id,
+            'name_get_field_id': name_id,
         }
 
         if not rule_id:
