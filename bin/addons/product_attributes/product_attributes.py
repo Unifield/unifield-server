@@ -517,93 +517,6 @@ class product_attributes(osv.osv):
 
         return []
 
-    def _compute_is_kc(self, cr, uid, product, context=None):
-        """
-        Return True if the product is considered as a Cold Chain product
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: True or False
-        """
-        return product.cold_chain and product.cold_chain.cold_chain or False
-
-
-    def _compute_is_dg(self, cr, uid, product, context=None):
-        """
-        Return True if the product is considered as a Dangerous Goods product
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: True or False
-        """
-        return product.dangerous_goods == 'True'
-
-    def _compute_dg_txt(self, cr, uid, product, context=None):
-        """
-        Return the character to display on views or reports ('X' or '?' or '') for Dangerous Goods
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: 'X' or '?' or ''
-        """
-        if product.dangerous_goods == 'True':
-            return 'X'
-        elif product.dangerous_goods == 'no_know':
-            return '?'
-
-        return ''
-
-    def _compute_is_cs(self, cr, uid, product, context=None):
-        """
-        Return True if the product is considered as a Controlled Substance product
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: True or False
-        """
-        return product.controlled_substance
-
-    def _compute_cs_txt(self, cr, uid, product, context=None):
-        """
-        Return the character to display on views or reports ('X' or '?' or '') for Controlled Substance
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: 'X' or '?' or ''
-        """
-        return product.controlled_substance and 'X' or ''
-
-    def _compute_is_ssl(self, cr, uid, product, context=None):
-        """
-        Return True if the product is considered as a Short Shelf Life product
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: True or False
-        """
-        return product.short_shelf_life == 'True'
-
-    def _compute_ssl_txt(self, cr, uid, product, context=None):
-        """
-        Return the character to display on views or reports ('X' or '?' or '') for Short Shelf Life
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: 'X' or '?' or ''
-        """
-        if product.short_shelf_life == 'True':
-            return 'X'
-        elif product.short_shelf_life == 'no_know':
-            return '?'
-
-        return ''
 
     def _compute_kc_dg_cs_ssl_values(self, cr, uid, ids, field_names, args, context=None):
         """
@@ -628,11 +541,49 @@ class product_attributes(osv.osv):
             field_names = [field_names]
 
         res = {}
-        for product in self.browse(cr, uid, ids, context=context):
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['short_shelf_life', 'cold_chain', 'dangerous_goods', 'controlled_substance'], context=context):
             res[product.id] = {}
-            for fld in field_names:
-                method_name = '_compute_%s' % fld
-                res[product.id][fld] = getattr(self, method_name)(cr, uid, product, context=context)
+            if product.short_shelf_life == 'True':
+                is_ssl = True
+                ssl_txt = 'X'
+            elif product.short_shelf_life == 'no_know':
+                is_ssl = False
+                ssl_txt = '?'
+            else:
+                is_ssl = False
+                ssl_txt = ''
+
+            if product.dangerous_goods == 'True':
+                is_dg = True
+                dg_txt = 'X'
+            elif product.dangerous_goods == 'no_know':
+                is_dg = False
+                dg_txt = '?'
+            else:
+                is_dg = False
+                dg_txt = ''
+
+
+            if 'is_ssl' in field_names or 'ssl_txt' in field_names:
+                res[product.id].update({
+                    'is_ssl': is_ssl,
+                    'ssl_txt': ssl_txt
+                })
+
+            if 'is_kc' in field_names:
+                res[product.id]['is_kc'] = product.cold_chain and product.cold_chain.cold_chain or False
+
+            if 'is_dg' in field_names or 'dg_txt' in field_names:
+                res[product.id].update({
+                    'is_dg': is_dg,
+                    'dg_txt': dg_txt,
+                })
+
+            if 'is_cs' in field_names or 'cs_txt' in field_names:
+                res[product.id].update({
+                    'is_cs': product.controlled_substance,
+                    'cs_txt': product.controlled_substance and 'X' or '',
+                })
 
         return res
 
@@ -1009,7 +960,7 @@ class product_attributes(osv.osv):
             method=True,
             type='boolean',
             string='Is Cold Chain ?',
-            multi='kc',
+            multi='ssl',
             readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['cold_chain'], 10),
@@ -1070,7 +1021,7 @@ class product_attributes(osv.osv):
             method=True,
             type='boolean',
             string='Is a Dangerous Goods ?',
-            multi='dg',
+            multi='ssl',
             readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
@@ -1083,7 +1034,7 @@ class product_attributes(osv.osv):
             type='char',
             size=8,
             string='Dangerous Goods icon',
-            multi='dg',
+            multi='ssl',
             readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
@@ -1152,7 +1103,7 @@ class product_attributes(osv.osv):
             method=True,
             type='boolean',
             string='Is Controlled subst.',
-            multi='cs',
+            multi='ssl',
             readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
@@ -1165,7 +1116,7 @@ class product_attributes(osv.osv):
             type='char',
             size=8,
             string='Controlled subst. icon',
-            multi='cs',
+            multi='ssl',
             readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
@@ -1622,7 +1573,7 @@ class product_attributes(osv.osv):
 
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
-        for product in self.browse(cr, uid, ids, context=context):
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['gmdn_code'], context=context):
             if product.gmdn_code and not int_pattern.match(product.gmdn_code):
                 return False
         return True
@@ -2012,7 +1963,7 @@ class product_attributes(osv.osv):
                 to_browse = [ids]
             else:
                 to_browse = ids
-            for product in self.browse(cr, uid, to_browse, context=context):
+            for product in self.browse(cr, uid, to_browse, fields_to_fetch=['uom_id'], context=context):
                 category_id = product.uom_id.category_id.id
                 if category_id not in product_uom_categ:
                     product_uom_categ.append(category_id)
@@ -2199,7 +2150,7 @@ class product_attributes(osv.osv):
         ud_prod = []
         ud_nsl_prod = []
         other_prod = []
-        for product in self.browse(cr, uid, ids, context=context):
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['active', 'name', 'default_code', 'international_status', 'standard_ok'], context=context):
             # Raise an error if the product is already inactive
             if not product.active and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
@@ -2263,57 +2214,88 @@ class product_attributes(osv.osv):
             if ignore_draft:
                 states_to_ignore.append('draft')
 
-            has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                      ('picking_id', '!=', False),
-                                                      ('state', 'not in', ['done', 'cancel']),
-                                                      '|', ('picking_id.state', 'not in', states_to_ignore),
-                                                      '&', ('picking_id.shipment_id', '!=', False),
-                                                      ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel']),
-                                                      ], context=context)
+            cr.execute('''
+                select
+                    m.id
+                from
+                    stock_move m
+                    inner join stock_picking p on m.picking_id = p.id
+                    left join shipment ship on ship.id = p.shipment_id
+                where
+                    m.product_id = %s and
+                    m.state not in ('done', 'cancel') and
+                    ( p.state not in %s or p.shipment_id is not null and ship.state not in ('delivered', 'done', 'cancel') )
+            ''', (product.id, tuple(states_to_ignore)))
+            has_move_line = [x[0] for x in cr.fetchall()]
 
             states_to_ignore = ['done', 'cancel']
             if ignore_draft:
                 states_to_ignore.append('draft')
             # Check if the product is in a stock inventory
-            has_inventory_line = inv_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                          ('inventory_id', '!=', False),
-                                                          ('inventory_id.state', 'not in', states_to_ignore)], context=context)
+
+
+            cr.execute('''
+                select
+                    l.id
+                from
+                    stock_inventory_line l, stock_inventory i
+                where
+                    l.inventory_id = i.id and
+                    l.product_id = %s and
+                    i.state not in %s
+                ''', (product.id, tuple(states_to_ignore)))
+            has_inventory_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product is in an initial stock inventory
-            has_initial_inv_line = in_inv_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                               ('inventory_id', '!=', False),
-                                                               ('inventory_id.state', 'not in', states_to_ignore)], context=context)
+            cr.execute('''
+                select
+                    l.id
+                from
+                    initial_stock_inventory_line l, initial_stock_inventory i
+                where
+                    l.inventory_id = i.id and
+                    l.product_id = %s and
+                    i.state not in %s
+                ''', (product.id, tuple(states_to_ignore)))
+            has_initial_inv_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product is in a real kit composition
-            has_kit = kit_obj.search(cr, uid, [('item_product_id', '=', product.id),
-                                               ('item_kit_id.composition_type', '=', 'real'),
-                                               ('item_kit_id.state', '=', 'completed'),
-                                               ], context=context)
+            cr.execute('''
+                select
+                    i.id
+                from
+                    composition_item i, composition_kit k
+                where
+                    i.item_kit_id = k.id and
+                    i.item_product_id = %s and
+                    k.composition_type = 'real' and
+                    k.state = 'completed'
+                ''', (product.id, ))
+            has_kit = [x[0] for x in cr.fetchall()]
+
             has_kit2 = self.pool.get('composition.kit').search(cr, uid, [('composition_product_id', '=', product.id),
                                                                          ('composition_type', '=', 'real'),
                                                                          ('state', '=', 'completed')], context=context)
             has_kit.extend(has_kit2)
 
             # Check if the product is in an invoice
-            has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                            ('invoice_id', '!=', False),
-                                                            ('invoice_id.state', 'not in', ['paid', 'inv_close', 'done', 'proforma', 'proforma2', 'cancel'])], context=context)
-
-            # Check if the invoices where the product is are open and if the header account is reconcilable
-            has_open_inv_reconcilable_acc = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                                         ('invoice_id', '!=', False),
-                                                                         ('invoice_id.state', 'in', ['open']),
-                                                                         ('invoice_id.account_id.reconcile', '=', False)], context=context)
-            # Allow deactivation of products in open invoices but with non-reconcilable header account
-            has_invoice_line = list(set(has_invoice_line) - set(has_open_inv_reconcilable_acc))
+            cr.execute('''
+                select
+                    l.id
+                from
+                    account_invoice_line l, account_invoice i, account_account a
+                where
+                    l.invoice_id = i.id and
+                    i.account_id = a.id and
+                    l.product_id = %s and
+                    i.state not in ('paid', 'inv_close', 'done', 'proforma', 'proforma2', 'cancel') and
+                    ( i.state != 'open' or coalesce(a.reconcile, 'f') != 'f' )
+                ''', (product.id, ))
+            has_invoice_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product has stock in internal locations
-            for loc_id in internal_loc:
-                c = context.copy()
-                c.update({'location': [loc_id]})
-                has_stock = self.read(cr, uid, product.id, ['qty_available'], context=c)['qty_available'] > 0.00
-                if has_stock:
-                    break
+            has_stock = self.pool.get('stock.mission.report.line.location').search_exists(cr, uid,
+                                                                                          [('product_id', '=', product.id), ('location_id', 'in', internal_loc), ('quantity', '>', 0)])
 
             opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line or has_product_list
             if not has_stock and not opened_object:
