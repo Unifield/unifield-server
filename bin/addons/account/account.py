@@ -2902,6 +2902,8 @@ class account_subscription_line(osv.osv):
         'subscription_id': fields.many2one('account.subscription', 'Subscription', required=True, select=True),
         'date': fields.date('Date', required=True),
         'move_id': fields.many2one('account.move', 'Entry'),
+        'sub_name': fields.related('subscription_id', 'name', type='char', readonly=True, size=128, store=False,
+                                     write_relate=False, string="Plan"),
     }
     _order = 'date, id'
 

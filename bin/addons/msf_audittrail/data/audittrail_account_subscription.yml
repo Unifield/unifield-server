@@ -54,18 +54,23 @@
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['date', 'subscription_id', 'move_id']
+        fields = ['subscription_id', 'date', 'move_id']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', 'in', fields)], context=context)
-        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', '=', 'name')], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', '=', 'date')], context=context)
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', '=', 'subscription_id')], context=context)
       
         name_id = False
         parent_id = False
 
         if field_parent:
-          parent_id = field_parent[0]
-          if field_name:
-            name_id = field_name[0]
+            parent_id = field_parent[0]
+            if field_name:
+                name_id = field_name[0]
+
+        field_other_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', '=', 'sub_name')], context=context)
+        field_other_id = False
+        if field_other_name:
+          field_other_id = field_other_name[0]
 
         vals = {
             'name': name,
@@ -76,6 +81,7 @@
             'field_ids': [(6, 0, fields_ids)],
             'parent_field_id': parent_id,
             'name_get_field_id': name_id,
+            'field_other_id': field_other_id,
         }
 
         if not rule_id:
