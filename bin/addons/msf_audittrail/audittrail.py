@@ -1202,15 +1202,17 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = False
             if values:
                 # Display only the date on log line (Comment the next line and uncomment the next one if you want display the time)
-                date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
+                if field['model'] in ['automated.import', 'automated.export'] and \
+                        field['name'] in ['next_scheduled_task', 'start_time']:
+                    date_format = self.pool.get('date.tools').get_datetime_format(cr, uid, context=context)
+                else:
+                    date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
                 try:
                     res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
                 except ValueError:
                     res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S.%f')
                 finally:
-                    if (field['model'] != 'automated.import' and field['name'] not in ['next_scheduled_task', 'start_time']) \
-                            or not res:
-                        res = datetime.strftime(res, date_format)
+                    res = datetime.strftime(res, date_format)
             return res
         elif field['ttype'] == 'selection':
             res = False
