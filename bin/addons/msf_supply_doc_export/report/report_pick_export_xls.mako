@@ -162,26 +162,28 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('CS')}</Data></Cell>
     </Row>
     % for move in o.move_lines:
-      <Row>
-          <Cell ss:StyleID="line" ><Data ss:Type="Number">${move.line_number or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_id.default_code or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_id.name or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.sale_line_id and move.sale_line_id.product_id != move.product_id and '[%s] %s' % (move.product_id.default_code, move.product_id.name) or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.comment or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.location_id.name or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="Number">${getStock(move) or 0.00}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="Number">${move.product_qty or 0.00 | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${0 | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.prodlot_id and move.prodlot_id.name or '' | x}</Data></Cell>
-          % if move.expired_date and isDate(move.expired_date):
-            <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${move.expired_date or '' | n}T00:00:00.000</Data></Cell>
-          % else:
-            <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
-          % endif
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.kc_check and _('Yes') or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.dg_check and _('Yes') or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${move.np_check and _('Yes') or '' | x}</Data></Cell>
-      </Row>
+      % if move.state != 'cancel':
+          <Row>
+              <Cell ss:StyleID="line" ><Data ss:Type="Number">${move.line_number or '' | x}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_id.default_code or '' | x}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="String">${move.product_id.name or '' | x}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="String">${move.sale_line_id and move.sale_line_id.product_id != move.product_id and '[%s] %s' % (move.product_id.default_code, move.product_id.name) or '' | x}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="String">${move.comment or '' | x}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="String">${move.location_id.name or '' | x}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="Number">${getStock(move) or 0.00}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="Number">${move.product_qty or 0.00 | x}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="String">${0 | x}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="String">${move.prodlot_id and move.prodlot_id.name or '' | x}</Data></Cell>
+              % if move.expired_date and isDate(move.expired_date):
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${move.expired_date or '' | n}T00:00:00.000</Data></Cell>
+              % else:
+                <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+              % endif
+              <Cell ss:StyleID="line" ><Data ss:Type="String">${move.kc_check and _('Yes') or '' | x}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="String">${move.dg_check and _('Yes') or '' | x}</Data></Cell>
+              <Cell ss:StyleID="line" ><Data ss:Type="String">${move.np_check and _('Yes') or '' | x}</Data></Cell>
+          </Row>
+      % endif
     % endfor
 </Table>
 <x:WorksheetOptions/>
