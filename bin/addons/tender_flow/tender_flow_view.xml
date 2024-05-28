@@ -310,7 +310,8 @@
                                 <field name="internal_type"/>
                                 <field name="customer_ref" widget="char"/>
                                 <group colspan="4">
-                                    <field name="pricelist_id" string="Currency"/>
+                                    <field name="no_line" invisible="1"/>
+                                    <field name="pricelist_id" string="Currency" attrs="{'readonly': [('no_line', '=', False)]}"/>
                                     <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': [('state', 'in', ['rfq_updated', 'done', 'cancel'])]}" />
                                 </group>
                             </group>

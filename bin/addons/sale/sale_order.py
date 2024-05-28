@@ -440,9 +440,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         }
         audit_line_obj.create(cr, uid, vals, context=context)
 
-
-
-
     def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for order in self.read(cr, uid, ids, ['order_line'], context=context):
