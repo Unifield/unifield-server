@@ -594,7 +594,7 @@ class automated_import(osv.osv):
             string='Associated cron job',
             readonly=True,
         ),
-        'next_scheduled_task': fields.related('cron_id', 'nextcall', type='datetime', readonly=1, string="Next Execution Date", store=True),
+        'next_scheduled_task': fields.related('cron_id', 'nextcall', type='datetime', readonly=1, string="Next Execution Date"),
         'priority': fields.integer(
             string='Priority',
             required=True,

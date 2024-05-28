@@ -807,9 +807,14 @@ class audittrail_rule(osv.osv):
                                     old_value[:10] == new_value[:10] and \
                                     (model_name_tolog not in ['automated.import', 'automated.export'] or field != 'start_time'):
                                 continue
-                            # US-13017: Skip the log creation when the field is emptied
-                            if model_name_tolog == 'automated.import' and field == 'start_time' and old_value and not new_value:
-                                continue
+                            # US-13017
+                            if model_name_tolog == 'automated.import' and field == 'start_time':
+                                if old_value and not new_value:  # Skip the log creation when the field is emptied
+                                    continue
+                                elif res_id and not old_value and new_value:
+                                    # When the empty forced date of next execution is filled, take the next execution date as old value
+                                    auto_imp = self.pool.get(model_name_tolog).read(cr, uid, res_id, ['next_scheduled_task'], context=context)
+                                    old_value = auto_imp and auto_imp['next_scheduled_task'] or False
                             line = vals.copy()
                             description = fields_to_trace[field].field_description
                             # UTP-360
