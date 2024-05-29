@@ -43,6 +43,7 @@
         'board_purchase_view.xml',
         'tender_flow_report.xml',
         'audittrail_data_tender.yml',
+        'tender_flow_data.xml',
     ],
     'installable': True,
 }

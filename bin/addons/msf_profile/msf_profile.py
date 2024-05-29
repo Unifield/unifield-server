@@ -57,6 +57,38 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF34.0
+    def us_12730_refresh_existing_rfq_state(self, cr, uid, *a, **b):
+        '''
+        Re-calculate the rfq_state of existing RfQs
+        '''
+        po_obj = self.pool.get('purchase.order')
+        rfq_ids = po_obj.search(cr, uid, [('rfq_ok', '=', 't')])
+        for rfq in po_obj.browse(cr, uid, rfq_ids, fields_to_fetch=['rfq_state', 'empty_po_cancelled'], context={}):
+            rfq_state_seq = {'draft': 10, 'sent': 20, 'updated': 30, 'done': 40}
+
+            state = 'draft'
+            if rfq.empty_po_cancelled:
+                state = 'cancel'
+            else:
+                rfql_states = set()
+                cr.execute('select distinct(rfq_line_state) from purchase_order_line where order_id = %s', (rfq.id,))
+                for x in cr.fetchall():
+                    rfql_states.add(x[0])
+                if rfql_states:
+                    if all([s.startswith('cancel') for s in rfql_states]):  # if all lines are cancelled then the PO is cancelled
+                        state = 'cancel'
+                    else:  # else compute the less advanced state:
+                        # cancel state must be ignored:
+                        rfql_states.discard('cancel')
+                        rfql_states.discard('cancel_r')
+                        state = self.pool.get('rfq.line.state').get_less_advanced_state(cr, uid, [rfq.id], rfql_states, context={})
+                        if rfq_state_seq.get(state, 100) < rfq_state_seq.get(rfq.rfq_state, 0):
+                            state = rfq.rfq_state
+            cr.execute("""UPDATE purchase_order SET rfq_state = %s WHERE id = %s""", (state, rfq.id))
+
+        return True
+
     # UF33.0
     def us_12598_ocb_group_user_manager(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
