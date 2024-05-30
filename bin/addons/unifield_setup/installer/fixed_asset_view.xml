@@ -22,7 +22,8 @@
           </xpath>
           <group string="res_config_contents" position="replace">
               <group colspan="5">
-              	<field name="fixed_asset_ok" />
+              	<field name="is_inactivable"/>
+              	<field name="fixed_asset_ok" attrs="{'readonly':[('is_inactivable','!=',True)]}"/>
               </group>
            </group>
         </data>
