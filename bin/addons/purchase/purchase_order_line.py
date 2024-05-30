@@ -1976,7 +1976,7 @@ class purchase_order_line(osv.osv):
                                                                                 'it might change at the supplier confirmation.') % info_price.min_quantity}})
                 if info_price.rounding and all_qty % info_price.rounding != 0:
                     message = _('A rounding value of %s UoM has been set for ' \
-                                'this product, you should than modify ' \
+                                'this product, you should then modify ' \
                                 'the quantity ordered to match the supplier criteria.') % info_price.rounding
                     message = '%s \n %s' % (res.get('warning', {}).get('message', ''), message)
                     res.setdefault('warning', {})
