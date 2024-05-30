@@ -3356,13 +3356,11 @@ class purchase_order(osv.osv):
             ids = [ids]
 
         self.generate_po_from_rfq(cr, uid, ids, context=context)
-        # FIXME: To see if we can close the lines or we need to keep them Updated
         pol_obj = self.pool.get('purchase.order.line')
         for rfq in self.read(cr, uid, ids, ['id'], context=context):
             rfq_lines_to_close = pol_obj.search(cr, uid, [('rfq_line_state', 'not in', ['cancel', 'cancel_r']),
                                                           ('order_id', '=', rfq['id'])], context=context)
             pol_obj.write(cr, uid, rfq_lines_to_close, {'rfq_line_state': 'done'}, context=context)
-        # self.write(cr, uid, ids, {'rfq_state': 'done'}, context=context)
 
         return True
 
