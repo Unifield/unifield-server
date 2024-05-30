@@ -27,6 +27,17 @@ class fixed_asset_setup(osv.osv_memory):
     _name = 'fixed.asset.setup'
     _inherit = 'res.config'
 
+    def _is_assets_inactivable(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        pa_obj = self.pool.get('product.asset')
+        al_obj = self.pool.get('product.asset.line')
+        has_unposted_asset_entries = False
+        has_non_closed_forms = pa_obj.search_exist(cr, uid, [('state', 'not in', ('done', 'cancel'))], context=context) or False
+        if not has_non_closed_forms:
+            has_unposted_asset_entries = al_obj.search_exist(cr, uid, [('move_state', '=', 'draft')], context=context)
+        return not (has_non_closed_forms or has_unposted_asset_entries)
+
     def _get_is_inactivable(self, cr, uid, ids, field_name, arg, context=None):
         """
         return True if at least one Asset Form is not in done or cancel state or at least one asset entry is draft, return False otherwise.
@@ -36,12 +47,9 @@ class fixed_asset_setup(osv.osv_memory):
         res = {}
         if context is None:
             context = {}
-        pa_obj = self.pool.get('product.asset')
-        al_obj = self.pool.get('product.asset.line')
-        has_non_closed_forms = pa_obj.search_exist(cr, uid, [('state', 'not in', ('done', 'cancel'))], context=context) or False
-        has_unposted_asset_entries = al_obj.search_exist(cr, uid, [('move_state', '=', 'draft')], context=context) or False
+        is_inactivable = self._is_assets_inactivable(cr, uid, context=context)
         for _id in ids:
-            res[_id] = not has_non_closed_forms and not has_unposted_asset_entries
+            res[_id] = is_inactivable
         return res
 
     _columns = {
@@ -61,16 +69,8 @@ class fixed_asset_setup(osv.osv_memory):
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res = super(fixed_asset_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
-        pa_obj = self.pool.get('product.asset')
-        al_obj = self.pool.get('product.asset.line')
-        has_non_closed_forms = pa_obj.search_exist(cr, uid, [('state', 'not in', ('done', 'cancel'))],
-                                                   context=context) or False
-        has_unposted_asset_entries = al_obj.search_exist(cr, uid, [('move_state', '=', 'draft')],
-                                                         context=context) or False
-        is_inactivable = not has_non_closed_forms and not has_unposted_asset_entries
-
         res['fixed_asset_ok'] = setup_id.fixed_asset_ok
-        res['is_inactivable'] = is_inactivable
+        res['is_inactivable'] = self._is_assets_inactivable(cr, uid, context=context)
         return res
 
     def execute(self, cr, uid, ids, context=None):
