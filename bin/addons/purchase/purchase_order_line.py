@@ -1015,8 +1015,7 @@ class purchase_order_line(osv.osv):
             'justification_code_id': prod.justification_code_id and prod.justification_code_id.code or False,
         }
 
-        lang = False
-        if partner_id:
+        if not lang and partner_id:
             lang = self.pool.get('res.partner').read(cr, uid, partner_id, ['lang'])['lang']
         context = {'lang': lang}
         context['partner_id'] = partner_id
