@@ -63,8 +63,8 @@ class patch_scripts(osv.osv):
         Re-calculate the rfq_state of existing RfQs
         '''
         po_obj = self.pool.get('purchase.order')
-        rfq_ids = po_obj.search(cr, uid, [('rfq_ok', '=', 't')])
-        for rfq in po_obj.browse(cr, uid, rfq_ids, fields_to_fetch=['rfq_state', 'empty_po_cancelled'], context={}):
+        rfq_ids = po_obj.search(cr, uid, [('rfq_ok', '=', 't')], context={})
+        for rfq in po_obj.browse(cr, uid, rfq_ids, fields_to_fetch=['rfq_state', 'empty_po_cancelled', 'name'], context={}):
             rfq_state_seq = {'draft': 10, 'sent': 20, 'updated': 30, 'done': 40}
 
             state = 'draft'
@@ -85,6 +85,11 @@ class patch_scripts(osv.osv):
                         state = self.pool.get('rfq.line.state').get_less_advanced_state(cr, uid, [rfq.id], rfql_states, context={})
                         if rfq_state_seq.get(state, 100) < rfq_state_seq.get(rfq.rfq_state, 0):
                             state = rfq.rfq_state
+                    # If the lines are updated and a linked PO exist, the whole RfQ should be closed
+                    if state == 'updated' and po_obj.search_exists(cr, uid, [('rfq_ok', '=', False),
+                                                                             ('origin', 'like', rfq.name)], context={}):
+                        state = 'done'
+                        cr.execute("""UPDATE purchase_order_line SET rfq_line_state = 'done' WHERE order_id = %s""", (rfq.id,))
             cr.execute("""UPDATE purchase_order SET rfq_state = %s WHERE id = %s""", (state, rfq.id))
 
         return True
