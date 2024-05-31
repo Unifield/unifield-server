@@ -77,19 +77,20 @@ class patch_scripts(osv.osv):
                 for x in cr.fetchall():
                     rfql_states.add(x[0])
                 if rfql_states:
+                    rfql_state = self.pool.get('rfq.line.state').get_less_advanced_state(cr, uid, [rfq.id], rfql_states, context={})
                     if all([s.startswith('cancel') for s in rfql_states]):  # if all lines are cancelled then the PO is cancelled
                         state = 'cancel'
                     else:  # else compute the less advanced state:
                         # cancel state must be ignored:
                         rfql_states.discard('cancel')
                         rfql_states.discard('cancel_r')
-                        state = self.pool.get('rfq.line.state').get_less_advanced_state(cr, uid, [rfq.id], rfql_states, context={})
+                        state = rfql_state
                         if rfq_state_seq.get(state, 100) < rfq_state_seq.get(rfq.rfq_state, 0):
                             state = rfq.rfq_state
                     # If the lines are updated and a linked PO exists, the whole RfQ should be closed if it was sourced from a FO
                     pol_domain = [('order_id.rfq_ok', '=', False), ('order_id.origin', 'like', rfq.name),
                                   ('linked_sol_id', '!=', False)]
-                    if state == 'updated' and pol_obj.search_exists(cr, uid, pol_domain, context={}):
+                    if rfql_state == 'updated' and pol_obj.search_exists(cr, uid, pol_domain, context={}):
                         state = 'done'
                         cr.execute("""UPDATE purchase_order_line SET rfq_line_state = 'done' 
                             WHERE order_id = %s AND rfq_line_state NOT IN ('cancel', 'cancel_r')""", (rfq.id,))
