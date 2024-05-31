@@ -32,11 +32,11 @@ class fixed_asset_setup(osv.osv_memory):
             context = {}
         pa_obj = self.pool.get('product.asset')
         al_obj = self.pool.get('product.asset.line')
-        has_unposted_asset_entries = False
-        has_non_closed_forms = pa_obj.search_exist(cr, uid, [('state', 'not in', ('done', 'cancel'))], context=context) or False
-        if not has_non_closed_forms:
-            has_unposted_asset_entries = al_obj.search_exist(cr, uid, [('move_state', '=', 'draft')], context=context)
-        return not (has_non_closed_forms or has_unposted_asset_entries)
+        if pa_obj.search_exist(cr, uid, [('state', 'not in', ('done', 'cancel'))], context=context):
+            return False
+        if al_obj.search_exist(cr, uid, [('move_state', '=', 'draft')], context=context):
+            return False
+        return True
 
     def _get_is_inactivable(self, cr, uid, ids, field_name, arg, context=None):
         """
