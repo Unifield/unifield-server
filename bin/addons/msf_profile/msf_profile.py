@@ -58,6 +58,34 @@ class patch_scripts(osv.osv):
     }
 
     # UF33.0
+    def us_12598_ocb_group_user_manager(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
+            user_obj = self.pool.get('res.users')
+            group_obj = self.pool.get('res.groups')
+            list_users = [
+                'FAC_7', 'PCAR', 'PCAR_MISSION', 'UFFR',
+                'UFFR4COORDO', 'UFR', 'UFR_COORDO', 'FINDEV',
+                'FAC_4', 'POWERUSER', 'UFR4HQ', 'RSISSOEASA',
+                'SISTO', 'SISSO', 'SISOTL', 'UFR_COORDO',
+                'UFR3FIELD', 'UFFR4COORDO', 'ADMIN', 'UFR3HQ',
+                'APM_HQ', 'APM_MISSION', 'SISOTL_HQ', 'SISTO_HQ',
+                'SISSO_HQ'
+            ]
+
+            group_id = group_obj.search(cr, uid, [('name', 'ilike', 'User_Manager')])
+            if not group_id:
+                return True
+            cr.execute('select id from res_users where upper(login) in %s', (tuple(list_users), ))
+            white_list = [x[0] for x in cr.fetchall()]
+            removed = user_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('groups_id', '=', group_id[0]), ('id', 'not in', white_list)])
+            to_keep = user_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('groups_id', '=', group_id[0]), ('id', 'in', white_list)])
+            if removed:
+                user_obj.write(cr, uid, removed, {'groups_id': [(3, group_id[0])]})
+            self.log_info(cr, uid, "US-12598: Group User_Manager, %d users kept %d removed" % (len(to_keep), len(removed)))
+
+        return True
+
     def us_12826_unidata_pull_info(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
@@ -189,9 +217,9 @@ class patch_scripts(osv.osv):
                     case
                         when catl.catalogue_id is null then ''
                         when catl.id is null then 'na'
-                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding=0 or pol.product_qty%catl.soq_rounding=0) then 'price'
-                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and catl.soq_rounding!=0 and pol.product_qty%catl.soq_rounding!=0 then 'price_soq'
-                        when catl.soq_rounding!=0 and pol.product_qty%catl.soq_rounding!=0 then  'soq'
+                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding=0 or pol.product_qty%catl.soq_rounding=0) and coalesce(catl.min_order_qty, 0) <= pol.product_qty then 'price'
+                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding!=0 and pol.product_qty%catl.soq_rounding!=0 or coalesce(catl.min_order_qty, 0) > pol.product_qty) then 'price_soq'
+                        when (catl.soq_rounding!=0 and pol.product_qty%catl.soq_rounding!=0) or coalesce(catl.min_order_qty, 0) > pol.product_qty then  'soq'
                         else 'conform'
                     end,
                 catalog_price_unit=
@@ -205,7 +233,7 @@ class patch_scripts(osv.osv):
                 left join product_pricelist curr_pricelist on curr_pricelist.id = po.pricelist_id
                 left join lateral (
                     select
-                        cat.id as catalogue_id, cat_line.id, cat.currency_id as cat_currency_id, cat_line.unit_price as cat_unit_price, cat_line.rounding as soq_rounding
+                        cat.id as catalogue_id, cat_line.id, cat.currency_id as cat_currency_id, cat_line.unit_price as cat_unit_price, cat_line.rounding as soq_rounding, cat_line.min_order_qty as min_order_qty
                     from
                         supplier_catalogue cat
                         left join supplier_catalogue_line cat_line on cat_line.catalogue_id = cat.id and cat_line.product_id = pol.product_id and cat_line.line_uom_id = pol.product_uom
@@ -216,7 +244,7 @@ class patch_scripts(osv.osv):
                         (cat.period_from is null or cat.period_from < pol.confirmation_date) and
                         (cat.period_to is null or cat.period_to > pol.confirmation_date)
                     order by
-                        cat.currency_id = curr_pricelist.currency_id, coalesce(cat_line.min_qty,0) <= pol.product_qty desc, abs(pol.product_qty - coalesce(cat_line.min_qty,0)) asc, cat_line.id
+                        cat.currency_id = curr_pricelist.currency_id, coalesce(cat_line.min_qty,0) <= pol.product_qty desc, abs(pol.product_qty - coalesce(cat_line.min_qty,0)) asc, cat_line.partner_info_id desc, cat_line.id
                     limit 1
                 ) catl on true
                 left join lateral (

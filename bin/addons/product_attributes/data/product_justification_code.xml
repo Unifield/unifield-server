@@ -86,6 +86,16 @@
             <field name="code">SP</field>
             <field name="description">Second Choice &amp; specific programme. The article must only be used if the first choice. is not available or cannot be used in a specific context. The article must be used only in a properly designed programme.</field>
         </record>
-        
+
+        <record id="justification_code_spm" model="product.justification.code">
+            <field name="code">SPM</field>
+            <field name="description">Second choice. Article must only be used if the first choice is not available or cannot be used in a specific context. Article must be used only in a properly designed programme, it may imply a medical risk if misused.</field>
+        </record>
+
+        <record id="justification_code_pmfe" model="product.justification.code">
+            <field name="code">PMFE</field>
+            <field name="description">Article must be used only in a properly designed programme, it may imply a medical risk if misused. Monitor the use, efficacy for at least one year after the introduction of new drugs. Expensive item</field>
+        </record>
+
     </data>
 </openerp>

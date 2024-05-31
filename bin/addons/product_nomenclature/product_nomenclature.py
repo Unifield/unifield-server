@@ -772,7 +772,7 @@ stock moves will be posted in this account. If not set on the product, the one f
         if not ids:
             return True
         if vals.get('nomen_manda_2'):
-            vals['categ_id'] = self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_2'], context=context).category_id.id
+            vals['categ_id'] = self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_2'], fields_to_fetch=['category_id'], context=context).category_id.id
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
 

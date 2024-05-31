@@ -768,9 +768,29 @@ class composition_kit(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        kit_obj = self.pool.get('composition.kit')
-        result = kit_obj.search(cr, uid, [('composition_product_id', 'in', ids)], context=context)
-        return result
+        if not ids:
+            return {}
+        cr.execute('''
+            select k.id
+                from composition_kit k, product_product p, product_template t
+            where
+                k.composition_product_id = p.id and
+                t.id = p.product_tmpl_id and
+                p.id in %s and
+                (
+                    k.nomen_manda_0 != t.nomen_manda_0 or
+                    k.nomen_manda_1 != t.nomen_manda_1 or
+                    k.nomen_manda_2 != t.nomen_manda_2 or
+                    k.nomen_manda_3 != t.nomen_manda_3 or
+                    k.nomen_sub_0 != t.nomen_sub_0 or
+                    k.nomen_sub_1 != t.nomen_sub_1 or
+                    k.nomen_sub_2 != t.nomen_sub_2 or
+                    k.nomen_sub_3 != t.nomen_sub_3 or
+                    k.nomen_sub_4 != t.nomen_sub_4 or
+                    k.nomen_sub_5 != t.nomen_sub_5 
+                )
+        ''', (tuple(ids),))
+        return [x[0] for x in cr.fetchall()]
 
     def _get_composition_kit_from_lot_ids(self, cr, uid, ids, context=None):
         '''

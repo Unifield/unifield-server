@@ -11719,7 +11719,7 @@ msgstr "Clave"
 #: code:addons/supplier_catalogue/purchase.py:82
 #: code:addons/supplier_catalogue/purchase.py:86
 #, python-format
-msgid "A rounding value of %s UoM has been set for this product, you should than modify the quantity ordered to match the supplier criteria."
+msgid "A rounding value of %s UoM has been set for this product, you should then modify the quantity ordered to match the supplier criteria."
 msgstr "Un valor de redondeo de la UdM %s se ha fijado para este producto,  debe modificar la cantidad pedida para que coincida con los criterios del proveedor."
 
 #. module: stock_schedule
