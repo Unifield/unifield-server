@@ -52,6 +52,15 @@ class fixed_asset_setup(osv.osv_memory):
             res[_id] = is_inactivable
         return res
 
+    def onchange_asset(self, cr, uid, ids, fixed_asset_ok=False):
+        '''
+        We need the authorization of inactivation only when the assets are activated.
+        This also manage the case when an instance has already inactivated assets before deployment of this code
+        while having non closed forms or unposted asset entries.
+        '''
+        if not fixed_asset_ok:
+            return {'value': {'is_inactivable': True}}
+
     _columns = {
         'fixed_asset_ok': fields.boolean(string='Does the system manage Fixed assets ?'),
         'is_inactivable': fields.function(_get_is_inactivable, method=True, type='boolean', string='Are Fixed Assets inactivable now?', store=False, readonly=True),
