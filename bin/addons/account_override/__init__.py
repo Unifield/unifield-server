@@ -129,9 +129,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'recurring_lines': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
-        '|',
         '|', '&', ('user_type_code', '=', 'receivables'), ('type', '=', 'receivable'), '&', ('user_type_code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),  # Receivable/Receivable allowed + expense accounts (without extra-accounting) allowed
-        '&', ('user_type_code', '=', 'asset'), ('type', '=', 'other'),  # US-10090 Allow Type "Asset" and Internal Type "Regular"
     ],
 
     # ACCRUALS - expense lines

@@ -40,6 +40,7 @@ class BackupConfig(osv.osv):
     _pg_psw_env_var_is_set = False
     _error = ''
     _logger = logging.getLogger('sync.client')
+    _trace = True
 
     def _get_bck_info(self, cr, uid, ids, field_name, args, context=None):
         ret = {}

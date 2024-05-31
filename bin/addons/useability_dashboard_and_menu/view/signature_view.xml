@@ -10,7 +10,7 @@
                 <search>
                     <filter name="my_sign" string="My Signatures" icon="terp-personal" domain="[('user_id', '=', uid)]" />
                     <separator orientation="vertical"/>
-                    <filter name="to_sign" string="To be signed" icon="gtk-paste"  domain="['&amp;', ('signed', '=', False), ('signature_is_closed', '=', False)]"  />
+                    <filter name="to_sign" string="To be signed" icon="gtk-paste"  domain="['&amp;', '&amp;', ('signed', '=', False), ('signature_is_closed', '=', False), ('wait_prio', '=', False)]"  />
                     <filter name="signed" string="Signed" icon="gtk-paste-v"  domain="[('signed', '=', True)]"  />
                     <separator orientation="vertical"/>
                     <filter name="open" string="Open" icon="terp-check" domain="[('status', '=', 'open')]" />

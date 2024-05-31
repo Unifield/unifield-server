@@ -186,6 +186,7 @@ class product_cold_chain(osv.osv):
     _name = "product.cold_chain"
     _columns = {
         'code': fields.char('Code', size=256),
+        'ud_code': fields.char(string='Code', size=256),
         'name': fields.char('Name', size=256, required=True, translate=1),
         'cold_chain': fields.boolean('Cold Chain'),
         'mapped_to': fields.many2one('product.cold_chain', string='Mapped to', readonly=1),
@@ -516,93 +517,6 @@ class product_attributes(osv.osv):
 
         return []
 
-    def _compute_is_kc(self, cr, uid, product, context=None):
-        """
-        Return True if the product is considered as a Cold Chain product
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: True or False
-        """
-        return product.cold_chain and product.cold_chain.cold_chain or False
-
-
-    def _compute_is_dg(self, cr, uid, product, context=None):
-        """
-        Return True if the product is considered as a Dangerous Goods product
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: True or False
-        """
-        return product.dangerous_goods == 'True'
-
-    def _compute_dg_txt(self, cr, uid, product, context=None):
-        """
-        Return the character to display on views or reports ('X' or '?' or '') for Dangerous Goods
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: 'X' or '?' or ''
-        """
-        if product.dangerous_goods == 'True':
-            return 'X'
-        elif product.dangerous_goods == 'no_know':
-            return '?'
-
-        return ''
-
-    def _compute_is_cs(self, cr, uid, product, context=None):
-        """
-        Return True if the product is considered as a Controlled Substance product
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: True or False
-        """
-        return product.controlled_substance
-
-    def _compute_cs_txt(self, cr, uid, product, context=None):
-        """
-        Return the character to display on views or reports ('X' or '?' or '') for Controlled Substance
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: 'X' or '?' or ''
-        """
-        return product.controlled_substance and 'X' or ''
-
-    def _compute_is_ssl(self, cr, uid, product, context=None):
-        """
-        Return True if the product is considered as a Short Shelf Life product
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: True or False
-        """
-        return product.short_shelf_life == 'True'
-
-    def _compute_ssl_txt(self, cr, uid, product, context=None):
-        """
-        Return the character to display on views or reports ('X' or '?' or '') for Short Shelf Life
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param product: browse_record of a product.product
-        :param context: Context of the call
-        :return: 'X' or '?' or ''
-        """
-        if product.short_shelf_life == 'True':
-            return 'X'
-        elif product.short_shelf_life == 'no_know':
-            return '?'
-
-        return ''
 
     def _compute_kc_dg_cs_ssl_values(self, cr, uid, ids, field_names, args, context=None):
         """
@@ -627,11 +541,49 @@ class product_attributes(osv.osv):
             field_names = [field_names]
 
         res = {}
-        for product in self.browse(cr, uid, ids, context=context):
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['short_shelf_life', 'cold_chain', 'dangerous_goods', 'controlled_substance'], context=context):
             res[product.id] = {}
-            for fld in field_names:
-                method_name = '_compute_%s' % fld
-                res[product.id][fld] = getattr(self, method_name)(cr, uid, product, context=context)
+            if product.short_shelf_life == 'True':
+                is_ssl = True
+                ssl_txt = 'X'
+            elif product.short_shelf_life == 'no_know':
+                is_ssl = False
+                ssl_txt = '?'
+            else:
+                is_ssl = False
+                ssl_txt = ''
+
+            if product.dangerous_goods == 'True':
+                is_dg = True
+                dg_txt = 'X'
+            elif product.dangerous_goods == 'no_know':
+                is_dg = False
+                dg_txt = '?'
+            else:
+                is_dg = False
+                dg_txt = ''
+
+
+            if 'is_ssl' in field_names or 'ssl_txt' in field_names:
+                res[product.id].update({
+                    'is_ssl': is_ssl,
+                    'ssl_txt': ssl_txt
+                })
+
+            if 'is_kc' in field_names:
+                res[product.id]['is_kc'] = product.cold_chain and product.cold_chain.cold_chain or False
+
+            if 'is_dg' in field_names or 'dg_txt' in field_names:
+                res[product.id].update({
+                    'is_dg': is_dg,
+                    'dg_txt': dg_txt,
+                })
+
+            if 'is_cs' in field_names or 'cs_txt' in field_names:
+                res[product.id].update({
+                    'is_cs': product.controlled_substance,
+                    'cs_txt': product.controlled_substance and 'X' or '',
+                })
 
         return res
 
@@ -668,6 +620,39 @@ class product_attributes(osv.osv):
                     dom += [ '&', ('batch_management', '=', False), ('perishable', '=', True)]
         return dom
 
+    def _search_incompatible_oc_default_values(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        oc_def = self.pool.get('unidata.default_product_value')
+        for arg in args:
+            if arg[1] == '=':
+                if not arg[2]:
+                    raise osv.except_osv(_('Warning'), _('This filter is not implemented'))
+
+                oc_def_ids = oc_def.search(cr, uid, [], context=context)
+            elif arg[1] == 'in':
+                if not isinstance(arg[2], list):
+                    raise osv.except_osv(_('Warning'), _('This filter is not implemented'))
+                oc_def_ids = arg[2]
+            else:
+                raise osv.except_osv(_('Warning'), _('This filter is not implemented'))
+
+            temp_dom = []
+            for oc_val in oc_def.browse(cr, uid, oc_def_ids, context=context):
+                value = oc_val.value
+                if value == 'f':
+                    value = False
+                temp_dom.append(['&', ('nomen_manda_%d' % oc_val.nomenclature.level, '=', oc_val.nomenclature.id), (oc_val.field, '!=', value)])
+
+            ud_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+            if temp_dom:
+                dom += temp_dom[0]
+                for d in temp_dom[1:]:
+                    dom.insert(0, '|')
+                    dom += d
+                dom = ['&', ('international_status', '=', ud_id)] + dom
+
+        return dom
+
     def _search_show_ud(self, cr, uid, obj, name, args, context=None):
         dom = []
         for arg in args:
@@ -697,14 +682,17 @@ class product_attributes(osv.osv):
 
     def _get_local_activation_from_merge(self, cr, uid, ids, field_name, args, context=None):
         '''
-            used by sync to not sync down active=True from coo to proj, activation of UD prod from COO will be done by the sync merge update
+        Used by sync to not sync down active=True from coo to proj.
+        Activation of UD prod from COO will be done by the sync merge update for non non-standard local products
         '''
         res = {}
         for _id in ids:
             res[_id] = False
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
-            for _id in self.search(cr, uid, [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', '=', True), ('replace_product_id', '!=', False)], context=context):
+            prod_domain = [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', '=', True),
+                           ('replace_product_id', '!=', False), ('standard_ok', '!=', 'non_standard_local')]
+            for _id in self.search(cr, uid, prod_domain, context=context):
                 res[_id] = True
 
         return res
@@ -972,7 +960,7 @@ class product_attributes(osv.osv):
             method=True,
             type='boolean',
             string='Is Cold Chain ?',
-            multi='kc',
+            multi='ssl',
             readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['cold_chain'], 10),
@@ -1033,7 +1021,7 @@ class product_attributes(osv.osv):
             method=True,
             type='boolean',
             string='Is a Dangerous Goods ?',
-            multi='dg',
+            multi='ssl',
             readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
@@ -1046,7 +1034,7 @@ class product_attributes(osv.osv):
             type='char',
             size=8,
             string='Dangerous Goods icon',
-            multi='dg',
+            multi='ssl',
             readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
@@ -1079,7 +1067,8 @@ class product_attributes(osv.osv):
         ),
         'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
-        'un_code': fields.char('UN Code', size=7),
+        'un_code': fields.char('UN Code', size=32),
+        'hs_code': fields.char('HS Code', size=12, readonly=1),
         'gmdn_code' : fields.char('GMDN Code', size=5),
         'gmdn_description' : fields.char('GMDN Description', size=64),
         'life_time': fields.integer('Product Life Time',
@@ -1114,7 +1103,7 @@ class product_attributes(osv.osv):
             method=True,
             type='boolean',
             string='Is Controlled subst.',
-            multi='cs',
+            multi='ssl',
             readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
@@ -1127,7 +1116,7 @@ class product_attributes(osv.osv):
             type='char',
             size=8,
             string='Controlled subst. icon',
-            multi='cs',
+            multi='ssl',
             readonly=True,
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
@@ -1214,6 +1203,8 @@ class product_attributes(osv.osv):
         'in_mml_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Valid for instance', domain=[('state', '=', 'active'), ('level', '!=', 'section')]),
         'mml_restricted_instance': fields.function(tools.misc.get_fake, method=True, type='many2one', relation='msf.instance', string='MML Restricted to instance', domain=[('state', '=', 'active'), ('level', '!=', 'section')]),
         'in_msl_instance': fields.function(_get_valid_msl_instance, method=True, type='many2many', relation='unifield.instance', domain=[('uf_active', '=', True)], string='MSL Valid for instance'),
+
+        'incompatible_oc_default_values': fields.function(tools.misc.get_fake, method=True, type='boolean', string='Incompatible OC default', fnct_search=_search_incompatible_oc_default_values),
     }
 
 
@@ -1582,7 +1573,7 @@ class product_attributes(osv.osv):
 
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
-        for product in self.browse(cr, uid, ids, context=context):
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['gmdn_code'], context=context):
             if product.gmdn_code and not int_pattern.match(product.gmdn_code):
                 return False
         return True
@@ -1719,6 +1710,10 @@ class product_attributes(osv.osv):
             for prd_data in data_obj.browse(cr, uid, prd_data_ids, context=context):
                 update_existing_translations('product.product', res, prd_data.name)
                 update_existing_translations('product.template', product_tmpl_id, prd_data.name)
+            # US-12147: Update existing translations before the ir_model_data for the product has been fully created
+            if not prd_data_ids and context.get('product_sdref'):
+                update_existing_translations('product.product', res, context['product_sdref'])
+                update_existing_translations('product.template', product_tmpl_id, context['product_sdref'])
 
         sptc_obj.track_change(cr, uid, res, _('Product creation'), vals,
                               context=context)
@@ -1968,7 +1963,7 @@ class product_attributes(osv.osv):
                 to_browse = [ids]
             else:
                 to_browse = ids
-            for product in self.browse(cr, uid, to_browse, context=context):
+            for product in self.browse(cr, uid, to_browse, fields_to_fetch=['uom_id'], context=context):
                 category_id = product.uom_id.category_id.id
                 if category_id not in product_uom_categ:
                     product_uom_categ.append(category_id)
@@ -2155,7 +2150,7 @@ class product_attributes(osv.osv):
         ud_prod = []
         ud_nsl_prod = []
         other_prod = []
-        for product in self.browse(cr, uid, ids, context=context):
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['active', 'name', 'default_code', 'international_status', 'standard_ok'], context=context):
             # Raise an error if the product is already inactive
             if not product.active and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
@@ -2219,57 +2214,88 @@ class product_attributes(osv.osv):
             if ignore_draft:
                 states_to_ignore.append('draft')
 
-            has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                      ('picking_id', '!=', False),
-                                                      ('state', 'not in', ['done', 'cancel']),
-                                                      '|', ('picking_id.state', 'not in', states_to_ignore),
-                                                      '&', ('picking_id.shipment_id', '!=', False),
-                                                      ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel']),
-                                                      ], context=context)
+            cr.execute('''
+                select
+                    m.id
+                from
+                    stock_move m
+                    inner join stock_picking p on m.picking_id = p.id
+                    left join shipment ship on ship.id = p.shipment_id
+                where
+                    m.product_id = %s and
+                    m.state not in ('done', 'cancel') and
+                    ( p.state not in %s or p.shipment_id is not null and ship.state not in ('delivered', 'done', 'cancel') )
+            ''', (product.id, tuple(states_to_ignore)))
+            has_move_line = [x[0] for x in cr.fetchall()]
 
             states_to_ignore = ['done', 'cancel']
             if ignore_draft:
                 states_to_ignore.append('draft')
             # Check if the product is in a stock inventory
-            has_inventory_line = inv_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                          ('inventory_id', '!=', False),
-                                                          ('inventory_id.state', 'not in', states_to_ignore)], context=context)
+
+
+            cr.execute('''
+                select
+                    l.id
+                from
+                    stock_inventory_line l, stock_inventory i
+                where
+                    l.inventory_id = i.id and
+                    l.product_id = %s and
+                    i.state not in %s
+                ''', (product.id, tuple(states_to_ignore)))
+            has_inventory_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product is in an initial stock inventory
-            has_initial_inv_line = in_inv_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                               ('inventory_id', '!=', False),
-                                                               ('inventory_id.state', 'not in', states_to_ignore)], context=context)
+            cr.execute('''
+                select
+                    l.id
+                from
+                    initial_stock_inventory_line l, initial_stock_inventory i
+                where
+                    l.inventory_id = i.id and
+                    l.product_id = %s and
+                    i.state not in %s
+                ''', (product.id, tuple(states_to_ignore)))
+            has_initial_inv_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product is in a real kit composition
-            has_kit = kit_obj.search(cr, uid, [('item_product_id', '=', product.id),
-                                               ('item_kit_id.composition_type', '=', 'real'),
-                                               ('item_kit_id.state', '=', 'completed'),
-                                               ], context=context)
+            cr.execute('''
+                select
+                    i.id
+                from
+                    composition_item i, composition_kit k
+                where
+                    i.item_kit_id = k.id and
+                    i.item_product_id = %s and
+                    k.composition_type = 'real' and
+                    k.state = 'completed'
+                ''', (product.id, ))
+            has_kit = [x[0] for x in cr.fetchall()]
+
             has_kit2 = self.pool.get('composition.kit').search(cr, uid, [('composition_product_id', '=', product.id),
                                                                          ('composition_type', '=', 'real'),
                                                                          ('state', '=', 'completed')], context=context)
             has_kit.extend(has_kit2)
 
             # Check if the product is in an invoice
-            has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                            ('invoice_id', '!=', False),
-                                                            ('invoice_id.state', 'not in', ['paid', 'inv_close', 'done', 'proforma', 'proforma2', 'cancel'])], context=context)
-
-            # Check if the invoices where the product is are open and if the header account is reconcilable
-            has_open_inv_reconcilable_acc = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                                         ('invoice_id', '!=', False),
-                                                                         ('invoice_id.state', 'in', ['open']),
-                                                                         ('invoice_id.account_id.reconcile', '=', False)], context=context)
-            # Allow deactivation of products in open invoices but with non-reconcilable header account
-            has_invoice_line = list(set(has_invoice_line) - set(has_open_inv_reconcilable_acc))
+            cr.execute('''
+                select
+                    l.id
+                from
+                    account_invoice_line l, account_invoice i, account_account a
+                where
+                    l.invoice_id = i.id and
+                    i.account_id = a.id and
+                    l.product_id = %s and
+                    i.state not in ('paid', 'inv_close', 'done', 'proforma', 'proforma2', 'cancel') and
+                    ( i.state != 'open' or coalesce(a.reconcile, 'f') != 'f' )
+                ''', (product.id, ))
+            has_invoice_line = [x[0] for x in cr.fetchall()]
 
             # Check if the product has stock in internal locations
-            for loc_id in internal_loc:
-                c = context.copy()
-                c.update({'location': [loc_id]})
-                has_stock = self.read(cr, uid, product.id, ['qty_available'], context=c)['qty_available'] > 0.00
-                if has_stock:
-                    break
+            has_stock = self.pool.get('stock.mission.report.line.location').search_exists(cr, uid,
+                                                                                          [('product_id', '=', product.id), ('location_id', 'in', internal_loc), ('quantity', '>', 0)])
 
             opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line or has_product_list
             if not has_stock and not opened_object:
@@ -3290,27 +3316,27 @@ class product_attributes(osv.osv):
             self.pool.get('product.merged').create(cr, 1, merge_data, context=new_ctx)
 
         # reset mission stock on nsl + old to 0, will be computed on next mission stock update
-        mission_stock_fields_reset = [
-            'stock_qty', 'stock_val',
-            'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
-            'secondary_qty', 'secondary_val',
-            'eprep_qty',
-            'cu_qty', 'cu_val',
-            'cross_qty', 'cross_val',
-            'wh_qty', 'internal_qty',
-            'quarantine_qty', 'input_qty', 'opdd_qty'
-        ]
-        cr.execute('''
-            update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field  for field in mission_stock_fields_reset]) + '''
-                where
-                mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
-                product_id in %(product_ids)s
-        ''', {'zero': 0, 'local_instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),  'product_ids': (kept_id, old_prod_id)}) # not_a_user_entry
-        cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (kept_id, ))
+        instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+        if instance_id:  # US-12845: To prevent issues during first synch when the instance has not been fully created
+            mission_stock_fields_reset = [
+                'stock_qty', 'stock_val',
+                'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
+                'secondary_qty', 'secondary_val',
+                'eprep_qty',
+                'cu_qty', 'cu_val',
+                'cross_qty', 'cross_val',
+                'wh_qty', 'internal_qty',
+                'quarantine_qty', 'input_qty', 'opdd_qty'
+            ]
+            cr.execute('''
+                update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field for field in mission_stock_fields_reset]) + '''
+                    where
+                    mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
+                    product_id in %(product_ids)s
+            ''', {'zero': 0, 'local_instance_id': instance_id,  'product_ids': (kept_id, old_prod_id)})  # not_a_user_entry
+            cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (kept_id, ))
 
         return True
-
-
 
     def merge_product(self, cr, uid, nsl_prod_id, local_id, context=None):
         """
@@ -3402,23 +3428,25 @@ class product_attributes(osv.osv):
             self.pool.get('product.merged').create(cr, 1, {'new_product_id': nsl_prod_id, 'old_product_id': local_id}, context=context)
 
         # reset mission stock on nsl + old to 0, will be computed on next mission stock update
-        mission_stock_fields_reset = [
-            'stock_qty', 'stock_val',
-            'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
-            'secondary_qty', 'secondary_val',
-            'eprep_qty',
-            'cu_qty', 'cu_val',
-            'cross_qty', 'cross_val',
-            'wh_qty', 'internal_qty',
-            'quarantine_qty', 'input_qty', 'opdd_qty'
-        ]
-        cr.execute('''
-            update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field  for field in mission_stock_fields_reset]) + '''
-                where
-                mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
-                product_id in %(product_ids)s
-        ''', {'zero': 0, 'local_instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),  'product_ids': (nsl_prod_id, local_id)}) # not_a_user_entry
-        cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (nsl_prod_id, ))
+        instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+        if instance_id:  # US-12845: To prevent issues during first synch when the instance has not been fully created
+            mission_stock_fields_reset = [
+                'stock_qty', 'stock_val',
+                'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
+                'secondary_qty', 'secondary_val',
+                'eprep_qty',
+                'cu_qty', 'cu_val',
+                'cross_qty', 'cross_val',
+                'wh_qty', 'internal_qty',
+                'quarantine_qty', 'input_qty', 'opdd_qty'
+            ]
+            cr.execute('''
+                update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field for field in mission_stock_fields_reset]) + '''
+                    where
+                    mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
+                    product_id in %(product_ids)s
+            ''', {'zero': 0, 'local_instance_id': instance_id,  'product_ids': (nsl_prod_id, local_id)})  # not_a_user_entry
+            cr.execute("update stock_move set included_in_mission_stock='f' where product_id=%s", (nsl_prod_id, ))
 
         return True
 
@@ -3463,22 +3491,21 @@ class product_attributes(osv.osv):
         return True
 
     def pull_ud(self, cr, uid, ids, context=None):
-        ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+        for x in self.read(cr, uid, ids, ['msfid'] , context=context):
+            wiz_id = self.pool.get('product.pull_single_ud').create(cr, uid, {'msfid': x['msfid'] or False}, context=context)
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'product.pull_single_ud',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+                'height': '190px',
+                'width': '420px',
+            }
 
-        code_updated = []
-        update = False
-        for x in self.read(cr, uid, ids, ['msfid', 'default_code'], context=context):
-            if x['msfid']:
-                try:
-                    ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False)
-                    code_updated.append(x['default_code'])
-                    if not update:
-                        update = x['id']
-                except requests.exceptions.HTTPError as e:
-                    raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
-        if code_updated:
-            self.log(cr, uid, update, _('%s updated from UniData') % ', '.join(code_updated))
-        return True
+
 
     def open_mml_nonconform_report(self, cr, uid, ids, context=None):
         instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
@@ -3834,5 +3861,44 @@ class product_ask_activate_wizard(osv.osv_memory):
 
 product_ask_activate_wizard()
 
+class product_pull_single_ud(osv.osv_memory):
+    _name = 'product.pull_single_ud'
+    rec_name = 'msfid'
+    _columns = {
+        'msfid': fields.integer_null('MSFID'),
+    }
+
+    def pull_product(self, cr, uid, ids, context=None):
+        session_obj = self.pool.get('unidata.sync.log')
+        act_obj = self.pool.get('ir.actions.act_window')
+        for x in self.read(cr, uid, ids, ['msfid'], context=context):
+            if x['msfid']:
+                session_id = session_obj.create(cr, uid, {'manual_single': True, 'server': 'ud', 'start_date': fields.datetime.now(), 'state': 'running', 'sync_type': 'single', 'msfid_min': x['msfid']}, context=context)
+                ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+                try:
+                    trash1, nb_prod, updated, total_nb_created, total_nb_errors = ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False, session_id=session_id)
+                except requests.exceptions.HTTPError as e:
+                    raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
+                except Exception:
+                    raise
+            else:
+                raise osv.except_osv(_('Error'), _('Error: msfid is required'))
+
+        session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'number_products_updated': updated, 'number_products_created': total_nb_created, 'number_products_errors': total_nb_errors}, context=context)
+
+        p_ids = self.pool.get('product.product').search(cr, uid, [('msfid', '=', x['msfid'])], context=context)
+        if p_ids:
+            if len(p_ids) == 1:
+                view = act_obj.open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['form', 'tree'], context=context)
+                view['res_id'] = p_ids[0]
+            else:
+                view = act_obj.open_view_from_xmlid(cr, uid, 'product.product_normal_action', context=context)
+                view['domain'] = [('id','in', p_ids)]
+        else:
+            view = act_obj.open_view_from_xmlid(cr, uid, 'product_attributes.unidata_sync_log_action', ['form', 'tree'], new_tab=True, context=context)
+            view['res_id'] = session_id
+        return view
+
+product_pull_single_ud()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

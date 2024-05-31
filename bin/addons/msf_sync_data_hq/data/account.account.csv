@@ -49,7 +49,7 @@ account_141,View,FALSE,1-Nov-13,141,,,View,Monetary,,None,FALSE,14,FALSE,FALSE,F
 account_14100,Cash,FALSE,1-Nov-13,14100,,,Regular,Bank transfer with HQ ,,None,TRUE,141,FALSE,TRUE,TRUE,TRUE
 account_14110,Cash,FALSE,1-Nov-13,14110,,,Regular,Cash transfer with HQ,,None,TRUE,141,FALSE,TRUE,FALSE,TRUE
 account_14120,Cash,FALSE,1-Nov-13,14120,,,Regular,Internal transfer same currency,,Internal Transfer (same currency),TRUE,141,FALSE,TRUE,TRUE,TRUE
-account_14130,Cash,FALSE,1-Nov-13,14130,,,Regular,Internal transfer with currency exchange,,Internal Transfer,TRUE,141,FALSE,TRUE,TRUE,TRUE
+account_14130,Cash,FALSE,1-Nov-13,14130,,,Regular,Internal transfer with currency exchange,,Internal Transfer (different currencies),TRUE,141,FALSE,TRUE,TRUE,TRUE
 account_14140,Cash,FALSE,1-Nov-13,14140,,,Regular,Transfer to another financial mission: Same section,,None,TRUE,141,FALSE,TRUE,FALSE,TRUE
 account_14150,Cash,FALSE,1-Nov-13,14150,,,Regular,Transfer to another financial mission: Other section,,None,TRUE,141,FALSE,TRUE,FALSE,TRUE
 account_14160,Cash,FALSE,1-Nov-13,14160,,,Regular,Others,,None,TRUE,141,FALSE,TRUE,FALSE,TRUE

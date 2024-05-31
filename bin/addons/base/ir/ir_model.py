@@ -861,7 +861,11 @@ class ir_model_data(osv.osv):
                         and not context.get('is_inkind_donation')
                     if is_debit_note and values.get('invoice_line'):
                         raise osv.except_osv(_('Error'), _('Creating Debit Note lines by file import is not allowed.'))
+                if model == 'product.product' and xml_id:
+                    context['product_sdref'] = xml_id
                 res_id = model_obj.create(cr, uid, values, context=context)
+                if context.get('product_sdref'):
+                    context.pop('product_sdref')
                 # US-180: Only create ir model data if res_id is valid
                 if xml_id and res_id:
                     if context.get('sync_update_execution') and model == 'res.partner' and module == 'sd':

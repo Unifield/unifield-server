@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from lxml import etree
-from datetime import datetime
 from tools.translate import _
 from osv import osv
 import csv
 from . import SPECIAL_CHAR
 import fileinput
 import re
+from dateutil import parser
 
 # example to read a Excel XML file in consumption_calculation/wizard/wizard_import_rac.py
 class SpreadsheetTools():
@@ -45,7 +45,7 @@ class SpreadsheetCell(SpreadsheetTools):
                     self.type = 'bool'
                 elif dtype == 'DateTime' and self.data:
                     try:
-                        self.data = datetime.fromisoformat(self.data)
+                        self.data = parser.isoparse(self.data)
                         self.type = 'datetime'
                     except Exception as e:
                         self.data = str(e)
