@@ -1271,6 +1271,21 @@ class users(osv.osv):
             'view_id': [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'useability_dashboard_and_menu', 'res_users_my_signature_form')[1]],
             'domain': [('id', '=', uid)],
         }
+
+    def check_user_has_group(self, cr, uid, group_name, context=None):
+        '''
+        Check if the user was given access to a specific Access Group
+        '''
+        cr.execute("""
+            SELECT u.id FROM res_users u
+                LEFT JOIN res_groups_users_rel rel ON rel.uid = u.id
+                LEFT JOIN res_groups g ON g.id = rel.gid
+            WHERE u.id = %s AND g.name = %s
+        """, (uid, group_name))
+
+        return cr.fetchone() and True or False
+
+
 users()
 
 class wizard_add_users_synchronized(osv.osv_memory):

@@ -17,6 +17,7 @@
             <button name="disable_offline" type="object" string="Sign On-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', False), ('signature_state', '!=', False)]}" icon="gtk-connect" ignore_access_error="1" colspan="6" />
         </group>
         <newline />
+        <field name="allowed_to_be_signed" invisible="1" />
         <field name="signature_line_ids" readonly="1" nolabel="1" colspan="4" on_change="sig_line_change()" mode="tree">
             <tree string="Signatures">
                 <field name="name" />
@@ -27,7 +28,7 @@
                 <field name="date" />
                 <field name="format_value" />
                 <field name="ready_to_sign" invisible="True" />
-                <button name="open_sign_wizard" string="Sign" icon="gtk-paste-v" attrs="{'invisible': ['|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('ready_to_sign', '=', False), ('signed_off_line', '=', True)]}" type="object" />
+                <button name="open_sign_wizard" string="Sign" icon="gtk-paste-v" attrs="{'invisible': ['|', '|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('ready_to_sign', '=', False), ('signed_off_line', '=', True), ('allowed_to_be_signed', '=', False)]}" type="object" />
                 <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('signed', '=', False), ('signed_off_line', '=', True)]}" type="object" confirm="Do you want to reset this signature ?"/>
                 <button name="super_action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', '|', ('user_id', '=', uid), ('signature_is_closed', '=', True), ('signed', '=', False), ('signed_off_line', '=', True)]}" type="object" confirm="Do you want to reset this signature ?"/>
                 <field name="backup" />

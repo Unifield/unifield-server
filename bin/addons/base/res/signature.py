@@ -139,13 +139,30 @@ class signature(osv.osv):
     _description = 'Signature options on documents'
     _record_source = True
 
-
     def _get_signature_available(self, cr, uid, ids, *a, **b):
         ret = {}
         available = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature')
         for _id in ids:
             ret[_id] = available
         return ret
+
+    def _get_allowed_to_be_signed(self, cr, uid, ids, *a, **b):
+        '''
+        Check if signature is permitted on the document.
+        For FO/IR/PO, only draft and validated documents. No restrictions on others
+        '''
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        for sign in self.read(cr, uid, ids, ['signature_res_model', 'signature_res_id']):
+            allow = True
+            model_obj = self.pool.get(sign['signature_res_model'])
+            if sign['signature_res_model'] in ('sale.order', 'purchase.order') and sign['signature_res_id'] and \
+                    model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] not in ('draft', 'draft_p', 'validated', 'validated_p'):
+                allow = False
+            res[sign['id']] = allow
+        return res
 
     _columns = {
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
@@ -157,6 +174,7 @@ class signature(osv.osv):
         'signature_available': fields.function(_get_signature_available, type='boolean', string='Signature Available', method=1),
         'signature_closed_date': fields.datetime('Date of signature closure', readonly=1),
         'signature_closed_user': fields.many2one('res.users', 'Closed by', readonly=1),
+        'allowed_to_be_signed': fields.function(_get_allowed_to_be_signed, type='boolean', string='Allowed to be signed', method=1),
     }
 
     _sql_constraints = [
@@ -506,25 +524,36 @@ class signature_line(osv.osv):
     _sql_constraints = [
         ('unique_signature_name_key', 'unique (signature_id,name_key)', 'Unique signature_id,name_key')
     ]
-    def _check_sign_unsign(self, cr, uid, ids, check_has_sign=False, context=None):
+
+    def _check_sign_unsign(self, cr, uid, ids, check_has_sign=False, check_super_unsign=False, context=None):
         # to export the term used in report
         _('As back up of ')
 
         assert len(ids) < 2, '_check_sign_unsign: only 1 id is allowed'
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
 
+        user_obj = self.pool.get('res.users')
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'user_id', 'ready_to_sign'], context=context)
-        if real_uid != sign_line.user_id.id:
+        if not check_super_unsign and real_uid != sign_line.user_id.id:
             raise osv.except_osv(_('Warning'), _("You are not allowed to sign on this line - please contact the document creator"))
 
         if sign_line.signature_id.signature_is_closed:
             raise osv.except_osv(_('Warning'), _("Signature Closed."))
 
+        if check_super_unsign:
+            group_name = ''
+            if sign_line.signature_id.signature_res_model in ['account.invoice', 'account.bank.statement']:
+                group_name = 'Sign_document_creator_finance'
+            elif sign_line.signature_id.signature_res_model in ['purchase.order', 'stock.picking', 'sale.order']:
+                group_name = 'Sign_document_creator_supply'
+            if not group_name or (group_name and not user_obj.check_user_has_group(cr, uid, group_name)):
+                raise osv.except_osv(_('Warning'), _("You are not allowed to remove this signature"))
+
         if check_has_sign:
             if not sign_line.ready_to_sign:
                 raise osv.except_osv(_('Warning'), _("You cannot sign before other role(s)"))
 
-            user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['has_valid_signature', 'esignature_id'], context=context)
+            user_d = user_obj.browse(cr, uid, real_uid, fields_to_fetch=['has_valid_signature', 'esignature_id'], context=context)
             if not user_d.has_valid_signature:
                 raise osv.except_osv(_('Warning'), _("No signature defined in user's profile"))
             return user_d.esignature_id
@@ -599,13 +628,15 @@ class signature_line(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        return self.action_unsign(cr, uid, ids, context=context, check_ur=False)
+        return self.action_unsign(cr, uid, ids, context=context, check_ur=True, check_super_unsign=True)
 
-    def action_unsign(self, cr, uid, ids, context=None, check_ur=True):
-        # check_ur: used when sign off line by sign creator
+    def action_unsign(self, cr, uid, ids, context=None, check_ur=True, check_super_unsign=False):
+        '''
+        check_ur: used when sign offline by sign creator
+        '''
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name', 'user_name', 'value', 'unit'], context=context)
         if check_ur:
-            sign_line._check_sign_unsign(context=context)
+            sign_line._check_sign_unsign(check_super_unsign=check_super_unsign, context=context)
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         value = sign_line.value
