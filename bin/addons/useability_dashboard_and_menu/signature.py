@@ -36,7 +36,12 @@ class signature_follow_up(osv.osv):
                     min(case when l.signed then l.date else NULL end) as signature_date,
                     coalesce(po.state, so.state, invoice.state, st.state, pick.state) as doc_state,
                     s.signature_is_closed as signature_is_closed,
-                    coalesce(min(priol.prio) < min(l.prio), 'f') as wait_prio
+                    coalesce(min(priol.prio) < min(l.prio), 'f') as wait_prio,
+                    case
+                        when s.signature_res_model in ('sale.order', 'purchase.order') and 
+                            (so.state not in ('draft', 'draft_p', 'validated', 'validated_p') 
+                            or po.state not in ('draft', 'draft_p', 'validated', 'validated_p')) then False
+                        else True end as allowed_to_be_signed
                 from
                     signature s
                 inner join signature_line l on l.signature_id = s.id
@@ -83,6 +88,7 @@ class signature_follow_up(osv.osv):
         'roles': fields.char('Roles', size=256, readonly=1),
         'signature_is_closed': fields.boolean('Signature Closed', readonly=1),
         'wait_prio': fields.boolean('Has signature before this one.'),
+        'allowed_to_be_signed': fields.boolean('Allowed to be signed', readonly=1),
     }
 
     def open_doc(self, cr, uid, ids, context=None):
