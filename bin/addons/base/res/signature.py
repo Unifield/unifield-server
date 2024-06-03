@@ -552,6 +552,8 @@ class signature_line(osv.osv):
         if check_has_sign:
             if not sign_line.ready_to_sign:
                 raise osv.except_osv(_('Warning'), _("You cannot sign before other role(s)"))
+            if not sign_line.signature_id.allowed_to_be_signed:
+                raise osv.except_osv(_('Warning'), _("You are not allowed to sign this document in this state, please refresh the page"))
 
             user_d = user_obj.browse(cr, uid, real_uid, fields_to_fetch=['has_valid_signature', 'esignature_id'], context=context)
             if not user_d.has_valid_signature:
