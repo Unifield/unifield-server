@@ -1360,7 +1360,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         return res
 
     _columns = {
-        'simu_id': fields.many2one('wizard.import.in.simulation.screen', string='Simu ID', required=True, ondelete='cascade'),
+        'simu_id': fields.many2one('wizard.import.in.simulation.screen', string='Simu ID', required=True, select=True, ondelete='cascade'),
         # Values from move line
         'move_id': fields.many2one('stock.move', string='Move', readonly=True),
         'initial_move_id': fields.many2one('stock.move', string='Initial Move', readonly=True),

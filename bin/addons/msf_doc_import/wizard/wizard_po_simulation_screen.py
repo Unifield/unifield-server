@@ -1381,7 +1381,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                       readonly=True),
         'simu_id': fields.many2one('wizard.import.po.simulation.screen',
                                    string='Simulation screen',
-                                   readonly=True, ondelete='cascade'),
+                                   readonly=True, select=True, ondelete='cascade'),
         'in_product_id': fields.function(_get_line_info, method=True, multi='line',
                                          type='many2one', relation='product.product',
                                          string='Product', readonly=True, store=True),
