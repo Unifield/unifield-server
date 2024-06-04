@@ -2856,6 +2856,9 @@ class account_bank_statement_line(osv.osv):
         """
         # We browse all ids
         for st_line in self.browse(cr, uid, ids):
+            if len(ids) > 1 and st_line.state != 'draft':
+                raise osv.except_osv(_('Error'),
+                                     _("You can not delete in MASS non draft register lines!\nTemp posted lines must be deleted one by one and hard posted lines cannot be deleted."))
             # if trying to delete a down payment, check that amounts IN won't be higher than remaining amounts OUT on the PO
             if st_line.account_id and st_line.account_id.type_for_register == 'down_payment' and st_line.down_payment_id:
                 args = [('down_payment_id', '=', st_line.down_payment_id.id)]
