@@ -1450,6 +1450,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'parent_line_id': fields.many2one('wizard.import.po.simulation.screen.line',
                                           string='Parent line id',
                                           help='Use to split the good PO line',
+                                          select=True,
                                           readonly=True),
         'chg_text': fields.function(_get_line_info, method=True, multi='line', type='char', size=216, string='CHG',
                                     readonly=True, store=True),
