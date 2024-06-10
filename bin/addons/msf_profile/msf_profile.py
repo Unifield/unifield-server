@@ -65,12 +65,23 @@ class patch_scripts(osv.osv):
         po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
         rfq_ids = po_obj.search(cr, uid, [('rfq_ok', '=', 't')], context={})
+        rfq_state_moved_exists = cr.column_exists('purchase_order', 'rfq_state_moved0')
         for rfq in po_obj.browse(cr, uid, rfq_ids, fields_to_fetch=['rfq_state', 'empty_po_cancelled', 'name'], context={}):
             rfq_state_seq = {'draft': 10, 'sent': 20, 'updated': 30, 'done': 40}
+
+            # US-12315: Old value for the RfQ state
+            og_state = False
+            if rfq_state_moved_exists:
+                cr.execute("""SELECT rfq_state_moved0 FROM purchase_order WHERE id = %s""", (rfq.id,))
+                og_state = cr.fetchone()[0]
 
             state = 'draft'
             if rfq.empty_po_cancelled:
                 state = 'cancel'
+            elif og_state == 'cancel':  # US-12315: In case the RfQ was cancelled but not the lines
+                state = 'cancel'
+                cr.execute("""UPDATE purchase_order_line SET rfq_line_state = 'cancel' 
+                    WHERE order_id = %s AND rfq_line_state NOT IN ('cancel', 'cancel_r')""", (rfq.id,))
             else:
                 rfql_states = set()
                 cr.execute('select distinct(rfq_line_state) from purchase_order_line where order_id = %s', (rfq.id,))
