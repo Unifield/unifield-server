@@ -82,12 +82,14 @@ class patch_scripts(osv.osv):
                 picks_to_close.append(x[0])
 
         # Close the Shipments
-        cr.execute("""UPDATE shipment SET state = 'done' WHERE id IN %s""", (tuple(ships_to_close),))
-        self.log_info(cr, uid, "US-12934: %s Shipments have been closed" % (len(ships_to_close),))
+        if ships_to_close:
+            cr.execute("""UPDATE shipment SET state = 'done' WHERE id IN %s""", (tuple(ships_to_close),))
+            self.log_info(cr, uid, "US-12934: %s Shipments have been closed" % (len(ships_to_close),))
         # Close the Picks and their non-closed/cancelled lines
-        cr.execute("""UPDATE stock_move SET state = 'done' WHERE state NOT IN ('done', 'cancel') AND picking_id IN %s""", (tuple(picks_to_close),))
-        cr.execute("""UPDATE stock_picking SET state = 'done', line_state = NULL WHERE id IN %s""", (tuple(picks_to_close),))
-        self.log_info(cr, uid, "US-12934: %s Picks have been closed" % (len(picks_to_close),))
+        if picks_to_close:
+            cr.execute("""UPDATE stock_move SET state = 'done' WHERE state NOT IN ('done', 'cancel') AND picking_id IN %s""", (tuple(picks_to_close),))
+            cr.execute("""UPDATE stock_picking SET state = 'done', line_state = NULL WHERE id IN %s""", (tuple(picks_to_close),))
+            self.log_info(cr, uid, "US-12934: %s Picks have been closed" % (len(picks_to_close),))
 
         return True
 
