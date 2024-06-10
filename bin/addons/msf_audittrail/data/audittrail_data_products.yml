@@ -31,7 +31,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.template')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['state', 'type', 'name', 'subtype', 'categ_id', 'uom_id', 'volume', 'weight', 'property_stock_account_input', 'property_stock_account_output', 'property_account_income', 'property_account_expense', 'nomen_manda_3']
+        fields = ['state', 'type', 'name', 'subtype', 'categ_id', 'uom_id', 'volume', 'weight', 'property_stock_account_input', 'property_stock_account_output', 'property_account_income', 'property_account_expense', 'nomen_manda_3', 'procure_method']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.template'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
