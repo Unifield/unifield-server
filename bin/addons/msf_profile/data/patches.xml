@@ -1066,5 +1066,9 @@
             <field name="method">us_12598_ocb_group_user_manager</field>
         </record>
 
+        <record id="us_12974_sync_server_instances_level" model="patch.scripts">
+            <field name="method">us_12974_sync_server_instances_level</field>
+        </record>
+
     </data>
 </openerp>

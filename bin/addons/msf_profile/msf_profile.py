@@ -57,6 +57,14 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF34.0
+    def us_12974_sync_server_instances_level(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.server.entity')
+        if entity_obj:
+            hq_ids = entity_obj.search(cr, uid, [('parent_id', '=', False)])
+            if hq_ids:
+                entity_obj._update_level(cr, uid, hq_ids, 'section')
+        return True
     # UF33.0
     def us_12598_ocb_group_user_manager(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')

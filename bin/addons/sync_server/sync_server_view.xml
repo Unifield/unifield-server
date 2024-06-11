@@ -37,6 +37,7 @@
                     <field name="name"/>
                     <field name="identifier"/>
                     <field name="parent_id"/>
+                    <field name="instance_level"/>
                     <field name="activity" allow_sort="1"/>
                     <field name="last_dateactivity" allow_sort="1"/>
                     <field name="date_success_sync" />
@@ -68,7 +69,7 @@
                             <field name="identifier"/>
                             <field name="hardware_id" />
                             <field name="email"/>
-                            <field name="parent_id" />
+                            <field name="parent_id" domain="[('instance_level', 'in', ['coordo', 'section'])]"/>
                             <field name="user_id"/>
                         </group>
                         <group colspan="2" col="2">
@@ -110,11 +111,14 @@
                     <newline />
                     <field name="parent_left" />
                     <field name="parent_right" />
+                    <field name="instance_level" />
                     <newline />
 
                     <group string="Group by..." expand="1" colspan="1">
                         <filter string='OC' icon="terp-mrp" domain="[]" context="{'group_by' : 'oc'}" />
                         <filter string='State' icon="terp-folder-violet" domain="[]" context="{'group_by' : 'state'}" />
+                        <filter string='UF Version' icon="terp-folder-yellow" domain="[]" context="{'group_by' : 'version_id'}" />
+                        <filter string='Instance Level' icon="terp-folder-blue" domain="[]" context="{'group_by' : 'instance_level'}" />
                     </group>
                 </search>
             </field>
