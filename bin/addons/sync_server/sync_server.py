@@ -389,10 +389,10 @@ class entity(osv.osv):
                 level = 'section'
             else:
                 p = self.browse(cr, uid, vals['parent_id'], fields_to_fetch=['parent_id'], context=context)
-                if p.parent_id.parent_id:
-                    level = 'project'
-                else:
+                if not p.parent_id:
                     level = 'coordo'
+                else:
+                    level = 'project'
             self._update_level(cr, uid, ids, level)
 
         return True
