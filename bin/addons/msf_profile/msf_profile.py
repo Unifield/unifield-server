@@ -73,12 +73,12 @@ class patch_scripts(osv.osv):
             og_state = False
             if rfq_state_moved_exists:
                 cr.execute("""SELECT rfq_state_moved0 FROM purchase_order WHERE id = %s""", (rfq.id,))
-                og_state = cr.fetchone()[0]
+                og_state = cr.fetchone()
 
             state = 'draft'
             if rfq.empty_po_cancelled:
                 state = 'cancel'
-            elif og_state == 'cancel':  # US-12315: In case the RfQ was cancelled but not the lines
+            elif og_state and og_state[0] == 'cancel':  # US-12315: In case the RfQ was cancelled but not the lines
                 state = 'cancel'
                 cr.execute("""UPDATE purchase_order_line SET rfq_line_state = 'cancel' 
                     WHERE order_id = %s AND rfq_line_state NOT IN ('cancel', 'cancel_r')""", (rfq.id,))
