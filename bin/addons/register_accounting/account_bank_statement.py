@@ -2855,8 +2855,11 @@ class account_bank_statement_line(osv.osv):
         Permit to delete some account_bank_statement_line. But do some treatments on temp posting lines and do nothing for hard posting lines.
         """
         # We browse all ids
+        if context is None:
+            context = {}
         for st_line in self.browse(cr, uid, ids):
-            if len(ids) > 1 and st_line.state != 'draft':
+            # prevent in mass only from reg line view
+            if len(ids) > 1 and (context.get('type_posting') or context.get('from_regline_view')) and st_line.state != 'draft':
                 raise osv.except_osv(_('Error'),
                                      _("You can not delete in MASS non draft register lines!\nTemp posted lines must be deleted one by one and hard posted lines cannot be deleted."))
             # if trying to delete a down payment, check that amounts IN won't be higher than remaining amounts OUT on the PO
