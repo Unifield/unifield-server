@@ -965,6 +965,12 @@ MochiKit.Base.update(ListView.prototype, {
         args['_terp_ids'] = $terp_ids.val()
         args['_terp_model'] = this.model;
         args['_terp_id'] = ids;
+	if (this.model == 'account.bank.statement.line') {
+		ctx_field = openobject.dom.get('_terp_context')
+		if (ctx_field) {
+			args['_terp_context'] = ctx_field.value;
+		}
+	}
         var req = openobject.http.postJSON('/openerp/listgrid/remove', args);
 
         req.addCallback(function(obj) {
