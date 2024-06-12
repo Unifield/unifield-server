@@ -337,7 +337,7 @@
                         <field name="is_intermission" invisible="1"/>
                         <field name="fiscal_position" invisible="1"/>
                         <!-- US-370: use the change currency button -->
-                        <field name="currency_id" width="50"
+                        <field name="currency_id" width="50" domain="[('active', '=', True)]"
                                attrs="{'readonly': ['|',
                                                     ('state', '!=', 'draft'),
                                                     '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
