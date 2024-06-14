@@ -967,6 +967,9 @@ class users(osv.osv):
         return self.name_get(cr, user, ids)
 
     def copy(self, cr, uid, id, default=None, context=None):
+        if id == 1:
+            raise osv.except_osv(_('Warning'), _('admin user cannot be duplicated.'))
+
         user2copy = self.read(cr, uid, [id], ['login','name'])[0]
         if default is None:
             default = {}
