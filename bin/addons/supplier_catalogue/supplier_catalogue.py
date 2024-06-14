@@ -354,8 +354,18 @@ class supplier_catalogue(osv.osv):
         line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)],
                                    order='NO_ORDER', context=context)
 
-        if not all(x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)):
+        if not all(x.state == 'draft' for x in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context)):
             raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already confirmed. Please reload the page to update the status of this catalogue'))
+
+        # US-12606: Check the products exist in another valid catalogue
+        catalogues = []
+        cr.execute('''SELECT catalogue_id, DISTINCT(product_id) FROM supplier_catalogue_line WHERE catalogue_id IN %s
+            GROUP BY catalogue_id''', (tuple(ids),))
+        for cat in catalogues:
+            invalid_prods = self.check_cat_prods_valid(cr, uid, cat[0], cat[1], context=context)
+            if invalid_prods:
+                raise osv.except_osv(_('Warning!'), _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
+                                     % (', '.join(invalid_prods),))
 
         # Update catalogues
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
@@ -936,6 +946,30 @@ class supplier_catalogue(osv.osv):
                 res['period_to'] = False
         return res
 
+    def check_cat_prods_valid(self, cr, uid, cat_id, product_ids, context=None):
+        '''
+        Check if there is already a confirmed and active catalogue, having the same supplier, the same currency and
+        with overlapping dates as a given catalogue for a list of products
+        '''
+        if not cat_id or not product_ids:
+            raise osv.except_osv(_('Error'), _('Please give a catalogue ID and a list of product IDs to this method'))
+        if not context:
+            context = {}
+
+        products = []
+        ftf = ['period_from', 'period_to', 'partner_id', 'currency_id']
+        cat = self.browse(cr, uid, cat_id, fields_to_fetch=ftf, context=context)
+        cr.execute("""SELECT DISTINCT(p.name) FROM supplier_catalogue_line cl 
+                LEFT JOIN supplier_catalogue c ON cl.catalogue_id = c.id
+                LEFT JOIN product_product p ON cl.product_id = p.id
+            WHERE c2.state = 'confirmed' AND (c.period_to >= %s OR c.period_from <= %s) 
+                AND c.partner_id = %s AND c.active = 't' AND c.id != %d AND c.currency_id = %d AND cl.product_id IN %s
+        """, (cat.period_from, cat.period_to, cat.partner_id.id, cat.id, cat.currency_id.id, tuple(product_ids)))
+        for x in cr.fetchall():
+            products.append(x[0])
+        return products
+
+
 supplier_catalogue()
 
 
@@ -1341,6 +1375,7 @@ class supplier_catalogue_line(osv.osv):
             res = super(supplier_catalogue_line, self).read(cr, uid, ids, fields, context=context)
 
         return res
+
 
 supplier_catalogue_line()
 
