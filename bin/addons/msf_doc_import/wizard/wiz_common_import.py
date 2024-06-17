@@ -690,7 +690,10 @@ class supplier_catalogue_line(osv.osv):
                       'line_uom_id': p_data['uom_id'][0],
                       'min_qty': 1.00}
 
-            values.update(self.product_change(cr, uid, False, p_data['id'], 1.00, 1.00).get('value', {}))
+            on_change_vals = self.product_change(cr, uid, False, p_data['id'], 1.00, 1.00, parent_id)
+            if on_change_vals.get('warning') and on_change_vals['warning'].get('message'):
+                raise osv.except_osv(_('Warning!'), on_change_vals['warning']['message'])
+            values.update(on_change_vals.get('value', {}))
 
             # Set the quantity to 0.00
             values.update({'min_qty': p_data['import_product_qty']})

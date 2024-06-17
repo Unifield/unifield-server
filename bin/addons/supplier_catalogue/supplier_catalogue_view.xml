@@ -165,7 +165,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Supplier catalogue line">
-                    <field name="product_id" on_change="product_change(product_id)" />
+                    <field name="product_id" on_change="product_change(product_id, min_qty, min_order_qty, catalogue_id)" />
                     <field name="product_code" />
                     <field name="line_uom_id" />
                     <field name="min_qty" />
@@ -173,6 +173,7 @@
                     <field name="rounding" on_change="change_soq_quantity(rounding, line_uom_id)"  />
                     <field name="min_order_qty" />
                     <field name="comment" />
+                    <field name="catalogue_id" invisible="1" />
                 </form>
             </field>
         </record>
@@ -186,7 +187,7 @@
             <field name="arch" type="xml">
                 <tree string="Supplier catalogue lines" min_rows="20" editable="top" colors="red: to_correct_ok == True">
                     <field name="line_number" readonly="1"/>
-                    <field name="product_id" on_change="product_change(product_id, min_qty, min_order_qty)" />
+                    <field name="product_id" on_change="product_change(product_id, min_qty, min_order_qty, catalogue_id)" />
                     <field name="product_code" />
                     <field name="line_uom_id" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" 
                            domain="[('uom_by_product', '=', product_id)]" />
@@ -198,6 +199,7 @@
                     <field name="to_correct_ok" invisible="1"/>
                     <field name="mml_status" />
                     <field name="msl_status" />
+                    <field name="catalogue_id" invisible="1" />
                 </tree>
             </field>
         </record>
@@ -212,7 +214,7 @@
                 <tree string="Supplier catalogue lines" min_rows="20" 
                     editable="top" noteditable="1" notselectable="0"
                     hide_new_button="1" hide_delete_button="1">
-                    <field name="product_id" on_change="product_change(product_id)" />
+                    <field name="product_id" on_change="product_change(product_id, min_qty, min_order_qty, catalogue_id)" />
                     <field name="product_code" />
                     <field name="line_uom_id" />
                     <field name="min_qty" />
@@ -222,6 +224,7 @@
                     <field name="comment" />
                     <field name="mml_status" />
                     <field name="msl_status" />
+                    <field name="catalogue_id" invisible="1" />
                 </tree>
             </field>
         </record>
