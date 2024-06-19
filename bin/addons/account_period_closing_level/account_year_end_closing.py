@@ -199,7 +199,7 @@ class account_year_end_closing(osv.osv):
                 if not_closed:
                     if len(not_closed) > 10:
                         not_closed = not_closed[0:10] + ['+%d' % (len(not_closed)-10)]
-                    msg = _('Periods are not mission-closed on the following projects:\n%s') % (
+                    msg = _('Periods are not at least mission-closed on the following projects:\n%s') % (
                         ', '.join(not_closed), )
                     raise osv.except_osv(_('Warning'), msg)
 
