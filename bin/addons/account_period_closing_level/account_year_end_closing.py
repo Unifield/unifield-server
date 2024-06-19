@@ -177,7 +177,7 @@ class account_year_end_closing(osv.osv):
 
             if level == 'coordo':
                 nb_local_period_ids = self.pool.get('account.period').search(cr, uid,
-                                                                             [('fiscalyear_id', '=', fy_rec.id), ('number', 'not in', [0, 16])], context=context)
+                                                                             [('fiscalyear_id', '=', fy_rec.id), ('number', '!=', 0), ('number', '!=', 16)], context=context)
                 cr.execute('''
                     select
                         m.code
