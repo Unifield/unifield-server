@@ -48,16 +48,13 @@ class supplier_catalogue(osv.osv):
     _order = 'period_from, period_to'
 
     def copy(self, cr, uid, catalogue_id, default=None, context=None):
-        '''
-        Disallow the possibility to duplicate a catalogue.
-        '''
-        raise osv.except_osv(_('Error'), _('You cannot duplicate a catalogue because you musn\'t have ' \
-                                           'overlapped catalogue !'))
-
-        default = default or {}
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
         default.update({'state': 'draft'})
 
-        return False
+        return super(supplier_catalogue, self).copy(cr, uid, catalogue_id, default, context=context)
 
     def open_new_catalogue_form(self, cr, uid, ids, context=None):
         if context is None:
@@ -87,99 +84,6 @@ class supplier_catalogue(osv.osv):
             'domain': [('partner_id', '=', ids[0])],
         }
 
-    def _update_other_catalogue(self, cr, uid, cat_id, period_from, currency_id, partner_id, period_to=False, context=None):
-        '''
-        Check if other catalogues with the same partner/currency exist and are defined in the period of the
-        new catalogue. If yes, update the period_to of the old catalogue with the period_from - 1 day of
-        the new catalogue.
-        '''
-        if not context:
-            context = {}
-
-        if not context.get('cat_ids', False):
-            context.update({'cat_ids': []})
-
-        if not period_from:
-            return
-
-        # Add catalogues already written to avoid
-        # loops in the same product
-        if cat_id:
-            context['cat_ids'].append(cat_id)
-
-        # Search other catalogues for the same partner/currency
-        # which are overrided by the new catalogue
-        equal_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '=', period_from),
-                                          ('currency_id', '=', currency_id),
-                                          ('partner_id', '=', partner_id)],
-                                order='period_from asc',
-                                limit=1,
-                                context=context)
-
-        # If overrided catalogues exist, display an error message
-        if equal_ids:
-            cat = self.browse(cr, uid, cat_id, context=context)
-            if cat and not cat.is_esc:
-                # [utp-746] no message for an esc supplier catalogue
-                # (no period for an esc supplier catalogue)
-                over_cat = self.browse(cr, uid, equal_ids[0], context=context)
-                over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
-                over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
-                raise osv.except_osv(_('Error'), _('This catalogue has the same \'From\' date than the following catalogue : %s (\'From\' : %s - \'To\' : %s) - ' \
-                                                   'Please change the \'From\' date of this new catalogue or delete the other catalogue.') % (over_cat.name, over_cat_from, over_cat_to))
-
-            elif cat and cat.is_esc:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Warning! There is already another active catalogue for this Supplier! This could have implications on the synching of catalogue to instances below, please check.'),
-                )
-
-        if period_to:
-            to_ids = self.search(cr, uid,
-                                 [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from),
-                                  ('period_from', '<', period_to),
-                                  ('currency_id', '=', currency_id),
-                                  ('partner_id', '=', partner_id)],
-                                 order='period_from asc',
-                                 limit=1,
-                                 context=context)
-        else:
-            to_ids = self.search(cr, uid,
-                                 [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from),
-                                  ('currency_id', '=', currency_id),
-                                  ('partner_id', '=', partner_id)],
-                                 order='period_from asc',
-                                 limit=1,
-                                 context=context)
-
-        # If overrided catalogues exist, display an error message
-        if to_ids:
-            over_cat = self.browse(cr, uid, to_ids[0], context=context)
-            over_cat_from = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_from, context=context)
-            over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
-            raise osv.except_osv(_('Error'), _('The \'To\' date of this catalogue is older than the \'From\' date of another catalogue - ' \
-                                               'Please change the \'To\' date of this catalogue or the \'From\' date of the following ' \
-                                               'catalogue : %s (\'From\' : %s - \'To\' : %s)') % (over_cat.name, over_cat_from, over_cat_to))
-
-        # Search all catalogues with the same partner/currency which are done
-        # after the beginning of the new catalogue
-        from_update_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('currency_id', '=', currency_id),
-                                                ('partner_id', '=', partner_id),
-                                                ('period_from', '<=', period_from),
-                                                '|',
-                                                ('period_to', '>=', period_from),
-                                                ('period_to', '=', False)],
-                                      order='NO_ORDER', context=context)
-
-        # Update these catalogues with an end date which is the start date - 1 day of
-        # the new catalogue
-        if isinstance(period_from, date):
-            period_from = period_from.strftime('%Y-%m-%d')
-        period_from = datetime.strptime(period_from, '%Y-%m-%d') + relativedelta(days=-1)
-        self.write(cr, uid, from_update_ids, {'period_to': period_from.strftime('%Y-%m-%d')}, context=context)
-
-        return True
-
     def create(self, cr, uid, vals, context=None):
         '''
         Check if the new values override a catalogue
@@ -187,13 +91,6 @@ class supplier_catalogue(osv.osv):
         if context is None:
             context = {}
 
-        # Check if other catalogues need to be updated because they finished
-        # after the starting date of the new catalogue.
-        if vals.get('active', True):
-            self._update_other_catalogue(cr, uid, None, vals.get('period_from', False),
-                                         vals.get('currency_id', False),
-                                         vals.get('partner_id', context.get('partner_id', False)),
-                                         vals.get('period_to', False), context=context)
         res = super(supplier_catalogue, self).create(cr, uid, vals, context=context)
 
         # UTP-746: now check if the partner is inactive, then set this catalogue also to become inactive
@@ -250,14 +147,6 @@ class supplier_catalogue(osv.osv):
 
         to_be_confirmed = False
         for catalogue in self.browse(cr, uid, ids, context=context):
-
-            # Check if other catalogues need to be updated because they finished
-            # after the starting date of the updated catalogue.
-            if vals.get('active', catalogue.active):
-                self._update_other_catalogue(cr, uid, catalogue.id, vals.get('period_from', catalogue.period_from),
-                                             vals.get('currency_id', catalogue.currency_id.id),
-                                             vals.get('partner_id', catalogue.partner_id.id),
-                                             vals.get('period_to', catalogue.period_to), context=context)
             # Track Changes
             if catalogue.state != 'draft' and vals.get('active') is not None and vals['active'] != catalogue.active:
                 for line in catalogue.line_ids:
@@ -357,11 +246,11 @@ class supplier_catalogue(osv.osv):
         if not all(x.state == 'draft' for x in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context)):
             raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already confirmed. Please reload the page to update the status of this catalogue'))
 
-        # US-12606: Check the products exist in another valid catalogue
+        # US-12606: Check if the products exist in another valid catalogue
         cr.execute('''SELECT catalogue_id, ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id IN %s
             GROUP BY catalogue_id''', (tuple(ids),))
         for cat in cr.fetchall():
-            invalid_prods = self.check_cat_prods_valid(cr, uid, cat[0], cat[1], context=context)
+            invalid_prods = self.check_cat_prods_valid(cr, uid, cat[0], cat[1], False, False, context=context)
             if invalid_prods:
                 raise osv.except_osv(_('Warning!'), _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
                                      % (', '.join(invalid_prods),))
@@ -597,6 +486,32 @@ class supplier_catalogue(osv.osv):
         return True
 
     _constraints = [(_check_period, 'The \'To\' date mustn\'t be younger than the \'From\' date !', ['period_from', 'period_to'])]
+
+    def on_change_period(self, cr, uid, ids, period_from, period_to, state, context=None):
+        '''
+        Check the validity of the products before allowing the period_from change
+        '''
+        if context is None:
+            context = {}
+
+        res = {'value': {'period_from': period_from, 'period_to': period_to}}
+        if ids and state == 'confirmed':
+            cat = self.read(cr, uid, ids[0], ['period_from', 'period_to'], context=context)
+            cr.execute('''SELECT ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id = %s 
+                GROUP BY catalogue_id''', (ids[0],))
+            for cat_prods in cr.fetchall():
+                period_from = not period_from and 'f' or period_from
+                period_to = not period_to and 'f' or period_to
+                invalid_prods = self.check_cat_prods_valid(cr, uid, ids[0], cat_prods[0], period_from, period_to, context=context)
+                if invalid_prods:
+                    return {
+                        'value': {'period_from': cat['period_from'], 'period_to': cat['period_to']},
+                        'warning': {'title': _('Warning!'), 'message':
+                            _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
+                            % (', '.join(invalid_prods),)}
+                    }
+
+        return res
 
     def open_lines(self, cr, uid, ids, context=None):
         '''
@@ -945,10 +860,11 @@ class supplier_catalogue(osv.osv):
                 res['period_to'] = False
         return res
 
-    def check_cat_prods_valid(self, cr, uid, cat_id, product_ids, context=None):
+    def check_cat_prods_valid(self, cr, uid, cat_id, product_ids, period_from=False, period_to=False, context=None):
         '''
         Check if there is already a confirmed and active catalogue, having the same supplier, the same currency and
-        with overlapping dates as a given catalogue for a list of products
+        with overlapping dates as a given catalogue for a list of products. Periods can be different if changed by
+        on_change_period
         '''
         if not cat_id or not product_ids:
             raise osv.except_osv(_('Error'), _('Please give a catalogue ID and a list of product IDs to this method'))
@@ -958,12 +874,22 @@ class supplier_catalogue(osv.osv):
         products = []
         ftf = ['period_from', 'period_to', 'partner_id', 'currency_id']
         cat = self.browse(cr, uid, cat_id, fields_to_fetch=ftf, context=context)
-        cr.execute("""SELECT DISTINCT(p.default_code) FROM supplier_catalogue_line cl 
+        period_from = period_from or cat.period_from
+        period_to = period_to or cat.period_to
+        period_conds = []
+        if period_from and period_from != 'f':
+            period_conds.append("(c.period_to >= '%s' AND (c.period_from <= '%s' OR c.period_from IS NULL))" % (period_from, period_from))
+        if period_to and period_to != 'f':
+            period_conds.append("(c.period_from <= '%s' AND (c.period_to >= '%s' OR c.period_to IS NULL))" % (period_to, period_to))
+        elif period_to == 'f':
+            period_conds.append("c.period_from IS NOT NULL AND (c.period_to >= '%s' OR c.period_to IS NULL)" % (period_from,))
+        period_cond = "(" + ' OR '.join(period_conds) + ") AND "
+        cr.execute("""SELECT DISTINCT(p.default_code), c.id, c.state,c.active,c.currency_id, c.partner_id, c.period_from, c.period_to FROM supplier_catalogue_line cl 
                 LEFT JOIN supplier_catalogue c ON cl.catalogue_id = c.id
                 LEFT JOIN product_product p ON cl.product_id = p.id
-            WHERE c.state = 'confirmed' AND (c.period_to >= %s OR c.period_from <= %s) 
-                AND c.partner_id = %s AND c.active = 't' AND c.id != %s AND c.currency_id = %s AND cl.product_id IN %s
-        """, (cat.period_from, cat.period_to, cat.partner_id.id, cat.id, cat.currency_id.id, tuple(product_ids)))
+            WHERE """ + period_cond + """c.state = 'confirmed' AND c.partner_id = %s AND c.active = 't' AND c.id != %s 
+                AND c.currency_id = %s AND cl.product_id IN %s
+        """, (cat.partner_id.id, cat.id, cat.currency_id.id, tuple(product_ids)))
         for x in cr.fetchall():
             products.append(x[0])
         return products
@@ -1043,9 +969,17 @@ class supplier_catalogue_line(osv.osv):
         '''
         Create a pricelist line on product supplier information tab
         '''
+        cat_obj = self.pool.get('supplier.catalogue')
         cat_state = False
         if vals.get('catalogue_id'):
-            cat_state = self.pool.get('supplier.catalogue').read(cr, uid, vals.get('catalogue_id'), ['state'], context=context)['state']
+            cat_state = cat_obj.read(cr, uid, vals['catalogue_id'], ['state'], context=context)['state']
+            # US-12606: Check if the product exists in another valid catalogue
+            if vals.get('product_id') and cat_state == 'confirmed':
+                invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, vals['catalogue_id'], [vals['product_id']], False, False, context=context)
+                if invalid_prod:
+                    raise osv.except_osv(_('Warning!'),
+                                         _('This catalogue line contains the product %s which is a duplicate in another catalogue for the same supplier! Please remove the product from this/other catalogue before saving')
+                                         % (invalid_prod[0],))
 
         if cat_state != 'draft':
             vals = self._create_supplier_info(cr, uid, vals, context=context)
@@ -1239,9 +1173,9 @@ class supplier_catalogue_line(osv.osv):
         res = {}
 
         if product_id:
-            # US-12606: Check the products exist in another valid catalogue
+            # US-12606: Check if the product exists in another valid catalogue
             if catalogue_id and cat_obj.read(cr, uid, catalogue_id, ['state'], context=context)['state'] == 'confirmed':
-                invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, catalogue_id, [product_id], context=context)
+                invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, catalogue_id, [product_id], False, False, context=context)
                 if invalid_prod:
                     return {
                         'value': {'product_id': False},

@@ -33,8 +33,8 @@
             <field name="arch" type="xml">
                 <form string="Supplier catalogue">
                     <field name="name" colspan="4" on_change="check_inactive_catalogues(partner_id)" />
-                    <field name="period_from" attrs="{'required': [('is_esc', '=', False)], 'invisible': [('is_esc', '=', True)]}" />
-                    <field name="period_to" attrs="{'invisible': [('is_esc', '=', True)]}" />
+                    <field name="period_from" on_change="on_change_period(period_from, period_to, state)" attrs="{'required': [('is_esc', '=', False)], 'invisible': [('is_esc', '=', True)]}" />
+                    <field name="period_to" on_change="on_change_period(period_from, period_to, state)" attrs="{'invisible': [('is_esc', '=', True)]}" />
                     <field name="currency_id" attrs="{'readonly': [('state', '=', 'confirmed')]}" domain="[('partner_currency', '=', partner_id)]" />
                     <field name="partner_id" readonly="1" />
                     <field name="is_esc" invisible="1" />
@@ -173,7 +173,7 @@
                     <field name="rounding" on_change="change_soq_quantity(rounding, line_uom_id)"  />
                     <field name="min_order_qty" />
                     <field name="comment" />
-                    <field name="catalogue_id" invisible="1" />
+                    <field name="catalogue_id" invisible="1" readonly="1" />
                 </form>
             </field>
         </record>
@@ -199,7 +199,7 @@
                     <field name="to_correct_ok" invisible="1"/>
                     <field name="mml_status" />
                     <field name="msl_status" />
-                    <field name="catalogue_id" invisible="1" />
+                    <field name="catalogue_id" invisible="1" readonly="1" />
                 </tree>
             </field>
         </record>
@@ -224,7 +224,7 @@
                     <field name="comment" />
                     <field name="mml_status" />
                     <field name="msl_status" />
-                    <field name="catalogue_id" invisible="1" />
+                    <field name="catalogue_id" invisible="1" readonly="1" />
                 </tree>
             </field>
         </record>
