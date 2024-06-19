@@ -188,7 +188,7 @@ class account_year_end_closing(osv.osv):
                             s.period_id in %s and
                             s.state in ('mission-closed', 'done')
                     where
-                        m.state != 'inactve' and
+                        m.state != 'inactive' and
                         m.parent_id = %s
                     group by
                         m.code, m.id
