@@ -175,13 +175,36 @@ class account_year_end_closing(osv.osv):
                                      _('FY can not be closed due to its state or' \
                                        ' its periods state; or previous FY not closed'))
 
-            # check next FY exists (we need FY+1 Period 0 for initial balances)
-            if not self._get_next_fy_id(cr, uid, fy_rec, context=context):
-                raise osv.except_osv(_('Warning'),
-                                     _('FY+1 required to close FY'))
+            if level == 'coordo':
+                nb_local_period_ids = self.pool.get('account.period').search(cr, uid,
+                                                                             [('fiscalyear_id', '=', fy_rec.id), ('number', 'not in', [0, 16])], context=context)
+                cr.execute('''
+                    select
+                        m.code
+                    from
+                        msf_instance m
+                        left join account_period_state s on
+                            s.instance_id = m.id and
+                            s.period_id in %s and
+                            s.state in ('mission-closed', 'done')
+                    where
+                        m.state != 'inactve' and
+                        m.parent_id = %s
+                    group by
+                        m.code, m.id
+                    having
+                        count(s.id) != %s
+                ''', (tuple(nb_local_period_ids), instance_id.id, len(nb_local_period_ids)))
+                not_closed = [x[0] for x in cr.fetchall()]
+                if not_closed:
+                    if len(not_closed) > 10:
+                        not_closed = not_closed[0:10] + ['+%d' % (len(not_closed)-10)]
+                    msg = _('Periods are not mission-closed on the following projects:') % (
+                        ', '.join(not_closed), )
+                    raise osv.except_osv(_('Warning'), msg)
 
             # HQ level: check that all coordos have their FY mission closed
-            if level == 'section':
+            elif level == 'section':
                 mi_obj = self.pool.get('msf.instance')
                 ci_ids = mi_obj.search(cr, uid, [
                     ('parent_id', '=', instance_id.id),
@@ -217,6 +240,12 @@ class account_year_end_closing(osv.osv):
                                 ' first') % (
                             ', '.join(codes), )
                         raise osv.except_osv(_('Warning'), msg)
+
+
+            # check next FY exists (we need FY+1 Period 0 for initial balances)
+            if not self._get_next_fy_id(cr, uid, fy_rec, context=context):
+                raise osv.except_osv(_('Warning'),
+                                     _('FY+1 required to close FY'))
 
         return level
 
