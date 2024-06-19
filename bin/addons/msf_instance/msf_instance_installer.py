@@ -52,6 +52,8 @@ class msf_instance_setup(osv.osv_memory):
                                        {'groups_id': [(6, 0, user['groups_id'])]},
                                        context=context)
 
+                # trigger update on account.period.state closed by sync
+                self.pool.get('patch.scripts').update_us_435_2(cr, uid)
 
 
             return self.action_next(cr, uid, ids, context=context)

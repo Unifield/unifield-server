@@ -5694,11 +5694,11 @@ class patch_scripts(osv.osv):
         self.us_394_2_patch(cr, uid, *a, **b)
 
     def update_us_435_2(self, cr, uid, *a, **b):
+        #  script also triggered by instance reconfigure wizard
         period_obj = self.pool.get('account.period')
         period_state_obj = self.pool.get('account.period.state')
         periods = period_obj.search(cr, uid, [])
-        for period in periods:
-            period_state_obj.update_state(cr, uid, period)
+        period_state_obj.update_state(cr, uid, periods)
 
         return True
 

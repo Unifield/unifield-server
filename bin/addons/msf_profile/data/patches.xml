@@ -1066,5 +1066,9 @@
             <field name="method">us_12598_ocb_group_user_manager</field>
         </record>
 
+        <record id="us_12283_period_states_closed_by_sync" model="patch.scripts">
+            <field name="method">update_us_435_2</field>
+        </record>
+
     </data>
 </openerp>
