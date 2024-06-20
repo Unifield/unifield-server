@@ -224,13 +224,13 @@ class supplier_catalogue(osv.osv):
                         price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
                 # Check products if the periods are changed
-                if vals.get('period_from') or vals.get('period_to'):
+                if 'period_from' in vals or 'period_to' in vals:
                     cr.execute('''SELECT ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id = %s 
                         GROUP BY catalogue_id''', (catalogue.id,))
                     for cat_prods in cr.fetchall():
-                        period_from = vals.get('period_from') and (not vals['period_from'] and 'f' or vals['period_from']) \
+                        period_from = 'period_from' in vals and (not vals['period_from'] and 'f' or vals['period_from']) \
                                       or catalogue.period_from
-                        period_to = vals.get('period_to') and (not vals['period_to'] and 'f' or vals['period_to']) \
+                        period_to = 'period_to' in vals and (not vals['period_to'] and 'f' or vals['period_to']) \
                                     or catalogue.period_to
                         invalid_prods = self.check_cat_prods_valid(cr, uid, catalogue.id, cat_prods[0], period_from,
                                                                    period_to, context=context)
