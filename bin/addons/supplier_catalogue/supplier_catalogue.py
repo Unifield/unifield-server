@@ -51,7 +51,7 @@ class supplier_catalogue(osv.osv):
         '''
         Disallow the possibility to duplicate a catalogue.
         '''
-        raise osv.except_osv(_('Error'), _('You cannot duplicate a catalogue because you musn\'t have overlapped catalogue !'))
+        raise osv.except_osv(_('Error'), _('You cannot duplicate a catalogue !'))
 
         default = default or {}
         default.update({'state': 'draft'})
