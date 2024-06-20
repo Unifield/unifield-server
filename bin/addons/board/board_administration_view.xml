@@ -11,7 +11,7 @@
             <field name="arch" type="xml">
                 <tree string="Group members">
                     <field name="name"/>
-                    <field name="date"/>
+                    <field name="last_authentication" allow_sort="1"/>
                 </tree>
             </field>
         </record>

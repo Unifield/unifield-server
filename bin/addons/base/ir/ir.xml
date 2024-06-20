@@ -826,7 +826,7 @@
                     <field name="name"/>
                     <field name="login"/>
                     <field name="context_lang"/>
-                    <field name="date"/>
+                    <field name="last_authentication" allow_sort="1"/>
                     <field name="is_synchronizable"/>
                 </tree>
             </field>

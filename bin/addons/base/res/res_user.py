@@ -244,6 +244,17 @@ def _lang_get(self, cr, uid, context=None):
 def _tz_get(self,cr,uid, context=None):
     return [(x, x) for x in pytz.all_timezones]
 
+class users_lastlogin(osv.osv):
+    _name = 'users.lastlogin'
+    _log_access = False
+    _rec_name = 'user_id'
+
+    _columns = {
+        'user_id': fields.integer('User', required=1, select=1),
+        'date': fields.datetime('Authentication date', requird=1, select=1)
+    }
+users_lastlogin()
+
 class users(osv.osv):
     __admin_ids = {}
     __sync_user_ids = {}
@@ -488,6 +499,15 @@ class users(osv.osv):
 
         return ret
 
+    def _get_last_authentication(self, cr, uid, ids, name=None, arg=None, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+        cr.execute('select user_id, max(date) from users_lastlogin where user_id in %s group by user_id', (tuple(ids), ))
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+        return ret
+
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
                             help="The new user's real name, used for searching"
@@ -544,6 +564,7 @@ class users(osv.osv):
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
+        'last_authentication': fields.function(_get_last_authentication, method=1, type='datetime', string='Last Authentication'),
         'synchronize': fields.boolean('Synchronize', help="Synchronize down this user", select=1),
         'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users.", select=1),
         'is_erp_manager': fields.function(_is_erp_manager, fnct_search=_search_role, method=True, string='Is ERP Manager ?', type="boolean"),
@@ -561,6 +582,35 @@ class users(osv.osv):
         'dont_ask_email': fields.boolean("Don't ask for email", readonly=1), # deprecated
         'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1), # deprecated
     }
+
+    def search_web(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        to_order = False
+        if not count and order and order != 'NO_ORDER' and 'last_authentication' in order:
+            to_order = True
+            init_offset = offset
+            init_limit = limit
+            offset = 0
+            limit = None
+        ids = super(users, self).search_web(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+        if ids and to_order:
+            order = order.replace('last_authentication', 'last.date')
+            limit_str = init_limit and ' limit %d' % init_limit or ''
+            offset_str = init_offset and ' offset %d' % init_offset or ''
+            cr.execute("""
+            select
+                u.id
+            from
+                res_users u
+                left join lateral (
+                    select user_id, max(date) as date from users_lastlogin l where user_id = u.id group by user_id
+                ) as last on true
+            where
+                u.id in %s
+            order by """ +  order + ',u.login, u.id '+ limit_str + offset_str, (tuple(ids),))  # not_a_user_entry
+            return [x[0] for x in cr.fetchall()]
+        return ids
+
+        return super(users, self).search_web(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
     def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         fg = super(users, self).fields_get(cr, uid, fields, context=context, with_uom_rounding=with_uom_rounding)
@@ -1018,28 +1068,26 @@ class users(osv.osv):
             return tools.ustr(res[0])
         return False
 
-    def get_user_database_password_from_login(self, cr, login):
-        '''
-        return encrypted password from the database using login
-        '''
-        login = tools.ustr(login).lower()
-        cr.execute("""SELECT password from res_users
-                      WHERE login=%s AND active AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
-                   (login,))
-        res = cr.fetchone()
-        if res:
-            return tools.ustr(res[0])
-        return False
-
     def login(self, db, login, password):
         if not password:
             return False
         login = tools.ustr(login).lower()
         cr = pooler.get_db(db).cursor()
         try:
-            database_password = self.get_user_database_password_from_login(cr, login)
+            cr.execute("""SELECT id, password from res_users
+                          WHERE login=%s AND active AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
+                       (login,))
+            res = cr.fetchone()
+            if not res:
+                return False
+
+            user_id = res[0]
+            if not user_id:
+                return False
+
+            database_password = tools.ustr(res[1])
+
             # check the password is a bcrypt encrypted one
-            database_password = tools.ustr(database_password)
             password = tools.ustr(password)
             if bcrypt.identify(database_password):
                 if not bcrypt.verify(password, database_password):
@@ -1057,26 +1105,15 @@ class users(osv.osv):
                 # in which case we can't delay the login just for the purpose of
                 # update the last login date - hence we use FOR UPDATE NOWAIT to
                 # try to get the lock - fail-fast
-                cr.execute("""SELECT id from res_users
-                              WHERE login=%s AND password=%s
-                                    AND active FOR UPDATE NOWAIT""",
-                           (login, tools.ustr(database_password)), log_exceptions=False)
-                cr.execute('UPDATE res_users SET date=now() WHERE login=%s AND password=%s AND active RETURNING id',
-                           (login, tools.ustr(database_password)))
+                cr.execute("insert into users_lastlogin (user_id, date) values (%s, now())", (user_id, ))
             except Exception:
                 # Failing to acquire the lock on the res_users row probably means
                 # another request is holding it - no big deal, we skip the update
                 # for this time, and let the user login anyway.
                 logging.getLogger('res.users').warn('Can\'t acquire lock on res users', exc_info=True)
                 cr.rollback()
-                cr.execute("""SELECT id from res_users
-                              WHERE login=%s AND password=%s
-                                    AND active""",
-                           (login, tools.ustr(database_password)))
             finally:
-                res = cr.fetchone()
-                if res:
-                    return res[0]
+                return user_id
         except Exception:
             # Failing to decode password given by the user
             logging.getLogger('res.users').warn('Can\'t decode password given by user at login', exc_info=True)
