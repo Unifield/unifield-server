@@ -182,49 +182,62 @@ class supplier_catalogue(osv.osv):
                     to_be_confirmed.append(catalogue.id)
 
             # Update product pricelists only if the catalogue is confirmed
-            if vals.get('state', catalogue.state) == 'confirmed' and not to_be_confirmed:
-                new_supinfo_vals = {}
+            if vals.get('state', catalogue.state) == 'confirmed':
+                if not to_be_confirmed:
+                    new_supinfo_vals = {}
 
-                # Change the partner of all supplier info instances
-                if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
-                    delay = partner_obj.browse(cr, uid, vals['partner_id'], context=context).default_delay
-                    new_supinfo_vals.update({'name': vals['partner_id'],
-                                             'delay': delay})
+                    # Change the partner of all supplier info instances
+                    if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
+                        delay = partner_obj.browse(cr, uid, vals['partner_id'], context=context).default_delay
+                        new_supinfo_vals.update({'name': vals['partner_id'], 'delay': delay})
 
-                # Change pricelist data according to new data (only if there is change)
-                new_price_vals = {}
-                for prop in ('period_to', 'period_from', 'currency_id', 'name'):
-                    if prop in vals:
-                        if prop == 'period_to':
-                            new_price_vals['valid_till'] = vals[prop]
-                        elif prop == 'period_from':
-                            new_price_vals['valid_from'] = vals[prop]
-                        else:
-                            new_price_vals[prop] = vals[prop]
+                    # Change pricelist data according to new data (only if there is change)
+                    new_price_vals = {}
+                    for prop in ('period_to', 'period_from', 'currency_id', 'name'):
+                        if prop in vals:
+                            if prop == 'period_to':
+                                new_price_vals['valid_till'] = vals[prop]
+                            elif prop == 'period_from':
+                                new_price_vals['valid_from'] = vals[prop]
+                            else:
+                                new_price_vals[prop] = vals[prop]
 
-                # Update the supplier info and price lines
-                supplierinfo_ids = supinfo_obj.search(cr, uid,
-                                                      [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
-                if new_supinfo_vals:
-                    supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
+                    # Update the supplier info and price lines
+                    supplierinfo_ids = supinfo_obj.search(cr, uid,
+                                                          [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
+                    if new_supinfo_vals:
+                        supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
 
-                pricelist_ids = []
-                if 'line_ids' in vals:
-                    # lines are being edited
-                    line_ids = [x[1] for x in vals['line_ids'] if x]
-                    line_result = line_obj.read(cr, uid, line_ids,
-                                                ['partner_info_id'], context=context)
-                    pricelist_ids = [x['partner_info_id'][0] for x in
-                                     line_result if x['partner_info_id']]
+                    pricelist_ids = []
+                    if 'line_ids' in vals:
+                        # lines are being edited
+                        line_ids = [x[1] for x in vals['line_ids'] if x]
+                        line_result = line_obj.read(cr, uid, line_ids, ['partner_info_id'], context=context)
+                        pricelist_ids = [x['partner_info_id'][0] for x in line_result if x['partner_info_id']]
 
-                if new_price_vals:
-                    # the catalog itself has been edited, all the related lines
-                    # should be updated accordingly (that could be long operation)
-                    cr.execute('''SELECT partner_info_id
-                    FROM supplier_catalogue_line
-                    WHERE catalogue_id = %s ''', (ids[0],))
-                    pricelist_ids = [x[0] for x in cr.fetchall() if x[0]]
-                    price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
+                    if new_price_vals:
+                        # the catalog itself has been edited, all the related lines
+                        # should be updated accordingly (that could be long operation)
+                        cr.execute('''SELECT partner_info_id FROM supplier_catalogue_line 
+                            WHERE catalogue_id = %s ''', (ids[0],))
+                        pricelist_ids = [x[0] for x in cr.fetchall() if x[0]]
+                        price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
+
+                # Check products if the periods are changed
+                if vals.get('period_from') or vals.get('period_to'):
+                    cr.execute('''SELECT ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id = %s 
+                        GROUP BY catalogue_id''', (catalogue.id,))
+                    for cat_prods in cr.fetchall():
+                        period_from = vals.get('period_from') and (not vals['period_from'] and 'f' or vals['period_from']) \
+                                      or catalogue.period_from
+                        period_to = vals.get('period_to') and (not vals['period_to'] and 'f' or vals['period_to']) \
+                                    or catalogue.period_to
+                        invalid_prods = self.check_cat_prods_valid(cr, uid, catalogue.id, cat_prods[0], period_from,
+                                                                   period_to, context=context)
+                        if invalid_prods:
+                            raise osv.except_osv(_('Warning!'),
+                                                 _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
+                                                 % (', '.join(invalid_prods),))
 
         res = super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
 
@@ -488,32 +501,6 @@ class supplier_catalogue(osv.osv):
         return True
 
     _constraints = [(_check_period, 'The \'To\' date mustn\'t be younger than the \'From\' date !', ['period_from', 'period_to'])]
-
-    def on_change_period(self, cr, uid, ids, period_from, period_to, state, context=None):
-        '''
-        Check the validity of the products before allowing the period_from change
-        '''
-        if context is None:
-            context = {}
-
-        res = {'value': {'period_from': period_from, 'period_to': period_to}}
-        if ids and state == 'confirmed':
-            cat = self.read(cr, uid, ids[0], ['period_from', 'period_to'], context=context)
-            cr.execute('''SELECT ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id = %s 
-                GROUP BY catalogue_id''', (ids[0],))
-            for cat_prods in cr.fetchall():
-                period_from = not period_from and 'f' or period_from
-                period_to = not period_to and 'f' or period_to
-                invalid_prods = self.check_cat_prods_valid(cr, uid, ids[0], cat_prods[0], period_from, period_to, context=context)
-                if invalid_prods:
-                    return {
-                        'value': {'period_from': cat['period_from'], 'period_to': cat['period_to']},
-                        'warning': {'title': _('Warning!'), 'message':
-                            _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
-                            % (', '.join(invalid_prods),)}
-                    }
-
-        return res
 
     def open_lines(self, cr, uid, ids, context=None):
         '''
