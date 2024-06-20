@@ -48,13 +48,15 @@ class supplier_catalogue(osv.osv):
     _order = 'period_from, period_to'
 
     def copy(self, cr, uid, catalogue_id, default=None, context=None):
-        if context is None:
-            context = {}
-        if default is None:
-            default = {}
+        '''
+        Disallow the possibility to duplicate a catalogue.
+        '''
+        raise osv.except_osv(_('Error'), _('You cannot duplicate a catalogue because you musn\'t have overlapped catalogue !'))
+
+        default = default or {}
         default.update({'state': 'draft'})
 
-        return super(supplier_catalogue, self).copy(cr, uid, catalogue_id, default, context=context)
+        return False
 
     def open_new_catalogue_form(self, cr, uid, ids, context=None):
         if context is None:
@@ -878,13 +880,13 @@ class supplier_catalogue(osv.osv):
         period_to = period_to or cat.period_to
         period_conds = []
         if period_from and period_from != 'f':
-            period_conds.append("(c.period_to >= '%s' AND (c.period_from <= '%s' OR c.period_from IS NULL))" % (period_from, period_from))
+            period_conds.append("((c.period_to >= '%s' OR c.period_to IS NULL) AND c.period_from <= '%s')" % (period_from, period_from))
         if period_to and period_to != 'f':
-            period_conds.append("(c.period_from <= '%s' AND (c.period_to >= '%s' OR c.period_to IS NULL))" % (period_to, period_to))
+            period_conds.append("((c.period_from <= '%s' OR c.period_from IS NULL) AND c.period_to >= '%s')" % (period_to, period_to))
         elif period_to == 'f':
             period_conds.append("c.period_from IS NOT NULL AND (c.period_to >= '%s' OR c.period_to IS NULL)" % (period_from,))
         period_cond = "(" + ' OR '.join(period_conds) + ") AND "
-        cr.execute("""SELECT DISTINCT(p.default_code), c.id, c.state,c.active,c.currency_id, c.partner_id, c.period_from, c.period_to FROM supplier_catalogue_line cl 
+        cr.execute("""SELECT DISTINCT(p.default_code) FROM supplier_catalogue_line cl 
                 LEFT JOIN supplier_catalogue c ON cl.catalogue_id = c.id
                 LEFT JOIN product_product p ON cl.product_id = p.id
             WHERE """ + period_cond + """c.state = 'confirmed' AND c.partner_id = %s AND c.active = 't' AND c.id != %s 
@@ -903,8 +905,7 @@ class supplier_catalogue_line(osv.osv):
     _rec_name = 'line_number'
     _description = 'Supplier catalogue line'
     _table = 'supplier_catalogue_line'
-    # Inherits of product.product to an easier search of lines
-    # with product attributes
+    # Inherits of product.product to an easier search of lines with product attributes
     _inherits = {'product.product': 'product_id'}
     _order = 'product_id, line_uom_id, min_qty'
 
