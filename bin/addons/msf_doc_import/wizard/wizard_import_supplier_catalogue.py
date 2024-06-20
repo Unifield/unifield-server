@@ -218,7 +218,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                             error_list_line.append(_("The product '%s' was not found.") % product_code)
 
                     # US-12606: Check the products exist in another valid catalogue
-                    if not to_correct_ok and default_code and obj.catalogue_id.state == 'confirmed':
+                    if not to_correct_ok and default_code and obj.catalogue_id.state == 'confirmed' and obj.catalogue_id.active:
                         invalid_prod = self.pool.get('supplier.catalogue').check_cat_prods_valid(cr, uid, obj.catalogue_id.id,
                                                                                                  [default_code], context=context)
                         if invalid_prod:

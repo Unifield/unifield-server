@@ -223,8 +223,8 @@ class supplier_catalogue(osv.osv):
                         pricelist_ids = [x[0] for x in cr.fetchall() if x[0]]
                         price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
-                # Check products if the periods are changed
-                if 'period_from' in vals or 'period_to' in vals:
+                # Check products if the periods are changed or the catalogue activated
+                if (vals.get('active') is True or catalogue.active) and ('period_from' in vals or 'period_to' in vals):
                     cr.execute('''SELECT ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id = %s 
                         GROUP BY catalogue_id''', (catalogue.id,))
                     for cat_prods in cr.fetchall():
@@ -255,20 +255,20 @@ class supplier_catalogue(osv.osv):
         ids = isinstance(ids, int) and [ids] or ids
         line_obj = self.pool.get('supplier.catalogue.line')
 
-        line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)],
-                                   order='NO_ORDER', context=context)
+        line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
 
         if not all(x.state == 'draft' for x in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context)):
             raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already confirmed. Please reload the page to update the status of this catalogue'))
 
         # US-12606: Check if the products exist in another valid catalogue
-        cr.execute('''SELECT catalogue_id, ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id IN %s
-            GROUP BY catalogue_id''', (tuple(ids),))
+        cr.execute('''SELECT c.id, c.active, ARRAY_AGG(cl.product_id) FROM supplier_catalogue_line cl 
+            LEFT JOIN supplier_catalogue c ON cl.catalogue_id = c.id WHERE catalogue_id IN %s GROUP BY c.id''', (tuple(ids),))
         for cat in cr.fetchall():
-            invalid_prods = self.check_cat_prods_valid(cr, uid, cat[0], cat[1], False, False, context=context)
-            if invalid_prods:
-                raise osv.except_osv(_('Warning!'), _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
-                                     % (', '.join(invalid_prods),))
+            if cat[1] is True:
+                invalid_prods = self.check_cat_prods_valid(cr, uid, cat[0], cat[2], False, False, context=context)
+                if invalid_prods:
+                    raise osv.except_osv(_('Warning!'), _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
+                                         % (', '.join(invalid_prods),))
 
         # Update catalogues
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
@@ -958,18 +958,18 @@ class supplier_catalogue_line(osv.osv):
         Create a pricelist line on product supplier information tab
         '''
         cat_obj = self.pool.get('supplier.catalogue')
-        cat_state = False
+        catalogue = False
         if vals.get('catalogue_id'):
-            cat_state = cat_obj.read(cr, uid, vals['catalogue_id'], ['state'], context=context)['state']
+            catalogue = cat_obj.read(cr, uid, vals['catalogue_id'], ['state', 'active'], context=context)
             # US-12606: Check if the product exists in another valid catalogue
-            if vals.get('product_id') and cat_state == 'confirmed':
+            if vals.get('product_id') and catalogue['state'] == 'confirmed' and catalogue['active']:
                 invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, vals['catalogue_id'], [vals['product_id']], False, False, context=context)
                 if invalid_prod:
                     raise osv.except_osv(_('Warning!'),
                                          _('This catalogue line contains the product %s which is a duplicate in another catalogue for the same supplier! Please remove the product from this/other catalogue before saving')
                                          % (invalid_prod[0],))
 
-        if cat_state != 'draft':
+        if catalogue and catalogue['state'] != 'draft':
             vals = self._create_supplier_info(cr, uid, vals, context=context)
 
         ids = super(supplier_catalogue_line, self).create(cr, uid, vals, context=context)
@@ -1162,15 +1162,17 @@ class supplier_catalogue_line(osv.osv):
 
         if product_id:
             # US-12606: Check if the product exists in another valid catalogue
-            if catalogue_id and cat_obj.read(cr, uid, catalogue_id, ['state'], context=context)['state'] == 'confirmed':
-                invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, catalogue_id, [product_id], False, False, context=context)
-                if invalid_prod:
-                    return {
-                        'value': {'product_id': False},
-                        'warning': {'title': _('Warning!'), 'message':
-                            _('This catalogue line contains the product %s which is a duplicate in another catalogue for the same supplier! Please remove the product from this/other catalogue before saving')
-                            % (invalid_prod[0],)}
-                    }
+            if catalogue_id:
+                catalogue = cat_obj.read(cr, uid, catalogue_id, ['state', 'active'], context=context)
+                if catalogue['state'] == 'confirmed' and catalogue['active']:
+                    invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, catalogue_id, [product_id], False, False, context=context)
+                    if invalid_prod:
+                        return {
+                            'value': {'product_id': False},
+                            'warning': {'title': _('Warning!'), 'message':
+                                _('This catalogue line contains the product %s which is a duplicate in another catalogue for the same supplier! Please remove the product from this/other catalogue before saving')
+                                % (invalid_prod[0],)}
+                        }
 
             product = self.pool.get('product.product').read(cr, uid, product_id, ['uom_id'], context=context)
             v.update({'line_uom_id': product['uom_id'][0]})
