@@ -224,7 +224,9 @@ class supplier_catalogue(osv.osv):
                         price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
                 # Check products if the periods are changed or the catalogue activated
-                if (vals.get('active') is True or catalogue.active) and ('period_from' in vals or 'period_to' in vals):
+                if (vals.get('active') is True or catalogue.active) and \
+                        (('period_from' in vals and vals['period_from'] != catalogue.period_from)
+                         or ('period_to' in vals and vals['period_to'] != catalogue.period_to)):
                     cr.execute('''SELECT ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id = %s 
                         GROUP BY catalogue_id''', (catalogue.id,))
                     for cat_prods in cr.fetchall():
@@ -865,14 +867,19 @@ class supplier_catalogue(osv.osv):
         cat = self.browse(cr, uid, cat_id, fields_to_fetch=ftf, context=context)
         period_from = period_from or cat.period_from
         period_to = period_to or cat.period_to
+        period_cond = ""
         period_conds = []
         if period_from and period_from != 'f':
             period_conds.append("((c.period_to >= '%s' OR c.period_to IS NULL) AND c.period_from <= '%s')" % (period_from, period_from))
         if period_to and period_to != 'f':
-            period_conds.append("((c.period_from <= '%s' OR c.period_from IS NULL) AND c.period_to >= '%s')" % (period_to, period_to))
-        elif period_to == 'f':
-            period_conds.append("c.period_from IS NOT NULL AND (c.period_to >= '%s' OR c.period_to IS NULL)" % (period_from,))
-        period_cond = "(" + ' OR '.join(period_conds) + ") AND "
+            period_conds.append("(c.period_from <= '%s' AND (c.period_to >= '%s' OR c.period_to IS NULL))" % (period_to, period_to))
+        elif period_from and period_from != 'f' and period_to in ('f', False):
+            period_conds.append("(c.period_from IS NOT NULL AND (c.period_to >= '%s' OR c.period_to IS NULL))" % (period_from,))
+        if period_from and period_from != 'f' and period_to and period_to != 'f':
+            period_conds.append("(c.period_from <= '%s' AND c.period_to >= '%s') OR (c.period_from >= '%s' AND c.period_to <= '%s')"
+                                % (period_from, period_to, period_from, period_to))
+        if period_conds:
+            period_cond = "(" + ' OR '.join(period_conds) + ") AND "
         cr.execute("""SELECT DISTINCT(p.default_code) FROM supplier_catalogue_line cl 
                 LEFT JOIN supplier_catalogue c ON cl.catalogue_id = c.id
                 LEFT JOIN product_product p ON cl.product_id = p.id
