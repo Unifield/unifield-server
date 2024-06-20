@@ -58,7 +58,7 @@ class patch_scripts(osv.osv):
     }
 
     def us_12274_populate_res_user_last_auth(self, cr, uid, *a, **b):
-        cr.execute('''insert into users_lastlogin (user_id, date)
+        cr.execute('''insert into users_last_login (user_id, date)
             (select id, date from res_users where date is not null) ''')
         return True
 

@@ -244,8 +244,8 @@ def _lang_get(self, cr, uid, context=None):
 def _tz_get(self,cr,uid, context=None):
     return [(x, x) for x in pytz.all_timezones]
 
-class users_lastlogin(osv.osv):
-    _name = 'users.lastlogin'
+class users_last_login(osv.osv):
+    _name = 'users.last_login'
     _log_access = False
     _rec_name = 'user_id'
 
@@ -253,7 +253,11 @@ class users_lastlogin(osv.osv):
         'user_id': fields.integer('User', required=1, select=1),
         'date': fields.datetime('Authentication date', requird=1, select=1)
     }
-users_lastlogin()
+
+    _sql_constraints = [
+        ('unique_user_id', 'unique(user_id)', 'user_id must be unique')
+    ]
+users_last_login()
 
 class users(osv.osv):
     __admin_ids = {}
@@ -503,7 +507,7 @@ class users(osv.osv):
         ret = {}
         for _id in ids:
             ret[_id] = False
-        cr.execute('select user_id, max(date) from users_lastlogin where user_id in %s group by user_id', (tuple(ids), ))
+        cr.execute('select user_id, date from users_last_login where user_id in %s', (tuple(ids), ))
         for x in cr.fetchall():
             ret[x[0]] = x[1]
         return ret
@@ -593,7 +597,7 @@ class users(osv.osv):
             limit = None
         ids = super(users, self).search_web(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
         if ids and to_order:
-            order = order.replace('last_authentication', 'last.date')
+            order = order.replace('last_authentication', "coalesce(l.date, '2014-11-16')")
             limit_str = init_limit and ' limit %d' % init_limit or ''
             offset_str = init_offset and ' offset %d' % init_offset or ''
             cr.execute("""
@@ -601,9 +605,7 @@ class users(osv.osv):
                 u.id
             from
                 res_users u
-                left join lateral (
-                    select user_id, max(date) as date from users_lastlogin l where user_id = u.id group by user_id
-                ) as last on true
+                left join users_last_login l on l.user_id = u.id
             where
                 u.id in %s
             order by """ +  order + ',u.login, u.id '+ limit_str + offset_str, (tuple(ids),))  # not_a_user_entry
@@ -1105,7 +1107,7 @@ class users(osv.osv):
                 # in which case we can't delay the login just for the purpose of
                 # update the last login date - hence we use FOR UPDATE NOWAIT to
                 # try to get the lock - fail-fast
-                cr.execute("insert into users_lastlogin (user_id, date) values (%s, now())", (user_id, ))
+                cr.execute("insert into users_last_login (user_id, date) values (%s, now()) on conflict (user_id) do update set date = now()", (user_id, ))
             except Exception:
                 # Failing to acquire the lock on the res_users row probably means
                 # another request is holding it - no big deal, we skip the update
