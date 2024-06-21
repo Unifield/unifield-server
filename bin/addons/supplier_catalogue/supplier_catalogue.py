@@ -227,19 +227,12 @@ class supplier_catalogue(osv.osv):
                 if (vals.get('active') is True or catalogue.active) and \
                         (('period_from' in vals and vals['period_from'] != catalogue.period_from)
                          or ('period_to' in vals and vals['period_to'] != catalogue.period_to)):
-                    cr.execute('''SELECT ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id = %s 
-                        GROUP BY catalogue_id''', (catalogue.id,))
-                    for cat_prods in cr.fetchall():
-                        period_from = 'period_from' in vals and (not vals['period_from'] and 'f' or vals['period_from']) \
-                                      or catalogue.period_from
-                        period_to = 'period_to' in vals and (not vals['period_to'] and 'f' or vals['period_to']) \
-                                    or catalogue.period_to
-                        invalid_prods = self.check_cat_prods_valid(cr, uid, catalogue.id, cat_prods[0], period_from,
-                                                                   period_to, context=context)
-                        if invalid_prods:
-                            raise osv.except_osv(_('Warning!'),
-                                                 _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
-                                                 % (', '.join(invalid_prods),))
+                    invalid_prods = self.check_cat_prods_valid(cr, uid, catalogue.id, [], vals['period_from'],
+                                                               vals['period_to'], context=context)
+                    if invalid_prods:
+                        raise osv.except_osv(_('Warning!'),
+                                             _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
+                                             % (', '.join(invalid_prods),))
 
         res = super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
 
@@ -259,15 +252,14 @@ class supplier_catalogue(osv.osv):
 
         line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
 
-        if not all(x.state == 'draft' for x in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context)):
+        catalogues = self.read(cr, uid, ids, ['state', 'active'], context=context)
+        if not all(x['state'] == 'draft' for x in catalogues):
             raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already confirmed. Please reload the page to update the status of this catalogue'))
 
         # US-12606: Check if the products exist in another valid catalogue
-        cr.execute('''SELECT c.id, c.active, ARRAY_AGG(cl.product_id) FROM supplier_catalogue_line cl 
-            LEFT JOIN supplier_catalogue c ON cl.catalogue_id = c.id WHERE catalogue_id IN %s GROUP BY c.id''', (tuple(ids),))
-        for cat in cr.fetchall():
-            if cat[1] is True:
-                invalid_prods = self.check_cat_prods_valid(cr, uid, cat[0], cat[2], False, False, context=context)
+        for catalogue in catalogues:
+            if catalogue['active']:
+                invalid_prods = self.check_cat_prods_valid(cr, uid, catalogue['id'], [], None, None, context=context)
                 if invalid_prods:
                     raise osv.except_osv(_('Warning!'), _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
                                          % (', '.join(invalid_prods),))
@@ -276,7 +268,7 @@ class supplier_catalogue(osv.osv):
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 
         # Update lines, this is required as many operations are done in the
-        # suppliser.catatogue.line.write() when the catalog state change
+        # supplier.catatogue.line.write() when the catalog state change
         line_obj.write(cr, uid, line_ids, {}, context=context)
 
         return True
@@ -851,43 +843,44 @@ class supplier_catalogue(osv.osv):
                 res['period_to'] = False
         return res
 
-    def check_cat_prods_valid(self, cr, uid, cat_id, product_ids, period_from=False, period_to=False, context=None):
+    def check_cat_prods_valid(self, cr, uid, cat_id, product_ids, period_from=None, period_to=None, context=None):
         '''
         Check if there is already a confirmed and active catalogue, having the same supplier, the same currency and
         with overlapping dates as a given catalogue for a list of products. Periods can be different if changed by
         on_change_period
         '''
-        if not cat_id or not product_ids:
-            raise osv.except_osv(_('Error'), _('Please give a catalogue ID and a list of product IDs to this method'))
+        if not cat_id:
+            raise osv.except_osv(_('Error'), _('Please give a catalogue ID to this method'))
         if not context:
             context = {}
 
         products = []
+        if not product_ids:
+            cr.execute('''SELECT ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id = %s 
+                GROUP BY catalogue_id''', (cat_id,))
+            product_ids = cr.fetchone()
         ftf = ['period_from', 'period_to', 'partner_id', 'currency_id']
         cat = self.browse(cr, uid, cat_id, fields_to_fetch=ftf, context=context)
-        period_from = period_from or cat.period_from
-        period_to = period_to or cat.period_to
-        period_cond = ""
-        period_conds = []
-        if period_from and period_from != 'f':
-            period_conds.append("((c.period_to >= '%s' OR c.period_to IS NULL) AND c.period_from <= '%s')" % (period_from, period_from))
-        if period_to and period_to != 'f':
-            period_conds.append("(c.period_from <= '%s' AND (c.period_to >= '%s' OR c.period_to IS NULL))" % (period_to, period_to))
-        elif period_from and period_from != 'f' and period_to in ('f', False):
-            period_conds.append("(c.period_from IS NOT NULL AND (c.period_to >= '%s' OR c.period_to IS NULL))" % (period_from,))
-        if period_from and period_from != 'f' and period_to and period_to != 'f':
-            period_conds.append("(c.period_from <= '%s' AND c.period_to >= '%s') OR (c.period_from >= '%s' AND c.period_to <= '%s')"
-                                % (period_from, period_to, period_from, period_to))
-        if period_conds:
-            period_cond = "(" + ' OR '.join(period_conds) + ") AND "
+        if period_from is None:
+            period_from = cat.period_from
+        elif period_from is False:
+            period_from = '1970-01-01'
+        if period_to is None:
+            period_to = cat.period_to
+        elif period_to is False:
+            period_to = '2999-12-31'
+
         cr.execute("""SELECT DISTINCT(p.default_code) FROM supplier_catalogue_line cl 
                 LEFT JOIN supplier_catalogue c ON cl.catalogue_id = c.id
                 LEFT JOIN product_product p ON cl.product_id = p.id
-            WHERE """ + period_cond + """c.state = 'confirmed' AND c.partner_id = %s AND c.active = 't' AND c.id != %s 
+            WHERE (COALESCE(c.period_from, '1970-01-01'), COALESCE(c.period_to,'2999-12-31')) 
+                    OVERLAPS (TO_DATE(%s, 'YYYY-MM-DD'), TO_DATE(%s, 'YYYY-MM-DD'))
+                AND c.state = 'confirmed' AND c.partner_id = %s AND c.active = 't' AND c.id != %s 
                 AND c.currency_id = %s AND cl.product_id IN %s
-        """, (cat.partner_id.id, cat.id, cat.currency_id.id, tuple(product_ids)))
+        """, (period_from, period_to, cat.partner_id.id, cat.id, cat.currency_id.id, tuple(product_ids)))
         for x in cr.fetchall():
             products.append(x[0])
+
         return products
 
 
@@ -970,7 +963,7 @@ class supplier_catalogue_line(osv.osv):
             catalogue = cat_obj.read(cr, uid, vals['catalogue_id'], ['state', 'active'], context=context)
             # US-12606: Check if the product exists in another valid catalogue
             if vals.get('product_id') and catalogue['state'] == 'confirmed' and catalogue['active']:
-                invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, vals['catalogue_id'], [vals['product_id']], False, False, context=context)
+                invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, vals['catalogue_id'], [vals['product_id']], None, None, context=context)
                 if invalid_prod:
                     raise osv.except_osv(_('Warning!'),
                                          _('This catalogue line contains the product %s which is a duplicate in another catalogue for the same supplier! Please remove the product from this/other catalogue before saving')
@@ -1172,7 +1165,7 @@ class supplier_catalogue_line(osv.osv):
             if catalogue_id:
                 catalogue = cat_obj.read(cr, uid, catalogue_id, ['state', 'active'], context=context)
                 if catalogue['state'] == 'confirmed' and catalogue['active']:
-                    invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, catalogue_id, [product_id], False, False, context=context)
+                    invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, catalogue_id, [product_id], None, None, context=context)
                     if invalid_prod:
                         return {
                             'value': {'product_id': False},
