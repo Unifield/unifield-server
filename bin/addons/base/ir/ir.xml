@@ -2098,5 +2098,17 @@
             <field name="args">()</field>
         </record>
 
+        <record model="ir.cron" id="deactivate_users">
+            <field name='name'>Deactivate users after 6 months of inactivity</field>
+            <field name='interval_number'>1</field>
+            <field name='interval_type'>days</field>
+            <field name="numbercall">-1</field>
+            <field name="active">True</field>
+            <field name="doall" eval="False" />
+            <field name="model">res.users</field>
+            <field name="function">_deactivate_user_no_activity</field>
+            <field name="args">()</field>
+        </record>
+
     </data>
 </openerp>

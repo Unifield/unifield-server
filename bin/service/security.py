@@ -131,7 +131,7 @@ def login(db_name, login, password):
         force_password, expired_password = cr.fetchone()
         if force_password:
             raise Exception("ForcePasswordChange: The admin requests your password change ...")
-        if expired_password and ( tools.config.get('is_prod_instance') or tools.misc.use_prod_sync(cr) ) and expired_password:
+        if expired_password and ( tools.config.get('is_prod_instance') or tools.misc.use_prod_sync(cr) ):
             raise Exception("PasswordExpired: your password has expired and must be changed.")
 
     finally:

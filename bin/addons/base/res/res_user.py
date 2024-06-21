@@ -585,6 +585,7 @@ class users(osv.osv):
         'nb_department_asked': fields.integer('Nb department popup displayed', readonly=1), # deprecated
         'dont_ask_email': fields.boolean("Don't ask for email", readonly=1), # deprecated
         'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1), # deprecated
+        'reactivation_date': fields.datetime('Reactivation date', readonly=1),
     }
 
     def search_web(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -939,7 +940,10 @@ class users(osv.osv):
             if cr.dbname in xmlrpc_uid_cache:
                 xmlrpc_uid_cache[cr.dbname] = None
 
-        if values.get('active') is False:
+        if values.get('active'):
+            cr.execute("update res_users set reactivation_date=NOW() where active='f' and id in %s", (tuple(ids),))
+
+        if not context.get('scheduled') and values.get('active') is False:
             sign_follow_up = self.pool.get('signature.follow_up')
             open_sign_ids = sign_follow_up.search(cr, uid, [('user_id', 'in', ids), ('signed', '=', 0), ('signature_is_closed', '=', False)], context=context)
             if open_sign_ids:
@@ -1037,7 +1041,8 @@ class users(osv.osv):
                        force_dept_email_popup=False,
                        nb_email_asked=False,
                        dont_ask_department=False,
-                       nb_department_asked=False
+                       nb_department_asked=False,
+                       reactivation_date=False,
                        )
         copydef.update(default)
         return super(users, self).copy(cr, uid, id, copydef, context)
@@ -1070,6 +1075,31 @@ class users(osv.osv):
             return tools.ustr(res[0])
         return False
 
+    def _deactivate_user_no_activity(self, cr, uid, *a, **b):
+        if not tools.config.get('is_prod_instance') and not tools.misc.use_prod_sync(cr):
+            return True
+        cr.execute('''
+                select u.id, u.login
+                    from res_users u
+                    left join users_last_login l on l.user_id = u.id
+                where
+                    active='t' and
+                    u.id != 1 and
+                    coalesce(synchronize, 'f') = 'f' and
+                    greatest(u.reactivation_date, coalesce(l.date, u.create_date)) + interval '6 months' < NOW()
+        ''')
+        user_ids = []
+        for x in cr.fetchall():
+            user_ids.append(x[0])
+            msg = _('User %s deactivated after 6 months of inactivity') % (x[1], )
+            self.pool.get('res.log').create(cr, uid, {
+                'name': '[AUTO] %s ' % msg,
+                'read': True,
+            })
+            tools.misc._register_log(self, cr, uid, x[0], 'res.users', 'User deactivated for inactivity', '', True, 'write')
+        self.write(cr, uid, user_ids, {'active': False, 'reactivation_date': False}, context={'scheduled': True})
+        return True
+
     def login(self, db, login, password):
         if not password:
             return False
@@ -1096,6 +1126,26 @@ class users(osv.osv):
                     return False
             elif password != database_password:
                 return False
+
+            if user_id != 1:
+                # check last activity: case of inactivation of cron job
+                cr.execute('''
+                    select
+                        u.id
+                    from
+                        res_users u
+                        left join users_last_login l on l.user_id = u.id
+                    where
+                        u.id = %s and
+                        coalesce(synchronize, 'f') = 'f' and
+                        greatest(u.reactivation_date, coalesce(l.date, u.create_date)) + interval '6 months' < NOW()
+                ''', (user_id,))
+                if cr.rowcount and ( tools.config.get('is_prod_instance') or tools.misc.use_prod_sync(cr) ):
+                    self._deactivate_user_no_activity(cr, 1)
+                    cr.commit()
+                    logging.getLogger('res.users').warn('User %s: login denied due to 6 months of inactivity' % (login,))
+                    return False
+
             try:
                 # autocommit: our single request will be performed atomically.
                 # (In this way, there is no opportunity to have two transactions

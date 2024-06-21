@@ -2264,3 +2264,32 @@ def _get_std_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=N
             ret[x[0]]['mml_status'] = 'T'
 
     return ret
+
+
+def _register_log(self, cr, uid, res_id, res_model, desc, old, new, log_type, context=None):
+    audit_line_obj = self.pool.get('audittrail.log.line')
+    audit_rule_obj = self.pool.get('audittrail.rule')
+
+    model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', res_model)], context=context)[0]
+
+    root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
+    user_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+    if isinstance(res_id, int):
+        res_id = [res_id]
+
+
+    for _id in res_id:
+        audit_line_obj.create(cr, root_uid, {
+            'description': desc,
+            'name': desc,
+            'log': audit_rule_obj.get_sequence(cr, uid, res_model, _id, context=context),
+            'object_id': model_id,
+            'user_id': user_uid,
+            'method': log_type,
+            'res_id': _id,
+            'new_value': new,
+            'new_value_text': '%s' % new,
+            'old_value': old,
+            'old_value_text': '%s' % old,
+            'field_description': desc,
+        }, context=context)
