@@ -224,9 +224,9 @@ class supplier_catalogue(osv.osv):
                         price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
                 # Check products if the periods are changed or the catalogue activated
-                if (vals.get('active') is True or catalogue.active) and \
-                        (('period_from' in vals and vals['period_from'] != catalogue.period_from)
-                         or ('period_to' in vals and vals['period_to'] != catalogue.period_to)):
+                if vals.get('active') is True or (catalogue.active and
+                                                  (('period_from' in vals and vals['period_from'] != catalogue.period_from)
+                                                   or ('period_to' in vals and vals['period_to'] != catalogue.period_to))):
                     invalid_prods = self.check_cat_prods_valid(cr, uid, catalogue.id, [], vals['period_from'],
                                                                vals['period_to'], context=context)
                     if invalid_prods:
@@ -851,33 +851,37 @@ class supplier_catalogue(osv.osv):
         '''
         if not cat_id:
             raise osv.except_osv(_('Error'), _('Please give a catalogue ID to this method'))
-        if not context:
+        if context is None:
             context = {}
 
         products = []
-        if not product_ids:
-            cr.execute('''SELECT ARRAY_AGG(product_id) FROM supplier_catalogue_line WHERE catalogue_id = %s 
-                GROUP BY catalogue_id''', (cat_id,))
-            product_ids = cr.fetchone()
+        prod_cond = "cl.product_id = ocl.product_id"
+        if product_ids:
+            if len(product_ids) == 1:
+                prod_cond = "cl.product_id = %s" % (product_ids[0],)
+            else:
+                prod_cond = "cl.product_id IN %s" % (tuple(product_ids),)
         ftf = ['period_from', 'period_to', 'partner_id', 'currency_id']
         cat = self.browse(cr, uid, cat_id, fields_to_fetch=ftf, context=context)
         if period_from is None:
-            period_from = cat.period_from
+            period_from = cat.period_from or '1970-01-01'
         elif period_from is False:
             period_from = '1970-01-01'
         if period_to is None:
-            period_to = cat.period_to
+            period_to = cat.period_to or '2999-12-31'
         elif period_to is False:
             period_to = '2999-12-31'
 
-        cr.execute("""SELECT DISTINCT(p.default_code) FROM supplier_catalogue_line cl 
+        cr.execute("""SELECT p.default_code FROM supplier_catalogue_line cl 
                 LEFT JOIN supplier_catalogue c ON cl.catalogue_id = c.id
                 LEFT JOIN product_product p ON cl.product_id = p.id
-            WHERE (COALESCE(c.period_from, '1970-01-01'), COALESCE(c.period_to,'2999-12-31')) 
+                , supplier_catalogue_line ocl
+                LEFT JOIN supplier_catalogue oc ON ocl.catalogue_id = oc.id
+            WHERE oc.id = %s AND oc.id != c.id AND c.state = 'confirmed' AND c.partner_id = %s AND c.active = 't'
+                AND (COALESCE(c.period_from, '1970-01-01'), COALESCE(c.period_to, '2999-12-31')) 
                     OVERLAPS (TO_DATE(%s, 'YYYY-MM-DD'), TO_DATE(%s, 'YYYY-MM-DD'))
-                AND c.state = 'confirmed' AND c.partner_id = %s AND c.active = 't' AND c.id != %s 
-                AND c.currency_id = %s AND cl.product_id IN %s
-        """, (period_from, period_to, cat.partner_id.id, cat.id, cat.currency_id.id, tuple(product_ids)))
+                AND c.currency_id = %s AND """ + prod_cond + """ GROUP BY p.default_code
+        """, (cat.id, cat.partner_id.id, period_from, period_to, cat.currency_id.id))
         for x in cr.fetchall():
             products.append(x[0])
 
