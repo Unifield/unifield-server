@@ -965,18 +965,20 @@ class supplier_catalogue_line(osv.osv):
         catalogue = False
         if vals.get('catalogue_id'):
             catalogue = cat_obj.read(cr, uid, vals['catalogue_id'], ['state', 'active'], context=context)
-            # US-12606: Check if the product exists in another valid catalogue
-            if vals.get('product_id') and catalogue['state'] == 'confirmed' and catalogue['active']:
-                invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, vals['catalogue_id'], [vals['product_id']], None, None, context=context)
-                if invalid_prod:
-                    raise osv.except_osv(_('Warning!'),
-                                         _('This catalogue line contains the product %s which is a duplicate in another catalogue for the same supplier! Please remove the product from this/other catalogue before saving')
-                                         % (invalid_prod[0],))
 
         if catalogue and catalogue['state'] != 'draft':
             vals = self._create_supplier_info(cr, uid, vals, context=context)
 
         ids = super(supplier_catalogue_line, self).create(cr, uid, vals, context=context)
+
+        # US-12606: Check if the product exists in another valid catalogue
+        if vals.get('product_id') and catalogue and catalogue['state'] == 'confirmed' and catalogue['active']:
+            invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, vals['catalogue_id'], [vals['product_id']], None,
+                                                         None, context=context)
+            if invalid_prod:
+                raise osv.except_osv(_('Warning!'),
+                                     _('This catalogue line contains the product %s which is a duplicate in another catalogue for the same supplier! Please remove the product from this/other catalogue before saving')
+                                     % (invalid_prod[0],))
 
         self._check_min_quantity(cr, uid, ids, context=context)
 
