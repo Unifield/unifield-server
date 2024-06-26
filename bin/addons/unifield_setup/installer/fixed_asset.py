@@ -61,6 +61,8 @@ class fixed_asset_setup(osv.osv_memory):
         '''
         if not fixed_asset_ok:
             return {'value': {'is_inactivable': True}}
+        elif fixed_asset_ok:
+            return {'value': {'is_inactivable': self._is_assets_inactivable(cr, uid)}}
 
     _columns = {
         'fixed_asset_ok': fields.boolean(string='Does the system manage Fixed assets ?'),
