@@ -40,7 +40,7 @@ class fixed_asset_setup(osv.osv_memory):
 
     def _get_is_inactivable(self, cr, uid, ids, field_name, arg, context=None):
         """
-        return True if at least one Asset Form is not in done or cancel state or at least one asset entry is draft, return False otherwise.
+        return False if at least one Asset Form is not in done or cancel state or at least one asset entry is draft, return True otherwise.
         """
         if not ids:
             return {}
