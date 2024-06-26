@@ -32,10 +32,13 @@ class fixed_asset_setup(osv.osv_memory):
             context = {}
         pa_obj = self.pool.get('product.asset')
         al_obj = self.pool.get('product.asset.line')
-        if pa_obj.search_exist(cr, uid, [('state', 'not in', ('done', 'cancel'))], context=context):
-            return False
-        if al_obj.search_exist(cr, uid, [('move_state', '=', 'draft')], context=context):
-            return False
+        uf_config = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        asset_activated = uf_config.fixed_asset_ok
+        if asset_activated:
+            if pa_obj.search_exist(cr, uid, [('state', 'not in', ('done', 'cancel'))], context=context):
+                return False
+            if al_obj.search_exist(cr, uid, [('move_state', '=', 'draft')], context=context):
+                return False
         return True
 
     def _get_is_inactivable(self, cr, uid, ids, field_name, arg, context=None):
@@ -55,8 +58,6 @@ class fixed_asset_setup(osv.osv_memory):
     def onchange_asset(self, cr, uid, ids, fixed_asset_ok=False):
         '''
         We need the authorization of inactivation only when the assets are activated.
-        This also manage the case when an instance has already inactivated assets before deployment of this code
-        while having non closed forms or unposted asset entries.
         '''
         if not fixed_asset_ok:
             return {'value': {'is_inactivable': True}}
@@ -79,7 +80,7 @@ class fixed_asset_setup(osv.osv_memory):
         res = super(fixed_asset_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         res['fixed_asset_ok'] = setup_id.fixed_asset_ok
-        res['is_inactivable'] = self._is_assets_inactivable(cr, uid, context=context)
+        res['is_inactivable'] = not setup_id.fixed_asset_ok or self._is_assets_inactivable(cr, uid, context=context)
         return res
 
     def execute(self, cr, uid, ids, context=None):
