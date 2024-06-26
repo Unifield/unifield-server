@@ -59,10 +59,15 @@ class fixed_asset_setup(osv.osv_memory):
         '''
         We need the authorization of inactivation only when the assets are activated.
         '''
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        setup_id = setup_obj.get_config(cr, uid).id
         if not fixed_asset_ok:
             return {'value': {'is_inactivable': True}}
         elif fixed_asset_ok:
-            return {'value': {'is_inactivable': self._is_assets_inactivable(cr, uid)}}
+            # recompute real value of is_inactivable and write it to the parent object
+            is_inactivable = self._is_assets_inactivable(cr, uid)
+            setup_obj.write(cr, uid, setup_id, {'is_inactivable': is_inactivable})
+            return {'value': {'is_inactivable': is_inactivable}}
 
     _columns = {
         'fixed_asset_ok': fields.boolean(string='Does the system manage Fixed assets ?'),
@@ -70,7 +75,7 @@ class fixed_asset_setup(osv.osv_memory):
     }
 
     _defaults = {
-        'is_inactivable': True,
+        'is_inactivable': lambda self, cr, uid, c={}: self._is_assets_inactivable(cr, uid, c),
     }
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):
