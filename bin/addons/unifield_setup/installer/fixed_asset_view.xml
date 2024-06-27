@@ -21,10 +21,16 @@
                     <attribute name='string'></attribute>
           </xpath>
           <group string="res_config_contents" position="replace">
-              <group colspan="5">
-              	<field name="fixed_asset_ok" />
+              <group colspan="5"  attrs="{'invisible': [('is_inactivable', '=', True)] }">
+                <html colspan="5">
+                    <h2><translate>Asset cannot be disabled. Please close the running assets first.</translate></h2>
+                </html>
               </group>
-           </group>
+              <group colspan="5">
+                <field name="is_inactivable" invisible="1" />
+                <field name="fixed_asset_ok" />
+              </group>
+          </group>
         </data>
       </field>
     </record>

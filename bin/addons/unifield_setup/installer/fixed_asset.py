@@ -21,27 +21,57 @@
 
 from osv import osv
 from osv import fields
-
+from tools.translate import _
 
 class fixed_asset_setup(osv.osv_memory):
     _name = 'fixed.asset.setup'
     _inherit = 'res.config'
 
+    def _is_assets_inactivable(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        pa_obj = self.pool.get('product.asset')
+        al_obj = self.pool.get('product.asset.line')
+        if pa_obj.search_exist(cr, uid, [('state', 'not in', ('done', 'cancel'))], context=context):
+            return False
+        if al_obj.search_exist(cr, uid, [('move_state', '=', 'draft')], context=context):
+            return False
+        return True
+
+    def _get_is_inactivable(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        return False if at least one Asset Form is not in done or cancel state or at least one asset entry is draft, return True otherwise.
+        """
+        if not ids:
+            return {}
+        res = {}
+        if context is None:
+            context = {}
+        is_inactivable = self._is_assets_inactivable(cr, uid, context=context)
+        for _id in ids:
+            res[_id] = is_inactivable
+        return res
+
     _columns = {
         'fixed_asset_ok': fields.boolean(string='Does the system manage Fixed assets ?'),
+        'is_inactivable': fields.function(_get_is_inactivable, method=True, type='boolean', string='Are Fixed Assets inactivable now?', store=False, readonly=True),
+    }
+
+    _defaults = {
+        'is_inactivable': lambda self, cr, uid, c={}: self._is_assets_inactivable(cr, uid, c),
     }
 
     def default_get(self, cr, uid, fields, context=None, from_web=False):
         '''
-        Display the default value for fixed asset
+        Display the default value for fixed asset and
+        update the value of is_inactivable.
         '''
         setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         res = super(fixed_asset_setup, self).default_get(cr, uid, fields, context=context, from_web=from_web)
 
         res['fixed_asset_ok'] = setup_id.fixed_asset_ok
-
+        res['is_inactivable'] = self._is_assets_inactivable(cr, uid, context=context)
         return res
-
 
     def execute(self, cr, uid, ids, context=None):
         '''
@@ -58,6 +88,8 @@ class fixed_asset_setup(osv.osv_memory):
             self.pool.get('ir.ui.menu').write(cr, uid, menu_id, {'active': payload.fixed_asset_ok}, context=context)
         if asset_menu_id:
             self.pool.get('ir.ui.menu').write(cr, uid, asset_menu_id, {'active': payload.fixed_asset_ok}, context=context)
+        if not payload.fixed_asset_ok and not payload.is_inactivable:
+            raise osv.except_osv(_('Warning'), _('Asset cannot be disabled. Please close the running assets first.'))
         setup_obj.write(cr, uid, [setup_id.id], {'fixed_asset_ok': payload.fixed_asset_ok}, context=context)
         if payload.fixed_asset_ok and self.pool.get('res.company')._get_instance_id(cr, uid):
             journal_obj = self.pool.get('account.journal')
@@ -73,8 +105,6 @@ class fixed_asset_setup(osv.osv_memory):
                         'type': 'depreciation',
                         'analytic_journal_id': ana_dep_journal_id[0]
                     }, context=context)
-
-
 
 
 fixed_asset_setup()
