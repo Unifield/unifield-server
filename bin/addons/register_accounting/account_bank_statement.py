@@ -2948,9 +2948,9 @@ class account_bank_statement_line(osv.osv):
                                           'reference': stl.ref or '', 'journal_id':stl.statement_id.journal_id.id}, context=context)
         if statement_id:
             return {
-                'name' : "Advance Return",
-                'type' : 'ir.actions.act_window',
-                'res_model' :"wizard.cash.return",
+                'name': _("Advance Return"),
+                'type': 'ir.actions.act_window',
+                'res_model': "wizard.cash.return",
                 'target': 'new',
                 'view_mode': 'form',
                 'view_type': 'form',
