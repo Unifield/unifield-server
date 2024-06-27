@@ -505,9 +505,12 @@ class hr_payroll_import(osv.osv_memory):
             context = {}
 
         # Verify that no draft payroll entries exists
-        line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')])
+        payroll_obj = self.pool.get('hr.payroll.msf')
+        line_ids = payroll_obj.search(cr, uid, [('state', '=', 'draft')])
         if len(line_ids):
-            raise osv.except_osv(_('Error'), _('You cannot import payroll entries. Please validate first draft payroll entries!'))
+            expense_lines = payroll_obj.search(cr, uid, [('id', 'in', line_ids), ('account_id.is_analytic_addicted', '=', True)])
+            bs_lines = payroll_obj.search(cr, uid, [('id', 'in', line_ids), ('account_id.is_analytic_addicted', '=', False)])
+            raise osv.except_osv(_('Error'), _('You cannot import payroll entries, there are %s draft expense line(s) and %s draft B/S line(s). Please validate draft entries or click on "Delete draft entries"') % (len(expense_lines), len(bs_lines)))
 
         # Prepare some values
         file_ext_separator = '.'
