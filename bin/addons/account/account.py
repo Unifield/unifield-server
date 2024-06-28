@@ -707,7 +707,7 @@ class account_journal(osv.osv):
         'is_active': True,
     }
 
-    _order = 'code'
+    _order = 'code, id'
 
     def _check_default_journal(self, cr, uid, ids, context=None):
         """
