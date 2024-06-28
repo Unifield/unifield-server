@@ -134,7 +134,7 @@ class purchase_order_line_sync(osv.osv):
                     msg = e.value
                 else:
                     msg = '%s' % e
-                raise SyncException(msg, target_object='purchase.order', target_id=po_ids[0])
+                raise SyncException(msg, target_object='purchase.order', target_id=po_ids[0], no_prod=False, line_vals={})
             else:
                 raise
 
@@ -250,7 +250,7 @@ class purchase_order_line_sync(osv.osv):
             try:
                 new_pol = self.create(cr, uid, pol_values, context=context)
             except Exception as e:
-                raise SyncException(hasattr(e, 'value') and e.value or '%s' % e , target_object='purchase.order', target_id=po_ids[0])
+                raise SyncException(hasattr(e, 'value') and e.value or '%s' % e, target_object='purchase.order', target_id=po_ids[0], no_prod=False, line_vals={})
             if debug:
                 logger.info("create pol id: %s, values: %s" % (new_pol, pol_values))
 
@@ -398,7 +398,7 @@ class purchase_order_line_sync(osv.osv):
                             msg = e.value
                         else:
                             msg = '%s' % e
-                        raise SyncException(msg, target_object='purchase.order.ad', target_id=po_ids[0], line_number=pol_info.line_number)
+                        raise SyncException(msg, target_object='purchase.order.ad', target_id=po_ids[0], line_number=pol_info.line_number, no_prod=False, line_vals={})
                     raise
         elif sol_dict['state'] == 'cancel' or (sol_dict['state'] == 'done' and sol_dict.get('from_cancel_out')):
             cancel_type = 'cancel'

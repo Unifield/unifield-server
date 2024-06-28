@@ -449,7 +449,7 @@ class so_po_common(osv.osv_memory):
         res = {}
         src_values = order_line.to_dict()
         split_cancel_line = {}
-        msg_err_not_found = "" # prod received by sync but not in our DB
+        msg_err_not_found = ""  # prod received by sync but not in our DB
 
         partner_type = self.get_partner_type(cr, uid, source, context)
 
@@ -520,6 +520,7 @@ class so_po_common(osv.osv_memory):
             res['name'] = order_line.comment
 
         if not res.get('product_id', False) and not res.get('name', False):
+            context['sync_no_prod'] = True
             raise osv.except_osv(_('Error'), _('Cannot process Document/line due to Product Code %s which does not exist in this instance')
                                  % (src_values.get('default_code'),))
 
@@ -529,6 +530,7 @@ class so_po_common(osv.osv_memory):
                 res['nomen_manda_0'] = rec_id
 
         if not res.get('nomen_manda_0') and not res.get('product_id'):
+            context['sync_no_prod'] = True
             if not msg_err_not_found:
                 msg_err_not_found += "Order could not be created as product not recognised, not existing in current database?\n"
             msg_err_not_found += "Product '%s' (line %s) with code %s not recognised.\n" % (order_line.name, order_line.line_number, order_line.default_code)

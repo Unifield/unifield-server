@@ -178,11 +178,13 @@ class sale_order_line(osv.osv):
         'to_correct_ok': fields.boolean('To correct'),
         'show_msg_ok': fields.boolean('Info on importation of lines'),
         'text_error': fields.text('Errors when trying to import file'),
+        'no_prod_nr_error': fields.char(size=256, string="Error when a line has been created by a NR because the product wasn't found"),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
     }
 
     _defaults = {
+        'no_prod_nr_error': '',
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }

@@ -470,13 +470,13 @@ class message_received(osv.osv):
 
     def execute(self, cr, uid, ids=None, context=None):
         # scope the context of message executions and loggers
-        context = dict((context or {}),
-                       sync_message_execution=True,
-                       sale_purchase_logger={})
+        context = dict((context or {}), sync_message_execution=True, sale_purchase_logger={})
         context['lang'] = 'en_US'
 
+        sol_obj = self.pool.get('sale.order.line')
+
         if ids is None:
-            ids = self.search(cr, uid, [('run','=',False)], order='rule_sequence, id', context=context)
+            ids = self.search(cr, uid, [('run', '=', False)], order='rule_sequence, id', context=context)
 
         if not ids: return 0
 
@@ -497,14 +497,14 @@ class message_received(osv.osv):
                     res = fn(cr, uid, message.source, *arg, context=new_ctx)
                 except RunWithoutException as e:
                     self.write(cr, uid, message.id, {
-                        'execution_date' : execution_date,
-                        'run' : True,
-                        'log' : "%s\nSet as run without exec by system" % e,
+                        'execution_date': execution_date,
+                        'run': True,
+                        'log': "%s\nSet as run without exec by system" % e,
                         'manually_set_run_date': fields.datetime.now(),
                         'editable': False
                     }, context=context)
                 except BaseException as e:
-                    error = e # Keep this message for the exception below
+                    error = e  # Keep this message for the exception below
                     self._logger.exception("Message execution %d failed!" % message.id)
                     cr.rollback()
                     if isinstance(e, osv.except_osv):
@@ -512,22 +512,25 @@ class message_received(osv.osv):
                     else:
                         error_msg = e
                     msg_data = {
-                        'execution_date' : execution_date,
-                        'run' : False,
-                        'log' : e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
+                        'execution_date': execution_date,
+                        'run': False,
+                        'log': e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
                     }
                     if isinstance(e, SyncException):
                         msg_data['target_object'] = e.target_object
                         msg_data['target_id'] = e.target_id
                         msg_data['line_number'] = e.line_number
-
+                        # US-11560: Create FO/PO line with no product if it wasn't found
+                        if method == 'create_so_line' and e.no_prod and e.line_vals and \
+                                not sol_obj.search_exist(cr, uid, [('no_prod_nr_id', '=', message.id)], context=context):
+                            sol_obj.create_so_line_no_product(cr, uid, e.line_vals, message.id, context=context)
 
                     self.write(cr, uid, message.id, msg_data, context=context)
                 else:
                     self.write(cr, uid, message.id, {
-                        'execution_date' : execution_date,
-                        'run' : True,
-                        'log' : tools.ustr(res),
+                        'execution_date': execution_date,
+                        'run': True,
+                        'log': tools.ustr(res),
                         'partial_run': new_ctx.get('partial_sync_run', False),
                     }, context=context)
             except BaseException as e1:
@@ -544,9 +547,9 @@ class message_received(osv.osv):
                 else:
                     error_msg = error
                 self.write(cr, uid, message.id, {
-                    'execution_date' : execution_date,
-                    'run' : False,
-                    'log' : error.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
+                    'execution_date': execution_date,
+                    'run': False,
+                    'log': error.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
                 }, context=context)
 
         return len(ids)

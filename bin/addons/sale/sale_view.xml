@@ -239,9 +239,9 @@
                                 filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="'3'" o2m_selectable="2"
                                 >
-                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or (not default_code and not nomenclature_description) or instance_sync_order_ref_needed == True;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}" editable="both">
+                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or (not default_code and not nomenclature_description) or instance_sync_order_ref_needed == True or no_prod_nr_id != False;blue:soq_updated == True" noteditable="fake_state not in ['draft', 'validated'] or no_prod_nr_id != False" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}" editable="both">
                                     <button name="tree_button" string="Add Line" attrs="{'invisible': [('state', '!=', 'validated')]}" />
-                                    <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
+                                    <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False), ('no_prod_nr_id', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
                                     <field name="default_name" displayon="noteditable"/>
@@ -251,7 +251,7 @@
                                     <button name="openform"
                                         special="openform"
                                         string="Configurator"
-                                        attrs="{'invisible': ['|', ('default_code', '!=', False), ('fake_state', 'not in', ['draft', 'validated'])]}"
+                                        attrs="{'invisible': ['|', '|', ('default_code', '!=', False), ('fake_state', 'not in', ['draft', 'validated']), ('no_prod_nr_id', '!=', False)]}"
                                         context="{'nom_configurator': True}"
                                         icon="terp-go-week" />
                                     <field name="product_uom_qty" string="Qty" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_qty_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True, price_unit, context)"/>
@@ -264,7 +264,7 @@
                                     <field name="esti_dd" attrs="{'readonly': [('fake_state', 'not in', ['draft', 'validated'])]}"/>
                                     <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}"/>
                                     <field name="stock_take_date" readonly="1"/>
-                                    <button name="button_analytic_distribution" string="Analytical distribution" type="object" icon="terp-stock_symbol-selection"/>
+                                    <button name="button_analytic_distribution" string="Analytical distribution" type="object" icon="terp-stock_symbol-selection" attrs="{'invisible': [('no_prod_nr_id', '!=', False)]}"/>
                                     <field name="analytic_distribution_state_recap" string="AD"/>
                                     <field name="kit_pol_check_sale_order_line" invisible="True"/>
                                     <field name="so_state_stored" invisible="True"/>
@@ -278,8 +278,9 @@
                                     <field name="soq_updated" invisible="1" readonly="1"/>
                                     <field name="instance_sync_order_ref" invisible="True"/>
                                     <field name="instance_sync_order_ref_needed" invisible="True"/>
+                                    <field name="no_prod_nr_id" invisible="True"/>
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', '!=', 'validated')]}"/>
-                                    <button string="Validate" icon="terp-check" name="validated" type="object" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="object" attrs="{'invisible': ['|', ('fake_state', '!=', 'draft'), ('no_prod_nr_id', '!=', False)]}" header="True"/>
                                     <button string="Cancel" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
                                     <field name="mml_status" />
                                     <field name="msl_status" />
@@ -1098,7 +1099,8 @@
                 <form>
                     <field name="to_correct_ok" invisible="1"/>
                     <field name="inactive_product" invisible="1" />
-                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
+                    <field name="no_prod_nr_id" invisible="1" />
+                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False), ('no_prod_nr_id', '=', False)]}">
                         <html>
                             <style>
                                 #error_message_unifield
@@ -1125,7 +1127,7 @@
                                 {
                                     height: 1em;
                                     min-height: 1em;
-                                        color: red;
+                                    color: red;
                                     font-weight: bold;
                                     text-transform: uppercase;
                                     padding: 5px;
@@ -1141,6 +1143,7 @@
                             <div id="error_message_unifield">
                                 <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" readonly="1" />
                                 <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" string="Error" colspan="4" />
+                                <field name="no_prod_nr_error" attrs="{'invisible': [('no_prod_nr_id', '=', False)]}" string="Error" colspan="4" readonly="1" />
                             </div>
                         </html>
                     </group>

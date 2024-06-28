@@ -851,6 +851,7 @@ Please check if these can be switched for UniData type product(s) instead, or co
         context.pop('no_check_line')
 
         return_info = {}
+        sol_nr_ids, nr_to_wo_exec_ids = [], []
         for sol in self.browse(cr, uid, ids, context=context):
             self._check_update_cv_line(cr, uid, sol, context=context)
 
@@ -871,10 +872,20 @@ Please check if these can be switched for UniData type product(s) instead, or co
                 if pol_to_cancel:
                     netsvc.LocalService("workflow").trg_validate(uid, 'purchase.order.line', pol_to_cancel, 'cancel', cr)
 
+            # Get the lines that were created by synch without a product
+            if sol.no_prod_nr_id:
+                sol_nr_ids.append(sol.id)
+                nr_to_wo_exec_ids.append(sol.no_prod_nr_id.id)
+
             # generate sync message:
             if not (initial_fo_states[sol.id] == 'draft' and not sol.order_id.fo_created_by_po_sync): # draft push FO
                 self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol.id, return_info,
                                                                                       'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+
+        # Set the linked NRs that created the line without product to run without execution
+        if sol_nr_ids and nr_to_wo_exec_ids:
+            self.pool.get('sync.client.message_received').manual_set_as_run(cr, uid, nr_to_wo_exec_ids, context=context)
+            self.write(cr, uid, sol_nr_ids, {'no_prod_nr_id': False, 'no_prod_nr_error': ''}, context=context)
 
         return True
 
@@ -952,7 +963,12 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate \'%s\' without a Requested date.') % (so.name))
 
-            return self.pool.get('sale.order.line').validated(cr, uid, [sol.id for sol in so.order_line], context=context)
+            # Prevent lines without products created by a NR during synch to be validated
+            sol_ids = []
+            for sol in so.order_line:
+                if not sol.no_prod_nr_id:
+                    sol_ids.append(sol.id)
+            return self.pool.get('sale.order.line').validated(cr, uid, sol_ids, context=context)
 
         return True
 

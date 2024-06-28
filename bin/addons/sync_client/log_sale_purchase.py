@@ -40,15 +40,20 @@ def check(fn):
 
     return wrapper
 
+
 class RunWithoutException(Exception):
     pass
 
+
 class SyncException(Exception):
-    def __init__(self, value, target_object, target_id, line_number=False):
+    def __init__(self, value, target_object, target_id, line_number=False, no_prod=False, line_vals=False):
         super(Exception, self).__init__(value)
         self.target_object = target_object
         self.target_id = target_id
         self.line_number = line_number
+        self.no_prod = no_prod
+        self.line_vals = line_vals
+
 
 class log_sale_purchase(osv.osv):
     _name = 'sync.client.log_sale_purchase'
@@ -140,6 +145,7 @@ class log_sale_purchase(osv.osv):
 
     _order = "synchro_id desc"
 
+
 log_sale_purchase()
 
 
@@ -189,6 +195,7 @@ class SalePurchaseLogger(object):
                     self._model._name, 'synchro_id', self._id)
             self._model.unlink(self._cr, self._uid, [self._id])
             self._id = None
+
 
 def get_sale_purchase_logger(cr, uid, model, res_id, context=None):
     assert context is not None, \
