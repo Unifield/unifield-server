@@ -517,7 +517,7 @@ class product_asset(osv.osv):
         'invo_date': fields.date('Invoice Date', readonly=1),
         'invo_value': fields.float('Value', readonly=1),
         'invoice_id': fields.many2one('account.invoice', 'Invoice'),
-        'move_line_id': fields.many2one('account.move.line', 'Journal Item', domain="['&', '&', '&', ('journal_id.type', 'in', ['purchase', 'correction_hq', 'hq', 'intermission']), ('debit', '>', 0), ('move_id.state', '=', 'posted'), ('account_id.user_type_code', 'in', ['asset', 'expense'])]"),
+        'move_line_id': fields.many2one('account.move.line', 'Journal Item', domain="['&', '&', '&', ('journal_id.type', 'in', ['purchase', 'correction_hq', 'hq', 'intermission']), ('debit', '>', 0), ('move_id.state', '=', 'posted'), ('account_id.user_type_code', 'in', ['asset', 'expense'])]", context="{'from_asset_journal_domain': [('type', 'in', ['purchase', 'correction_hq', 'hq', 'intermission'])]}"),
         'quantity_divisor': fields.integer_null('Divisor Quantity', help='This quantity will divide the total invoice value.'),
         'invoice_line_id': fields.many2one('account.invoice.line', 'Invoice Line'),
         'invo_currency': fields.many2one('res.currency', 'Currency', readonly=1),

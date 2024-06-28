@@ -334,8 +334,12 @@ class account_move(osv.osv):
     def onchange_filter_journal(self, cr, uid, ids, instance_id, journal_id, context=None):
         value = {}
         dom = []
+        if context is None:
+            context = {}
         if instance_id:
             dom = [('instance_id', '=', instance_id)]
+            if context.get('from_asset_journal_domain') and isinstance(context['from_asset_journal_domain'], list):
+                dom += context['from_asset_journal_domain']
             if journal_id and not self.pool.get('account.journal').search(cr, uid, [('id', '=', journal_id), ('instance_id', '=', instance_id)]):
                 value['journal_id_fake'] = False
 
