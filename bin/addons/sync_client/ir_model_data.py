@@ -234,14 +234,28 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in list(rec.keys()))
                 WHERE module = 'sd' AND model = %s AND res_id = %s""",
                        [values['model'], values['res_id']])
 
-        # idem for xmlids
-        # different res_id means re-creation
-        cr.execute("""\
-            DELETE FROM ir_model_data
-            WHERE module = %s AND name = %s""",
-                   [values['module'], values['name']])
-        if cr._obj.rowcount and values['module'] == 'sd':
-            values['force_recreation'] = not context.get('sync_update_execution', False)
+            cr.execute("""
+                select
+                    id, model, res_id
+                from
+                    ir_model_data
+                where
+                    module = 'sd' and name = %s
+                """, (values['name'], ))
+            to_del = []
+            for x in cr.fetchall():
+                if not self.pool.get(x[1]).exists(cr, uid, x[2]):
+                    to_del.append(x[0])
+            if to_del:
+                cr.execute("delete from ir_model_data where id in %s and module = 'sd' and name=%s", (tuple(to_del), values['name']))
+                values['force_recreation'] = not context.get('sync_update_execution', False)
+        else:
+            # idem for xmlids
+            # different res_id means re-creation
+            cr.execute("""\
+                DELETE FROM ir_model_data
+                WHERE module = %s AND name = %s""",
+                       [values['module'], values['name']])
 
         id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
 
