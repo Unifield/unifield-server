@@ -774,6 +774,7 @@ class purchase_order_line(osv.osv):
         'catalog_mismatch': fields.selection([('conform', 'Conform'), ('na', 'N/A'),('soq', 'SOQ') ,('price', 'Unit Price'), ('price_soq', 'Unit Price & SOQ')], 'Catalog Mismatch', size=64, readonly=1, select=1),
         'catalog_price_unit': fields.float_null('Catalogue Price Unit', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
         'catalog_soq': fields.float_null('Catalogue SoQ', digits=(16,2), readonly=1),
+        'no_prod_nr_id': fields.many2one('sync.client.message_received', string='Linked Not Run that created this line without a product', readonly=True),
     }
 
     _defaults = {
@@ -802,6 +803,7 @@ class purchase_order_line(osv.osv):
         'mml_status': 'na',
         'msl_status': 'na',
         'catalog_mismatch': '',
+        'no_prod_nr_id': False,
     }
 
     def _check_max_price(self, cr, uid, ids, context=None):
@@ -1452,6 +1454,8 @@ class purchase_order_line(osv.osv):
             'from_dpo_line_id': False,
             'dates_modified': False,
             'catalog_mismatch': '',
+            'no_prod_nr_id': False,
+            'no_prod_nr_error': '',
         })
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
@@ -1481,7 +1485,10 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False,
+                        'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False,
+                        'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False,
+                        'no_prod_nr_id': False, 'no_prod_nr_error': ''})
 
         if not context.get('split_line'):
             default.update({'stock_take_date': False, 'loan_line_id': False})

@@ -24,8 +24,7 @@ import tools
 
 import traceback
 import logging
-from .log_sale_purchase import SyncException
-from .log_sale_purchase import RunWithoutException
+from .log_sale_purchase import SyncException, RunWithoutException, ProdNotFoundException
 
 from tools.safe_eval import safe_eval as eval
 
@@ -473,8 +472,6 @@ class message_received(osv.osv):
         context = dict((context or {}), sync_message_execution=True, sale_purchase_logger={})
         context['lang'] = 'en_US'
 
-        sol_obj = self.pool.get('sale.order.line')
-
         if ids is None:
             ids = self.search(cr, uid, [('run', '=', False)], order='rule_sequence, id', context=context)
 
@@ -493,7 +490,7 @@ class message_received(osv.osv):
                 try:
                     fn = getattr(self.pool.get(model), method)
                     new_ctx = context.copy()
-                    new_ctx.update({'identifier': message.identifier})
+                    new_ctx.update({'identifier': message.identifier, 'msg_id': message.id})
                     res = fn(cr, uid, message.source, *arg, context=new_ctx)
                 except RunWithoutException as e:
                     self.write(cr, uid, message.id, {
@@ -502,6 +499,12 @@ class message_received(osv.osv):
                         'log': "%s\nSet as run without exec by system" % e,
                         'manually_set_run_date': fields.datetime.now(),
                         'editable': False
+                    }, context=context)
+                except ProdNotFoundException as e:
+                    self.write(cr, uid, message.id, {
+                        'execution_date': execution_date,
+                        'run': False,
+                        'log': "An error has occurred during the line creation: \n%s" % e,
                     }, context=context)
                 except BaseException as e:
                     error = e  # Keep this message for the exception below
@@ -520,10 +523,6 @@ class message_received(osv.osv):
                         msg_data['target_object'] = e.target_object
                         msg_data['target_id'] = e.target_id
                         msg_data['line_number'] = e.line_number
-                        # US-11560: Create FO/PO line with no product if it wasn't found
-                        if method == 'create_so_line' and e.no_prod and e.line_vals and \
-                                not sol_obj.search_exist(cr, uid, [('no_prod_nr_id', '=', message.id)], context=context):
-                            sol_obj.create_so_line_no_product(cr, uid, e.line_vals, message.id, context=context)
 
                     self.write(cr, uid, message.id, msg_data, context=context)
                 else:

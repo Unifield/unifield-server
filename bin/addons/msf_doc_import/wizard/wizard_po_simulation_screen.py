@@ -1499,7 +1499,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             # Comment
             write_vals['imp_comment'] = values[15] and values[15].strip()
 
-            if line.po_line_id.state in ['cancel', 'cancel_r']:
+            if line.po_line_id.state in ['cancel', 'cancel_r'] or line.po_line_id.no_prod_nr_id:
                 self.write(cr, uid, [line.id], {'type_change': 'ignore'}, context=context)
                 continue
 

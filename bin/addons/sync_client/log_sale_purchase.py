@@ -46,13 +46,16 @@ class RunWithoutException(Exception):
 
 
 class SyncException(Exception):
-    def __init__(self, value, target_object, target_id, line_number=False, no_prod=False, line_vals=False):
+    def __init__(self, value, target_object, target_id, line_number=False):
         super(Exception, self).__init__(value)
         self.target_object = target_object
         self.target_id = target_id
         self.line_number = line_number
-        self.no_prod = no_prod
-        self.line_vals = line_vals
+
+
+class ProdNotFoundException(Exception):
+    def __init__(self, value):
+        super(Exception, self).__init__(value)
 
 
 class log_sale_purchase(osv.osv):
