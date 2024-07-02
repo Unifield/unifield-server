@@ -24,7 +24,9 @@ import tools
 
 import traceback
 import logging
-from .log_sale_purchase import SyncException, RunWithoutException, ProdNotFoundException
+from .log_sale_purchase import SyncException
+from .log_sale_purchase import RunWithoutException
+from .log_sale_purchase import ProdNotFoundException
 
 from tools.safe_eval import safe_eval as eval
 
