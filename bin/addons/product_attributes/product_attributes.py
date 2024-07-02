@@ -3143,7 +3143,6 @@ class product_attributes(osv.osv):
             old_fields_to_read = list(set(old_fields_to_read).union(self.merged_fields_to_keep))
 
         old_prod_data = self.read(cr, uid, old_prod_id, old_fields_to_read, context=context)
-
         instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
 
         errors = []
@@ -3303,10 +3302,10 @@ class product_attributes(osv.osv):
                 self.write(cr, uid, kept_id, new_write_data, context={'lang': lang})
 
         if merge_type == 'section':
-            old_prod_data = {'active': False, 'unidata_merged': True, 'unidata_merge_date': fields.datetime.now(), 'kept_product_id': kept_id, 'kept_initial_product_id': kept_id, 'new_code': kept_data['default_code']}
+            old_prod_new_data = {'active': False, 'unidata_merged': True, 'unidata_merge_date': fields.datetime.now(), 'kept_product_id': kept_id, 'kept_initial_product_id': kept_id, 'new_code': kept_data['default_code']}
         else:
-            old_prod_data = {'active': False, 'replaced_by_product_id': kept_id}
-        self.write(cr, uid, old_prod_id, old_prod_data, context=context)
+            old_prod_new_data = {'active': False, 'replaced_by_product_id': kept_id}
+        self.write(cr, uid, old_prod_id, old_prod_new_data, context=context)
 
         # US-11877: To have those translations in the audittrail without putting mandatory lang at the creation
         # generate terms on translations export
