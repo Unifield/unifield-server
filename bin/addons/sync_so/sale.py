@@ -26,8 +26,7 @@ from . import so_po_common
 assert so_po_common # needed by rw
 import time
 from sync_client import get_sale_purchase_logger
-from sync_client import SyncException
-from sync_client import ProdNotFoundException
+from sync_client import SyncException, ProdNotFoundException
 from tools.translate import _
 
 

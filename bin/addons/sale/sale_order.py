@@ -2412,7 +2412,6 @@ class sale_order_line(osv.osv):
         'instance_sync_order_ref_needed': fields.function(_get_instance_sync_order_ref_needed, method=True, type='boolean', store=False, string='Is instance_sync_order_ref needed ?'),
         'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
         'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
-        'no_prod_nr_id': fields.many2one('sync.client.message_received', string='Linked Not Run that created this line without a product', readonly=True),
 
     }
     _order = 'sequence, id desc'
@@ -2440,7 +2439,6 @@ class sale_order_line(osv.osv):
         'instance_sync_order_ref_needed': _defaults_instance_sync_order_ref_needed,
         'mml_status': 'na',
         'msl_status': 'na',
-        'no_prod_nr_id': False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

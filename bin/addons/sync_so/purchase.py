@@ -28,8 +28,7 @@ from tools.translate import _
 import uuid
 
 from sync_client import get_sale_purchase_logger
-from sync_client import SyncException
-from sync_client import ProdNotFoundException
+from sync_client import SyncException, ProdNotFoundException
 from sync_client.log_sale_purchase import RunWithoutException
 
 

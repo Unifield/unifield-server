@@ -774,7 +774,6 @@ class purchase_order_line(osv.osv):
         'catalog_mismatch': fields.selection([('conform', 'Conform'), ('na', 'N/A'),('soq', 'SOQ') ,('price', 'Unit Price'), ('price_soq', 'Unit Price & SOQ')], 'Catalog Mismatch', size=64, readonly=1, select=1),
         'catalog_price_unit': fields.float_null('Catalogue Price Unit', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
         'catalog_soq': fields.float_null('Catalogue SoQ', digits=(16,2), readonly=1),
-        'no_prod_nr_id': fields.many2one('sync.client.message_received', string='Linked Not Run that created this line without a product', readonly=True),
     }
 
     _defaults = {
@@ -803,7 +802,6 @@ class purchase_order_line(osv.osv):
         'mml_status': 'na',
         'msl_status': 'na',
         'catalog_mismatch': '',
-        'no_prod_nr_id': False,
     }
 
     def _check_max_price(self, cr, uid, ids, context=None):

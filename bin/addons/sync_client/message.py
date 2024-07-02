@@ -24,9 +24,7 @@ import tools
 
 import traceback
 import logging
-from .log_sale_purchase import SyncException
-from .log_sale_purchase import RunWithoutException
-from .log_sale_purchase import ProdNotFoundException
+from .log_sale_purchase import SyncException, RunWithoutException, ProdNotFoundException
 
 from tools.safe_eval import safe_eval as eval
 
@@ -557,6 +555,38 @@ class message_received(osv.osv):
 
 
 message_received()
+
+
+class sale_order_line(osv.osv):
+    _name = 'sale.order.line'
+    _inherit = 'sale.order.line'
+
+    _columns = {
+        'no_prod_nr_id': fields.many2one('sync.client.message_received', string='Linked Not Run that created this line without a product', readonly=True),
+    }
+
+    _defaults = {
+        'no_prod_nr_id': False,
+    }
+
+
+sale_order_line()
+
+
+class purchase_order_line(osv.osv):
+    _name = 'purchase.order.line'
+    _inherit = 'purchase.order.line'
+
+    _columns = {
+        'no_prod_nr_id': fields.many2one('sync.client.message_received', string='Linked Not Run that created this line without a product', readonly=True),
+    }
+
+    _defaults = {
+        'no_prod_nr_id': False,
+    }
+
+
+purchase_order_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
