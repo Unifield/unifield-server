@@ -3274,10 +3274,14 @@ class product_attributes(osv.osv):
         write_context = context.copy()
         write_context['keep_standard_price'] = True # to allow to write standard_price field
         write_context['lang'] = 'en_US'
-        if merge_type != 'section' and not context.get('sync_update_execution'):
-            # copy fields from old product to kept prod
-            for field in self.merged_fields_to_keep:
-                new_write_data[field] = old_prod_data[field]
+        if merge_type != 'section':
+            if not context.get('sync_update_execution'):
+                # copy fields from old product to kept prod
+                for field in self.merged_fields_to_keep:
+                    new_write_data[field] = old_prod_data[field]
+            else:
+                # project execute merge from coo
+                new_write_data['procure_delay'] = old_prod_data['procure_delay']
 
         self.write(cr, uid, kept_id, new_write_data, context=write_context)
         if merge_type != 'section' and not context.get('sync_update_execution'):
