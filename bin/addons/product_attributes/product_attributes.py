@@ -3125,9 +3125,9 @@ class product_attributes(osv.osv):
 
         kept_context = context.copy()
         kept_context['lang'] = 'en_US'
-        kept_data = self.read(cr, uid, kept_id, ['default_code','perishable', 'batch_management', 'old_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'standard_ok', 'international_status'], context=kept_context)
+        kept_data = self.read(cr, uid, kept_id, ['default_code','perishable', 'batch_management', 'old_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'standard_ok', 'international_status', 'finance_price'], context=kept_context)
 
-        old_fields_to_read = ['default_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'can_be_hq_merged', 'international_status', 'standard_ok']
+        old_fields_to_read = ['default_code', 'product_tmpl_id', 'standard_price', 'qty_available', 'active', 'can_be_hq_merged', 'international_status', 'standard_ok', 'finance_price']
         if merge_type != 'section':
             old_fields_to_read = list(set(old_fields_to_read).union(self.merged_fields_to_keep))
 
