@@ -1066,5 +1066,10 @@
             <field name="method">us_12598_ocb_group_user_manager</field>
         </record>
 
+        <!-- UF34.0 -->
+        <record id="us_12916_11496_13123_donation_reason_type" model="patch.scripts">
+            <field name="method">us_12916_11496_13123_donation_reason_type</field>
+        </record>
+
     </data>
 </openerp>

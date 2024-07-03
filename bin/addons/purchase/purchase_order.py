@@ -1496,7 +1496,7 @@ class purchase_order(osv.osv):
             if draft_po_ids and pol_obj.search_exist(cr, uid, [('order_id', 'in', draft_po_ids), ('origin', '!=', False), ('state', '!=', 'cancel')], context=context):
                 raise osv.except_osv(
                     _('Error'),
-                    _('You can\'t change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document')
+                    _('You can\'t change the Order Type to Loan, Donation to prevent losses, Standard donation or In Kind Donation if a line has a Source Document')
                 )
 
         res = super(purchase_order, self).write(cr, uid, ids, vals, context=context)
@@ -2412,7 +2412,7 @@ class purchase_order(osv.osv):
                 'value': {'order_type': 'regular'},
                 'warning': {
                     'title': _('Error'),
-                    'message': _('You can\'t change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document')
+                    'message': _('You can\'t change the Order Type to Loan, Donation to prevent losses, Standard donation or In Kind Donation if a line has a Source Document')
                 },
             }
 

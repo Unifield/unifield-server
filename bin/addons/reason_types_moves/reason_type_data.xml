@@ -59,7 +59,7 @@
         </record>
         
         <record id="reason_type_donation_expiry" model="stock.reason.type">
-            <field name="name">Donation before expiry</field>
+            <field name="name">Donation to prevent losses</field>
             <field name="code">10</field>
             <field name="incoming_ok">True</field>
             <field name="outgoing_ok">True</field>

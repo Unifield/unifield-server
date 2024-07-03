@@ -28,7 +28,7 @@ from tools.translate import _
 from tools.misc import float_uom_to_str
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
-ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation to prevent losses'),
               ('donation_st', 'Standard donation'), ('loan', 'Loan'), ('loan_return', 'Loan Return'),
               ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
               ('direct', 'Direct Purchase Order')]

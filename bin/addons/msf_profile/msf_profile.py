@@ -57,6 +57,18 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF34.0
+    def us_12916_11496_13123_donation_reason_type(self, cr, uid, *a, **b):
+        '''
+        Change the name of the RT 'Donation before expiry' to 'Donation to prevent losses'
+        '''
+        data_obj = self.pool.get('ir.model.data')
+        exp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+
+        cr.execute("""UPDATE stock_reason_type SET name = 'Donation to prevent losses' WHERE id = %s""", (exp_rt_id,))
+
+        return True
+
     # UF33.0
     def us_12598_ocb_group_user_manager(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
@@ -1264,14 +1276,14 @@ class patch_scripts(osv.osv):
                     AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
         ''', (don_st_rt, '%-return%', '%-surplus%'))
 
-        # Donation before expiry
+        # Donation to prevent losses
         cr.execute('''
             UPDATE stock_picking SET reason_type_id = %s 
             WHERE id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id
                 WHERE p.type = 'out' AND s.procurement_request = 'f' AND s.order_type = 'donation_exp' 
                     AND p.name NOT LIKE %s AND p.name NOT LIKE %s)
         ''', (don_exp_rt, '%-return%', '%-surplus%'))
-        self.log_info(cr, uid, "US-10587: %d OUTs/Picks/PPLs/Packs and their lines had their Reason Type set to 'Donation before expiry'" % (cr.rowcount,))
+        self.log_info(cr, uid, "US-10587: %d OUTs/Picks/PPLs/Packs and their lines had their Reason Type set to 'Donation to prevent losses'" % (cr.rowcount,))
         cr.execute('''
             UPDATE stock_move SET reason_type_id = %s 
             WHERE picking_id IN (SELECT p.id FROM stock_picking p LEFT JOIN sale_order s ON p.sale_id = s.id

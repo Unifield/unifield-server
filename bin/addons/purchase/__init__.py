@@ -71,7 +71,7 @@ PURCHASE_ORDER_STATE_SELECTION = [
 
 ORDER_TYPES_SELECTION = [
     ('regular', _('Regular')),
-    ('donation_exp', _('Donation before expiry')),
+    ('donation_exp', _('Donation to prevent losses')),
     ('donation_st', _('Standard donation')),
     ('loan', _('Loan')),
     ('loan_return', _('Loan Return')),

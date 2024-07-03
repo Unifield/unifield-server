@@ -728,7 +728,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'short_client_ref': fields.function(_get_short_client_ref, method=True, string='Customer Reference', type='char', size=64, store=False),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', required=True, change_default=True, select=True),
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation to prevent losses'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), ('loan_return', 'Loan Return'), ],
                                        string='Order Type', required=True, readonly=True),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),

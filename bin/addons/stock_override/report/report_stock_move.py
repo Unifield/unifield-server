@@ -79,7 +79,7 @@ class report_stock_move(osv.osv):
         'day_diff': fields.float('Execution Lead Time (Days)', readonly=True, digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
         'stock_journal': fields.many2one('stock.journal', 'Stock Journal', select=True),
         'order_type': fields.function(_get_order_information, method=True, string='Order Type', type='selection',
-                                      selection=[('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+                                      selection=[('regular', 'Regular'), ('donation_exp', 'Donation to prevent losses'),
                                                  ('donation_st', 'Standard donation'), ('loan', 'Loan'),
                                                  ('loan_return', 'Loan Return'), ('in_kind', 'In Kind Donation'),
                                                  ('purchase_list', 'Purchase List'), ('direct', 'Direct Purchase Order')],
@@ -526,7 +526,7 @@ product will be shown.""",
 
         ORDER_TYPES = {
             'regular': _('Regular'),
-            'donation_exp': _('Donation before expiry'),
+            'donation_exp': _('Donation to prevent losses'),
             'donation_st': _('Standard donation'),
             'loan': _('Loan'),
             'loan_return': _('Loan Return'),

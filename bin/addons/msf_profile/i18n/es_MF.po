@@ -56886,8 +56886,8 @@ msgstr "Disponible HTML"
 #: selection:report.stock.move,order_type:0
 #: view:purchase.order:0
 #: selection:purchase.report,order_type:0
-msgid "Donation before expiry"
-msgstr "Donación antes de caducidad"
+msgid "Donation to prevent losses"
+msgstr "Donación para evitar pérdidas"
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.cv

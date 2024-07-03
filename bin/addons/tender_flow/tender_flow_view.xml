@@ -410,7 +410,7 @@
                     <newline />
                     <group string="Type" expand="0">
                             <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]" />
-                            <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]" />
+                            <filter icon="terp-stage" string="Donation to prevent losses" domain="[('order_type','=','donation_exp')]" />
                             <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]" />
                             <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]" />
                             <filter icon="terp-gtk-jump-to-rtl" string="In-Kind donation" domain="[('order_type','=','in_kind')]" />
