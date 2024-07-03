@@ -1099,27 +1099,6 @@ action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.act
         <menuitem action="product.previous_mass_update_action" id="menu_import_request" sequence="1" parent="product.parent_product_mass_update" />
         <menuitem action="product.products_bn_ed_mass_update_action" id="products_bn_ed_mass_update_menu" sequence="20" parent="product.parent_product_mass_update" />
 
-        <record id="product_ask_activate_wizard_form_view" model="ir.ui.view">
-            <field name="name">product.ask.activate.wizard.form.view</field>
-            <field name="model">product.ask.activate.wizard</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Warning">
-                    <field name="product_id" invisible="1" />
-                    <group colspan="4" col="1">
-                        <html>
-                            <h3 style="text-align: center; margin: 10px"><translate>This is an NSL (Non-standard Local) product, please ensure that there is no duplicate “Local” product with which this product should be merged. If you activate and start to use this product it will no longer be possible to merge it with another.</translate></h3>
-                        </html>
-                    </group>
-                    <group colspan="4" col="2">
-                        <separator string="Actions" colspan="2" />
-                        <button name="do_activate_product" string="OK" type="object" icon="gtk-ok" colspan="1" />
-                        <button name="button_close" string="Cancel" type="object" icon="gtk-cancel" colspan="1" />
-                    </group>
-                </form>
-            </field>
-        </record>
-
         <record id="product_pull_single_ud_view" model="ir.ui.view">
             <field name="name">product.pull_single_ud.view</field>
             <field name="model">product.pull_single_ud</field>

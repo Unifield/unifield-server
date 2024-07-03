@@ -2085,7 +2085,6 @@ class product_attributes(osv.osv):
         '''
         Re-activate product.
         '''
-        wiz_obj = self.pool.get('product.ask.activate.wizard')
         data_obj = self.pool.get('ir.model.data')
 
         instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
@@ -2093,24 +2092,14 @@ class product_attributes(osv.osv):
         itc_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1]
         esc_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1]
         local_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
-        for product in self.browse(cr, uid, ids, context=context):
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['active', 'default_code', 'name', 'standard_ok', 'oc_subscription', 'international_status', 'state_ud'],context=context):
             vals = {'active': True}
             if product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already active.') % (product.default_code, product.name))
             if product.standard_ok == 'non_standard_local':
                 if not product.oc_subscription:
                     raise osv.except_osv(_('Error'), _('Product activation is not allowed on Non-Standard Local Products which are not OC Subscribed'))
-                if instance_level == 'coordo':
-                    return {
-                        'type': 'ir.actions.act_window',
-                        'res_model': 'product.ask.activate.wizard',
-                        'view_type': 'form',
-                        'view_mode': 'form',
-                        'res_id': wiz_obj.create(cr, uid, {'product_id': product.id}, context=context),
-                        'target': 'new',
-                        'context': context
-                    }
-                elif instance_level == 'project':
+                if instance_level == 'project':
                     raise osv.except_osv(_('Error'), _('%s activation is not allowed at project') % (product.default_code,))
             if (instance_level == 'section' and (product.international_status.id in (hq_status, itc_status, esc_status) or
                                                  (product.oc_subscription and product.state_ud in ('valid', 'outdated', 'discontinued')))) or \
@@ -3751,40 +3740,6 @@ class change_bn_ed_mandatory_wizard(osv.osv_memory):
 
 change_bn_ed_mandatory_wizard()
 
-
-class product_ask_activate_wizard(osv.osv_memory):
-    _name = 'product.ask.activate.wizard'
-
-    _columns = {
-        'product_id': fields.many2one('product.product', string='Product', required=True),
-    }
-
-    def do_activate_product(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-
-        data_obj = self.pool.get('ir.model.data')
-
-        prod = self.browse(cr, uid, ids[0], fields_to_fetch=['product_id'], context=context).product_id
-        local_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
-
-        vals = {'active': True}
-        # US-9509: The flow can only go through there if the instance is coordo
-        if prod.international_status.id == local_status:
-            vals.update({'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_1')[1]})
-
-        self.pool.get('product.product').write(cr, uid, prod.id, vals, context=context)
-
-        return {'type': 'ir.actions.act_window_close'}
-
-    def button_close(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-
-        return {'type': 'ir.actions.act_window_close'}
-
-
-product_ask_activate_wizard()
 
 class product_pull_single_ud(osv.osv_memory):
     _name = 'product.pull_single_ud'
