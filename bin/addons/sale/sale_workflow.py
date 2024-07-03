@@ -955,7 +955,8 @@ class sale_order(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        for so in self.browse(cr, uid, ids, context=context):
+        ftf = ['name', 'procurement_request', 'location_requestor_id', 'delivery_requested_date', 'order_line']
+        for so in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             if so.procurement_request and not so.location_requestor_id:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate \'%s\' without a Location Requestor.') % (so.name))

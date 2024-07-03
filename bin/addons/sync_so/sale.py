@@ -65,56 +65,50 @@ class sale_order_line_sync(osv.osv):
             raise Exception("Cannot find the parent FO with client order ref = %s" % order_ref)
         so_name = so_obj.read(cr, uid, sale_order_ids[0], ['name'], context=context)['name'] or ''
 
+        no_prod_error = ''
         try:
             # from purchase.order.line to sale.order.line:
             sol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, line_info, context)
-        except Exception as e:
-            if hasattr(e, 'value'):
-                msg = e.value
-            else:
-                msg = '%s' % e
-            raise SyncException(msg, target_object='sale.order', target_id=sale_order_ids[0])
 
-        sol_values['order_id'] = sale_order_ids[0]
-        sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
-        sol_values['ir_name_from_sync'] = pol_dict.get('ir_name_for_sync', False)
-        sol_values['original_instance'] = pol_dict.get('original_instance', False)
-        # Check if the new sync FO line comes from a PO with an IR/FO Reference
-        # If that's the case, put it on the new FO line
-        if pol_dict.get('ir_name_for_sync', False):
-            order_label_ids = order_label_obj.search(cr, uid, [('name', '=', line_info.ir_name_for_sync),
-                                                               ('order_id', '=', sale_order_ids[0])], context=context)
-            if order_label_ids:
-                sol_values['instance_sync_order_ref'] = order_label_ids[0]
-        if line_info.product_id and not sol_values.get('product_id'):
-            # US-11560: In case of no product, create a line with a comment, linked to the NR
-            if pol_dict.get('comment'):
-                comment = '%s - %s - %s' % (pol_dict['default_code'], pol_dict['name'], pol_dict['comment'])
-            else:
-                comment = '%s - %s' % (pol_dict['default_code'], pol_dict['name'])
+            sol_values['order_id'] = sale_order_ids[0]
+            sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
+            sol_values['ir_name_from_sync'] = pol_dict.get('ir_name_for_sync', False)
+            sol_values['original_instance'] = pol_dict.get('original_instance', False)
+            # Check if the new sync FO line comes from a PO with an IR/FO Reference
+            # If that's the case, put it on the new FO line
+            if pol_dict.get('ir_name_for_sync', False):
+                order_label_ids = order_label_obj.search(cr, uid, [('name', '=', line_info.ir_name_for_sync),
+                                                                   ('order_id', '=', sale_order_ids[0])], context=context)
+                if order_label_ids:
+                    sol_values['instance_sync_order_ref'] = order_label_ids[0]
+            if line_info.product_id and not sol_values.get('product_id'):
+                # US-11560: In case of no product, create a line with a comment, linked to the NR
+                if pol_dict.get('comment'):
+                    comment = '%s - %s - %s' % (pol_dict['default_code'], pol_dict['name'], pol_dict['comment'])
+                else:
+                    comment = '%s - %s' % (pol_dict['default_code'], pol_dict['name'])
 
-            no_prod_msg = _('Product %s not found') % (pol_dict['default_code'],)
-            if pol_dict.get('product_id') and pol_dict['product_id'].get('international_status') \
-                    and pol_dict['product_id']['international_status'].get('code'):
-                if pol_dict['product_id']['international_status']['code'] == 'unidata':
-                    no_prod_msg = _('Make sure your OC is subscribed to the article (according to your OC procedures). Otherwise, cancel the line & inform the Partner')
-                elif pol_dict['product_id']['international_status']['code'] == 'local':
-                    no_prod_msg = _("Check with your Mission's Focal Point how to handle - NSL (Non-standard Local) Product may need to be created/subscribed to in UniData. For an alternative management of Local codes, please contact your help-desk. Otherwise, cancel the line & inform the Partner")
-            sol_values.update({
-                'name': comment,
-                'comment': comment,
-                'analytic_distribution_id': False,
-                'no_prod_nr_id': context.get('msg_id', False),
-                'no_prod_nr_error': no_prod_msg
-            })
-            raise ProdNotFoundException(_('%s: Cannot process document/line due to Product Code %s which does not exist in this instance') % (so_name, line_info.default_code or ''))
+                no_prod_msg = _('Product %s not found') % (pol_dict['default_code'],)
+                if pol_dict.get('product_id') and pol_dict['product_id'].get('international_status') \
+                        and pol_dict['product_id']['international_status'].get('code'):
+                    if pol_dict['product_id']['international_status']['code'] == 'unidata':
+                        no_prod_msg = _('Make sure your OC is subscribed to the article (according to your OC procedures). Otherwise, cancel the line & inform the Partner')
+                    elif pol_dict['product_id']['international_status']['code'] == 'local':
+                        no_prod_msg = _("Check with your Mission's Focal Point how to handle - NSL (Non-standard Local) Product may need to be created/subscribed to in UniData. For an alternative management of Local codes, please contact your help-desk. Otherwise, cancel the line & inform the Partner")
+                sol_values.update({
+                    'name': comment,
+                    'comment': comment,
+                    'analytic_distribution_id': False,
+                    'no_prod_nr_id': context.get('msg_id', False),
+                    'no_prod_nr_error': no_prod_msg
+                })
+                no_prod_error = _('%s: Cannot process document/line due to Product Code %s which does not exist in this instance') % (so_name, line_info.default_code or '')
 
-        if sol_values.get('product_id'):
-            sol_values['original_product'] = sol_values['product_id']
-        if sol_values.get('product_qty') or sol_values.get('product_uom_qty'):
-            sol_values['original_qty'] = sol_values.get('product_qty', False) or sol_values.get('product_uom_qty', False)
+            if sol_values.get('product_id'):
+                sol_values['original_product'] = sol_values['product_id']
+            if sol_values.get('product_qty') or sol_values.get('product_uom_qty'):
+                sol_values['original_qty'] = sol_values.get('product_qty', False) or sol_values.get('product_uom_qty', False)
 
-        try:
             # Search an existing FO line that was created with no product by synch to update it. Normal flow otherwise
             sol_no_prod_ids = []
             if pol_dict.get('sync_local_id'):
@@ -131,13 +125,18 @@ class sale_order_line_sync(osv.osv):
                 message = ": New line #%s (id:%s) added to Sale Order %s ::" % (pol_dict['line_number'], new_sol_id, so_name)
 
             self._logger.info(message)
+            if no_prod_error:
+                raise ProdNotFoundException(no_prod_error)
             return message
         except Exception as e:
             if hasattr(e, 'value'):
                 msg = e.value
             else:
                 msg = '%s' % e
-            raise SyncException(msg, target_object='sale.order', target_id=sale_order_ids[0])
+            if isinstance(e, ProdNotFoundException):
+                raise ProdNotFoundException(msg)
+            else:
+                raise SyncException(msg, target_object='sale.order', target_id=sale_order_ids[0])
 
 
 sale_order_line_sync()

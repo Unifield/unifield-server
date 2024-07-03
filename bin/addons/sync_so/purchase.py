@@ -130,6 +130,7 @@ class purchase_order_line_sync(osv.osv):
             pol_id = self.search(cr, uid, [('order_id', '=', po_ids[0]), ('id', '=', int(pol_id_msg))], context=context)
 
         # retrieve data
+        no_prod_error = ''
         try:
             pol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, sol_info, context)
         except Exception as e:
@@ -164,8 +165,8 @@ class purchase_order_line_sync(osv.osv):
                 'no_prod_nr_id': context.get('msg_id', False),
                 'no_prod_nr_error': no_prod_msg
             })
-            raise ProdNotFoundException(_('%s: Cannot process document/line due to Product Code %s which does not exist in this instance')
-                                        % (po_name, sol_dict['default_code'] or ''))
+            no_prod_error = _('%s: Cannot process document/line due to Product Code %s which does not exist in this instance') \
+                            % (po_name, sol_dict['default_code'] or '')
 
         order_name = sol_dict['order_id']['name']
         pol_values['order_id'] = po_ids[0]
@@ -464,6 +465,9 @@ class purchase_order_line_sync(osv.osv):
             all_pol_ids = pol_obj.search(cr, uid, [('order_id', '=', linked_fo_ir.order_id.id)])
             logger.info('Final pol %s' % pol_obj.read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty']))
         ## Debug
+
+        if no_prod_error:
+            raise ProdNotFoundException(no_prod_error)
 
         return message
 
