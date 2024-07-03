@@ -717,11 +717,16 @@ class ud_sync():
 
     def ud_date(self, date):
         date = date.split('.')[0] # found 3 formats in UD: 2021-03-30T06:32:51.500, 2021-03-30T06:32:51  and 2021-03-30T06:32
+        # new format 2020-01-19T23:00:00Z[UTC]
         try:
             date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S')
         except:
-            date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M')
-        return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:%S')
+            try:
+                date_fmt = datetime.strptime(date, '%Y-%m-%dT%H:%M')
+            except:
+                date_fmt = datetime.strptime(date[0:16], '%Y-%m-%dT%H:%M')
+
+        return date_fmt.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal()).strftime('%Y-%m-%d %H:%M:00')
 
     def query(self, q_filter, page=1, url=None):
         params = self.ud_params.copy()
