@@ -267,7 +267,7 @@ Please check if these can be switched for UniData type product(s) instead, or co
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
                                                                          round=False, context={'currency_date': pol.order_id.date_order})
 
-            if sale_order.order_type == 'regular' and price_unit_converted < 0.00001:
+            if sale_order.order_type in ['regular', 'donation_prog'] and price_unit_converted < 0.00001:
                 price_unit_converted = 0.00001
 
             # date values
@@ -439,7 +439,7 @@ Please check if these can be switched for UniData type product(s) instead, or co
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
                                                                          round=False, context={'currency_date': pol.order_id.date_order})
 
-            if sale_order.order_type == 'regular' and price_unit_converted < 0.00001:
+            if sale_order.order_type in ['regular', 'donation_prog'] and price_unit_converted < 0.00001:
                 price_unit_converted = 0.00001
 
             # date values

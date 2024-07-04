@@ -41,7 +41,8 @@ class sale_report(osv.osv):
             sale = report.order_id
             if sale.partner_id:
                 partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
-            if sale.state != 'draft' and (sale.order_type != 'regular' or (partner and partner.partner_type == 'internal')):
+            if sale.state != 'draft' and (sale.order_type not in ['regular', 'donation_prog']
+                                          or (partner and partner.partner_type == 'internal')):
                 res[report.id] = True
             else:
                 res[report.id] = True
@@ -84,8 +85,9 @@ class sale_report(osv.osv):
                             readonly=True, states={'draft': [('readonly', False)]}, select=True),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
                                     type='boolean', help="It indicates that an invoice has been paid."),
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation to prevent losses'),
-                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'), ('loan_return', 'Loan Return'),],
+        'order_type': fields.selection([('regular', 'Regular'), ('donation_prog', 'Programmatic Donation'),
+                                        ('donation_exp', 'Donation to prevent losses'), ('donation_st', 'Standard donation'),
+                                        ('loan', 'Loan'), ('loan_return', 'Loan Return'),],
                                        string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),

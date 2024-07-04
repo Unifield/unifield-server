@@ -29,56 +29,35 @@ class sale_donation_stock_moves(osv.osv_memory):
     _name = 'sale.donation.stock.moves'
 
     _columns = {
-        'start_date': fields.date(
-            string='Start date',
-        ),
-        'end_date': fields.date(
-            string='End date',
-        ),
-        'company_id': fields.many2one(
-            'res.company',
-            string='Company',
-            readonly=True,
-        ),
-        'partner_id': fields.many2one(
-            'res.partner',
-            string='Partner',
-            help="The partner you want have the donations from",
-        ),
-        'partner_type': fields.selection(
-            PARTNER_TYPE,
-            string='Partner Type',
-        ),
-        'product_id': fields.many2one(
-            'product.product',
-            string='Product Ref.',
-        ),
-        'nomen_manda_0': fields.many2one(
-            'product.nomenclature',
-            'Product Main Type',
-        ),
-        'move_id': fields.many2one(
-            'stock.move',
-            string='Move Ref.',
-        ),
-        'sm_ids': fields.text(
-            string='Stock Moves',
-            readonly=True
-        ),
-        'display_bn_ed': fields.boolean(
-            string='Display BN/ED details',
-        ),
+        'start_date': fields.date(string='Start date'),
+        'end_date': fields.date(string='End date'),
+        'company_id': fields.many2one('res.company', string='Company', readonly=True),
+        'partner_id': fields.many2one('res.partner', string='Partner', help="The partner you want have the donations from"),
+        'partner_type': fields.selection(PARTNER_TYPE, string='Partner Type'),
+        'product_id': fields.many2one('product.product', string='Product Ref.'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Product Main Type'),
+        'move_id': fields.many2one('stock.move', string='Move Ref.'),
+        'sm_ids': fields.text(string='Stock Moves', readonly=True),
+        'display_bn_ed': fields.boolean(string='Display BN/ED details'),
+        'donation_prog_ok': fields.boolean(string='Programmatic Donation'),
+        'donation_exp_ok': fields.boolean(string='Donation to prevent losses'),
+        'donation_st_ok': fields.boolean(string='Standard donation'),
+        'donation_in_kind_ok': fields.boolean(string='In-Kind Donation'),
     }
 
     _defaults = {
         'display_bn_ed': False,
+        'donation_prog_ok': False,
+        'donation_exp_ok': False,
+        'donation_st_ok': False,
+        'donation_in_kind_ok': False,
     }
-
 
     def get_values(self, cr, uid, ids, context=None):
         '''
         Retrieve the data according to values in wizard
         '''
+        data_obj = self.pool.get('ir.model.data')
         sm_obj = self.pool.get('stock.move')
         prod_obj = self.pool.get('product.product')
 
@@ -88,12 +67,23 @@ class sale_donation_stock_moves(osv.osv_memory):
         if isinstance(ids, int):
             ids = [ids]
 
-        type_donation_ids = self.pool.get('stock.picking')._get_type_donation_ids(cr, uid)
-
         for wizard in self.browse(cr, uid, ids, context=context):
             sm_domain = []
 
-            sm_domain.append(('reason_type_id', 'in', type_donation_ids))
+            type_donation_ids = []
+            if wizard.donation_prog_ok:
+                type_donation_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_prog')[1])
+            if wizard.donation_exp_ok:
+                type_donation_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1])
+            if wizard.donation_st_ok:
+                type_donation_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1])
+            if wizard.donation_in_kind_ok:
+                type_donation_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_in_kind_donation')[1])
+
+            if type_donation_ids:
+                sm_domain.append(('reason_type_id', 'in', type_donation_ids))
+            else:
+                sm_domain.append(('reason_type_id', 'in', self.pool.get('stock.picking')._get_type_donation_ids(cr, uid)))
             sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'), ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
 
             if wizard.move_id:

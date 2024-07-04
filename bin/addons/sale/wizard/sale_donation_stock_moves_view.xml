@@ -16,6 +16,11 @@
                     <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection"/>
                     <field name="move_id" domain="[('reason_type_id.name', 'in', ['In-Kind Donation', 'Donation to prevent losses', 'Donation (standard)']),('state', '=', 'done'),
                         '|', ('type', '=', 'in'), '&amp;', ('location_id.usage', '=', 'internal'), ('location_dest_id.usage', 'in', ['customer', 'supplier'])]" />
+                    <separator colspan="4" string="Order Types" />
+                    <field name="donation_prog_ok" />
+                    <field name="donation_exp_ok" />
+                    <field name="donation_st_ok" />
+                    <field name="donation_in_kind_ok" />
                     <separator colspan="4" string="Report parameters" />
                     <field name="display_bn_ed" on_change="donation_report_onchange(partner_id, move_id, display_bn_ed)" />
                     <separator colspan="4" string="Actions" />

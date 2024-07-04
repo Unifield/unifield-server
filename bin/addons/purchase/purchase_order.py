@@ -686,12 +686,12 @@ class purchase_order(osv.osv):
                 sale_ids = self.get_so_ids_from_po_ids(cr, uid, [po.id], context=context)
                 if sale_ids:
                     for sale in self.pool.get('sale.order').read(cr, uid, sale_ids, ['procurement_request', 'order_type'], context=context):
-                        if sale['procurement_request'] or sale['order_type'] == 'regular':
+                        if sale['procurement_request'] or sale['order_type'] in ['regular', 'donation_prog']:
                             src_type['purchase_list'] = 1
                             src_type['regular'] = 1
 
                         if not sale['procurement_request']:
-                            if sale['order_type'] == 'regular':
+                            if sale['order_type'] in ['regular', 'donation_prog']:
                                 src_type['direct'] = 1
                             elif sale['order_type'] == 'loan':
                                 src_type['loan'] = 1

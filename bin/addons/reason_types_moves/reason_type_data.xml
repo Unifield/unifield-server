@@ -174,5 +174,12 @@
             <field name="incoming_ok">True</field>
             <field name="outgoing_ok">True</field>
         </record>
+
+        <record id="reason_type_donation_prog" model="stock.reason.type">
+            <field name="name">Programmatic Donation</field>
+            <field name="code">22</field>
+            <field name="incoming_ok">False</field>
+            <field name="outgoing_ok">True</field>
+        </record>
     </data>
 </openerp>

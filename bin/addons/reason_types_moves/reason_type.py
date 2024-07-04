@@ -356,6 +356,7 @@ class stock_picking(osv.osv):
         type_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1])
         type_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1])
         type_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_in_kind_donation')[1])
+        type_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_prog')[1])
         return type_ids
 
     def _get_is_donation(self, cr, uid, ids, field_name, args, context=None):

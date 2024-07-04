@@ -2045,8 +2045,7 @@ class product_product(osv.osv):
 
 
         # get uom_id of all product_id
-        product_result = self.pool.get('product.product').read(cr, uid, ids, ['uom_id'],
-                                                               context=context)
+        product_result = self.pool.get('product.product').read(cr, uid, ids, ['uom_id'], context=context)
         product_dict = dict((x['id'], x) for x in product_result)
 
 
@@ -2075,7 +2074,7 @@ class product_product(osv.osv):
                 if move['reason_type_id'][0] in [return_id, return_good_id] and move['type'] == 'in':
                     sign = -1
 
-                elif move['location_dest_id'][0] in customer_locations_ids and  move['reason_type_id'][0] not in [return_id, return_good_id, replacement_id]:
+                elif move['location_dest_id'][0] in customer_locations_ids and move['reason_type_id'][0] not in [return_id, return_good_id, replacement_id]:
                     sign = 1
             else:
                 if move['reason_type_id'][0] in [return_id, return_good_id, internal_return] or move['id'] in int_return:

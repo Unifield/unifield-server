@@ -1809,7 +1809,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if line['order_id'][0] not in order_to_check:
                 order_to_check.update({line['order_id'][0]: state_to_use})
 
-            if order_type == 'regular' and not order_proc and line['price_unit'] * line['product_uom_qty'] < 0.00001:
+            if order_type in ['regular', 'donation_prog'] and not order_proc and line['price_unit'] * line['product_uom_qty'] < 0.00001:
                 raise osv.except_osv(
                     _('Warning'),
                     _('You cannot confirm the sourcing of a line with a subtotal of zero.'),
