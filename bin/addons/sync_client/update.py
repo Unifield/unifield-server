@@ -36,7 +36,6 @@ from sync_common import sync_log, \
 from msf_field_access_rights.osv_override import _get_instance_level
 
 
-re_fieldname = re.compile(r"^\w+")
 re_subfield_separator = re.compile(r"[./]")
 
 
@@ -195,32 +194,19 @@ class update_to_send(osv.osv,fv_formatter):
     def _auto_init(self, cr, context=None):
         super(update_to_send, self)._auto_init(cr, context=context)
 
+
     def create_update(self, cr, uid, rule_id, session_id, context=None):
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         update = self
 
         def create_normal_update(self, rule, context):
-            domain = eval(rule.domain or '[]')
-            export_fields = eval(rule.included_fields or '[]')
-            if 'id' not in export_fields:
-                export_fields.append('id')
-            ids_need_to_push = self.need_to_push(cr, uid, [],
-                                                 [m.group(0) for m in map(re_fieldname.match, export_fields)],
-                                                 empty_ids=True,
-                                                 context=context)
-            if not ids_need_to_push:
-                return 0
-            domain.append(('id', 'in', ids_need_to_push))
-
-            order = None
-            if hasattr(self, '_sync_order'):
-                # keep same id order at HQ and lower level
-                order = self._sync_order
-
-            ids_to_compute = self.search_ext(cr, uid, domain, order=order, context=context)
+            ids_to_compute = self._get_ids_to_push(cr, uid, rule, context=context)
             if not ids_to_compute:
                 return 0
 
+            export_fields = eval(rule.included_fields or '[]')
+            if 'id' not in export_fields:
+                export_fields.append('id')
             owners = self.get_destination_name(cr, uid,
                                                ids_to_compute, rule.owner_field, context)
 

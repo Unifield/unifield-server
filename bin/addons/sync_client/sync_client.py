@@ -981,6 +981,16 @@ class Entity(osv.osv):
             offset_recovery = 0
             max_seq = min(max_seq+max_seq_pack, total_max_seq)
 
+        if _get_instance_level(self, cr, uid) == 'coordo':
+            rule_obj = self.pool.get('sync.client.rule')
+            prod_rule_id = rule_obj.search(cr, uid, [('sequence_number', '=', 604), ('model', '=', 'product.product')])
+            if prod_rule_id:
+                prod_rule = rule_obj.browse(cr, uid, prod_rule_id[0], context=context)
+                prod_ids = self.pool.get('product.product')._get_ids_to_push(cr, uid, prod_rule, context=context)
+                if prod_ids:
+                    self.pool.get('ir.model.data').mark_resend(cr, uid, 'product.product', prod_ids, context=context)
+                    cr.commit()
+
         trigger_analyze = self.pool.get('ir.config_parameter').get_param(cr, 1, 'ANALYZE_NB_UPDATES')
         nb = 2000
         if trigger_analyze:
