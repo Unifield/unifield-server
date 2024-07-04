@@ -3176,7 +3176,18 @@ class product_attributes(osv.osv):
 
         if old_prod_data['qty_available'] + kept_data['qty_available']:
             for price_field in ['standard_price', 'finance_price']:
-                new_write_data[price_field] = (old_prod_data['qty_available'] * old_prod_data[price_field] + kept_data['qty_available'] * kept_data[price_field]) / float(old_prod_data['qty_available'] + kept_data['qty_available'])
+                # ignore qty if price = 0
+                if price_field == 'finance_price':
+                    total_qty = 0
+                    if old_prod_data[price_field]:
+                        total_qty += old_prod_data['qty_available']
+                    if kept_data[price_field]:
+                        total_qty += kept_data['qty_available']
+                else:
+                    total_qty = old_prod_data['qty_available'] + kept_data['qty_available']
+
+                if total_qty:
+                    new_write_data[price_field] = (old_prod_data['qty_available'] * old_prod_data[price_field] + kept_data['qty_available'] * kept_data[price_field]) / float(total_qty)
 
             if abs(new_write_data['standard_price'] - kept_data['standard_price']) > 0.0001:
                 self.pool.get('standard.price.track.changes').create(cr, uid, {
