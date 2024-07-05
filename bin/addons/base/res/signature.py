@@ -16,60 +16,60 @@ from io import BytesIO
 
 list_sign = {
     'purchase.order': [
-        # (key, label, active)
-        ('sr', _('Supply Responsible'), True),
-        ('tr', _('Technical Responsible'), True),
-        ('fr', _('Finance Responsible'), True),
-        ('mr', _('Mission Responsible'), False),
-        ('hq', _('HQ'), False, ''),
+        # (key, label, active, prio)
+        ('sr', _('Supply Responsible'), True, 1),
+        ('tr', _('Technical Responsible'), True, 2),
+        ('fr', _('Finance Responsible'), True, 3),
+        ('mr', _('Mission Responsible'), False, 4),
+        ('hq', _('HQ'), False, 5),
     ],
     'sale.order.fo': [
-        ('sr', _('Supply Responsible'), True),
-        ('tr', _('Technical Responsible'), True),
-        ('fr', _('Finance Responsible'), True),
-        ('mr', _('Mission Responsible'), False),
-        ('hq', _('HQ'), False),
+        ('sr', _('Supply Responsible'), True, 1),
+        ('tr', _('Technical Responsible'), True, 2),
+        ('fr', _('Finance Responsible'), True, 3),
+        ('mr', _('Mission Responsible'), False, 4),
+        ('hq', _('HQ'), False, 5),
     ],
     'sale.order.ir': [
-        ('tr', _('Technical Responsible'), True),
-        ('sr', _('Supply Responsible'), True),
+        ('tr', _('Technical Responsible'), True, 1),
+        ('sr', _('Supply Responsible'), True, 2),
     ],
     'account.bank.statement.cash': [
-        ('fr', _('Signature 1 - reconciliation'), True),
-        ('mr', _('Signature 2 - reconciliation'), True),
-        ('fr_report', _('Signature 1 - full report'), True),
-        ('mr_report', _('Signature 2 - full report'), True),
+        ('fr', _('Signature 1 - reconciliation'), True, 1),
+        ('mr', _('Signature 2 - reconciliation'), True, 1),
+        ('fr_report', _('Signature 1 - full report'), True, 1),
+        ('mr_report', _('Signature 2 - full report'), True, 1),
     ],
     'account.bank.statement.bank': [
-        ('fr', _('Signature 1 - reconciliation'), True),
-        ('mr', _('Signature 2 - reconciliation'), True),
-        ('fr_report', _('Signature 1 - full report'), True),
-        ('mr_report', _('Signature 2 - full report'), True),
+        ('fr', _('Signature 1 - reconciliation'), True, 1),
+        ('mr', _('Signature 2 - reconciliation'), True, 1),
+        ('fr_report', _('Signature 1 - full report'), True, 1),
+        ('mr_report', _('Signature 2 - full report'), True, 1),
     ],
     'account.bank.statement.cheque': [
-        ('fr_report', _('Signature 1 - full report'), True),
-        ('mr_report', _('Signature 2 - full report'), True),
+        ('fr_report', _('Signature 1 - full report'), True, 1),
+        ('mr_report', _('Signature 2 - full report'), True, 1),
     ],
     'account.invoice': [
-        ('sr', _('Supply Responsible'), True),
-        ('tr', _('Technical Responsible'), True),
-        ('fr', _('Finance Responsible'), True),
-        ('mr', _('Mission Responsible'), False),
+        ('sr', _('Supply Responsible'), True, 1),
+        ('tr', _('Technical Responsible'), True, 1),
+        ('fr', _('Finance Responsible'), True, 1),
+        ('mr', _('Mission Responsible'), False, 1),
     ],
     'stock.picking.in': [
-        ('tr', _('Receiver'), True),
-        ('sr', _('Controller'), True),
+        ('tr', _('Receiver'), True, 1),
+        ('sr', _('Controller'), True, 2),
     ],
     'stock.picking.out': [
-        ('sr', _('Approved by'), True),
-        ('tr', _('Logistic / Supply'), True),
-        ('fr', _('Storekeeper'), True),
-        ('mr', _('Receiver'), True),
+        ('sr', _('Approved by'), True, 1),
+        ('tr', _('Logistic / Supply'), True, 1),
+        ('fr', _('Storekeeper'), True, 1),
+        ('mr', _('Receiver'), True, 1),
     ],
     'stock.picking.pick': [
-        ('sr', _('Approved by'), True),
-        ('tr', _('Picked by'), True),
-        ('fr', _('Validated by'), True),
+        ('sr', _('Approved by'), True, 1),
+        ('tr', _('Picked by'), True, 1),
+        ('fr', _('Validated by'), True, 1),
     ],
 }
 
@@ -398,7 +398,8 @@ class signature_object(osv.osv):
                         'name_key': x[0],
                         'name': x[1],
                         'is_active': x[2],
-                        'signature_id': obj.signature_id.id
+                        'signature_id': obj.signature_id.id,
+                        'prio': x[3],
                     }, context=context)
         return new_id
 
@@ -407,6 +408,7 @@ signature_object()
 class signature_line(osv.osv):
     _name = 'signature.line'
     _description = 'Document line to sign by role'
+    _order = 'prio, id'
 
     def _format_state_value(self, cr, uid, ids, name=None, arg=None, context=None):
         res = {}
@@ -445,6 +447,34 @@ class signature_line(osv.osv):
                 res[x.id]['format_state'] = cache_state[key]
         return res
 
+
+    def _get_ready_to_sign(self, cr, uid, ids, name=None, arg=None, context=None):
+        if not ids:
+            return {}
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+
+        cr.execute('''
+            select
+                l.id
+            from
+                signature_line l
+            left join
+                signature_line other on other.signature_id = l.signature_id and other.is_active='t' and other.prio < l.prio and other.signed = 'f'
+            where
+                l.id in %s and
+                l.is_active = 't' and
+                l.signed = 'f'
+            group by
+                l.id
+            having
+                count(other.id) = 0
+        ''', (tuple(ids), ))
+        for _id in cr.fetchall():
+            ret[_id[0]] = True
+        return ret
+
     _columns = {
         'signature_id': fields.many2one('signature', 'Parent', required=1, select=1),
         'user_id': fields.many2one('res.users', 'Signee User'),
@@ -464,9 +494,13 @@ class signature_line(osv.osv):
         'format_value': fields.function(_format_state_value, method=1, type='char', string='Value', multi='fsv'),
         'format_state': fields.function(_format_state_value, method=1, type='char', string='Document State', multi='fsv'),
         'backup': fields.boolean('Back Up', readonly=1),
+        'prio': fields.integer('Sign Order', readonly=1, select=1),
+        'ready_to_sign': fields.function(_get_ready_to_sign, type='boolean', string='Ready to sign', method=1),
     }
 
     _defaults = {
+        'signed': False,
+        'prio': 0,
     }
 
     _sql_constraints = [
@@ -479,7 +513,7 @@ class signature_line(osv.osv):
         assert len(ids) < 2, '_check_sign_unsign: only 1 id is allowed'
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
 
-        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'user_id'], context=context)
+        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'user_id', 'ready_to_sign'], context=context)
         if real_uid != sign_line.user_id.id:
             raise osv.except_osv(_('Warning'), _("You are not allowed to sign on this line - please contact the document creator"))
 
@@ -487,6 +521,9 @@ class signature_line(osv.osv):
             raise osv.except_osv(_('Warning'), _("Signature Closed."))
 
         if check_has_sign:
+            if not sign_line.ready_to_sign:
+                raise osv.except_osv(_('Warning'), _("You cannot sign before other role(s)"))
+
             user_d = self.pool.get('res.users').browse(cr, uid, real_uid, fields_to_fetch=['has_valid_signature', 'esignature_id'], context=context)
             if not user_d.has_valid_signature:
                 raise osv.except_osv(_('Warning'), _("No signature defined in user's profile"))
@@ -1076,14 +1113,15 @@ class signature_setup(osv.osv_memory):
 
                     for role in list_sign[obj]:
                         cr.execute("""
-                            insert into signature_line (signature_id, is_active, name, name_key)
-                                    select o.signature_id, %%(is_active)s, %%(name)s, %%(name_key)s from
+                            insert into signature_line (signature_id, is_active, name, name_key, prio, signed)
+                                    select o.signature_id, %%(is_active)s, %%(name)s, %%(name_key)s, %%(prio)s, 'f' from
                                     %s
                             on conflict on constraint signature_line_unique_signature_name_key do nothing
                         """ % cond, { # not_a_user_entry
                             'is_active': role[2],
                             'name': role[1],
                             'name_key': role[0],
+                            'prio': role[3],
                         })
             setup_obj.write(cr, uid, [setup.id], {'signature': wiz.signature}, context=context)
 

@@ -83,6 +83,241 @@ class patch_scripts(osv.osv):
         cr.execute('''update hr_employee set expat_creation_date=create_date where employee_type='ex' ''')
         return True
 
+    # UF33.0
+    def us_12598_ocb_group_user_manager(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
+            user_obj = self.pool.get('res.users')
+            group_obj = self.pool.get('res.groups')
+            list_users = [
+                'FAC_7', 'PCAR', 'PCAR_MISSION', 'UFFR',
+                'UFFR4COORDO', 'UFR', 'UFR_COORDO', 'FINDEV',
+                'FAC_4', 'POWERUSER', 'UFR4HQ', 'RSISSOEASA',
+                'SISTO', 'SISSO', 'SISOTL', 'UFR_COORDO',
+                'UFR3FIELD', 'UFFR4COORDO', 'ADMIN', 'UFR3HQ',
+                'APM_HQ', 'APM_MISSION', 'SISOTL_HQ', 'SISTO_HQ',
+                'SISSO_HQ'
+            ]
+
+            group_id = group_obj.search(cr, uid, [('name', 'ilike', 'User_Manager')])
+            if not group_id:
+                return True
+            cr.execute('select id from res_users where upper(login) in %s', (tuple(list_users), ))
+            white_list = [x[0] for x in cr.fetchall()]
+            removed = user_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('groups_id', '=', group_id[0]), ('id', 'not in', white_list)])
+            to_keep = user_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('groups_id', '=', group_id[0]), ('id', 'in', white_list)])
+            if removed:
+                user_obj.write(cr, uid, removed, {'groups_id': [(3, group_id[0])]})
+            self.log_info(cr, uid, "US-12598: Group User_Manager, %d users kept %d removed" % (len(to_keep), len(removed)))
+
+        return True
+
+    def us_12826_unidata_pull_info(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if entity_obj and instance and instance.level == 'section':
+            if instance.instance in ('OCP_HQ', 'OCBHQ', 'HQ_OCA', 'OCG_HQ'):
+                ent = entity_obj.get_entity(cr, uid)
+                oc = ent.oc.upper()
+                values_mapping = {
+                    'Yes': 't',
+                    'Kit/Module': 'kit',
+                    'Make to Order': 'make_to_order',
+                    'Service with Reception': 'service_recep',
+                    '': '',
+                }
+                csv_file_name = os.path.join(os.path.abspath(tools.config['root_path']), 'addons/msf_profile/data/ud_default_oc_value.csv')
+                line_number = 0
+                with open(csv_file_name, 'r', newline='') as f:
+                    c = csv.reader(f, quotechar='"', delimiter=',')
+                    for line in c:
+                        line_number += 1
+                        if not line or line[1] != oc:
+                            continue
+                        nomen = line[3][5:].strip()
+                        all_nom = nomen.split('|')
+                        level = 1
+                        parent_id = False
+
+                        if line[4] not in values_mapping:
+                            self._logger.warn('Line number %s, value %s not found' % (line_number, line[4]))
+                            return False
+                        for nom in all_nom:
+                            nom = nom.strip()[0:63]
+                            if nom:
+                                cond = ''
+                                params = [nom.strip(), level]
+                                if parent_id:
+                                    cond = ' and n.parent_id in %s'
+                                    params.append(tuple(parent_id))
+                                    params[0] = '%%%s' % nom
+
+                                cr.execute("""
+                                    select
+                                        n.id
+                                    from
+                                        product_nomenclature n
+                                    left join ir_translation t on t.lang='en_MF' and t.name='product.nomenclature,name' and t.res_id = n.id
+                                    where
+                                        coalesce(t.value, n.name) like %s and
+                                        n.level=%s
+                                    """+cond, tuple(params)) # not_a_user_entry
+                                if not cr.rowcount:
+                                    self._logger.warn('Line number %s, nomen %s not found' % (line_number, nom))
+                                    return False
+                                parent_id = [x[0] for x in cr.fetchall()]
+                                level += 1
+                        for n_id in parent_id:
+                            query = "insert into unidata_default_product_value (field, value, nomenclature, create_date) values (%s, %s, %s, NOW());"
+                            values = (line[2], values_mapping[line[4]], n_id)
+                            cr.execute(query, values)
+
+            cr.execute("update product_cold_chain set ud_code=code")
+            cr.execute("update product_cold_chain set ud_code='CT3+' where id in (select res_id from ir_model_data where name='product_attributes_cold_20')")
+
+            cr.execute("update unidata_sync set is_active='f'")
+            cr.execute("update ir_cron set active='f' where model='unidata.sync'")
+            # set next UD sync as full sync
+            param_obj = self.pool.get('ir.config_parameter')
+            param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
+            param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
+
+
+
+        return True
+
+    def us_12074_gdpr_remove_personal_data_from_track_changes(self, cr, uid, *a, **b):
+        '''
+        GDPR - Remove from staff track changes the fields removed from US-7791
+        '''
+        cr.execute(
+            """
+            DELETE FROM audittrail_log_line
+            WHERE
+                name IN ('birthday', 'gender', 'marital', 'mobile_phone', 'notes', 'private_phone', 'work_email',
+            'work_phone', 'country_id', 'ssnid', 'bank_name', 'bank_account_number') AND
+                object_id = (SELECT id FROM ir_model WHERE model = 'resource.resource')
+            """)
+        return True
+
+    def us_11135_set_pol_confirmation_date(self, cr, uid, *a, **b):
+
+        cr.execute('''
+            update purchase_order set catalogue_not_applicable='t' where state in ('done', 'cancel', 'confirmed')
+        ''')
+
+        cr.execute('''
+            update
+                purchase_order_line pol
+            set confirmation_date = po.date_confirm
+            from
+                purchase_order po
+            where
+                pol.order_id = po.id and
+                pol.state in ('done', 'confirmed') and
+                pol.confirmation_date is null and
+                po.date_confirm is not null
+        ''')
+
+        cr.execute('''
+            update
+                purchase_order_line pol
+            set confirmation_date = audit_line.timestamp
+            from
+                audittrail_log_line audit_line, ir_model_fields f, ir_model m
+            where
+                pol.state in ('done', 'confirmed', 'cancel', 'cancel_r') and
+                pol.confirmation_date is null and
+                audit_line.field_id = f.id and
+                audit_line.object_id = m.id and
+                m.model='purchase.order' and
+                f.model='purchase.order.line' and
+                f.name='state_to_display' and
+                audit_line.fct_res_id = pol.id and
+                audit_line.new_value in ('Confirmed', 'Resourced-c')
+        ''')
+
+        cr.execute("""
+            update purchase_order_line pol1 set
+                catalog_mismatch=
+                    case
+                        when catl.catalogue_id is null then ''
+                        when catl.id is null then 'na'
+                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding=0 or pol.product_qty%catl.soq_rounding=0) and coalesce(catl.min_order_qty, 0) <= pol.product_qty then 'price'
+                        when abs(pol.price_unit - catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)) > 0.0001 and (catl.soq_rounding!=0 and pol.product_qty%catl.soq_rounding!=0 or coalesce(catl.min_order_qty, 0) > pol.product_qty) then 'price_soq'
+                        when (catl.soq_rounding!=0 and pol.product_qty%catl.soq_rounding!=0) or coalesce(catl.min_order_qty, 0) > pol.product_qty then  'soq'
+                        else 'conform'
+                    end,
+                catalog_price_unit=
+                    case
+                        when catl.catalogue_id is null or catl.id is null  then null
+                        else catl.cat_unit_price * coalesce(po_rate.rate,1) / coalesce(cat_rate.rate, 1)
+                    end,
+                catalog_soq=catl.soq_rounding
+            from purchase_order_line pol
+                left join purchase_order po on po.id = pol.order_id
+                left join product_pricelist curr_pricelist on curr_pricelist.id = po.pricelist_id
+                left join lateral (
+                    select
+                        cat.id as catalogue_id, cat_line.id, cat.currency_id as cat_currency_id, cat_line.unit_price as cat_unit_price, cat_line.rounding as soq_rounding, cat_line.min_order_qty as min_order_qty
+                    from
+                        supplier_catalogue cat
+                        left join supplier_catalogue_line cat_line on cat_line.catalogue_id = cat.id and cat_line.product_id = pol.product_id and cat_line.line_uom_id = pol.product_uom
+                    where
+                        cat.partner_id = po.partner_id and
+                        cat.active = 't' and
+                        cat.state = 'confirmed' and
+                        (cat.period_from is null or cat.period_from < pol.confirmation_date) and
+                        (cat.period_to is null or cat.period_to > pol.confirmation_date)
+                    order by
+                        cat.currency_id = curr_pricelist.currency_id, coalesce(cat_line.min_qty,0) <= pol.product_qty desc, abs(pol.product_qty - coalesce(cat_line.min_qty,0)) asc, cat_line.partner_info_id desc, cat_line.id
+                    limit 1
+                ) catl on true
+                left join lateral (
+                    select
+                        rate
+                    from
+                        res_currency_rate
+                    where
+                        currency_id = curr_pricelist.currency_id and
+                        name <= pol.confirmation_date
+                    order by
+                        name desc
+                    limit 1
+                ) po_rate on true
+                left join lateral (
+                    select
+                        rate
+                    from
+                        res_currency_rate
+                    where
+                        currency_id = catl.cat_currency_id and
+                        name <= pol.confirmation_date
+                    order by
+                        name desc
+                    limit 1
+                ) cat_rate on true
+            where
+                pol1.id = pol.id and
+                pol1.confirmation_date is not null and
+                pol.product_id is not null and
+                pol.state in ('confirmed', 'done', 'cancel', 'cancel_r') and
+                po.state not in ('done', 'cancel', 'confirmed')
+        """)
+
+        return True
+
+    def us_12350_is_default_update(self, cr, uid, *a, **b):
+        # update is_default field of journals EOY and IB
+        cr.execute("""
+                    UPDATE account_journal
+                    SET is_default = 't'
+                    WHERE
+                        code IN ('EOY', 'IB') AND
+                        type = 'system'
+                    """)
+        return True
+
     # UF32.0
     def us_12273_remove_never_exp_password(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id

@@ -334,6 +334,7 @@
             <rng:optional><rng:attribute name="name"/></rng:optional>
             <rng:optional><rng:attribute name="attrs"/></rng:optional>
             <rng:optional><rng:attribute name="invisible"/></rng:optional>
+            <rng:optional><rng:attribute name="view_id"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
                     <rng:element name="newline"><rng:empty/></rng:element>
@@ -503,6 +504,7 @@
             <rng:optional><rng:attribute name="required_error_msg"/></rng:optional>
             <rng:optional><rng:attribute name="truncate"/></rng:optional>
             <rng:optional><rng:attribute name="tooltip"/></rng:optional>
+            <rng:optional><rng:attribute name="colors"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
                     <rng:ref name="diagram"/>

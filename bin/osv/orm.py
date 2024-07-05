@@ -138,7 +138,7 @@ class browse_record_list(list):
 class browse_record(object):
     logger = netsvc.Logger()
     def __init__(self, cr, uid, id, table, cache, context=None,
-                 list_class=None, fields_process=None, fields_to_fetch=None):
+                 list_class=None, fields_process=None, fields_to_fetch=None, subfields_to_fetch=None):
         '''
         table : the object (inherited from orm)
         context : dictionary with an optional context
@@ -158,6 +158,7 @@ class browse_record(object):
         self._context = context
         self._fields_process = fields_process
         self._fields_to_fetch = fields_to_fetch
+        self._subfields_to_fetch = subfields_to_fetch
 
         cache.setdefault(table._name, {})
         self._data = cache[table._name]
@@ -279,7 +280,8 @@ class browse_record(object):
                                                                          self._uid, value, obj, self._cache,
                                                                          context=self._context,
                                                                          list_class=self._list_class,
-                                                                         fields_process=self._fields_process)
+                                                                         fields_process=self._fields_process,
+                                                                         fields_to_fetch=self._subfields_to_fetch)
                                 else:
                                     new_data[field_name] = value
                             else:
@@ -580,7 +582,7 @@ class orm_template(object):
             self._table = self._name.replace('.', '_')
 
     def browse(self, cr, uid, select, context=None, list_class=None,
-               fields_process=None, fields_to_fetch=None):
+               fields_process=None, fields_to_fetch=None, subfields_to_fetch=None):
         """Fetch records as objects allowing to use dot notation to browse fields and relations
 
         :param cr: database cursor
@@ -597,11 +599,11 @@ class orm_template(object):
         if isinstance(select, int):
             return browse_record(cr, uid, select, self, bcache, context=context,
                                  list_class=self._list_class, fields_process=fields_process,
-                                 fields_to_fetch=fields_to_fetch)
+                                 fields_to_fetch=fields_to_fetch, subfields_to_fetch=subfields_to_fetch)
         elif isinstance(select, list):
             return self._list_class([browse_record(cr, uid, id, self, bcache,
                                                    context=context, list_class=self._list_class,
-                                                   fields_process=fields_process, fields_to_fetch=fields_to_fetch) for id in select], context=context)
+                                                   fields_process=fields_process, fields_to_fetch=fields_to_fetch, subfields_to_fetch=subfields_to_fetch) for id in select], context=context)
         else:
             return browse_null()
 
@@ -1640,12 +1642,23 @@ class orm_template(object):
             if node.get('filter_selector'):
                 try:
                     filter_eval = eval(node.get('filter_selector'))
-                    if filter_eval and isinstance(filter_eval, list):
-                        trans_filter_eval = []
-                        for x in filter_eval:
-                            trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
-                            trans_filter_eval.append((trans_x, x[1]))
-                        node.set('filter_selector', '%s'%trans_filter_eval)
+                    if filter_eval:
+                        if isinstance(filter_eval, list):
+                            trans_filter_eval = []
+                            for x in filter_eval:
+                                trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
+                                trans_filter_eval.append((trans_x, x[1]))
+                            node.set('filter_selector', '%s' % trans_filter_eval)
+                        elif isinstance(filter_eval, tuple):
+                            trans_filter_eval = []
+                            for t_filter in filter_eval:
+                                if filter_eval and isinstance(t_filter, list):
+                                    sub_trans_filter_eval = []
+                                    for x in t_filter:
+                                        trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
+                                        sub_trans_filter_eval.append((trans_x, x[1]))
+                                    trans_filter_eval.append(sub_trans_filter_eval)
+                            node.set('filter_selector', '%s' % trans_filter_eval)
                 except:
                     logger = netsvc.Logger()
                     logger.notifyChannel("translate.view", netsvc.LOG_WARNING, "Unable to translate %s" % node.get('filter_selector'))
@@ -1693,6 +1706,11 @@ class orm_template(object):
     def __view_look_dom_arch(self, cr, user, node, view_id, context=None):
         fields_def = self.__view_look_dom(cr, user, node, view_id, context=context)
         node = self._disable_workflow_buttons(cr, user, node)
+        #for page_view_id in node.getiterator('page'):
+        for page_view_id in node.iterfind(".//page[@view_id]"):
+            if page_view_id.get('view_id'):
+                module, xml_id = page_view_id.get('view_id').rsplit('.', 1)
+                page_view_id.set('view_id', '%d'%self.pool.get('ir.model.data').get_object_reference(cr, user, module, xml_id)[1])
         arch = etree.tostring(node, encoding="unicode").replace('\t', '')
         fields = {}
         if node.tag == 'diagram':
@@ -3564,21 +3582,18 @@ class orm(orm_template):
             if not f.store:
                 continue
             if self._columns[store_field].store is True:
-                sm = {self._name: (lambda self, cr, uid, ids, c={}: ids, None, 10, None)}
+                sm = {self._name: (lambda self, cr, uid, ids, c={}: ids, None, 10)}
             else:
                 sm = self._columns[store_field].store
             for object, aa_list in list(sm.items()):
                 if isinstance(aa_list, tuple):
                     aa_list = [aa_list]
                 for aa in aa_list:
-                    if len(aa) == 4:
-                        (fnct, fields2, order, length) = aa
-                    elif len(aa) == 3:
+                    if len(aa) == 3:
                         (fnct, fields2, order) = aa
-                        length = None
                     else:
                         raise except_orm('Error',
-                                         ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
+                                         ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority)}.' % (store_field, self._name)))
                     self.pool._store_function.setdefault(object, [])
                     ok = True
                     for x, y, z, e, f, l in self.pool._store_function[object]:
@@ -3587,7 +3602,7 @@ class orm(orm_template):
                                 ok = False
                                 break
                     if ok:
-                        self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
+                        self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, None))
                         self.pool._store_function[object].sort(key=lambda x:x[4])
 
         for (key, null, msg) in self._sql_constraints:
@@ -4654,39 +4669,20 @@ class orm(orm_template):
            respecting ``multi`` attributes), and stores the resulting values in the database directly."""
         if not ids:
             return True
-        field_flag = False
-        field_dict = {}
-        if self._log_access:
-            cr.execute('select id,write_date from '+self._table+' where id IN %s', (tuple(ids),))  # not_a_user_entry
-            res = cr.fetchall()
-            for r in res:
-                if r[1]:
-                    field_dict.setdefault(r[0], [])
-                    res_date = time.strptime((r[1])[:19], '%Y-%m-%d %H:%M:%S')
-                    write_date = datetime.datetime.fromtimestamp(time.mktime(res_date))
-                    for i in self.pool._store_function.get(self._name, []):
-                        if i[5]:
-                            up_write_date = write_date + datetime.timedelta(hours=i[5])
-                            if datetime.datetime.now() < up_write_date:
-                                if i[1] in fields:
-                                    field_dict[r[0]].append(i[1])
-                                    if not field_flag:
-                                        field_flag = True
         todo = {}
         keys = []
-        keys_append = keys.append
         for f in fields:
             key = self._columns[f]._multi
             if key not in keys:
-                keys_append(key)
-        todo = dict((k, []) for k in keys)
-        for f in fields:
-            key = self._columns[f]._multi
+                keys.append(key)
+                todo[key] = []
             todo[key].append(f)
 
+        ids_to_update = {}
         for key in keys:
             val = todo[key]
             if key:
+                # mutli
                 # uid == 1 for accessing objects having rules defined on store fields
                 if hasattr(uid, 'realUid'):
                     context['computed_for_uid'] = uid.realUid
@@ -4698,10 +4694,6 @@ class orm(orm_template):
                 except KeyError:
                     pass
                 for id, value in list(result.items()):
-                    if field_flag:
-                        for f in list(value.keys()):
-                            if f in field_dict[id]:
-                                value.pop(f)
                     upd0 = []
                     upd1 = []
                     for v in value:
@@ -4714,22 +4706,15 @@ class orm(orm_template):
                                 pass
                         upd0.append('"'+v+'"='+self._columns[v]._symbol_set[0])
                         upd1.append(self._columns[v]._symbol_set[1](value[v]))
-                    upd1.append(id)
                     if upd0 and upd1:
-                        query = ''.join(('UPDATE "', self._table, '" SET ',
-                                         ','.join(upd0), ' WHERE id = %s'))
-                        cr.execute(query, upd1)
+                        ids_to_update.setdefault(id, {'query': [], 'params': []})
+                        ids_to_update[id]['query'] += upd0
+                        ids_to_update[id]['params'] += upd1
 
             else:
-                id_param_dict = {}
                 for f in val:
                     # uid == 1 for accessing objects having rules defined on store fields
                     result = self._columns[f].get(cr, self, ids, f, 1, context=context)
-                    if field_flag:
-                        for r in list(result.keys()):
-                            if r in list(field_dict.keys()):
-                                if f in field_dict[r]:
-                                    result.pop(r)
                     if result:
                         current_value = '"%s"=%s' % (f, self._columns[f]._symbol_set[0])
                         column_type = self._columns[f]._type
@@ -4739,20 +4724,22 @@ class orm(orm_template):
                                     value = value[0]
                                 except:
                                     pass
-                            id_param_dict.setdefault(id, {})
-                            param_list = id_param_dict[id].setdefault('param_list', [])
-                            param_list.append((self._columns[f]._symbol_set[1](value)))
-                            update_list = id_param_dict[id].setdefault('update_list', [])
-                            update_list.append(current_value)
+                            ids_to_update.setdefault(id, {'query': [], 'params': []})
+                            ids_to_update[id]['query'].append(current_value)
+                            ids_to_update[id]['params'].append((self._columns[f]._symbol_set[1](value)))
 
-                # do only one update request per object
-                for id, param_dict in list(id_param_dict.items()):
-                    current_query = ['UPDATE "%s" SET' % self._table]
-                    current_query.append(', '.join(param_dict['update_list']))
-                    current_query.append('WHERE id = %s')
-                    param_dict['param_list'].append(id)
-                    final_query = ' '.join(current_query)
-                    cr.execute(final_query, tuple(param_dict['param_list']))
+        if ids_to_update:
+            group_by_values = {}
+            for _id, values in ids_to_update.items():
+                group_by_values.setdefault(repr(values), {'ids': [], 'values': values})
+                group_by_values[repr(values)]['ids'].append(_id)
+
+            for repr_value in group_by_values:
+                query = group_by_values[repr_value]['values']['query']
+                params = group_by_values[repr_value]['values']['params']
+                params.append(tuple(group_by_values[repr_value]['ids']))
+                cr.execute('UPDATE '+ self._table + ' SET '+ ', '.join(query) + ' WHERE id in %s', params) # not_a_user_entry
+
         return True
 
     #

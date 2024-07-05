@@ -72,11 +72,11 @@ class purchase_order_line(osv.osv):
             if info.rounding and rounding_qty%info.rounding != 0:
                 if not res.get('warning', {}).get('message', False):
                     res.update({'warning': {'title': _('Warning'), 'message': _('A rounding value of %s UoM has been set for ' \
-                                                                                'this product, you should than modify ' \
+                                                                                'this product, you should then modify ' \
                                                                                 'the quantity ordered to match the supplier criteria.') % info.rounding}})
                 else:
                     message = _('A rounding value of %s UoM has been set for ' \
-                                'this product, you should than modify ' \
+                                'this product, you should then modify ' \
                                 'the quantity ordered to match the supplier criteria.') % info.rounding
                     message = '%s \n %s' % (res.get('warning', {}).get('message', ''), message)
                     res['warning'].update({'message': message})

@@ -31,9 +31,8 @@
                             <field name="balance_start" readonly="1"/>
                             <group col="3" colspan="4">
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}" string="Bank statement balance"/>
-                                <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-Month Balance" icon="gtk-apply"
-                                    colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                    confirm="Are you sure you want to freeze closing balance?"/>
+                                <button name="wiz_confirm_closing_balance" type="object" string="Confirm End-of-Month Balance" icon="gtk-apply"
+                                    colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"/>
                             </group>
                             <field name="balance_end" readonly="1"/>
                             <group col="3" colspan="4">
@@ -68,7 +67,7 @@
                                     <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state in ('invalid', 'invalid_small_amount'))) or red_on_supplier == True" limit="20">
                                         <field name="red_on_supplier" invisible="1"/>
                                         <field name="has_a_counterpart_transfer" invisible="1" />
-                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
+                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy"  attrs="{'invisible': [('direct_invoice', '=', True)]}"/>
                                         <field name="display_analytic_lines_button" invisible="1"/>
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom"
                                                 attrs="{'invisible': [('display_analytic_lines_button', '=', False)]}"
@@ -244,7 +243,8 @@
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state in ('invalid', 'invalid_small_amount'))) or red_on_supplier == True" limit="20">
-                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
+                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" attrs="{'invisible': [('direct_invoice', '=', True)]}"
+                                        />
                                         <field name="display_analytic_lines_button" invisible="1"/>
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom"
                                                 attrs="{'invisible': [('display_analytic_lines_button', '=', False)]}"
@@ -371,9 +371,8 @@
                                             <field name="subtotal"/>
                                         </form>
                                     </field>
-                                    <button name="button_confirm_closing_balance" type="object" string="Confirm month-end cash count" icon="gtk-apply"
-                                        colspan="4" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                        confirm="Are you sure you want to freeze closing balance?"/>
+                                    <button name="wiz_confirm_closing_balance" type="object" string="Confirm month-end cash count" icon="gtk-apply"
+                                        colspan="4" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"/>
                                     <button name="button_cancel_closing_balance_confirmation" type="object"
                                             string="Re-open month-end cash count" icon="gtk-undo" colspan="4"
                                             attrs="{'invisible': ['|', ('closing_balance_frozen', '=', False), ('state', '!=', 'open')]}"/>
@@ -775,7 +774,7 @@
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
                                 <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state in ('invalid', 'invalid_small_amount'))) or red_on_supplier == True" limit="20">
-                                    <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
+                                    <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy"  attrs="{'invisible': [('direct_invoice', '=', True)]}" />
                                     <field name="display_analytic_lines_button" invisible="1"/>
                                     <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom"
                                             attrs="{'invisible': [('display_analytic_lines_button', '=', False)]}"

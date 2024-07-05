@@ -23,6 +23,7 @@
 PARTNER_TYPE = [('internal', 'Internal'), ('section', 'Inter-section'),
                 ('external', 'External'), ('esc', 'ESC'), ('intermission', 'Intermission'),]
 
+from . import wizard
 from . import partner
 from . import product
 

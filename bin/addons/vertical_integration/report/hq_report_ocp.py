@@ -613,8 +613,13 @@ class hq_report_ocp(report_sxw.report_sxw):
                                 'Closing balance', 'Currency'],
                     'filename': liquidity_balance_filename,
                     'key': 'liquidity',
-                    'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, first_day_of_period,
-                                     last_day_of_period, reg_types, last_day_of_period, tuple(instance_ids)),
+                    'dict_query_params': {
+                        'period_title': period_yyyymm,
+                        'j_type': reg_types,
+                        'date_from': first_day_of_period,
+                        'date_to': last_day_of_period,
+                        'instance_ids': tuple(instance_ids),
+                    },
                     'function': 'postprocess_liquidity_balances',
                     'fnct_params': context,
                 }

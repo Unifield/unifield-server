@@ -2,5 +2,14 @@
 <openerp>
     <data>
         <report auto="False" id="report_purchase_order" model="purchase.order" name="purchase.order" rml="purchase/report/order.rml" string="Purchase Order" view_ids="purchase.purchase_order_form,purchase.purchase_order_tree"/>
+        <report
+            id="report_line_mismatch"
+            name="report_line_mismatch"
+            model="purchase.order"
+            auto="False"
+            string="PO Lines Mismatch"
+            report_type="openpyxl"
+            target_filename="Catalogue mismatch ${name}"
+            />
     </data>
 </openerp>

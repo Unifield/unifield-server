@@ -1902,7 +1902,7 @@
                       <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state', '=', 'done')]" />
                       <field name="name"/>
                       <field name="journal_id"
-                             domain="[('type', 'in', ('purchase', 'depreciation')), ('code', '!=', 'ISI'), ('is_current_instance', '=', True)]"
+                             domain="[('type', '=', 'purchase'), ('code', '!=', 'ISI'), ('is_current_instance', '=', True)]"
                              context="{'search_default_filter_is_active': 1}"
                       />
                     </group>
