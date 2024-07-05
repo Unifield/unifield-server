@@ -185,8 +185,7 @@ class sale_donation_stock_moves(osv.osv_memory):
                 }
 
         sm_domain = [
-            ('reason_type_id.name', 'in', ['In-Kind Donation', 'Donation to prevent losses', 'Donation (standard)']),
-            '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
+            ('picking_id.is_donation', '=', True), '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
             ('location_dest_id.usage', 'in', ['customer', 'supplier'])
         ]
 
