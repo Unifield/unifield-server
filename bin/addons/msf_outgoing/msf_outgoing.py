@@ -220,7 +220,7 @@ class shipment(osv.osv):
                         # total amount and currency
                         currency_id = memory_family['currency_id'] or False
                         total_amount = memory_family['total_amount']
-                        if current_result.get('currency_id') and current_result['currency_id'][0] != currency_id[0]:
+                        if current_result.get('currency_id') and currency_id and current_result['currency_id'][0] != currency_id[0]:
                             current_result['total_amount'] = curr_obj.compute(cr, uid, current_result['currency_id'][0],
                                                                               currency_id[0], current_result.get('total_amount', 0.00),
                                                                               round=False, context=context)
