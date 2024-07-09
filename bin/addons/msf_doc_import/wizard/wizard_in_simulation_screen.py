@@ -1395,7 +1395,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'imp_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
         'imp_price_unit': fields.float(digits=(16, 2), string='Price Unit', readonly=True),
         'imp_cost': fields.function(_get_imported_values, method=True, type='float', multi='imported',
-                                    digits=(16, 2), string='Cost', readonly=True, store=False),
+                                    digits=(16, 2), string='Unit Cost', readonly=True, store=False),
         'discrepancy': fields.function(_get_imported_values, method=True, type='float', multi='imported',
                                        digits=(16, 2), string='Discre.', readonly=True, store=False),
         'imp_currency_id': fields.many2one('res.currency', string='Curr.', readonly=True),
