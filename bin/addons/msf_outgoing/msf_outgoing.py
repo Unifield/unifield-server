@@ -225,7 +225,8 @@ class shipment(osv.osv):
                                                                               currency_id[0], current_result.get('total_amount', 0.00),
                                                                               round=False, context=context)
                         current_result['total_amount'] += total_amount
-                        current_result['currency_id'] = currency_id
+                        if currency_id:
+                            current_result['currency_id'] = currency_id
 
             if pack_fam_ids and all_returned and not has_non_ret_sub_ship:
                 state = 'cancel'
