@@ -114,14 +114,11 @@ class supplier_catalogue(osv.osv):
         if context is None:
             context = {}
 
-        entity_identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
-
         # forbid supplier catalogue coming from higher instance level to be manually deleted:
         to_unlink = set()
-        for catalogue in self.browse(cr, uid, ids, context=context):
-            catalogue_sd_ref = self.get_sd_ref(cr, uid, catalogue.id)
-            if catalogue_sd_ref and catalogue_sd_ref.startswith(entity_identifier) or context.get('sync_update_execution', False):
-                to_unlink.add(catalogue.id)
+        for catalogue in self.read(cr, uid, ids, ['from_sync'], context=context):
+            if not catalogue['from_sync'] or context.get('sync_update_execution', False):
+                to_unlink.add(catalogue['id'])
             else:
                 raise osv.except_osv(
                     _('Error'),
@@ -149,6 +146,10 @@ class supplier_catalogue(osv.osv):
 
         to_be_confirmed = False
         for catalogue in self.browse(cr, uid, ids, context=context):
+            if catalogue.from_sync and not context.get('sync_update_execution'):
+                for val in vals:
+                    if val != 'active':
+                        raise osv.except_osv(_('Error'), _('You can not modify a catalogue created from sync'))
             # Track Changes
             if catalogue.state != 'draft' and vals.get('active') is not None and vals['active'] != catalogue.active:
                 for line in catalogue.line_ids:
@@ -227,8 +228,15 @@ class supplier_catalogue(osv.osv):
                 if vals.get('active') is True or (catalogue.active and
                                                   (('period_from' in vals and vals['period_from'] != catalogue.period_from)
                                                    or ('period_to' in vals and vals['period_to'] != catalogue.period_to))):
-                    invalid_prods = self.check_cat_prods_valid(cr, uid, catalogue.id, [], vals['period_from'],
-                                                               vals['period_to'], context=context)
+                    if 'period_from' in vals:
+                        period_from = vals['period_from']
+                    else:
+                        period_from = catalogue.period_from
+                    if 'period_to' in vals:
+                        period_to = vals['period_to']
+                    else:
+                        period_to = catalogue.period_to
+                    invalid_prods = self.check_cat_prods_valid(cr, uid, catalogue.id, [], period_from, period_to, context=context)
                     if invalid_prods:
                         raise osv.except_osv(_('Warning!'),
                                              _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
@@ -446,6 +454,25 @@ class supplier_catalogue(osv.osv):
 
         return res
 
+    def _is_from_sync(self, cr, uid, ids, fieldname, args, context=None):
+        """
+        Has the catalogue been created by sync ?
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        if not ids:
+            return res
+        entity_identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
+        for cat in self.read(cr, uid, ids, ['partner_id'], context=context):
+            catalogue_sd_ref = self.get_sd_ref(cr, uid, cat['id'])
+            res[cat['id']] = catalogue_sd_ref and not catalogue_sd_ref.startswith(entity_identifier) or False
+
+        return res
+
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'partner_id': fields.many2one('res.partner', string='Partner', required=True,
@@ -473,6 +500,7 @@ class supplier_catalogue(osv.osv):
         'esc_update_ts': fields.datetime('Last updated on', readonly=True),  # UTP-746 last update date for ESC Supplier
         'is_esc': fields.function(_is_esc, type='boolean', string='Is ESC Supplier', method=True),
         'state': fields.selection([('draft', 'Draft'), ('confirmed', 'Confirmed')], string='State', required=True, readonly=True),
+        'from_sync': fields.function(_is_from_sync, type='boolean', string='Created by Sync', method=True),
     }
 
     _defaults = {
@@ -964,10 +992,13 @@ class supplier_catalogue_line(osv.osv):
         cat_obj = self.pool.get('supplier.catalogue')
         catalogue = False
         if vals.get('catalogue_id'):
-            catalogue = cat_obj.read(cr, uid, vals['catalogue_id'], ['state', 'active'], context=context)
+            catalogue = cat_obj.read(cr, uid, vals['catalogue_id'], ['state', 'active', 'from_sync'], context=context)
 
-        if catalogue and catalogue['state'] != 'draft':
-            vals = self._create_supplier_info(cr, uid, vals, context=context)
+        if catalogue:
+            if catalogue['from_sync'] and not context.get('sync_update_execution'):
+                raise osv.except_osv(_('Error'), _('You can not add a line to a catalogue created from sync'))
+            if catalogue['state'] != 'draft':
+                vals = self._create_supplier_info(cr, uid, vals, context=context)
 
         ids = super(supplier_catalogue_line, self).create(cr, uid, vals, context=context)
 
@@ -1001,6 +1032,8 @@ class supplier_catalogue_line(osv.osv):
         prod_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
 
         for line in self.browse(cr, uid, ids, context=context):
+            if line.catalogue_id.from_sync and not context.get('sync_update_execution'):
+                raise osv.except_osv(_('Error'), _('You can not modify lines from a catalogue created from sync'))
             new_vals = vals.copy()
             cat_state = cat_obj.read(cr, uid, new_vals.get('catalogue_id', line.catalogue_id.id), ['state'], context=context)['state']
             if 'product_id' in new_vals and 'line_uom_id' in new_vals and new_vals['product_id'] != prod_id and new_vals['line_uom_id'] != uom_id:
@@ -1080,13 +1113,10 @@ class supplier_catalogue_line(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        entity_identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
-
         # forbid supplier catalogue line coming from higher instance level to be manually deleted:
         to_unlink = set()
-        for cat_line in self.browse(cr, uid, ids, context=context):
-            cat_line_sd_ref = self.get_sd_ref(cr, uid, cat_line.id)
-            if cat_line_sd_ref and cat_line_sd_ref.startswith(entity_identifier) or context.get('sync_update_execution', False):
+        for cat_line in self.browse(cr, uid, ids, fields_to_fetch=['catalogue_id'], context=context):
+            if not cat_line.catalogue_id.from_sync or context.get('sync_update_execution', False):
                 to_unlink.add(cat_line.id)
             else:
                 raise osv.except_osv(

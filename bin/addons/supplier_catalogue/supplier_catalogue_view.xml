@@ -32,45 +32,35 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Supplier catalogue">
-                    <field name="name" colspan="4" on_change="check_inactive_catalogues(partner_id)" />
-                    <field name="period_from" attrs="{'required': [('is_esc', '=', False)], 'invisible': [('is_esc', '=', True)]}" />
-                    <field name="period_to" attrs="{'invisible': [('is_esc', '=', True)]}" />
-                    <field name="currency_id" attrs="{'readonly': [('state', '=', 'confirmed')]}" domain="[('partner_currency', '=', partner_id)]" />
+                    <field name="name" colspan="4" on_change="check_inactive_catalogues(partner_id)" attrs="{'readonly': [('from_sync', '=', True)]}" />
+                    <field name="period_from" attrs="{'required': [('is_esc', '=', False)], 'readonly': ['|', ('is_esc', '=', True), ('from_sync', '=', True)]}" />
+                    <field name="period_to" attrs="{'readonly': ['|', ('is_esc', '=', True), ('from_sync', '=', True)]}" />
+                    <field name="currency_id" attrs="{'readonly': ['|', ('state', '=', 'confirmed'), ('from_sync', '=', True)]}" domain="[('partner_currency', '=', partner_id)]" />
                     <field name="partner_id" readonly="1" />
                     <field name="is_esc" invisible="1" />
+                    <field name="from_sync" invisible="1" />
                     <field name="esc_update_ts" attrs="{'invisible': [('is_esc', '=', False)]}" /> <!-- UTP-746 -->
                     <field name="active" />
 
                     <newline />
 
-                    <group name="import" string=" Import Lines " colspan="4" col="7" attrs="{'invisible': [('state', '!=', 'draft')]}">
-                        <field name="filename_template" invisible="1"/>
-                        <field name="file_to_import" filename="filename_template" colspan="2"/>
-                        <label> </label>
-                        <button name="catalogue_import_lines" type="object" string="Import lines" icon="gtk-execute" colspan="2" />
-                        <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="2" type="object" />
-                        <newline />
-                        <field name="filename" invisible="1"/>
-                        <field name="data" filename="filename" attrs="{'invisible': [('import_error_ok', '=', False)]}"/>
-                        <button name="clear_error" string="Clear errors" icon="gtk-clear" colspan="1" type="object" attrs="{'invisible': [('import_error_ok', '=', False)]}" />
-                        <field name="import_error_ok" invisible="1"/>
-                        <field name="text_error" colspan="4" attrs="{'invisible': [('import_error_ok', '=', False)]}" nolabel="1"/>
-                        <newline />
-                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
-                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="3" type="object" />
+                    <group colspan="4" col="3" name="import" string="Import Lines" attrs="{'invisible': [('from_sync', '=', True)]}" >
+                        <button name="wizard_import_supplier_catalogue_line" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
+                        <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="1" />
                     </group>
 
                     <notebook colspan="4">
                         <page string="Products">
-                            <field name="line_ids" mode="tree" colspan="4" nolabel="1" />
+                            <field name="line_ids" mode="tree" colspan="4" nolabel="1" attrs="{'readonly': [('from_sync', '=', True)]}" />
                         </page>
                         <page string="Comment">
-                            <field name="comment" colspan="4" nolabel="1" />
+                            <field name="comment" colspan="4" nolabel="1" attrs="{'readonly': [('from_sync', '=', True)]}" />
                         </page>
                     </notebook>
 
                     <field name="state" readonly="1" />
-                    <group colspan="2" col="2">
+                    <group colspan="2" col="2" attrs="{'invisible': [('from_sync', '=', True)]}">
                         <button type="object" name="button_confirm" icon="gtk-execute" string="Confirm" states="draft" colspan="2" />
                         <button type="object" name="button_draft" icon="gtk-cancel" string="Reset to draft" states="confirmed" colspan="2" />
                     </group>
