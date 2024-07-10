@@ -638,7 +638,7 @@ class product_asset(osv.osv):
         return True
 
     def _check_mandatory_fields(self, cr, uid, ids, context=None):
-        fields = ['start_date', 'asset_bs_depreciation_account_id', 'asset_pl_account_id', 'useful_life_id']
+        fields = ['start_date', 'asset_bs_depreciation_account_id', 'asset_pl_account_id', 'useful_life_id', 'analytic_distribution_id']
         all_fields = {}
         missing_fields = []
         for asset in self.browse(cr, uid,  ids, fields_to_fetch=fields, context=context):
