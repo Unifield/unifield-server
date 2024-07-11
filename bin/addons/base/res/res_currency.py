@@ -158,6 +158,29 @@ class res_currency(osv.osv):
     _trace = True
     _order = "name"
 
+    def _auto_init(self, cr, context=None):
+        super(res_currency, self)._auto_init(cr, context)
+        if not cr.table_exists('hq_report_no_decimal'):
+            # used by ocp workday VI export to balance rounded JE
+            cr.execute("""
+                create table hq_report_no_decimal (
+                  id bigserial,
+                  account_move_id integer,
+                  account_move_line_id integer,
+                  account_analytic_line_id integer,
+                  original_amount decimal(16, 2),
+                  rounded_amount integer,
+                  period_id integer,
+                  instance_id integer,
+                  primary key (id)
+            )""")
+
+            cr.execute("create index hq_report_no_decimal_account_move_id on hq_report_no_decimal(account_move_id)")
+            cr.execute("create index hq_report_no_decimal_account_move_line_id on hq_report_no_decimal(account_move_line_id)")
+            cr.execute("create index hq_report_no_decimal_account_analytic_line_id on hq_report_no_decimal(account_analytic_line_id)")
+            cr.execute("create index hq_report_no_decimal_period_id on hq_report_no_decimal(period_id)")
+            cr.execute("create index hq_report_no_decimal_instance_id on hq_report_no_decimal(instance_id)")
+
     def _check_unicity_currency_name(self, cr, uid, ids, context=None):
         """
         Check that no currency have the same name and the same currency_table_id.

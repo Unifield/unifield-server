@@ -662,6 +662,7 @@ class hq_report_ocp(report_sxw.report_sxw):
 
 hq_report_ocp('report.hq.ocp', 'account.move.line', False, parser=False)
 
+
 class hq_report_ocp_workday(hq_report_ocp):
 
     def update_percent(self, cr, uid, percent):
@@ -716,6 +717,85 @@ class hq_report_ocp_workday(hq_report_ocp):
 
         journal_type = dict(pool.get('account.journal').fields_get(cr, uid)['type']['selection'])
 
+
+        # fix rounded value to balance rounded JE
+        cr.execute('delete from hq_report_no_decimal where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
+        cr.execute("""insert into hq_report_no_decimal (account_move_id, account_analytic_line_id, original_amount, rounded_amount, period_id, instance_id)
+            select
+                aml.move_id,
+                al.id,
+                -1*al.amount_currency,
+                CASE WHEN al.amount_currency=0 or abs(al.amount_currency)>=1
+                    THEN -1*round(al.amount_currency)
+                    WHEN al.amount_currency < 0 THEN 1
+                    ELSE -1 END,
+                %(period_id)s,
+                al.instance_id
+            from
+                account_analytic_line AS al,
+                res_currency AS c,
+                account_analytic_journal AS j,
+                account_move_line aml,
+                account_move am,
+                account_journal AS aj,
+                account_period p
+            where
+                    c.ocp_workday_decimal = 0
+                    and c.id = al.currency_id
+                    AND j.id = al.journal_id
+                    AND aml.id = al.move_id
+                    AND am.id = aml.move_id
+                    AND p.id = am.period_id
+                    AND p.number not in (0, 16)
+                    AND (
+                        al.real_period_id = %(period_id)s
+                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                    )
+                    AND am.state = 'posted'
+                    AND aml.journal_id = aj.id
+                    AND j.type not in %(j_type)s
+                    AND al.instance_id in %(instance_ids)s
+                    AND aml.is_addendum_line = 'f'
+            """, {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'min_date': period.date_start,
+            'max_date':  period.date_stop,
+            'j_type': tuple(excluded_journal_types),
+        })
+
+        cr.execute("""insert into hq_report_no_decimal (account_move_id, account_move_line_id, original_amount, rounded_amount, period_id, instance_id)
+            select
+                m.id,
+                aml.id,
+                aml.debit_currency - aml.credit_currency,
+                CASE WHEN aml.debit_currency - aml.credit_currency=0 OR abs(aml.debit_currency - aml.credit_currency) >= 1
+                    THEN round(aml.debit_currency - aml.credit_currency)
+                    WHEN aml.debit_currency - aml.credit_currency > 0 THEN 1
+                    ELSE -1 END,
+                %(period_id)s,
+                aml.instance_id
+            from
+                account_move_line aml
+                INNER JOIN account_move AS m ON aml.move_id = m.id
+                INNER JOIN account_account AS a ON aml.account_id = a.id
+                INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+            where
+                c.ocp_workday_decimal = 0
+                AND aal.id IS NULL
+                AND aml.period_id = %(period_id)s
+                AND j.type NOT IN %(j_type)s
+                AND aml.instance_id IN %(instance_ids)s
+                AND m.state = 'posted'
+                AND aml.is_addendum_line = 'f'
+            """, {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'j_type': tuple(excluded_journal_types),
+        })
+
         sql_params = {
             'instance_ids': tuple(instance_ids),
             'period_id': period_id,
@@ -730,7 +810,38 @@ class hq_report_ocp_workday(hq_report_ocp):
         }
 
 
-        self.update_percent(cr, uid, 0.05)
+        cr.execute('''
+            select
+                account_move_id, sum(rounded_amount)
+            from
+                hq_report_no_decimal d
+            where
+                period_id = %s and instance_id in %s
+            group by account_move_id
+            having(sum(d.rounded_amount)!=0 and abs(sum(d.original_amount))<0.001)
+        ''', (period_id, tuple(instance_ids)))
+        for x in cr.fetchall():
+            # add gap on the biggest B/S line
+            move_id, gap = x
+            cr.execute("""
+                update
+                    hq_report_no_decimal d1 set rounded_amount = rounded_amount - %s 
+                where
+                    d1.id in (
+                        select id
+                        from hq_report_no_decimal d2
+                        where
+                            d2.account_move_id=%s
+                        order by
+                            account_analytic_line_id is not null,
+                            abs(rounded_amount) desc
+                        limit 1
+                )
+            """, (gap, move_id))
+
+        # end balance rounded amounts
+
+        self.update_percent(cr, uid, 0.10)
         # analytic lines raw_data
         analytic_query = """
                 SELECT
@@ -754,9 +865,11 @@ class hq_report_ocp_workday(hq_report_ocp):
                     hr.identification_id as emplid, -- 17
                     aml.id as account_move_line_id, -- 18
                     dest.code as destination_code, -- 19
-                    c.ocp_workday_decimal = 0 as no_decimal -- 20
+                    c.ocp_workday_decimal = 0 as no_decimal, -- 20
+                    rounded.rounded_amount as rounded_amount -- 21
                 FROM
-                    account_analytic_line AS al,
+                    account_analytic_line AS al
+                        left join hq_report_no_decimal rounded on rounded.account_analytic_line_id = al.id,
                     account_account AS a,
                     account_analytic_account AS dest,
                     account_analytic_account AS cost_center,
@@ -810,7 +923,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     j.code as journal_code, -- 15
                     a.code as account_code,  -- 16
                     hr.identification_id as emplid,  -- 17
-                    c.ocp_workday_decimal = 0 as no_decimal -- 18
+                    c.ocp_workday_decimal = 0 as no_decimal, -- 18
+                    rounded.rounded_amount as rounded_amount -- 19
                 FROM
                     account_move_line aml
                     INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -820,6 +934,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     INNER JOIN account_journal AS j ON aml.journal_id = j.id
                     INNER JOIN msf_instance AS i ON aml.instance_id = i.id
                     LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+                    left join hq_report_no_decimal rounded on rounded.account_move_line_id = aml.id
                 WHERE
                     aal.id IS NULL
                     AND aml.period_id = %(period_id)s
@@ -891,20 +1006,21 @@ class hq_report_ocp_workday(hq_report_ocp):
                     else:
                         amls.add(row['id'])
 
-                    if row['no_decimal']:
-                        book_debit_round = round(row['book_debit'])
-                        if row['book_debit'] > 0 and not book_debit_round:
-                            book_debit_round = 1
-                        book_credit_round = round(row['book_credit'])
-                        if row['book_credit'] > 0 and not book_credit_round:
-                            book_credit_round = 1
+                    if row['no_decimal'] and (row['book_credit'] or row['book_debit']):
+                        book_debit_round = 0
+                        book_credit_round = 0
+                        if row['rounded_amount'] > 0:
+                            book_debit_round = row['rounded_amount']
+                        else:
+                            book_credit_round = abs(row['rounded_amount'])
+
                         ecart = round( (book_credit_round - book_debit_round) - (row['book_credit'] - row['book_debit']), 2)
                     else:
                         book_debit_round = row['book_debit']
                         book_credit_round = row['book_credit']
                         ecart = 0
                     writer.writerow([
-                        finance_archive._get_hash(cr, uid, ids='%s'%row['id'], model=obj), # DB-ID
+                        finance_archive._get_hash(new_cr, uid, ids='%s'%row['id'], model=obj), # DB-ID
                         row['instance'], # Instance
                         row['entry_sequence'], # Entry Sequence
                         'Company_Reference_ID', # Valeur fixe
@@ -936,7 +1052,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                 if amls:
                     new_cr.execute("update account_move_line set exported='t' where id in %s", (tuple(amls), ))
 
-                self.update_percent(cr, uid, 0.45)
+                self.update_percent(new_cr, uid, 0.45)
 
         self.update_percent(cr, uid, 0.80)
 
@@ -956,11 +1072,12 @@ class hq_report_ocp_workday(hq_report_ocp):
                     j.code as journal_code,  -- 10
                     a.code as account_code, -- 11
                     i.code as instance_code, -- 12
-                    c.ocp_workday_decimal = 0 as no_decimal -- 13
+                    c.ocp_workday_decimal = 0 as no_decimal, -- 13
+                    sum(coalesce(rounded.rounded_amount, aml.amount_currency)) -- 14
                 FROM
                     account_move_line aml
+                    LEFT JOIN hq_report_no_decimal rounded on rounded.account_move_line_id = aml.id
                     INNER JOIN account_move AS m ON aml.move_id = m.id
-                    LEFT JOIN hr_employee hr ON hr.id = aml.employee_id
                     INNER JOIN account_account AS a ON aml.account_id = a.id
                     INNER JOIN res_currency AS c ON aml.currency_id = c.id
                     INNER JOIN account_journal AS j ON aml.journal_id = j.id
@@ -996,7 +1113,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             for row in rows:
                 amls.update(row[0])
                 if row[13]:
-                    amount_currency_round = round(row[5])
+                    amount_currency_round = row[14]
                     if row[5] > 0 and not amount_currency_round:
                         amount_currency_round = 1
                     elif row[5] < 0 and not amount_currency_round:
@@ -1007,7 +1124,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     ecart = 0
 
                 writer.writerow([
-                    finance_archive._get_hash(cr, uid, ids=row[0], model='account.move.line'), # DB-ID
+                    finance_archive._get_hash(new_cr, uid, ids=row[0], model='account.move.line'), # DB-ID
                     row[1], # Instance
                     row[2], # Entry Sequence
                     'Company_Reference_ID', # Valeur fixe
@@ -1029,7 +1146,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     row[10] if row[4] == 'cash' else '', # Journal Cash
                     row[10] if row[4] in ('bank', 'cheque') else '', # Journal Cash
                     row[11], # G/L Account,
-                    row[17], # EMPLID
+                    '', # EMPLID
                     row[12][0:3], # 3 digits seq.
                 ])
             if amls:
