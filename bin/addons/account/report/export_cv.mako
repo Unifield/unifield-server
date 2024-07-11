@@ -163,7 +163,7 @@
         <Cell ss:StyleID="non_editable_number"><Data ss:Type="Number">${cv_line.amount|x}</Data></Cell>
         <% ad_obj = cv_line.analytic_distribution_id or cv_line.commit_id.analytic_distribution_id or False %>
         % if ad_obj and len(ad_obj.funding_pool_lines) == 1 :
-            <Cell ss:StyleID="non_editable"><Data ss:Type="String">${'100%'|x}</Data></Cell>
+            <Cell ss:StyleID="editable"><Data ss:Type="String">${'100'|x}</Data></Cell>
             <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].cost_center_id.code or ''|x}</Data></Cell>
             <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].destination_id.code or ''|x}</Data></Cell>
             <Cell ss:StyleID="editable"><Data ss:Type="String">${ad_obj.funding_pool_lines[0].analytic_id.code or ''|x}</Data></Cell>

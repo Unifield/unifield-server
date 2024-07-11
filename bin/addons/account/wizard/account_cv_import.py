@@ -231,7 +231,7 @@ class account_cv_import(osv.osv_memory):
                         errors.append(_("Line %s: product %s doesn't match.") % (current_line_num, cv_line_product))
                         continue
 
-                    if account.is_analytic_addicted and analytic_distribution_type and analytic_distribution_type.strip() in ('100%', '100', '1'):
+                    if account.is_analytic_addicted and analytic_distribution_type and analytic_distribution_type.strip() == '100':
                         if not cost_center_code or not destination_code or not funding_pool_code:
                             errors.append(_("Line %s: An expense account is set while the analytic distribution values (mandatory) are missing.") % (current_line_num,))
                             continue
