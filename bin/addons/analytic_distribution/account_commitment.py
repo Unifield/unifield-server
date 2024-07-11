@@ -152,6 +152,9 @@ class account_commitment(osv.osv):
             res[commit.id] = len(commit.line_ids)
         return res
 
+    def _get_ad(self, cr, uid, ids,  ad_obj, context=None):
+        return self.pool.get('account.invoice')._get_ad(cr, uid, ids, ad_obj, context=context)
+
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
