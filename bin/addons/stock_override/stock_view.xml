@@ -591,7 +591,7 @@
                             </group>
                             <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
                                 default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'address_in_id': address_id, 'date_expected': min_date, 'ext_cu': ext_cu, 'from_wkf': from_wkf}"
-                                context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_in_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
+                                context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_in_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'parent_state': state}"
                                 on_change="onchange_move()"
                                 filter_selector="[('Show available lines', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show all lines', []), ('Show cancelled lines', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 >
@@ -607,7 +607,7 @@
                                     <field name="comment" />
                                     <field name="product_qty"/>
                                     <field name="product_uom" string="UoM"/>
-                                    <field name="price_unit" attrs="{'invisible': [('fake_state', '!=', 'done')]}" />
+                                    <field name="price_unit" invisible="context.get('parent_state', 'none') != 'done'" />
                                     <field name="scrapped" invisible="1"/>
                                     <field name="asset_id"/>
                                     <field name="prodlot_id"/>
