@@ -312,6 +312,12 @@ class account_move_line(osv.osv):
                 for tag in tags:
                     tag.set('string', _("Account Entry Lines"))
                 result['arch'] = etree.tostring(search, encoding='unicode')
+        elif view_type == 'search' and context.get('from_asset_journal_domain'):
+            search = etree.fromstring(result['arch'])
+            journal_dom = self.pool.get('product.asset')._get_journal_domain(cr, uid, context)
+            for tag in search.xpath('//field[@name="journal_id_fake"]'):
+                tag.set('domain', str(journal_dom))
+            result['arch'] = etree.tostring(search, encoding='unicode')
         return result
 
     def onchange_account_id(self, cr, uid, ids, account_id=False, third_party=False):
