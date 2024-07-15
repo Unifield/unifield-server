@@ -206,9 +206,9 @@
                             <label string="" colspan="2"/>
                             <field name="check_total" required="2"/>
                             <group name="import" string=" Import Lines " colspan="4" col="4">
-                                <button name="import_invoice" string="Import Invoice Line" icon="gtk-execute" colspan="2" type="object"
+                                <button name="import_invoice" string="Import Invoice Lines" icon="gtk-execute" colspan="2" type="object"
                                         attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <button name="export_invoice" string="Export Invoice Line" icon="gtk-execute" colspan="2" type="object"
+                                <button name="export_invoice" string="Export Invoice Lines" icon="gtk-execute" colspan="2" type="object"
                                         force_editable="1"/>
                             </group>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
@@ -380,9 +380,9 @@
                                    attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_supply', '=', True)]}"/>
                             <newline/>
                             <group name="import" string=" Import Lines " colspan="4" col="4">
-                                <button name="import_invoice" string="Import Invoice Line" icon="gtk-execute" colspan="2" type="object"
+                                <button name="import_invoice" string="Import Invoice Lines" icon="gtk-execute" colspan="2" type="object"
                                         attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <button name="export_invoice" string="Export Invoice Line" icon="gtk-execute" colspan="2" type="object"
+                                <button name="export_invoice" string="Export Invoice Lines" icon="gtk-execute" colspan="2" type="object"
                                         force_editable="1"/>
                                 <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
                                         attrs="{'invisible': [('state', '!=', 'draft')],
