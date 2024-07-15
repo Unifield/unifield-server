@@ -427,7 +427,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="20" />
             <field name="arch" type="xml">
-                <tree hide_delete_button="1" string="Register Lines" editable="bottom" noteditable="state=='hard' or direct_invoice is True" hide_new_button="1">
+                <tree hide_delete_button="0" string="Register Lines" editable="bottom" noteditable="state=='hard' or direct_invoice is True" hide_new_button="1">
                     <button name="button_advance" states="hard" string="Advance return" type="object"
                         icon="terp-stock_effects-object-colorize" context="context"
                         attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0),'|',
@@ -473,10 +473,6 @@
                     <field name="state"/>
                     <field name="statement_id" string="Register Name" readonly="1"/><!-- Pay ATTENTION that string="Register Name" had been added by UF-1736 -->
                     <field name="direct_invoice" invisible="1" readonly="1"/>
-                    <button name="delete_button" states="draft,temp,unknown"
-                            string="Delete" type="object" icon="gtk-del"
-                            context="context"
-                            confirm='Do you really want to delete selected record(s) ?' />
                 </tree>
             </field>
         </record>
