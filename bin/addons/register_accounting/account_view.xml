@@ -93,7 +93,7 @@
                                         <field name="partner_type"
                                             attrs="{'readonly': ['|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id, 'has_a_counterpart_transfer': has_a_counterpart_transfer}" />
                                         <field name="analytic_account_id"
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
                                         <field name="analytic_distribution_id" invisible="1"/>
@@ -271,7 +271,7 @@
                                         <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id, 'has_a_counterpart_transfer': has_a_counterpart_transfer}"
                                             />
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
@@ -328,7 +328,7 @@
                                         <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id, 'has_a_counterpart_transfer': has_a_counterpart_transfer}"
                                             />
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
@@ -792,7 +792,7 @@
                                     <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id, 'has_a_counterpart_transfer': has_a_counterpart_transfer}"
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
@@ -845,7 +845,7 @@
                                     <field name="partner_type"
                                         attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                         domain="[('filter_for_third_party', '=', account_id)]"
-                                        context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
+                                        context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id, 'has_a_counterpart_transfer': has_a_counterpart_transfer}"
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
