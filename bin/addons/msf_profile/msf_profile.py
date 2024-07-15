@@ -57,6 +57,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_12195_deactivate_asset_creation_rule(self, cr, uid, *a, **b):
+        asset_obj = self.pool.get('audittrail.rule')
+        asset_ids = asset_obj.search(cr, uid, [('name', '=', 'Asset Form Creation')])
+        if asset_ids:
+            asset_obj.write(cr, uid, asset_ids, {'state': 'draft'})
+
     # UF33.0
     def us_12598_ocb_group_user_manager(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
