@@ -851,20 +851,19 @@ Please check if these can be switched for UniData type product(s) instead, or co
             if pol.order_type != 'direct' and not pol.from_synchro_return_goods:
                 # create incoming shipment (IN):
 
+                in_domain = [
+                    ('purchase_id', '=', pol.order_id.id),
+                    ('type', '=', 'in'),
+                    ('claim', '=', False)
+                ]
                 if sourced_on_dpo:
-                    in_domain = [
-                        ('purchase_id', '=', pol.order_id.id),
+                    in_domain.extend([
                         ('state', '=', 'shipped'),
-                        ('type', '=', 'in'),
                         ('dpo_incoming', '=', True),
                         ('dpo_id_incoming', '=', pol.from_dpo_id),
-                    ]
+                    ])
                 else:
-                    in_domain = [
-                        ('purchase_id', '=', pol.order_id.id),
-                        ('state', 'not in', ['done', 'cancel', 'shipped', 'updated', 'import']),
-                        ('type', '=', 'in')
-                    ]
+                    in_domain.append(('state', 'not in', ['done', 'cancel', 'shipped', 'updated', 'import']))
                 in_id = self.pool.get('stock.picking').search(cr, uid, in_domain)
                 created = False
                 if not in_id:
