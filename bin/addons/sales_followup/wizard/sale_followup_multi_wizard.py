@@ -240,6 +240,9 @@ class sale_followup_multi_wizard(osv.osv_memory):
             ids = [ids]
 
         for wizard in self.browse(cr, uid, ids, context=context):
+            if wizard.start_date and wizard.end_date and wizard.start_date > wizard.end_date:
+                raise osv.except_osv(_('Error'),
+                                     _('Please correct the Start Date. Start date can not be later than the end date'))
             if wizard.msl_non_conform:
                 state_domain = self._get_state_domain(wizard)
                 sql_param = {'instance_id': self.pool.get('res.company')._get_instance_id(cr, uid)}
