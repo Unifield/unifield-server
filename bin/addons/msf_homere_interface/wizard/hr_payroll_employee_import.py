@@ -1,25 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-##############################################################################
-#
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-##############################################################################
 
 from zipfile import ZipFile as zf
 from zipfile import is_zipfile
@@ -457,7 +437,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             # - no contract line found with current = True
 
             # sort contract: get current one, then by start date
-            contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff)], order='current desc,date_start desc')
+            contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff)], order='current desc,date_start desc,id')
             if not contract_ids:
                 vals.update({'active': False})
             current_contract = False
@@ -497,7 +477,7 @@ class hr_payroll_employee_import(osv.osv_memory):
 
         return True, created, updated
 
-    def update_contract(self, cr, uid, ids, contract_reader, job_reader, context=None):
+    def update_contract(self, cr, uid, ids, contract_readers, job_reader, context=None):
         """
         Read lines from reader and update database
         """
@@ -505,37 +485,38 @@ class hr_payroll_employee_import(osv.osv_memory):
         libelle_dict = {}
         if job_reader:
             libelle_dict = self.get_job_libelles(cr, uid, job_reader, context=context)
-        for line in contract_reader:
-            if not line.get('contratencours'): #or not line.get('contratencours') == 'O':
-                continue
-            vals = {
-                'homere_codeterrain': line.get('codeterrain') or False,
-                'homere_id_staff': line.get('id_staff') or False,
-                'homere_id_unique': line.get('id_unique') or 'empty',
-                'current': False,
-            }
-            # Update values for current field
-            if line.get('contratencours'):
-                if line.get('contratencours') == 'O':
-                    vals.update({'current': True})
-            # Update values for datedeb and datefin fields
-            for field in [('datedeb', 'date_start'), ('datefin', 'date_end')]:
-                if line.get(field[0]):
-                    if line.get(field[0]) == '0000-00-00':
-                        vals.update({field[1]: False})
-                    else:
-                        vals.update({field[1]: line.get(field[0])})
-            # Update values for job
-            if line.get('libfonction', False):
-                vals.update({'job_name': line.get('libfonction')})
-            else:
-                job_code = line.get('fonction', False)
-                if job_code:
-                    vals.update({'job_name': libelle_dict.get(job_code)})
-            # Add entry to database
-            new_line = self.pool.get('hr.contract.msf').create(cr, uid, vals)
-            if new_line:
-                res.append(new_line)
+        for contract_reader in contract_readers:
+            for line in contract_reader:
+                if not line.get('contratencours'): #or not line.get('contratencours') == 'O':
+                    continue
+                vals = {
+                    'homere_codeterrain': line.get('codeterrain') or False,
+                    'homere_id_staff': line.get('id_staff') or False,
+                    'homere_id_unique': line.get('id_unique') or 'empty',
+                    'current': False,
+                }
+                # Update values for current field
+                if line.get('contratencours'):
+                    if line.get('contratencours') == 'O':
+                        vals.update({'current': True})
+                # Update values for datedeb and datefin fields
+                for field in [('datedeb', 'date_start'), ('datefin', 'date_end')]:
+                    if line.get(field[0]):
+                        if line.get(field[0]) == '0000-00-00':
+                            vals.update({field[1]: False})
+                        else:
+                            vals.update({field[1]: line.get(field[0])})
+                # Update values for job
+                if line.get('libfonction', False):
+                    vals.update({'job_name': line.get('libfonction')})
+                else:
+                    job_code = line.get('fonction', False)
+                    if job_code:
+                        vals.update({'job_name': libelle_dict.get(job_code)})
+                # Add entry to database
+                new_line = self.pool.get('hr.contract.msf').create(cr, uid, vals)
+                if new_line:
+                    res.append(new_line)
         return res
 
     def _extract_7z(self, cr, uid, filename):
@@ -551,12 +532,14 @@ class hr_payroll_employee_import(osv.osv_memory):
 
     def read_files(self, cr, uid, filename):
         staff_file = 'staff.csv'
+        staff_I_file = 'staff_I.csv'
         contract_file = 'contrat.csv'
+        contract_I_file = 'contrat_I.csv'
         job_file = 'fonction.csv'
         ini_file = 'envoi.ini'
         job_reader = False
-        contract_reader = False
-        staff_reader = False
+        contract_reader = []
+        staff_reader = []
         config_parser = False
         desc_to_close = []
         tmpdir = False
@@ -567,22 +550,25 @@ class hr_payroll_employee_import(osv.osv_memory):
             zipobj = zf(filename)
             if zipobj:
                 desc_to_close.append(zipobj)
-            if zipobj.namelist() and job_file in zipobj.namelist():
-                job_reader = csv.DictReader(io.TextIOWrapper(zipobj.open(job_file), encoding=encoding), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
-                # Do not raise error for job file because it's just a useful piece of data, but not more.
-            # read the contract file
-            if zipobj.namelist() and contract_file in zipobj.namelist():
-                contract_reader = csv.DictReader(io.TextIOWrapper(zipobj.open(contract_file), encoding=encoding), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
-            # read the staff file
-            if zipobj.namelist() and staff_file in zipobj.namelist():
-                # Doublequote and escapechar avoid some problems
-                staff_reader = csv.DictReader(io.TextIOWrapper(zipobj.open(staff_file), encoding=encoding), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
-            # read the ini file
-            if zipobj.namelist() and ini_file in zipobj.namelist():
-                ini_desc = zipobj.open(ini_file, 'r')
-                config_parser = configparser.SafeConfigParser()
-                # io.TextIOWrapper to open the file as text instead of binary (required by config_parser)
-                config_parser.read_file(io.TextIOWrapper(ini_desc, encoding='utf_8_sig'))
+
+            zip_namelist = zipobj.namelist()
+            if zip_namelist:
+                if job_file in zip_namelist:
+                    job_reader = csv.DictReader(io.TextIOWrapper(zipobj.open(job_file), encoding=encoding), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+                    # Do not raise error for job file because it's just a useful piece of data, but not more.
+                # read the contract file
+                for contract_f in [contract_file, contract_I_file]:
+                    if contract_f in zip_namelist:
+                        contract_reader.append(csv.DictReader(io.TextIOWrapper(zipobj.open(contract_f), encoding=encoding), quotechar='"', delimiter=',', doublequote=False, escapechar='\\'))
+                for staff_f in [staff_file, staff_I_file]:
+                    if staff_f in zip_namelist:
+                        staff_reader.append(csv.DictReader(io.TextIOWrapper(zipobj.open(staff_f), encoding=encoding), quotechar='"', delimiter=',', doublequote=False, escapechar='\\'))
+                # read the ini file
+                if ini_file in zip_namelist:
+                    ini_desc = zipobj.open(ini_file, 'r')
+                    config_parser = configparser.SafeConfigParser()
+                    # io.TextIOWrapper to open the file as text instead of binary (required by config_parser)
+                    config_parser.read_file(io.TextIOWrapper(ini_desc, encoding='utf_8_sig'))
         else:
             tmpdir = self._extract_7z(cr, uid, filename)
             job_file_name = os.path.join(tmpdir, job_file)
@@ -591,17 +577,19 @@ class hr_payroll_employee_import(osv.osv_memory):
                 desc_to_close.append(job_file_desc)
                 job_reader = csv.DictReader(job_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
 
-            contract_file_name = os.path.join(tmpdir, contract_file)
-            if os.path.isfile(contract_file_name):
-                contract_file_desc = open(contract_file_name, 'r', encoding=encoding)
-                desc_to_close.append(contract_file_desc)
-                contract_reader = csv.DictReader(contract_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+            for contract_f in [contract_file, contract_I_file]:
+                contract_file_name = os.path.join(tmpdir, contract_f)
+                if os.path.isfile(contract_file_name):
+                    contract_file_desc = open(contract_file_name, 'r', encoding=encoding)
+                    desc_to_close.append(contract_file_desc)
+                    contract_reader.append(csv.DictReader(contract_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\'))
 
-            staff_file_name = os.path.join(tmpdir, staff_file)
-            if os.path.isfile(staff_file_name):
-                staff_file_desc = open(staff_file_name, 'r', encoding=encoding)
-                desc_to_close.append(staff_file_desc)
-                staff_reader = csv.DictReader(staff_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+            for staff_f in [staff_file, staff_I_file]:
+                staff_file_name = os.path.join(tmpdir, staff_f)
+                if os.path.isfile(staff_file_name):
+                    staff_file_desc = open(staff_file_name, 'r', encoding=encoding)
+                    desc_to_close.append(staff_file_desc)
+                    staff_reader.append(csv.DictReader(staff_file_desc, quotechar='"', delimiter=',', doublequote=False, escapechar='\\'))
 
             ini_file_name = os.path.join(tmpdir, ini_file)
             if os.path.isfile(ini_file_name):
@@ -641,7 +629,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             # now we determine the file format
             filename = fileobj.name
             fileobj.close()
-            job_reader, contract_reader, staff_reader, config_parser, desc_to_close, tmpdir = self.read_files(cr, uid, filename)
+            job_reader, contract_readers, staff_readers, config_parser, desc_to_close, tmpdir = self.read_files(cr, uid, filename)
             filename = wiz.filename or ""
             # Check data from the ini file
             mois_ko = not config_parser.has_option('DEFAUT', 'MOIS')
@@ -653,31 +641,42 @@ class hr_payroll_employee_import(osv.osv_memory):
                                                    "for only one month and one field."))
             # read the contract file
             contract_ids = False
-            if contract_reader:
-                contract_ids = self.update_contract(cr, uid, ids, contract_reader, job_reader, context=context)
+            if contract_readers:
+                contract_ids = self.update_contract(cr, uid, ids, contract_readers, job_reader, context=context)
             # UF-2472: Read all lines to check employee's code before importing
             staff_data = []
             staff_codes = []
             duplicates = []
             staff_seen = []
+            code_staff_seen = {}
             homere_fields = {}
-            for line in staff_reader:
-                staff_seen.append(line)
-                data = self.read_employee_infos(cr, uid, line)
-                processed += 1
-                if data: # to avoid False value in staff_data list
-                    staff_data.append(data)
-                    code = data[0]
-                    if code in staff_codes:
-                        duplicates.append(code)
-                    staff_codes.append(code)
-                # store the Homere fields combination for all employees
-                if line.get('nom'):
-                    # "no id_unique" is replaced by the string "empty"
-                    homere_fields_key = "%s%s%s" % (line.get('codeterrain', ''), line.get('id_staff', ''), line.get('id_unique') or 'empty')
-                    if homere_fields_key not in homere_fields:
-                        homere_fields[homere_fields_key] = []
-                    homere_fields[homere_fields_key].append(line['nom'])
+            staff_file_number = 0
+            for staff_reader in staff_readers:
+                for line in staff_reader:
+                    # in case of saff_I: ignore duplicated code_staff (found in previous Homere version)
+                    if not staff_file_number and line.get('code_staff'):
+                        code_staff_seen[line['code_staff']] = True
+                    if staff_file_number > 0 and line.get('code_staff') in code_staff_seen:
+                        # 2nd file read, ignore code_staff already seen
+                        continue
+
+                    staff_seen.append(line)
+                    data = self.read_employee_infos(cr, uid, line)
+                    processed += 1
+                    if data: # to avoid False value in staff_data list
+                        staff_data.append(data)
+                        code = data[0]
+                        if code in staff_codes:
+                            duplicates.append(code)
+                        staff_codes.append(code)
+                    # store the Homere fields combination for all employees
+                    if line.get('nom'):
+                        # "no id_unique" is replaced by the string "empty"
+                        homere_fields_key = "%s%s%s" % (line.get('codeterrain', ''), line.get('id_staff', ''), line.get('id_unique') or 'empty')
+                        if homere_fields_key not in homere_fields:
+                            homere_fields[homere_fields_key] = []
+                        homere_fields[homere_fields_key].append(line['nom'])
+                staff_file_number += 1
             # Delete duplicates of… duplicates!
             duplicates = list(set(duplicates))
             details = {}
