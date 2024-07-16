@@ -680,6 +680,31 @@ class account_invoice(osv.osv):
         self.synch_auto_tick(cr, uid, res, partner_id, doc_type, from_supply)
         return res
 
+    def _check_currency_active(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+
+        if isinstance(ids, int):
+            ids = [ids]
+
+        cr.execute('''
+            select 
+                c.name 
+            from
+                account_invoice i, res_currency c
+            where
+                i.currency_id = c.id and
+                c.active = 'f' and
+                i.id in %s
+        ''', (tuple(ids),))
+        inactives = [x[0] for x in cr.fetchall()]
+        if inactives:
+            raise osv.except_osv(
+                _('Error'),
+                _('Currency %s is inactive. Activate or change the currency before validation.') % (','.join(inactives))
+            )
+        return True
+
     def _check_document_date(self, cr, uid, ids):
         """
         Check that document's date is done BEFORE posting date
@@ -1028,6 +1053,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if context is None:
             context = {}
+        self._check_currency_active(cr, uid, ids, context=context)
         self._check_active_product(cr, uid, ids, context=context)
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
         self.check_accounts_for_partner(cr, uid, ids, context=context)

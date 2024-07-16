@@ -331,7 +331,7 @@ class account_invoice(osv.osv):
             'account.invoice.line': (_get_invoice_line, ['price_unit','invoice_line_tax_id','quantity','discount','invoice_id'], 20),
         },
             multi='all'),
-        'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True, states={'draft':[('readonly',False)]}, context={'hide_active_buttons': True}),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, hide_default_menu=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_type': fields.related('journal_id', 'type', type='selection', string='Journal Type',
                                        selection=_get_journal_type, store=False, write_relate=False),

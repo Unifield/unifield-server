@@ -855,6 +855,15 @@ class res_currency(osv.osv):
             # already ok
             return currency_id
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+        if view_type == 'search' and context.get('hide_active_buttons'):
+            try:
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'res_currency_functional', 'view_currency_functional_search_noactive')[1]
+            except:
+                pass
+        return super(res_currency, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
 
 res_currency()
 
