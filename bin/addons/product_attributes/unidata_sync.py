@@ -226,8 +226,11 @@ class unidata_project(osv.osv):
             ids = [ids]
         self._set_uf_active_from_parent(cr, uid, vals, context=context)
         if ids and 'unifield_instance_id' in vals:
-            # TODO test NULL
-            cr.execute('update product_msl_rel set unifield_instance_id=%s where msl_id in %s', (vals['unifield_instance_id'], tuple(ids)))
+            unifield_instance_id = vals['unifield_instance_id']
+            if not unifield_instance_id:
+                # replace False in sync update by None, sql execute will change it to NULL
+                unifield_instance_id = None
+            cr.execute('update product_msl_rel set unifield_instance_id=%s where msl_id in %s', (unifield_instance_id, tuple(ids)))
         return super(unidata_project, self).write(cr, uid, ids, vals, context=context)
 
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
@@ -677,7 +680,7 @@ class ud_sync():
             #project_obj.write(self.cr, self.uid, msl.id, {'msl_sync_date': exec_date}, context=self.context)
             self.cr.execute('update unidata_project set msl_sync_date=publication_date where id=%s', (msl.id,))
 
-            self.cr.execute("update product_msl_rel set to_delete='t', unifield_instance_id=%s where msl_id=%s", (self.uf_instance_cache.get(msl.instance_id.code), msl.id)) # TODO SET NULL
+            self.cr.execute("update product_msl_rel set to_delete='t', unifield_instance_id=%s where msl_id=%s", (self.uf_instance_cache.get(msl.instance_id.code), msl.id))
             for prod_id in prod_ids:
                 self.cr.execute("insert into product_msl_rel (msl_id, product_id, creation_date, version, unifield_instance_id) values (%s, %s, NOW(), %s, %s) ON CONFLICT (msl_id, product_id) DO UPDATE SET to_delete='f'", (msl.id, prod_id, version, self.uf_instance_cache.get(msl.instance_id.code)))
             # update version on resurected links
