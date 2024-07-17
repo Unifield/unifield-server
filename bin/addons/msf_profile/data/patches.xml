@@ -1069,6 +1069,10 @@
             <field name="method">us_12195_deactivate_asset_creation_rule</field>
         </record>
 
+        <record id="us_12283_period_states_closed_by_sync" model="patch.scripts">
+            <field name="method">update_us_435_2</field>
+        </record>
+
 
 
     </data>
