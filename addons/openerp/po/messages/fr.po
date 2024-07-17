@@ -1880,6 +1880,11 @@ msgstr "Un bouton pour télécharger le rapport sera affiché à la fin de la g�
 msgid "Name of the requested report: "
 msgstr "Nom du rapport demandé: "
 
+#: controllers/templates/downloadbg.mako:115
+#, python-format
+msgid "An Application Error has been reported."
+msgstr "Une Erreur de l'application a été rapportée."
+
 #: controllers/templates/downloadbg.mako:87
 #, python-format
 msgid "Stop report"

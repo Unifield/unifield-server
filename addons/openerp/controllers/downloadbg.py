@@ -37,16 +37,18 @@ class DownLoadBg(SecuredController):
         finish = ""
         finished = "False"
         data_collected = "False"
+        exception = False
         if data_bg['percent'] >= 1.00:
             data_collected = "True"
             if not data_bg['finished']:
                 download.write([int(res_id)], {'finished': True}, rpc.session.context)
             else:
-                report_state = rpc.session.execute('report', 'report_get_state', data_bg['report_id'])
-                finish = report_state or ""
+                report_state = rpc.session.execute('report', 'report_get_state_exception', data_bg['report_id'])
+                finish = report_state[0] or ""
                 if finish:
                     finished = "True"
-                if from_button:
+                exception = report_state[1]
+                if not exception and from_button:
                     report = rpc.session.execute('report', 'report_get', data_bg['report_id'])
                     report_type = report['format']
                     cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
@@ -55,7 +57,7 @@ class DownLoadBg(SecuredController):
                     return actions._print_data(report)
 
         return dict(finish=finish, percent=data_bg['percent'], total=finished,
-                    data_collected=data_collected, report_name=data_bg['report_name'], res_id=res_id)
+                    data_collected=data_collected, report_name=data_bg['report_name'], res_id=res_id, exception=exception)
     @expose('json')
     def kill(self, res_id):
         return {'result': rpc.RPCProxy('memory.background.report').kill_report(int(res_id), rpc.session.context)}

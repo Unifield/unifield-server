@@ -111,7 +111,10 @@
         <div id="explanations"><button onclick="kill_report()" class="oe_form_button_object"><img src="/openerp/static/images/stock/gtk-cancel.png" alt="" height="16" width="16"/><span> ${_('Stop report')} </span></button></div>
     %endif
     <div id="report_name">${_('Name of the requested report: ')}${report_name}
-    %if total == 'True':
+    %if exception:
+	<div id="down_title">${_('An Application Error has been reported.')}</div>
+	<pre style="text-align: left;">${exception}</pre>
+    %elif total == 'True':
         <div>
             <input type="button" value="${_('Download report')}"
             onclick="setTimeout(function(){window.close();}, 1000); window.open('/openerp/downloadbg?res_id=${res_id}&from_button=1', '_blank'); window.frameElement.close()" />
