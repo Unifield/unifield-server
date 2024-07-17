@@ -753,7 +753,12 @@ class field_balance_spec_parser(XlsxReportParser):
                 # partner_txt lines not linked to employee_id line
                 for emp_id in partner_txt_lines:
                     if abs(partner_txt_lines[emp_id]['amount']) > 0.001:
-                        all_lines.append(partner_txt_lines[emp_id])
+                        emp_as_int = emp_id
+                        try:
+                            emp_as_int = int(emp_id)
+                        except:
+                            pass
+                        all_lines.append([partner_txt_lines[emp_id]['name'], partner_txt_lines[emp_id]['amount'], emp_as_int])
 
                 for emp in sorted(all_lines, key=lambda x: x[2] if x[2] and isinstance(x[2], int) else 0):
                     self.append_line(
