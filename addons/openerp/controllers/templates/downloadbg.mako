@@ -96,7 +96,11 @@
 
 <%def name="content()">
 <div class="downloadbg-form">
-    <div id="down_title">${_('Report generation in progress')}</div>
+    %if exception:
+        <div id="down_title">${_('An Application Error has been reported.')}</div>
+    %else:
+        <div id="down_title">${_('Report generation in progress')}</div>
+    %endif
     <div id="pwidget">
         <div id="progressbar">
             <span class="percentage">${'%d'%(percent*100)}%</span>
@@ -112,8 +116,7 @@
     %endif
     <div id="report_name">${_('Name of the requested report: ')}${report_name}
     %if exception:
-	<div id="down_title">${_('An Application Error has been reported.')}</div>
-	<pre style="text-align: left;">${exception}</pre>
+        <pre style="text-align: left;">${exception}</pre>
     %elif total == 'True':
         <div>
             <input type="button" value="${_('Download report')}"
