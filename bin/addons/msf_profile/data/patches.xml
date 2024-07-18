@@ -1021,6 +1021,10 @@
             <field name="method">us_12071_gdpr_patch</field>
         </record>
 
+        <record id="us_10865_fix_far_model_id" model="patch.scripts">
+            <field name="method">fix_far_model_id</field>
+        </record>
+
         <record id="us_12110_remove_sup_fin_read" model="patch.scripts">
             <field name="method">us_12110_remove_sup_fin_read</field>
         </record>

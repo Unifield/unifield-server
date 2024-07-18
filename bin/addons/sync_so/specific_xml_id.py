@@ -23,6 +23,15 @@ import netsvc
 def get_valid_xml_name(*args):
     return "_".join([str(x) for x in [_f for _f in args if _f]]).replace('.', '').replace(',', '_')
 
+class res_groups(osv.osv):
+    _inherit = 'res.groups'
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        group_name = self.browse(cr, uid, res_id, fields_to_fetch=['name']).name
+        return get_valid_xml_name('res_groups', group_name)
+
+res_groups()
+
 class fiscal_year(osv.osv):
 
     _inherit = 'account.fiscalyear'

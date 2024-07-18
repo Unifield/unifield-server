@@ -36,6 +36,8 @@ from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from lxml import etree
 from tools.misc import fakeUid
+from tools.misc import get_global_instance_level
+from tools.misc import search_global_instance_level
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -61,6 +63,7 @@ class groups(osv.osv):
         # field defined in module msf_field_access_rights
         #'far_ids': fields.many2many('msf_field_access_rights.field_access_rule', 'field_access_rule_groups_rel', 'group_id', 'field_access_rule_id', 'Fields Access Rules', readonly=1),
         'act_window_ids': fields.many2many('ir.actions.act_window', 'ir_act_window_group_rel', 'gid', 'act_id', 'Window Actions', readonly=1),
+        'global_instance_level': fields.function(get_global_instance_level, method=True, string='Instance Level', type='char', fnct_search=search_global_instance_level),
     }
 
     _defaults = {
@@ -231,6 +234,7 @@ class groups(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         extended_group_data_id = data_obj._get_id(cr, uid, 'base', 'group_extended')
         return data_obj.browse(cr, uid, extended_group_data_id, context=context).res_id
+
 
 groups()
 

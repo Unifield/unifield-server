@@ -269,6 +269,7 @@ class entity(osv.osv):
         'latitude': fields.float('Latitude',digits=(16,6)),
         'longitude': fields.float('Longitude', digits=(16,6)),
         'pgversion': fields.char('Postgres Version', size=64, readonly=1),
+        'current_user_rights_name': fields.char('UR Version', size=64, select=1),
     }
     _defaults = {
         'version': lambda *a: 0,
@@ -536,7 +537,15 @@ class entity(osv.osv):
 
     @check_validated
     def set_pg_version(self, cr, uid, entity, pg_version, context=None):
+        """
+            deprecated replaced by set_pg_ur_version
+        """
         self.write(cr, 1, entity.id, {'pgversion': pg_version}, context=context)
+        return True
+
+    @check_validated
+    def set_pg_ur_version(self, cr, uid, entity, pg_version, current_user_rights_name, context=None):
+        self.write(cr, 1, entity.id, {'pgversion': pg_version, 'current_user_rights_name': current_user_rights_name}, context=context)
         return True
 
     def validate_action(self, cr, uid, ids, context=None):

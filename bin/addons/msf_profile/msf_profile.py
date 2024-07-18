@@ -374,6 +374,28 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def fix_far_model_id(self, cr, uid, *a, **b):
+        # on far change model_id according to model_name
+        cr.execute("update msf_field_access_rights_field_access_rule fr set model_id=m.id from ir_model m where m.model = fr.model_name and fr.model_id!=m.id")
+
+        # on farl change field(_id) according to FAR model_name and line.field_name
+        cr.execute("""update msf_field_access_rights_field_access_rule_line l
+            set
+                field=f.id
+            from
+                msf_field_access_rights_field_access_rule r,
+                ir_model_fields f
+            where
+            l.field_access_rule = r.id
+            and f.name=l.field_name
+            and CASE WHEN r.model_name='product.product' THEN f.model in ('product.product', 'product.template') WHEN r.model_name='hr.employee' THEN f.model in ('hr.employee', 'resource.resource') ELSE f.model=r.model_name END
+            and l.field!=f.id
+        """)
+
+        # delete sdref on ir.actions.act_window, Windows Action export will then use the xmlid
+        cr.execute("delete from ir_model_data where model='ir.actions.act_window' and module='sd'")
+        return True
+
     def us_12071_gdpr_patch(self, cr, uid, *a, **b):
         cr.execute("""UPDATE hr_employee
         SET

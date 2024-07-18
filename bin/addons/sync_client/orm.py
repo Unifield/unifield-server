@@ -6,7 +6,7 @@ from tools.translate import _
 import functools
 from datetime import datetime
 
-from sync_common import WHITE_LIST_MODEL, xmlid_to_sdref
+from sync_common import WHITE_LIST_MODEL, SDREF_BUT_NO_TOUCH, xmlid_to_sdref
 
 #import cProfile
 ## Helpers ###################################################################
@@ -542,7 +542,7 @@ SELECT res_id, touched
             funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
 
         to_be_synchronized = (
-            self._name in WHITE_LIST_MODEL and
+            self._name in WHITE_LIST_MODEL + SDREF_BUT_NO_TOUCH and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
 

@@ -11,6 +11,7 @@
             	<field name="identifier" position="after">
             	 <field name="version_id" ></field>
             	 <field name="pgversion" ></field>
+            	 <field name="current_user_rights_name" ></field>
                 </field>
             </field>
         </record>
@@ -24,6 +25,7 @@
             	<field name="state" position="after">
                 	<field name="version_id" ></field>
                     <field name="pgversion" ></field>
+                    <field name="current_user_rights_name" ></field>
                 </field>
             </field>
         </record>

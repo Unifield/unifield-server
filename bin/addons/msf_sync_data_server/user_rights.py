@@ -41,7 +41,7 @@ class user_rights_auto_load(osv.osv_memory):
                 self._logger.info('UR file found current sum: %s, new sum: %s, name: %s' % (cur_data.get('sum'), md5, ur_name))
 
                 loader = self.pool.get('sync_server.user_rights.add_file')
-                load_id = loader.create(cr, uid, {'name': ur_name, 'zip_file': b64encode(plain_zip)}, context=context)
+                load_id = loader.create(cr, uid, {'name': ur_name, 'zip_file': b64encode(plain_zip), 'install': False}, context=context)
                 loader.import_zip(cr, uid, [load_id], context=context)
                 result = loader.read(cr, uid, load_id, ['state', 'message'], context=context)
                 if result['state'] != 'done':
