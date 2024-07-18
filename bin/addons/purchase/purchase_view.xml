@@ -331,7 +331,7 @@
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="no_line" invisible="1"/>
-                                    <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
+                                    <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', '|', ('no_line', '=', False), ('state', 'not in', ['draft']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
                                     <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}"/>
                                 </group>
                                 <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>

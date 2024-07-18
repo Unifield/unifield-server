@@ -440,15 +440,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         }
         audit_line_obj.create(cr, uid, vals, context=context)
 
-
-
-
     def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        for order in self.read(cr, uid, ids, ['order_line'], context=context):
-            res[order['id']] = True
-            if order['order_line']:
-                res[order['id']] = False
+        for _id in ids:
+            res[_id] = True
+
+        cr.execute('''select order_id from sale_order_line where order_id in %s group by order_id''', (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]] = False
         return res
 
     def _get_manually_corrected(self, cr, uid, ids, field_name, args, context=None):
