@@ -28,15 +28,29 @@
             <field name="arch" type="xml">
                 <search string="Currencies">
                     <group>
-						<filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
-						 <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('active','=', False)]" />
-	                    <separator orientation="vertical"/>
-	                    <field name="name"/>
+                        <filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
+                        <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('active','=', False)]" />
+                        <separator orientation="vertical"/>
+                        <field name="name"/>
                     </group>
                 </search>
             </field>
         </record>
-        
+
+        <record id="view_currency_functional_search_noactive" model="ir.ui.view">
+            <field name="name">res.currency_functional.search.noactive</field>
+            <field name="model">res.currency</field>
+            <field name="type">search</field>
+            <field name="priority">100</field>
+            <field name="arch" type="xml">
+                <search string="Currencies">
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
         <record id="action_currency_functional_form" model="ir.actions.act_window">
             <field name="name">Currencies</field>
             <field name="res_model">res.currency</field>

@@ -680,6 +680,31 @@ class account_invoice(osv.osv):
         self.synch_auto_tick(cr, uid, res, partner_id, doc_type, from_supply)
         return res
 
+    def _check_currency_active(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+
+        if isinstance(ids, int):
+            ids = [ids]
+
+        cr.execute('''
+            select 
+                c.name 
+            from
+                account_invoice i, res_currency c
+            where
+                i.currency_id = c.id and
+                c.active = 'f' and
+                i.id in %s
+        ''', (tuple(ids),))
+        inactives = [x[0] for x in cr.fetchall()]
+        if inactives:
+            raise osv.except_osv(
+                _('Error'),
+                _('Currency %s is inactive. Activate or change the currency before validation.') % (','.join(inactives))
+            )
+        return True
+
     def _check_document_date(self, cr, uid, ids):
         """
         Check that document's date is done BEFORE posting date
@@ -880,17 +905,6 @@ class account_invoice(osv.osv):
         if not vals.get('real_doc_type') and context.get('doc_type') and not context.get('from_refund_button'):
             vals.update({'real_doc_type': context['doc_type']})
 
-        # US-12137: avoid the creation of a manual IVO and IVI with an inactive currency
-        if 'currency_id' in vals:
-            curr_obj = self.pool.get('res.currency')
-            curr_active = curr_obj.browse(cr, uid, vals.get('currency_id'), fields_to_fetch=['active'],
-                                          context=context).active
-            if not curr_active and \
-                    context.get('doc_type', False) in ('ivo', 'ivi') and \
-                    context.get('from_inv_form', False):
-                raise osv.except_osv(_('Error'),
-                                     _('You cannot create a manual IVO and IVI with an inactive currency.'))
-
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
 
         return super(account_invoice, self).create(cr, uid, vals, context)
@@ -920,13 +934,6 @@ class account_invoice(osv.osv):
                         if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
-        # US-12137: avoid the creation of a manual IVO and IVI with an inactive currency
-        if 'currency_id' in vals:
-            curr_obj = self.pool.get('res.currency')
-            curr_active = curr_obj.browse(cr, uid, vals.get('currency_id'), fields_to_fetch=['active'], context=context).active
-            if not curr_active and context.get('doc_type', False) in ('ivo', 'ivi') and context.get('from_inv_form', False):
-                raise osv.except_osv(_('Error'),
-                                     _('You cannot create a manual IVO and IVI with an inactive currency.'))
 
         self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
@@ -1028,6 +1035,7 @@ class account_invoice(osv.osv):
         # Some verifications
         if context is None:
             context = {}
+        self._check_currency_active(cr, uid, ids, context=context)
         self._check_active_product(cr, uid, ids, context=context)
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
         self.check_accounts_for_partner(cr, uid, ids, context=context)
