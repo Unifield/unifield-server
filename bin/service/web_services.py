@@ -906,7 +906,7 @@ class report_spool(netsvc.ExportService):
     def dispatch(self, method, auth, params):
         (db, uid, passwd ) = params[0:3]
         params = params[3:]
-        if method not in ['report','report_get', 'report_get_state', 'export']:
+        if method not in ['report','report_get', 'report_get_state', 'export', 'report_get_state_exception']:
             raise KeyError("Method not supported %s" % method)
         security.check(db,uid,passwd)
         fn = getattr(self, 'exp_' + method)
@@ -1087,6 +1087,7 @@ class report_spool(netsvc.ExportService):
         def go(id, uid, ids, datas, context):
             cr = pooler.get_db(db_name).cursor()
             self._reports[id]['psql_pid'] = cr._cnx.get_backend_pid()
+            bg_obj = False
             import traceback
             import sys
             try:
@@ -1097,7 +1098,8 @@ class report_spool(netsvc.ExportService):
                 (result, format) = obj.create(cr, uid, ids, datas, context)
                 if not result:
                     tb = sys.exc_info()
-                    self._reports[id]['exception'] = ExceptionWithTraceback('RML is not available at specified location or not enough data to print!', tb)
+                    tb_s = "".join(traceback.format_exception(*tb))
+                    self._reports[id]['exception'] = ExceptionWithTraceback('RML is not available at specified location or not enough data to print!', tb_s)
                 if context.get('background_id'):
                     bg_obj.update_percent(cr, uid, context['background_id'],
                                           percent=1.00, context=context)
@@ -1117,9 +1119,11 @@ class report_spool(netsvc.ExportService):
                     logger.notifyChannel('web-services', netsvc.LOG_ERROR,
                                          'Exception: %s\n%s' % (tools.ustr(exception), tb_s))
                     if hasattr(exception, 'name') and hasattr(exception, 'value'):
-                        self._reports[id]['exception'] = ExceptionWithTraceback(tools.ustr(exception.name), tools.ustr(exception.value))
+                        self._reports[id]['exception'] = ExceptionWithTraceback('%s %s' % (tools.ustr(exception.name), tools.ustr(exception.value)), tb_s)
                     else:
-                        self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb)
+                        self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb_s)
+                    if context.get('background_id') and bg_obj:
+                        bg_obj.write(cr, uid, context['background_id'], {'percent': 1.00, 'finished': True}, context=context)
                 self._reports[id]['state'] = True
             finally:
                 cr.commit()
@@ -1154,6 +1158,18 @@ class report_spool(netsvc.ExportService):
                 res['delete'] = result.get('delete', False)
             del self._reports[report_id]
         return res
+
+    def exp_report_get_state_exception(self, db, uid, report_id):
+        if report_id in self._reports:
+            if self._reports[report_id]['uid'] == uid:
+                result = self._reports[report_id]
+                if result.get('exception'):
+                    return result['state'], '%s %s' % (result['exception'].message, result['exception'].traceback)
+                return result['state'], ''
+            else:
+                raise Exception('AccessDenied')
+        else:
+            raise Exception('ReportNotFound')
 
     def exp_report_get_state(self, db, uid, report_id):
         if report_id in self._reports:
