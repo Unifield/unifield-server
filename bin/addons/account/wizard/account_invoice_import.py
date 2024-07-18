@@ -61,6 +61,42 @@ class account_invoice_import(osv.osv_memory):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         return super(account_invoice_import, self).create(cr, real_uid, vals, context=context)
 
+    def _check_col_length(self, percent_col, cc_col, dest_col, fp_col, line_num, errors):
+        if isinstance(percent_col, list):
+            if not isinstance(cc_col, list) or len(cc_col) != len(percent_col) or \
+                    not isinstance(dest_col, list) or len(dest_col) != len(percent_col) or \
+                    not isinstance(fp_col, list) or len(fp_col) != len(percent_col):
+                errors.append(_('Line %s: Cost Center, Destination and Funding Pool columns should have '
+                                'the same number of values as Percentage column') % line_num)
+
+    def _check_percent_values(self, percent_col, line_num, errors):
+        '''
+        Check if the Percent Column values adds up to exactly 100
+        '''
+        if isinstance(percent_col, list):
+            try:
+                percent_vals = [float(percent_val) for percent_val in percent_col]
+                if sum(percent_vals) != 100:
+                    errors.append(
+                        _('Line %s: The values in Percentage column should add up to exactly 100') % line_num)
+                if any(percent_val <= 0 or percent_val > 100 for percent_val in percent_vals):
+                    errors.append(
+                        _('Line %s: All percentages values should be superior to 0 and inferior or equal to 100') % line_num)
+            except ValueError:
+                errors.append(_('Line %s: All values in Percentage column should be numbers') % line_num)
+
+    def _is_ad_diff(self, current_ad, cc_ids, dest_ids, fp_ids, percentages):
+        ad_diff = False
+        if len(current_ad.funding_pool_lines) != len(percentages):
+            return True
+        for i, percent in enumerate(percentages):
+            if current_ad.funding_pool_lines[i].analytic_id.id != fp_ids[i] or \
+                    current_ad.funding_pool_lines[i].cost_center_id.id != cc_ids[i] or \
+                    current_ad.funding_pool_lines[i].destination_id.id != dest_ids[i] or \
+                    current_ad.funding_pool_lines[i].percentage != float(percent):
+                ad_diff = True
+        return ad_diff
+
     def _import(self, dbname, uid, ids, context=None):
         """
         Checks file data, and either updates the lines or displays the errors found
@@ -80,40 +116,6 @@ class account_invoice_import(osv.osv_memory):
         errors_obj = self.pool.get('account.invoice.import.errors')
         ana_obj = self.pool.get('analytic.distribution')
         aac_obj = self.pool.get('account.analytic.account')
-
-        def _check_col_length(percent_col, cc_col, dest_col, fp_col, line_num, errors):
-            if isinstance(percent_col, list):
-                if not isinstance(cc_col,list) or len(cc_col) != len(percent_col) or \
-                    not isinstance(dest_col, list) or len(dest_col) != len(percent_col) or \
-                        not isinstance(fp_col, list) or len(fp_col) != len(percent_col):
-                    errors.append(_('Line %s: Cost Center, Destination and Funding Pool columns should have '
-                                    'the same number of values as Percentage column') % line_num)
-        def _check_percent_values(percent_col, line_num, errors):
-            '''
-            Check if the Percent Column values adds up to exactly 100
-            '''
-            if isinstance(percent_col, list):
-                try:
-                    percent_vals = [float(percent_val) for percent_val in percent_col]
-                    if sum(percent_vals) != 100:
-                        errors.append(
-                            _('Line %s: The values in Percentage column should add up to exactly 100') % line_num)
-                    if any(percent_val <= 0 or percent_val > 100 for percent_val in percent_vals):
-                        errors.append(_('Line %s: All percentages values should be superior to 0 and inferior or equal to 100') % line_num)
-                except ValueError:
-                    errors.append(_('Line %s: All values in Percentage column should be numbers') % line_num)
-
-        def _is_ad_diff(current_ad, cc_ids, dest_ids, fp_ids, percentages):
-            ad_diff = False
-            if len(current_ad.funding_pool_lines) != len(percentages):
-                return True
-            for i, percent in enumerate(percentages):
-                if current_ad.funding_pool_lines[i].analytic_id.id != fp_ids[i] or \
-                        current_ad.funding_pool_lines[i].cost_center_id.id != cc_ids[i] or \
-                        current_ad.funding_pool_lines[i].destination_id.id != dest_ids[i] or \
-                        current_ad.funding_pool_lines[i].percentage != float(percent):
-                    ad_diff = True
-            return ad_diff
 
         try:
             for wiz in self.browse(cr, uid, ids, context):
@@ -299,8 +301,8 @@ class account_invoice_import(osv.osv_memory):
                         if not funding_pool_vals:
                             errors.append(_("Line %s: An expense account is set while the funding pool code (mandatory) is missing.") % (current_line_num,))
                         if isinstance(percentage_vals, list):
-                            _check_col_length(percentage_vals, cost_center_vals, destination_vals, funding_pool_vals, current_line_num, errors)
-                            _check_percent_values(percentage_vals, current_line_num, errors)
+                            self._check_col_length(percentage_vals, cost_center_vals, destination_vals, funding_pool_vals, current_line_num, errors)
+                            self._check_percent_values(percentage_vals, current_line_num, errors)
                         # If AD is filled - write on each line the AD on the import file. Remove from header.
 
                         cc_ids, fp_ids, dest_ids = [], [], []
@@ -331,7 +333,7 @@ class account_invoice_import(osv.osv_memory):
                         current_ad =  invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
 
                         # create a new AD if diff from current AD on line
-                        if not current_ad or _is_ad_diff(current_ad, cc_ids=cc_ids, dest_ids=dest_ids, fp_ids=fp_ids, percentages=percentage_vals):
+                        if not current_ad or self._is_ad_diff(current_ad, cc_ids=cc_ids, dest_ids=dest_ids, fp_ids=fp_ids, percentages=percentage_vals):
                             distrib_id = ana_obj.create(cr, uid, {'name': 'Line Distribution Import'}, context=context)
                             for i, percentage in enumerate(percentage_vals):
                                 ad_state, ad_error = ana_obj.analytic_state_from_info(cr, uid, account.id, dest_ids[i], cc_ids[i], fp_ids[i],
