@@ -269,7 +269,7 @@ class entity(osv.osv):
         'latitude': fields.float('Latitude',digits=(16,6)),
         'longitude': fields.float('Longitude', digits=(16,6)),
         'pgversion': fields.char('Postgres Version', size=64, readonly=1),
-        'current_user_rights_name': fields.char('UR Version', size=64, select=1),
+        'current_user_rights_name': fields.char('UR Version', size=64, select=1, readonly=1),
     }
     _defaults = {
         'version': lambda *a: 0,
