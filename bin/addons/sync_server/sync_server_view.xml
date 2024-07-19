@@ -110,6 +110,7 @@
                     <newline />
                     <field name="parent_left" />
                     <field name="parent_right" />
+                    <field name="current_user_rights_name" />
                     <newline />
 
                     <group string="Group by..." expand="1" colspan="1">
