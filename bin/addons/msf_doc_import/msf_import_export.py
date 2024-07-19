@@ -68,8 +68,11 @@ class msf_import_export(osv.osv_memory):
         result_list = []
         if 'domain_type' in context:
             domain_type = context['domain_type']
+        is_section = self.pool.get('res.company')._get_instance_level(cr, uid) == 'section'
         for key, value in list(MODEL_DICT.items()):
             if key in ['product_list_update', 'supplier_catalogue_update']:
+                continue
+            if key == '00_full_ur' and not is_section:
                 continue
             if value['domain_type'] == domain_type:
                 if self.pool.get('ir.model.access').check(cr, realuser, value['model'], 'write', raise_exception=False, context=context):
