@@ -194,15 +194,16 @@ class report_user_access_export_parser(report_generic_export_parser):
             # take first level : the ones that don't have parent_id
             menu_ids = menu_obj.search(self.cr, self.uid,
                                        [('parent_id', '=', None),
-                                        ('name', '!=', 'Hidden Menu')],
-                                       order='name')
+                                        ('name', '!=', 'Hidden Menu'),
+                                        ('active', 'in', ['t', 'f'])],
+                                       order='name', context={'ir.ui.menu.full_list': True})
             for menu_id in menu_ids:
                 menu_list.append((level, menu_id))
                 self.getMenuList(menu_id, menu_list, level+1)
         else:
             child_menu_ids = menu_obj.search(self.cr, self.uid,
-                                             [('parent_id', '=', menu_id)],
-                                             order='name')
+                                             [('parent_id', '=', menu_id), ('active', 'in', ['t', 'f'])],
+                                             order='name', context={'ir.ui.menu.full_list': True})
             for menu_id in child_menu_ids:
                 menu_list.append((level, menu_id))
                 self.getMenuList(menu_id, menu_list, level+1)
