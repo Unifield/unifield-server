@@ -63,19 +63,9 @@ class supplier_catalogue(osv.osv):
             context = {}
         context['partner_id'] = ids[0]
         partner_obj = self.pool.get('res.partner')
-        if partner_obj.search(cr, uid, [('id', '=', ids[0]), ('partner_type', '=', 'esc')], context=context):
-            user = self.pool.get('res.users').browse(cr, uid, uid,context=context)
-            level = user and user.company_id and user.company_id.instance_id and user.company_id.instance_id.level or False
-            if level == 'coordo':
-                raise osv.except_osv(
-                    _('Error'),
-                    'For an ESC Supplier you must create the catalogue on a HQ instance.'
-                )
-            elif self.search(cr, uid, [('active', '=', True), ('partner_id', '=', ids[0])]):
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Warning! There is already another active catalogue for this Supplier! This could have implications on the synching of catalogue to instances below, please check.'),
-                )
+        if partner_obj.search(cr, uid, [('id', '=', ids[0]), ('partner_type', '=', 'esc')], context=context) and \
+                self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+            raise osv.except_osv(_('Error'), 'For an ESC Supplier you must create the catalogue on a HQ instance.')
 
         return {
             'res_model': 'supplier.catalogue',
@@ -96,15 +86,9 @@ class supplier_catalogue(osv.osv):
         res = super(supplier_catalogue, self).create(cr, uid, vals, context=context)
 
         # UTP-746: now check if the partner is inactive, then set this catalogue also to become inactive
-        catalogue = self.browse(cr, uid, [res], context=context)[0]
+        catalogue = self.browse(cr, uid, [res], fields_to_fetch=['partner_id'], context=context)[0]
         if not catalogue.partner_id.active:
             self.write(cr, uid, [res], {'active': False}, context=context)
-        elif not context.get('sync_update_execution') and vals.get('active') and catalogue.partner_id.partner_type == 'esc':
-            if self.search(cr, uid, [('partner_id', '=', catalogue.partner_id.id), ('active', '=', True)], count=True, context=context) > 1:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Warning! There is already another active catalogue for this Supplier! This could have implications on the synching of catalogue to instances below, please check.'),
-                )
 
         return res
 
@@ -473,6 +457,13 @@ class supplier_catalogue(osv.osv):
 
         return res
 
+    def _get_instance_level(self, cr, uid, ids, field_name, args, context=None):
+        level = self.pool.get('res.company')._get_instance_level(cr, uid)
+        res = {}
+        for _id in ids:
+            res[_id] = level
+        return res
+
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'partner_id': fields.many2one('res.partner', string='Partner', required=True,
@@ -501,6 +492,7 @@ class supplier_catalogue(osv.osv):
         'is_esc': fields.function(_is_esc, type='boolean', string='Is ESC Supplier', method=True),
         'state': fields.selection([('draft', 'Draft'), ('confirmed', 'Confirmed')], string='State', required=True, readonly=True),
         'from_sync': fields.function(_is_from_sync, type='boolean', string='Created by Sync', method=True),
+        'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', method=True),
     }
 
     _defaults = {
@@ -511,6 +503,7 @@ class supplier_catalogue(osv.osv):
         'active': lambda *a: True,
         'filename_template': 'template.xls',
         'state': lambda *a: 'draft',
+        'instance_level': lambda obj, cr, uid, ctx: obj.pool.get('res.company')._get_instance_level(cr, uid),
     }
 
     def _check_period(self, cr, uid, ids):

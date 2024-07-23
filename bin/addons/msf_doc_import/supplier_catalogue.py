@@ -89,6 +89,7 @@ class supplier_catalogue(osv.osv):
             catalogue_id = self.create(cr, uid, data, context=context)
             catalogue_id = [catalogue_id]
             self.button_confirm(cr, uid, catalogue_id, context=context)
+            cr.commit()
         else:
             self.write(cr, uid, catalogue_id, {'period_from': data['period_from'], 'period_to': data.get('period_to', False)}, context=context)
 
