@@ -32,7 +32,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Supplier catalogue">
-                    <field name="name" colspan="4" on_change="check_inactive_catalogues(partner_id)" attrs="{'readonly': [('from_sync', '=', True)]}" />
+                    <field name="name" colspan="4" attrs="{'readonly': [('from_sync', '=', True)]}" />
                     <field name="period_from" attrs="{'required': [('is_esc', '=', False)], 'readonly': ['|', '&amp;', ('is_esc', '=', True), ('instance_level', '!=', 'section'), ('from_sync', '=', True)]}" />
                     <field name="period_to" attrs="{'readonly': ['|', '&amp;', ('is_esc', '=', True), ('instance_level', '!=', 'section'), ('from_sync', '=', True)]}" />
                     <field name="currency_id" attrs="{'readonly': ['|', ('state', '=', 'confirmed'), ('from_sync', '=', True)]}" domain="[('partner_currency', '=', partner_id)]" />

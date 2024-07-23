@@ -265,31 +265,6 @@ class supplier_catalogue(osv.osv):
 
         return True
 
-    def check_inactive_catalogues(self, cr, uid, ids, partner_id, context=None):
-        '''
-        Check if there are an inactive catalogue for this supplier. If yes, display a warning messagse
-        '''
-        res = {}
-
-        if not ids:
-            ids = []
-
-        if partner_id and self.pool.get('res.partner').read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type'] == 'esc':
-            equal_ids = self.search(cr, uid, [
-                ('id', 'not in', ids),
-                ('active', '=', False),
-                ('partner_id', '=', partner_id),
-            ], order='period_from asc', limit=1, context=context)
-            if equal_ids:
-                res.update({
-                    'warning': {
-                        'title': _('Warning'),
-                        'message': _('Warning! There is already another inactive catalogue for this Supplier! This could have implications on the synching of catalogue to instances below, please check'),
-                    },
-                })
-
-        return res
-
     def button_draft(self, cr, uid, ids, context=None):
         '''
         Reset to draft the catalogue
