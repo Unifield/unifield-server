@@ -99,6 +99,13 @@ class account_move_line_reconcile(osv.osv_memory):
                 '\n'.join([x.move_id.name for x in account_move_line_obj.browse(cr, uid, cp_ids, fields_to_fetch=['move_id'])])
             )
 
+        fxa_entry_ids = account_move_line_obj.search(cr, uid, [('id', 'in', ids), ('reconcile_partial_id', '=', False), ('reconcile_id', '=', False), ('is_addendum_line', '=', True)])
+        if fxa_entry_ids:
+            raise osv.except_osv(
+                _('Warning'),
+                _('FXA entries cannot be included in a manual reconcile:\n %s') %
+                '\n'.join([x.move_id.name for x in account_move_line_obj.browse(cr, uid, fxa_entry_ids, fields_to_fetch=['move_id'])])
+            )
         for line in account_move_line_obj.browse(cr, uid, context['active_ids']):
             if line.move_id and line.move_id.state == 'posted':
                 # Prepare some infos needed for transfers with/without change
