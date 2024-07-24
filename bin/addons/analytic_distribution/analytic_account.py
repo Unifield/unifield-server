@@ -121,6 +121,26 @@ class analytic_account(osv.osv):
         'record_id': fields.function(_get_record_id, method=True, type='integer', string='Database ID'),
     }
 
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        new_dom = []
+        destination_with_account = False
+        for x in domain:
+            if x[0] == 'destination_ids' and x[1] == '=':
+                destination_with_account = x[2]
+            else:
+                new_dom.append(x)
+
+        ret = super(analytic_account, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+
+        if destination_with_account:
+            ret.tables.append('"account_destination_link"')
+            ret.joins.setdefault('"account_analytic_account"', [])
+            ret.joins['"account_analytic_account"'] += [('"account_destination_link"', 'id', 'destination_id', 'INNER JOIN')]
+            ret.where_clause.append(''' "account_destination_link"."account_id" = %s AND disabled='f'  ''')
+            ret.where_clause_params.append(destination_with_account)
+
+        return ret
+
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
         FIXME: this method do others things that not have been documented. Please complete here what method do.
@@ -150,14 +170,6 @@ class analytic_account(osv.osv):
                     fp_ids.append(adl.get('funding_pool_ids'))
                 fp_ids = flatten(fp_ids)
                 args[i] = ('id', 'in', fp_ids)
-            elif arg[0] == 'destination_ids' and arg[1] == '=':
-                link_obj = self.pool.get('account.destination.link')
-                link_ids = link_obj.search(cr, uid, [('account_id', '=', arg[2]), ('disabled', '=', False)],
-                                           context=context, order='NO_ORDER')
-                dest_ids = []
-                for dest in link_obj.read(cr, uid, link_ids, ['destination_id'], context=context):
-                    dest_ids.append(dest['destination_id'][0])
-                args[i] = ('id', 'in', dest_ids)
         return super(analytic_account, self).search(cr, uid, args, offset,
                                                     limit, order, context=context, count=count)
 
