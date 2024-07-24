@@ -501,7 +501,7 @@ class analytic_line(osv.osv):
             for aline in self.browse(cr, uid, ids, context=context):
                 if aline.account_id.id == pf_id:
                     # UC1: the Funding Pool is PF ==> only check Acc/Dest compatibility
-                    fp_acc_dest_ok = account_id in [x.id for x in aline.general_account_id.destination_ids]
+                    fp_acc_dest_ok = ad_obj.check_gl_account_destination_compatibility(cr, uid, aline.general_account_id.id, account_id)
                 else:
                     # UC2: the Funding Pool is NOT PF ==> check the FP compatibility with the Acc/Dest (Acc/Dest compat. check is included)
                     fp_acc_dest_ok = ad_obj.check_fp_acc_dest_compatibility(cr, uid, aline.account_id.id, aline.general_account_id.id,
@@ -545,8 +545,8 @@ class analytic_line(osv.osv):
                 return False
 
             # check cost center with general account
-            dest_ids = [d.id for d in general_account_br.destination_ids]
-            if not new_dest_id in dest_ids:
+
+            if not ad_obj.check_gl_account_destination_compatibility(cr, uid, general_account_br.id, new_dest_id):
                 # not compatible with general account
                 res.append((id, entry_sequence, _('DEST')))
                 return False

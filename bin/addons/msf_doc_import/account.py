@@ -512,7 +512,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                                 errors.append(_('Line %s. Funding Pool %s not found!') % (current_line_num, line[cols['Funding Pool']]))
                                 continue
                             r_fp = fp_ids[0]
-                        if r_destination not in [d.id for d in account.destination_ids]:
+                        if not ad_obj.check_gl_account_destination_compatibility(cr, uid, account.id, r_destination):
                             errors.append(_('Line %s. The destination %s is not compatible with the account %s.') %
                                           (current_line_num, line[cols['Destination']], line[cols['G/L Account']]))
                             continue
