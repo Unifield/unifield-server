@@ -23,152 +23,12 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-
+from tools.analytic import get_analytic_state
 class hq_entries(osv.osv):
     _name = 'hq.entries'
     _description = 'HQ Entries'
     _trace = True
 
-    def _get_analytic_state(self, cr, uid, ids, name, args, context=None):
-        """
-        Get state of distribution:
-         - if compatible with the line, then "valid"
-         - all other case are "invalid"
-        """
-        if isinstance(ids, int):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        ad_obj = self.pool.get('analytic.distribution')
-        dest_cc_link_obj = self.pool.get('dest.cc.link')
-        # Search MSF Private Fund element, because it's valid with all accounts
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                        'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
-        # Browse all given lines to check analytic distribution validity
-        ## TO CHECK:
-        # A/ if no CC
-        # B/ if FP = MSF Private FUND
-        # C/ (account/DEST) in FP except B
-        # D/ CC in FP except when B
-        # E/ DEST in list of available DEST in ACCOUNT
-        # F/ Check posting date with cost center and destination if exists
-        # G/ Check document date with funding pool
-        # H/ Check Cost Center / Destination compatibility
-        ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
-        ## CC is mandatory, so always available:
-        # 1/ no FP, no DEST => Distro = valid
-        # 2/ FP, no DEST => Check D except B
-        # 3/ no FP, DEST => Check E
-        # 4/ FP, DEST => Check C, D except B, E
-        ##
-        account_dest_map = {}
-        cc_active_map = {}
-        dest_active_map = {}
-        fp_active_map = {}
-        cc_dest_date_map = {}
-        fp_dest_map = {}
-        fp_acc_dest_map = {}
-        fp_cc_map = {}
-        cc_dest_map = {}
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = 'valid' # by default
-            #### SOME CASE WHERE DISTRO IS OK
-            # if it's neither an expense nor an income account, the AD is valid
-            if line.account_id and line.account_id.user_type_code not in ['expense', 'income']:
-                continue
-            # Date checks
-            # F Check
-            if line.cost_center_id:
-                key = (line.cost_center_id.id, line.date)
-                if key not in cc_active_map:
-                    cc = self.pool.get('account.analytic.account').browse(cr, uid, line.cost_center_id.id, fields_to_fetch=['filter_active', 'code'], context={'date': line.date})
-                    cc_active_map[key] = cc and cc.filter_active is not False
-                if not cc_active_map[key]:
-                    res[line.id] = 'invalid'
-                    continue
-            if line.destination_id:
-                key = (line.destination_id.id, line.date)
-                if key not in dest_active_map:
-                    dest = self.pool.get('account.analytic.account').browse(cr, uid, line.destination_id.id, fields_to_fetch=['filter_active', 'code'], context={'date': line.date})
-                    dest_active_map[key] = dest and dest.filter_active is not False
-                if not dest_active_map[key]:
-                    res[line.id] = 'invalid'
-                    continue
-            if line.destination_id and line.cost_center_id and line.date:
-                key = (line.destination_id.id, line.cost_center_id.id, line.date)
-                if key not in cc_dest_date_map:
-                    cc_dest_date_map[key] = not dest_cc_link_obj.is_inactive_dcl(cr, uid, line.destination_id.id, line.cost_center_id.id, line.date, context=context)
-                if not cc_dest_date_map[key]:
-                    res[line.id] = 'invalid'
-                    continue
-            # G Check
-            if line.analytic_id:
-                key = (line.analytic_id.id, line.document_date)
-                if key not in fp_active_map:
-                    fp = self.pool.get('account.analytic.account').browse(cr, uid, line.analytic_id.id, fields_to_fetch=['filter_active', 'code'], context={'date': line.document_date})
-                    fp_active_map[key] = fp and fp.filter_active is not False
-                if not fp_active_map[key]:
-                    res[line.id] = 'invalid'
-                    continue
-            # if just a cost center, it's also valid! (CASE 1/)
-            if not line.analytic_id and not line.destination_id:
-                continue
-            # if FP is MSF Private Fund and no destination_id, then all is OK.
-            if line.analytic_id and line.analytic_id.id == fp_id and not line.destination_id:
-                continue
-            #### END OF CASES
-            if not line.cost_center_id:
-                res[line.id] = 'invalid'
-                continue
-            if line.analytic_id and not line.destination_id: # CASE 2/
-                key = (line.analytic_id.id, line.cost_center_id.id)
-                if key not in fp_dest_map:
-                    fp_dest_map[key] = ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context)
-                # D Check, except B check
-                if not fp_dest_map[key]:
-                    res[line.id] = 'invalid'
-                    continue
-            elif not line.analytic_id and line.destination_id: # CASE 3/
-                # E Check
-                key = (line.destination_id.id, line.account_id.id)
-                if key not in account_dest_map:
-                    account_dest_map[key] =  ad_obj.check_gl_account_destination_compatibility(cr, uid, line.account_id.id, line.destination_id.id)
-                if not account_dest_map[key]:
-                    res[line.id] = 'invalid'
-                    continue
-            else: # CASE 4/
-                # C Check, except B
-                key = (line.analytic_id.id, line.account_id.id, line.destination_id.id)
-                if key not in fp_acc_dest_map:
-                    fp_acc_dest_map[key] = ad_obj.check_fp_acc_dest_compatibility(cr, uid, line.analytic_id.id, line.account_id.id, line.destination_id.id, context=context)
-                if not fp_acc_dest_map[key]:
-                    res[line.id] = 'invalid'
-                    continue
-                # D Check, except B check
-                key = (line.analytic_id.id, line.cost_center_id.id)
-                if key not in fp_cc_map:
-                    fp_cc_map[key] = ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context)
-                if not fp_cc_map[key]:
-                    res[line.id] = 'invalid'
-                    continue
-                # E Check
-                key = (line.destination_id.id, line.account_id.id)
-                if key not in account_dest_map:
-                    account_dest_map[key] =  ad_obj.check_gl_account_destination_compatibility(cr, uid, line.account_id.id, line.destination_id.id)
-                if not account_dest_map[key]:
-                    res[line.id] = 'invalid'
-                    continue
-            # H check
-            if line.destination_id and line.cost_center_id:
-                key = (line.destination_id, line.cost_center_id)
-                if key not in cc_dest_map:
-                    cc_dest_map[key] = ad_obj.check_dest_cc_compatibility(cr, uid, line.destination_id.id, line.cost_center_id.id, context=context)
-                if not cc_dest_map[key]:
-                    res[line.id] = 'invalid'
-        return res
 
     def _get_cc_changed(self, cr, uid, ids, field_name, arg, context=None):
         """
@@ -266,7 +126,7 @@ class hq_entries(osv.osv):
         'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=False, readonly=False),
         'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", readonly=True),
         'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", readonly=True),
-        'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
+        'analytic_state': fields.function(get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
                                           selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
         'is_original': fields.boolean("Has been split", help="This line has been split into other ones.", readonly=True),
         'is_split': fields.boolean("Is split?", help="This line comes from a split.", readonly=True),
