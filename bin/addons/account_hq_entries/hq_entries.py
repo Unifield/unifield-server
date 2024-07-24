@@ -23,7 +23,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-import netsvc
 
 class hq_entries(osv.osv):
     _name = 'hq.entries'
@@ -40,7 +39,6 @@ class hq_entries(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
-        logger = netsvc.Logger()
         ad_obj = self.pool.get('analytic.distribution')
         dest_cc_link_obj = self.pool.get('dest.cc.link')
         # Search MSF Private Fund element, because it's valid with all accounts
@@ -66,6 +64,15 @@ class hq_entries(osv.osv):
         # 3/ no FP, DEST => Check E
         # 4/ FP, DEST => Check C, D except B, E
         ##
+        account_dest_map = {}
+        cc_active_map = {}
+        dest_active_map = {}
+        fp_active_map = {}
+        cc_dest_date_map = {}
+        fp_dest_map = {}
+        fp_acc_dest_map = {}
+        fp_cc_map = {}
+        cc_dest_map = {}
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = 'valid' # by default
             #### SOME CASE WHERE DISTRO IS OK
@@ -75,30 +82,36 @@ class hq_entries(osv.osv):
             # Date checks
             # F Check
             if line.cost_center_id:
-                cc = self.pool.get('account.analytic.account').browse(cr, uid, line.cost_center_id.id, context={'date': line.date})
-                if cc and cc.filter_active is False:
+                key = (line.cost_center_id.id, line.date)
+                if key not in cc_active_map:
+                    cc = self.pool.get('account.analytic.account').browse(cr, uid, line.cost_center_id.id, fields_to_fetch=['filter_active', 'code'], context={'date': line.date})
+                    cc_active_map[key] = cc and cc.filter_active is not False
+                if not cc_active_map[key]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive CC (%s)') % (line.id or '', cc.code or ''))
                     continue
             if line.destination_id:
-                dest = self.pool.get('account.analytic.account').browse(cr, uid, line.destination_id.id, context={'date': line.date})
-                if dest and dest.filter_active is False:
+                key = (line.destination_id.id, line.date)
+                if key not in dest_active_map:
+                    dest = self.pool.get('account.analytic.account').browse(cr, uid, line.destination_id.id, fields_to_fetch=['filter_active', 'code'], context={'date': line.date})
+                    dest_active_map[key] = dest and dest.filter_active is not False
+                if not dest_active_map[key]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive DEST (%s)') % (line.id or '', dest.code or ''))
                     continue
-            if line.destination_id and line.cost_center_id and line.date and \
-                    dest_cc_link_obj.is_inactive_dcl(cr, uid, line.destination_id.id, line.cost_center_id.id, line.date, context=context):
-                res[line.id] = 'invalid'
-                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING,
-                                     _('%s: inactive combination (%s - %s)') %
-                                     (line.id or '', line.destination_id.code or '', line.cost_center_id.code or ''))
-                continue
+            if line.destination_id and line.cost_center_id and line.date:
+                key = (line.destination_id.id, line.cost_center_id.id, line.date)
+                if key not in cc_dest_date_map:
+                    cc_dest_date_map[key] = not dest_cc_link_obj.is_inactive_dcl(cr, uid, line.destination_id.id, line.cost_center_id.id, line.date, context=context)
+                if not cc_dest_date_map[key]:
+                    res[line.id] = 'invalid'
+                    continue
             # G Check
             if line.analytic_id:
-                fp = self.pool.get('account.analytic.account').browse(cr, uid, line.analytic_id.id, context={'date': line.document_date})
-                if fp and fp.filter_active is False:
+                key = (line.analytic_id.id, line.document_date)
+                if key not in fp_active_map:
+                    fp = self.pool.get('account.analytic.account').browse(cr, uid, line.analytic_id.id, fields_to_fetch=['filter_active', 'code'], context={'date': line.document_date})
+                    fp_active_map[key] = fp and fp.filter_active is not False
+                if not fp_active_map[key]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive FP (%s)') % (line.id or '', fp.code or ''))
                     continue
             # if just a cost center, it's also valid! (CASE 1/)
             if not line.analytic_id and not line.destination_id:
@@ -109,47 +122,52 @@ class hq_entries(osv.osv):
             #### END OF CASES
             if not line.cost_center_id:
                 res[line.id] = 'invalid'
-                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: No CC') % (line.id or ''))
                 continue
             if line.analytic_id and not line.destination_id: # CASE 2/
+                key = (line.analytic_id.id, line.cost_center_id.id)
+                if key not in fp_dest_map:
+                    fp_dest_map[key] = ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context)
                 # D Check, except B check
-                if not ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context):
+                if not fp_dest_map[key]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
                     continue
             elif not line.analytic_id and line.destination_id: # CASE 3/
                 # E Check
-                account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
-                if line.destination_id.id not in [x.id for x in account.destination_ids]:
+                key = (line.destination_id.id, line.account_id.id)
+                if key not in account_dest_map:
+                    account_dest_map[key] =  ad_obj.check_gl_account_destination_compatibility(cr, uid, line.account_id.id, line.destination_id.id)
+                if not account_dest_map[key]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
             else: # CASE 4/
                 # C Check, except B
-                if not ad_obj.check_fp_acc_dest_compatibility(cr, uid, line.analytic_id.id, line.account_id.id,
-                                                              line.destination_id.id, context=context):
+                key = (line.analytic_id.id, line.account_id.id, line.destination_id.id)
+                if key not in fp_acc_dest_map:
+                    fp_acc_dest_map[key] = ad_obj.check_fp_acc_dest_compatibility(cr, uid, line.analytic_id.id, line.account_id.id, line.destination_id.id, context=context)
+                if not fp_acc_dest_map[key]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: Tuple Account/DEST (%s/%s) not found in FP (%s)') % (line.id or '', line.account_id.code or '', line.destination_id.code or '', line.analytic_id.code or ''))
                     continue
                 # D Check, except B check
-                if not ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context):
+                key = (line.analytic_id.id, line.cost_center_id.id)
+                if key not in fp_cc_map:
+                    fp_cc_map[key] = ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context)
+                if not fp_cc_map[key]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
                     continue
                 # E Check
-                account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
-                if line.destination_id.id not in [x.id for x in account.destination_ids]:
+                key = (line.destination_id.id, line.account_id.id)
+                if key not in account_dest_map:
+                    account_dest_map[key] =  ad_obj.check_gl_account_destination_compatibility(cr, uid, line.account_id.id, line.destination_id.id)
+                if not account_dest_map[key]:
                     res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
             # H check
-            if line.destination_id and line.cost_center_id and \
-                    not ad_obj.check_dest_cc_compatibility(cr, uid, line.destination_id.id, line.cost_center_id.id, context=context):
-                res[line.id] = 'invalid'
-                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING,
-                                     _('%s: CC (%s) not compatible with DEST (%s)') %
-                                     (line.id or '', line.cost_center_id.code or '', line.destination_id.code or ''))
-                continue
+            if line.destination_id and line.cost_center_id:
+                key = (line.destination_id, line.cost_center_id)
+                if key not in cc_dest_map:
+                    cc_dest_map[key] = ad_obj.check_dest_cc_compatibility(cr, uid, line.destination_id.id, line.cost_center_id.id, context=context)
+                if not cc_dest_map[key]:
+                    res[line.id] = 'invalid'
         return res
 
     def _get_cc_changed(self, cr, uid, ids, field_name, arg, context=None):
