@@ -225,9 +225,10 @@ class picking_ticket(report_sxw.rml_parse):
         res = 0
         dict_res = {}
         for m in picking.move_lines:
-            dict_res.setdefault(m.line_number, {})
-            if m.product_id.id not in dict_res[m.line_number]:
-                dict_res[m.line_number][m.product_id.id] = 1
+            if m.state != 'cancel':
+                dict_res.setdefault(m.line_number, {})
+                if m.product_id.id not in dict_res[m.line_number]:
+                    dict_res[m.line_number][m.product_id.id] = 1
 
         for ln in list(dict_res.values()):
             for p in list(ln.values()):
