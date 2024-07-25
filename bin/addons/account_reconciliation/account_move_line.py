@@ -491,12 +491,13 @@ class account_move_line(osv.osv):
             if balanced_in_booking and not balanced_in_fctal:
                 # check if we have a NR
                 ok_unrec = False
-                if len(all_instances) == 1 and self.pool.get('res.company')._get_instance_id(cr, uid) not in all_instances:
+                if not fxa_line_ids and len(all_instances) == 1 and self.pool.get('res.company')._get_instance_id(cr, uid) not in all_instances:
+                    print(instance_name, '%%already reconciled on the instance%%rec_txt:%s' % (rec_txt,))
                     if self.pool.get('sync.client.update_received').search_exists(cr, 1, [
                         ('source', '=', instance_name),
                         ('model', '=', 'account.move.reconcile'),
                         ('run', '=', False),
-                        ('log', '=like', '%%already reconciled on the instance%%rec_txt:%s' % (rec_txt,))
+                        ('log', '=like', '%%already reconciled on the instance%%rec_txt:%s%%' % (rec_txt,))
                     ]):
                         ok_unrec = True
 
