@@ -86,7 +86,7 @@ class purchase_order(osv.osv):
                        where pol1.state in ('confirmed', 'done') group by pol1.order_id) pol on pol.order_id=po.id 
             WHERE po.pricelist_id = prod.id 
             AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc')) 
-            AND po.order_type in ('regular', 'purchase_list') 
+            AND (po.order_type in ('regular', 'purchase_list') OR (po.order_type = 'direct' AND po.state = 'confirmed'))
             AND po.partner_id = %s AND po.rfq_ok != TRUE 
             GROUP BY po.id, po.name 
             HAVING abs(COALESCE(sum(pol.total) - sum(inv.inv_total), 10)) > 0.001;

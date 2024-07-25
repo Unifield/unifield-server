@@ -325,12 +325,12 @@ class account_bank_statement_line(osv.osv):
             ids = [ids]
         for o in self.browse(cr, uid, ids, context=context):
             if o.cash_register_op_advance_po_id:
-                if o.account_id and o.account_id.type_for_register != 'advance':
+                if o.account_id and o.account_id.type_for_register not in ('advance', 'down_payment'):
                     return False
         return True
 
     _constraints = [
-        (check_is_cash_register_op_advance_po_available, 'You can only link to a purchase order for an Operation advance', ['account_id', 'cash_register_op_advance_po_id']),
+        (check_is_cash_register_op_advance_po_available, 'You can only link to a purchase order for an Operation advance or Down Payment', ['account_id', 'cash_register_op_advance_po_id']),
     ]
 
     def create(self, cr, uid, values, context=None):
