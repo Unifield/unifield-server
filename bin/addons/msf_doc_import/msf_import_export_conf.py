@@ -83,7 +83,7 @@ MODEL_DICT = {
         'name': 'Supplier Catalogue Update',
         'domain_type': 'supply',
         'model': 'supplier.catalogue.line',
-        'partial': True,
+        'partial': False,
     },
 
     # FINANCE
