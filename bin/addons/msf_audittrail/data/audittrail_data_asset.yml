@@ -1,19 +1,45 @@
 -
-  Asset Form Creation / Deletion
--  
+  For Asset Forms (product.asset), track the creation, modif and delete
+-
   !python {model: audittrail.rule}: |
-    name = 'Asset Form Creation'
+    name = 'Asset Forms'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.asset')], context=context)
-    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids), ('log_create', '=', True)], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids), ('log_write', '=', True)], context=context)
     if object_ids:
-        fields = ['name']
+        fields = ['name', 'state', 'product_id', 'instance_id', 'asset_type_id', 'useful_life_id', 'description', 'hq_ref', 'local_ref', 'serial_nb', 'brand', 'type', 'model', 'year', 'comment', 'project_po', 'international_po', 'arrival_date', 'receipt_place', 'move_line_id', 'quantity_divisor', 'invo_value', 'invo_currency', 'invo_date', 'invo_supplier_id', 'invo_donator_code', 'invo_certif_depreciation', 'from_invoice', 'state', 'start_date', 'depreciation_amount', 'disposal_amount', 'asset_pl_account_id']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset'), ('name', 'in', fields)], context=context)
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': True,
+            'log_create': True,
+            'field_ids': [(6, 0, fields_ids)],
+        }
 
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+-
+  For Asset Types (product.asset.type), track the creation, modif and delete
+-
+  !python {model: audittrail.rule}: |
+    name = 'Asset Types'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.asset.type')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['name','description', 'active', 'useful_life_id']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.asset.type'), ('name', 'in', fields)], context=context)
 
         vals = {
             'name': name,
             'object_id': object_ids[0],
-            'log_write': False,
+            'log_write': True,
             'log_unlink': True,
             'log_create': True,
             'field_ids': [(6, 0, fields_ids)],
@@ -26,21 +52,111 @@
         # Subscribe to the rule
         self.subscribe(cr, uid, rule_id)
 -
-  Asset Form Write
+  For Useful Life (product.asset.useful.life), track the creation and modif, delete
 -
   !python {model: audittrail.rule}: |
-    name = 'Asset Form Write'
-    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.asset')], context=context)
-    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids), ('log_write', '=', True)], context=context)
+    name = 'Useful Life'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.asset.useful.life')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
-        fields = ['name', 'state', 'product_id', 'asset_type_id', 'userful_life_id', 'serial_nb', 'brand', 'type', 'model', 'year', 'move_line_id', 'invo_value', 'invo_date', 'asset_bs_depreciation_account_id', 'asset_pl_account_id', 'start_date']
-        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset'), ('name', 'in', fields)], context=context)
+        # Create the rule
+        fields = ['year', 'is_active', 'asset_type_id']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.asset.useful.life'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.useful.life'), ('name', '=', 'year')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.useful.life'), ('name', '=', 'asset_type_id')], context=context)
+
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+          parent_id = field_parent[0]
+          if field_name:
+            name_id = field_name[0]
+
         vals = {
             'name': name,
             'object_id': object_ids[0],
             'log_write': True,
-            'log_unlink': False,
-            'log_create': False,
+            'log_unlink': True,
+            'log_create': True,
+            'field_ids': [(6, 0, fields_ids)],
+            'parent_field_id': parent_id,
+            'name_get_field_id': name_id,
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+
+-
+  For Asset Events (product.asset.event), track the creation, modif and delete
+-
+  !python {model: audittrail.rule}: |
+    name = 'Asset Events'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.asset.event')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['date','event_type_id', 'asset_id', 'location', 'proj_code', 'product_id', 'comment']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.asset.event'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.event'), ('name', '=', 'date')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.event'), ('name', '=', 'asset_id')], context=context)
+
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+          parent_id = field_parent[0]
+          if field_name:
+            name_id = field_name[0]
+
+        field_other_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.event'), ('name', '=', 'asset_name')], context=context)
+        field_other_id = False
+        if field_other_name:
+          field_other_id = field_other_name[0]
+
+        vals = {
+          'name': name,
+          'object_id': object_ids[0],
+          'log_write': True,
+          'log_unlink': True,
+          'log_create': True,
+          'field_ids': [ (6, 0, fields_ids) ],
+          'parent_field_id': parent_id,
+          'name_get_field_id': name_id,
+          'field_other_id': field_other_id,
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+
+-
+  For Asset Event Types (product.asset.event.type), track the creation, modif and delete
+-
+  !python {model: audittrail.rule}: |
+    name = 'Asset Event Types'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.asset.event.type')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['name','is_disposal', 'active', 'expense_account_id']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.asset.event.type'), ('name', 'in', fields)], context=context)
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': True,
+            'log_create': True,
             'field_ids': [(6, 0, fields_ids)],
         }
 
@@ -48,5 +164,87 @@
             rule_id = self.create(cr, uid, vals, context=context)
         elif rule_id:
             self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+
+-
+  For Depreciation Lines (product.asset.line), track the creation, modif and delete
+-
+  !python {model: audittrail.rule}: |
+      name = 'Depreciation Lines'
+      object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.asset.line')], context=context)
+      rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+      if object_ids:
+        # Create the rule
+        fields = ['date','depreciation_amount', 'remaining_amount', 'amount', 'asset_bs_depreciation_account_id', 'asset_pl_account_id', 'analytic_distribution_id', 'move_id', 'move_state']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.asset.line'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.line'), ('name', '=', 'date')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.line'), ('name', '=', 'asset_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+          parent_id = field_parent[0]
+          if field_name:
+            name_id = field_name[0]
+
+        vals = {
+          'name': name,
+          'object_id': object_ids[0],
+          'log_write': True,
+          'log_unlink': True,
+          'log_create': True,
+          'field_ids': [ (6, 0, fields_ids) ],
+          'parent_field_id': parent_id,
+          'name_get_field_id': name_id,
+        }
+
+        if not rule_id:
+          rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+          self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+
+-
+  For Asset Dispose (product.asset.disposal), track the creation, modif and delete
+-
+  !python {model: audittrail.rule}: |
+      name = 'Asset Dispose'
+      object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.asset.disposal')], context=context)
+      rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+      if object_ids:
+        # Create the rule
+        fields = ['disposal_date','event_type_id', 'location', 'proj_code', 'comment']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.asset.disposal'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.disposal'), ('name', '=', 'disposal_date')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.asset.disposal'), ('name', '=', 'asset_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+          parent_id = field_parent[0]
+          if field_name:
+            name_id = field_name[0]
+
+        vals = {
+          'name': name,
+          'object_id': object_ids[0],
+          'log_write': True,
+          'log_unlink': True,
+          'log_create': True,
+          'field_ids': [ (6, 0, fields_ids) ],
+          'parent_field_id': parent_id,
+          'name_get_field_id': name_id,
+        }
+
+        if not rule_id:
+          rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+          self.write(cr, uid, rule_id, vals, context=context)
         # Subscribe to the rule
         self.subscribe(cr, uid, rule_id)

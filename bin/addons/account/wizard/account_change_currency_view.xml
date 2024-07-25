@@ -8,7 +8,7 @@
             <field name="arch" type="xml">
                 <form string="Invoice Currency">
                     <separator colspan="4" string="This wizard will change the currency of the invoice"/>
-                    <field name="currency_id"/>
+                    <field name="currency_id" domain="[('active', '=', True)]"/>
                     <separator colspan="4"/>
                     <group colspan="2" col="4">
                         <button special="cancel" string="Cancel"  icon="gtk-cancel"/>

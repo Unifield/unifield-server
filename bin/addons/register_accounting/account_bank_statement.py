@@ -96,19 +96,28 @@ class account_journal(osv.osv):
             context = {}
         regline_obj = self.pool.get('account.bank.statement.line')
         dom = [('type', 'in', ['cash', 'bank', 'cheque']), ('is_active', '=', True)]
+        has_cp_tranfert = False
         if context.get('from', '') == 'regline_view' and context.get('active_id'):
             # get the currency and journal values for the View "Register Lines" accessible from the reg. Actions Menu
-            reg_line = regline_obj.browse(cr, uid, context['active_id'], fields_to_fetch=['statement_id'], context=context)
+            reg_line = regline_obj.browse(cr, uid, context['active_id'], fields_to_fetch=['statement_id', 'has_a_counterpart_transfer'], context=context)
             reg = reg_line and reg_line.statement_id
             if reg and not context.get('curr'):
                 context['curr'] = reg.currency and reg.currency.id or False
             if reg and not context.get('journal'):
                 context['journal'] = reg.journal_id.id
+            if reg_line.has_a_counterpart_transfer:
+                has_cp_tranfert = True
         if not args or not context.get('curr') or not context.get('journal'):
             return dom
         if args[0][2]:
             t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type_for_register'])
             # UF-1972: Do not display itself for transfer in same currency. If another currency, itself is not shown.
+            if not has_cp_tranfert:
+                has_cp_tranfert = context.get('has_a_counterpart_transfer')
+
+            if t['type_for_register'] in ('transfer_same', 'transfer')  and has_cp_tranfert:
+                instance_id = self.pool.get('account.journal').browse(cr, uid, context['journal'], fields_to_fetch=['instance_id']).instance_id.id
+                dom += [('instance_id', '=', instance_id)]
             if t['type_for_register'] == 'transfer_same':
                 return dom+[('currency', 'in', [context['curr']]), ('id', 'not in', [context['journal']])]
             elif t['type_for_register'] == 'transfer':
@@ -2533,6 +2542,7 @@ class account_bank_statement_line(osv.osv):
                                 'auto_counterpart': True,
                                 'counterpart_transfer_st_line_id': absl.id,
                                 'has_a_counterpart_transfer': True,
+                                'partner_type_mandatory': True,
                                 'statement_id': cp_reg[0],
                                 'transfer_journal_id': absl.statement_id.journal_id.id,
                                 'document_date': absl.document_date,
@@ -2855,7 +2865,13 @@ class account_bank_statement_line(osv.osv):
         Permit to delete some account_bank_statement_line. But do some treatments on temp posting lines and do nothing for hard posting lines.
         """
         # We browse all ids
+        if context is None:
+            context = {}
         for st_line in self.browse(cr, uid, ids):
+            # prevent in mass only from reg line view
+            if len(ids) > 1 and (context.get('type_posting') or context.get('from_regline_view')) and st_line.state != 'draft':
+                raise osv.except_osv(_('Error'),
+                                     _("You can not delete in MASS non draft register lines!\nTemp posted lines must be deleted one by one and hard posted lines cannot be deleted."))
             # if trying to delete a down payment, check that amounts IN won't be higher than remaining amounts OUT on the PO
             if st_line.account_id and st_line.account_id.type_for_register == 'down_payment' and st_line.down_payment_id:
                 args = [('down_payment_id', '=', st_line.down_payment_id.id)]
@@ -2948,9 +2964,9 @@ class account_bank_statement_line(osv.osv):
                                           'reference': stl.ref or '', 'journal_id':stl.statement_id.journal_id.id}, context=context)
         if statement_id:
             return {
-                'name' : "Advance Return",
-                'type' : 'ir.actions.act_window',
-                'res_model' :"wizard.cash.return",
+                'name': _("Advance Return"),
+                'type': 'ir.actions.act_window',
+                'res_model': "wizard.cash.return",
                 'target': 'new',
                 'view_mode': 'form',
                 'view_type': 'form',

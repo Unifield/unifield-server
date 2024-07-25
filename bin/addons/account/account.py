@@ -707,7 +707,7 @@ class account_journal(osv.osv):
         'is_active': True,
     }
 
-    _order = 'code'
+    _order = 'code, id'
 
     def _check_default_journal(self, cr, uid, ids, context=None):
         """
@@ -901,7 +901,7 @@ class account_journal(osv.osv):
                 else:
                     cr.execute("SELECT date(max(coalesce(write_date, create_date))) FROM account_move WHERE journal_id=%s", (journal.id, ))
                     last_entry = cr.fetchone()
-                    if last_entry and last_entry[0] > journal.inactivation_date:
+                    if last_entry and last_entry[0] and last_entry[0] > journal.inactivation_date:
                         vals.update({'inactivation_date': datetime.today().date()})
         self._check_journal_inactivation(cr, uid, ids, vals, context=context)
         ret = super(account_journal, self).write(cr, uid, ids, vals, context=context)

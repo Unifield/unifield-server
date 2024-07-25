@@ -1,0 +1,73 @@
+-
+  For Recurring Plans (account.subscription), track the creation, modification, and deletion
+-
+  !python {model: audittrail.rule}: |
+    name = 'Recurring Plan'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.subscription')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['model_id', 'period_nbr', 'name', 'date_start', 'period_total', 'state', 'period_type', 'ref']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription'), ('name', 'in', fields)], context=context)
+
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': True,
+            'log_create': True,
+            'field_ids': [(6, 0, fields_ids)],
+            'field_other_id': False,
+            'parent_field_id': False,
+            'name_get_field_id': False,
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+
+-
+  For Journal Entry Model Lines (account.subscription.line), track the creation, modification, and deletion
+-
+  !python {model: audittrail.rule}: |
+    name = 'Account Subscription Line'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.subscription.line')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        # Create the rule
+        fields = ['move_id']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', '=', 'date')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.subscription.line'), ('name', '=', 'subscription_id')], context=context)
+      
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+            if field_name:
+                name_id = field_name[0]
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': True,
+            'log_create': True,
+            'field_ids': [(6, 0, fields_ids)],
+            'parent_field_id': parent_id,
+            'name_get_field_id': name_id,
+            'field_other_id': False,
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)

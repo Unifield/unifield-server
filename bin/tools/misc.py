@@ -2120,7 +2120,7 @@ def _get_std_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=N
     ret = {}
     local_instance = self.pool.get('res.company')._get_instance_record(cr, uid)
 
-    if local_instance.level == 'section':
+    if local_instance and local_instance.level == 'section':
         for _id in ids:
             ret[_id] = {}
             for f in field_name:
@@ -2135,6 +2135,8 @@ def _get_std_mml_status(self, cr, uid, ids, field_name=None, arg=None, context=N
                 'msl_status': 'na',
             }.get(f)
 
+    if not local_instance:
+        return ret
 
     local_instance_id = local_instance.id
 

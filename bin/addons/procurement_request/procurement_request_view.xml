@@ -69,8 +69,8 @@
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             <field name="order_line" mode="tree,form" colspan="4" nolabel="1"
                                 on_change="order_line_change(order_line)"
-                                filter_selector="[('Show all', []), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
-                                default_selector="'3'" o2m_selectable="2">
+                                filter_selector="[('Show all', []), ('Show validated only', [('state', 'in', ['validated', 'sourced', 'sourced_v', 'sourced_sy', 'sourced_n'])]), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
+                                default_selector="'4'" o2m_selectable="2">
                                 <tree string="Products" hide_delete_button="True" editable="top" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p'])]}"
                                     colors="red:mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True;blue: soq_updated == True">
                                     <button name="tree_button" string="Add Line" attrs="{'invisible': [('state', '!=', 'validated')]}" />

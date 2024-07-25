@@ -26,7 +26,7 @@ class account_change_currency(osv.osv_memory):
     _name = 'account.change.currency'
     _description = 'Change Currency'
     _columns = {
-       'currency_id': fields.many2one('res.currency', 'Change to', required=True, help="Select a currency to apply on the invoice"),
+        'currency_id': fields.many2one('res.currency', 'Change to', required=True, help="Select a currency to apply on the invoice", context={'hide_active_buttons': True}),
     }
 
     def view_init(self, cr , uid , fields_list, context=None):

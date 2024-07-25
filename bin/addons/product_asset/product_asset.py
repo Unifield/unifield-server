@@ -20,6 +20,7 @@ class product_asset_type(osv.osv):
     _name = "product.asset.type"
     _description = "Specify the type of asset at product level"
     _order = 'name, id'
+    _trace = True
 
     _columns = {
         'name': fields.char('Name', size=64, required=True, translate=1),
@@ -41,6 +42,7 @@ class product_asset_event_type(osv.osv):
     _name = 'product.asset.event.type'
     _description = 'Event Type'
     _order = 'name, id'
+    _trace = True
 
     _columns = {
         'name': fields.char('Name', size=512, required=True, translate=1),
@@ -62,6 +64,7 @@ class product_asset_useful_life(osv.osv):
     _description = 'Asset Useful Life'
     _rec_name = 'year'
     _order = 'year, id'
+    _trace = True
 
     _columns = {
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', required=1),
@@ -486,6 +489,9 @@ class product_asset(osv.osv):
         return []
 
 
+    def _get_journal_domain(self, cr, uid, context=None):
+        return ['|', ('type', 'in', ['purchase', 'intermission']), '&', ('instance_id.level', '=', 'coordo'), ('type', 'in', ['correction_hq', 'hq'])]
+
     _columns = {
         # asset
         'name': fields.char('Asset Code', size=128, readonly=True),
@@ -517,7 +523,7 @@ class product_asset(osv.osv):
         'invo_date': fields.date('Invoice Date', readonly=1),
         'invo_value': fields.float('Value', readonly=1),
         'invoice_id': fields.many2one('account.invoice', 'Invoice'),
-        'move_line_id': fields.many2one('account.move.line', 'Journal Item', domain="['&', '&', '&', ('journal_id.type', 'in', ['purchase', 'correction_hq', 'hq', 'intermission']), ('debit', '>', 0), ('move_id.state', '=', 'posted'), ('account_id.user_type_code', 'in', ['asset', 'expense'])]"),
+        'move_line_id': fields.many2one('account.move.line', 'Journal Item', domain="['&', '&', '&', ('journal_id.type', 'in', ['purchase', 'correction_hq', 'hq', 'intermission']), ('debit', '>', 0), ('move_id.state', '=', 'posted'), ('account_id.user_type_code', 'in', ['asset', 'expense'])]", context="{'from_asset_journal_domain': True}"), # for domain see also _get_journal_domain used by G/L journal domain
         'quantity_divisor': fields.integer_null('Divisor Quantity', help='This quantity will divide the total invoice value.'),
         'invoice_line_id': fields.many2one('account.invoice.line', 'Invoice Line'),
         'invo_currency': fields.many2one('res.currency', 'Currency', readonly=1),
@@ -883,6 +889,7 @@ class product_asset_event(osv.osv):
     _rec_name = 'asset_id'
     _description = "Event for asset follow up"
     _order = 'date desc, id desc'
+    _trace = True
 
     eventTypeSelection = [('reception', 'Reception'),
                           ('startUse', 'Start Use'),
@@ -986,7 +993,7 @@ class product_asset_event(osv.osv):
         'brand': fields.char('Brand', size=128, readonly=True), # from asset
         'model': fields.char('Model', size=128, readonly=True), # from asset
         'comment': fields.text('Comment'),
-
+        'asset_name': fields.related('asset_id', 'name', type='char', readonly=True, size=128, store=False, write_relate=False, string="Asset"),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
         'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], readonly=1),
     }
@@ -1002,6 +1009,7 @@ class product_asset_line(osv.osv):
     _rec_name = 'date'
     _order = 'date, id'
     _description = "Depreciation Lines"
+    _trace = True
 
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
@@ -1260,6 +1268,7 @@ class product_asset_disposal(osv.osv_memory):
     _name = 'product.asset.disposal'
     _description = 'Asset Dispose'
     _rec_name = 'asset_id'
+    _trace = True
     _columns = {
         'asset_id': fields.many2one('product.asset', 'Asset', required=1),
         'event_type_id': fields.many2one('product.asset.event.type', 'Event Type', required=1, domain=[('is_disposal', '=', True)], add_empty=True),

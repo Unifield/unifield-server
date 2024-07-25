@@ -64,9 +64,9 @@
                         <field name="record_id" invisible="1" />
                     </xpath>    
                     <xpath expr="//field[@name='type']" position="replace">
-                    </xpath>    
+                    </xpath>
                     <field name="code" position="replace">
-                        <field name="code" select="1" required="1"/>
+                        <field name="code" select="1" required="1" attrs="{'readonly': [('has_ajis', '=', True)]}"/>
                         <field name="type"/>
                     </field>
                     <field name="parent_id" position="replace">

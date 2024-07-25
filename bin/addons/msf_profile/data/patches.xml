@@ -1044,7 +1044,6 @@
             <field name="method">us_12294_force_email_popup</field>
         </record>
 
-
         <!-- UF33.0 -->
         <record id="us_12074_gdpr_remove_personal_data_from_track_changess" model="patch.scripts">
             <field name="method">us_12074_gdpr_remove_personal_data_from_track_changes</field>
@@ -1065,6 +1064,16 @@
         <record id="us_12598_ocb_group_user_manager" model="patch.scripts">
             <field name="method">us_12598_ocb_group_user_manager</field>
         </record>
+
+        <record id="us_12195_deactivate_asset_creation_rule" model="patch.scripts">
+            <field name="method">us_12195_deactivate_asset_creation_rule</field>
+        </record>
+
+        <record id="us_12283_period_states_closed_by_sync" model="patch.scripts">
+            <field name="method">update_us_435_2</field>
+        </record>
+
+
 
     </data>
 </openerp>

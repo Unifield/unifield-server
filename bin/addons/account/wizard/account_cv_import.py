@@ -67,6 +67,7 @@ class account_cv_import(osv.osv_memory):
         errors_obj = self.pool.get('account.cv.import.errors')
         ana_obj = self.pool.get('analytic.distribution')
         aac_obj = self.pool.get('account.analytic.account')
+        inv_import_obj = self.pool.get('account.invoice.import')
 
         try:
             for wiz in self.browse(cr, uid, ids, context):
@@ -93,7 +94,7 @@ class account_cv_import(osv.osv_memory):
                     'account': 3,
                     'initial_amount': 4,
                     'left_amount': 5,
-                    'analytic_distribution': 6,
+                    'percentage': 6,
                     'cost_center': 7,
                     'destination': 8,
                     'funding_pool': 9,
@@ -183,11 +184,18 @@ class account_cv_import(osv.osv_memory):
                     cv_line_product = line[cols['product_code']] or False
                     line_number = line[cols['line_number']] or False
                     account_code = line[cols['account']] and tools.ustr(line[cols['account']]).strip()
-                    analytic_distribution_type = line[cols['analytic_distribution']] and tools.ustr(line[cols['analytic_distribution']])
-                    cost_center_code = line[cols['cost_center']] and tools.ustr(line[cols['cost_center']])
-                    destination_code = line[cols['destination']] and tools.ustr(line[cols['destination']])
-                    funding_pool_code = line[cols['funding_pool']] and tools.ustr(line[cols['funding_pool']])
-
+                    percentage_vals = (line[cols['percentage']] and
+                                       (len(tools.ustr(line[cols['percentage']]).split(';')) > 0 and
+                                        tools.ustr(line[cols['percentage']]).split(';')))
+                    cost_center_vals = (line[cols['cost_center']] and
+                                        (len(tools.ustr(line[cols['cost_center']]).split(';')) > 0 and
+                                         tools.ustr(line[cols['cost_center']]).split(';')))
+                    destination_vals = (line[cols['destination']] and
+                                        (len(tools.ustr(line[cols['destination']]).split(';')) > 0 and
+                                         tools.ustr(line[cols['destination']]).split(';')))
+                    funding_pool_vals = (line[cols['funding_pool']] and
+                                         (len(tools.ustr(line[cols['funding_pool']]).split(';')) > 0 and
+                                          tools.ustr(line[cols['funding_pool']]).split(';')))
 
                     if not cv_line_id:
                         errors.append(_('Line %s: the internal id is missing.') % (current_line_num,))
@@ -231,49 +239,78 @@ class account_cv_import(osv.osv_memory):
                         errors.append(_("Line %s: product %s doesn't match.") % (current_line_num, cv_line_product))
                         continue
 
-                    if account.is_analytic_addicted and analytic_distribution_type and analytic_distribution_type.strip() in ('100%', '100', '1'):
-                        if not cost_center_code or not destination_code or not funding_pool_code:
-                            errors.append(_("Line %s: An expense account is set while the analytic distribution values (mandatory) are missing.") % (current_line_num,))
-                            continue
+                    if not percentage_vals:
+                        errors.append(_("Line %s: The percentages are mandatory") % current_line_num)
+                    if account.is_analytic_addicted and percentage_vals:
+                        if not cost_center_vals:
+                            errors.append(_("Line %s: An expense account is set while the cost center code (mandatory) is missing.") % (current_line_num,))
+                        if not destination_vals:
+                            errors.append(_("Line %s: An expense account is set while the destination code (mandatory) is missing.") % (current_line_num,))
+                        if not funding_pool_vals:
+                            errors.append(_("Line %s: An expense account is set while the funding pool code (mandatory) is missing.") % (current_line_num,))
+                        if isinstance(percentage_vals, list):
+                            inv_import_obj._check_col_length(percentage_vals, cost_center_vals, destination_vals, funding_pool_vals, current_line_num, errors)
+                            inv_import_obj._check_percent_values(percentage_vals, current_line_num, errors)
 
-                        cc_ids = aac_obj.search(cr, uid, [('code', '=', cost_center_code),('category', '=', 'OC'), ('type', '!=', 'view')], limit=1, context=context)
-                        if not cc_ids:
-                            errors.append(_("Line %s: the cost center %s doesn't exist.") % (current_line_num, cost_center_code))
-                            continue
-
-                        fp_ids = aac_obj.search(cr, uid, [('code', '=', funding_pool_code), ('category', '=', 'FUNDING'), ('type', '!=', 'view')], limit=1, context=context)
-                        if not fp_ids:
-                            errors.append(_("Line %s: the funding pool %s doesn't exist.") % (current_line_num, funding_pool_code))
-                            continue
-
-                        dest_ids = aac_obj.search(cr, uid, [('code', '=', destination_code), ('category', '=', 'DEST'), ('type', '!=', 'view')], limit=1, context=context)
-                        if not dest_ids:
-                            errors.append(_("Line %s: the destination %s doesn't exist or is inactive.") % (current_line_num, destination_code))
-                            continue
+                        # If AD is filled - write on each line the AD on the import file. Remove from header.
+                        cc_ids, fp_ids, dest_ids = [], [], []
+                        for cc_code in cost_center_vals:
+                            cc_id = aac_obj.search(cr, uid, [('code', '=', cc_code),
+                                                             ('category', '=', 'OC'),
+                                                             ('type', '!=', 'view')], context=context)
+                            if not cc_id:
+                                errors.append(
+                                    _("Line %s: the cost center %s doesn't exist.") % (current_line_num, cc_code))
+                            else:
+                                cc_ids.append(cc_id[0])
+                        for fp_code in funding_pool_vals:
+                            fp_id = aac_obj.search(cr, uid, [('code', '=', fp_code),
+                                                             ('category', '=', 'FUNDING'),
+                                                             ('type', '!=', 'view')], context=context)
+                            if not fp_id:
+                                errors.append(
+                                    _("Line %s: the funding pool %s doesn't exist.") % (current_line_num, fp_code))
+                            else:
+                                fp_ids.append(fp_id[0])
+                        for dest_code in destination_vals:
+                            dest_id = aac_obj.search(cr, uid, [('code', '=', dest_code),
+                                                               ('category', '=', 'DEST'),
+                                                               ('type', '!=', 'view')], context=context)
+                            if not dest_id:
+                                errors.append(
+                                    _("Line %s: the destination %s doesn't exist.") % (current_line_num, dest_code))
+                            else:
+                                dest_ids.append(dest_id[0])
 
                         current_ad = cv_line_data.analytic_distribution_id or False
 
-                        if not current_ad or \
-                                len(current_ad.funding_pool_lines) != 1 or \
-                                current_ad.funding_pool_lines[0].analytic_id.id != fp_ids[0] or \
-                                current_ad.funding_pool_lines[0].cost_center_id.id != cc_ids[0] or \
-                                current_ad.funding_pool_lines[0].destination_id.id != dest_ids[0]:
-
-
-                            ad_state, ad_error = ana_obj.analytic_state_from_info(cr, uid, account.id, dest_ids[0], cc_ids[0], fp_ids[0],
-                                                                                  posting_date=wiz.commit_id.date, document_date=wiz.commit_id.date, check_analytic_active=True, context=context)
-                            if ad_state != 'valid':
-                                ad_errors.append(_("Line %s: %s/%s/%s %s" ) % (current_line_num, cost_center_code, destination_code, funding_pool_code, ad_error))
-
+                        # create a new AD if diff from current AD on lines
+                        if not current_ad or inv_import_obj._is_ad_diff(current_ad, cc_ids=cc_ids, dest_ids=dest_ids, fp_ids=fp_ids,
+                                                                        percentages=percentage_vals):
                             distrib_id = ana_obj.create(cr, uid, {'name': 'Line Distribution Import'}, context=context)
-                            ad_vals = {'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': wiz.commit_id.currency_id.id,
-                                       'destination_id': dest_ids[0]}
+                            for i, percentage in enumerate(percentage_vals):
+                                ad_state, ad_error = ana_obj.analytic_state_from_info(cr, uid, account.id, dest_ids[i],
+                                                                                      cc_ids[i], fp_ids[i],
+                                                                                      posting_date=wiz.commit_id.date,
+                                                                                      document_date=wiz.commit_id.date,
+                                                                                      check_analytic_active=True,
+                                                                                      context=context)
+                                if ad_state != 'valid':
+                                    ad_errors.append(_("Line %s: %s/%s/%s %s") % (current_line_num,
+                                                                                  cost_center_vals[i],
+                                                                                  destination_vals[i],
+                                                                                  funding_pool_vals[i], ad_error))
 
-                            ad_vals['analytic_id'] = cc_ids[0]
-                            self.pool.get('cost.center.distribution.line').create(cr, uid, ad_vals, context=context)
+                                ad_vals = {'distribution_id': distrib_id,
+                                           'percentage': percentage,
+                                           'currency_id': wiz.commit_id.currency_id.id,
+                                           'destination_id': dest_ids[i],
+                                           'analytic_id': cc_ids[i]}
 
-                            ad_vals.update({'analytic_id': fp_ids[0], 'cost_center_id': cc_ids[0]})
-                            self.pool.get('funding.pool.distribution.line').create(cr, uid, ad_vals, context=context)
+                                self.pool.get('cost.center.distribution.line').create(cr, uid, ad_vals, context=context)
+
+                                ad_vals.update({'analytic_id': fp_ids[i], 'cost_center_id': cc_ids[i]})
+                                self.pool.get('funding.pool.distribution.line').create(cr, uid, ad_vals, context=context)
 
                             vals['analytic_distribution_id'] = distrib_id
 
