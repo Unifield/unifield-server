@@ -34,6 +34,7 @@ import threading
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from . import PURCHASE_ORDER_STATE_SELECTION
+from tender_flow import RFQ_STATE_SELECTION
 from . import ORDER_TYPES_SELECTION
 from account_override.period import get_period_from_date
 from msf_order_date.order_dates import common_create, get_type, common_requested_date_change, common_onchange_transport_lt, common_onchange_date_order, common_onchange_transport_type, common_onchange_partner_id
@@ -556,10 +557,10 @@ class purchase_order(osv.osv):
                 res[po.id] = {'location_ids': [input_id], 'location_names': _('Input')}
         return res
 
-    def _get_less_advanced_pol_state(self, cr, uid, ids, field_name, arg, context=None):
+    def _get_less_advanced_line_state(self, cr, uid, ids, field_name, arg, context=None):
         """
         Get the less advanced state of the purchase order lines
-        Used to compute sale order state
+        Used to compute PO and RfQ state
         """
         if context is None:
             context = {}
@@ -570,73 +571,105 @@ class purchase_order(osv.osv):
             return {}
 
         res = {}
-        for po in self.browse(cr, uid, ids, fields_to_fetch=['state', 'push_fo', 'empty_po_cancelled'], context=context):
-            po_state_seq = {
-                'draft': 10,
-                'draft_p': 15,
-                'validated': 20,
-                'validated_p': 25,
-                'sourced_p': 30,
-                'confirmed': 35,
-                'confirmed_p': 40,
-                'done': 50
-            }
+        po_update_date_confirm = []
+        ftf = ['state', 'push_fo', 'empty_po_cancelled', 'rfq_state', 'rfq_ok']
+        for po in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            res[po.id] = {}
+            if not po.rfq_ok:  # If the document is not RfQ
+                po_state_seq = {
+                    'draft': 10,
+                    'draft_p': 15,
+                    'validated': 20,
+                    'validated_p': 25,
+                    'sourced_p': 30,
+                    'confirmed': 35,
+                    'confirmed_p': 40,
+                    'done': 50
+                }
 
-            po_update_date_confirm = []
-            if po.empty_po_cancelled:
-                res[po.id] = 'cancel'
-            else:
-                pol_states = set()
-                cr.execute('select distinct(state) from purchase_order_line where order_id = %s', (po.id, ))
-                for x in cr.fetchall():
-                    pol_states.add(x[0])
-                if pol_states:
-                    if all([s.startswith('cancel') for s in pol_states]):  # if all lines are cancelled then the PO is cancelled
-                        res[po.id] = 'cancel'
-                    else:  # else compute the less advanced state:
-                        # cancel state must be ignored:
-                        pol_states.discard('cancel')
-                        pol_states.discard('cancel_r')
-                        res[po.id] = self.pool.get('purchase.order.line.state').get_less_advanced_state(cr, uid, ids, pol_states, context=context)
-
-                        if res[po.id] == 'draft': # set the draft-p state ?
-                            draft_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'draft', context=context)
-                            # do we have a line further then draft in our FO ?
-                            if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > draft_sequence for s in pol_states]):
-                                res[po.id] = 'draft_p'
-                        elif res[po.id] in ('validated', 'validated_n'): # set the validated-p state ?
-                            validated_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'validated', context=context)
-                            # do we have a line further then validated in our FO ?
-                            if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > validated_sequence for s in pol_states]):
-                                res[po.id] = 'validated_p'
-                            else:
-                                res[po.id] = 'validated'
-                        elif res[po.id].startswith('sourced'): # set the sourced-p state ?
-                            sourced_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'sourced', context=context)
-                            # do we have a line further then sourced in our FO ?
-                            if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in pol_states]):
-                                res[po.id] = 'sourced_p'
-                            else:
-                                res[po.id] = 'sourced'
-                        elif res[po.id] == 'confirmed': # set the confirmed-p state ?
-                            po_update_date_confirm.append(po.id)
-                            confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'confirmed', context=context)
-                            # do we have a line further then confirmed in our FO ?
-                            if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in pol_states]):
-                                res[po.id] = 'confirmed_p'
-                        # PO state must not go back:
-                        if po.push_fo:
-                            # fo push, 2 line added, L2 cancel , sync => resulting PO must be validated
-                            po_state_seq['draft_p'] = 0
-                            po_state_seq['sourced_p'] = 5
-                        if po_state_seq.get(res[po.id], 100) < po_state_seq.get(po.state, 0):
-                            res[po.id] = po.state
+                po_update_date_confirm = []
+                if po.empty_po_cancelled:
+                    res[po.id]['state'] = 'cancel'
                 else:
-                    res[po.id] = 'draft'
+                    pol_states = set()
+                    cr.execute('select distinct(state) from purchase_order_line where order_id = %s', (po.id, ))
+                    for x in cr.fetchall():
+                        pol_states.add(x[0])
+                    if pol_states:
+                        if all([s.startswith('cancel') for s in pol_states]):  # if all lines are cancelled then the PO is cancelled
+                            res[po.id]['state'] = 'cancel'
+                        else:  # else compute the less advanced state:
+                            # cancel state must be ignored:
+                            pol_states.discard('cancel')
+                            pol_states.discard('cancel_r')
+                            res[po.id]['state'] = self.pool.get('purchase.order.line.state').get_less_advanced_state(cr, uid, ids, pol_states, context=context)
 
-            # add audit line in track change if state has changed:
-            if po.state != res[po.id]:
-                self.add_audit_line(cr, uid, po.id, po.state, res[po.id], context=context)
+                            if res[po.id]['state'] == 'draft':  # set the draft-p state ?
+                                draft_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'draft', context=context)
+                                # do we have a line further than draft in our FO ?
+                                if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > draft_sequence for s in pol_states]):
+                                    res[po.id]['state'] = 'draft_p'
+                            elif res[po.id]['state'] in ('validated', 'validated_n'): # set the validated-p state ?
+                                validated_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'validated', context=context)
+                                # do we have a line further than validated in our FO ?
+                                if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > validated_sequence for s in pol_states]):
+                                    res[po.id]['state'] = 'validated_p'
+                                else:
+                                    res[po.id]['state'] = 'validated'
+                            elif res[po.id]['state'].startswith('sourced'):  # set the sourced-p state ?
+                                sourced_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'sourced', context=context)
+                                # do we have a line further than sourced in our FO ?
+                                if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in pol_states]):
+                                    res[po.id]['state'] = 'sourced_p'
+                                else:
+                                    res[po.id]['state'] = 'sourced'
+                            elif res[po.id]['state'] == 'confirmed':  # set the confirmed-p state ?
+                                po_update_date_confirm.append(po.id)
+                                confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'confirmed', context=context)
+                                # do we have a line further then confirmed in our FO ?
+                                if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in pol_states]):
+                                    res[po.id]['state'] = 'confirmed_p'
+                            # PO state must not go back:
+                            if po.push_fo:
+                                # fo push, 2 line added, L2 cancel , sync => resulting PO must be validated
+                                po_state_seq['draft_p'] = 0
+                                po_state_seq['sourced_p'] = 5
+                            if po_state_seq.get(res[po.id]['state'], 100) < po_state_seq.get(po.state, 0):
+                                res[po.id]['state'] = po.state
+                    else:
+                        res[po.id]['state'] = 'draft'
+
+                # add audit line in track change if state has changed:
+                if po.state != res[po.id]['state']:
+                    self.add_audit_line(cr, uid, po.id, po.state, res[po.id]['state'], context=context)
+            else:  # If the PO is RfQ
+                rfq_state_seq = {'draft': 10, 'sent': 20, 'updated': 30, 'done': 40}
+
+                if po.empty_po_cancelled:
+                    res[po.id]['rfq_state'] = 'cancel'
+                else:
+                    rfql_states = set()
+                    cr.execute('select distinct(rfq_line_state) from purchase_order_line where order_id = %s', (po.id,))
+                    for x in cr.fetchall():
+                        rfql_states.add(x[0])
+                    if rfql_states:
+                        if all([s.startswith('cancel') for s in rfql_states]):  # if all lines are cancelled then the PO is cancelled
+                            res[po.id]['rfq_state'] = 'cancel'
+                        else:  # else compute the less advanced state:
+                            # cancel state must be ignored:
+                            rfql_states.discard('cancel')
+                            rfql_states.discard('cancel_r')
+                            res[po.id]['rfq_state'] = self.pool.get('rfq.line.state').\
+                                get_less_advanced_state(cr, uid, ids, rfql_states, context=context)
+
+                            if rfq_state_seq.get(res[po.id]['rfq_state'], 100) < rfq_state_seq.get(po.rfq_state, 0):
+                                res[po.id]['rfq_state'] = po.rfq_state
+                    else:
+                        res[po.id]['rfq_state'] = 'draft'
+
+                # add audit line in track change if state has changed:
+                if po.rfq_state != res[po.id]['rfq_state']:
+                    self.add_audit_line(cr, uid, po.id, po.rfq_state, res[po.id]['rfq_state'], context=context)
 
         if po_update_date_confirm:
             cr.execute('''
@@ -1073,15 +1106,20 @@ class purchase_order(osv.osv):
                                           readonly=True, store=False, help="""This location is set according to the origin of the line(s) of the document. 
         It can have 'Input', 'Cross Docking', 'Non-Stockable' and/or 'Service' as data"""),
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
-        'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
+        'state': fields.function(_get_less_advanced_line_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
                                  store={
                                      'purchase.order': (lambda obj, cr, uid, ids, c={}: ids, ['empty_po_cancelled'], 10),
                                      'purchase.order.line': (_get_order, ['state'], 10),
                                  },
-                                 select=True,
+                                 select=True, multi='get_po_rfq_states',
                                  help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.",
                                  internal="request_for_quotation"
                                  ),
+        'rfq_state': fields.function(_get_less_advanced_line_state, string='Order State', method=True, type='selection', selection=RFQ_STATE_SELECTION, readonly=True,
+                                     store={
+                                         'purchase.order': (lambda obj, cr, uid, ids, c={}: ids, ['empty_po_cancelled'], 10),
+                                         'purchase.order.line': (_get_order, ['rfq_line_state'], 10),
+                                     }, select=True, multi='get_po_rfq_states', internal="purchase_order"),
 
         'validator': fields.many2one('res.users', 'Validated by', readonly=True),
         'notes': fields.text('Notes'),

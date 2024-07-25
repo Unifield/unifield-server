@@ -30,7 +30,6 @@ import time
 import tools
 
 from purchase import PURCHASE_ORDER_STATE_SELECTION
-from . import RFQ_STATE_SELECTION
 from . import RFQ_LINE_STATE_SELECTION
 
 class tender(osv.osv):
@@ -1410,49 +1409,6 @@ class purchase_order(osv.osv):
             result[line.order_id.id] = True
         return list(result.keys())
 
-    def _get_less_advanced_rfql_state(self, cr, uid, ids, field_name, arg, context=None):
-        """
-        Get the less advanced state of the RfQ lines
-        """
-        if context is None:
-            context = {}
-        if isinstance(ids, int):
-            ids = [ids]
-
-        if not ids:
-            return {}
-
-        res = {}
-        for rfq in self.browse(cr, uid, ids, fields_to_fetch=['rfq_state', 'empty_po_cancelled'], context=context):
-            rfq_state_seq = {'draft': 10, 'sent': 20, 'updated': 30, 'done': 40}
-
-            if rfq.empty_po_cancelled:
-                res[rfq.id] = 'cancel'
-            else:
-                rfql_states = set()
-                cr.execute('select distinct(rfq_line_state) from purchase_order_line where order_id = %s', (rfq.id, ))
-                for x in cr.fetchall():
-                    rfql_states.add(x[0])
-                if rfql_states:
-                    if all([s.startswith('cancel') for s in rfql_states]):  # if all lines are cancelled then the PO is cancelled
-                        res[rfq.id] = 'cancel'
-                    else:  # else compute the less advanced state:
-                        # cancel state must be ignored:
-                        rfql_states.discard('cancel')
-                        rfql_states.discard('cancel_r')
-                        res[rfq.id] = self.pool.get('rfq.line.state').get_less_advanced_state(cr, uid, ids, rfql_states, context=context)
-
-                        if rfq_state_seq.get(res[rfq.id], 100) < rfq_state_seq.get(rfq.rfq_state, 0):
-                            res[rfq.id] = rfq.rfq_state
-                else:
-                    res[rfq.id] = 'draft'
-
-            # add audit line in track change if state has changed:
-            if rfq.rfq_state != res[rfq.id]:
-                self.add_audit_line(cr, uid, rfq.id, rfq.rfq_state, res[rfq.id], context=context)
-
-        return res
-
     _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True, internal="purchase_order"),
                 'rfq_delivery_address': fields.many2one('res.partner.address', string='Delivery address', internal="purchase_order"),
                 'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True, internal=True),
@@ -1461,11 +1417,6 @@ class purchase_order(osv.osv):
                 'valid_till': fields.date(string='Valid Till', internal="purchase_order"),
                 # add readonly when state is Done
                 'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True, internal="purchase_order"),
-                'rfq_state': fields.function(_get_less_advanced_rfql_state, string='Order State', method=True, type='selection', selection=RFQ_STATE_SELECTION, readonly=True,
-                                             store={
-                                                 'purchase.order': (lambda obj, cr, uid, ids, c={}: ids, ['empty_po_cancelled'], 10),
-                                                 'purchase.order.line': (_get_order, ['rfq_line_state'], 10),
-                                             }, select=True, internal="purchase_order"),
                 }
 
     _defaults = {
