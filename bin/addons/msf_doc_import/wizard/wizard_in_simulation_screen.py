@@ -17,6 +17,7 @@ import traceback
 from msf_order_date import TRANSPORT_TYPE
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 from msf_outgoing import PACK_INTEGRITY_STATUS_SELECTION
+from product._common import rounding
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
 
@@ -1605,6 +1606,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if write_vals.get('imp_uom_id') and not line.move_uom_id:
                 write_vals['move_uom_id'] = write_vals['imp_uom_id']
+
+            # Check rounding of qty according to UoM
+            if write_vals.get('imp_product_qty') and write_vals.get('imp_uom_id'):
+                uom_rounding = uom_obj.read(cr, uid, write_vals['imp_uom_id'], ['rounding'], context=context)['rounding']
+                if write_vals['imp_product_qty'] != rounding(write_vals['imp_product_qty'], uom_rounding):
+                    errors.append(_("Product Qty is not compatible with the rounding of the UoM"))
+                    write_vals['type_change'] = 'error'
 
             # Unit price
             err_msg = _('Incorrect float value for field \'Price Unit\'')
