@@ -199,6 +199,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
         ## PO Supplier
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
+        ## Order Category
+        <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Doc. Status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Line Status
@@ -322,6 +324,7 @@
                 _('Origin'),
                 _('PO ref'),
                 _('PO Supplier'),
+                _('Order Category'),
                 _('Doc. Status'),
                 _('Line Status'),
                 _('IR Details'),
@@ -361,6 +364,7 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.origin or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('po_supplier', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'categ')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
@@ -448,6 +452,7 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.origin or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_supplier', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'categ')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
