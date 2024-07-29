@@ -1073,6 +1073,11 @@
             <field name="method">update_us_435_2</field>
         </record>
 
+        <record id="us_12274_populate_res_user_last_auth" model="patch.scripts">
+            <field name="method">us_12274_populate_res_user_last_auth</field>
+        </record>
+
+
 
 
     </data>

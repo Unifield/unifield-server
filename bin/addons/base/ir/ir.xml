@@ -826,7 +826,7 @@
                     <field name="name"/>
                     <field name="login"/>
                     <field name="context_lang"/>
-                    <field name="date"/>
+                    <field name="last_authentication" allow_sort="1"/>
                     <field name="is_synchronizable"/>
                 </tree>
             </field>
@@ -2095,6 +2095,18 @@
             <field name="doall" eval="False" />
             <field name="model">osv_memory.autovacuum</field>
             <field name="function">power_on</field>
+            <field name="args">()</field>
+        </record>
+
+        <record model="ir.cron" id="deactivate_users">
+            <field name='name'>Deactivate users after 6 months of inactivity</field>
+            <field name='interval_number'>1</field>
+            <field name='interval_type'>days</field>
+            <field name="numbercall">-1</field>
+            <field name="active">True</field>
+            <field name="doall" eval="False" />
+            <field name="model">res.users</field>
+            <field name="function">_deactivate_user_no_activity</field>
             <field name="args">()</field>
         </record>
 

@@ -62,6 +62,12 @@ class patch_scripts(osv.osv):
         asset_ids = asset_obj.search(cr, uid, [('name', '=', 'Asset Form Creation')])
         if asset_ids:
             asset_obj.write(cr, uid, asset_ids, {'state': 'draft'})
+        return True
+
+    def us_12274_populate_res_user_last_auth(self, cr, uid, *a, **b):
+        cr.execute('''insert into users_last_login (user_id, date)
+            (select id, date from res_users where date is not null) ''')
+        return True
 
     # UF33.0
     def us_12598_ocb_group_user_manager(self, cr, uid, *a, **b):
