@@ -204,6 +204,7 @@ class entity(osv.osv):
         'user_rights_sum': fields.char('UR Sum', size=256),
         'user_rights_state': fields.selection([('installed', 'Installed'), ('to_install', 'To install')], 'UR State'),
         'user_rights_data': fields.binary('UR Zip file'),
+        'current_user_rights_name': fields.char('Installed UR Version', size=256, readonly=1),
     }
 
     def get_upgrade_status(self, cr, uid, context=None):

@@ -219,6 +219,12 @@ MODEL_DICT = {
         'lang': 'en_MF',
         'domain': [('res_model', '!=', 'audittrail.log.line')],
     },
+    '00_full_ur': {
+        'name': '-- UR full archive --',
+        'domain_type': 'non_functionnal',
+        'model': 'msf.import.export',
+        'lang': 'en_MF',
+    }
 }
 
 MODEL_DATA_DICT = {
@@ -713,6 +719,13 @@ MODEL_DATA_DICT = {
             'name',
         ],
     },
+    '00_full_ur' : {
+        'header_list': [],
+        'required_field_list': [],
+        'hide_download_template': True,
+        'hide_download_3_entries': True,
+        'display_file_import': False,
+    },
     'user_access': {
         'header_list': [
         ],
@@ -745,11 +758,11 @@ MODEL_DATA_DICT = {
             'perm_unlink',
             'perm_read',
             'perm_write',
-            'model_id.id',
+            'model_id.model',
         ],
         'required_field_list': [
             'name',
-            'model_id.id',
+            'model_id.model',
         ],
     },
     'access_control_list_empty': {
@@ -794,11 +807,11 @@ MODEL_DATA_DICT = {
         ],
         'required_field_list': [
             'field_access_rule.name',
-            'field.id',
+            'field.name',
         ],
         'ignore_field': [
             'field.field_description',
-            'field.name',
+            'field.id',
         ],
     },
     'button_access_rules': {

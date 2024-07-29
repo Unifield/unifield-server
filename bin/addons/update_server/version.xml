@@ -80,6 +80,7 @@
                     <field name="name" />
                     <newline />
                     <field name="zip_file" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                    <field name="install" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     </group>
                     <group colspan="4" attrs="{'invisible': [('state', '=', 'draft')]}">
                         <separator colspan="4" string="Message" />
@@ -103,9 +104,10 @@
                         <button name="import_zip" type="object" icon="gtk-ok" string="Import" colspan="2"  attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                         <button name="dummy" string="Update" icon="gtk-refresh" type="object" attrs="{'invisible':[('state', '!=', 'inprogress')]}"/>
                         <button name="done" string="Deploy on server" icon="gtk-ok" type="object" attrs="{'invisible':[('state', '!=', 'done')]}"/>
+                        <button name="close" string="Close Windows" icon="gtk-ok" type="object" attrs="{'invisible':[('state', '!=', 'deployed')]}"/>
                     </group>
                     <newline />
-                    <group colspan="4" attrs="{'invisible': [('state', '=', 'inprogress')]}">
+                    <group colspan="4" attrs="{'invisible': [('state', 'in', ['inprogress', 'deployed'])]}">
                         <separator colspan="4" string="Cancel" />
                         <button special="cancel" icon="gtk-cancel" string="Cancel" colspan="2" />
                     </group>

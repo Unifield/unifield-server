@@ -38,6 +38,14 @@ from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
 from msf_doc_import.msf_import_export_conf import MODEL_DICT
 from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT
 
+from report import report_sxw
+import tempfile
+import pooler
+import netsvc
+import os
+import shutil
+from tools.misc import Path
+
 MIN_COLUMN_SIZE = 40
 MAX_COLUMN_SIZE = 400
 
@@ -60,8 +68,11 @@ class msf_import_export(osv.osv_memory):
         result_list = []
         if 'domain_type' in context:
             domain_type = context['domain_type']
+        is_section = self.pool.get('res.company')._get_instance_level(cr, uid) == 'section'
         for key, value in list(MODEL_DICT.items()):
             if key in ['product_list_update', 'supplier_catalogue_update']:
+                continue
+            if key == '00_full_ur' and not is_section:
                 continue
             if value['domain_type'] == domain_type:
                 if self.pool.get('ir.model.access').check(cr, realuser, value['model'], 'write', raise_exception=False, context=context):
@@ -116,6 +127,14 @@ class msf_import_export(osv.osv_memory):
 
         wiz = self.browse(cr, uid, ids[0])
         selection = wiz.model_list_selection
+
+        if selection == '00_full_ur':
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'sync_client.user_rights.download',
+                'datas': {'ids': [ids[0]], 'target_filename': 'UR%s-%s' % (release.version.split('-')[0].lower().replace('uf',''), time.strftime('%Y%m%d'))}
+            }
+
         model = MODEL_DICT[selection]['model']
         if selection not in MODEL_DATA_DICT:
             raise osv.except_osv(_('Error'),
@@ -719,6 +738,8 @@ class msf_import_export(osv.osv_memory):
         gl_account_cache = {}
         parent_ok_cache = {}
         instances_cache = {}
+        far_cache = {}
+        far_rule_obj_id_cache = {}
         import_data_obj = self.pool.get('import_data')
         prod_nomenclature_obj = self.pool.get('product.nomenclature')
 
@@ -953,13 +974,26 @@ class msf_import_export(osv.osv_memory):
                                 nb_error += 1
                                 line_ok = False
                                 break
-
                     if newo2m and ('.' not in h or h.split('.')[0] != newo2m or h.split('.')[1] == delimiter):
                         data.setdefault(newo2m, []).append((0, 0, o2mdatas.copy()))
                         o2mdatas = {}
                         delimiter = False
                         newo2m = False
-                    if h == 'id' and line_data[n]:
+
+                    if impobj._name == 'msf_field_access_rights.field_access_rule_line':
+                        if h == 'field_access_rule.name':
+                            if line_data[n] not in far_cache:
+                                far_cache[line_data[n]] = self.pool.get('msf_field_access_rights.field_access_rule').search(cr, uid, [('name', '=', line_data[n])])[0]
+                            data['field_access_rule'] = far_cache[line_data[n]]
+                        elif h == 'field.name':
+                            if data.get('field_access_rule') not in far_rule_obj_id_cache:
+                                far = self.pool.get('msf_field_access_rights.field_access_rule').browse(cr, uid, data['field_access_rule'], fields_to_fetch=['model_name'])
+                                far_rule_obj_id_cache[data['field_access_rule']] = [far.model_name]
+                                for inherits in self.pool.get(far.model_name)._inherits:
+                                    far_rule_obj_id_cache[data['field_access_rule']].append(inherits)
+                            data['field'] = self.pool.get('ir.model.fields').search(cr, uid, [('model', 'in', far_rule_obj_id_cache[data['field_access_rule']]), ('name', '=', line_data[n])])[0]
+
+                    elif h == 'id' and line_data[n]:
                         ids_to_update = _get_obj('id.id', line_data[n], {'id': {'relation': impobj._name}})
 
                     elif '.' not in h:
@@ -1584,4 +1618,26 @@ class account_analytic_account(osv.osv):
         return processed, rejected, headers
 
 account_analytic_account()
+
+class sync_client_user_rights_download(report_sxw.report_sxw):
+    def create(self, cr, uid, ids, data, context=None):
+        tmp_dir = tempfile.TemporaryDirectory()
+        exp_wiz = pooler.get_pool(cr.dbname).get('msf.import.export')
+        for selection in ['user_access', 'record_rules', 'access_control_list', 'field_access_rules', 'field_access_rule_lines', 'button_access_rules', 'window_actions']:
+            wiz_id = exp_wiz.create(cr, uid, {'model_list_selection': selection}, context=context)
+            r_data = exp_wiz.generic_download(cr, uid, [wiz_id], context=context)
+            obj = netsvc.LocalService('report.%s' % r_data['report_name'])
+            r_data['datas']['context'] = context
+            content, file_format = obj.create(cr, uid, [], r_data['datas'], context=context)
+            with open(os.path.join(tmp_dir.name, '%s.%s' % (r_data['datas']['target_filename'], file_format)), 'wb') as f:
+                f.write(content)
+
+        tmp_file = tempfile.NamedTemporaryFile(delete=True)
+        tmp_file.close()
+
+        shutil.make_archive(tmp_file.name, 'zip', root_dir=tmp_dir.name)
+        return (Path('%s.zip'%tmp_file.name, delete=True), 'zip')
+
+sync_client_user_rights_download('report.sync_client.user_rights.download', 'msf.import.export', False, parser=False)
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

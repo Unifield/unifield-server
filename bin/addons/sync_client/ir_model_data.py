@@ -24,7 +24,7 @@ import logging
 from osv import osv, fields
 import tools
 
-from sync_common import WHITE_LIST_MODEL, normalize_sdref
+from sync_common import WHITE_LIST_MODEL, SDREF_BUT_NO_TOUCH, normalize_sdref
 
 
 class ir_module_module(osv.osv):
@@ -103,7 +103,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         """
         # loop on objects that don't match the models to ignore domain in sync common
         result = set()
-        for model in WHITE_LIST_MODEL:
+        for model in WHITE_LIST_MODEL + SDREF_BUT_NO_TOUCH:
             obj = self.pool.get(model)
             if obj is None:
                 self._logger.warn('Could not get object %s while creating all missing sdrefs' % model)
@@ -247,7 +247,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in list(rec.keys()))
 
         # when a module load a specific xmlid, the sdref is updated according
         # that xmlid
-        if values['model'] in WHITE_LIST_MODEL and \
+        if values['model'] in WHITE_LIST_MODEL + SDREF_BUT_NO_TOUCH and \
            values['module'] not in ('sd', '__export__') and \
            not (values['module'] == 'base' and values['name'].startswith('main_')):
             sdref_name = "%(module)s_%(name)s" % values
