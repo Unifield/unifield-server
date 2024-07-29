@@ -1,24 +1,4 @@
 # -*- coding: utf-8 -*-
-##############################################################################
-#
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) MSF, TeMPO Consulting.
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-##############################################################################
-
 import time
 from osv import osv
 from tools.translate import _
@@ -27,6 +7,20 @@ from tools.translate import _
 class analytic_distribution(osv.osv):
     _name = 'analytic.distribution'
     _inherit = 'analytic.distribution'
+
+    def check_gl_account_destination_compatibility(self, cr, uid, account_id, destination_id, context=None):
+        if not account_id or not destination_id:
+            return False
+        cr.execute('''
+            SELECT
+                id
+            FROM account_destination_link
+            WHERE
+                account_id = %s AND
+                destination_id = %s AND
+                disabled='f'
+            ''', (account_id, destination_id))
+        return bool(cr.rowcount)
 
     def check_dest_cc_compatibility(self, cr, uid, destination_id, cost_center_id, context=None):
         """
@@ -97,7 +91,7 @@ class analytic_distribution(osv.osv):
         if context is None:
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
-        account_obj = self.pool.get('account.account')
+        ad_obj = self.pool.get('analytic.distribution')
         ir_model_data_obj = self.pool.get('ir.model.data')
         res = True
         if fp_id and account_id and dest_id:
@@ -113,8 +107,7 @@ class analytic_distribution(osv.osv):
                                              context=context)
                 if fp and fp.category == 'FUNDING':
                     # continue only if the account and destination selected are compatible with one another
-                    account_selected = account_obj.browse(cr, uid, account_id, fields_to_fetch=['destination_ids'], context=context)
-                    if dest_id not in [d.id for d in account_selected.destination_ids]:
+                    if not ad_obj.check_gl_account_destination_compatibility(cr, uid, account_id, dest_id):
                         res = False
                     else:
                         # when the link is made to G/L accounts only: all Destinations compatible with the acc. are allowed
@@ -150,6 +143,7 @@ class analytic_distribution(osv.osv):
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
         dest_cc_link_obj = self.pool.get('dest.cc.link')
+        ad_obj = self.pool.get('analytic.distribution')
         # Have an analytic distribution on another account than analytic-a-holic account make no sense. So their analytic distribution is valid
         if account_id:
             account =  self.pool.get('account.account').read(cr, uid, account_id, ['is_analytic_addicted'])
@@ -167,10 +161,9 @@ class analytic_distribution(osv.osv):
         if amount is not None and amount is not False and abs(amount) <= 1:
             if not all(len(d) <= 1 for d in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]):
                 return 'invalid_small_amount'
-        account = self.pool.get('account.account').read(cr, uid, account_id, ['destination_ids'])
         # Check Cost Center lines regarding destination/account and destination/CC links
         for cc_line in distrib.cost_center_lines:
-            if account and cc_line.destination_id.id not in account.get('destination_ids', []):
+            if account_id and not ad_obj.check_gl_account_destination_compatibility(cr, uid, account_id, cc_line.destination_id.id):
                 return 'invalid'
             if not self.check_dest_cc_compatibility(cr, uid, cc_line.destination_id.id,
                                                     cc_line.analytic_id and cc_line.analytic_id.id or False, context=context):
@@ -193,7 +186,7 @@ class analytic_distribution(osv.osv):
                         return 'invalid'
                 if doc_date and fp_line.analytic_id and not analytic_acc_obj.is_account_active(fp_line.analytic_id, doc_date):
                     return 'invalid'
-            if account and fp_line.destination_id.id not in account.get('destination_ids', []):
+            if account_id and not ad_obj.check_gl_account_destination_compatibility(cr, uid, account_id, fp_line.destination_id.id):
                 return 'invalid'
             if not self.check_dest_cc_compatibility(cr, uid, fp_line.destination_id.id, fp_line.cost_center_id.id, context=context):
                 return 'invalid'
@@ -226,7 +219,6 @@ class analytic_distribution(osv.osv):
         res = 'valid'
         info = ''
         dest_cc_link_obj = self.pool.get('dest.cc.link')
-        account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
         analytic_acc_obj = self.pool.get('account.analytic.account')
         # DISTRIBUTION VERIFICATION
         # Check that destination is compatible with account
@@ -239,7 +231,7 @@ class analytic_distribution(osv.osv):
 
                 if not analytic_acc_obj.is_account_active(aa, date_check):
                     return 'invalid', _('Account %s is inactive on %s') % (aa.code, date_check)
-        if destination_id not in [x.id for x in account.destination_ids]:
+        if not self.check_gl_account_destination_compatibility(cr, uid, account_id, destination_id):
             return 'invalid', _('Destination not compatible with account')
         # Check that Destination and Cost Center are compatible
         if not self.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):

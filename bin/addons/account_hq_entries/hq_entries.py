@@ -23,134 +23,12 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-import netsvc
-
+from tools.analytic import get_analytic_state
 class hq_entries(osv.osv):
     _name = 'hq.entries'
     _description = 'HQ Entries'
     _trace = True
 
-    def _get_analytic_state(self, cr, uid, ids, name, args, context=None):
-        """
-        Get state of distribution:
-         - if compatible with the line, then "valid"
-         - all other case are "invalid"
-        """
-        if isinstance(ids, int):
-            ids = [ids]
-        # Prepare some values
-        res = {}
-        logger = netsvc.Logger()
-        ad_obj = self.pool.get('analytic.distribution')
-        dest_cc_link_obj = self.pool.get('dest.cc.link')
-        # Search MSF Private Fund element, because it's valid with all accounts
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                        'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
-        # Browse all given lines to check analytic distribution validity
-        ## TO CHECK:
-        # A/ if no CC
-        # B/ if FP = MSF Private FUND
-        # C/ (account/DEST) in FP except B
-        # D/ CC in FP except when B
-        # E/ DEST in list of available DEST in ACCOUNT
-        # F/ Check posting date with cost center and destination if exists
-        # G/ Check document date with funding pool
-        # H/ Check Cost Center / Destination compatibility
-        ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
-        ## CC is mandatory, so always available:
-        # 1/ no FP, no DEST => Distro = valid
-        # 2/ FP, no DEST => Check D except B
-        # 3/ no FP, DEST => Check E
-        # 4/ FP, DEST => Check C, D except B, E
-        ##
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = 'valid' # by default
-            #### SOME CASE WHERE DISTRO IS OK
-            # if it's neither an expense nor an income account, the AD is valid
-            if line.account_id and line.account_id.user_type_code not in ['expense', 'income']:
-                continue
-            # Date checks
-            # F Check
-            if line.cost_center_id:
-                cc = self.pool.get('account.analytic.account').browse(cr, uid, line.cost_center_id.id, context={'date': line.date})
-                if cc and cc.filter_active is False:
-                    res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive CC (%s)') % (line.id or '', cc.code or ''))
-                    continue
-            if line.destination_id:
-                dest = self.pool.get('account.analytic.account').browse(cr, uid, line.destination_id.id, context={'date': line.date})
-                if dest and dest.filter_active is False:
-                    res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive DEST (%s)') % (line.id or '', dest.code or ''))
-                    continue
-            if line.destination_id and line.cost_center_id and line.date and \
-                    dest_cc_link_obj.is_inactive_dcl(cr, uid, line.destination_id.id, line.cost_center_id.id, line.date, context=context):
-                res[line.id] = 'invalid'
-                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING,
-                                     _('%s: inactive combination (%s - %s)') %
-                                     (line.id or '', line.destination_id.code or '', line.cost_center_id.code or ''))
-                continue
-            # G Check
-            if line.analytic_id:
-                fp = self.pool.get('account.analytic.account').browse(cr, uid, line.analytic_id.id, context={'date': line.document_date})
-                if fp and fp.filter_active is False:
-                    res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: inactive FP (%s)') % (line.id or '', fp.code or ''))
-                    continue
-            # if just a cost center, it's also valid! (CASE 1/)
-            if not line.analytic_id and not line.destination_id:
-                continue
-            # if FP is MSF Private Fund and no destination_id, then all is OK.
-            if line.analytic_id and line.analytic_id.id == fp_id and not line.destination_id:
-                continue
-            #### END OF CASES
-            if not line.cost_center_id:
-                res[line.id] = 'invalid'
-                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: No CC') % (line.id or ''))
-                continue
-            if line.analytic_id and not line.destination_id: # CASE 2/
-                # D Check, except B check
-                if not ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context):
-                    res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
-                    continue
-            elif not line.analytic_id and line.destination_id: # CASE 3/
-                # E Check
-                account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
-                if line.destination_id.id not in [x.id for x in account.destination_ids]:
-                    res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
-                    continue
-            else: # CASE 4/
-                # C Check, except B
-                if not ad_obj.check_fp_acc_dest_compatibility(cr, uid, line.analytic_id.id, line.account_id.id,
-                                                              line.destination_id.id, context=context):
-                    res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: Tuple Account/DEST (%s/%s) not found in FP (%s)') % (line.id or '', line.account_id.code or '', line.destination_id.code or '', line.analytic_id.code or ''))
-                    continue
-                # D Check, except B check
-                if not ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context):
-                    res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
-                    continue
-                # E Check
-                account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
-                if line.destination_id.id not in [x.id for x in account.destination_ids]:
-                    res[line.id] = 'invalid'
-                    logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
-                    continue
-            # H check
-            if line.destination_id and line.cost_center_id and \
-                    not ad_obj.check_dest_cc_compatibility(cr, uid, line.destination_id.id, line.cost_center_id.id, context=context):
-                res[line.id] = 'invalid'
-                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING,
-                                     _('%s: CC (%s) not compatible with DEST (%s)') %
-                                     (line.id or '', line.cost_center_id.code or '', line.destination_id.code or ''))
-                continue
-        return res
 
     def _get_cc_changed(self, cr, uid, ids, field_name, arg, context=None):
         """
@@ -248,7 +126,7 @@ class hq_entries(osv.osv):
         'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=False, readonly=False),
         'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", readonly=True),
         'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", readonly=True),
-        'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
+        'analytic_state': fields.function(get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
                                           selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
         'is_original': fields.boolean("Has been split", help="This line has been split into other ones.", readonly=True),
         'is_split': fields.boolean("Is split?", help="This line comes from a split.", readonly=True),

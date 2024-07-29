@@ -248,7 +248,7 @@ class account_move_line(osv.osv):
             if l.account_id and l.account_id.is_analytic_addicted:
                 vals = {'cost_center_id': l.employee_id.cost_center_id.id}
                 if l.employee_id.destination_id:
-                    if l.employee_id.destination_id.id in [x and x.id for x in l.account_id.destination_ids]:
+                    if ad_obj.check_gl_account_destination_compatibility(cr, uid, l.account_id.id, l.employee_id.destination_id.id):
                         vals.update({'destination_id': l.employee_id.destination_id.id})
                     else:
                         vals.update({'destination_id': l.account_id.default_destination_id.id})

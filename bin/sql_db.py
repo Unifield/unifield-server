@@ -199,7 +199,7 @@ class Cursor(object):
             delay = delay.seconds * 1E6 + delay.microseconds
             #if len(self._obj.query) > 500:
             #    self.__logger.warn(misc.get_stack())
-            self.__logger.warn("query: %s %s", self._obj.query, delay)
+            self.__logger.warn("query: %s %s", str(self._obj.query, 'utf8').replace('\n', ''), delay)
         return res
 
 
