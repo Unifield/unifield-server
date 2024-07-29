@@ -465,12 +465,15 @@ class account_move_line(osv.osv):
             # (= full reconciliation but FX entry not yet received via sync)
             rec_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconcile_id)], order='NO_ORDER', context=context)
             rec_lines = self.browse(cr, uid, rec_line_ids, context=context,
-                                    fields_to_fetch=['debit', 'credit', 'debit_currency', 'credit_currency', 'is_addendum_line'])
+                                    fields_to_fetch=['debit', 'credit', 'debit_currency', 'credit_currency', 'is_addendum_line', 'instance_id', 'reconcile_id'])
             debit = 0.0
             credit = 0.0
             debit_currency = 0.0
             credit_currency = 0.0
             fxa_line_ids = []
+            all_instances = set()
+            instance_name = False
+            rec_txt = False
             for rec_line in rec_lines:
                 debit += rec_line.debit
                 credit += rec_line.credit
@@ -478,11 +481,29 @@ class account_move_line(osv.osv):
                 credit_currency += rec_line.credit_currency
                 if rec_line.is_addendum_line:
                     fxa_line_ids.append(rec_line.id)
+                all_instances.add(rec_line.instance_id.id)
+                if not instance_name:
+                    instance_name = rec_line.instance_id.instance
+                    rec_txt = rec_line.reconcile_id.name
+
             balanced_in_booking = abs(debit_currency - credit_currency) < 10**-3
             balanced_in_fctal = abs(debit - credit) < 10**-3
             if balanced_in_booking and not balanced_in_fctal:
-                raise osv.except_osv(_('Warning !'),
-                                     _("You can't unreconcile these lines because the FX entry is still missing."))
+                # check if we have a NR
+                ok_unrec = False
+                if not fxa_line_ids and len(all_instances) == 1 and self.pool.get('res.company')._get_instance_id(cr, uid) not in all_instances:
+                    print(instance_name, '%%already reconciled on the instance%%rec_txt:%s' % (rec_txt,))
+                    if self.pool.get('sync.client.update_received').search_exists(cr, 1, [
+                        ('source', '=', instance_name),
+                        ('model', '=', 'account.move.reconcile'),
+                        ('run', '=', False),
+                        ('log', '=like', '%%already reconciled on the instance%%rec_txt:%s%%' % (rec_txt,))
+                    ]):
+                        ok_unrec = True
+
+                if not ok_unrec:
+                    raise osv.except_osv(_('Warning !'),
+                                         _("You can't unreconcile these lines because the FX entry is still missing."))
             # The loop is on full reconciliations => if the amounts are partial all legs aren't in the current instance:
             # prevent from unreconciling
             if not balanced_in_booking and not balanced_in_fctal:
@@ -795,6 +816,9 @@ class account_move_unreconcile(osv.osv):
                     cr.execute("UPDATE account_move_line SET unreconcile_txt=%s, unreconcile_date=%s, reconcile_txt='', reconcile_date=NULL, has_a_counterpart_transfer='f' WHERE id in %s", (vals.get('delete_reconcile_txt'), vals.get('unreconcile_date'), tuple([x.id for x in move_lines])))
 
             if vals.get('delete_reconcile_txt'):
+                reconcile_nr_ids = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False), ('model', '=', 'account.move.reconcile'), ('values', '=like', "%%'%s'%%" % (vals['delete_reconcile_txt'], ))])
+                if reconcile_nr_ids:
+                    self.pool.get('sync.client.update_received').write(cr, uid, reconcile_nr_ids, {'run': True, 'log': 'Set as run because of unreconcile update received'})
                 # do not sync reconcile delete, to prevent any error in case of account_move_unreconcile update is NR
                 delete_rec = self.pool.get('account.move.reconcile').search(cr, uid, [('name', '=', vals.get('delete_reconcile_txt'))], context=context)
                 if delete_rec:
