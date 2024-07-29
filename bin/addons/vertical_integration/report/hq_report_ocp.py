@@ -866,7 +866,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     aml.id as account_move_line_id, -- 18
                     dest.code as destination_code, -- 19
                     c.ocp_workday_decimal = 0 as no_decimal, -- 20
-                    rounded.rounded_amount as rounded_amount -- 21
+                    rounded.rounded_amount as rounded_amount, -- 21
+                    hr.employee_type as employee_type -- 22
                 FROM
                     account_analytic_line AS al
                         left join hq_report_no_decimal rounded on rounded.account_analytic_line_id = al.id,
@@ -924,7 +925,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     a.code as account_code,  -- 16
                     hr.identification_id as emplid,  -- 17
                     c.ocp_workday_decimal = 0 as no_decimal, -- 18
-                    rounded.rounded_amount as rounded_amount -- 19
+                    rounded.rounded_amount as rounded_amount, -- 19
+                    hr.employee_type as employee_type -- 20
                 FROM
                     account_move_line aml
                     INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -1003,8 +1005,11 @@ class hq_report_ocp_workday(hq_report_ocp):
                         #        original_ref = cor_or_rev.ref or ''
                         #        seq = original_ref.startswith('EAUD') and 'EAUD' or 'SIEG'
                         #        journal = original_ref[8:11] or ''
+
                     else:
                         amls.add(row['id'])
+
+                    local_employee = row['employee_type'] and row['employee_type'] != 'ex'
 
                     if row['no_decimal'] and (row['book_credit'] or row['book_debit']):
                         book_debit_round = 0
@@ -1039,11 +1044,11 @@ class hq_report_ocp_workday(hq_report_ocp):
                         row['ref'], # Reference
                         datetime.strptime(row['document_date'], '%Y-%m-%d').strftime('%d/%m/%Y'), # Document Date
                         row['cost_center'] or '',# Cost Center
-                        row['partner_id'] or '', # Partner DB ID
+                        local_employee and row['emplid'] or row['partner_id'] or '', # Partner DB ID
                         row['journal_code'] if row['journal_type'] == 'cash' else '', # Journal Cash
                         row['journal_code'] if row['journal_type'] in ('bank', 'cheque') else '', # Journal Cash
                         row['account_code'], # G/L Account,
-                        row['emplid'], # EMPLID
+                        not local_employee and row['emplid'] or '', # EMPLID
                         row['entry_sequence'][0:3], # 3 digits seq.
                         row.get('destination_code') or '',
                     ])
