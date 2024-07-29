@@ -57,6 +57,7 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF34.0
     def us_12195_deactivate_asset_creation_rule(self, cr, uid, *a, **b):
         asset_obj = self.pool.get('audittrail.rule')
         asset_ids = asset_obj.search(cr, uid, [('name', '=', 'Asset Form Creation')])
@@ -67,6 +68,14 @@ class patch_scripts(osv.osv):
     def us_12274_populate_res_user_last_auth(self, cr, uid, *a, **b):
         cr.execute('''insert into users_last_login (user_id, date)
             (select id, date from res_users where date is not null) ''')
+        return True
+
+    def us_12974_sync_server_instances_level(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.server.entity')
+        if entity_obj:
+            hq_ids = entity_obj.search(cr, uid, [('parent_id', '=', False)])
+            if hq_ids:
+                entity_obj._update_level(cr, uid, hq_ids, 'section')
         return True
 
     # UF33.0

@@ -269,6 +269,7 @@ class entity(osv.osv):
         'latitude': fields.float('Latitude',digits=(16,6)),
         'longitude': fields.float('Longitude', digits=(16,6)),
         'pgversion': fields.char('Postgres Version', size=64, readonly=1),
+        'instance_level': fields.selection([('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')], 'Instance level', readonly=1),
     }
     _defaults = {
         'version': lambda *a: 0,
@@ -368,6 +369,34 @@ class entity(osv.osv):
         self.write(cr, 1, ids, {'state' : 'validated'}, context=context)
         return (True, "Instance Validated")
 
+    def _update_level(self, cr, uid, ids, level, context=None):
+        cr.execute("update sync_server_entity set instance_level=%s where coalesce(instance_level, '')!=%s and id in %s returning id", (level, level, tuple(ids)))
+        if level in ('section', 'coordo'):
+            updated_instance_ids = [x[0] for x in cr.fetchall()]
+            if updated_instance_ids:
+                cr.execute('select id from sync_server_entity where parent_id in %s', (tuple(updated_instance_ids),))
+                child_ids = [x[0] for x in cr.fetchall()]
+                if child_ids:
+                    if level == 'section':
+                        new_level = 'coordo'
+                    else:
+                        new_level = 'project'
+                    self._update_level(cr, uid, child_ids, new_level, context=context)
+
+    def _set_instance_level(self, cr, uid, ids, vals, context=None):
+        if 'parent_id' in vals and ids:
+            if not vals['parent_id']:
+                level = 'section'
+            else:
+                p = self.browse(cr, uid, vals['parent_id'], fields_to_fetch=['parent_id'], context=context)
+                if not p.parent_id:
+                    level = 'coordo'
+                else:
+                    level = 'project'
+            self._update_level(cr, uid, ids, level)
+
+        return True
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -385,6 +414,7 @@ class entity(osv.osv):
                         'email' in vals and before.email != vals['email']):
                     vals['state'] = 'updated'
 
+        self._set_instance_level(cr, uid, ids, vals, context=context)
         ret = super(entity, self).write(cr, uid, ids, vals, context=context)
 
         if context.get('update', False):
@@ -402,6 +432,7 @@ class entity(osv.osv):
             vals['state'] = 'updated'
 
         newid = super(entity, self).create(cr, uid, vals, context=context)
+        self._set_instance_level(cr, uid, [newid], vals, context=context)
         self.pool.get('sync.server.entity.activity').create(cr, uid, {'entity_id': newid})
         return newid
 
@@ -566,6 +597,9 @@ class entity(osv.osv):
                         raise osv.except_osv(_("Error!"), _("Instance %s: the Mission group %s must contain the parent instance %s") % (instance.name, grp.name, instance.parent_id.name))
 
                 grp_type.append(grp.type_id.name)
+
+            if instance.parent_id and instance.parent_id.parent_id.parent_id:
+                raise osv.except_osv(_("Error!"), _("An instance cannot have a project for parent"))
 
             if instance.parent_id and instance.parent_id.parent_id:
                 # project

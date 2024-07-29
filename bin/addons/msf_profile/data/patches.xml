@@ -1065,6 +1065,7 @@
             <field name="method">us_12598_ocb_group_user_manager</field>
         </record>
 
+        <!-- UF34.0 -->
         <record id="us_12195_deactivate_asset_creation_rule" model="patch.scripts">
             <field name="method">us_12195_deactivate_asset_creation_rule</field>
         </record>
@@ -1077,6 +1078,9 @@
             <field name="method">us_12274_populate_res_user_last_auth</field>
         </record>
 
+        <record id="us_12974_sync_server_instances_level" model="patch.scripts">
+            <field name="method">us_12974_sync_server_instances_level</field>
+        </record>
 
 
 
