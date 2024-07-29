@@ -221,7 +221,7 @@ class product_list(osv.osv):
             context = {}
 
         for prod_list in self.read(cr, uid, ids, ['from_sync'], context=context):
-            if prod_list['from_sync']:
+            if not context.get('sync_update_execution') and prod_list['from_sync']:
                 raise osv.except_osv(_('Error'), _('You can not delete a synced product list created in another instance'))
 
         return super(product_list, self).unlink(cr, uid, ids, context=context)
