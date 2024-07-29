@@ -206,7 +206,7 @@ class hr_payroll_employee_import(osv.osv_memory):
 
     def update_employee_check(self, cr, uid,
                               staffcode=False, missioncode=False, staff_id=False, uniq_id=False,
-                              wizard_id=None, employee_name=False, registered_keys=None, homere_fields=None, errors=None):
+                              wizard_id=None, employee_name=False, registered_keys=None, homere_fields=None, uuid_key=None, errors=None):
         """
         Check that:
         - no more than 1 employee exist for "missioncode + staff_id + uniq_id"
@@ -289,7 +289,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             # UTP-1098: Do not make an error if the employee have the same code staff and the same name
             for employee in self.pool.get('hr.employee').browse(cr, uid, staffcode_ids):
                 what_changed = changed(employee.homere_codeterrain, missioncode, str(employee.homere_id_staff), staff_id, employee.homere_id_unique, uniq_id)
-                if employee.name == employee_name:
+                if employee.name == employee_name or (uuid_key and employee.homere_uuid_key == uuid_key):
                     continue
                 if what_changed != None:
                     # duplicated employees in UniField
@@ -404,7 +404,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                                                                       staffcode=ustr(code_staff), missioncode=ustr(codeterrain),
                                                                       staff_id=id_staff, uniq_id=ustr(uniq_id),
                                                                       wizard_id=wizard_id, employee_name=employee_name,
-                                                                      registered_keys=registered_keys, homere_fields=homere_fields,
+                                                                      registered_keys=registered_keys, homere_fields=homere_fields, uuid_key=uuid_key,
                                                                       errors=errors)
             if not employee_check and not what_changed:
                 return False, created, updated
@@ -413,7 +413,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)])
             # UTP-1098: If what_changed is not None, we should search the employee only on code_staff
             if what_changed:
-                e_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', ustr(code_staff)), ('name', '=', employee_name)])
+                e_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', ustr(code_staff)), '|', ('name', '=', employee_name), ('homere_uuid_key', '=', uuid_key)])
             # Prepare vals
             res = False
             vals = {
