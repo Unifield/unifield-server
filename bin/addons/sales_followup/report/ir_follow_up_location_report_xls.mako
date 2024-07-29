@@ -200,7 +200,7 @@
         ## PO Supplier
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
         ## Order Category
-        <Column ss:AutoFitWidth="1" ss:Width="60.75" />
+        <Column ss:AutoFitWidth="1" ss:Width="100.75" />
         ## Doc. Status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Line Status

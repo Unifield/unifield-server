@@ -199,9 +199,9 @@
         ## Supplier
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## Order Category
-        <Column ss:AutoFitWidth="1" ss:Width="60.75" />
+        <Column ss:AutoFitWidth="1" ss:Width="100.75" />
         ## Order Type
-        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="90.75" />
         ## Doc. Status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Line Status
