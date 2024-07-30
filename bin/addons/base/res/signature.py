@@ -525,7 +525,7 @@ class signature_line(osv.osv):
         ('unique_signature_name_key', 'unique (signature_id,name_key)', 'Unique signature_id,name_key')
     ]
 
-    def _check_sign_unsign(self, cr, uid, ids, check_has_sign=False, check_super_unsign=False, context=None):
+    def _check_sign_unsign(self, cr, uid, ids, check_has_sign=False, check_unsign=False, check_super_unsign=False, context=None):
         # to export the term used in report
         _('As back up of ')
 
@@ -539,6 +539,9 @@ class signature_line(osv.osv):
 
         if sign_line.signature_id.signature_is_closed:
             raise osv.except_osv(_('Warning'), _("Signature Closed."))
+
+        if check_unsign and not sign_line.signature_id.allowed_to_be_signed_unsigned:
+            raise osv.except_osv(_('Warning'), _("You are not allowed to remove the signature of this document in this state, please refresh the page"))
 
         if check_super_unsign:
             group_name = ''
@@ -640,7 +643,7 @@ class signature_line(osv.osv):
         '''
         sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name', 'user_name', 'value', 'unit'], context=context)
         if check_ur:
-            sign_line._check_sign_unsign(check_super_unsign=check_super_unsign, context=context)
+            sign_line._check_sign_unsign(check_unsign=True, check_super_unsign=check_super_unsign, context=context)
 
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         value = sign_line.value
