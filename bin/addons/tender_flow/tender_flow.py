@@ -30,7 +30,6 @@ import time
 import tools
 
 from purchase import PURCHASE_ORDER_STATE_SELECTION
-from . import RFQ_STATE_SELECTION
 from . import RFQ_LINE_STATE_SELECTION
 
 class tender(osv.osv):
@@ -1412,7 +1411,6 @@ class purchase_order(osv.osv):
                 'valid_till': fields.date(string='Valid Till', internal="purchase_order"),
                 # add readonly when state is Done
                 'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True, internal="purchase_order"),
-                'rfq_state': fields.selection(RFQ_STATE_SELECTION, 'Order state', required=True, readonly=True, internal="purchase_order"),
                 }
 
     _defaults = {
@@ -1487,10 +1485,7 @@ class purchase_order(osv.osv):
                     tend_l_obj.fake_unlink(cr, uid, tend_l_ids, context=context)
                 wf_service.trg_validate(uid, 'tender', rfq.tender_id.id, 'tender_cancel', cr)
 
-            self.write(cr, uid, [rfq.id], {'rfq_state': 'cancel'}, context=context)
-
         return True
-
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -1572,7 +1567,7 @@ class purchase_order(osv.osv):
             non_cancel_rfq_line_ids = pol_obj.search(cr, uid, [('order_id', '=', rfq.id), ('state', 'not in', ['cancel', 'cancel_r']),
                                                                ('rfq_line_state', 'not in', ['cancel', 'cancel_r'])], context=context)
             pol_obj.write(cr, uid, non_cancel_rfq_line_ids, {'rfq_line_state': 'sent'}, context=context)
-            self.write(cr, uid, rfq.id, {'rfq_state': 'sent', 'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
+            self.write(cr, uid, rfq.id, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
             self.infolog(cr, uid, "The RfQ id:%s (%s) has been sent." % (rfq.id, rfq.name,))
 
         return True
@@ -1590,8 +1585,6 @@ class purchase_order(osv.osv):
         non_cancel_rfq_line_ids = pol_obj.search(cr, uid, [('order_id', 'in', ids), ('state', 'not in', ['cancel', 'cancel_r']),
                                                            ('rfq_line_state', 'not in', ['cancel', 'cancel_r'])], context=context)
         pol_obj.write(cr, uid, non_cancel_rfq_line_ids, {'rfq_line_state': 'updated'}, context=context)
-
-        self.write(cr, uid, ids, {'rfq_state': 'updated'}, context=context)
 
         return True
 
@@ -1701,7 +1694,7 @@ price. Please set unit price on these lines or cancel them'''),
                                                            ('rfq_line_state', 'not in', ['cancel', 'cancel_r'])], context=context)
         pol_obj.write(cr, uid, non_cancel_rfq_line_ids, {'rfq_line_state': 'done'}, context=context)
 
-        return self.write(cr, uid, ids, {'rfq_state': 'done', 'state': 'done'}, context=context)
+        return True
 
 
 purchase_order()
@@ -1722,7 +1715,7 @@ class purchase_order_line(osv.osv):
     }
 
     _defaults = {
-        'rfq_line_state': 'draft',
+        'rfq_line_state': lambda *args: 'draft',
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -1747,6 +1740,46 @@ class purchase_order_line(osv.osv):
 
 
 purchase_order_line()
+
+
+class rfq_line_state(osv.osv):
+    _name = "rfq.line.state"
+    _description = "States of a RfQ line"
+
+    _columns = {
+        'name': fields.text(string='RfQ line state', store=True),
+        'sequence': fields.integer(string='Sequence'),
+    }
+
+    def get_less_advanced_state(self, cr, uid, ids, states, context=None):
+        '''
+        Return the less advanced state of gives purchase order line states
+        @param states: a list of string
+        '''
+        if not states:
+            return False
+
+        cr.execute("""SELECT name FROM rfq_line_state WHERE name IN %s ORDER BY sequence;""", (tuple(states),))
+
+        min_state = cr.fetchone()
+
+        return min_state[0] if min_state else False
+
+    def get_sequence(self, cr, uid, ids, state, context=None):
+        '''
+        return the sequence of the given state
+        @param state: the state's name as a string
+        '''
+        if not state:
+            return False
+
+        cr.execute("""SELECT sequence FROM rfq_line_state WHERE name = %s;""", (state,))
+        sequence = cr.fetchone()
+
+        return sequence[0] if sequence else False
+
+
+rfq_line_state()
 
 
 class sale_order_line(osv.osv):

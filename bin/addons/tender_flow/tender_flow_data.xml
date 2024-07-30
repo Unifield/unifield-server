@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="0">
+        <record id="rfql_state_cancel" model="rfq.line.state">
+            <field name="name">cancel</field>
+            <field name="sequence">1000</field>
+        </record>
+        <record id="rfql_state_cancel_r" model="rfq.line.state">
+            <field name="name">cancel_r</field>
+            <field name="sequence">1001</field>
+        </record>
+        <record id="rfql_state_draft" model="rfq.line.state">
+            <field name="name">draft</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="rfql_state_sent" model="rfq.line.state">
+            <field name="name">sent</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="rfql_state_updated" model="rfq.line.state">
+            <field name="name">updated</field>
+            <field name="sequence">30</field>
+        </record>
+        <record id="rfql_state_done" model="rfq.line.state">
+            <field name="name">done</field>
+            <field name="sequence">40</field>
+        </record>
+    </data>
+</openerp>
