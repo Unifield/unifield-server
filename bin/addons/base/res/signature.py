@@ -146,9 +146,9 @@ class signature(osv.osv):
             ret[_id] = available
         return ret
 
-    def _get_allowed_to_be_signed(self, cr, uid, ids, *a, **b):
+    def _get_allowed_to_be_signed_unsigned(self, cr, uid, ids, *a, **b):
         '''
-        Check if signature is permitted on the document.
+        Check if signature and un-signature is permitted on the document.
         For FO/IR/PO, only draft and validated documents. No restrictions on others
         '''
         if isinstance(ids, int):
@@ -174,7 +174,7 @@ class signature(osv.osv):
         'signature_available': fields.function(_get_signature_available, type='boolean', string='Signature Available', method=1),
         'signature_closed_date': fields.datetime('Date of signature closure', readonly=1),
         'signature_closed_user': fields.many2one('res.users', 'Closed by', readonly=1),
-        'allowed_to_be_signed': fields.function(_get_allowed_to_be_signed, type='boolean', string='Allowed to be signed', method=1),
+        'allowed_to_be_signed_unsigned': fields.function(_get_allowed_to_be_signed_unsigned, type='boolean', string='Allowed to be signed/un-signed', method=1),
     }
 
     _sql_constraints = [
@@ -548,11 +548,13 @@ class signature_line(osv.osv):
                 group_name = 'Sign_document_creator_supply'
             if not group_name or (group_name and not user_obj.check_user_has_group(cr, uid, group_name)):
                 raise osv.except_osv(_('Warning'), _("You are not allowed to remove this signature"))
+            if not sign_line.signature_id.allowed_to_be_signed_unsigned:
+                raise osv.except_osv(_('Warning'), _("You are not allowed to remove the signature of this document in this state, please refresh the page"))
 
         if check_has_sign:
             if not sign_line.ready_to_sign:
                 raise osv.except_osv(_('Warning'), _("You cannot sign before other role(s)"))
-            if not sign_line.signature_id.allowed_to_be_signed:
+            if not sign_line.signature_id.allowed_to_be_signed_unsigned:
                 raise osv.except_osv(_('Warning'), _("You are not allowed to sign this document in this state, please refresh the page"))
 
             user_d = user_obj.browse(cr, uid, real_uid, fields_to_fetch=['has_valid_signature', 'esignature_id'], context=context)
