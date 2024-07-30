@@ -329,9 +329,11 @@ class signature_object(osv.osv):
 
     def activate_offline(self, cr, uid, ids, context=None):
         _register_log(self, cr, uid, ids, self._name, 'Sign offline', False, True, 'write', context)
+        for sign in self.read(cr, uid, ids, ['allowed_to_be_signed_unsigned'], context=context):
+            if not sign['allowed_to_be_signed_unsigned']:
+                raise osv.except_osv(_('Warning'), _("You are not allowed to remove the signature of this document in this state, please refresh the page"))
         self.write(cr, uid, ids, {'signed_off_line': True, 'signature_state': False}, context=context)
         return True
-
 
     def activate_offline_reset(self, cr, uid, ids, context=None):
         to_unsign = []
