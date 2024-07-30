@@ -78,6 +78,41 @@ class patch_scripts(osv.osv):
                 entity_obj._update_level(cr, uid, hq_ids, 'section')
         return True
 
+    def us_12934_close_empty_ship_and_linked_pick(self, cr, uid, *a, **b):
+        '''
+        Fetch the Draft empty Shipments not linked to an open sub-Ship, and close them as well as the linked Pick
+        '''
+        cr.execute("""SELECT DISTINCT(COALESCE(p4.id, p3.id, p2.id, p.id)), s.id 
+            FROM shipment s 
+                LEFT JOIN shipment s2 ON s2.parent_id = s.id 
+                LEFT JOIN pack_family_memory f ON f.shipment_id = s.id AND f.state != 'returned' 
+                LEFT JOIN stock_picking p ON p.shipment_id = s.id 
+                LEFT JOIN stock_picking p2 ON p.previous_step_id = p2.id 
+                LEFT JOIN stock_picking p3 ON p2.previous_step_id = p3.id 
+                LEFT JOIN stock_picking p4 ON p3.backorder_id = p4.id 
+            WHERE s.state = 'draft' AND s.parent_id IS NULL AND p4.state = 'draft' 
+            GROUP BY s.id, p.id, p2.id, p3.id, p4.id 
+            HAVING COUNT(f.id) = 0 AND (COUNT(s2.id) = 0 OR COUNT(s2.id) = 
+                (SELECT COUNT(s3.id) FROM shipment s3 WHERE s3.state IN ('done', 'delivered', 'cancel') AND s3.parent_id = s.id))""")
+
+        picks_to_close, ships_to_close = [], []
+        for x in cr.fetchall():
+            ships_to_close.append(x[1])
+            if x[0]:
+                picks_to_close.append(x[0])
+
+        # Close the Shipments
+        if ships_to_close:
+            cr.execute("""UPDATE shipment SET state = 'done' WHERE id IN %s""", (tuple(ships_to_close),))
+            self.log_info(cr, uid, "US-12934: %s Shipments have been closed" % (len(ships_to_close),))
+        # Close the Picks and their non-closed/cancelled lines
+        if picks_to_close:
+            cr.execute("""UPDATE stock_move SET state = 'done' WHERE state NOT IN ('done', 'cancel') AND picking_id IN %s""", (tuple(picks_to_close),))
+            cr.execute("""UPDATE stock_picking SET state = 'done', line_state = NULL WHERE id IN %s""", (tuple(picks_to_close),))
+            self.log_info(cr, uid, "US-12934: %s Picks have been closed" % (len(picks_to_close),))
+
+        return True
+
     # UF33.0
     def us_12598_ocb_group_user_manager(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')
