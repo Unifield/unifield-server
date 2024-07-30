@@ -55,7 +55,7 @@ class purchase_order(osv.osv):
         BKLG-51 / US-3782: new filters
         1) On PO LINE state: only allow PO having at least one line in Confirmed State, or Closed State if the related
            invoice is still in Draft state or Cancelled
-        2) On PO type: only allow regular and "purchase list" purchase order types
+        2) On PO type: only allow regular and "purchase list" purchase order types - Also DPO (only in confirmed status) since US-10871
         3) Make sure that RFQs or tenders can not be linked to down payments
         1) line state 'confirmed' + 'done' (done tolerated if invoice still in Draft state)
         2) order_type 'regular', 'purchase_list'
