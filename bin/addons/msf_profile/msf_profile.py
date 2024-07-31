@@ -3899,7 +3899,7 @@ class patch_scripts(osv.osv):
         """
         user_obj = self.pool.get('res.users')
         current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
-        if current_instance and (current_instance.name.startswith('OCB') or current_instance.name.startswith('OCP')):
+        if current_instance and (current_instance.name.startswith('OCB') or current_instance.name.startswith('OCP') or current_instance.name.startswith('WACA')):
             cr.execute("UPDATE unifield_setup_configuration SET previous_fy_dates_allowed = 't';")
         return True
 
