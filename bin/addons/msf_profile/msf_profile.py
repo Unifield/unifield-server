@@ -162,6 +162,27 @@ class patch_scripts(osv.osv):
             cr.execute("""UPDATE purchase_order SET rfq_state = %s WHERE id = %s""", (state, rfq.id))
         return True
 
+    def us_12891_create_super_unsign_bar(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) != 'hq':
+            return True
+
+        bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+        for group_name, model, b_name in [
+            ('Sign_document_creator_finance', ['account.invoice', 'account.bank.statement'], 'super_action_unsign'),
+            ('Sign_document_creator_supply', ['purchase.order', 'stock.picking', 'sale.order'], 'super_action_unsign'),
+        ]:
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
+            if not group_ids:
+                group_id = self.pool.get('res.groups').create(cr, uid, {'name': group_name})
+            else:
+                group_id = group_ids[0]
+
+            if model and b_name:
+                bar_ids = bar_obj.search(cr, uid, [('name', '=', b_name), ('model_id', 'in', model)])
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
+
+        return True
+
     # UF33.0
     def us_12598_ocb_group_user_manager(self, cr, uid, *a, **b):
         entity_obj = self.pool.get('sync.client.entity')

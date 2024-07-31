@@ -1094,6 +1094,10 @@
             <field name="method">us_12730_refresh_existing_rfq_state</field>
         </record>
 
+        <record id="us_12891_create_super_unsign_bar" model="patch.scripts">
+            <field name="method">us_12891_create_super_unsign_bar</field>
+        </record>
+
 
 
     </data>
