@@ -832,12 +832,15 @@ class ud_sync():
                     if uf_key == 'nomen_manda_1':
                         msfid = '%s-%s' % (ud_data['type'], ud_data['group']['code'])
                         ud_key = 'group'
+                        msf_key = ud_data['group']['code']
                     elif uf_key == 'nomen_manda_2':
                         msfid = '%s-%s-%s%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'])
                         ud_key = 'family'
+                        msf_key = '%s%s' % (ud_data['group']['code'], ud_data['family']['code'])
                     else:
                         msfid = '%s-%s-%s%s-%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'], ud_data['root']['code'])
                         ud_key = 'root'
+                        msf_key = ud_data['root']['code']
 
                     #if previous_nom not in lang_values:
                     #    continue
@@ -851,14 +854,14 @@ class ud_sync():
                             created_nomen = True
                             self.log('==== create nomenclature %s'%msfid)
                             nomen_data = {
-                                'name': ud_data[ud_key]['labels']['english'],
+                                'name': '%s - %s' % (msf_key, ud_data[ud_key]['labels']['english']),
                                 'msfid': msfid,
                                 'parent_id':  uf_values['en_MF'][previous_nom],
                                 'level': self.uf_config[uf_key]['nomen_level'],
                             }
                             nomen_id = [self.pool.get('product.nomenclature').create(self.cr, self.uid, nomen_data, context={'lang': 'en_MF'})]
                             if ud_data.get(ud_key, {}).get('labels', {}).get('french'):
-                                self.pool.get('product.nomenclature').write(self.cr, self.uid, nomen_id, {'name': ud_data[ud_key]['labels']['french']}, context={'lang': 'fr_MF'})
+                                self.pool.get('product.nomenclature').write(self.cr, self.uid, nomen_id, {'name': '%s - %s'% (msf_key, ud_data[ud_key]['labels']['french'])}, context={'lang': 'fr_MF'})
                             if uf_key == 'nomen_manda_2':
                                 self.log('===== create category %s'%msfid)
                                 account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', ud_data.get('accountCode', {}).get('code'))])
