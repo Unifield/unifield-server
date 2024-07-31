@@ -58,6 +58,34 @@ class patch_scripts(osv.osv):
     }
 
     # UF34.0
+    def us_13299_fix_nomenclature_name(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            nomen_obj = self.pool.get('product.nomenclature')
+            cr.execute('''
+                select n.id
+                from product_nomenclature n, res_users u
+                where
+                    n.create_uid = u.id and
+                    u.login = 'unidata_pull'
+            ''')
+
+            nomen_ids = [x[0] for x in cr.fetchall()]
+            context = {'lang': 'en_MF'}
+            context_fr = {'lang': 'fr_MF'}
+            for nomen in nomen_obj.browse(cr, uid, nomen_ids, fields_to_fetch=['name', 'msfid'], context=context):
+                if nomen['msfid'] and nomen['name']:
+                    last_part = nomen['msfid'].split('-')[-1]
+                    if last_part and not nomen['name'].startswith(last_part):
+                        nomen_obj.write(cr, uid, nomen['id'], {'name': '%s - %s' % (last_part, nomen['name'])}, context=context)
+                        nomen_fr = nomen_obj.read(cr, uid, nomen['id'], ['name'], context=context_fr)['name']
+                        log = ['Update nomenclature: %s %s' % (nomen['name'], nomen['msfid'])]
+                        if not nomen_fr.startswith(last_part):
+                            nomen_obj.write(cr, uid, nomen['id'], {'name': '%s - %s' % (last_part, nomen_fr)}, context=context_fr)
+                            log.append(' + FR')
+                        self.log_info(cr, uid, "US-13299: %s" % ' '.join(log))
+        return True
+
     def us_12195_deactivate_asset_creation_rule(self, cr, uid, *a, **b):
         asset_obj = self.pool.get('audittrail.rule')
         asset_ids = asset_obj.search(cr, uid, [('name', '=', 'Asset Form Creation')])

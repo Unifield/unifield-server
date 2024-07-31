@@ -1098,6 +1098,9 @@
             <field name="method">us_12891_create_super_unsign_bar</field>
         </record>
 
+        <record id="us_13299_fix_nomenclature_name" model="patch.scripts">
+            <field name="method">us_13299_fix_nomenclature_name</field>
+        </recode>
 
 
     </data>
