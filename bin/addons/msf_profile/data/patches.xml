@@ -1100,7 +1100,7 @@
 
         <record id="us_13299_fix_nomenclature_name" model="patch.scripts">
             <field name="method">us_13299_fix_nomenclature_name</field>
-        </recode>
+        </record>
 
 
     </data>
