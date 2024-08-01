@@ -22,7 +22,6 @@
 from osv import osv
 from sync_common import xmlid_to_sdref
 from lxml import etree
-from tools.translate import _
 import re
 
 class so_po_common(osv.osv_memory):
@@ -449,7 +448,6 @@ class so_po_common(osv.osv_memory):
         res = {}
         src_values = order_line.to_dict()
         split_cancel_line = {}
-        msg_err_not_found = "" # prod received by sync but not in our DB
 
         partner_type = self.get_partner_type(cr, uid, source, context)
 
@@ -519,19 +517,10 @@ class so_po_common(osv.osv_memory):
         else:
             res['name'] = order_line.comment
 
-        if not res.get('product_id', False) and not res.get('name', False):
-            raise osv.except_osv(_('Error'), _('Cannot process Document/line due to Product Code %s which does not exist in this instance')
-                                 % (src_values.get('default_code'),))
-
         if src_values.get('nomen_manda_0'):
             rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_0.id), context=context)
             if rec_id:
                 res['nomen_manda_0'] = rec_id
-
-        if not res.get('nomen_manda_0') and not res.get('product_id'):
-            if not msg_err_not_found:
-                msg_err_not_found += "Order could not be created as product not recognised, not existing in current database?\n"
-            msg_err_not_found += "Product '%s' (line %s) with code %s not recognised.\n" % (order_line.name, order_line.line_number, order_line.default_code)
 
         if src_values.get('nomen_manda_1'):
             rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_1.id), context=context)
@@ -573,8 +562,6 @@ class so_po_common(osv.osv_memory):
             res['external_ref'] = src_values['pol_external_ref']
 
         return res
-
-
 
     def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []

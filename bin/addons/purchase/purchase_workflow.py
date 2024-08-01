@@ -1049,7 +1049,6 @@ class purchase_order(osv.osv):
     _name = "purchase.order"
     _inherit = "purchase.order"
 
-
     def validate_lines(self, cr, uid, ids, context=None):
         """
         Force PO lines validation and update PO state
@@ -1059,11 +1058,10 @@ class purchase_order(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        pol_obj =  self.pool.get('purchase.order.line')
-        pol_ids = pol_obj.search(cr, uid, [('order_id', '=', ids[0]), ('state', '=', 'draft')], context=context)
+        pol_obj = self.pool.get('purchase.order.line')
+        pol_domain = [('order_id', '=', ids[0]), ('state', '=', 'draft'),  ('no_prod_nr_id', '=', False)]
+        pol_ids = pol_obj.search(cr, uid, pol_domain, context=context)
         return pol_obj.validated(cr, uid, pol_ids, context=context)
-
-
 
     def confirm_lines(self, cr, uid, ids, context=None):
         """
@@ -1084,7 +1082,7 @@ class purchase_order(osv.osv):
                     pol_line = pol_obj.read(cr, uid, pol_ids, ['line_number'], context=context)
                     raise osv.except_osv(_('Error'), _('Line %s: Date of Stock Take is required for PO to ESC') % ', '.join(['#%s'%x['line_number'] for x in pol_line]))
 
-            pol_ids_to_confirm = pol_obj.search(cr, uid, [('order_id', '=', po.id), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
+            pol_ids_to_confirm = pol_obj.search(cr, uid, [('order_id', '=', po.id), ('state', 'not in', ['cancel', 'cancel_r']), ('no_prod_nr_id', '=', False)], context=context)
             missing_cdd = pol_obj.search(cr, uid, [('confirmed_delivery_date', '=', False), ('id', 'in', pol_ids_to_confirm)], limit=1, context=context)
             if missing_cdd:
                 pol_line = pol_obj.read(cr, uid, missing_cdd, ['line_number'], context=context)

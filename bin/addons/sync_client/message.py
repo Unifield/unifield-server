@@ -24,8 +24,7 @@ import tools
 
 import traceback
 import logging
-from .log_sale_purchase import SyncException
-from .log_sale_purchase import RunWithoutException
+from .log_sale_purchase import SyncException, RunWithoutException, ProdNotFoundException
 
 from tools.safe_eval import safe_eval as eval
 
@@ -470,13 +469,11 @@ class message_received(osv.osv):
 
     def execute(self, cr, uid, ids=None, context=None):
         # scope the context of message executions and loggers
-        context = dict((context or {}),
-                       sync_message_execution=True,
-                       sale_purchase_logger={})
+        context = dict((context or {}), sync_message_execution=True, sale_purchase_logger={})
         context['lang'] = 'en_US'
 
         if ids is None:
-            ids = self.search(cr, uid, [('run','=',False)], order='rule_sequence, id', context=context)
+            ids = self.search(cr, uid, [('run', '=', False)], order='rule_sequence, id', context=context)
 
         if not ids: return 0
 
@@ -493,18 +490,24 @@ class message_received(osv.osv):
                 try:
                     fn = getattr(self.pool.get(model), method)
                     new_ctx = context.copy()
-                    new_ctx.update({'identifier': message.identifier})
+                    new_ctx.update({'identifier': message.identifier, 'msg_id': message.id})
                     res = fn(cr, uid, message.source, *arg, context=new_ctx)
                 except RunWithoutException as e:
                     self.write(cr, uid, message.id, {
-                        'execution_date' : execution_date,
-                        'run' : True,
-                        'log' : "%s\nSet as run without exec by system" % e,
+                        'execution_date': execution_date,
+                        'run': True,
+                        'log': "%s\nSet as run without exec by system" % e,
                         'manually_set_run_date': fields.datetime.now(),
                         'editable': False
                     }, context=context)
+                except ProdNotFoundException as e:
+                    self.write(cr, uid, message.id, {
+                        'execution_date': execution_date,
+                        'run': False,
+                        'log': "An error has occurred during the line creation: \n%s" % e,
+                    }, context=context)
                 except BaseException as e:
-                    error = e # Keep this message for the exception below
+                    error = e  # Keep this message for the exception below
                     self._logger.exception("Message execution %d failed!" % message.id)
                     cr.rollback()
                     if isinstance(e, osv.except_osv):
@@ -512,22 +515,21 @@ class message_received(osv.osv):
                     else:
                         error_msg = e
                     msg_data = {
-                        'execution_date' : execution_date,
-                        'run' : False,
-                        'log' : e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
+                        'execution_date': execution_date,
+                        'run': False,
+                        'log': e.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
                     }
                     if isinstance(e, SyncException):
                         msg_data['target_object'] = e.target_object
                         msg_data['target_id'] = e.target_id
                         msg_data['line_number'] = e.line_number
 
-
                     self.write(cr, uid, message.id, msg_data, context=context)
                 else:
                     self.write(cr, uid, message.id, {
-                        'execution_date' : execution_date,
-                        'run' : True,
-                        'log' : tools.ustr(res),
+                        'execution_date': execution_date,
+                        'run': True,
+                        'log': tools.ustr(res),
                         'partial_run': new_ctx.get('partial_sync_run', False),
                     }, context=context)
             except BaseException as e1:
@@ -544,15 +546,47 @@ class message_received(osv.osv):
                 else:
                     error_msg = error
                 self.write(cr, uid, message.id, {
-                    'execution_date' : execution_date,
-                    'run' : False,
-                    'log' : error.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
+                    'execution_date': execution_date,
+                    'run': False,
+                    'log': error.__class__.__name__+": "+tools.ustr(error_msg)+"\n\n--\n"+tools.ustr(traceback.format_exc()),
                 }, context=context)
 
         return len(ids)
 
 
 message_received()
+
+
+class sale_order_line(osv.osv):
+    _name = 'sale.order.line'
+    _inherit = 'sale.order.line'
+
+    _columns = {
+        'no_prod_nr_id': fields.many2one('sync.client.message_received', string='Linked Not Run that created this line without a product', readonly=True),
+    }
+
+    _defaults = {
+        'no_prod_nr_id': False,
+    }
+
+
+sale_order_line()
+
+
+class purchase_order_line(osv.osv):
+    _name = 'purchase.order.line'
+    _inherit = 'purchase.order.line'
+
+    _columns = {
+        'no_prod_nr_id': fields.many2one('sync.client.message_received', string='Linked Not Run that created this line without a product', readonly=True),
+    }
+
+    _defaults = {
+        'no_prod_nr_id': False,
+    }
+
+
+purchase_order_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
