@@ -7,6 +7,7 @@ import functools
 from datetime import datetime
 
 from sync_common import WHITE_LIST_MODEL, SDREF_BUT_NO_TOUCH, xmlid_to_sdref
+import re
 
 #import cProfile
 ## Helpers ###################################################################
@@ -73,6 +74,28 @@ class extended_orm_methods:
                 recur_get_model(self.pool.get(parent), res)
             return res
         return recur_get_model(self, [])
+
+    def _get_ids_to_push(self, cr, uid, rule, context=None):
+        re_fieldname = re.compile(r"^\w+")
+        domain = eval(rule.domain or '[]')
+        export_fields = eval(rule.included_fields or '[]')
+        if 'id' not in export_fields:
+            export_fields.append('id')
+        ids_need_to_push = self.need_to_push(cr, uid, [],
+                                             [m.group(0) for m in map(re_fieldname.match, export_fields)],
+                                             empty_ids=True,
+                                             context=context)
+        if not ids_need_to_push:
+            return []
+        domain.append(('id', 'in', ids_need_to_push))
+
+        order = None
+        if hasattr(self, '_sync_order'):
+            # keep same id order at HQ and lower level
+            order = self._sync_order
+
+        ids_to_compute = self.search_ext(cr, uid, domain, order=order, context=context)
+        return ids_to_compute
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
         """

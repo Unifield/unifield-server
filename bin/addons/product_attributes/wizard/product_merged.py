@@ -26,15 +26,7 @@ class product_merged_wizard(osv.osv_memory):
         prod_obj = self.pool.get('product.product')
         wiz = self.browse(cr, uid, ids[0], context)
 
-        if wiz.level == 'coordo':
-            error_used = prod_obj._error_used_in_doc(cr, uid, wiz.new_product_id.id, context=context)
-            if error_used:
-                raise osv.except_osv(_('Warning'), _('The selected UD product has already been used in the past. Merge cannot be done for this product.'))
-
-            has_pipe = prod_obj._has_pipe(cr, uid, wiz.new_product_id.id)
-            if has_pipe:
-                raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore this product cannot be merged. Instances: %s') % (has_pipe[0][1], ))
-        else:
+        if wiz.level != 'coordo':
             if prod_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('kept_product_id', '=', wiz.new_product_id.id)], count=True, context=context) >= 2:
                 raise osv.except_osv(_('Warning'), _('Merge products is limited to 2 merge actions, %s can not be merged') % wiz.new_product_id.default_code)
 

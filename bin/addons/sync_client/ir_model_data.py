@@ -93,7 +93,9 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
     }
 
     def mark_resend(self, cr, uid, model, res_id, context=None):
-        cr.execute("update ir_model_data set resend='t' where module='sd' and model=%s and res_id=%s", (model, res_id))
+        if isinstance(res_id, int):
+            res_id = [res_id]
+        cr.execute("update ir_model_data set resend='t' where module='sd' and model=%s and res_id in %s", (model, tuple(res_id)))
         return True
 
 
@@ -295,6 +297,8 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in list(rec.keys()))
 
         ids = self.search(cr, uid, domain, order='NO_ORDER', context=context)
         if not ids:
+            if consider_resend:
+                return True
             raise ValueError("Cannot find sdref %s!" % sdref)
 
         if context.get('offline_synchronization', False) and 'touched' in vals:

@@ -118,6 +118,7 @@ class sync_rule(osv.osv):
         'direction': fields.selection([
             ('up', 'Up'),
             ('down', 'Down'),
+            ('hqdown', 'HQ Down'),
             ('bidirectional', 'Bidirectional'),
             ('bi-private', 'Bidirectional-Private'),
             ('single-private', 'Single-Private'),
@@ -208,8 +209,11 @@ class sync_rule(osv.osv):
                 if rule.direction == 'up' and entity.parent_id: #got a parent in the same group
                     if group_id in ancestor_group:
                         rules_to_send.add(rule.id)
-                elif rule.direction == 'down' and entity.children_ids: #got children in the same group
+                elif rule.direction == 'down' and entity.children_ids:
                     if group_id in children_group:
+                        rules_to_send.add(rule.id)
+                elif rule.direction == 'hqdown':
+                    if not entity.parent_id and group_id in children_group:
                         rules_to_send.add(rule.id)
                 else:
                     rules_to_send.add(rule.id)

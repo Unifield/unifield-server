@@ -466,7 +466,7 @@ class update(osv.osv):
             else:
                 privates = []
             if (update.rule_id.direction == 'up' and update.source.id in children) or \
-               (update.rule_id.direction == 'down' and update.source.id in ancestor) or \
+               (update.rule_id.direction in ('hqdown', 'down') and update.source.id in ancestor) or \
                (update.rule_id.direction == 'bidirectional') or \
                (entity.id in privates) or \
                (recover and entity.id == update.source.id):
@@ -535,6 +535,7 @@ class update(osv.osv):
             filters.append("direction = 'up' AND source IN (" + (','.join(map(str,children))) + ")")
         if ancestor:
             filters.append("direction = 'down' AND source IN (" + (','.join(map(str,ancestor))) + ")")
+            filters.append("direction = 'hqdown' AND source = " + str(top.id))
         filters.append("direction = 'bidirectional'")
         if recover:
             filters.append("source = %s" % (entity.id, ))

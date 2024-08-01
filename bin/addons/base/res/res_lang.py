@@ -235,6 +235,10 @@ class lang(osv.osv):
 
         return formatted
 
+    def get_translatable_code(self, cr, uid, context=None):
+        cr.execute("select code from res_lang where translatable='t'")
+        return [x[0] for x in cr.fetchall()]
+
 #    import re, operator
 #    _percent_re = re.compile(r'%(?:\((?P<key>.*?)\))?'
 #                             r'(?P<modifiers>[-#0-9 +*.hlL]*?)[eEfFgGdiouxXcrs%]')
