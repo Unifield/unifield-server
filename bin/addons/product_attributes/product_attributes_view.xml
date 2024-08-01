@@ -26,7 +26,8 @@
                         <field name="price" invisible="not context.get('pricelist',False)" string="Price"/>
                         <field name="standard_price" invisible="context.get('pricelist', False)"/>
                         <field name="state" />
-                        <field name="international_status"/>
+			<field name="international_status"/>
+			<field name="golden_status" invisible="1" />
                         <field name="uf_create_date" string="Creation"/>
                         <field name="uf_write_date" string="Modification"/>
                         <field name="active" invisible="1"/>
@@ -118,7 +119,8 @@
                                 <field name="standard_ok" colspan="3" />
                                 <field name="state" colspan="3" widget="selection" />
                                 <field name="state_ud" colspan="3" />
-                                <field name="oc_subscription" colspan="3" readonly="1" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}"/>
+				<field name="oc_subscription" colspan="3" readonly="1" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}"/>
+				<field name="golden_status" invisible="1" />
                                 <group colspan="3" col="6">
                                     <field name="oc_validation" readonly="1" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}" />
                                     <field name="oc_validation_date" readonly="1" attrs="{'invisible': ['|', ('int_status_code', '!=', 'unidata'), ('oc_validation', '!=', True)]}" widget="date"/>
@@ -529,7 +531,8 @@
                     </group>
                    <field name="in_mml_instance" />
                    <field name="in_msl_instance" widget="many2one"/>
-                   <field name="msfid"/>
+		   <field name="msfid"/>
+		   <field name="golden_status" invisible="1" />
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>

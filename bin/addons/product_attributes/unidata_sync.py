@@ -324,7 +324,8 @@ class ud_sync():
             'password': config['password'],
             'size': self.page_size,
             'publishonweb': False,
-            'mode': 2,
+            'mode': 3,
+            'all': True,
         }
         self.url = config['url']
         self.url_msl = config['url_msl']
@@ -511,6 +512,9 @@ class ud_sync():
                     '01. Temporary Merge': 'stopped',
                     '07. Parked': 'archived',
                 },
+            },
+            'golden_status': {
+                'ud': 'state',
             },
             'sterilized': {
                 'ud': 'medical/sterile',
@@ -971,10 +975,6 @@ class ud_sync():
                     if not x.get('id'):
                         raise UDException('No msfid in API')
 
-                    if not x.get('formerCodes'):
-                        raise UDException('No formerCodes code')
-                    if not x.get('type') or not x.get('group', {}).get('code') or not x.get('family', {}).get('code') or not x.get('root', {}).get('code'):
-                        raise UDException('Nomenclature not set in UD')
 
                     prod_ids = prod_obj.search(self.cr, self.uid, [('msfid', '=', x.get('id')), ('active', 'in', ['t', 'f']), ('international_status', '=', self.unidata_id)], context=self.context)
                     if len(prod_ids) > 1:
@@ -982,16 +982,24 @@ class ud_sync():
 
                     if len(prod_ids) == 0:
                         if not x.get('ocSubscriptions').get(self.oc):
-                            self.log('%s product ignored: ocSubscriptions False' % x['formerCodes'])
+                            self.log('%s product ignored: ocSubscriptions False' % x.get('formerCodes'))
                             continue
-                        self.log('%s product to create' % (x['formerCodes'], ))
+                        if x.get('state') != 'Golden':
+                            self.log('%s product ignored, not exists in UF, golden: %s' % (x.get('formerCodes'), x.get('state')))
+                            continue
+                        self.log('%s product to create' % (x.get('formerCodes'), ))
                     else:
                         if not x.get('ocSubscriptions').get(self.oc):
                             if not prod_obj.search(self.cr, self.uid, [('id', 'in', prod_ids), ('oc_subscription', '=', True), ('active', 'in', ['t', 'f'])], context=self.context):
                                 self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
                                 continue
 
-                        self.log('%s product found %s' % (x['formerCodes'], prod_ids[0]))
+                        self.log('%s product found %s' % (x.get('formerCodes'), prod_ids[0]))
+
+                    if not x.get('formerCodes'):
+                        raise UDException('No formerCodes code')
+                    if not x.get('type') or not x.get('group', {}).get('code') or not x.get('family', {}).get('code') or not x.get('root', {}).get('code'):
+                        raise UDException('Nomenclature not set in UD')
 
                     product_values = self.map_ud_fields(x, new_prod=not bool(prod_ids))
 
@@ -1037,7 +1045,11 @@ class ud_sync():
                             current_value = prod_obj.browse(self.cr, self.uid, prod_ids[0], fields_to_fetch=product_values[lang].keys(), context={'lang': lang})
                             for key, value in product_values[lang].items():
                                 tmp_diff = False
-                                if key in ('oc_country_restrictions', 'oc_project_restrictions'):
+                                if value and current_value[key] and self.uf_config.get(key, {}).get('type') == 'date':
+                                    tmp_diff = value[0:10] !=  current_value[key][0:10]
+                                    if tmp_diff:
+                                        self.log('Field diff (date) %s, uf: *%s*, ud: *%s*'% (key, current_value[key], value))
+                                elif key in ('oc_country_restrictions', 'oc_project_restrictions'):
                                     if set(value[0][2]) != set([x.id for x in current_value[key]]):
                                         self.log('Field diff %s, uf: *%s*, ud: *%s*'% (key, [x.id for x in current_value[key]], value[0][2]))
                                         tmp_diff = True

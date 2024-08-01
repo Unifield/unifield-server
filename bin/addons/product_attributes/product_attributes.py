@@ -1065,6 +1065,7 @@ class product_attributes(osv.osv):
             readonly=True,
             help="Automatically filled with UniData information.",
         ),
+        'golden_status': fields.selection([('Golden', 'Golden'), ('Unmatched', 'Unmatched'), ('Merged', 'Merged'), ('Deleted', 'Deleted')], 'UD Golden State', select=1),
         'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=32),
@@ -1306,6 +1307,15 @@ class product_attributes(osv.osv):
             for field in root.xpath('//field[@name="old_code"]'):
                 field.set('invisible', '0')
             res['arch'] = etree.tostring(root, encoding='unicode')
+
+        if view_type in ('tree', 'form', 'search') and self.pool.get('res.company')._get_instance_level(cr, uid) == 'section':
+            root = etree.fromstring(res['arch'])
+            found = False
+            for field in root.xpath('//field[@name="golden_status"]'):
+                field.set('invisible', '0')
+                found = True
+            if found:
+                res['arch'] = etree.tostring(root, encoding='unicode')
 
         if view_type == 'form':
             esc_line = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'esc_line')
