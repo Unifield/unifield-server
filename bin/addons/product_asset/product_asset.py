@@ -106,6 +106,9 @@ class product_asset(osv.osv):
             'asset_id': asset.id,
             'currency_id': asset.invo_currency.id or False,
             'state': 'dispatch',
+            'account_id': asset.asset_pl_account_id.id,
+            'posting_date': time.strftime('%Y-%m-%d'),
+            'document_date': time.strftime('%Y-%m-%d'),
         }
         if asset.analytic_distribution_id:
             vals.update({'distribution_id': asset.analytic_distribution_id.id})
@@ -652,7 +655,7 @@ class product_asset(osv.osv):
                                 ._get_distribution_state(cr, uid, asset['analytic_distribution_id'].id, False,
                                                          asset['asset_pl_account_id'].id, context=context,
                                                          doc_date=time.strftime('%Y-%m-%d'),
-                                                         posting_date=time.strftime('%Y-%m-%d')))
+                                                         posting_date=time.strftime('%Y-%m-%d'), manual=True))
                     if ad_state != 'valid':
                         raise osv.except_osv(_('Error !'), _('Please provide a valid analytic distribution.'))
 
