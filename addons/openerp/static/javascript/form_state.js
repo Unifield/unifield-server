@@ -548,6 +548,11 @@ function form_setReadonly(container, fieldName, readonly) {
     var field_id = $field.attr('id');
     var field_name = $field.attr('name');
     var type = $field.attr('type');
+    var ro_by_trans = $field.attr('ro_by_trans');
+
+    if (!readonly && ro_by_trans) {
+        return;
+    }
     
     if (type == 'hidden' && kind == 'reference') {
         form_setReadonly(container, openobject.dom.get(field_id + '_text'), readonly);

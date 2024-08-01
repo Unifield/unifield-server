@@ -5,6 +5,9 @@
         % if translatable:
             translatable="1"
         % endif
+        % if ro_by_trans:
+            ro_by_trans="1"
+        % endif
             ${py.attrs(attrs, kind=kind, maxlength=size, value=value, required=required and 1 or 0, fld_readonly=1 if readonly_before_state else 0)}/>
         % if translatable and ( not readonly_before_state or ro_by_trans ) :
             <img src="/openerp/static/images/stock/stock_translate.png" class="translatable" id="${name}_translatable"/>
