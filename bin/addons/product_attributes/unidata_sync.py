@@ -1453,17 +1453,27 @@ class unidata_sync(osv.osv):
         logger.info('Sync start, page size: %s, last msfid: %s, last date: %s' % (page_size, min_msfid, last_ud_date_sync))
 
         try:
+            cr.execute('SAVEPOINT unidata_sync_log')
             last_loop = False
             max_id = 0
             # first tries previous errors
             cr.execute('select distinct(msfid) from unidata_products_error where fixed_date is null')
             query = []
             all_msfids = [x[0] for x in cr.fetchall()]
-            for x in all_msfids:
-                query.append("msfIdentifier=%s" % x)
-            if query:
-                cr.execute('update unidata_products_error set fixed_date=NOW() where msfid in %s', (tuple(all_msfids),))
-                trash1, nb_prod, updated, total_nb_created, total_nb_errors = sync_obj.update_products(" or ".join(query), False, session_id)
+            if all_msfids:
+                min_index = 0
+                intervall = 15
+                while nr_msfid := all_msfids[min_index:min_index+intervall]:
+                    query = []
+                    for x in nr_msfid:
+                        query.append("msfIdentifier=%s" % x)
+                    cr.execute('update unidata_products_error set fixed_date=NOW() where msfid in %s', (tuple(nr_msfid),))
+                    trash1, tmp_nb_prod, tmp_updated, tmp_total_nb_created, tmp_total_nb_errors = sync_obj.update_products(" or ".join(query), False, session_id)
+                    nb_prod +=tmp_nb_prod
+                    updated += tmp_updated
+                    total_nb_created += tmp_total_nb_created
+                    total_nb_errors += tmp_total_nb_errors
+                    min_index += intervall
             while not last_loop:
                 cr.execute('SAVEPOINT unidata_sync_log')
                 cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
