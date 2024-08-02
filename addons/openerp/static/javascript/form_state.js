@@ -551,7 +551,7 @@ function form_setReadonly(container, fieldName, readonly) {
     var ro_by_trans = $field.attr('ro_by_trans');
 
     if (!readonly && ro_by_trans) {
-        return;
+        readonly = true;
     }
     
     if (type == 'hidden' && kind == 'reference') {
@@ -588,7 +588,7 @@ function form_setReadonly(container, fieldName, readonly) {
             $field.removeAttr('href');
         }
         $field.toggleClass('readonlyfield', type != 'button');
-        if ($field.attr('translatable') == "1") {
+        if ($field.attr('translatable') == "1" && !ro_by_trans) {
             $('#'+field_id+'_translatable').hide();
 
         }
