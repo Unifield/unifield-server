@@ -58,6 +58,12 @@ class patch_scripts(osv.osv):
     }
 
     # UF34.0
+    def us_10865_disable_former_ur(self, cr, uid, *a, **b):
+        if cr.table_exists('sync_server_user_rights'):
+            cr.execute("update sync_server_user_rights set state='deprecated' where state='confirmed'")
+        return True
+
+
     def us_12195_deactivate_asset_creation_rule(self, cr, uid, *a, **b):
         asset_obj = self.pool.get('audittrail.rule')
         asset_ids = asset_obj.search(cr, uid, [('name', '=', 'Asset Form Creation')])

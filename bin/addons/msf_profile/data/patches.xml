@@ -1098,6 +1098,9 @@
             <field name="method">us_12891_create_super_unsign_bar</field>
         </record>
 
+        <record id="us_10865_disable_former_ur" model="patch.scripts">
+            <field name="method">us_10865_disable_former_ur</field>
+        </record>
 
 
     </data>
