@@ -220,12 +220,13 @@ class shipment(osv.osv):
                         # total amount and currency
                         currency_id = memory_family['currency_id'] or False
                         total_amount = memory_family['total_amount']
-                        if current_result.get('currency_id') and current_result['currency_id'][0] != currency_id[0]:
+                        if current_result.get('currency_id') and currency_id and current_result['currency_id'][0] != currency_id[0]:
                             current_result['total_amount'] = curr_obj.compute(cr, uid, current_result['currency_id'][0],
                                                                               currency_id[0], current_result.get('total_amount', 0.00),
                                                                               round=False, context=context)
                         current_result['total_amount'] += total_amount
-                        current_result['currency_id'] = currency_id
+                        if currency_id:
+                            current_result['currency_id'] = currency_id
 
             if pack_fam_ids and all_returned and not has_non_ret_sub_ship:
                 state = 'cancel'
