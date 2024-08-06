@@ -718,6 +718,23 @@ class hq_report_ocp_workday(hq_report_ocp):
         journal_type = dict(pool.get('account.journal').fields_get(cr, uid)['type']['selection'])
 
 
+        # get budget rates
+        fx_budget_rate = {}
+        cr.execute('''
+            select
+                 DISTINCT ON (c.name) c.name, r.rate
+            from
+                res_currency_rate r, res_currency c, res_currency_table t
+            where
+                c.currency_table_id = t.id and
+                r.currency_id = c.id and
+                t.state = 'valid' and
+                r.name < %s
+                order by c.name, r.name desc
+            ''', (period.date_stop, ))
+        for x in cr.fetchall():
+            fx_budget_rate[x[0]] = x[1]
+
         # fix rounded value to balance rounded JE
         cr.execute('delete from hq_report_no_decimal where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
         cr.execute("""insert into hq_report_no_decimal (account_move_id, account_analytic_line_id, original_amount, rounded_amount, period_id, instance_id)
@@ -975,6 +992,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             'EMPLID',
             'Code-Mission',
             'Destination',
+            'Debit/Credit EUR Budget Rate'
         ]
 
         lines_file = tempfile.NamedTemporaryFile('w', delete=False, newline='')
@@ -1024,6 +1042,11 @@ class hq_report_ocp_workday(hq_report_ocp):
                         book_debit_round = row['book_debit']
                         book_credit_round = row['book_credit']
                         ecart = 0
+
+                    budget_amount = row['book_credit'] - row['book_debit']
+                    if fx_budget_rate.get(row['booking_currency']):
+                        budget_amount = round(budget_amount / fx_budget_rate.get(row['booking_currency']), 2)
+
                     writer.writerow([
                         finance_archive._get_hash(new_cr, uid, ids='%s'%row['id'], model=obj), # DB-ID
                         row['instance'], # Instance
@@ -1051,6 +1074,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                         not local_employee and row['emplid'] or '', # EMPLID
                         row['entry_sequence'][0:3], # 3 digits seq.
                         row.get('destination_code') or '',
+                        budget_amount,
                     ])
                 if ajis:
                     new_cr.execute("update account_analytic_line set exported='t' where id in %s", (tuple(ajis), ))
@@ -1128,6 +1152,10 @@ class hq_report_ocp_workday(hq_report_ocp):
                     amount_currency_round = row[5]
                     ecart = 0
 
+                budget_amount = row[5]
+                if fx_budget_rate.get(row[6]):
+                    budget_amount = round(budget_amount / fx_budget_rate.get(row[6]), 2)
+
                 writer.writerow([
                     finance_archive._get_hash(new_cr, uid, ids=row[0], model='account.move.line'), # DB-ID
                     row[1], # Instance
@@ -1152,7 +1180,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     row[10] if row[4] in ('bank', 'cheque') else '', # Journal Cash
                     row[11], # G/L Account,
                     '', # EMPLID
-                    row[12][0:3], # 3 digits seq.
+                    row[12][0:3], # 3 digits seq
+                    budget_amount,
                 ])
             if amls:
                 new_cr.execute("update account_move_line set exported='t' where id in %s", (tuple(amls),))
