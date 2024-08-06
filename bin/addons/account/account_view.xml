@@ -206,15 +206,18 @@
                         </page>
                         <page string="Allowed Partner types">
                             <group col="4" colspan="4">
-                                <group col="2" colspan="2">
+                                <group col="4" colspan="2">
                                     <field name="has_partner_type_internal" />
+                                    <newline />
                                     <field name="has_partner_type_external" />
+                                    <newline />
                                     <field name="has_partner_type_esc" />
                                     <newline />
                                     <field name="has_partner_type_local" />
-                                    <group colspan="2" col="4">
-                                        <field name="has_partner_type_ex" />
-                                        <field name="expat_restriction" attrs="{'invisible': [('has_partner_type_ex', '=', False)]}"/>
+                                    <newline />
+                                    <field name="has_partner_type_ex" />
+                                    <group colspan="2">
+                                        <field name="expat_restriction" attrs="{'invisible': [('has_partner_type_ex', '=', False)]}" invisible="1"/>
                                     </group>
                                     <field name="has_partner_type_empty" />
                                     <newline />

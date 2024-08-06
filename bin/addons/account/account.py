@@ -551,6 +551,15 @@ class account_account(osv.osv):
             for field in arch.xpath('//group[@name="mapping_value"]'):
                 field.set('invisible', '0')
             fvg['arch'] = etree.tostring(arch, encoding='unicode')
+
+        if view_type == 'form' and self.pool.get('res.company')._get_instance_oc(cr, uid) == 'ocp':
+            found = False
+            view_xml = etree.fromstring(fvg['arch'])
+            for field in view_xml.xpath('//field[@name="expat_restriction"]'):
+                found = True
+                field.set('invisible', "0")
+            if found:
+                fvg['arch'] = etree.tostring(view_xml, encoding='unicode')
         return fvg
 
 

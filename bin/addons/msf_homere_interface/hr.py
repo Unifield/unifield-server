@@ -153,6 +153,7 @@ class hr_employee(osv.osv):
         'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
         'instance_creator': fields.char('Instance creator of the employee', size=64, readonly=1),
         'expat_creation_date': fields.date('Creation Date', readonly=1),
+        'former_identification_id': fields.char('Former ID', size=32, readonly=1, help='Used for the OCP migration'),
     }
 
     _defaults = {
@@ -373,6 +374,15 @@ class hr_employee(osv.osv):
         if not context:
             context = {}
         view = super(hr_employee, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if self.pool.get('res.company')._get_instance_oc(cr, uid) == 'ocp':
+            found = False
+            view_xml = etree.fromstring(view['arch'])
+            for field in view_xml.xpath('//field[@name="section_code"]'):
+                found = True
+                field.set('invisible', "0")
+            if found:
+                view['arch'] = etree.tostring(view_xml, encoding='unicode')
+
         if view_type in ['form', 'tree']:
             form = etree.fromstring(view['arch'])
             data_obj = self.pool.get('ir.model.data')
