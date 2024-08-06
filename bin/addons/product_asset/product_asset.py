@@ -109,6 +109,9 @@ class product_asset(osv.osv):
             'asset_id': asset.id,
             'currency_id': asset.invo_currency.id or False,
             'state': 'dispatch',
+            'account_id': asset.asset_pl_account_id.id,
+            'posting_date': time.strftime('%Y-%m-%d'),
+            'document_date': time.strftime('%Y-%m-%d'),
         }
         if asset.analytic_distribution_id:
             vals.update({'distribution_id': asset.analytic_distribution_id.id})
@@ -644,7 +647,7 @@ class product_asset(osv.osv):
         return True
 
     def _check_mandatory_fields(self, cr, uid, ids, context=None):
-        fields = ['start_date', 'asset_bs_depreciation_account_id', 'asset_pl_account_id', 'useful_life_id']
+        fields = ['start_date', 'asset_bs_depreciation_account_id', 'asset_pl_account_id', 'useful_life_id', 'analytic_distribution_id', 'move_line_id']
         all_fields = {}
         missing_fields = []
         for asset in self.browse(cr, uid,  ids, fields_to_fetch=fields, context=context):
@@ -653,6 +656,14 @@ class product_asset(osv.osv):
                     if not all_fields:
                         all_fields = self.fields_get(cr, uid, fields=fields, context=context)
                     missing_fields.append(all_fields[field].get('string', field))
+                elif field == 'analytic_distribution_id' and asset['analytic_distribution_id'] and asset['asset_pl_account_id']:
+                    ad_state = (self.pool.get('analytic.distribution')
+                                ._get_distribution_state(cr, uid, asset['analytic_distribution_id'].id, False,
+                                                         asset['asset_pl_account_id'].id, context=context,
+                                                         doc_date=time.strftime('%Y-%m-%d'),
+                                                         posting_date=time.strftime('%Y-%m-%d'), manual=True))
+                    if ad_state != 'valid':
+                        raise osv.except_osv(_('Error !'), _('Please provide a valid analytic distribution.'))
 
         if missing_fields:
             raise osv.except_osv(_('Error !'), _('Please fill the mandatory field: %s') % ', '.join(missing_fields))
