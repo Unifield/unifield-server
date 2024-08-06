@@ -2293,7 +2293,7 @@ class product_product(osv.osv):
         if context.get('from_date', False):
             from_date = (datetime.strptime(context.get('from_date'), '%Y-%m-%d') + relativedelta(day=1)).strftime('%Y-%m-%d')
         else:
-            from_date = (datetime.now() + relativedelta(months=-6, day=1)).strftime('%Y-%m-%d')
+            from_date = (datetime.now() + relativedelta(months=-3, day=1)).strftime('%Y-%m-%d')
 
         if context.get('to_date', False):
             to_date = (datetime.strptime(context.get('to_date'), '%Y-%m-%d') + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
