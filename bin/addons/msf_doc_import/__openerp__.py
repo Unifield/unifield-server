@@ -48,7 +48,6 @@
         'view/product_list_view.xml',
         'view/account_view.xml',
         'view/stock_picking_import_lines_view.xml',
-        'view/supplier_catalogue_view.xml',
         'view/msf_import_export_view.xml',
         'wizard/wizard_import_po_line_view.xml',
         'wizard/wizard_import_fo_line.xml',

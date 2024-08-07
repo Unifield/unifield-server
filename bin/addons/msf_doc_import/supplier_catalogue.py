@@ -80,7 +80,6 @@ class supplier_catalogue(osv.osv):
             elif row.cells[0].data == displayable['period_to']:
                 data['period_to'] = get_well_formed_date(row.cells[1].data)
 
-
         catalogue_id = False
         if data.get('name') and data.get('partner_id'):
             catalogue_id = self.search(cr, uid, [('name', '=', data['name']), ('partner_id', '=', data['partner_id'])], context=context)
@@ -89,8 +88,9 @@ class supplier_catalogue(osv.osv):
         if not catalogue_id:
             catalogue_id = self.create(cr, uid, data, context=context)
             catalogue_id = [catalogue_id]
-            cr.commit()
             self.button_confirm(cr, uid, catalogue_id, context=context)
+        else:
+            self.write(cr, uid, catalogue_id, {'period_from': data['period_from'], 'period_to': data.get('period_to', False)}, context=context)
 
         res = (False, False, False)
         if catalogue_id:
@@ -103,7 +103,6 @@ class supplier_catalogue(osv.osv):
             res = self.pool.get('msf.import.export').import_xml(cr, uid, wiz_id, context=context)
 
         return res
-
 
     def wizard_import_supplier_catalogue_line(self, cr, uid, ids, context=None):
         """
@@ -150,5 +149,6 @@ class supplier_catalogue(osv.osv):
             'target': 'crush',
             'context': context,
         }
+
 
 supplier_catalogue()

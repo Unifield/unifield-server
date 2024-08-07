@@ -1415,11 +1415,21 @@ class msf_import_export(osv.osv_memory):
                     nb_update_success += 1
                     processed.append((row_index+1, line_data))
                 else:
-                    context['from_import_menu']=  True
+                    context['from_import_menu'] = True
                     if import_brw.model_list_selection == 'supplier_catalogue_update':
                         if data.get('product_id') and data['product_id'] not in forbid_creation_of:
-                            line_created = impobj.create(cr, uid, data, context=context)
-                            lines_already_updated.append(line_created)
+                            cr.execute("SAVEPOINT catalogue_auto_import")
+                            try:
+                                line_created = impobj.create(cr, uid, data, context=context)
+                                lines_already_updated.append(line_created)
+                            except (osv.except_osv, orm.except_orm) as e:
+                                logging.getLogger('import data').info('Error %s' % e.value)
+                                save_error(e.value, row_index)
+                                nb_error += 1
+                                rejected.append((row_index + 1, line_data, e.value))
+                                cr.execute("ROLLBACK TO SAVEPOINT catalogue_auto_import")
+                            else:
+                                cr.execute("RELEASE SAVEPOINT catalogue_auto_import")
                     elif import_brw.model_list_selection == 'cost_centers':
                         keys_to_extract = ['category', 'date_start', 'date','parent_id', 'type']
                         data_subset = {

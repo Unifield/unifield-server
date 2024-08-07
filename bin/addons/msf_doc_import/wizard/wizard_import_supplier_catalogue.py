@@ -217,6 +217,15 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                             to_correct_ok = True
                             error_list_line.append(_("The product '%s' was not found.") % product_code)
 
+                    # US-12606: Check the products exist in another valid catalogue
+                    if not to_correct_ok and default_code and obj.catalogue_id.state == 'confirmed' and obj.catalogue_id.active:
+                        invalid_prod = self.pool.get('supplier.catalogue').\
+                            check_cat_prods_valid(cr, uid, obj.catalogue_id.id, [default_code], None, None, context=context)
+                        if invalid_prod:
+                            default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+                            to_correct_ok = True
+                            error_list_line.append(_("This line contains the product '%s' which is a duplicate in another catalogue for the same supplier! Please remove the product from the import or the other catalogue before trying to import.") % (invalid_prod[0],))
+
                     supplier_code = len(row.cells)>=3 and row.cells[2].data
                     #Product UoM
                     p_uom = len(row.cells)>=4 and row.cells[3].data
