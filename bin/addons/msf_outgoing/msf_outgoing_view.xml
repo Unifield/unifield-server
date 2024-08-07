@@ -1381,6 +1381,7 @@
                                             <field name="expired_date" />
                                             <field name="product_qty" />
                                             <field name="product_uom" />
+                                            <field name="price_unit" string="Unit Cost" />
                                             <field name="location_id" />
                                             <field name="location_dest_id" />
                                             <field name="ship_influenced_state" />

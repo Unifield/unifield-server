@@ -233,7 +233,7 @@
                     <field name="kc_check" widget="null_boolean" />
                     <field name="dg_check" widget="null_boolean" />
                     <field name="np_check" widget="null_boolean" />
-                    <field name="cost" attrs="{'readonly': [('cost_as_ro', '=', True)]}" />
+                    <field name="cost" string="Unit Cost" attrs="{'readonly': [('cost_as_ro', '=', True)]}" />
                     <field name="currency" />
                     <field name="integrity_status" string="" />
                     <field name="mml_status" />

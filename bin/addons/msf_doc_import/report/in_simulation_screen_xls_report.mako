@@ -159,7 +159,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty to Process')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price Unit')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Unit Cost')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Discre.')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Curr.')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch Number')}</Data></Cell>
