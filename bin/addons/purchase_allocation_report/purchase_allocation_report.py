@@ -57,7 +57,7 @@ class purchase_order_line_allocation_report(osv.osv):
 
     _columns = {
         'order_id': fields.many2one('purchase.order', string='PO', domain=[('rfq_ok', '=', False)]),
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation to prevent losses'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),
                                         ('loan_return', 'Loan Return'), ('in_kind', 'In Kind Donation'),
                                         ('purchase_list', 'Purchase List'), ('direct', 'Direct Purchase Order')],

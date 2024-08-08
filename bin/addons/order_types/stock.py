@@ -110,19 +110,14 @@ class stock_picking(osv.osv):
         Return True if at least one stock move requires a donation certificate
         '''
         res = dict.fromkeys(ids, False)
-        new_ids = self.search(cr, uid, [('id', 'in', ids),
-                                        ('type', '=', 'out')], context=context)
+        new_ids = self.search(cr, uid, [('id', 'in', ids), ('type', '=', 'out')], context=context)
         if new_ids:
             stock_move_obj = self.pool.get('stock.move')
-            move_line_read_list = self.read(cr, uid, new_ids, ['id', 'move_lines', 'type'],
-                                            context=context)
+            move_line_read_list = self.read(cr, uid, new_ids, ['id', 'move_lines', 'type'], context=context)
             for move_line_dict in move_line_read_list:
                 stock_move_ids = move_line_dict['move_lines']
                 if stock_move_obj.search(cr, uid, [('id', 'in', stock_move_ids),
-                                                   ('order_type', 'in',
-                                                    ('donation_exp',
-                                                     'donation_st',
-                                                     'in_kind')),
+                                                   ('order_type', 'in', ('donation_exp', 'donation_st', 'in_kind', 'donation_prog')),
                                                    ], context=context):
                     res[move_line_dict['id']] = True
         return res
@@ -222,14 +217,14 @@ class stock_picking(osv.osv):
                             check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
                             self.pool.get('product.product')._get_restriction_error(cr, uid, [move.product_id.id],
                                                                                     check_vals, context=context)
-                        if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
+                        if move.order_type in ['donation_exp', 'donation_st', 'in_kind', 'donation_prog']:
                             certif = True
                             break
 
         if certif and not context.get('attach_ok', False):
             partial_id = self.pool.get("stock.certificate.picking").create(
                 cr, uid, {'picking_id': ids[0]}, context=dict(context, active_ids=ids))
-            return {'name':_("Attach a certificate of donation"),
+            return {'name': _("Attach a certificate of donation"),
                     'view_mode': 'form',
                     'view_id': False,
                     'view_type': 'form',

@@ -25,6 +25,7 @@
 from osv import osv
 from tools.translate import _
 
+
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -42,21 +43,26 @@ class sale_order(osv.osv):
                 'warning': {'title': _('Error'), 'message': _('You can not select this Order Type manually')}
             }
         msg = _('Partner type is not compatible with given Order Type!')
-        if order_type in ['regular', 'donation_st', 'loan', 'loan_return', 'donation_exp']:
+        if order_type in ['regular', 'donation_st', 'loan', 'loan_return', 'donation_exp', 'donation_prog']:
             # Check that partner correspond
             if partner_id:
                 partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
                 if partner and partner.partner_type not in ['internal', 'intermission', 'section', 'external']:
                     return {'warning': {'title': _('Error'), 'message': msg}}
 
-                if partner.partner_type == 'section' and order_type == 'regular':
+                if (partner.partner_type == 'section' and order_type == 'regular') or \
+                        (partner.partner_type != 'external' and order_type == 'donation_prog'):
                     current_type = id and self.browse(cr, uid, id[0], fields_to_fetch=['order_type'], context=context).order_type or False
                     return {'value': {'order_type': current_type}, 'warning': {'title': _('Error'), 'message': msg}}
+
+            if order_type == 'donation_prog':
+                res.update({'warning': {'title': _('Error'), 'message':
+                                        _('Any products which leave the instance in Pick/OUT linked to this document will be included in Consumption calculation')}})
 
         if partner_id and order_type:
             res.update({'value': {'order_policy': 'picking'}})
             partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
-            if order_type != 'regular' or (order_type == 'regular' and partner.partner_type == 'internal'):
+            if order_type not in ['regular', 'donation_prog'] or (order_type == 'regular' and partner.partner_type == 'internal'):
                 res.update({'value': {'order_policy': 'manual'}})
 
         return res
@@ -66,13 +72,14 @@ class sale_order(osv.osv):
         Check that partner and order type are compatibles
         """
         compats = {
-            'regular':      ['internal', 'intermission', 'section', 'external', 'esc'],
-            'donation_st':  ['internal', 'intermission', 'section', 'external'],
-            'loan':         ['internal', 'intermission', 'section', 'external'],
-            'loan_return':  ['internal', 'intermission', 'section', 'external'],
-            'donation_exp': ['internal', 'intermission', 'section', 'external'],
-            'in_kind':      ['internal', 'intermission', 'section', 'external', 'esc'],
-            'direct':       ['internal', 'intermission', 'section', 'external', 'esc'],
+            'regular':       ['internal', 'intermission', 'section', 'external', 'esc'],
+            'donation_prog': ['external'],
+            'donation_st':   ['internal', 'intermission', 'section', 'external'],
+            'loan':          ['internal', 'intermission', 'section', 'external'],
+            'loan_return':   ['internal', 'intermission', 'section', 'external'],
+            'donation_exp':  ['internal', 'intermission', 'section', 'external'],
+            'in_kind':       ['internal', 'intermission', 'section', 'external', 'esc'],
+            'direct':        ['internal', 'intermission', 'section', 'external', 'esc'],
         }
         # Browse SO
         for so in self.browse(cr, uid, ids):
@@ -83,6 +90,7 @@ class sale_order(osv.osv):
     _constraints = [
         (_check_order_type_and_partner, "Partner type and order type are incompatible! Please change either order type or partner.", ['order_type', 'partner_id']),
     ]
+
 
 sale_order()
 

@@ -214,7 +214,8 @@ class sale_order(osv.osv):
         for sale in self.browse(cr, uid, ids):
             if sale.partner_id:
                 partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
-            if sale.state != 'draft' and (sale.order_type != 'regular' or (partner and partner.partner_type == 'internal')):
+            if sale.state != 'draft' and (sale.order_type not in ['regular', 'donation_prog']
+                                          or (partner and partner.partner_type == 'internal')):
                 res[sale.id] = True
             else:
                 res[sale.id] = True
@@ -235,9 +236,9 @@ class sale_order(osv.osv):
         for arg in args:
             if arg[1] == '=':
                 if arg[2]:
-                    clause += 'AND inv.state in (\'paid\', \'inv_close\') OR (sale.state != \'draft\' AND (sale.order_type != \'regular\' OR part.partner_type = \'internal\'))'
+                    clause += 'AND inv.state in (\'paid\', \'inv_close\') OR (sale.state != \'draft\' AND (sale.order_type NOT IN (\'regular\', \'donation_prog\') OR part.partner_type = \'internal\'))'
                 else:
-                    clause += 'AND inv.state != \'cancel\' AND sale.state != \'cancel\'  AND inv.state not in  (\'paid\', \'inv_close\') AND sale.order_type = \'regular\''
+                    clause += 'AND inv.state != \'cancel\' AND sale.state != \'cancel\' AND inv.state not in  (\'paid\', \'inv_close\') AND sale.order_type IN (\'regular\', \'donation_prog\')'
                     no_invoiced = True
 
         cursor.execute('SELECT rel.order_id ' \
@@ -354,7 +355,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     def _get_noinvoice(self, cr, uid, ids, name, arg, context=None):
         res = {}
         for sale in self.browse(cr, uid, ids):
-            res[sale.id] = sale.order_type != 'regular' or sale.partner_id.partner_type == 'internal'
+            res[sale.id] = sale.order_type not in ['regular', 'donation_prog'] or sale.partner_id.partner_type == 'internal'
         return res
 
     def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
@@ -727,7 +728,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'short_client_ref': fields.function(_get_short_client_ref, method=True, string='Customer Reference', type='char', size=64, store=False),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', required=True, change_default=True, select=True),
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+        'order_type': fields.selection([('regular', 'Regular'), ('donation_prog', 'Programmatic Donation'), ('donation_exp', 'Donation to prevent losses'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), ('loan_return', 'Loan Return'), ],
                                        string='Order Type', required=True, readonly=True),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
@@ -990,7 +991,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if order.yml_module_name == 'sale':
                 continue
             partner = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id', order.partner_id.id))
-            if vals.get('order_type', order.order_type) != 'regular' or (vals.get('order_type', order.order_type) == 'regular' and partner.partner_type == 'internal'):
+            if vals.get('order_type', order.order_type) not in ['regular', 'donation_prog'] \
+                    or (vals.get('order_type', order.order_type) == 'regular' and partner.partner_type == 'internal'):
                 vals['order_policy'] = 'manual'
             else:
                 vals['order_policy'] = 'picking'
@@ -1023,7 +1025,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if 'partner_id' in vals:
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'])
-            if vals.get('order_type', 'regular') != 'regular' or (vals.get('order_type', 'regular') == 'regular' and partner.partner_type == 'internal'):
+            if vals.get('order_type', 'regular') not in ['regular', 'donation_prog'] \
+                    or (vals.get('order_type', 'regular') == 'regular' and partner.partner_type == 'internal'):
                 vals['order_policy'] = 'manual'
             else:
                 vals['order_policy'] = 'picking'
@@ -1488,6 +1491,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     def _get_reason_type(self, cr, uid, order, context=None):
         r_types = {
             'regular': 'reason_type_deliver_partner',
+            'donation_prog': 'reason_type_donation_prog',
             'loan': 'reason_type_loan',
             'loan_return': 'reason_type_loan_return',
             'donation_st': 'reason_type_donation',

@@ -953,7 +953,7 @@ class purchase_order_line(osv.osv):
         ('rfq_updated', 'Updated'),
     ]
 
-    ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+    ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation to prevent losses'),
                   ('donation_st', 'Standard donation'), ('loan', 'Loan'), ('loan_return', 'Loan Return'),
                   ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
                   ('direct', 'Direct Purchase Order')]

@@ -1718,7 +1718,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         errors.append(err_msg)
                         write_vals['type_change'] = 'error'
                 else:
-                    err_msg = _('A PO with a Loan, Donation before expiry, Standard donation or In Kind Donation Order Type can\'t have an Source Document in its lines')
+                    err_msg = _('A PO with a Loan, Donation to prevent losses, Standard donation or In Kind Donation Order Type can\'t have an Source Document in its lines')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
             elif line.simu_id.order_id.po_from_fo or line.simu_id.order_id.po_from_ir:

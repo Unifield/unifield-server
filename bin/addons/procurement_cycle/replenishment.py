@@ -3285,7 +3285,7 @@ class replenishment_segment_line_amc(osv.osv):
                                 m.location_id in %s and
                                 m.product_id in %s and
                                 m.reason_type_id = rt.id and
-                                rt.name in ('Donation (standard)', 'Donation before expiry')
+                                rt.name in ('Donation (standard)', 'Donation to prevent losses')
                             ''', (tuple(seg_context['amc_location_ids']), tuple(lines.keys())))
                     for don in cr.fetchall():
                         open_donation[don[0]] = True

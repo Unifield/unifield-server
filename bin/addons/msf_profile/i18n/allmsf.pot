@@ -29106,7 +29106,7 @@ msgstr ""
 #: selection:purchase.order.line,order_type:0
 #: selection:report.stock.move,order_type:0
 #: view:purchase.order:0
-msgid "Donation before expiry"
+msgid "Donation to prevent losses"
 msgstr ""
 
 #. module: stock

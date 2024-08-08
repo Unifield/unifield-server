@@ -1803,7 +1803,7 @@ class purchase_order_line(osv.osv):
                     return {'warning': {'title': _('Error'),
                                         'message': _('You can not link a Product by Nomenclature with SRV as Nomenclature Main Type to a FO on a Regular or a Purchase List PO')},
                             'value': {'origin': False}}
-                elif fo['order_type'] == 'regular':
+                elif fo['order_type'] in ['regular', 'donation_prog']:
                     return {
                         'value': {
                             'origin': fo['name'],
@@ -1825,7 +1825,7 @@ class purchase_order_line(osv.osv):
                 ('name', '=', origin),
                 ('state', 'not in', ['done', 'cancel']),
                 ('procurement_request', 'in', ['t', 'f']),
-                ('order_type', '=', 'regular'),
+                ('order_type', 'in', ['regular', 'donation_prog']),
             ], limit=1, order='NO_ORDER', context=context)
             if not sale_id:
                 res['warning'] = {

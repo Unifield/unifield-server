@@ -1106,6 +1106,12 @@
             <field name="method">us_13299_fix_nomenclature_name</field>
         </record>
 
+        <record id="us_12916_11496_13123_donation_reason_type" model="patch.scripts">
+            <field name="method">us_12916_11496_13123_donation_reason_type</field>
+        </record>
+
+
+
 
     </data>
 </openerp>

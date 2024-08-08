@@ -534,13 +534,11 @@ class sale_order_line(osv.osv):
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
 
-
             if self.pool.get('unifield.setup.configuration').get_config(cr, uid,).customer_commitment and \
                     not sol.order_id.procurement_request and \
                     sol.order_id.partner_type in ('intermission', 'section') and \
-                    sol.order_id.order_type == 'regular':
+                    sol.order_id.order_type in 'regular':
                 self.create_or_update_commitment_voucher(cr, uid, [sol.id], context=context)
-
 
             if sol.order_id.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'):  # IR non stockable
                 continue

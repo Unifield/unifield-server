@@ -617,7 +617,7 @@
                     <newline/>
                     <group string="Type" expand="0">
                         <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]"/>
-                        <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]"/>
+                        <filter icon="terp-stage" string="Donation to prevent losses" domain="[('order_type','=','donation_exp')]"/>
                         <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]"/>
                         <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]"/>
                         <filter icon="terp-partner" string="Loan Return" domain="[('order_type','=','loan_return')]"/>
@@ -818,7 +818,7 @@
                                 <field name="po_order_type" invisible="1"/>
                                 <field name="rfq_ok" invisible="1"/>
                                 <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type, product_id, po_order_type, rfq_ok)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', '|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('link_so_id', '!=', False), ('po_order_type', 'in', ['loan', 'loan_return', 'donation_exp', 'donation_st', 'in_kind'])]}" string="Source Document"/>
-                                <field name="select_fo" on_change="on_change_select_fo(select_fo, product_id, po_order_type, nomen_manda_0, rfq_ok)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f']), ('order_type', '=', 'regular')]" attrs="{'invisible': ['|', '|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('po_order_type', 'in', ['loan', 'loan_return', 'donation_exp', 'donation_st', 'in_kind'])]}"/>
+                                <field name="select_fo" on_change="on_change_select_fo(select_fo, product_id, po_order_type, nomen_manda_0, rfq_ok)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f']), ('order_type', 'in', ['regular', 'donation_prog'])]" attrs="{'invisible': ['|', '|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('po_order_type', 'in', ['loan', 'loan_return', 'donation_exp', 'donation_st', 'in_kind'])]}"/>
                                 </group>
                                 <field name="customer_ref" string="Customer ref" widget="char"/>
                                 <field name="external_ref" readonly="1"/>

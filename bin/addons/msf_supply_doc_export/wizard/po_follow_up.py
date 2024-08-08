@@ -45,7 +45,7 @@ class po_follow_up(osv.osv_memory):
         'export_format': fields.char('Export Format', size=16),
         # Order Types
         'regular_ok': fields.boolean('Regular'),
-        'donation_exp_ok': fields.boolean('Donation before expiry'),
+        'donation_exp_ok': fields.boolean('Donation to prevent losses'),
         'donation_st_ok': fields.boolean('Standard donation'),
         'loan_ok': fields.boolean('Loan'),
         'loan_return_ok': fields.boolean('Loan Return'),

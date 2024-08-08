@@ -44,7 +44,7 @@ class supplier_performance_wizard(osv.osv_memory):
         'partner_type_intermission': fields.boolean(string='Intermission'),
         'ot_text': fields.text(string='Order Types Text', readonly=True),
         'po_type_regular': fields.boolean(string='Regular'),
-        'po_type_donation_exp': fields.boolean(string='Donation before expiry'),
+        'po_type_donation_exp': fields.boolean(string='Donation to prevent losses'),
         'po_type_donation_st': fields.boolean(string='Standard donation'),
         'po_type_loan': fields.boolean(string='Loan'),
         'po_type_loan_return': fields.boolean(string='Loan Return'),
@@ -100,7 +100,7 @@ class supplier_performance_wizard(osv.osv_memory):
 
         ORDER_TYPES_SELECTION = {
             'regular': _('Regular'),
-            'donation_exp': _('Donation before expiry'),
+            'donation_exp': _('Donation to prevent losses'),
             'donation_st': _('Standard donation'),
             'loan': _('Loan'),
             'loan_return': _('Loan Return'),

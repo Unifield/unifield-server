@@ -87,7 +87,7 @@ class purchase_report(osv.osv):
                                   readonly=True, states={'draft': [('readonly', False)]}, select=True),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
                                     type='boolean', help="It indicates that an invoice has been paid."),
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation to prevent losses'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),
                                         ('loan_return', 'Loan Return'), ('in_kind', 'In Kind Donation'),
                                         ('purchase_list', 'Purchase List'), ('direct', 'Direct Purchase Order')],
