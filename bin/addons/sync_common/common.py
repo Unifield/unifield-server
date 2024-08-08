@@ -178,7 +178,7 @@ WHITE_LIST_MODEL = [
     'account.export.mapping',
 ]
 
-OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']
+OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP', 'WACA']
 OC_LIST_TUPLE = list(zip([x.lower() for x in OC_LIST], OC_LIST))
 
 def xmlid_to_sdref(xmlid):
