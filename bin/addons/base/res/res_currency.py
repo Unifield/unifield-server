@@ -181,6 +181,20 @@ class res_currency(osv.osv):
             cr.execute("create index hq_report_no_decimal_period_id on hq_report_no_decimal(period_id)")
             cr.execute("create index hq_report_no_decimal_instance_id on hq_report_no_decimal(instance_id)")
 
+            cr.execute("""
+                create table hq_report_func_adj (
+                    id bigserial,
+                    account_analytic_line_id integer,
+                    original_amount decimal(16, 2),
+                    rounded_func_amount decimal(16, 2),
+                    period_id integer,
+                    instance_id integer,
+                    primary key (id)
+            )""")
+            cr.execute("create index hq_report_func_adj_account_analytic_line_id on hq_report_func_adj(account_analytic_line_id)")
+            cr.execute("create index hq_report_func_adj_period_id on hq_report_func_adj(period_id)")
+            cr.execute("create index hq_report_func_adj_instance_id on hq_report_func_adj(instance_id)")
+
     def _check_unicity_currency_name(self, cr, uid, ids, context=None):
         """
         Check that no currency have the same name and the same currency_table_id.

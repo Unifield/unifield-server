@@ -735,8 +735,63 @@ class hq_report_ocp_workday(hq_report_ocp):
         for x in cr.fetchall():
             fx_budget_rate[x[0]] = x[1]
 
-        # fix rounded value to balance rounded JE
         cr.execute('delete from hq_report_no_decimal where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
+        cr.execute('delete from hq_report_func_adj where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
+        # round AJI for match JI funct amount
+        cr.execute("""
+            select
+                aml.id, aml.credit - aml.debit  - sum(al.amount)
+            from
+                account_analytic_line AS al,
+                res_currency AS c,
+                account_analytic_journal AS j,
+                account_move_line aml,
+                account_move am,
+                account_journal AS aj,
+                account_period p
+            where
+                    c.id = al.currency_id
+                    AND j.id = al.journal_id
+                    AND aml.id = al.move_id
+                    AND am.id = aml.move_id
+                    AND p.id = am.period_id
+                    AND p.number not in (0, 16)
+                    AND (
+                        al.real_period_id = %(period_id)s
+                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                    )
+                    AND am.state = 'posted'
+                    AND aml.journal_id = aj.id
+                    AND j.type not in %(j_type)s
+                    AND al.instance_id in %(instance_ids)s
+                    AND aml.is_addendum_line = 'f'
+            group by
+                aml.id
+            having
+                abs(aml.credit - aml.debit  - sum(al.amount)) >= 0.01
+            """, {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'min_date': period.date_start,
+            'max_date':  period.date_stop,
+            'j_type': tuple(excluded_journal_types),
+        })
+        for bal in cr.fetchall():
+            cr.execute('''
+                insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
+                    select
+                        id,
+                        round(amount + %s, 2),
+                        real_period_id,
+                        instance_id
+                    from
+                        account_analytic_line
+                    where
+                        move_id = %s and
+                        real_period_id = %s
+                    order by abs(amount) desc, id limit 1
+            ''', (bal[1], bal[0], period_id))
+        # fix rounded value to balance rounded JE
         cr.execute("""insert into hq_report_no_decimal (account_move_id, account_analytic_line_id, original_amount, rounded_amount, period_id, instance_id)
             select
                 aml.move_id,
@@ -835,7 +890,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             where
                 period_id = %s and instance_id in %s
             group by account_move_id
-            having(sum(d.rounded_amount)!=0 and abs(sum(d.original_amount))<0.001)
+            having(sum(d.rounded_amount)!=0 and abs(sum(d.original_amount))<0.01)
         ''', (period_id, tuple(instance_ids)))
         for x in cr.fetchall():
             # add gap on the biggest B/S line
@@ -870,8 +925,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS book_debit, -- 5
                     CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS book_credit, -- 6
                     c.name AS booking_currency, -- 7
-                    CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS func_debit, -- 8
-                    CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS func_credit, -- 9
+                    CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) < 0 THEN ABS(ROUND(coalesce(func_rounded.rounded_func_amount,al.amount), 2)) ELSE 0.0 END AS func_debit, -- 8
+                    CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) > 0 THEN ROUND(coalesce(func_rounded.rounded_func_amount, al.amount), 2) ELSE 0.0 END AS func_credit, -- 9
                     al.name as description, -- 10
                     al.ref, -- 11
                     al.document_date, -- 12
@@ -884,10 +939,12 @@ class hq_report_ocp_workday(hq_report_ocp):
                     dest.code as destination_code, -- 19
                     c.ocp_workday_decimal = 0 as no_decimal, -- 20
                     rounded.rounded_amount as rounded_amount, -- 21
-                    hr.employee_type as employee_type -- 22
+                    hr.employee_type as employee_type, -- 22
+                    al.partner_txt as partner_txt -- 23
                 FROM
                     account_analytic_line AS al
-                        left join hq_report_no_decimal rounded on rounded.account_analytic_line_id = al.id,
+                        left join hq_report_no_decimal rounded on rounded.account_analytic_line_id = al.id
+                        left join hq_report_func_adj func_rounded on func_rounded.account_analytic_line_id = al.id,
                     account_account AS a,
                     account_analytic_account AS dest,
                     account_analytic_account AS cost_center,
@@ -943,7 +1000,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                     hr.identification_id as emplid,  -- 17
                     c.ocp_workday_decimal = 0 as no_decimal, -- 18
                     rounded.rounded_amount as rounded_amount, -- 19
-                    hr.employee_type as employee_type -- 20
+                    hr.employee_type as employee_type, -- 20
+                    aml.partner_txt as partner_txt
                 FROM
                     account_move_line aml
                     INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -992,7 +1050,8 @@ class hq_report_ocp_workday(hq_report_ocp):
             'EMPLID',
             'Code-Mission',
             'Destination',
-            'Debit/Credit EUR Budget Rate'
+            'Debit/Credit EUR Budget Rate',
+            'Third party text',
         ]
 
         lines_file = tempfile.NamedTemporaryFile('w', delete=False, newline='')
@@ -1075,6 +1134,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                         row['entry_sequence'][0:3], # 3 digits seq.
                         row.get('destination_code') or '',
                         budget_amount,
+                        row.get('partner_txt') or '',
                     ])
                 if ajis:
                     new_cr.execute("update account_analytic_line set exported='t' where id in %s", (tuple(ajis), ))
@@ -1182,6 +1242,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     '', # EMPLID
                     row[12][0:3], # 3 digits seq
                     budget_amount,
+                    '',
                 ])
             if amls:
                 new_cr.execute("update account_move_line set exported='t' where id in %s", (tuple(amls),))
