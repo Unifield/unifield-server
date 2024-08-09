@@ -249,16 +249,18 @@ class stock_picking(osv.osv):
 
             context.update({'do_not_process_incoming': True, 'do_not_import_with_thread': True, 'simulation_bypass_missing_lot': True, 'auto_import_ok': True})
             self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, [simu_id], context=context)
-            info_wiz = self.pool.get('wizard.import.in.simulation.screen').read(cr,uid, [simu_id], ['state', 'message', 'import_error_ok'])[0]
-            if info_wiz['state'] == 'error' or info_wiz['import_error_ok']:
-                errors = []
-                if info_wiz['message']:
-                    for error in info_wiz['message'].split("\n"):
-                        if not error:
-                            continue
-                        errors.append(('', [], error))
+            with_pack = self.pool.get('wizard.import.in.simulation.screen').read(cr, uid, simu_id, ['pack_found'], context=context)['pack_found']
+            if with_pack:
+                info_wiz = self.pool.get('wizard.import.in.simulation.screen').read(cr,uid, [simu_id], ['state', 'message'])[0]
+                if info_wiz['state'] == 'error':
+                    errors = []
+                    if info_wiz['message']:
+                        for error in info_wiz['message'].split("\n"):
+                            if not error:
+                                continue
+                            errors.append(('', [], error))
 
-                return ([], errors, [])
+                    return ([], errors, [])
 
             file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
             self.pool.get('wizard.import.in.simulation.screen').launch_import(cr, uid, [simu_id], context=context)
