@@ -53,7 +53,7 @@
                 <field name="comment" attrs="{'invisible': [('register_event','=', False)]}" colspan="4"/>
                 <group colspan="4" col="4">
                     <button name="button_generate_disposal_entry" type="object" string="Dispose" icon="gtk-ok"/>
-                    <button name="cancel"  type="special" special="cancel" string="Cancel" icon="gtk-cancel" />
+                    <button name="cancel" type="object" string="Cancel" icon="gtk-cancel" />
                 </group>
             </form>
         </field>
