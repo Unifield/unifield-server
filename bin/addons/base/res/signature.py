@@ -316,11 +316,10 @@ class signature_object(osv.osv):
             for line in doc.signature_line_ids:
                 if line.signed:
                     to_unsign.append(line.id)
-                elif line.user_id:
-                    to_delete.append(line.id)
+                to_delete.append(line.id)
 
         if to_unsign:
-            # disable check if button as BAR (i.e: uid.realUid exists)
+            # disable check if button has BAR (i.e: uid.realUid exists)
             self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'))
         if to_delete:
             self.pool.get('signature.line').write(cr, uid, to_delete, {'user_id': False, 'user_name': False},  context=context)
