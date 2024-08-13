@@ -815,6 +815,7 @@ class account_journal(osv.osv):
         Raises an error in case the journal is being inactivated while it is not allowed:
         - for all liquidity journals: not all registers have been closed, or not all manual journal entries have been posted.
         - for bank and cash journals only: the balance of the last register is not zero.
+        - for bank journals: the inactivation of a bank journal must be conditioned to the inactivation of the related cheque journal.
         - for non-liquidity journals: not all entries have been posted, some invoices are still Draft, or some Recurring Plans are not Done.
 
         Note: there is a Python constraint preventing the inactivation of the journals imported by default at instance creation.
@@ -858,6 +859,14 @@ class account_journal(osv.osv):
                                 raise osv.except_osv(_('Error'),
                                                      _("The journal %s cannot be inactivated because the balance of the "
                                                        "last register is not zero.") % journal.code)
+                    if journal.type == 'bank':
+                        related_chq_id = self.search(cr, uid, [('bank_journal_id', '=', journal.id),
+                                                               ('is_active', '=', 't')], context=context)
+                        if related_chq_id:
+                            chq_journal = self.browse(cr, uid, related_chq_id[0], context=context)
+                            raise osv.except_osv(_('Error'), _("The bank journal %s cannot be inactivated because the "
+                                                               "related cheque journal %s is still active.") % (journal.code, chq_journal.code))
+
                 else:  # non-liquidity journals
                     if am_obj.search_exist(cr, uid, [('journal_id', '=', journal.id), ('state', '!=', 'posted')], context=context):
                         raise osv.except_osv(_('Error'),
