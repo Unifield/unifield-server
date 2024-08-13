@@ -320,7 +320,7 @@ class signature_object(osv.osv):
 
         if to_unsign:
             # disable check if button has BAR (i.e: uid.realUid exists)
-            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'))
+            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'), check_super_unsign=True)
         if to_delete:
             self.pool.get('signature.line').write(cr, uid, to_delete, {'user_id': False, 'user_name': False},  context=context)
 
