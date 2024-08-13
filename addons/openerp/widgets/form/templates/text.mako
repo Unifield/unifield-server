@@ -8,6 +8,9 @@
     % if translatable:
         translatable="1"
     % endif
+    % if ro_by_trans:
+        ro_by_trans="1"
+    % endif
         >${value}</textarea>
         % if translatable and ( not readonly_before_state or ro_by_trans ):
             <img src="/openerp/static/images/stock/stock_translate.png" id="${name}_translatable" class="area_translatable" />
