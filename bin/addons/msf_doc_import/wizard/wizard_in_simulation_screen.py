@@ -1493,6 +1493,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         uom_obj = self.pool.get('product.uom')
         prodlot_obj = self.pool.get('stock.production.lot')
 
+        unit_uom_ids = uom_obj.search(cr, uid, [('rounding', '=', 1)])
         if isinstance(ids, int):
             ids = [ids]
 
@@ -1605,6 +1606,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if write_vals.get('imp_uom_id') and not line.move_uom_id:
                 write_vals['move_uom_id'] = write_vals['imp_uom_id']
+
+            # Check rounding of qty according to UoM
+            if write_vals.get('imp_product_qty') and write_vals.get('imp_uom_id') and write_vals.get('imp_uom_id') in unit_uom_ids:
+                if not write_vals['imp_product_qty'].is_integer():
+                    errors.append(_("Product Qty is not compatible with the rounding of the UoM"))
+                    write_vals['type_change'] = 'error'
 
             # Unit price
             err_msg = _('Incorrect float value for field \'Price Unit\'')
