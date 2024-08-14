@@ -197,6 +197,14 @@ class output_currency_for_export(osv.osv_memory):
                     'ids': export_obj.search(cr, uid, dom, context=context, limit=limit),
                     'header': mcdb_obj.get_selection_from_domain(cr, uid, dom, model, context=context),
                 }
+                if wiz.currency_id:
+                    currency = self.pool.get('res.currency').browse(cr, uid, wiz.currency_id.id, context=context)
+                    currency_str = "%s: %s" % (_("Output currency"), currency and currency.name)
+                    datas['header'] = datas['header'] + '; ' + currency_str
+                if wiz.fx_table_id:
+                    currency_table = self.pool.get('res.currency.table').browse(cr, uid, wiz.fx_table_id.id, context=context)
+                    currency_table_str = "%s: %s" % (_("Currency table"), currency_table and currency_table.name)
+                    datas['header'] = datas['header'] + '; ' + currency_table_str
         else:
             context['from_domain'] = True
         # Update context with wizard currency or default currency
