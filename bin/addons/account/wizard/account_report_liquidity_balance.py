@@ -35,10 +35,15 @@ class liquidity_balance_wizard(osv.osv_memory):
         'period_id': fields.many2one('account.period', 'Period'),
         'date_from': fields.date("Date From"),
         'date_to': fields.date("To"),
+        'currency_id': fields.many2one('res.currency', string="Display currency",
+                                       help="Give an output currency that would be used for export"),
+        'fx_table_id': fields.many2one('res.currency.table', string="Currency Table"),
+        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export type"),
     }
 
     _defaults = {
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=c),
+        'export_format': lambda *a: 'xls',
     }
 
     def onchange_period_id(self, cr, uid, ids, period_id, context=None):

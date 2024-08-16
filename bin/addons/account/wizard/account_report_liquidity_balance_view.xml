@@ -18,6 +18,9 @@
                     <field name="period_id" string="or Period"
                                             domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '&lt;', 16)]"
                                             on_change="onchange_period_id(period_id)" />
+                    <field name="fx_table_id" string="Currency Table"/>
+                    <field name="export_format" string="Export type"/>
+                    <field name="currency_id" string="Display currency"/>
                     <newline/>
                     <group colspan="6" col="4">
                         <label string="" colspan="2"/>
