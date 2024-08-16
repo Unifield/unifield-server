@@ -1295,14 +1295,6 @@ class account_mcdb(osv.osv):
         if context.get('related_entries', []):
             related_entries_str = "%s: %s" % (_("Related entries"), _("True"))
             dom_selections.append(related_entries_str)
-        if context.get('output_currency_id', False):
-            currency = self.pool.get('res.currency').browse(cr, uid, context.get('output_currency_id'), context=context)
-            currency_str = "%s: %s" % (_("Output currency"), currency and currency.name)
-            dom_selections.append(currency_str)
-        if context.get('fx_table_id', False):
-            currency_table = self.pool.get('res.currency.table').browse(cr, uid, context.get('fx_table_id'), context=context)
-            currency_table_str = "%s: %s" % (_("Currency table"), currency_table and currency_table.name)
-            dom_selections.append(currency_table_str)
         return ' ; '.join(dom_selections)
 
     def export_pdf(self, cr, uid, ids, context=None):

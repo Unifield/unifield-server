@@ -169,6 +169,8 @@ class output_currency_for_export(osv.osv_memory):
         model = data_from_selector.get('model') or context.get('active_model')
         display_fp = context.get('display_fp', False)
         wiz = currency_id = choice = False
+        currency_str = False
+        currency_table_str = False
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.id or False
         if data_from_selector:
@@ -177,6 +179,16 @@ class output_currency_for_export(osv.osv_memory):
         else:
             wiz = self.browse(cr, uid, ids, context=context)[0]
             currency_id = wiz and wiz.currency_id and wiz.currency_id.id or company_currency
+            if not wiz or not wiz.currency_id and context.get('output_currency_id', False):
+                currency_id = context.get('output_currency_id')
+            currency = self.pool.get('res.currency').browse(cr, uid, currency_id, context=context)
+            currency_str = "%s: %s" % (_("Output currency"), currency and currency.name)
+            fx_table_id = wiz and wiz.fx_table_id and wiz.fx_table_id.id or False
+            if not wiz or not wiz.fx_table_id and context.get('fx_table_id', False):
+                fx_table_id = context.get('fx_table_id')
+            if fx_table_id:
+                currency_table = self.pool.get('res.currency.table').browse(cr, uid, fx_table_id, context=context)
+                currency_table_str = "%s: %s" % (_("Currency table"), currency_table and currency_table.name)
             choice = wiz and wiz.export_format or False
             if not choice:
                 raise osv.except_osv(_('Error'), _('Please choose an export format!'))
@@ -197,13 +209,9 @@ class output_currency_for_export(osv.osv_memory):
                     'ids': export_obj.search(cr, uid, dom, context=context, limit=limit),
                     'header': mcdb_obj.get_selection_from_domain(cr, uid, dom, model, context=context),
                 }
-                if wiz.currency_id:
-                    currency = self.pool.get('res.currency').browse(cr, uid, wiz.currency_id.id, context=context)
-                    currency_str = "%s: %s" % (_("Output currency"), currency and currency.name)
+                if currency_str:
                     datas['header'] = datas['header'] + '; ' + currency_str
-                if wiz.fx_table_id:
-                    currency_table = self.pool.get('res.currency.table').browse(cr, uid, wiz.fx_table_id.id, context=context)
-                    currency_table_str = "%s: %s" % (_("Currency table"), currency_table and currency_table.name)
+                if currency_table_str:
                     datas['header'] = datas['header'] + '; ' + currency_table_str
         else:
             context['from_domain'] = True
