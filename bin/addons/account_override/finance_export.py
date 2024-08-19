@@ -189,7 +189,7 @@ class finance_archive():
         if select is not None:
             sql = sql.replace('#OCB_VI_COND#',  ocb_vi_cond)
         if insert_numbering:
-            sql = "INSERT INTO ocb_vi_export_number (move_id, move_line_id, analytic_line_id, period_id) (%s)" % sql
+            sql = "INSERT INTO ocb_vi_export_number (entry_sequence, move_line_id, analytic_line_id, period_id) (%s)" % sql
 
 
         if fileparams.get('query_params', False):
@@ -239,7 +239,7 @@ class finance_archive():
                     ocb_vi_cond = ' %s AND %s ' % (ocb_vi_cond, fileparams.get('numbering_cond'))
                 self._execute_query(cr, fileparams, select=fileparams['select_1'], ocb_vi_cond=ocb_vi_cond, insert_numbering=True)
                 # create unique id on move_id, period_id
-                cr.execute("INSERT INTO ocb_vi_je_period_number (move_id, period_id) (SELECT distinct move_id, period_id from ocb_vi_export_number WHERE move_number IS NULL) ON CONFLICT DO NOTHING")
+                cr.execute("INSERT INTO ocb_vi_je_period_number (entry_sequence, period_id) (SELECT distinct entry_sequence, period_id from ocb_vi_export_number WHERE move_number IS NULL) ON CONFLICT DO NOTHING")
 
                 # update move_number values
                 cr.execute("""UPDATE ocb_vi_export_number set move_number=je_number.id
@@ -247,7 +247,7 @@ class finance_archive():
                         ocb_vi_je_period_number je_number
                     WHERE
                         ocb_vi_export_number.move_number is null and
-                        ocb_vi_export_number.move_id = je_number.move_id and
+                        ocb_vi_export_number.entry_sequence = je_number.entry_sequence and
                         ocb_vi_export_number.period_id = je_number.period_id
                 """)
 
