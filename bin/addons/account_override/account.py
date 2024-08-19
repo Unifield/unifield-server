@@ -503,6 +503,7 @@ class account_account(osv.osv):
         'has_partner_type_intermission': fields.boolean('Intermission'),
         'has_partner_type_local': fields.boolean('Employee Local'),  # NAT employee
         'has_partner_type_ex': fields.boolean('Employee Expat'),  # Expat
+        'expat_restriction': fields.selection([('FR', 'FR'), ('NOFR', 'NOFR')], 'Restricted to Section Code, empty for all expat'),
         'has_partner_type_book': fields.boolean('Journal'),  # transfer journal
         'has_partner_type_empty': fields.boolean('Empty'),  # US-1307 empty
 
@@ -722,9 +723,11 @@ class account_account(osv.osv):
         '''
         if 'allowed_partner_field' in context:
             allowed_partner_field = context['allowed_partner_field']
+            sub_type_expat = context.get('allowed_sub_type_expat', False)
         else:
             allowed_partner_field = False
             should_have_field_suffix = False
+            sub_type_expat = False
             if not partner_type and not partner_txt and not employee_id and not transfer_journal_id and not partner_id:
                 # empty partner
                 should_have_field_suffix = 'empty'
@@ -759,9 +762,10 @@ class account_account(osv.osv):
                             if transfer_journal_ids:
                                 transfer_journal_id = transfer_journal_ids[0]
                 if employee_id:
-                    tp_rec = emp_obj.browse(cr, uid, employee_id, fields_to_fetch=['employee_type'], context=context)
+                    tp_rec = emp_obj.browse(cr, uid, employee_id, fields_to_fetch=['employee_type', 'section_code'], context=context)
                     # note: allowed for employees with no type
                     should_have_field_suffix = tp_rec.employee_type or False
+                    sub_type_expat = tp_rec.section_code or False
                 elif transfer_journal_id:
                     should_have_field_suffix = 'book'
                 elif partner_id:
@@ -771,7 +775,8 @@ class account_account(osv.osv):
                 allowed_partner_field = 'has_partner_type_%s' % (should_have_field_suffix,)
             # store the returned value in context in order not to do the same check several times
             context.update({'allowed_partner_field': allowed_partner_field})
-        return allowed_partner_field
+            context.update({'allowed_sub_type_expat': sub_type_expat})
+        return allowed_partner_field, sub_type_expat
 
     def _display_account_partner_compatibility_error(self, cr, uid, not_compatible_ids,
                                                      context=None, type_for_specific_treatment=False):
@@ -866,7 +871,7 @@ class account_account(osv.osv):
         res = {}
         fields_to_fetch = ['type_for_register', 'has_partner_type_internal', 'has_partner_type_external', 'has_partner_type_esc',
                            'has_partner_type_local', 'has_partner_type_ex', 'has_partner_type_empty', 'has_partner_type_book',
-                           'has_partner_type_intermission', 'has_partner_type_section']
+                           'has_partner_type_intermission', 'has_partner_type_section', 'expat_restriction']
         # browse the accounts and check if the third party is compatible
         for r in self.browse(cr, uid, ids, fields_to_fetch=fields_to_fetch, context=context):
             # US-1307 If the account has a "Type for specific Treatment": bypass the check on "Allowed Partner type"
@@ -874,15 +879,19 @@ class account_account(osv.osv):
             if type_for_specific_treatment:
                 res[r.id] = True
             else:
-                allowed_partner_field = self._get_allowed_partner_field(cr, uid, partner_type, partner_txt, employee_id,
-                                                                        transfer_journal_id, partner_id, from_vals, context)
+                allowed_partner_field, sub_type_expat = self._get_allowed_partner_field(cr, uid, partner_type, partner_txt, employee_id,
+                                                                                        transfer_journal_id, partner_id, from_vals, context)
                 if not allowed_partner_field:
                     res[r.id] = True  # allowed with no specific field (e.g. don't block validation of HQ entries with non-existing 3d Party)
                 else:
                     res[r.id] = hasattr(r, allowed_partner_field) and getattr(r, allowed_partner_field) or False
+                    if res[r.id] and r.has_partner_type_ex and r.expat_restriction:
+                        res[r.id] = r.expat_restriction == sub_type_expat
         # once the checks are done, remove allowed_partner_field from context so as not to reuse it for another record
         if 'allowed_partner_field' in context:
             del context['allowed_partner_field']
+        if 'allowed_sub_type_expat' in context:
+            del context['allowed_sub_type_expat']
         if raise_it:
             not_compatible_ids = [ id for id in res if not res[id] ]
             if not_compatible_ids:
@@ -985,7 +994,7 @@ class account_move(osv.osv):
                                              "('code', '!=', 'ISI'), "
                                              "('is_active', '=', True), "
                                              "('instance_filter', '=', True)]",
-                                      hide_default_menu=True),
+                                      hide_default_menu=True, select=1),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
                                        help="This indicates which Journal Type is attached to this Journal Entry", write_relate=False),

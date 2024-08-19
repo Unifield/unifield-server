@@ -7,8 +7,8 @@
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
     if object_ids:
         fields = ['name', 'code', 'type', 'default_debit_account_id', 'default_credit_account_id', 'instance_id', 'currency',
-                  'analytic_journal_id', 'bank_account_name', 'bank_account_number', 'bank_swift_code', 'bank_address', 'bank_journal_id', 
-                  'is_active']
+                  'analytic_journal_id', 'bank_account_name', 'bank_account_number', 'bank_swift_code', 'bank_address', 'bank_journal_id',
+                  'is_active', 'inactivation_date']
 
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.journal'), ('name', 'in', fields)], context=context)
 

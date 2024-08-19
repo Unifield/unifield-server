@@ -25,12 +25,16 @@ import pooler
 import time
 from time import strftime
 from time import strptime
-
+from datetime import datetime
 from account_override import finance_export
 from . import hq_report_ocb
 
 from report import report_sxw
-
+import csv
+import zipfile
+import tempfile
+from tools.misc import Path
+import os
 
 class finance_archive(finance_export.finance_archive):
     """
@@ -201,19 +205,19 @@ class finance_archive(finance_export.finance_archive):
 # request used for OCP VI only (removed from OCG VI in US-6516)
 # Journals excluded from the Account Balances: Migration, In-kind Donation, OD-Extra Accounting
 account_balances_per_currency_sql = """
-    SELECT i.code AS instance, acc.code, acc.name, %(period_yyymm)s AS period, req.opening, req.calculated, req.closing, 
+    SELECT i.code AS instance, acc.code, acc.name, %(period_yyymm)s AS period, req.opening, req.calculated, req.closing,
            c.name AS currency
     FROM
     (
-        SELECT instance_id, account_id, currency_id, SUM(col1) AS opening, 
+        SELECT instance_id, account_id, currency_id, SUM(col1) AS opening,
                SUM(col2) AS calculated, SUM(col3) AS closing
         FROM (
             (
-                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
                        aml.currency_id AS currency_id,
                 ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3
-                FROM account_move_line AS aml 
-                LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id
                 LEFT JOIN account_account acc ON aml.account_id = acc.id
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
                 WHERE acc.active = 't'
@@ -225,10 +229,77 @@ account_balances_per_currency_sql = """
             )
         UNION
             (
-                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
                        aml.currency_id AS currency_id,
                 0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3
-                FROM account_move_line AS aml 
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id
+                LEFT JOIN account_account acc ON aml.account_id = acc.id
+                LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                WHERE acc.active = 't'
+                AND curr.active = 't'
+                AND aml.period_id = %(period_id)s
+                AND j.instance_id IN %(instance_ids)s
+                AND j.type NOT IN ('migration', 'inkind', 'extra')
+                GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+            )
+        UNION
+            (
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
+                       aml.currency_id AS currency_id,
+                0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id
+                LEFT JOIN account_account acc ON aml.account_id = acc.id
+                LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                WHERE acc.active = 't'
+                AND curr.active = 't'
+                AND ( aml.date <= %(last_day_of_period)s and aml.period_id not in %(exclude_period_closing)s )
+                AND j.instance_id IN %(instance_ids)s
+                AND j.type NOT IN ('migration', 'inkind', 'extra')
+                GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+            )
+        ) AS ssreq
+        GROUP BY instance_id, account_id, currency_id
+        ORDER BY instance_id, account_id, currency_id
+    ) AS req
+    INNER JOIN account_account acc ON req.account_id = acc.id
+    INNER JOIN res_currency c ON req.currency_id = c.id
+    INNER JOIN msf_instance i ON req.instance_id = i.id
+    WHERE (req.opening != 0.0 OR req.calculated != 0.0 OR req.closing != 0.0);
+    """
+
+account_balances_per_currency_with_euro_sql = """
+    SELECT i.code AS instance, acc.code, acc.name, %(period_yyymm)s AS period, c.name AS currency, req.opening, req.calculated, req.closing, req.opening_eur, req.calculated_eur, req.closing_eur
+    FROM
+    (
+        SELECT instance_id, account_id, currency_id, SUM(col1) AS opening,
+               SUM(col2) AS calculated, SUM(col3) AS closing,
+               sum(col4) as opening_eur, sum(col5) as calculated_eur, sum(col6) as closing_eur
+        FROM (
+            (
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
+                       aml.currency_id AS currency_id,
+                ROUND(SUM(amount_currency), 2) as col1, 0.00 as col2, 0.00 as col3,
+                ROUND(SUM(coalesce(debit, 0) - coalesce(credit, 0)), 2) as col4, 0.00 as col5, 0.00 as col6
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id
+                LEFT JOIN account_account acc ON aml.account_id = acc.id
+                LEFT JOIN res_currency curr ON aml.currency_id = curr.id
+                WHERE acc.active = 't'
+                AND curr.active = 't'
+                AND ( aml.date < %(first_day_of_period)s or aml.period_id in %(include_period_opening)s )
+                AND j.instance_id IN %(instance_ids)s
+                AND j.type NOT IN ('migration', 'inkind', 'extra')
+                GROUP BY aml.instance_id, aml.account_id, aml.currency_id
+            )
+        UNION
+            (
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
+                       aml.currency_id AS currency_id,
+                0.00 as col1, ROUND(SUM(amount_currency), 2) as col2, 0.00 as col3,
+                0.00 as col4, ROUND(SUM(coalesce(debit, 0) - coalesce(credit, 0)), 2) as col5, 0.00 as col6
+                FROM account_move_line AS aml
                 LEFT JOIN account_journal j ON aml.journal_id = j.id 
                 LEFT JOIN account_account acc ON aml.account_id = acc.id
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
@@ -241,11 +312,12 @@ account_balances_per_currency_sql = """
             )
         UNION
             (
-                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id, 
+                SELECT aml.instance_id AS instance_id, aml.account_id AS account_id,
                        aml.currency_id AS currency_id,
-                0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3
-                FROM account_move_line AS aml 
-                LEFT JOIN account_journal j ON aml.journal_id = j.id 
+                0.00 as col1, 0.00 as col2, ROUND(SUM(amount_currency), 2) as col3,
+                0.00 as col4, 0.00 as col5, ROUND(SUM(coalesce(debit, 0) - coalesce(credit, 0)), 2) as col6
+                FROM account_move_line AS aml
+                LEFT JOIN account_journal j ON aml.journal_id = j.id
                 LEFT JOIN account_account acc ON aml.account_id = acc.id
                 LEFT JOIN res_currency curr ON aml.currency_id = curr.id
                 WHERE acc.active = 't'
@@ -341,10 +413,10 @@ class hq_report_ocp(report_sxw.report_sxw):
                        CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.code ELSE aj.code END AS journal,
                        al.entry_sequence, al.name, al.ref, al.document_date, al.date,
                        a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, 
-                       CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, 
-                       CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit, 
-                       c.name AS "booking_currency", 
-                       CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, 
+                       CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit,
+                       CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit,
+                       c.name AS "booking_currency",
+                       CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit,
                        CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit,
                        cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id, hr.name_resource as hr_name,
                        CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type
@@ -589,3 +661,643 @@ class hq_report_ocp(report_sxw.report_sxw):
         return fe.archive(cr, uid)
 
 hq_report_ocp('report.hq.ocp', 'account.move.line', False, parser=False)
+
+
+class hq_report_ocp_workday(hq_report_ocp):
+
+    def update_percent(self, cr, uid, percent):
+        if self.bk_id:
+            self.pool.get('memory.background.report').write(cr, uid, self.bk_id, {'percent': percent})
+
+
+    def create(self, cr, uid, ids, data, context=None):
+
+        if not data.get('form', False):
+            raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
+
+        if context is None:
+            context = {}
+
+        pool = pooler.get_pool(cr.dbname)
+
+        new_cr = pooler.get_db(cr.dbname).cursor()
+
+        self.bk_id = context.get('background_id')
+        self.pool = pool
+
+        mi_obj = pool.get('msf.instance')
+        period_obj = pool.get('account.period')
+        excluded_journal_types = ['hq', 'migration', 'inkind', 'extra']  # journal types that should not be used to take lines
+
+        form = data.get('form')
+        period_id = form.get('period_id', False)
+        instance_ids = form.get('instance_ids', False)
+        instance_id = form.get('instance_id', False)
+        all_missions = form.get('all_missions', False)
+        if not period_id or not instance_ids or (not instance_id and not all_missions):
+            raise osv.except_osv(_('Warning'), _('Some information is missing: either fiscal year or period or instance.'))
+
+        period = period_obj.browse(cr, uid, period_id, context=context,
+                                   fields_to_fetch=['date_start', 'date_stop', 'number', 'fiscalyear_id'])
+        first_day_of_period = period.date_start
+        tm = strptime(first_day_of_period, '%Y-%m-%d')
+        year_num = tm.tm_year
+        period_yyyymm = '%d%02d' % (year_num, tm.tm_mon)
+        include_period_opening = [0]
+        exclude_period_closing = [0]
+        if period.number in (13, 14, 15):
+            include_period_opening = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('number', 'in', [12, 13, 14]), ('number', '<', period.number)], context=context)
+            if not include_period_opening:
+                include_period_opening = [0]
+
+        if period.number in (12, 13, 14):
+            exclude_period_closing = period_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('special', '=', 't'), ('number', '>', period.number)], context=context)
+            if not exclude_period_closing:
+                exclude_period_closing = [0]
+
+        journal_type = dict(pool.get('account.journal').fields_get(cr, uid)['type']['selection'])
+
+
+        # get budget rates
+        fx_budget_rate = {}
+        cr.execute('''
+            select
+                 DISTINCT ON (c.name) c.name, r.rate
+            from
+                res_currency_rate r, res_currency c, res_currency_table t
+            where
+                c.currency_table_id = t.id and
+                r.currency_id = c.id and
+                t.state = 'valid' and
+                r.name < %s
+                order by c.name, r.name desc
+            ''', (period.date_stop, ))
+        for x in cr.fetchall():
+            fx_budget_rate[x[0]] = x[1]
+
+        cr.execute('delete from hq_report_no_decimal where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
+        cr.execute('delete from hq_report_func_adj where period_id = %s and instance_id in %s', (period_id, tuple(instance_ids)))
+        # round AJI for match JI funct amount
+        cr.execute("""
+            select
+                aml.id, aml.credit - aml.debit  - sum(al.amount)
+            from
+                account_analytic_line AS al,
+                res_currency AS c,
+                account_analytic_journal AS j,
+                account_move_line aml,
+                account_move am,
+                account_journal AS aj,
+                account_period p
+            where
+                    c.id = al.currency_id
+                    AND j.id = al.journal_id
+                    AND aml.id = al.move_id
+                    AND am.id = aml.move_id
+                    AND p.id = am.period_id
+                    AND p.number not in (0, 16)
+                    AND (
+                        al.real_period_id = %(period_id)s
+                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                    )
+                    AND am.state = 'posted'
+                    AND aml.journal_id = aj.id
+                    AND j.type not in %(j_type)s
+                    AND al.instance_id in %(instance_ids)s
+                    AND aml.is_addendum_line = 'f'
+            group by
+                aml.id
+            having
+                abs(aml.credit - aml.debit  - sum(al.amount)) >= 0.01
+            """, {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'min_date': period.date_start,
+            'max_date':  period.date_stop,
+            'j_type': tuple(excluded_journal_types),
+        })
+        for bal in cr.fetchall():
+            cr.execute('''
+                insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
+                    select
+                        id,
+                        round(amount + %s, 2),
+                        real_period_id,
+                        instance_id
+                    from
+                        account_analytic_line
+                    where
+                        move_id = %s and
+                        real_period_id = %s
+                    order by abs(amount) desc, id limit 1
+            ''', (bal[1], bal[0], period_id))
+        # fix rounded value to balance rounded JE
+        cr.execute("""insert into hq_report_no_decimal (account_move_id, account_analytic_line_id, original_amount, rounded_amount, period_id, instance_id)
+            select
+                aml.move_id,
+                al.id,
+                -1*al.amount_currency,
+                CASE WHEN al.amount_currency=0 or abs(al.amount_currency)>=1
+                    THEN -1*round(al.amount_currency)
+                    WHEN al.amount_currency < 0 THEN 1
+                    ELSE -1 END,
+                %(period_id)s,
+                al.instance_id
+            from
+                account_analytic_line AS al,
+                res_currency AS c,
+                account_analytic_journal AS j,
+                account_move_line aml,
+                account_move am,
+                account_journal AS aj,
+                account_period p
+            where
+                    c.ocp_workday_decimal = 0
+                    and c.id = al.currency_id
+                    AND j.id = al.journal_id
+                    AND aml.id = al.move_id
+                    AND am.id = aml.move_id
+                    AND p.id = am.period_id
+                    AND p.number not in (0, 16)
+                    AND (
+                        al.real_period_id = %(period_id)s
+                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                    )
+                    AND am.state = 'posted'
+                    AND aml.journal_id = aj.id
+                    AND j.type not in %(j_type)s
+                    AND al.instance_id in %(instance_ids)s
+                    AND aml.is_addendum_line = 'f'
+            """, {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'min_date': period.date_start,
+            'max_date':  period.date_stop,
+            'j_type': tuple(excluded_journal_types),
+        })
+
+        cr.execute("""insert into hq_report_no_decimal (account_move_id, account_move_line_id, original_amount, rounded_amount, period_id, instance_id)
+            select
+                m.id,
+                aml.id,
+                aml.debit_currency - aml.credit_currency,
+                CASE WHEN aml.debit_currency - aml.credit_currency=0 OR abs(aml.debit_currency - aml.credit_currency) >= 1
+                    THEN round(aml.debit_currency - aml.credit_currency)
+                    WHEN aml.debit_currency - aml.credit_currency > 0 THEN 1
+                    ELSE -1 END,
+                %(period_id)s,
+                aml.instance_id
+            from
+                account_move_line aml
+                INNER JOIN account_move AS m ON aml.move_id = m.id
+                INNER JOIN account_account AS a ON aml.account_id = a.id
+                INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+            where
+                c.ocp_workday_decimal = 0
+                AND aal.id IS NULL
+                AND aml.period_id = %(period_id)s
+                AND j.type NOT IN %(j_type)s
+                AND aml.instance_id IN %(instance_ids)s
+                AND m.state = 'posted'
+                AND aml.is_addendum_line = 'f'
+            """, {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'j_type': tuple(excluded_journal_types),
+        })
+
+        sql_params = {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'min_date': period.date_start,
+            'max_date':  period.date_stop,
+            'j_type': tuple(excluded_journal_types),
+            'period_yyymm': period_yyyymm,
+            'first_day_of_period': period.date_start,
+            'last_day_of_period': period.date_stop,
+            'include_period_opening': tuple(include_period_opening),
+            'exclude_period_closing': tuple(exclude_period_closing),
+        }
+
+
+        cr.execute('''
+            select
+                account_move_id, sum(rounded_amount)
+            from
+                hq_report_no_decimal d
+            where
+                period_id = %s and instance_id in %s
+            group by account_move_id
+            having(sum(d.rounded_amount)!=0 and abs(sum(d.original_amount))<0.01)
+        ''', (period_id, tuple(instance_ids)))
+        for x in cr.fetchall():
+            # add gap on the biggest B/S line
+            move_id, gap = x
+            cr.execute("""
+                update
+                    hq_report_no_decimal d1 set rounded_amount = rounded_amount - %s 
+                where
+                    d1.id in (
+                        select id
+                        from hq_report_no_decimal d2
+                        where
+                            d2.account_move_id=%s
+                        order by
+                            account_analytic_line_id is not null,
+                            abs(rounded_amount) desc
+                        limit 1
+                )
+            """, (gap, move_id))
+
+        # end balance rounded amounts
+
+        self.update_percent(cr, uid, 0.10)
+        # analytic lines raw_data
+        analytic_query = """
+                SELECT
+                    al.id as id, -- 0
+                    i.instance as instance, -- 1
+                    al.entry_sequence, -- 2
+                    al.date as posting_date, -- 3
+                    CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type, -- 4
+                    CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS book_debit, -- 5
+                    CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS book_credit, -- 6
+                    c.name AS booking_currency, -- 7
+                    CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) < 0 THEN ABS(ROUND(coalesce(func_rounded.rounded_func_amount,al.amount), 2)) ELSE 0.0 END AS func_debit, -- 8
+                    CASE WHEN coalesce(func_rounded.rounded_func_amount, al.amount) > 0 THEN ROUND(coalesce(func_rounded.rounded_func_amount, al.amount), 2) ELSE 0.0 END AS func_credit, -- 9
+                    al.name as description, -- 10
+                    al.ref, -- 11
+                    al.document_date, -- 12
+                    cost_center.code AS cost_center, -- 13
+                    aml.partner_id, -- 14
+                    aj.code as journal_code, -- 15
+                    a.code as account_code, -- 16
+                    hr.identification_id as emplid, -- 17
+                    aml.id as account_move_line_id, -- 18
+                    dest.code as destination_code, -- 19
+                    c.ocp_workday_decimal = 0 as no_decimal, -- 20
+                    rounded.rounded_amount as rounded_amount, -- 21
+                    hr.employee_type as employee_type, -- 22
+                    al.partner_txt as partner_txt -- 23
+                FROM
+                    account_analytic_line AS al
+                        left join hq_report_no_decimal rounded on rounded.account_analytic_line_id = al.id
+                        left join hq_report_func_adj func_rounded on func_rounded.account_analytic_line_id = al.id,
+                    account_account AS a,
+                    account_analytic_account AS dest,
+                    account_analytic_account AS cost_center,
+                    res_currency AS c,
+                    account_analytic_journal AS j,
+                    account_move_line aml
+                        left outer join hr_employee hr on hr.id = aml.employee_id,
+                    account_move am,
+                    account_journal AS aj,
+                    account_period p,
+                    msf_instance AS i
+                WHERE
+                    dest.id = al.destination_id
+                    AND cost_center.id = al.cost_center_id
+                    AND a.id = al.general_account_id
+                    AND c.id = al.currency_id
+                    AND j.id = al.journal_id
+                    AND aml.id = al.move_id
+                    AND am.id = aml.move_id
+                    AND p.id = am.period_id
+                    AND p.number not in (0, 16)
+                    AND (
+                        al.real_period_id = %(period_id)s
+                        or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
+                    )
+                    AND am.state = 'posted'
+                    AND al.instance_id = i.id
+                    AND aml.journal_id = aj.id
+                    AND j.type not in %(j_type)s
+                    AND al.instance_id in %(instance_ids)s
+        """
+
+        # B/S lines no shrink
+        move_line_query = """
+                SELECT
+                    aml.id as id,  -- 0
+                    i.instance as instance,  -- 1
+                    m.name as entry_sequence, -- 2
+                    aml.date as posting_date,  -- 3
+                    j.type as journal_type,  -- 4
+                    aml.debit_currency as book_debit,  -- 5
+                    aml.credit_currency as book_credit,  -- 6
+                    c.name AS booking_currency,  -- 7
+                    ROUND(aml.debit, 2) as func_debit, -- 8
+                    ROUND(aml.credit, 2) as func_credit,  -- 9
+                    aml.name as description, -- 10
+                    aml.ref,  -- 11
+                    aml.document_date,  -- 12
+                    '' as cost_center, -- 13
+                    aml.partner_id,  -- 14
+                    j.code as journal_code, -- 15
+                    a.code as account_code,  -- 16
+                    hr.identification_id as emplid,  -- 17
+                    c.ocp_workday_decimal = 0 as no_decimal, -- 18
+                    rounded.rounded_amount as rounded_amount, -- 19
+                    hr.employee_type as employee_type, -- 20
+                    aml.partner_txt as partner_txt
+                FROM
+                    account_move_line aml
+                    INNER JOIN account_move AS m ON aml.move_id = m.id
+                    LEFT JOIN hr_employee hr ON hr.id = aml.employee_id
+                    INNER JOIN account_account AS a ON aml.account_id = a.id
+                    INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                    INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                    INNER JOIN msf_instance AS i ON aml.instance_id = i.id
+                    LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+                    left join hq_report_no_decimal rounded on rounded.account_move_line_id = aml.id
+                WHERE
+                    aal.id IS NULL
+                    AND aml.period_id = %(period_id)s
+                    AND a.shrink_entries_for_hq != 't'
+                    AND j.type NOT IN %(j_type)s
+                    AND aml.instance_id IN %(instance_ids)s
+                    AND m.state = 'posted'
+                ORDER BY
+                    aml.id
+        """
+
+        col_header = [
+            'DB-ID',
+            'Instance',
+            'Entry Sequence',
+            'Valeur fixe',
+            'Func. Currency',
+            'Posting date',
+            'Journal Type',
+            'Booking Debit',
+            'Booking Credit',
+            'Booking Debit Arrondi',
+            'Booking Credit Arrondi',
+            'Ecart',
+            'Book. Currency',
+            'Func. Debit',
+            'Func. Credit',
+            'Description',
+            'Reference',
+            'Document Date',
+            'Cost Center',
+            'Partner DB ID',
+            'Journal_PCash',
+            'Journal_BBank',
+            'G/L Account',
+            'EMPLID',
+            'Code-Mission',
+            'Destination',
+            'Debit/Credit EUR Budget Rate',
+            'Third party text',
+        ]
+
+        lines_file = tempfile.NamedTemporaryFile('w', delete=False, newline='')
+        lines_file_name = lines_file.name
+        writer = csv.writer(lines_file, quoting=csv.QUOTE_ALL, delimiter=",")
+        writer.writerow(col_header)
+
+        for sql, obj in [
+                (analytic_query, 'account.analytic.line'),
+                (move_line_query, 'account.move.line')]:
+            cr.execute(sql, sql_params)
+            while True:
+                ajis = set()
+                amls = set()
+                rows = cr.dictfetchmany(500)
+                if not rows:
+                    break
+                for row in rows:
+                    if obj == 'account.analytic.line':
+                        ajis.add(row['id'])
+                        amls.add(row['account_move_line_id'])
+                        #if row[15] == 'ODHQ':
+                        #    aal = aal_obj.browse(cr, uid, row[0], fields_to_fetch=['last_corrected_id', 'reversal_origin'])
+                        #    cor_or_rev = aal.last_corrected_id or aal.reversal_origin
+                        #    while cor_or_rev:
+                        #        cor_or_rev = last_corrected_id
+                        #    if cor_or_rev and cor_or_rev.journal_id.type == 'hq':
+                        #        original_ref = cor_or_rev.ref or ''
+                        #        seq = original_ref.startswith('EAUD') and 'EAUD' or 'SIEG'
+                        #        journal = original_ref[8:11] or ''
+
+                    else:
+                        amls.add(row['id'])
+
+                    local_employee = row['employee_type'] and row['employee_type'] != 'ex'
+
+                    if row['no_decimal'] and (row['book_credit'] or row['book_debit']):
+                        book_debit_round = 0
+                        book_credit_round = 0
+                        if row['rounded_amount'] > 0:
+                            book_debit_round = row['rounded_amount']
+                        else:
+                            book_credit_round = abs(row['rounded_amount'])
+
+                        ecart = round( (book_credit_round - book_debit_round) - (row['book_credit'] - row['book_debit']), 2)
+                    else:
+                        book_debit_round = row['book_debit']
+                        book_credit_round = row['book_credit']
+                        ecart = 0
+
+                    budget_amount = row['book_credit'] - row['book_debit']
+                    if fx_budget_rate.get(row['booking_currency']):
+                        budget_amount = round(budget_amount / fx_budget_rate.get(row['booking_currency']), 2)
+
+                    writer.writerow([
+                        finance_archive._get_hash(new_cr, uid, ids='%s'%row['id'], model=obj), # DB-ID
+                        row['instance'], # Instance
+                        row['entry_sequence'], # Entry Sequence
+                        'Company_Reference_ID', # Valeur fixe
+                        'EUR', # Func. Currency
+                        datetime.strptime(row['posting_date'], '%Y-%m-%d').strftime('%d/%m/%Y'), # Posting date
+                        journal_type.get(row['journal_type'], row['journal_type']), # Journal Type
+                        row['book_debit'], # Booking Debit
+                        row['book_credit'], # Booking Credit
+                        book_debit_round,
+                        book_credit_round,
+                        ecart,
+                        row['booking_currency'], # Book. Currency
+                        row['func_debit'], # Func. Debit
+                        row['func_credit'], # Func. Credit
+                        row['description'], # Description
+                        row['ref'], # Reference
+                        datetime.strptime(row['document_date'], '%Y-%m-%d').strftime('%d/%m/%Y'), # Document Date
+                        row['cost_center'] or '',# Cost Center
+                        local_employee and row['emplid'] or row['partner_id'] or '', # Partner DB ID
+                        row['journal_code'] if row['journal_type'] == 'cash' else '', # Journal Cash
+                        row['journal_code'] if row['journal_type'] in ('bank', 'cheque') else '', # Journal Cash
+                        row['account_code'], # G/L Account,
+                        not local_employee and row['emplid'] or '', # EMPLID
+                        row['entry_sequence'][0:3], # 3 digits seq.
+                        row.get('destination_code') or '',
+                        budget_amount,
+                        row.get('partner_txt') or '',
+                    ])
+                if ajis:
+                    new_cr.execute("update account_analytic_line set exported='t' where id in %s", (tuple(ajis), ))
+                if amls:
+                    new_cr.execute("update account_move_line set exported='t' where id in %s", (tuple(amls), ))
+
+                self.update_percent(new_cr, uid, 0.45)
+
+        self.update_percent(cr, uid, 0.80)
+
+        # B/S lines consolidated
+        cr.execute("""
+                SELECT
+                    array_agg(aml.id ORDER BY aml.id) AS concat,  -- 0
+                    i.instance, -- 1
+                    j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS entry_sequence,  -- 2
+                    p.date_stop AS posting_date, -- 3
+                    j.type,  -- 4
+                    SUM(aml.amount_currency) as book_amount, -- 5
+                    c.name AS "booking_currency", -- 6
+                    SUM(aml.debit - aml.credit) as func_amount, -- 7
+                    'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS description,  -- 8
+                    p.date_stop AS document_date,  -- 9
+                    j.code as journal_code,  -- 10
+                    a.code as account_code, -- 11
+                    i.code as instance_code, -- 12
+                    c.ocp_workday_decimal = 0 as no_decimal, -- 13
+                    sum(coalesce(rounded.rounded_amount, aml.amount_currency)) -- 14
+                FROM
+                    account_move_line aml
+                    LEFT JOIN hq_report_no_decimal rounded on rounded.account_move_line_id = aml.id
+                    INNER JOIN account_move AS m ON aml.move_id = m.id
+                    INNER JOIN account_account AS a ON aml.account_id = a.id
+                    INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                    INNER JOIN account_journal AS j ON aml.journal_id = j.id
+                    INNER JOIN msf_instance AS i ON aml.instance_id = i.id
+                    LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
+                    INNER JOIN account_period p ON p.id = aml.period_id
+                    INNER JOIN account_fiscalyear f ON f.id = p.fiscalyear_id
+                WHERE
+                    aal.id IS NULL
+                    AND aml.period_id = %(period_id)s
+                    AND a.shrink_entries_for_hq = 't'
+                    AND j.type NOT IN %(j_type)s
+                    AND aml.instance_id IN %(instance_ids)s
+                    AND m.state = 'posted'
+                GROUP BY
+                    i.instance,
+                    i.code,
+                    j.code,
+                    p.code,
+                    f.code,
+                    a.code,
+                    c.name,
+                    p.date_stop,
+                    j.type,
+                    p.date_stop,
+                    c.ocp_workday_decimal
+        """, sql_params)
+        while True:
+            rows = cr.fetchmany(500)
+            if not rows:
+                break
+            amls = set()
+            for row in rows:
+                amls.update(row[0])
+                if row[13]:
+                    amount_currency_round = row[14]
+                    if row[5] > 0 and not amount_currency_round:
+                        amount_currency_round = 1
+                    elif row[5] < 0 and not amount_currency_round:
+                        amount_currency_round = -1
+                    ecart =  round(amount_currency_round - row[5], 2)
+                else:
+                    amount_currency_round = row[5]
+                    ecart = 0
+
+                budget_amount = row[5]
+                if fx_budget_rate.get(row[6]):
+                    budget_amount = round(budget_amount / fx_budget_rate.get(row[6]), 2)
+
+                writer.writerow([
+                    finance_archive._get_hash(new_cr, uid, ids=row[0], model='account.move.line'), # DB-ID
+                    row[1], # Instance
+                    row[2], # Entry Sequence
+                    'Company_Reference_ID', # Valeur fixe
+                    'EUR', # Func. Currency
+                    row[3], # Posting date
+                    journal_type.get(row[4], row[4]), # Journal Type
+                    -1*row[5] if row[5] < 0 else 0, # Booking Debit
+                    row[5] if row[5] > 0 else 0, # Booking Credit
+                    -1*amount_currency_round if row[5] < 0 else 0,
+                    amount_currency_round if row[5] > 0 else 0,
+                    ecart,
+                    row[6], # Book. Currency
+                    -1 * row[7] if row[7] < 0 else 0, # Func. Debit
+                    row[7] if row[7] > 0 else 0, # Func. Credit
+                    row[8], # Description
+                    '', # Reference
+                    '',# Cost Center
+                    '', # Partner DB ID
+                    row[10] if row[4] == 'cash' else '', # Journal Cash
+                    row[10] if row[4] in ('bank', 'cheque') else '', # Journal Cash
+                    row[11], # G/L Account,
+                    '', # EMPLID
+                    row[12][0:3], # 3 digits seq
+                    budget_amount,
+                    '',
+                ])
+            if amls:
+                new_cr.execute("update account_move_line set exported='t' where id in %s", (tuple(amls),))
+
+        self.update_percent(cr, uid, 0.90)
+
+        lines_file.close()
+
+        balances_file = tempfile.NamedTemporaryFile('w', delete=False, newline='')
+        balances_file_name = balances_file.name
+        writer = csv.writer(balances_file, quoting=csv.QUOTE_ALL, delimiter=",")
+        writer.writerow([
+            'Instance', 'Account', 'Account Name', 'Period', 'Booking Currency',
+            'Starting balance', 'Calculated balance', 'Closing balance',
+            'Starting balance in EUR', 'Calculated balance in EUR', 'Closing balance in EUR'
+        ])
+
+        cr.execute(account_balances_per_currency_with_euro_sql, sql_params)
+        while True:
+            rows = cr.fetchmany(500)
+            if not rows:
+                break
+            for row in rows:
+                writer.writerow(row)
+        balances_file.close()
+        self.update_percent(cr, uid, 0.75)
+
+        if data.get('output_file'):
+            tmpzipname = data['output_file']
+        else:
+            null1, tmpzipname = tempfile.mkstemp()
+        zf = zipfile.ZipFile(tmpzipname, 'w')
+
+        if all_missions:
+            prefix = 'Allinstances'
+        elif instance_id:
+            inst = mi_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
+            prefix = inst and inst.code[:3] or ''
+        else:
+            prefix = ''
+        selected_period = strftime('%Y%m', strptime(first_day_of_period, '%Y-%m-%d')) or ''
+        current_time = time.strftime('%d%m%y%H%M%S')
+        lines_file_zip_name = '%s_%s_%s_Monthly_Export.csv' % (prefix, period_yyyymm, current_time)
+        balances_file_zip_name = '%s_%s_%s_Account_Balances.csv' % (prefix, selected_period, current_time)
+        zf.write(lines_file_name, lines_file_zip_name)
+        zf.write(balances_file_name, balances_file_zip_name)
+        zf.close()
+
+        if not data.get('output_file'):
+            os.close(null1)
+
+        new_cr.commit()
+        new_cr.close(True)
+        return (Path(tmpzipname, delete=True), 'zip')
+
+
+
+hq_report_ocp_workday('report.hq.ocp.workday', 'account.move.line', False, parser=False)

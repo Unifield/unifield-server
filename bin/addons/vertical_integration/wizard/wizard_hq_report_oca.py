@@ -29,29 +29,24 @@ import netsvc
 import os
 import threading
 
-class wizard_hq_report_oca(osv.osv_memory):
-    _name = "wizard.hq.report.oca"
-
+class wizard_export_vi_finance(osv.osv_memory):
     _delete_suffix = '.delete'
+    _export_extra_data = {}
 
-    _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
-        'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
-        'period_id': fields.many2one('account.period', 'Period', required=True),
-        'selection': fields.selection([('all', 'All lines'), ('unexported', 'Not yet exported')], string="Select", required=True),
-    }
+    def get_period_state(self, cr, uid, context=None):
+        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+            return []
 
-    _defaults = {
-        'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, time.strftime('%Y-%m-%d'), context=c),
-        'selection': lambda *a: 'all',
-    }
+        coordo_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
+        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16), ('already_exported', '=', False)], context=context)
+
 
     def get_active_export_ids(self, cr, uid, context=None):
         instance = self.pool.get('res.company')._get_instance_record(cr, uid)
-        if not instance or instance.name != 'HQ_OCA':
+        if not instance or instance.instance not in ('HQ_OCA', 'OCP_HQ'):
             return False
 
-        return self.pool.get('automated.export').search(cr, uid, [('active', '=', True), ('function_id.model_id', '=', 'wizard.hq.report.oca')], context=context)
+        return self.pool.get('automated.export').search(cr, uid, [('active', '=', True), ('function_id.model_id', '=', self._name)], context=context)
 
     def launch_auto_export(self, cr, uid, context=None):
         export_ids = self.get_active_export_ids(cr, uid, context)
@@ -68,14 +63,6 @@ class wizard_hq_report_oca(osv.osv_memory):
         )
         new_thread.start()
         return True
-
-
-    def get_period_state(self, cr, uid, context=None):
-        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
-            return []
-
-        coordo_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
-        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16)], context=context)
 
     def _delete_file(self, filename):
         try:
@@ -94,14 +81,18 @@ class wizard_hq_report_oca(osv.osv_memory):
             return False
         return True
 
-    def auto_export_vi(self, cr, uid, export_wiz, remote_con, disable_generation=False, context=None):
+    def auto_export_vi(self, cr, uid, export_wiz, remote_con=False, disable_generation=False, context=None):
         """
             disable_generation=True when we only want to push files to remote
         """
 
-        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+        instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+        if not instance or instance.level != 'section':
             raise osv.except_osv(_('Warning'), _('Export is only available at HQ level.'))
 
+        set_as_already_exported = False
+        if instance.instance == 'OCP_HQ':
+            set_as_already_exported = True
         p_state_obj = self.pool.get('account.period.state')
         export_job_obj = self.pool.get('automated.export.job')
         nb_ok = 0
@@ -116,7 +107,12 @@ class wizard_hq_report_oca(osv.osv_memory):
                     continue
 
                 try:
-                    file_name = '%s_Y%sP%02d_formatted_data_D365_import_%s.zip' % (period_state.instance_id.code, strptime(period_state.period_id.date_start, '%Y-%m-%d').tm_year, period_state.period_id.number or 0, time.strftime('%Y%m%d%H%M%S'))
+                    file_name = self._export_filename.format(
+                        instance=period_state.instance_id.code,
+                        year=strptime(period_state.period_id.date_start, '%Y-%m-%d').tm_year,
+                        month=period_state.period_id.number or 0,
+                        date=time.strftime('%Y%m%d%H%M%S'),
+                    )
                     if not export_wiz.ftp_dest_ok:
                         out_file_name = os.path.join(export_wiz.dest_path, file_name)
                     else:
@@ -125,19 +121,22 @@ class wizard_hq_report_oca(osv.osv_memory):
                     msg.append('[%s] processing %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), out_file_name))
 
                     out_file = open(out_file_name, 'wb')
+                    form_data = {
+                        'instance_id': period_state.instance_id.id,
+                        'instance_ids': [period_state.instance_id.id] + [child_id.id for child_id in period_state.instance_id.child_ids],
+                        'period_id': period_state.period_id.id,
+                        'selection': 'unexported'
+                    }
+                    form_data.update(self._export_extra_data)
                     report_data = {
-                        'form': {
-                            'instance_ids': [period_state.instance_id.id] + [child_id.id for child_id in period_state.instance_id.child_ids],
-                            'period_id': period_state.period_id.id,
-                            'selection': 'unexported'
-                        },
+                        'form': form_data,
                         'output_file': out_file,
                     }
 
-                    obj = netsvc.LocalService('report.hq.oca')
+                    obj = netsvc.LocalService(self._export_report_name)
                     obj.create(cr, uid, [], report_data, context=context)
                     out_file.close()
-                    p_state_obj.write(cr, uid, period_state.id, {'auto_export_vi': True}, context=context)
+                    p_state_obj.write(cr, uid, period_state.id, {'auto_export_vi': True, 'already_exported': set_as_already_exported}, context=context)
                     nb_ok += 1
                     msg.append('[%s] %s done' % (time.strftime('%Y-%m-%d %H:%M:%S'), period_state.instance_id.code))
                     cr.commit()
@@ -148,7 +147,7 @@ class wizard_hq_report_oca(osv.osv_memory):
 
             for period_state_ids in list(instance_seen.items()):
                 # overkill ? just in case of duplicates period_id / coordo_id
-                p_state_obj.write(cr, uid, period_state_ids, {'auto_export_vi': True}, context=context)
+                p_state_obj.write(cr, uid, period_state_ids, {'auto_export_vi': True, 'already_exported': set_as_already_exported}, context=context)
 
 
         if nb_ok and export_wiz.pause:
@@ -208,6 +207,26 @@ class wizard_hq_report_oca(osv.osv_memory):
                     msg.append('ERROR %s %s' % (current_report,  misc.get_traceback(e)))
 
         return nb_ok, nb_error, msg
+
+
+class wizard_hq_report_oca(wizard_export_vi_finance):
+    _name = "wizard.hq.report.oca"
+
+    _export_filename = '{instance}_Y{year}P{month:02d}_formatted_data_D365_import_{date}.zip'
+    _export_report_name = 'report.hq.oca'
+
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
+        'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
+        'period_id': fields.many2one('account.period', 'Period', required=True),
+        'selection': fields.selection([('all', 'All lines'), ('unexported', 'Not yet exported')], string="Select", required=True),
+    }
+
+    _defaults = {
+        'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, time.strftime('%Y-%m-%d'), context=c),
+        'selection': lambda *a: 'all',
+    }
+
 
     def onchange_instance_id(self, cr, uid, ids, context=None):
         '''
