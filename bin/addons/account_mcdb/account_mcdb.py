@@ -1327,6 +1327,14 @@ class account_mcdb(osv.osv):
         output_currency_id = False
         if selector.display_in_output_currency:
             output_currency_id = selector.display_in_output_currency.id
+            currency = self.pool.get('res.currency').browse(cr, uid, output_currency_id, context=context)
+            currency_str = "%s: %s" % (_("Output currency"), currency and currency.name)
+            header = header + '; ' + currency_str
+        if selector.fx_table_id:
+            currency_table = self.pool.get('res.currency.table').browse(cr, uid, selector.fx_table_id.id, context=context)
+            currency_table_str = "%s: %s" % (_("Currency table"), currency_table and currency_table.name)
+            header = header + '; ' + currency_table_str
+
         data = {}
         data['ids'] = result_ids
         data['model'] = res_model
