@@ -486,6 +486,8 @@ class Database(BaseController):
                 ('silentupgrade', 'hour_from', self.check_time),
                 ('silentupgrade', 'hour_to', self.check_time),
                 ('reconfigure', 'activate_international_invoices_lines', self.check_boolean),
+                ('reconfigure', 'activate_fixed_asset', self.check_boolean),
+                ('reconfigure', 'activate_electronic_validation', self.check_boolean),
 
             ]
             for section, option, check_fct in check_format:
@@ -506,6 +508,14 @@ class Database(BaseController):
                     self.msg = {
                         'message': _('Project creation asked, you must set 3 sync groups'),
                         'title': _('Bad sync groups'),
+                    }
+                    return
+
+            if config.get('reconfigure', 'address_country'):
+                if len(config.get('reconfigure', 'address_country')) != 2:
+                    self.msg = {
+                        'message': _('address_country %s must be a 2 characters country code') % (config.get('reconfigure', 'address_country'), ),
+                        'title': _('Bad Country'),
                     }
                     return
 
