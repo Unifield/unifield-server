@@ -58,6 +58,15 @@ class patch_scripts(osv.osv):
     }
 
     # UF34.0
+    def us_13375_ocb_activate_iil(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
+            esc_wiz_obj = self.pool.get('esc_line.setup')
+            wiz_id = esc_wiz_obj.create(cr, uid, {'esc_line': True})
+            esc_wiz_obj.execute(cr, uid, [wiz_id])
+            self.log_info(cr, uid, "US-13375: IIL active")
+        return True
+
     def us_10865_disable_former_ur(self, cr, uid, *a, **b):
         if cr.table_exists('sync_server_user_rights'):
             cr.execute("update sync_server_user_rights set state='deprecated' where state='confirmed'")
