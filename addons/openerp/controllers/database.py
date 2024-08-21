@@ -586,6 +586,8 @@ class Database(BaseController):
                 return
 
             import_path = os.path.join(os.path.dirname(file_path), 'import')
+            found_ana_journal = False
+            found_journal = False
             if os.path.exists(import_path):
                 for file_name in os.listdir(import_path):
                     if file_name.endswith('.imported'):
@@ -603,6 +605,10 @@ class Database(BaseController):
                             'title': 'File name error',
                         }
                         return
+                    if file_name == 'account.analytic.journal.csv':
+                        found_ana_journal = True
+                    if file_name == 'account.journal.csv':
+                        found_journal = True
                     if file_name == 'res.users.csv':
                         with open(os.path.join(import_path, file_name), 'r') as fcsv:
                             reader = csv.reader(fcsv, quotechar='"', delimiter=',')
@@ -632,6 +638,33 @@ class Database(BaseController):
                                         return
 
 
+            if not found_ana_journal or not found_journal:
+                missing = []
+                if not found_ana_journal:
+                    missing.append('account.analytic.journal.csv')
+                if not found_journal:
+                    missing.append('account.journal.csv')
+                self.msg = {
+                    'message': _('Journal to import not found: %s') % ' and '.join(missing),
+                    'title': _('Missing journal'),
+                }
+                return
+
+            if config.has_option('reconfigure', 'activate_fixed_asset') and config.getboolean('reconfigure', 'activate_fixed_asset'):
+                found = 0
+                for to_import in ['account.analytic.journal.csv', 'account.journal.csv']:
+                    with open(os.path.join(import_path, file_name), 'r') as r_f:
+                        for line in r_f:
+                            if re.search('DEP,.*,depreciation', line):
+                                found += 1
+                                break
+
+                if found != 2:
+                    self.msg = {
+                        'message': _('Asset is activated, you must import DEP G/L and Analytic journals with depreciation type'),
+                        'title': _('Missing DEP journals')
+                    }
+                    return
 
 
         except NoOptionError as e:
