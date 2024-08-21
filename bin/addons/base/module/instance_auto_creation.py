@@ -465,7 +465,7 @@ class instance_auto_creation(osv.osv):
                 country_id = False
                 if country_code:
                     country_obj = self.pool.get('res.country')
-                    country_ids = country_obj.search(cr, uid, [('code', '=', country_code)])
+                    country_ids = country_obj.search(cr, uid, [('code', '=ilike', country_code)])
                     if country_ids:
                         country_id = country_ids[0]
 
