@@ -462,7 +462,7 @@ class instance_auto_creation(osv.osv):
                                {'state': 'reconfigure'}, context=context)
 
                 country_code = config_dict['reconfigure'].get('address_country')
-                country_id = None
+                country_id = False
                 if country_code:
                     country_obj = self.pool.get('res.country')
                     country_ids = country_obj.search(cr, uid, [('code', '=', country_code)])
@@ -550,10 +550,15 @@ class instance_auto_creation(osv.osv):
                     },
                     'esc_line.setup': {
                         'esc_line': config.has_option('reconfigure', 'activate_international_invoices_lines') and config.getboolean('reconfigure', 'activate_international_invoices_lines')
-                    }
+                    },
+                    'fixed.asset.setup': {
+                        'fixed_asset_ok': config.has_option('reconfigure', 'activate_fixed_asset') and config.getboolean('reconfigure', 'activate_fixed_asset')
+                    },
+                    'signature.setup': {
+                        'signature': config.has_option('reconfigure', 'activate_electronic_validation') and config.getboolean('reconfigure', 'activate_electronic_validation')
+                    },
                 }
-                if country_id:
-                    base_wizards['base.setup.company']['country_id'] = country_id
+                base_wizards['base.setup.company']['country_id'] = country_id
                 if state_code:
                     base_wizards['base.setup.company']['state_id'] = state_id
 
