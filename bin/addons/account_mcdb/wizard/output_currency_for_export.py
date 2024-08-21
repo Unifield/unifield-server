@@ -124,6 +124,9 @@ class output_currency_for_export(osv.osv_memory):
             data_from_selector = {}
             wiz = self.browse(cr, uid, ids, context=context)[0]
             choice = wiz and wiz.export_format or False
+            currency_table_id = wiz and wiz.fx_table_id or False
+            if currency_table_id:
+                context.update({'currency_table_id': currency_table_id.id, 'fx_table_id': currency_table_id.id})
 
         count_ids = 0
         if choice != 'pdf':
@@ -184,8 +187,8 @@ class output_currency_for_export(osv.osv_memory):
             currency = self.pool.get('res.currency').browse(cr, uid, currency_id, context=context)
             currency_str = "%s: %s" % (_("Output currency"), currency and currency.name)
             fx_table_id = wiz and wiz.fx_table_id and wiz.fx_table_id.id or False
-            if not wiz or not wiz.fx_table_id and context.get('fx_table_id', False):
-                fx_table_id = context.get('fx_table_id')
+            if not wiz or not wiz.fx_table_id and context.get('currency_table_id', False):
+                fx_table_id = context.get('currency_table_id')
             if fx_table_id:
                 currency_table = self.pool.get('res.currency.table').browse(cr, uid, fx_table_id, context=context)
                 currency_table_str = "%s: %s" % (_("Currency table"), currency_table and currency_table.name)
