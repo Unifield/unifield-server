@@ -432,6 +432,14 @@ class Remote(object):
 
     def push_report(self, localname, filename):
         if self.path_report_is_remote:
+            # Check if the path exists before trying to push a file in it
+            if self.connection_type == 'sftp':
+                try:
+                    self.connection.sftp.stat(self.path_report)
+                except Exception as e:
+                    msg = _("Path '%s' doesn't exist on the remote server!") % (self.path_report,)
+                    self.infolog(msg)
+                    raise osv.except_osv(_('Error'), msg)
             self.connection.push(localname, posixpath.join(self.path_report, filename))
         return True
 
