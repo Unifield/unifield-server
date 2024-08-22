@@ -227,10 +227,12 @@
                        on_change="onchange_instance_id(instance_id)"
                        attrs="{'required': [('all_missions', '=', False)]}"
                 />
-                <field name="fiscalyear_id"/>
+            <field name="fiscalyear_id"/>
+            <field name="export_type" invisible="1" />
                 <field name="all_missions"
                        string="or All Missions"
                        on_change="onchange_all_missions(all_missions)"
+                       attrs="{'invisible': [('export_type', '!=', 'arcole')]}"
                 />
                 <field name="period_id"
                        domain="[('period_visible', '=', [fiscalyear_id, instance_id, all_missions])]"
@@ -257,6 +259,21 @@
         <menuitem parent="account.menu_finance_generic_reporting"
             action="action_hq_export_ocp"
             id="menu_action_hq_export_ocp" sequence="60"/>
+
+        <record id="action_hq_export_ocp_workday" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCP Workday)</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ocp.export.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="ocp_export_wizard"/>
+            <field name="context">{'export_type': 'workday'}</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem parent="account.menu_finance_generic_reporting"
+            action="action_hq_export_ocp_workday"
+            id="menu_action_hq_export_ocp_workday" sequence="61"/>
 
     <!-- OCP matching export -->
 
