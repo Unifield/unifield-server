@@ -486,6 +486,8 @@ class Database(BaseController):
                 ('silentupgrade', 'hour_from', self.check_time),
                 ('silentupgrade', 'hour_to', self.check_time),
                 ('reconfigure', 'activate_international_invoices_lines', self.check_boolean),
+                ('reconfigure', 'activate_fixed_asset', self.check_boolean),
+                ('reconfigure', 'activate_electronic_validation', self.check_boolean),
 
             ]
             for section, option, check_fct in check_format:
@@ -506,6 +508,14 @@ class Database(BaseController):
                     self.msg = {
                         'message': _('Project creation asked, you must set 3 sync groups'),
                         'title': _('Bad sync groups'),
+                    }
+                    return
+
+            if config.get('reconfigure', 'address_country'):
+                if len(config.get('reconfigure', 'address_country')) != 2:
+                    self.msg = {
+                        'message': _('address_country %s must be a 2 characters country code') % (config.get('reconfigure', 'address_country'), ),
+                        'title': _('Bad Country'),
                     }
                     return
 
@@ -576,6 +586,8 @@ class Database(BaseController):
                 return
 
             import_path = os.path.join(os.path.dirname(file_path), 'import')
+            found_ana_journal = False
+            found_journal = False
             if os.path.exists(import_path):
                 for file_name in os.listdir(import_path):
                     if file_name.endswith('.imported'):
@@ -593,6 +605,10 @@ class Database(BaseController):
                             'title': 'File name error',
                         }
                         return
+                    if file_name == 'account.analytic.journal.csv':
+                        found_ana_journal = True
+                    if file_name == 'account.journal.csv':
+                        found_journal = True
                     if file_name == 'res.users.csv':
                         with open(os.path.join(import_path, file_name), 'r') as fcsv:
                             reader = csv.reader(fcsv, quotechar='"', delimiter=',')
@@ -622,6 +638,33 @@ class Database(BaseController):
                                         return
 
 
+            if not found_ana_journal or not found_journal:
+                missing = []
+                if not found_ana_journal:
+                    missing.append('account.analytic.journal.csv')
+                if not found_journal:
+                    missing.append('account.journal.csv')
+                self.msg = {
+                    'message': _('Journal to import not found: %s') % ' and '.join(missing),
+                    'title': _('Missing journal'),
+                }
+                return
+
+            if config.has_option('reconfigure', 'activate_fixed_asset') and config.getboolean('reconfigure', 'activate_fixed_asset'):
+                found = 0
+                for to_import in ['account.analytic.journal.csv', 'account.journal.csv']:
+                    with open(os.path.join(import_path, file_name), 'r') as r_f:
+                        for line in r_f:
+                            if re.search('DEP,.*,depreciation', line):
+                                found += 1
+                                break
+
+                if found != 2:
+                    self.msg = {
+                        'message': _('Asset is activated, you must import DEP G/L and Analytic journals with depreciation type'),
+                        'title': _('Missing DEP journals')
+                    }
+                    return
 
 
         except NoOptionError as e:
