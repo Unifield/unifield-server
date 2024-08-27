@@ -38,7 +38,7 @@ class liquidity_balance_wizard(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Display currency",
                                        help="Give an output currency that would be used for export"),
         'fx_table_id': fields.many2one('res.currency.table', string="Currency Table"),
-        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export type"),
+        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export type", required=True),
     }
 
     _defaults = {
@@ -64,6 +64,20 @@ class liquidity_balance_wizard(osv.osv_memory):
         res = {}
         if date_from or date_to:
             res['value'] = {'period_id': False, }
+        return res
+
+    def onchange_fx_table(self, cr, uid, ids, fx_table_id, context=None):
+        """
+        Update output currency domain in order to show right currencies attached to given fx table
+        """
+        res = {}
+        # Some verifications
+        if not context:
+            context = {}
+        if fx_table_id:
+            res.update({'domain': {'currency_id': [('currency_table_id', '=', fx_table_id), ('active', 'in', ['True', 'False'])]}, 'value': {'currency_id' : False}})
+        else:
+            res.update({'domain': {'currency_id': [('currency_table_id', '=', False), ('active', 'in', ['True', 'False'])]}, 'value': {'currency_id' : False}})
         return res
 
     def _check_wizard_data(self, wiz, context=None):
@@ -92,6 +106,11 @@ class liquidity_balance_wizard(osv.osv_memory):
         data['form'].update({'period_id': wiz.period_id and wiz.period_id.id or False,
                              'date_from': wiz.date_from or False,
                              'date_to': wiz.date_to or False,
+                             })
+        # Get the selected output currency and currency table
+        data['form'].update({'currency_id': wiz.currency_id and wiz.currency_id.name or
+                                            self.pool.get('res.users').browse(cr, uid, uid, context).company_id.currency_id.name,
+                             'fx_table_id': wiz.fx_table_id and wiz.fx_table_id.id or False,
                              })
 
         # get the selected instance AND its children
@@ -124,12 +143,33 @@ class liquidity_balance_wizard(osv.osv_memory):
 
         data['target_filename'] = "%s_%s_%s" % (instance, period_title_filename, _('Liquidity Balances'))
         data['form'].update({'period_title': period_title})
-        return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'account.liquidity.balance',
-            'datas': data,
-            'context': context,
-        }
+        if wiz.export_format == 'pdf':
+            header_infos = []
+            if wiz.period_id:
+                period_title = wiz.period_id.name
+            data['title'] = "%s - %s" % (_('Liquidity Balance Report'), period_title)
+            if wiz.currency_id:
+                currency_str = "%s: %s" % (_('Currency'), wiz.currency_id.name)
+                header_infos.append(currency_str)
+            if wiz.fx_table_id:
+                fx_table_str = "%s: %s" % (_('Currency table'), wiz.fx_table_id.name)
+                header_infos.append(fx_table_str)
+            if header_infos:
+                data['header'] = ' ; '.join(header_infos)
+
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.liquidity.balance_pdf',
+                'datas': data,
+                'context': context,
+            }
+        else:
+            return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.liquidity.balance',
+                'datas': data,
+                'context': context,
+            }
 
 liquidity_balance_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

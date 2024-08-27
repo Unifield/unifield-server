@@ -38,10 +38,14 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.date_to = False
         self.instance_ids = False
         self.period_title = False
+        self.currency_id = False
+        self.fx_table_id = False
+        self.sub_totals = False
         self.context = {}
         super(account_liquidity_balance, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'get_register_data': self._get_register_data,
+            'get_subtotals' : self._get_subtotals,
         })
 
     def _filter_journal_status(self, reg_data, date_to):
@@ -199,7 +203,19 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         res.extend(cheque_res)
         # sort result by instance code and by journal code
         sorted_res = sorted(res, key=lambda k: (k['instance'], k['code']))
+        # sum closing balances by booking currencies
+        sub_totals = {}
+        for register in sorted_res:
+            if register['currency'] in sub_totals:
+                sub_totals[register['currency']] += register['closing']
+            else:
+                sub_totals[register['currency']] = register['closing']
+        self.sub_totals = sub_totals
+
         return sorted_res
+
+    def _get_subtotals(self):
+        return self.sub_totals
 
     def set_context(self, objects, data, ids, report_type=None):
         # get the selection made by the user
@@ -208,9 +224,16 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.date_to = data['form'].get('date_to', False)
         self.instance_ids = data['form'].get('instance_ids', False)
         self.period_title = data['form'].get('period_title', False)
+        self.currency_id = data['form'].get('currency_id', False)
+        self.fx_table_id = data['form'].get('fx_table_id', False)
         self.context = data.get('context', {})
         return super(account_liquidity_balance, self).set_context(objects, data, ids, report_type)
 
+# XLS Report
 SpreadsheetReport('report.account.liquidity.balance', 'account.bank.statement',
                   'addons/account/report/account_liquidity_balance.mako', parser=account_liquidity_balance)
+# PDF report
+report_sxw.report_sxw('report.account.liquidity.balance_pdf', 'account.bank.statement',
+                      'addons/account/report/account_liquidity_balance.rml',parser=account_liquidity_balance,
+                      header='internal landscape')
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
