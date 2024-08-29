@@ -1122,8 +1122,9 @@
             <field name="method">us_12472_currency_workday_set_no_decimal</field>
         </record>
 
-
-
+        <record id="us_13398_ocb_unmerge_2_prod" model="patch.scripts">
+            <field name="method">us_13398_ocb_unmerge_2_prod</field>
+        </record>
 
     </data>
 </openerp>
