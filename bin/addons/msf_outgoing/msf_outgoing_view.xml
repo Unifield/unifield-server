@@ -741,8 +741,9 @@
                                     <field name="prodlot_id" string="Batch\nNumber" readonly="1" />
                                     <field name="expired_date" string="Expiry\nDate" readonly="1" />
                                     <field name="qty_per_pack" readonly="1" />
-                                    <field name="from_pack" attrs="{'readonly': [('fake_state', 'not in', ['assigned', 'confirmed'])]}" on_change="change_from_to_pack(from_pack, to_pack)" required="1" />
-                                    <field name="to_pack" attrs="{'readonly': [('fake_state', 'not in', ['assigned', 'confirmed'])]}" on_change="change_from_to_pack(from_pack, to_pack)" required="1" />
+                                    <field name="from_pack" tooltip="parcel_ids" attrs="{'readonly': [('fake_state', 'not in', ['assigned', 'confirmed'])]}" on_change="change_from_to_pack(from_pack, to_pack)" required="1" />
+                                    <field name="to_pack" tooltip="parcel_ids" attrs="{'readonly': [('fake_state', 'not in', ['assigned', 'confirmed'])]}" on_change="change_from_to_pack(from_pack, to_pack)" required="1" />
+                                    <field name="parcel_ids" invisible="1" />
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('confirmed', 'assigned'))]}"/>
                                     <field name="date" string="Actual\nPack Date" readonly="1"  />
                                     <field name="state" readonly="1" />
@@ -766,6 +767,7 @@
                                         <field name="product_qty" readonly="1" />
                                         <field name="from_pack" attrs="{'readonly': [('state', 'not in', ['assigned', 'confirmed'])]}" required="1" />
                                         <field name="to_pack" attrs="{'readonly': [('state', 'not in', ['assigned', 'confirmed'])]}" required="1" />
+                                        <field name="parcel_ids" readonly="1" widget="char" colspan="4" />
                                         <field name="product_uom" readonly="1" />
                                         <field name="composition_list_id" readonly="1" />
                                         <field name="comment" colspan="4" readonly="1" />
@@ -1320,16 +1322,17 @@
                             filter_selector="[('Show all', []), ('Hide closed', [('state', '!=', 'done')]), ('Show closed only', [('state', '=', 'done')]), ('Hide returned', [('state', 'not in', ['returned', 'cancel'])]), ('Show returned only', [('state', 'in', ['returned', 'cancel'])])]"
                             default_selector="'3'" o2m_selectable="2">
                                 <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1" editable_style="new" noteditable="fake_state not in ['draft','assigned']">
+                                    <field name="parcel_ids" invisible="1" />
                                     <field name="fake_state" invisible="True" />
                                     <field name="sale_order_id" readonly="1"/>
                                     <field name="ppl_id" readonly="1"/>
                                     <field name="packing_list" readonly="1" />
                                     <field name="description_ppl" readonly="1" />
-                                    <field name="from_pack" readonly="1" />
-                                    <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" readonly="0"/>
+                                    <field name="from_pack" readonly="1" tooltip="parcel_ids"/>
+                                    <field name="to_pack" tooltip="parcel_ids" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" readonly="0"/>
                                     <field name="parcel_comment" readonly="1"/>
                                     <button name="change_description" string="Change parcel comment" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
-                                    <field name="num_of_packs" readonly="1" />
+                                    <field name="num_of_packs" tooltip="parcel_ids" readonly="1" />
                                     <field name="selected_number" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0" on_change="change_selected_number(selected_number)"/>
                                     <field name="pack_type" readonly="1" />
                                     <field name="total_volume" string="Total\nVolume[dm³]" attrs="{'readonly': ['|', ('volume_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}" readonly="0"/>
@@ -1349,7 +1352,7 @@
                                     <field name="sale_order_id" readonly="1"/>
                                     <field name="ppl_id" readonly="1" />
                                     <field name="description_ppl" readonly="1" />
-                                    <newline />
+                                    <field name="parcel_ids" readonly="1" widget="char"/>
                                     <field name="from_pack" readonly="1" />
                                     <field name="to_pack" attrs="{'readonly': ['|', '|', '|', ('quick_flow', '=', False), ('fake_state', 'not in', ['draft', 'assigned']), ('from_pack', '!=', 1), ('pack_state', '!=', 'draft')]}" />
                                     <field name="parcel_comment" readonly="1"/>

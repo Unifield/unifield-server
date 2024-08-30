@@ -263,6 +263,7 @@ class ppl_family_processor(osv.osv):
         ),
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
+        'parcel_ids': fields.text('Parcel Ids'),
         'pack_type': fields.many2one(
             'pack.type',
             string='Pack Type',

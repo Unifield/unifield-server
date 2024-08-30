@@ -3886,6 +3886,7 @@ class stock_picking(osv.osv):
                             'width': line.pack_info_id.total_width,
                             'height': line.pack_info_id.total_height,
                             'weight': line.pack_info_id.total_weight,
+                            'parcel_ids': line.pack_info_id.parcel_ids,
                         })
 
                     context.update({
@@ -4056,6 +4057,7 @@ class stock_picking(osv.osv):
                     'width': line.width,
                     'height': line.height,
                     'weight': line.weight,
+                    'parcel_ids': line.parcel_ids,
                 }
 
                 if existing_data.get(key):
@@ -4197,6 +4199,7 @@ class stock_picking(osv.osv):
                     values = {
                         'from_pack': family.from_pack,
                         'to_pack': family.to_pack,
+                        'parcel_ids': family.parcel_ids,
                         'selected_number': family.to_pack - family.from_pack + 1,
                         'pack_type': family.pack_type and family.pack_type.id or False,
                         'length': family.length,
@@ -4713,6 +4716,7 @@ class pack_family_memory(osv.osv):
                 p.shipment_id as shipment_id,
                 from_pack as from_pack,
                 to_pack as to_pack,
+                m.parcel_ids as parcel_ids,
                 array_agg(m.id) as move_lines,
                 min(packing_list) as packing_list,
                 bool_and(m.volume_set) as volume_set,
@@ -4745,7 +4749,7 @@ class pack_family_memory(osv.osv):
             left join sale_order_line sol on sol.id = m.sale_line_id
             left join product_pricelist pl on pl.id = so.pricelist_id
             where p.shipment_id is not null
-            group by p.shipment_id, p.details, p.description_ppl, from_pack, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, m.not_shipped
+            group by p.shipment_id, p.details, p.description_ppl, from_pack, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, m.not_shipped, parcel_ids
     )
     ''')
 
@@ -4798,6 +4802,7 @@ class pack_family_memory(osv.osv):
         'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
+        'parcel_ids': fields.text('Parcel Ids'),
         'parcel_comment': fields.char(string='Parcel Comment', size=256),
         'pack_type': fields.many2one('pack.type', string='Pack Type'),
         'length': fields.float(digits=(16, 2), string='Length [cm]'),
