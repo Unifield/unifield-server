@@ -88,9 +88,9 @@ class catalogue_export_track_changes_report_xlsx(XlsxReportParser):
             self.add_cell(audll.timestamp and datetime.strptime(audll.timestamp, '%Y-%m-%d %H:%M:%S') or '',
                           date_style, number_format='DD/MM/YYYY HH:MM:SS')
             self.add_cell(audll.other_column or '', line_style)
-            self.add_cell(self.getSel(audll, 'sub_obj_name') or '', line_style)
+            self.add_cell(audll.sub_obj_name or '', line_style)
             self.add_cell(self.getSel(audll, 'method') or '', line_style)
-            self.add_cell(audll.field_description or '', line_style)
+            self.add_cell(audll.trans_field_description or '', line_style)
             self.add_cell(audll.old_value_text or '', line_style)
             self.add_cell(audll.new_value_text or '', line_style)
             self.add_cell(audll.user_id.name or '', line_style)
