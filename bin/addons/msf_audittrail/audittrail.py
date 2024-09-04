@@ -570,10 +570,6 @@ class audittrail_rule(osv.osv):
         obj_model = self.pool.get('ir.model.data')
 
         for thisrule in self.browse(cr, uid, ids):
-            # Do not create the Action on the right menu for catalogues
-            if thisrule.object_id.model == 'supplier.catalogue':
-                continue
-
             obj = self.pool.get(thisrule.object_id.model)
             if not obj:
                 raise osv.except_osv(
@@ -625,6 +621,11 @@ class audittrail_rule(osv.osv):
             else:
                 action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
+
+            # Do not create the Action on the right menu for catalogues
+            if thisrule.object_id.model == 'supplier.catalogue':
+                continue
+
             keyword = 'client_action_relate'
             value = 'ir.actions.act_window,' + str(action_id)
             obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False, view_ids=view_ids)
