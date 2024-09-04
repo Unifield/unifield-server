@@ -174,19 +174,6 @@ class export_report_stock_inventory(osv.osv):
 
         return True
 
-    def onchange_reset_display_0(self, cr, uid, ids, data_id):
-        """
-        Reset the display > 0 when a product list, a nomenclature family, a mml or a msl is selected
-        """
-        if data_id:
-            return {
-                'value': {
-                    'display_0': False,
-                    'in_last_x_months': False,
-                },
-            }
-        return {}
-
     def onchange_prodlot(self, cr, uid, ids, prodlot_id):
         """
         Change the product when change the prodlot
@@ -290,6 +277,7 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             dom = []
             if report.product_list_id:
                 dom.append(('list_ids', '=', report.product_list_id.id))
+                with_zero = True
             if report.mml_id:
                 dom.append(('in_mml_instance', '=', report.mml_id.id))
             if report.msl_id:
@@ -299,7 +287,6 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             if full_prod_list:
                 cond.append('product_id in %(product_ids)s')
                 values['product_ids'] = tuple(full_prod_list)
-                with_zero = True
             else:  # No need to continue if no product was found with the combined filters
                 return 0, 0, []
 
@@ -322,8 +309,7 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             values['nomen_family_id'] = report.nomen_family_id.id
             with_zero = True
 
-        if (not report.prodlot_id or not report.expiry_date or not report.product_list_id or not report.nomen_family_id) \
-                and report.display_0:
+        if (not report.prodlot_id or not report.expiry_date) and report.display_0:
             to_date = datetime.now()
             if report.stock_level_date:
                 to_date = datetime.strptime(values['stock_level_date'], '%Y-%m-%d %H:%M:%S')
