@@ -25,7 +25,7 @@ from osv import fields
 from tools.translate import _
 from tools.misc import _get_std_mml_status
 from datetime import date, datetime
-
+from msf_partner import PARTNER_TYPE
 
 import decimal_precision as dp
 
@@ -442,7 +442,8 @@ class supplier_catalogue(osv.osv):
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'partner_id': fields.many2one('res.partner', string='Partner', required=True,
-                                      domain=[('supplier', '=', True)], select=1),
+                                      domain=[('supplier', '=', True)], select=1, join=True),
+        'partner_type': fields.related('partner_id', 'partner_type', type='selection', selection=PARTNER_TYPE, readonly=True),
         'period_from': fields.date(string='From',
                                    help='Starting date of the catalogue.'),
         'period_to': fields.date(string='To',
@@ -1130,7 +1131,7 @@ class supplier_catalogue_line(osv.osv):
 
     _columns = {
         'line_number': fields.integer(string='Line'),
-        'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
+        'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade', join=True),
         'product_code': fields.char('Supplier Code', size=64),
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
         'min_qty': fields.float(digits=(16,2), string='Min. Qty', required=True,
@@ -1144,6 +1145,7 @@ class supplier_catalogue_line(osv.osv):
         'comment': fields.char(size=64, string='Comment'),
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
+        'partner_type': fields.related('catalogue_id', 'partner_type', type='selection', selection=PARTNER_TYPE, readonly=True),
         'to_correct_ok': fields.boolean('To correct'),
         'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
         'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
