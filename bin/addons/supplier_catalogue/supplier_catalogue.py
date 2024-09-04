@@ -45,6 +45,7 @@ class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _description = 'Supplier catalogue'
     _order = 'period_from, period_to'
+    _trace = True
 
     def copy(self, cr, uid, catalogue_id, default=None, context=None):
         '''
@@ -894,6 +895,7 @@ class supplier_catalogue_line(osv.osv):
     # Inherits of product.product to an easier search of lines with product attributes
     _inherits = {'product.product': 'product_id'}
     _order = 'product_id, line_uom_id, min_qty'
+    _trace = True
 
     def _create_supplier_info(self, cr, uid, vals, context=None):
         '''

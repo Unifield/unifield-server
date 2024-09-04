@@ -397,6 +397,7 @@ class hr_employee(osv.osv):
     _inherit = 'hr.employee'
     _trace = True
 
+
 hr_employee()
 
 
@@ -569,6 +570,10 @@ class audittrail_rule(osv.osv):
         obj_model = self.pool.get('ir.model.data')
 
         for thisrule in self.browse(cr, uid, ids):
+            # Do not create the Action on the right menu for catalogues
+            if thisrule.object_id.model == 'supplier.catalogue':
+                continue
+
             obj = self.pool.get(thisrule.object_id.model)
             if not obj:
                 raise osv.except_osv(

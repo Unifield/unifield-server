@@ -1,0 +1,139 @@
+-
+  For a Supplier Catalogue, rule for the CREATE/WRITE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'SUPPLIER CATALOGUE CREATE/WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'supplier.catalogue')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['name', 'period_from', 'period_to', 'currency_id', 'partner_id', 'active', 'state', 'comment']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'domain_filter': "[('partner_id.partner_type', '=', 'external')]",
+                'log_create': True,
+                'log_write': True,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+               }
+        if not rule_id:
+            # Create the rule
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+-
+  For a Supplier Catalogue Line, rule for the CREATE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'SUPPLIER CATALOGUE LINE CREATE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'supplier.catalogue.line')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = []
+        
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', '=', 'line_number')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', '=', 'catalogue_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+               }
+        if not rule_id:
+            # Create the rule
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+-
+  For a Supplier Catalogue Line, rule for the WRITE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'SUPPLIER CATALOGUE LINE WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'supplier.catalogue.line')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['line_number', 'product_id', 'product_code', 'line_uom_id', 'min_qty', 'unit_price', 'rounding', 'min_order_qty', 'comment']
+        
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', '=', 'line_number')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', '=', 'catalogue_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': False,
+                'log_write': True,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+               }
+        if not rule_id:
+            # Create the rule
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+-
+  For a Supplier Catalogue Line, rule for the DELETE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'SUPPLIER CATALOGUE LINE DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'supplier.catalogue.line')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['line_number']
+        
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', '=', 'line_number')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', '=', 'catalogue_id')], context=context)
+        
+        name_id = False
+        parent_id = False
+
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': False,
+                'log_write': False,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+               }
+        if not rule_id:
+            # Create the rule
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
