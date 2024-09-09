@@ -1526,10 +1526,7 @@ class product_asset_import_entries(osv.osv_memory):
                             (current_line_num, line[cols['External Asset ID']] or '_', line[cols['Serial Number']] or '_'))
                     else:
                         if not asset_type_cache.get(line[cols['Asset Type']], False):
-                            cr.execute("SELECT src FROM ir_translation WHERE value = '%s' AND name = 'product.asset.type,name'" % line[cols['Asset Type']])
-                            query_res = cr.dictfetchone()
-                            asset_type_name = query_res and query_res['src'] or False
-                            asset_type_ids = self.pool.get('product.asset.type').search(cr, uid, [('name', '=', asset_type_name or line[cols['Asset Type']])], context=context)
+                            asset_type_ids = self.pool.get('product.asset.type').search(cr, uid, [('name', '=', line[cols['Asset Type']])], context=context)
                             if asset_type_ids:
                                 asset_type_cache[line[cols['Asset Type']]] = asset_type_ids[0]
                             else:
