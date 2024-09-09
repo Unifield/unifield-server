@@ -687,7 +687,7 @@ class hq_report_ocp_workday(hq_report_ocp):
 
         mi_obj = pool.get('msf.instance')
         period_obj = pool.get('account.period')
-        excluded_journal_types = ['hq', 'migration', 'inkind', 'extra']  # journal types that should not be used to take lines
+        excluded_journal_types = ['hq', 'migration', 'inkind', 'extra', 'engagement']  # journal types that should not be used to take lines
 
         form = data.get('form')
         period_id = form.get('period_id', False)
@@ -740,15 +740,15 @@ class hq_report_ocp_workday(hq_report_ocp):
         # round AJI for match JI funct amount
         cr.execute("""
             select
-                aml.id, aml.credit - aml.debit  - sum(al.amount)
+                aml.id, round(aml.credit, 2) - round(aml.debit, 2)  - sum(round(al.amount, 2)), array_agg(al.id)
             from
                 account_analytic_line AS al,
                 res_currency AS c,
                 account_analytic_journal AS j,
-                account_move_line aml,
-                account_move am,
                 account_journal AS aj,
-                account_period p
+                account_period p,
+                account_move_line aml,
+                account_move am
             where
                     c.id = al.currency_id
                     AND j.id = al.journal_id
@@ -760,6 +760,8 @@ class hq_report_ocp_workday(hq_report_ocp):
                         al.real_period_id = %(period_id)s
                         or al.real_period_id is NULL and al.date >= %(min_date)s and al.date <= %(max_date)s
                     )
+                    AND aml.period_id = %(period_id)s
+                    AND am.name = al.entry_sequence
                     AND am.state = 'posted'
                     AND aml.journal_id = aj.id
                     AND j.type not in %(j_type)s
@@ -768,7 +770,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             group by
                 aml.id
             having
-                abs(aml.credit - aml.debit  - sum(al.amount)) >= 0.01
+                abs(round(aml.credit, 2) - round(aml.debit, 2)  - sum(round(al.amount, 2))) >= 0.01
             """, {
             'instance_ids': tuple(instance_ids),
             'period_id': period_id,
@@ -781,17 +783,66 @@ class hq_report_ocp_workday(hq_report_ocp):
                 insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
                     select
                         id,
-                        round(amount + %s, 2),
+                        round(round(amount, 2) + %s, 2),
                         real_period_id,
                         instance_id
                     from
                         account_analytic_line
                     where
                         move_id = %s and
-                        real_period_id = %s
+                        real_period_id = %s and
+                        id in %s
                     order by abs(amount) desc, id limit 1
-            ''', (bal[1], bal[0], period_id))
-        # fix rounded value to balance rounded JE
+            ''', (bal[1], bal[0], period_id, tuple(bal[2])))
+
+        # pure AD
+        cr.execute("""
+            select
+                al.move_id, sum(round(al.amount, 2)), array_agg(al.id)
+            from
+                account_analytic_line AS al
+                inner join res_currency AS c on c.id = al.currency_id
+                inner join account_analytic_journal AS j on j.id = al.journal_id
+                inner join account_period p on p.id = al.real_period_id
+                left join account_move_line aml on aml.id = al.move_id and aml.period_id = %(period_id)s
+                left join account_move am on am.id = aml.move_id and am.name = al.entry_sequence
+            where
+                    p.id = al.real_period_id
+                    AND p.number not in (0, 16)
+                    AND al.real_period_id = %(period_id)s
+                    AND j.type not in %(j_type)s
+                    AND al.instance_id in %(instance_ids)s
+                    AND am.id is null
+                    AND aml.id is null
+            group by
+                al.move_id
+            having
+                abs(sum(round(al.amount, 2))) >= 0.01
+            """, {
+            'instance_ids': tuple(instance_ids),
+            'period_id': period_id,
+            'min_date': period.date_start,
+            'max_date':  period.date_stop,
+            'j_type': tuple(excluded_journal_types),
+        })
+        for bal in cr.fetchall():
+            cr.execute('''
+                insert into hq_report_func_adj (account_analytic_line_id, rounded_func_amount, period_id, instance_id)
+                    select
+                        id,
+                        round(round(amount, 2) - %s, 2),
+                        real_period_id,
+                        instance_id
+                    from
+                        account_analytic_line
+                    where
+                        move_id = %s and
+                        real_period_id = %s and
+                        id in %s
+                    order by abs(amount) desc, id offset 1 limit 1
+            ''', (bal[1], bal[0], period_id, tuple(bal[2])))
+
+        # fix rounded value to balance rounded ton integer JE
         cr.execute("""insert into hq_report_no_decimal (account_move_id, account_analytic_line_id, original_amount, rounded_amount, period_id, instance_id)
             select
                 aml.move_id,
