@@ -28,7 +28,7 @@ from time import strptime
 from datetime import datetime
 from account_override import finance_export
 from . import hq_report_ocb
-
+import logging
 from report import report_sxw
 import csv
 import zipfile
@@ -672,6 +672,11 @@ class hq_report_ocp_workday(hq_report_ocp):
 
     def create(self, cr, uid, ids, data, context=None):
 
+        debug = True
+
+        if debug:
+            logger = logging.getLogger('OCP Export')
+
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
 
@@ -842,7 +847,7 @@ class hq_report_ocp_workday(hq_report_ocp):
                     order by abs(amount) desc, id offset 1 limit 1
             ''', (bal[1], bal[0], period_id, tuple(bal[2])))
 
-        # fix rounded value to balance rounded ton integer JE
+        # fix rounded booking value JE
         cr.execute("""insert into hq_report_no_decimal (account_move_id, account_analytic_line_id, original_amount, rounded_amount, period_id, instance_id)
             select
                 aml.move_id,
@@ -954,13 +959,13 @@ class hq_report_ocp_workday(hq_report_ocp):
                         select id
                         from hq_report_no_decimal d2
                         where
-                            d2.account_move_id=%s
+                            d2.account_move_id=%s and period_id = %s
                         order by
                             account_analytic_line_id is not null,
                             abs(rounded_amount) desc
                         limit 1
                 )
-            """, (gap, move_id))
+            """, (gap, move_id, period_id))
 
         # end balance rounded amounts
 
@@ -1110,6 +1115,12 @@ class hq_report_ocp_workday(hq_report_ocp):
         writer = csv.writer(lines_file, quoting=csv.QUOTE_ALL, delimiter=",")
         writer.writerow(col_header)
 
+        if debug:
+            tot_book = 0
+            tot_book_round = 0
+            tot_func = 0
+            all_tot = {}
+
         for sql, obj in [
                 (analytic_query, 'account.analytic.line'),
                 (move_line_query, 'account.move.line')]:
@@ -1153,6 +1164,16 @@ class hq_report_ocp_workday(hq_report_ocp):
                         book_credit_round = row['book_credit']
                         ecart = 0
 
+                    if debug:
+                        if row['entry_sequence'] not in all_tot:
+                            all_tot[row['entry_sequence']] = {'book': 0, 'book_round': 0, 'func': 0}
+
+                        all_tot[row['entry_sequence']]['book'] += row['book_credit'] - row['book_debit']
+                        all_tot[row['entry_sequence']]['book_round'] += book_credit_round - book_debit_round
+                        all_tot[row['entry_sequence']]['func'] += row['func_credit'] - row['func_debit']
+                        tot_book = tot_book + row['book_credit'] - row['book_debit']
+                        tot_book_round = tot_book_round + book_credit_round - book_debit_round
+                        tot_func = tot_func + row['func_credit'] - row['func_debit']
                     budget_amount = row['book_credit'] - row['book_debit']
                     if fx_budget_rate.get(row['booking_currency']):
                         budget_amount = round(budget_amount / fx_budget_rate.get(row['booking_currency']), 2)
@@ -1334,6 +1355,12 @@ class hq_report_ocp_workday(hq_report_ocp):
             prefix = inst and inst.code[:3] or ''
         else:
             prefix = ''
+        if debug:
+            logger.warn('=========== %s %s %s %s %s' % (inst.code[:3], period_yyyymm, round(tot_book,2), round(tot_book_round, 2), round(tot_func, 2)))
+            if round(tot_book,2) != 0 or  round(tot_book_round, 2) != 0 or round(tot_func, 2) != 0:
+                for entr_seq in all_tot:
+                    if abs(all_tot[entr_seq]['book']) > 0.001 or abs(all_tot[entr_seq]['book_round']) > 0.001 or abs(all_tot[entr_seq]['func']) > 0.001:
+                        logger.warn('%s %r' % (entr_seq, all_tot[entr_seq]))
         selected_period = strftime('%Y%m', strptime(first_day_of_period, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
         lines_file_zip_name = '%s_%s_%s_Monthly_Export.csv' % (prefix, period_yyyymm, current_time)
