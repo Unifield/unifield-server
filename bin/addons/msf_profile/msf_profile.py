@@ -59,6 +59,19 @@ class patch_scripts(osv.osv):
     }
 
     # UF34.0
+    def us_12912_catalogue_lines_partner_id(self, cr, uid, *a, **b):
+        '''
+        Give the partner_type of the catalogue's partner to their lines
+        '''
+        cr.execute("""
+            UPDATE supplier_catalogue_line cl SET partner_type = (SELECT p.partner_type FROM supplier_catalogue c 
+                LEFT JOIN res_partner p ON c.partner_id = p.id WHERE cl.catalogue_id = c.id)
+        """)
+        self.log_info(cr, uid, "US-12912: %s catalogue lines were updated to add partner data" % (cr.rowcount,))
+
+        return True
+
+    # UF34.0
     def us_13398_ocb_unmerge_2_prod(self, cr, uid, *a, **b):
         '''
         Un-merge the products SSDTHCTE014 and SSDTHCTE40T1 on all OCB instances

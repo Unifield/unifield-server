@@ -1126,5 +1126,10 @@
             <field name="method">us_13398_ocb_unmerge_2_prod</field>
         </record>
 
+        <!-- UF35.0 -->
+        <record id="us_12912_catalogue_lines_partner_id" model="patch.scripts">
+            <field name="method">us_12912_catalogue_lines_partner_id</field>
+        </record>
+
     </data>
 </openerp>
