@@ -992,6 +992,8 @@ class msf_import_export(osv.osv_memory):
                                 for inherits in self.pool.get(far.model_name)._inherits:
                                     far_rule_obj_id_cache[data['field_access_rule']].append(inherits)
                             data['field'] = self.pool.get('ir.model.fields').search(cr, uid, [('model', 'in', far_rule_obj_id_cache[data['field_access_rule']]), ('name', '=', line_data[n])])[0]
+                        elif h == 'write_access':
+                            data['write_access'] = process_data(h, line_data[n], fields_def)
 
                     elif h == 'id' and line_data[n]:
                         ids_to_update = _get_obj('id.id', line_data[n], {'id': {'relation': impobj._name}})
