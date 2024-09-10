@@ -277,7 +277,6 @@ class export_report_stock_inventory_parser(XlsxReportParser):
             dom = []
             if report.product_list_id:
                 dom.append(('list_ids', '=', report.product_list_id.id))
-                with_zero = True
             if report.mml_id:
                 dom.append(('in_mml_instance', '=', report.mml_id.id))
             if report.msl_id:
@@ -293,12 +292,10 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         if report.prodlot_id:
             cond.append('prodlot_id=%(prodlot_id)s')
             values['prodlot_id'] = report.prodlot_id.id
-            with_zero = True
 
         if report.expiry_date:
             cond.append('expired_date=%(expiry_date)s')
             values['expiry_date'] = report.expiry_date
-            with_zero = True
 
         if report.stock_level_date:
             cond.append('date<%(stock_level_date)s')
@@ -307,23 +304,28 @@ class export_report_stock_inventory_parser(XlsxReportParser):
         if report.nomen_family_id:
             cond.append('nomen_family_id=%(nomen_family_id)s')
             values['nomen_family_id'] = report.nomen_family_id.id
-            with_zero = True
 
-        if (not report.prodlot_id or not report.expiry_date) and report.display_0:
+        if report.display_0:
             to_date = datetime.now()
             if report.stock_level_date:
                 to_date = datetime.strptime(values['stock_level_date'], '%Y-%m-%d %H:%M:%S')
             from_date = (to_date + relativedelta(months=-int(report.in_last_x_months))).strftime('%Y-%m-%d 00:00:00')
             with_zero = True
 
-            w_prod = ""
-            if report.product_id:
-                w_prod = " product_id = %s AND" % report.product_id.id
+            w_prod, w_fam = "", ""
+            if full_prod_list:
+                if len(full_prod_list) == 1:
+                    w_prod = " m.product_id = %s AND" % full_prod_list[0]
+                else:
+                    w_prod = " m.product_id IN %s AND" % (tuple(full_prod_list),)
+            if report.nomen_family_id:
+                w_fam = " t.nomen_manda_2 = %s AND" % report.nomen_family_id.id
 
             self.cr.execute("""
                 SELECT DISTINCT m.product_id, m.prodlot_id FROM stock_move m
                 LEFT JOIN product_product p ON m.product_id = p.id 
-                WHERE""" + w_prod + """ m.state = 'done' AND m.product_qty != 0 AND p.active = 't' AND
+                LEFT JOIN product_template t ON p.product_tmpl_id = t.id 
+                WHERE""" + w_prod + w_fam + """ m.state = 'done' AND m.product_qty != 0 AND p.active = 't' AND
                     (location_id IN %s OR location_dest_id IN %s) AND m.date >= %s AND m.date <= %s
                 """, (values['location_ids'], values['location_ids'], from_date, to_date))
             for x in self.cr.fetchall():
@@ -338,8 +340,6 @@ class export_report_stock_inventory_parser(XlsxReportParser):
                 values['batch_list'] = tuple(batch_list)
             else:
                 having.append('or prodlot_id is NULL')
-        elif with_zero:
-            having = []
 
         self.cr.execute("""select sum(product_qty), product_id, expired_date, prodlot_id, location_id
             from report_stock_inventory

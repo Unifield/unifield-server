@@ -69,7 +69,7 @@
                     <group colspan="4" col="4">
                     <field name="display_0" />
                     <field name="in_last_x_months" nolabel="1" colspan="2"
-                           attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('display_0', '=', True), ('state', '=', 'draft')]}" />
+                           attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('display_0', '=', False)], 'required': [('display_0', '=', True), ('state', '=', 'draft')]}" />
 
                     </group>
                     <separator colspan="4" string="Actions" />
