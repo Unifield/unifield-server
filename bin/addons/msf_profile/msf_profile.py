@@ -58,6 +58,61 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF35.0
+    def us_11803_12201_12333_lines_state_to_subpick(self, cr, uid, *a, **b):
+        '''
+        Set the line_state of existing sub-Picks
+        '''
+        pick_obj = self.pool.get('stock.picking')
+
+        to_mixed, to_assign, to_confirmed, to_processed, to_empty = [], [], [], [], []
+        pick_ids = pick_obj.search(cr, uid, [('type', '=', 'out'), ('subtype', '=', 'picking'), ('is_subpick', '=', True)], context={})
+        for pick in pick_obj.browse(cr, uid, pick_ids, fields_to_fetch=['move_lines', 'is_subpick'], context={}):
+            available, confirmed = False, False
+            processed = True
+            empty = len(pick.move_lines)
+            for move in pick.move_lines:
+                if move.product_qty == 0.00 or move.state in ('cancel', 'done'):
+                    continue
+
+                processed = False
+                if move.state != 'assigned':
+                    confirmed = True
+                else:
+                    available = True
+
+                if confirmed and available:
+                    break
+
+            if available and confirmed:
+                to_mixed.append(pick.id)
+            elif available:
+                to_assign.append(pick.id)
+            elif confirmed:
+                to_confirmed.append(pick.id)
+            elif processed:
+                to_processed.append(pick.id)
+            elif empty == 0:
+                to_empty.append(pick.id)
+
+        if to_mixed:
+            cr.execute("""UPDATE stock_picking SET line_state = 'mixed' WHERE id IN %s""", (tuple(to_mixed),))
+            self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Partially available'" % (len(to_mixed),))
+        if to_assign:
+            cr.execute("""UPDATE stock_picking SET line_state = 'assigned' WHERE id IN %s""", (tuple(to_assign),))
+            self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Available'" % (len(to_assign),))
+        if to_confirmed:
+            cr.execute("""UPDATE stock_picking SET line_state = 'confirmed' WHERE id IN %s""", (tuple(to_confirmed),))
+            self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Not available'" % (len(to_confirmed),))
+        if to_processed:
+            cr.execute("""UPDATE stock_picking SET line_state = 'processed' WHERE id IN %s""", (tuple(to_processed),))
+            self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Processed'" % (len(to_processed),))
+        if to_empty:
+            cr.execute("""UPDATE stock_picking SET line_state = 'empty' WHERE id IN %s""", (tuple(to_empty),))
+            self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Empty'" % (len(to_empty),))
+
+        return True
+
     # UF34.0
     def us_13398_ocb_unmerge_2_prod(self, cr, uid, *a, **b):
         '''

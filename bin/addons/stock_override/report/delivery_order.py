@@ -58,7 +58,7 @@ class delivery_order(report_sxw.rml_parse):
         states = {
             'draft': _('Draft'),
             'auto': _('Waiting'),
-            'confirmed': _('Confirmed'),
+            'confirmed': _('Not Available'),
             'assigned': _('Available'),
             'shipped': _('Available Shipped'),
             'done': _('Closed'),

@@ -31,7 +31,7 @@ class stock_picking(osv.osv):
     PICKING_STATE = [
         ('draft', _('Draft')),
         ('auto', _('Waiting')),
-        ('confirmed', _('Confirmed')),
+        ('confirmed', _('Not Available')),
         ('assigned', _('Available')),
         ('shipped', _('Available Shipped')),
         ('done', _('Closed')),
