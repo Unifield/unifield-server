@@ -1351,12 +1351,6 @@ class product_asset_disposal(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def cancel(self, cr, uid, ids, context=None):
-        '''
-        Return to the initial view
-        '''
-        return {'type': 'ir.actions.act_window_close'}
-
 product_asset_disposal()
 
 
