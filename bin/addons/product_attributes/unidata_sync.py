@@ -1241,7 +1241,7 @@ class unidata_sync(osv.osv):
                         remove(log['log_file'])
                         to_reset.append(log['id'])
                     except:
-                        raise
+                        pass
 
             if to_reset:
                 log_obj.write(cr, uid, to_reset, {'log_file': False}, context=context)

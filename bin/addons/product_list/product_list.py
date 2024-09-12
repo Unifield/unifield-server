@@ -93,84 +93,48 @@ class product_list(osv.osv):
 
         return [('product_ids.name', args[0][1], args[0][2])]
 
+    def _is_from_sync(self, cr, uid, ids, fieldname, args, context=None):
+        """
+        Has the product list been created by sync ?
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        if not ids:
+            return res
+        entity_identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
+        for prod_list in self.read(cr, uid, ids, ['name'], context=context):
+            prod_list_sd_ref = self.get_sd_ref(cr, uid, prod_list['id'])
+            res[prod_list['id']] = prod_list_sd_ref and not prod_list_sd_ref.startswith(entity_identifier) or False
+
+        return res
+
     _columns = {
-        'name': fields.char(
-            size=128,
-            string='Name',
-            required=True,
-        ),
-        'ref': fields.char(
-            size=128,
-            string='Ref.',
-        ),
-        'type': fields.selection(
-            selection=PRODUCT_LIST_TYPE,
-            string='Type',
-            required=True,
-        ),
+        'name': fields.char(size=128, string='Name', required=True),
+        'ref': fields.char(size=128, string='Ref.'),
+        'type': fields.selection(selection=PRODUCT_LIST_TYPE, string='Type', required=True),
         'creator': fields.selection(
-            selection=[
-                ('hq', 'HQ'),
-                ('coordo', 'Coordination'),
-                ('project', 'Project'),
-                ('temp', 'Temporary'),
-            ],
-            string='Creator',
-            required=True,
+            selection=[('hq', 'HQ'), ('coordo', 'Coordination'), ('project', 'Project'), ('temp', 'Temporary')],
+            string='Creator', required=True,
         ),
-        'description': fields.char(
-            size=256,
-            string='Description',
-        ),
-        'creation_date': fields.date(
-            string='Creation date',
-            readonly=True,
-        ),
-        'last_update_date': fields.date(
-            string='Last update date',
-            readonly=True,
-        ),
-        'standard_list_ok': fields.boolean(
-            string='Standard List',
-        ),
-        'order_list_print_ok': fields.boolean(
-            string='Order list print',
-        ),
-        'reviewer_id': fields.many2one(
-            'res.users',
-            string='Reviewed by',
-            readonly=True,
-        ),
-        'parent_id': fields.many2one(
-            'product.list',
-            string='Parent list',
-        ),
-        'warehouse_id': fields.many2one(
-            'stock.warehouse',
-            string='Warehouse',
-        ),
-        'location_id': fields.many2one(
-            'stock.location',
-            string='Stock Location',
-        ),
-        'product_ids': fields.one2many(
-            'product.list.line',
-            'list_id',
-            string='Products',
-        ),
-        'old_product_ids': fields.one2many(
-            'old.product.list.line',
-            'list_id',
-            string='Old Products',
-        ),
-        'nb_products': fields.function(
-            _get_nb_products,
-            method=True,
-            type='integer',
-            string='# of products',
-        ),
+        'description': fields.char(size=256, string='Description'),
+        'creation_date': fields.date(string='Creation date', readonly=True),
+        'last_update_date': fields.date(string='Last update date', readonly=True),
+        'standard_list_ok': fields.boolean(string='Standard List'),
+        'order_list_print_ok': fields.boolean(string='Order list print'),
+        'reviewer_id': fields.many2one('res.users', string='Reviewed by', readonly=True),
+        'parent_id': fields.many2one('product.list', string='Parent list'),
+        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
+        'location_id': fields.many2one('stock.location', string='Stock Location'),
+        'product_ids': fields.one2many('product.list.line', 'list_id', string='Products'),
+        'old_product_ids': fields.one2many('old.product.list.line', 'list_id', string='Old Products'),
+        'nb_products': fields.function(_get_nb_products, method=True, type='integer', string='# of products'),
         'real_product_ids': fields.function(_get_real_product_ids, method=True, type='many2many', relation='product.product', fnct_search=_search_real_product_ids, string='Products', domain=[('in_any_product_list', '=', True)]),
         'alert_msl_mml': fields.function(_get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
+        'from_sync': fields.function(_is_from_sync, type='boolean', string='Created by Sync', method=True),
     }
 
     _defaults = {
@@ -251,6 +215,17 @@ class product_list(osv.osv):
             'target': 'new',
             'context': context,
         }
+
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        for prod_list in self.read(cr, uid, ids, ['from_sync'], context=context):
+            if not context.get('sync_update_execution') and prod_list['from_sync']:
+                raise osv.except_osv(_('Error'), _('You can not delete a synced product list created in another instance'))
+
+        return super(product_list, self).unlink(cr, uid, ids, context=context)
+
 
 product_list()
 
@@ -622,7 +597,7 @@ class product_template(osv.osv):
 
     # SP-193 : Change field size 60 to 128 digits
     _columns = {
-        'name': fields.char(size=128, string='Description', required=True, translate=True, copy_translate=False),
+        'name': fields.char(size=128, string='Description', required=True, translate=True, copy_translate=False, select=1),
     }
 product_template()
 

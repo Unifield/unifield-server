@@ -68,6 +68,7 @@
         'data/audittrail_account_model.yml',
         'data/audittrail_account_subscription.yml',
         'data/audittrail_data_sync.yml',
+        'data/audittrail_data_auto_import_export.yml',
     ],
     'demo_xml': [],
     'installable': True,

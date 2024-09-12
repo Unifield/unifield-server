@@ -41,6 +41,7 @@ import zlib
 import random
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from base.res.signature import _register_log
 import hashlib
 
 class patch_scripts(osv.osv):
@@ -58,6 +59,67 @@ class patch_scripts(osv.osv):
     }
 
     # UF34.0
+    def us_13398_ocb_unmerge_2_prod(self, cr, uid, *a, **b):
+        '''
+        Un-merge the products SSDTHCTE014 and SSDTHCTE40T1 on all OCB instances
+        '''
+        entity_obj = self.pool.get('sync.client.entity')
+        prod_obj = self.pool.get('product.product')
+        audit_seq_obj = self.pool.get('audittrail.log.sequence')
+
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
+            log = 1
+            # SSDTHCTE014
+            p1_ids = prod_obj.search(cr, uid, [('default_code', '=', 'SSDTHCTE014'), ('active', 'in', ['t', 'f'])], limit=1)
+            if p1_ids:
+                cr.execute("""
+                    UPDATE product_product 
+                    SET kept_product_id = NULL, unidata_merged = 'f', unidata_merge_date = NULL, 
+                        kept_initial_product_id = NULL, old_code = 'SSDTHCTE014' 
+                    WHERE id = %s
+                """, (p1_ids[0],))
+                _register_log(self, cr, uid, p1_ids[0], 'product.product', 'Merge Product kept product', 'SSDTHCTE40T1', '', 'write', {})
+
+                object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.product')], limit=1)
+                field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.product'),
+                                                                              ('name', '=', 'old_code')], limit=1)
+                log_seq_ids = audit_seq_obj.search(cr, uid, [('model', '=', 'product.product'), ('res_id', '=', p1_ids[0])])
+                if log_seq_ids:
+                    log_seq = audit_seq_obj.browse(cr, uid, log_seq_ids[0]).sequence
+                    log = log_seq.get_id(code_or_id='id')
+                auditt_vals = {
+                    'user_id': uid,
+                    'method': 'write',
+                    'object_id': object_ids and object_ids[0] or False,
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'name': 'old_code',
+                    'res_id': p1_ids[0],
+                    'field_id': field_ids and field_ids[0] or False,
+                    'field_description': 'Old Code',
+                    'old_value': 'SSDTHCTE014,SSDTHCTE40T1',
+                    'old_value_text': 'SSDTHCTE014,SSDTHCTE40T1',
+                    'new_value': 'SSDTHCTE014',
+                    'new_value_text': 'SSDTHCTE014',
+                    'log': log,
+                }
+                self.pool.get('audittrail.log.line').create(cr, uid, auditt_vals)
+            # SSDTHCTE40T1
+            p2_ids = prod_obj.search(cr, uid, [('default_code', '=', 'SSDTHCTE40T1'), ('active', 'in', ['t', 'f'])], limit=1)
+            if p2_ids:
+                cr.execute("""UPDATE product_product SET is_kept_product = 'f' WHERE id = %s""", (p2_ids[0],))
+                _register_log(self, cr, uid, p2_ids[0], 'product.product', 'Merge Product non-kept product', 'SSDTHCTE014', '', 'write', {})
+
+        return True
+
+    def us_13375_ocb_activate_iil(self, cr, uid, *a, **b):
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'ocb':
+            esc_wiz_obj = self.pool.get('esc_line.setup')
+            wiz_id = esc_wiz_obj.create(cr, uid, {'esc_line': True})
+            esc_wiz_obj.execute(cr, uid, [wiz_id])
+            self.log_info(cr, uid, "US-13375: IIL active")
+        return True
+
     def us_10865_disable_former_ur(self, cr, uid, *a, **b):
         if cr.table_exists('sync_server_user_rights'):
             cr.execute("update sync_server_user_rights set state='deprecated' where state='confirmed'")
@@ -223,6 +285,33 @@ class patch_scripts(osv.osv):
         exp_rt_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
 
         cr.execute("""UPDATE stock_reason_type SET name = 'Donation to prevent losses' WHERE id = %s""", (exp_rt_id,))
+        return True
+
+    def us_12472_currency_workday_set_no_decimal(self, cr, uid, *a, **b):
+        cr.execute('''update res_currency set ocp_workday_decimal=0 where currency_table_id is null and name in (
+                        'BIF',
+                        'BYR'
+                        'CLP',
+                        'DJF',
+                        'GNF',
+                        'ISK',
+                        'JPY',
+                        'KMF',
+                        'KRW',
+                        'PYG',
+                        'RWF',
+                        'UGX',
+                        'UYI',
+                        'VND',
+                        'VUV',
+                        'XAF',
+                        'XOF',
+                        'XPF'
+                    )''')
+        return True
+
+    def us_12472_hr_populate_expat_creation_date(self, cr, uid, *a, **b):
+        cr.execute('''update hr_employee set expat_creation_date=create_date where employee_type='ex' ''')
         return True
 
     # UF33.0

@@ -31,9 +31,11 @@ from ftplib import FTP
 
 import pooler
 
+
 class automated_export(osv.osv):
     _name = 'automated.export'
     _order = 'name, id'
+    _trace = True
 
     def _auto_init(self, cr, context=None):
         res = super(automated_export, self)._auto_init(cr, context)
@@ -126,7 +128,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
     }
 
     _defaults = {
-        'pause': 120,
+        'pause': 10,
         'interval': lambda *a: 1,
         'interval_unit': lambda *a: 'hours',
         'active': lambda *a: False,
@@ -555,5 +557,6 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             ids = [ids]
 
         return self.write(cr, uid, ids, {'active': False}, context=context)
+
 
 automated_export()

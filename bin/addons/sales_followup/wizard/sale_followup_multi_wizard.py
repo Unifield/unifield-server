@@ -72,34 +72,30 @@ class sale_followup_multi_wizard(osv.osv_memory):
         #    'order_id',
         #    string='Orders',
         #),
-        'order_id': fields.many2one(
-            'sale.order',
-            string='Order Ref.',
-        ),
-        'draft_ok': fields.boolean(
-            string='Draft',
-        ),
-        'validated_ok': fields.boolean(
-            string='Validated',
-        ),
-        'sourced_ok': fields.boolean(
-            string='Sourced',
-        ),
-        'confirmed_ok': fields.boolean(
-            string='Confirmed',
-        ),
-        'closed_ok': fields.boolean(
-            string='Closed',
-        ),
-        'cancel_ok': fields.boolean(
-            string='Cancelled',
-        ),
-        'only_bo': fields.boolean(
-            string='Pending order lines only (PDF)',
-        ),
-        'include_notes_ok': fields.boolean(
-            string='Include order lines note (PDF)',
-        ),
+        # States
+        'order_id': fields.many2one('sale.order', string='Order Ref.'),
+        'draft_ok': fields.boolean(string='Draft'),
+        'validated_ok': fields.boolean(string='Validated'),
+        'sourced_ok': fields.boolean(string='Sourced'),
+        'confirmed_ok': fields.boolean(string='Confirmed'),
+        'closed_ok': fields.boolean(string='Closed'),
+        'cancel_ok': fields.boolean(string='Cancelled'),
+        # Categories
+        'medical_ok': fields.boolean(string='Medical'),
+        'logistic_ok': fields.boolean(string='Logistic'),
+        'service_ok': fields.boolean(string='Service'),
+        'transport_ok': fields.boolean(string='Transport'),
+        'other_ok': fields.boolean(string='Other'),
+        # Order Types
+        'regular_ok': fields.boolean(string='Regular'),
+        'donation_prog_ok': fields.boolean(string='Programmatic Donation'),
+        'donation_exp_ok': fields.boolean(string='Donation to prevent losses'),
+        'donation_st_ok': fields.boolean(string='Standard donation'),
+        'loan_ok': fields.boolean(string='Loan'),
+        'loan_return_ok': fields.boolean(string='Loan Return'),
+
+        'only_bo': fields.boolean(string='Pending order lines only (PDF)'),
+        'include_notes_ok': fields.boolean(string='Include order lines note (PDF)'),
         'msl_non_conform': fields.boolean('MSL/MML Non Conforming'),
     }
 
@@ -138,6 +134,55 @@ class sale_followup_multi_wizard(osv.osv_memory):
             state_domain.append('cancel')
 
         return state_domain
+
+    def _get_category_domain(self, wizard):
+        '''
+        Return a list of categories on which the FO should be filtered
+        '''
+        category_domain = []
+
+        if wizard.medical_ok:
+            category_domain.append('medical')
+
+        if wizard.logistic_ok:
+            category_domain.append('logistic')
+
+        if wizard.service_ok:
+            category_domain.append('service')
+
+        if wizard.transport_ok:
+            category_domain.append('transport')
+
+        if wizard.other_ok:
+            category_domain.append('other')
+
+        return category_domain
+
+    def _get_order_type_domain(self, wizard):
+        '''
+        Return a list of order types on which the FO should be filtered
+        '''
+        order_type_domain = []
+
+        if wizard.regular_ok:
+            order_type_domain.append('regular')
+
+        if wizard.donation_prog_ok:
+            order_type_domain.append('donation_prog')
+
+        if wizard.donation_exp_ok:
+            order_type_domain.append('donation_exp')
+
+        if wizard.donation_st_ok:
+            order_type_domain.append('donation_st')
+
+        if wizard.loan_ok:
+            order_type_domain.append('loan')
+
+        if wizard.loan_return_ok:
+            order_type_domain.append('loan_return')
+
+        return order_type_domain
 
     def _check_max_line_number(self, cr, fo_ids):
         """
@@ -245,6 +290,8 @@ class sale_followup_multi_wizard(osv.osv_memory):
                                      _('Please correct the Start Date. Start date can not be later than the end date'))
             if wizard.msl_non_conform:
                 state_domain = self._get_state_domain(wizard)
+                category_domain = self._get_category_domain(wizard)
+                order_type_domain = self._get_order_type_domain(wizard)
                 sql_param = {'instance_id': self.pool.get('res.company')._get_instance_id(cr, uid)}
                 sql_cond = ["nom.name='MED'", "nom.level = 0", "so.procurement_request = 'f'", "creator.code = 'unidata'"]
                 if wizard.order_id:
@@ -262,6 +309,12 @@ class sale_followup_multi_wizard(osv.osv_memory):
                 if state_domain:
                     sql_param['state'] = tuple(state_domain)
                     sql_cond.append(' so.state in %(state)s ')
+                if category_domain:
+                    sql_param['categ'] = tuple(category_domain)
+                    sql_cond.append(' so.categ in %(categ)s ')
+                if order_type_domain:
+                    sql_param['order_type'] = tuple(order_type_domain)
+                    sql_cond.append(' so.order_type in %(order_type)s ')
 
                 # MML
                 cr.execute('''
@@ -322,6 +375,8 @@ class sale_followup_multi_wizard(osv.osv_memory):
             else:
                 fo_domain = []
                 state_domain = self._get_state_domain(wizard)
+                category_domain = self._get_category_domain(wizard)
+                order_type_domain = self._get_order_type_domain(wizard)
 
                 if wizard.partner_id:
                     fo_domain.append(('partner_id', '=', wizard.partner_id.id))
@@ -334,6 +389,12 @@ class sale_followup_multi_wizard(osv.osv_memory):
 
                 if state_domain:
                     fo_domain.append(('state', 'in', tuple(state_domain)))
+
+                if category_domain:
+                    fo_domain.append(('categ', 'in', tuple(category_domain)))
+
+                if order_type_domain:
+                    fo_domain.append(('order_type', 'in', tuple(order_type_domain)))
 
                 fo_ids = fo_obj.search(cr, uid, fo_domain, context=context)
 

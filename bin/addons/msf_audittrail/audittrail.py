@@ -839,15 +839,26 @@ class audittrail_rule(osv.osv):
                                 continue
 
                         if old_value != new_value:
-                            if fields_to_trace[field].ttype == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10]:
+                            # Prevent log to be created for datetime fields if only the time changes, but not in auto import/export
+                            if fields_to_trace[field].ttype == 'datetime' and old_value and new_value and \
+                                    old_value[:10] == new_value[:10] and \
+                                    (model_name_tolog not in ['automated.import', 'automated.export'] or field != 'start_time'):
                                 continue
+                            # US-13017
+                            if model_name_tolog == 'automated.import' and field == 'start_time':
+                                if old_value and not new_value:  # Skip the log creation when the field is emptied
+                                    continue
+                                elif res_id and not old_value and new_value:
+                                    # When the empty forced date of next execution is filled, take the next execution date as old value
+                                    auto_imp = self.pool.get(model_name_tolog).read(cr, uid, res_id, ['next_scheduled_task'], context=context)
+                                    old_value = auto_imp and auto_imp['next_scheduled_task'] or False
                             line = vals.copy()
                             description = fields_to_trace[field].field_description
                             # UTP-360
                             if description == 'Pricelist':
                                 description = 'Currency'
-                            # Prevent password field to be plainly stored in Connection Manager
-                            if field == 'password':
+                            # Prevent password field to be plainly stored in Connection Manager and Auto Import/Export
+                            if field in ['password', 'ftp_password']:
                                 old_value, new_value = '********', '********'
                             line.update({
                                 'field_id': fields_to_trace[field].id,
@@ -1039,6 +1050,13 @@ class audittrail_log_line(osv.osv):
                     elif res[line.id].find('Purchase Order') != -1:
                         res[line.id] = res[line.id].replace('Purchase Order', 'Request for Quotation')
 
+            # rename 'Force Date and time of next execution' to 'Next Execution Date' in the Auto Import
+            if line.object_id.model == 'automated.import':
+                if res[line.id].find('Date et heure forcée de la prochaine exécution planifiée') != -1:
+                    res[line.id] = res[line.id].replace('Date et heure forcée de la prochaine exécution planifiée', 'Prochaine date d\'exécution')
+                elif res[line.id].find('Force Date and time of next execution') != -1:
+                    res[line.id] = res[line.id].replace('Force Date and time of next execution', 'Next Execution Date')
+
         return res
 
     def _src_field_name(self, cr, uid, obj, name, args, context=None):
@@ -1182,7 +1200,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         field_id = field_ids and field_ids[0] or False
 
     if field_id:
-        field = field_pool.read(cr, uid, field_id, ['relation', 'ttype', 'name'])
+        field = field_pool.read(cr, uid, field_id, ['relation', 'ttype', 'name', 'model'])
         relation_model = field['relation']
         relation_model_pool = relation_model and pool.get(relation_model) or False
 
@@ -1221,7 +1239,11 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = False
             if values:
                 # Display only the date on log line (Comment the next line and uncomment the next one if you want display the time)
-                date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
+                if field['model'] in ['automated.import', 'automated.export'] and \
+                        field['name'] in ['next_scheduled_task', 'start_time']:
+                    date_format = self.pool.get('date.tools').get_datetime_format(cr, uid, context=context)
+                else:
+                    date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
                 try:
                     res = datetime.strptime(values, '%Y-%m-%d %H:%M:%S')
                 except ValueError:
