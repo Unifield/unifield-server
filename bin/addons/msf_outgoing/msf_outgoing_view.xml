@@ -503,10 +503,10 @@
 						<field name="partner_id2" />
 						<field name="origin"/>
 						<field name="details"/>
-                        <field name="packing_list" />
-                        <field name="order_category" />
                         <newline />
 						<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
+                        <field name="packing_list" />
+                        <field name="order_category" />
 						<field name="date" />
 						<field name="min_date" />
 						<field name="product_id" />
