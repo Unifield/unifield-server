@@ -1788,7 +1788,7 @@ class Connection(osv.osv):
                     self._password = password
                     con.password = password
                 else:
-                    self._password = con.login
+                    self._password = tools.config.get('sync_user_password', con.login)
             if login is None:
                 login = con.login
             cnx = rpc.Connection(connector, con.database, login, self._password)

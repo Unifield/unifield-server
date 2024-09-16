@@ -592,7 +592,7 @@ class configmanager(object):
             finally:
                 self.__lock.release()
         else:
-            logging.getLogger('server').warning('Unbale to lock file %s, db %s not added', self.rcfile, db_name)
+            logging.getLogger('server').warning('Unable to lock file %s, db %s not added', self.rcfile, db_name)
 
     def delete_db_name(self, db_name):
         if not db_name or not self.rcfile or not os.path.exists(config.rcfile):
@@ -608,7 +608,7 @@ class configmanager(object):
             finally:
                 self.__lock.release()
         else:
-            logging.getLogger('server').warning('Unbale to lock file %s, db %s not added', config.rcfile, db_name)
+            logging.getLogger('server').warning('Unable to lock file %s, db %s not added', config.rcfile, db_name)
 
 
 config = configmanager()
