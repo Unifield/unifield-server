@@ -63,6 +63,10 @@ class merged_order(report_sxw.rml_parse):
         line_obj = self.pool.get('purchase.order.line')
         line_ids = line_obj.search(self.cr, self.uid, [('order_id', '=', order.id), ('state', 'not in', ['cancel', 'cancel_r'])])
 
+        # Decimal precision of the PO line's subtotal
+        pur_price_db = self.pool.get('decimal.precision').precision_get(self.cr, self.uid, 'Purchase Price')
+        subtt_dp = pur_price_db is None and 2 or pur_price_db
+
         for line in line_obj.browse(self.cr, self.uid, line_ids, context=self.localcontext):
             if not line.product_id:
                 p_key = line.nomenclature_description
@@ -80,7 +84,7 @@ class merged_order(report_sxw.rml_parse):
                     'supplier_code': line.supplier_code,
                     'name': p_name,
                     'price_unit': line.price_unit,
-                    'price_subtotal': line.price_subtotal,
+                    'price_subtotal': round(line.price_subtotal, subtt_dp),
                     'product_uom': line.product_uom.name,
                     'quantity': line.product_qty,
                     'comment': line.comment or '',

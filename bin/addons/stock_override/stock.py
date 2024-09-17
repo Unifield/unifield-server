@@ -1688,14 +1688,14 @@ class stock_move(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
+        # Decimal precision of the product's standard price
+        acc_comput_dp = self.pool.get('decimal.precision').precision_get(cr, uid, 'Account Computation')
+        price_dp = acc_comput_dp is None and 5 or acc_comput_dp
+
         result = []
         for move in self.browse(cr, uid, ids, context=context):
             # add this move into the list of result
             sub_total = move.product_qty * move.product_id.standard_price
-            # Decimal precision of the product's standard price
-            acc_comput_data = self.pool.get('ir.model.data').\
-                get_object_reference(cr, uid, 'account_override', 'decimal_account_computation')
-            price_dp = acc_comput_data is not None and acc_comput_data[1] or 5
 
             currency = ''
             if move.purchase_line_id and move.purchase_line_id.currency_id:
