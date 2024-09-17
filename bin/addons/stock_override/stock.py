@@ -1680,7 +1680,6 @@ class stock_move(osv.osv):
 
         return defaults
 
-
     def _get_destruction_products(self, cr, uid, ids, product_ids=False, context=None, recursive=False):
         """ Finds the product quantity and price for particular location.
         """
@@ -1693,6 +1692,10 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             # add this move into the list of result
             sub_total = move.product_qty * move.product_id.standard_price
+            # Decimal precision of the product's standard price
+            acc_comput_data = self.pool.get('ir.model.data').\
+                get_object_reference(cr, uid, 'account_override', 'decimal_account_computation')
+            price_dp = acc_comput_data is not None and acc_comput_data[1] or 5
 
             currency = ''
             if move.purchase_line_id and move.purchase_line_id.currency_id:
@@ -1703,8 +1706,8 @@ class stock_move(osv.osv):
             result.append({
                 'prod_name': move.product_id.name,
                 'prod_code': move.product_id.code,
-                'prod_price': move.product_id.standard_price,
-                'sub_total': sub_total,
+                'prod_price': round(move.product_id.standard_price, price_dp),
+                'sub_total': round(sub_total, price_dp),
                 'currency': currency,
                 'origin': move.origin,
                 'expired_date': move.expired_date,
