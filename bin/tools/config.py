@@ -475,7 +475,7 @@ class configmanager(object):
         setattr(parser.values, option.dest, ','.join(result))
 
     def load(self):
-        p = configparser.ConfigParser()
+        p = configparser.ConfigParser(interpolation=None)
         try:
             p.read([self.rcfile])
             for (name,value) in p.items('options'):
