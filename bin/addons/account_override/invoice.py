@@ -885,12 +885,18 @@ class account_invoice(osv.osv):
         res_seq = self.create_sequence(cr, uid, vals, context)
         vals.update({'sequence_id': res_seq,})
 
+        # UTP-317 # Check that no inactive partner have been used to create this invoice (except for isi and ivi)
         if 'partner_id' in vals:
             partner_id = vals.get('partner_id')
             if isinstance(partner_id, (str)):
                 partner_id = int(partner_id)
             partner_obj = self.pool.get('res.partner')
-            partner = partner_obj.read(cr, uid, partner_id, ['ref'])
+            partner = partner_obj.read(cr, uid, partner_id,
+                                       ['active', 'name', 'ref'])
+            if partner and not partner['active']:
+                if not ('real_doc_type' in vals and vals['real_doc_type'] in ('isi', 'ivi')):
+                    raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner and partner['name'] or '',))
+
             #US-1686: set supplier reference from partner
             if 'supplier_reference' not in vals\
                     and self.is_set_ref_from_partner(cr, uid, vals=vals,
