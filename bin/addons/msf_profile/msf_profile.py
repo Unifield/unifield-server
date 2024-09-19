@@ -58,6 +58,12 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_13192_get_ud_not_golden(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'UD_GETALL_MERGED', '1')
+        return True
+
     # UF34.0
     def us_13398_ocb_unmerge_2_prod(self, cr, uid, *a, **b):
         '''

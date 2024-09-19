@@ -1066,6 +1066,7 @@ class product_attributes(osv.osv):
             readonly=True,
             help="Automatically filled with UniData information.",
         ),
+        'golden_status': fields.selection([('Golden', 'Golden'), ('Unmatched', 'Unmatched'), ('Merged', 'Merged'), ('Deleted', 'Deleted')], 'UD Golden State', select=1),
         'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=32),
@@ -1308,6 +1309,15 @@ class product_attributes(osv.osv):
             for field in root.xpath('//field[@name="old_code"]'):
                 field.set('invisible', '0')
             res['arch'] = etree.tostring(root, encoding='unicode')
+
+        if view_type in ('tree', 'form', 'search') and self.pool.get('res.company')._get_instance_level(cr, uid) == 'section':
+            root = etree.fromstring(res['arch'])
+            found = False
+            for field in root.xpath('//field[@name="golden_status"]'):
+                field.set('invisible', '0')
+                found = True
+            if found:
+                res['arch'] = etree.tostring(root, encoding='unicode')
 
         if view_type == 'form':
             esc_line = self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'esc_line')
@@ -3769,7 +3779,7 @@ class product_pull_single_ud(osv.osv_memory):
         for x in self.read(cr, uid, ids, ['msfid'], context=context):
             if x['msfid']:
                 session_id = session_obj.create(cr, uid, {'manual_single': True, 'server': 'ud', 'start_date': fields.datetime.now(), 'state': 'running', 'sync_type': 'single', 'msfid_min': x['msfid']}, context=context)
-                ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+                ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, hidden_records=True, context=context)
                 try:
                     trash1, nb_prod, updated, total_nb_created, total_nb_errors = ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False, session_id=session_id)
                 except requests.exceptions.HTTPError as e:

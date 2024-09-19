@@ -1126,5 +1126,9 @@
             <field name="method">us_13398_ocb_unmerge_2_prod</field>
         </record>
 
+        <record id="us_13192_get_ud_not_golden" model="patch.scripts">
+            <field name="method">us_13192_get_ud_not_golden</field>
+        </record>
+
     </data>
 </openerp>
