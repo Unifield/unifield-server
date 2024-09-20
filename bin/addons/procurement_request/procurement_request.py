@@ -467,6 +467,31 @@ class procurement_request(osv.osv):
             'context': context,
         }
 
+    def ir_product_list_import_call_wizard(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        if not ids:
+            return False
+        if context is None:
+            context = {}
+
+        if self.read(cr, uid, ids[0], ['state'], context=context)['state'] != 'draft':
+            raise osv.except_osv(_('Warning'),
+                                 _('This import can not be used as IR must be in Draft with header information already filled'))
+        import_id = self.pool.get('ir.product.list.import.wizard').create(cr, uid, {'sale_id': ids[0]}, context)
+        context.update({'ir_plist_import_id': import_id})
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'ir.product.list.import.wizard',
+            'res_id': import_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'same',
+            'context': context,
+        }
+
 
 procurement_request()
 
