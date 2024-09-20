@@ -64,7 +64,7 @@ class freight_manifest(report_sxw.rml_parse):
         return self.parcetot and self.parcetot or 0
 
     def getTotKg(self):
-        return self.kgtot and self.kgtot or 0.0
+        return self.kgtot and round(self.kgtot, 2) or 0.0
 
     # BKLG_84
     def get_group_lines(self, report_data):
@@ -135,7 +135,7 @@ class freight_manifest(report_sxw.rml_parse):
                     'ppl': ppl,
                     'desc': line_obj[ref][ppl]['desc'],
                     'parcels': line_obj[ref][ppl]['parcels'],
-                    'kgs': line_obj[ref][ppl]['kgs'],
+                    'kgs': round(line_obj[ref][ppl]['kgs'], 2),
                     'm3': round(line_obj[ref][ppl]['m3'], 4),
                     'value': round(line_obj[ref][ppl]['value'], 2),
                     'kc': line_obj[ref][ppl]['kc'],

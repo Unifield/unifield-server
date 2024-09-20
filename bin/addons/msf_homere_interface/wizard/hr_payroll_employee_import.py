@@ -204,6 +204,21 @@ class hr_payroll_employee_import(osv.osv_memory):
             for err in errors[wiz_id]:
                 error_obj.create(cr, uid, {'wizard_id': wiz_id, 'msg': err}, context=context)
 
+
+    def search_employee(self, cr, uid, codeterrain, id_staff, uniq_id, uuid_key, identification_id):
+        e_ids = []
+        emp_obj = self.pool.get('hr.employee')
+
+        domain = [('homere_codeterrain', '=', codeterrain,), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)]
+        if uuid_key:
+            e_ids = emp_obj.search(cr, uid, domain + [('homere_uuid_key', '=', uuid_key), ('identification_id', '=', identification_id)])
+        if not e_ids and uuid_key:
+            e_ids = emp_obj.search(cr, uid, domain + [('homere_uuid_key', '=', uuid_key)])
+        if not e_ids:
+            e_ids = emp_obj.search(cr, uid, domain)
+        return e_ids
+
+
     def update_employee_check(self, cr, uid,
                               staffcode=False, missioncode=False, staff_id=False, uniq_id=False,
                               wizard_id=None, employee_name=False, registered_keys=None, homere_fields=None, uuid_key=None, errors=None):
@@ -268,8 +283,10 @@ class hr_payroll_employee_import(osv.osv_memory):
                                  )
             return (res, what_changed)
 
+
         # check duplicates already in db
-        search_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', missioncode), ('homere_id_staff', '=', staff_id), ('homere_id_unique', '=', uniq_id)])
+        search_ids = self.search_employee(cr, uid, missioncode, staff_id, uniq_id, uuid_key, staffcode)
+
         if search_ids and len(search_ids) > 1:
             emp_duplicates = self.pool.get('hr.employee').browse(cr, uid, search_ids, fields_to_fetch=['name'])
             # create a list with the employee from the file...
@@ -409,11 +426,12 @@ class hr_payroll_employee_import(osv.osv_memory):
             if not employee_check and not what_changed:
                 return False, created, updated
 
-            # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
-            e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)])
             # UTP-1098: If what_changed is not None, we should search the employee only on code_staff
             if what_changed:
                 e_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', ustr(code_staff)), '|', ('name', '=', employee_name), ('homere_uuid_key', '=', uuid_key)])
+            else:
+                e_ids = self.search_employee(cr, uid, codeterrain, id_staff, uniq_id, uuid_key, code_staff)
+
             # Prepare vals
             res = False
             vals = {
