@@ -879,6 +879,53 @@ class product_attributes(osv.osv):
 
         return ret
 
+    def _get_is_ud_golden(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        ret = {}
+
+        for _id in ids:
+            ret[_id] = False
+
+        cr.execute('''
+            select p.id
+            from product_product p, product_international_status st
+            where
+                st.code ='unidata' and
+                st.id = p.international_status and
+                p.id in %s and
+                p.golden_status = 'Golden'
+            ''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            ret[x[0]] = True
+
+        return ret
+
+    def _search_is_ud_golden(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+
+        unidata_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+        dom = [('international_status', '=', unidata_id)]
+        for arg in args:
+            if arg[0] == 'is_ud_golden':
+                if arg[1] not in ('=', '!='):
+                    raise osv.except_osv(_('Error'), _('Filter not implemented on %s') % (name, ))
+                if not arg[2] or arg[2] in ('f', 'False', 'false'):
+                    value = False
+                else:
+                    value = True
+                if arg[1] == '!=':
+                    value = not value
+
+                if value:
+                    dom += [('golden_status', '=', 'Golden')]
+                else:
+                    dom += [('golden_status', '!=', 'Golden')]
+
+        return dom
+
 
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
@@ -1067,6 +1114,7 @@ class product_attributes(osv.osv):
             help="Automatically filled with UniData information.",
         ),
         'golden_status': fields.selection([('Golden', 'Golden'), ('Unmatched', 'Unmatched'), ('Merged', 'Merged'), ('Deleted', 'Deleted')], 'UD Golden State', select=1),
+        'is_ud_golden': fields.function(_get_is_ud_golden, type='boolean', method=1, string='UD Golden', fnct_search=_search_is_ud_golden),
         'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=32),
@@ -1313,7 +1361,11 @@ class product_attributes(osv.osv):
         if view_type in ('tree', 'form', 'search') and self.pool.get('res.company')._get_instance_level(cr, uid) == 'section':
             root = etree.fromstring(res['arch'])
             found = False
-            for field in root.xpath('//field[@name="golden_status"]'):
+
+            field_name = 'golden_status'
+            if view_type == 'search':
+                field_name = 'is_ud_golden'
+            for field in root.xpath('//field[@name="%s"]' % field_name):
                 field.set('invisible', '0')
                 found = True
             if found:
@@ -3781,7 +3833,7 @@ class product_pull_single_ud(osv.osv_memory):
                 session_id = session_obj.create(cr, uid, {'manual_single': True, 'server': 'ud', 'start_date': fields.datetime.now(), 'state': 'running', 'sync_type': 'single', 'msfid_min': x['msfid']}, context=context)
                 ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, hidden_records=True, context=context)
                 try:
-                    trash1, nb_prod, updated, total_nb_created, total_nb_errors = ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False, session_id=session_id)
+                    trash1, nb_prod, updated, total_nb_created, total_nb_errors = ud.update_products(q_filter='msfIdentifier=%d'%x['msfid'], record_date=False, session_id=session_id, create_missing_nomen=True)
                 except requests.exceptions.HTTPError as e:
                     raise osv.except_osv(_('Error'), _('Unidata error: %s, did you configure the UniData sync ?') % e.response)
                 except Exception:

@@ -118,6 +118,9 @@
                     <field name="page_size" />
                     <field name="start_uid" />
                     <newline />
+                    <field name="nomen_updated" />
+                    <field name="nomen_created" />
+                    <field name="nomen_error" />
                     <field name="number_products_pulled" />
                     <field name="number_products_updated" />
                     <field name="number_products_created" />
@@ -156,10 +159,13 @@
                     <field name="start_date" />
                     <field name="end_date"  />
                     <field name="page_size" />
+                    <field name="nomen_updated" />
+                    <field name="nomen_created" />
+                    <field name="nomen_error" />
                     <field name="number_products_pulled" />
-		    <field name="number_products_updated" />
-		    <field name="number_products_created" />
-	            <field name="number_products_errors" />
+                    <field name="number_products_updated" />
+                    <field name="number_products_created" />
+                    <field name="number_products_errors" />
                     <field name="sync_type" />
                     <field name="state" />
                     <field name="log_exists" invisible="1" />

@@ -532,7 +532,7 @@
                    <field name="in_mml_instance" />
                    <field name="in_msl_instance" widget="many2one"/>
                    <field name="msfid"/>
-                   <field name="golden_status" invisible="1" />
+                   <field name="is_ud_golden" invisible="1" />
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>
