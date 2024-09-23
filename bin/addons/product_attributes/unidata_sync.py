@@ -949,9 +949,11 @@ class ud_sync():
         if nomen_msf_id:
             split_parts = nomen_msf_id.split('-')
             url = '%s/%s' % (url, "".join(split_parts[2:]))
+        else:
+            self.cr.execute("update unidata_products_error set fixed_date=NOW() where type='nomenclature'")
+
         current_id = False
 
-        self.cr.execute("update unidata_products_error set fixed_date=NOW() where type='nomenclature'")
 
         while True:
             js = self.query("", page=page, url=url)
