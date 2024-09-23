@@ -1073,6 +1073,15 @@ class ud_sync():
                             'json_data': x,
                             'session_id': session_id,
                         })
+                    if current_msfid:
+                        self.cr.execute('''insert into unidata_products_error (unique_key, type, code, date, log, json_data)
+                            values (%(code)s, 'nomenclature', %(code)s, NOW(), %(log)s, %(json_data)s)
+                            on conflict (unique_key)  do update SET code = %(code)s, date=NOW(), log=%(log)s, json_data=%(json_data)s, fixed_date=NULL
+                        ''', {
+                            'code': x.get('code', ''),
+                            'log': '%s %s' % (nom_type, error),
+                            'json_data': '%s'%x,
+                        })
                 finally:
                     self.cr.execute("RELEASE SAVEPOINT nom_ud_update")
 
@@ -1275,9 +1284,9 @@ class ud_sync():
                     else:
                         nb_errors += 1
                     if x.get('id', ''):
-                        self.cr.execute('''insert into unidata_products_error (msfid, code, former_codes, date, log, uf_product_id, json_data)
-                            values (%(msfid)s, %(code)s, %(former_codes)s, NOW(), %(log)s, %(uf_product_id)s, %(json_data)s)
-                            on conflict (msfid)  do update SET code = %(code)s, former_codes=%(former_codes)s, date=NOW(), log=%(log)s, uf_product_id=%(uf_product_id)s, json_data=%(json_data)s, fixed_date=NULL
+                        self.cr.execute('''insert into unidata_products_error (unique_key, msfid, code, former_codes, date, log, uf_product_id, json_data)
+                            values (%(msfid)s, %(msfid)s, %(code)s, %(former_codes)s, NOW(), %(log)s, %(uf_product_id)s, %(json_data)s)
+                            on conflict (unique_key) do update SET code = %(code)s, former_codes=%(former_codes)s, date=NOW(), log=%(log)s, uf_product_id=%(uf_product_id)s, json_data=%(json_data)s, fixed_date=NULL
                         ''', {
                             'msfid': x.get('id'),
                             'code': x.get('code', ''),
@@ -1863,7 +1872,8 @@ class unidata_products_error(osv.osv):
         return res
 
     _columns = {
-        'msfid': fields.integer('MSF ID', required=1, select=1),
+        'unique_key': fields.char('Record key', size=64, required=1),
+        'msfid': fields.integer('MSF ID', select=1),
         'code': fields.char('UD Code', size=64, select=1),
         'former_codes': fields.char('Former Code', size=1024),
         'date': fields.datetime('Date of last error', required=1, select=1),
@@ -1872,12 +1882,14 @@ class unidata_products_error(osv.osv):
         'uf_product_id': fields.text('UF product db id'),
         'json_data': fields.text('UD Json'),
         'json_data_formated': fields.function(_get_json_data_formated, method=1, type='text',string='UD Json'),
+        'type': fields.selection([('product', 'Product'), ('nomenclature', 'Nomenclature')], string="Object", required=1),
     }
 
     _sql_constraints = [
-        ('unique_msfid', 'unique(msfid)', 'msfid already exists.'),
+        ('unique_key', 'unique(unique_key)', 'key already exists.'),
     ]
     _defaults = {
         'date': lambda *a, **b: fields.datetime.now(),
+        'type': 'product',
     }
 unidata_products_error()

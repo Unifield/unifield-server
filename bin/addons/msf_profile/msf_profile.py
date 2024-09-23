@@ -62,6 +62,9 @@ class patch_scripts(osv.osv):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if instance and instance.level == 'section':
             self.pool.get('ir.config_parameter').set_param(cr, 1, 'UD_GETALL_MERGED', '1')
+
+        cr.drop_constraint_if_exists('unidata_products_error', 'unidata_products_error_unique_msfid')
+        cr.execute('update unidata_products_error set unique_key = msfid')
         return True
 
     # UF34.0
