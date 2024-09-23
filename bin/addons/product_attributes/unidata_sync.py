@@ -1030,7 +1030,7 @@ class ud_sync():
                         if x.get('accountCode') not in account_cache:
                             account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', x.get('accountCode'))])
                             if not account_ids:
-                                raise UDException('Family %s account code %s not found' % (current_msfid, x.get('accountCode')))
+                                raise UDException('%s account code %s not found' % (current_msfid, x.get('accountCode')))
                             categ_ids = categ_obj.search(self.cr, self.uid, [('msfid', '=', current_msfid), ('family_id', '=', current_id)])
                             categ_data = {
                                 'name': x['labels']['english'],
@@ -1072,7 +1072,7 @@ class ud_sync():
                     if session_id:
                         pull_log.create(self.cr, self.uid, {
                             'code': current_msfid,
-                            'log': 'Nomenclature %s : %s' % (nom_type, error),
+                            'log': 'Nomenclature %s: %s' % (nom_type, error),
                             'json_data': x,
                             'session_id': session_id,
                         })
@@ -1082,7 +1082,7 @@ class ud_sync():
                             on conflict (unique_key)  do update SET code = %(code)s, date=NOW(), log=%(log)s, json_data=%(json_data)s, fixed_date=NULL
                         ''', {
                             'code': current_msfid,
-                            'log': '%s %s' % (nom_type, error),
+                            'log': '%s: %s' % (nom_type, error),
                             'json_data': '%s'%x,
                         })
                 finally:
