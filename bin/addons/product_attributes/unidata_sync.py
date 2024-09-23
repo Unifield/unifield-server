@@ -1030,7 +1030,7 @@ class ud_sync():
                             account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', x.get('accountCode'))])
                             if not account_ids:
                                 raise UDException('%s account code %s not found' % (current_msfid, x.get('accountCode')))
-                            categ_ids = categ_obj.search(self.cr, self.uid, [('msfid', '=', current_msfid), ('family_id', '=', current_id)])
+                            categ_ids = categ_obj.search(self.cr, self.uid, [('family_id', '=', current_id)])
                             categ_data = {
                                 'name': x['labels']['english'],
                                 'msfid': current_msfid,
@@ -1047,6 +1047,7 @@ class ud_sync():
                                 if not categ_obj.search_exists(self.cr, self.uid, [
                                     ('id', '=', categ_ids[0]),
                                     ('name', '=', x['labels']['english']),
+                                    ('msfid', '=', current_msfid),
                                     ('property_account_income_categ', '=', account_ids[0]),
                                     ('property_account_expense_categ', '=', account_ids[0])
                                 ], context={'lang': 'en_MF'}):
