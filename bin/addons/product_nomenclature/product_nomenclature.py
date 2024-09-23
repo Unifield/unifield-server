@@ -458,7 +458,7 @@ class product_nomenclature(osv.osv):
     _description = "Product Nomenclature"
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
-        'name': fields.char('Name', size=64, required=True, select=True, translate=1),
+        'name': fields.char('Name', size=128, required=True, select=True, translate=1),
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Full name', fnct_search=_search_complete_name),
         'custom_name': fields.function(_get_custom_name, method=True, type="char", string='Name', fnct_search=_search_custom_name),
         # technic fields - tree management
