@@ -1077,8 +1077,8 @@ class ud_sync():
                             'session_id': session_id,
                         })
                     if current_msfid:
-                        self.cr.execute('''insert into unidata_products_error (unique_key, type, code, date, log, json_data)
-                            values (%(code)s, 'nomenclature', %(code)s, NOW(), %(log)s, %(json_data)s)
+                        self.cr.execute('''insert into unidata_products_error (unique_key, type, code, date, first_data, log, json_data)
+                            values (%(code)s, 'nomenclature', %(code)s, NOW(), NOW(), %(log)s, %(json_data)s)
                             on conflict (unique_key)  do update SET code = %(code)s, date=NOW(), log=%(log)s, json_data=%(json_data)s, fixed_date=NULL
                         ''', {
                             'code': current_msfid,
@@ -1288,8 +1288,8 @@ class ud_sync():
                     else:
                         nb_errors += 1
                     if x.get('id', ''):
-                        self.cr.execute('''insert into unidata_products_error (unique_key, msfid, code, former_codes, date, log, uf_product_id, json_data, type)
-                            values (%(msfid)s, %(msfid)s, %(code)s, %(former_codes)s, NOW(), %(log)s, %(uf_product_id)s, %(json_data)s, 'product')
+                        self.cr.execute('''insert into unidata_products_error (unique_key, msfid, code, former_codes, date, first_date, log, uf_product_id, json_data, type)
+                            values (%(msfid)s, %(msfid)s, %(code)s, %(former_codes)s, NOW(), NOW(), %(log)s, %(uf_product_id)s, %(json_data)s, 'product')
                             on conflict (unique_key) do update SET code = %(code)s, former_codes=%(former_codes)s, date=NOW(), log=%(log)s, uf_product_id=%(uf_product_id)s, json_data=%(json_data)s, fixed_date=NULL
                         ''', {
                             'msfid': x.get('id'),
@@ -1881,6 +1881,7 @@ class unidata_products_error(osv.osv):
         'code': fields.char('UD Code', size=64, select=1),
         'former_codes': fields.char('Former Code', size=1024),
         'date': fields.datetime('Date of last error', required=1, select=1),
+        'first_date': fields.datetime('Date of first error', select=1),
         'fixed_date': fields.datetime('Fixed at',  select=1),
         'log': fields.text('Log'),
         'uf_product_id': fields.text('UF product db id'),
