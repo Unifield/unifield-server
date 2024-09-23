@@ -1876,18 +1876,18 @@ class unidata_products_error(osv.osv):
         return res
 
     _columns = {
-        'unique_key': fields.char('Record key', size=64, required=1),
-        'msfid': fields.integer_null('MSF ID', select=1),
-        'code': fields.char('UD Code', size=64, select=1),
-        'former_codes': fields.char('Former Code', size=1024),
-        'date': fields.datetime('Date of last error', required=1, select=1),
-        'first_date': fields.datetime('Date of first error', select=1),
-        'fixed_date': fields.datetime('Fixed at',  select=1),
-        'log': fields.text('Log'),
-        'uf_product_id': fields.text('UF product db id'),
-        'json_data': fields.text('UD Json'),
+        'unique_key': fields.char('Record key', size=64, required=1, readonly=1),
+        'msfid': fields.integer_null('MSF ID', select=1, readonly=1),
+        'code': fields.char('UD Code', size=64, select=1, readonly=1),
+        'former_codes': fields.char('Former Code', size=1024, readonly=1),
+        'date': fields.datetime('Date of last error', required=1, select=1, readonly=1),
+        'first_date': fields.datetime('Date of first error', select=1, readonly=1),
+        'fixed_date': fields.datetime('Fixed at',  select=1, readonly=1),
+        'log': fields.text('Log', readonly=1),
+        'uf_product_id': fields.text('UF product db id', readonly=1),
+        'json_data': fields.text('UD Json', readonly=1),
         'json_data_formated': fields.function(_get_json_data_formated, method=1, type='text',string='UD Json'),
-        'type': fields.selection([('product', 'Product'), ('nomenclature', 'Nomenclature')], string="Object", required=1, select=1),
+        'type': fields.selection([('product', 'Product'), ('nomenclature', 'Nomenclature')], string="Object", required=1, select=1, readonly=1),
     }
 
     _sql_constraints = [
