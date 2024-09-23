@@ -1113,7 +1113,7 @@ class product_attributes(osv.osv):
             readonly=True,
             help="Automatically filled with UniData information.",
         ),
-        'golden_status': fields.selection([('Golden', 'Golden'), ('Unmatched', 'Unmatched'), ('Merged', 'Merged'), ('Deleted', 'Deleted')], 'UD Golden State', select=1),
+        'golden_status': fields.selection([('Golden', 'Golden'), ('Unmatched', 'Unmatched'), ('Merged', 'Merged'), ('Deleted', 'Deleted')], 'UD Golden State', select=1, readonly=1),
         'is_ud_golden': fields.function(_get_is_ud_golden, type='boolean', method=1, string='UD Golden', fnct_search=_search_is_ud_golden),
         'ud_seen': fields.boolean('UD seen in last full sync', select=1, readonly=1),
         'oc_subscription': fields.boolean(string='OC Subscription'),
