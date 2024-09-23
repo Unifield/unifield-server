@@ -1288,8 +1288,8 @@ class ud_sync():
                     else:
                         nb_errors += 1
                     if x.get('id', ''):
-                        self.cr.execute('''insert into unidata_products_error (unique_key, msfid, code, former_codes, date, log, uf_product_id, json_data)
-                            values (%(msfid)s, %(msfid)s, %(code)s, %(former_codes)s, NOW(), %(log)s, %(uf_product_id)s, %(json_data)s)
+                        self.cr.execute('''insert into unidata_products_error (unique_key, msfid, code, former_codes, date, log, uf_product_id, json_data, type)
+                            values (%(msfid)s, %(msfid)s, %(code)s, %(former_codes)s, NOW(), %(log)s, %(uf_product_id)s, %(json_data)s, 'product')
                             on conflict (unique_key) do update SET code = %(code)s, former_codes=%(former_codes)s, date=NOW(), log=%(log)s, uf_product_id=%(uf_product_id)s, json_data=%(json_data)s, fixed_date=NULL
                         ''', {
                             'msfid': x.get('id'),
