@@ -874,17 +874,14 @@ class ud_sync():
                     if not nomen_id:
                         raise UDException('%s error %s not found %s' % (uf_key, cache_key, nomen_id))
 
-                    if uf_key == 'nomen_manda_2':
+                    if uf_key == 'nomen_manda_2' and new_prod:
                         if msfid not in self.categ_account_cache:
                             self.categ_account_cache[msfid] = self.pool.get('product.nomenclature').browse(self.cr, self.uid, nomen_id).category_id.property_account_income_categ.code
 
-                        categ_account_code = ud_data.get('accountCode', {}).get('code')
+                        prod_account_code = ud_data.get('accountCode', {}).get('code')
 
-                        if categ_account_code == self.categ_account_cache[msfid]:
-                            lang_values['property_account_income'] = False
-                            lang_values['property_account_expense'] = False
-                        elif new_prod:
-                            account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', ud_data.get('accountCode', {}).get('code'))])
+                        if prod_account_code != self.categ_account_cache[msfid]:
+                            account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', prod_account_code)])
                             if not account_ids:
                                 raise UDException('Account code %s not found' % (ud_data.get('accountCode', {}).get('code')))
                             account_id = account_ids[0]
