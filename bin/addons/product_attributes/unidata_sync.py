@@ -509,17 +509,17 @@ class ud_sync():
             },
             'state_ud': {
                 'ud': 'lifeCycleStatus',
-                'mapping': {
-                    '01. Preparation': 'valid',
-                    '02. Valid': 'valid',
-                    '03. Outdated': 'outdated',
-                    '04. Discontinued': 'discontinued',
-                    '05. Forbidden': 'forbidden',
-                    '06. Rejected': 'stopped',
-                    '08. Archived': 'archived',
-                    '01. Temporary Golden:': 'stopped',
-                    '01. Temporary Merge': 'stopped',
-                    '07. Parked': 'archived',
+                'mapping': { # found in new version, found in UF34.0
+                    '01. Preparation': 'valid', # OK, N
+                    '02. Valid': 'valid', # OK, OK
+                    '03. Outdated': 'outdated', # OK, OK
+                    '04. Discontinued': 'discontinued', # OK, OK
+                    '05. Forbidden': 'forbidden', # OK, OK
+                    '06. Rejected': 'stopped', # OK, N
+                    '08. Archived': 'archived', #OK, OK
+                    '01. Temporary Golden': 'stopped', # N, N
+                    '01. Temporary Merge': 'stopped', # N, N
+                    '07. Parked': 'archived', # OK, N
                 },
             },
             'golden_status': {
@@ -1151,6 +1151,9 @@ class ud_sync():
                             continue
                         if x.get('state') != 'Golden':
                             self.log('%s product ignored, not exists in UF, golden: %s' % (x.get('formerCodes'), x.get('state')))
+                            continue
+                        if x.get('lifeCycleStatus') in ('01. Preparation', '06. Rejected', '01. Temporary Golden', '01. Temporary Merge', '07. Parked'):
+                            self.log('%s product ignored, not exists in UF, lifeCycleStatus: %s' % (x.get('formerCodes'), x.get('lifeCycleStatus')))
                             continue
                         self.log('%s product to create' % (x.get('formerCodes'), ))
                     else:
