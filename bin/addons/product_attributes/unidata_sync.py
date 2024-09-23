@@ -963,8 +963,6 @@ class ud_sync():
                     parent_msfid = ''
                     current_msfid = ''
                     self.cr.execute("SAVEPOINT nom_ud_update")
-                    if not x.get('labels', {}).get('english'):
-                        raise UDException('Missing UD english label')
 
                     if level == 2:
                         if not x.get('main', {}).get('code') or not x.get('group',{}).get('code') or not x.get('id'):
@@ -980,7 +978,11 @@ class ud_sync():
                         name_prefix = x.get('code')
 
                     if nomen_msf_id and nomen_msf_id != current_msfid:
+                        # case of single pull (from product)
                         continue
+
+                    if not x.get('labels', {}).get('english'):
+                        raise UDException('Missing UD english label')
 
                     if parent_msfid not in parent_cache:
                         parent_ids = nom_obj.search(self.cr, self.uid, [('msfid', '=', parent_msfid), ('level', '=', level -1)])
@@ -1080,7 +1082,7 @@ class ud_sync():
                             values (%(code)s, 'nomenclature', %(code)s, NOW(), %(log)s, %(json_data)s)
                             on conflict (unique_key)  do update SET code = %(code)s, date=NOW(), log=%(log)s, json_data=%(json_data)s, fixed_date=NULL
                         ''', {
-                            'code': x.get('code', ''),
+                            'code': current_msfid,
                             'log': '%s %s' % (nom_type, error),
                             'json_data': '%s'%x,
                         })
