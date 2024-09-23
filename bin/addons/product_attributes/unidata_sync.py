@@ -1586,14 +1586,6 @@ class unidata_sync(osv.osv):
         if full:
             param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', '')
             param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC','')
-            cr.execute('''
-                update product_product p set golden_status=''
-                    from product_international_status st
-                    where
-                        st.id = p.international_status and
-                        st.code = 'unidata' and
-                        p.golden_status='Golden'
-                ''')
 
         sync_type = 'full'
         last_ud_date_sync = param_obj.get_param(cr, 1, 'LAST_UD_DATE_SYNC') or False
