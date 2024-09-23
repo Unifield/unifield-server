@@ -1071,7 +1071,6 @@ class ud_sync():
                     self.log('ERROR %s'% error)
                     if session_id:
                         pull_log.create(self.cr, self.uid, {
-                            'msfid': 0,
                             'code': current_msfid,
                             'log': 'Nomenclature %s : %s' % (nom_type, error),
                             'json_data': x,
@@ -1848,7 +1847,7 @@ class unidata_pull_product_log(osv.osv):
         return res
 
     _columns = {
-        'msfid': fields.integer('MSF ID', required=1),
+        'msfid': fields.integer_null('MSF ID', select=1),
         'code': fields.char('UD Code', size=64, select=1),
         'former_codes': fields.char('Former Code', size=1024, select=1),
         'date': fields.datetime('Date', required=1, select=1),
@@ -1878,7 +1877,7 @@ class unidata_products_error(osv.osv):
 
     _columns = {
         'unique_key': fields.char('Record key', size=64, required=1),
-        'msfid': fields.integer('MSF ID', select=1),
+        'msfid': fields.integer_null('MSF ID', select=1),
         'code': fields.char('UD Code', size=64, select=1),
         'former_codes': fields.char('Former Code', size=1024),
         'date': fields.datetime('Date of last error', required=1, select=1),
