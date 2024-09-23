@@ -6,6 +6,8 @@ from osv import fields
 from tools.translate import _
 from openpyxl import load_workbook
 from io import BytesIO
+import threading
+import pooler
 import base64
 import time
 
@@ -59,7 +61,42 @@ class ir_product_list_import_wizard(osv.osv_memory):
 
         return act_obj.open_view_from_xmlid(cr, uid, 'procurement_request.action_procurement_request', ['tree', 'form'], context=context)
 
+    def update(self, cr, uid, ids, context=None):
+        """
+        This button is only for updating the view.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        for wiz in self.browse(cr, uid, ids, fields_to_fetch=['sale_id', 'state'], context=context):
+            if wiz.state not in ('done', 'error'):
+                self.write(cr, uid, ids, {'message':
+                    _(' Import in progress... \n Please wait that the import is finished before editing %s.')
+                    % (wiz.sale_id and wiz.sale_id.name or _('the IR'),)})
+        return False
+
     def import_ir(self, cr, uid, ids, context=None):
+        '''
+        Launch the thread for the import file
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        if not wiz.file_to_import:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+
+        thread = threading.Thread(target=self._import_ir, args=(cr.dbname, uid, ids, context))
+        thread.start()
+        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
+Otherwise, you can continue to use Unifield.""")
+
+        return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
+
+    def _import_ir(self, dbname, uid, ids, context=None):
         if context is None:
             context = {}
         if isinstance(ids, int):
@@ -67,12 +104,11 @@ class ir_product_list_import_wizard(osv.osv_memory):
 
         prod_obj = self.pool.get('product.product')
 
+        cr = pooler.get_db(dbname).cursor()
+
         start_time = time.time()
-        wiz = self.browse(cr, uid, ids[0], context=context)
+        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['sale_id', 'file_to_import'], context=context)
         sale = wiz.sale_id
-        if not wiz.file_to_import:
-            raise osv.except_osv(_('Error'), _('Nothing to import.'))
-        self.write(cr, uid, wiz.id, {'state': 'in_progress'}, context=context)
 
         wb = load_workbook(filename=BytesIO(base64.b64decode(wiz.file_to_import)), read_only=True)
         sheet = wb.active
@@ -177,6 +213,9 @@ Importation completed in %s!
         self.write(cr, uid, wiz.id, {'state': wiz_state, 'message': final_message}, context=context)
 
         wb.close()  # Close manually because of readonly
+        cr.commit()
+        cr.close(True)
+
         return True
 
 

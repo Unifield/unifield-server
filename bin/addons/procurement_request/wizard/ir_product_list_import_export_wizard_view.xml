@@ -52,12 +52,13 @@
                         </group>
                         <field name="state" />
                     </group>
-                    <group colspan="4" attrs="{'invisible': [('state', 'not in', ['error', 'done'])]}">
+                    <group colspan="4" attrs="{'invisible': [('state', 'not in', ['in_progress', 'error', 'done'])]}">
                         <separator colspan="12" string="Import Information" />
                         <field name="message" colspan="4" nolabel="1" widget="full_text"/>
                     </group>
                     <group name="buttons" colspan="4" col="6">
-                        <button name="go_to_ir" string="Close import" icon="gtk-cancel" type="object" />
+                        <button name="go_to_ir" string="Close import" icon="gtk-cancel" type="object" states="draft,error,done" />
+                        <button name="update" string="Update" icon="gtk-execute" type="object" states="in_progress"/>
                         <button name="import_ir" string="Import file" icon="gtk-go-forward" type="object" states="draft" />
                     </group>
                 </form>
