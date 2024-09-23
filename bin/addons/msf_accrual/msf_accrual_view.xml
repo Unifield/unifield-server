@@ -56,6 +56,10 @@
                             <button name="button_reset_distribution" string="Reset AD at line level" type="object"
                                     icon="gtk-undelete" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                         </group>
+                        <group name="import" string=" Import Accrual Lines " colspan="4" col="4" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                            <button name="import_accrual" string="Import Accrual Lines" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        </group>
 
                         <notebook colspan="6">
                             <page string="Accruals">

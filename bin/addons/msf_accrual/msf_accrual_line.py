@@ -117,6 +117,23 @@ class msf_accrual_line(osv.osv):
             res[acc_id] = ml_obj.search(cr, uid, [('accrual_line_id', '=', acc_id)], order='move_id', context=context)
         return res
 
+    def import_accrual(self, cr, uid, ids, data, context=None):
+        """
+        Opens the Import Accrual Lines wizard
+        """
+        if isinstance(ids, int):
+            ids = [ids]
+        wiz_id = self.pool.get('account.accrual.import').create(cr, uid, {'accrual_id': ids[0]}, context=context)
+        return {
+            'name': _('Import Accrual Lines'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.accrual.import',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [wiz_id],
+        }
+
     _columns = {
         'date': fields.date("Date"),
         'document_date': fields.date("Document Date", required=True),
