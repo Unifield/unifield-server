@@ -992,6 +992,8 @@ class ud_sync():
                             parent_cache[parent_msfid] = parent_ids[0]
 
                     if not parent_cache[parent_msfid]:
+                        if 'Archived' in x.get('status', {}).get('label', ''):
+                            continue
                         raise UDException('Parent nomenclature %s not found in UF' % (parent_msfid,))
 
                     current_ids = nom_obj.search(self.cr, self.uid, [('msfid', '=', current_msfid), ('level', '=', level)])
