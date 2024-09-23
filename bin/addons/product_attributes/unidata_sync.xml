@@ -762,6 +762,8 @@
              <form string="UniData linkage error" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <field name="date" />
                     <field name="fixed_date" />
+                    <field name="type" />
+                    <newline />
                     <field name="msfid" />
                     <field name="uf_product_id" />
                     <field name="code"  />
@@ -781,6 +783,7 @@
                 <tree string="UniData linkage errors" hide_new_button="1" hide_delete_button="1" noteditable="1" colors="red:not fixed_date">
                     <field name="date" />
                     <field name="fixed_date"  />
+                    <field name="type" />
                     <field name="msfid" />
                     <field name="uf_product_id" />
                     <field name="code" />
@@ -805,6 +808,7 @@
                             <field name="code" />
                     <field name="former_codes" />
                     <field name="log" />
+                    <field name="type" />
                 </search>
             </field>
         </record>

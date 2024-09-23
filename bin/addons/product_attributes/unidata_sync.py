@@ -951,6 +951,8 @@ class ud_sync():
             url = '%s/%s' % (url, "".join(split_parts[2:]))
         current_id = False
 
+        self.cr.execute("update unidata_products_error set fixed_date=NOW() where type='nomenclature'")
+
         while True:
             js = self.query("", page=page, url=url)
             if not js.get('rows'):
@@ -1882,7 +1884,7 @@ class unidata_products_error(osv.osv):
         'uf_product_id': fields.text('UF product db id'),
         'json_data': fields.text('UD Json'),
         'json_data_formated': fields.function(_get_json_data_formated, method=1, type='text',string='UD Json'),
-        'type': fields.selection([('product', 'Product'), ('nomenclature', 'Nomenclature')], string="Object", required=1),
+        'type': fields.selection([('product', 'Product'), ('nomenclature', 'Nomenclature')], string="Object", required=1, select=1),
     }
 
     _sql_constraints = [
