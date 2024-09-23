@@ -1105,7 +1105,7 @@ class ud_sync():
             nb_errors += tmp_nb_errors
         return created, updated, nb_errors
 
-    def update_products(self, q_filter, record_date, session_id=False, create_missing_nomen=False):
+    def update_products(self, q_filter, record_date, session_id=False, create_missing_nomen=False, is_full=False):
         country_obj = self.pool.get('unidata.country')
         project_obj = self.pool.get('unidata.project')
         prod_obj = self.pool.get('product.product')
@@ -1129,7 +1129,7 @@ class ud_sync():
                 break
 
             for x in js.get('rows'):
-                self.log('UD: %s' % x)
+                self.log('is_full: %s, UD: %s' % (is_full, x))
                 rows_seen += 1
                 try:
                     self.cr.execute("SAVEPOINT nom_ud_update")
@@ -1156,8 +1156,8 @@ class ud_sync():
                     else:
                         if not x.get('ocSubscriptions').get(self.oc):
                             if not prod_obj.search(self.cr, self.uid, [('id', 'in', prod_ids), ('oc_subscription', '=', True), ('active', 'in', ['t', 'f'])], context=self.context):
-                                if x.get('state') != 'Golden':
-                                    self.cr.execute('update product_product set golden_status=%s where id=%s', (x.get('state'), prod_ids[0]))
+                                if x.get('state') != 'Golden' or is_full:
+                                    self.cr.execute("update product_product set golden_status=%s, ud_seen='t' where id=%s", (x.get('state'), prod_ids[0]))
                                     if self.cr.rowcount:
                                         prod_updated += 1
                                 self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
@@ -1240,6 +1240,8 @@ class ud_sync():
                                 break
 
                         if not diff:
+                            if is_full:
+                                self.cr.execute("update product_product set ud_seen='t' where id=%s", (prod_ids[0], ))
                             self.log('==== same values %s %s' % (product_values.get('en_MF', {}).get('default_code'), prod_ids[0]))
                             continue
                         else:
@@ -1247,6 +1249,8 @@ class ud_sync():
 
                     try:
                         self.cr.execute("SAVEPOINT prod_ud_update")
+                        if is_full:
+                            product_values['en_MF']['ud_seen'] = True
                         if prod_ids:
                             self.log('==== write product id: %d, code: %s, msfid: %s, data: %s' % (prod_ids[0], x['code'], x['id'], product_values['en_MF']))
                             prod_obj.write(self.cr, self.uid, prod_ids[0], product_values['en_MF'], context={'lang': 'en_MF'})
@@ -1609,6 +1613,8 @@ class unidata_sync(osv.osv):
             first_query = True
             param_obj.set_param(cr, 1, 'FORMER_UD_DATE_SYNC', last_ud_date_sync or '')
 
+        is_full = not last_ud_date_sync
+
         nuid = hasattr(nuid, 'realUid') and nuid.realUid or nuid
         session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync, 'sync_type': sync_type, 'start_uid': nuid, 'server': 'ud'}, context=context)
 
@@ -1637,6 +1643,16 @@ class unidata_sync(osv.osv):
             'nomen_error': nomen_error
         }, context=context)
         cr.commit()
+
+        if is_full:
+            cr.execute('''
+                update product_product p set ud_seen='f'
+                    from product_international_status st
+                    where
+                        st.id = p.international_status and
+                        st.code = 'unidata'
+                ''')
+
         try:
             cr.execute('SAVEPOINT unidata_sync_log')
             last_loop = False
@@ -1653,7 +1669,7 @@ class unidata_sync(osv.osv):
                     for x in nr_msfid:
                         query.append("msfIdentifier=%s" % x)
                     cr.execute('update unidata_products_error set fixed_date=NOW() where msfid in %s', (tuple(nr_msfid),))
-                    trash1, tmp_nb_prod, tmp_updated, tmp_total_nb_created, tmp_total_nb_errors = sync_obj.update_products(" or ".join(query), False, session_id)
+                    trash1, tmp_nb_prod, tmp_updated, tmp_total_nb_created, tmp_total_nb_errors = sync_obj.update_products(" or ".join(query), False, session_id, is_full=is_full)
                     nb_prod += tmp_nb_prod
                     updated += tmp_updated
                     total_nb_created += tmp_total_nb_created
@@ -1670,7 +1686,7 @@ class unidata_sync(osv.osv):
                                 st.id = p.international_status and
                                 st.code = 'unidata'
                         ''')
-                    trash1, tmp_nb_prod, tmp_updated, tmp_total_nb_created, tmp_total_nb_errors = sync_obj.update_products('(./metaData/state!="Golden")', False, session_id)
+                    trash1, tmp_nb_prod, tmp_updated, tmp_total_nb_created, tmp_total_nb_errors = sync_obj.update_products('(./metaData/state!="Golden")', False, session_id, is_full=is_full)
                     nb_prod += tmp_nb_prod
                     updated += tmp_updated
                     total_nb_created += tmp_total_nb_created
@@ -1703,7 +1719,7 @@ class unidata_sync(osv.osv):
                         'createdOn': createdOn,
                     }
 
-                s_date_to_record, rows_seen, prod_updated, nb_created, nb_errors = sync_obj.update_products(q_filter, first_query, session_id)
+                s_date_to_record, rows_seen, prod_updated, nb_created, nb_errors = sync_obj.update_products(q_filter, first_query, session_id, is_full=is_full)
                 if first_query and s_date_to_record:
                     logger.info('Set last date: %s', s_date_to_record)
                     param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', s_date_to_record)
@@ -1736,6 +1752,16 @@ class unidata_sync(osv.osv):
                 'number_products_errors': total_nb_errors,
             }, context=context)
             return False
+
+        if is_full:
+            cr.execute('''
+                update product_product p set golden_status=''
+                    from product_international_status st
+                    where
+                        st.id = p.international_status and
+                        st.code = 'unidata' and
+                        p.ud_seen = 'f'
+                ''')
 
         logger.info('End of Script')
         handler.close()

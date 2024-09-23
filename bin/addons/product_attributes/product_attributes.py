@@ -1115,6 +1115,7 @@ class product_attributes(osv.osv):
         ),
         'golden_status': fields.selection([('Golden', 'Golden'), ('Unmatched', 'Unmatched'), ('Merged', 'Merged'), ('Deleted', 'Deleted')], 'UD Golden State', select=1),
         'is_ud_golden': fields.function(_get_is_ud_golden, type='boolean', method=1, string='UD Golden', fnct_search=_search_is_ud_golden),
+        'ud_seen': fields.boolean('UD seen in last full sync', select=1, readonly=1),
         'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=32),
