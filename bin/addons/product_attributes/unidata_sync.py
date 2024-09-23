@@ -1134,6 +1134,10 @@ class ud_sync():
                     else:
                         if not x.get('ocSubscriptions').get(self.oc):
                             if not prod_obj.search(self.cr, self.uid, [('id', 'in', prod_ids), ('oc_subscription', '=', True), ('active', 'in', ['t', 'f'])], context=self.context):
+                                if x.get('state') != 'Golden':
+                                    self.cr.execute('update product_product set golden_status=%s where id=%s', (x.get('state'), prod_ids[0]))
+                                    if self.cr.rowcount:
+                                        prod_updated += 1
                                 self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
                                 continue
 
@@ -1643,7 +1647,7 @@ class unidata_sync(osv.osv):
                     min_index += intervall
 
             first_merged = param_obj.get_param(cr, 1, 'UD_GETALL_MERGED')
-            if first_merged == 1:
+            if first_merged == '1':
                 if not full:
                     cr.execute('''
                         update product_product p set golden_status='Golden'
