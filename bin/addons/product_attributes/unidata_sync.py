@@ -1038,10 +1038,17 @@ class ud_sync():
                             if not categ_ids:
                                 self.log('Category %s created' % (current_msfid, ))
                                 categ_id = categ_obj.create(self.cr, self.uid, categ_data, context={'lang': 'en_MF'})
-                            elif not categ_obj.search_exists(self.cr, self.uid, [('id', '=', categ_ids[0]), ('name', '=', x['labels']['english']), ('property_account_income_categ', '=', account_ids[0]), ('property_account_expense_categ', '=', account_ids[0])], context={'lang': 'en_MF'}):
+                            else:
                                 categ_id = categ_ids[0]
-                                self.log('Category %s updated uf id:%s' % (current_msfid, categ_id))
-                                categ_obj.write(self.cr, self.uid, categ_id, categ_data, context={'lang': 'en_MF'})
+
+                                if not categ_obj.search_exists(self.cr, self.uid, [
+                                    ('id', '=', categ_ids[0]),
+                                    ('name', '=', x['labels']['english']),
+                                    ('property_account_income_categ', '=', account_ids[0]),
+                                    ('property_account_expense_categ', '=', account_ids[0])
+                                ], context={'lang': 'en_MF'}):
+                                    self.log('Category %s updated uf id:%s' % (current_msfid, categ_id))
+                                    categ_obj.write(self.cr, self.uid, categ_id, categ_data, context={'lang': 'en_MF'})
                             if x['labels']['french'] and not categ_obj.search_exists(self.cr, self.uid, [('id', '=', categ_id), ('name', '=', x['labels']['french'])], context={'lang': 'fr_MF'}):
                                 categ_obj.write(self.cr, self.uid, categ_id, {'name': x['labels']['french']}, context={'lang': 'fr_MF'})
 
