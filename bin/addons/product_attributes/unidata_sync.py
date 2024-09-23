@@ -1077,7 +1077,7 @@ class ud_sync():
                             'session_id': session_id,
                         })
                     if current_msfid:
-                        self.cr.execute('''insert into unidata_products_error (unique_key, type, code, date, first_data, log, json_data)
+                        self.cr.execute('''insert into unidata_products_error (unique_key, type, code, date, first_date, log, json_data)
                             values (%(code)s, 'nomenclature', %(code)s, NOW(), NOW(), %(log)s, %(json_data)s)
                             on conflict (unique_key)  do update SET code = %(code)s, date=NOW(), log=%(log)s, json_data=%(json_data)s, fixed_date=NULL
                         ''', {
