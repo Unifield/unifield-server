@@ -1229,7 +1229,14 @@ class ud_sync():
                                     if value:
                                         self.log('Field diff m2o %s, uf: *%s*, ud: *%s*'% (key, current_value[key]['id'], value))
                                         tmp_diff = True
-                                elif current_value[key] != value and ( value is False and current_value[key] or value is not False):
+                                elif key == 'old_code':
+                                    if current_value[key] and value:
+                                        tmp_diff = set(current_value[key].split(';')) != set(value.split(';'))
+                                    else:
+                                        tmp_diff = current_value[key] != value
+                                    if tmp_diff:
+                                        self.log('Field diff old_code, uf: *%s*, ud: *%s*'% (current_value[key], value))
+                                elif current_value[key] != value and (value is False and current_value[key] or value is not False):
                                     self.log('Field diff %s, uf: *%s*, ud: *%s*'% (key, current_value[key], value))
                                     tmp_diff = True
                                 if tmp_diff:
