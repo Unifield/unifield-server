@@ -299,7 +299,7 @@ class account_invoice(osv.osv):
                                 "of accounting entries. If you keep the payment term and the due date empty, it means direct payment. The payment term may compute several due dates, for example 50% now, 50% in one month."),
         'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=True, states={'draft':[('readonly',False)]}),
         'address_contact_id': fields.many2one('res.partner.address', 'Contact Address', readonly=True, states={'draft':[('readonly',False)]}),
-        'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft':[('readonly',False)]}),
+        'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, states={'draft':[('readonly',False)]}),
         'payment_term': fields.many2one('account.payment.term', 'Payment Term',readonly=True, states={'draft':[('readonly',False)]},
                                         help="If you use payment terms, the due date will be computed automatically at the generation "\
                                         "of accounting entries. If you keep the payment term and the due date empty, it means direct payment. "\

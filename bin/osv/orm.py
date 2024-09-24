@@ -3242,7 +3242,7 @@ class orm(orm_template):
                         self.__schema.debug("Table '%s': added column '%s' with definition=%s",
                                             self._table, k, logs[k])
 
-            self._check_removed_columns(cr, log=False)
+            #self._check_removed_columns(cr, log=False)
 
             # iterate on the "object columns"
             todo_update_store = []
