@@ -1159,8 +1159,6 @@ class ud_sync():
                             if not prod_obj.search(self.cr, self.uid, [('id', 'in', prod_ids), ('oc_subscription', '=', True), ('active', 'in', ['t', 'f'])], context=self.context):
                                 if x.get('state') != 'Golden' or is_full:
                                     self.cr.execute("update product_product set golden_status=%s, ud_seen='t' where id=%s", (x.get('state'), prod_ids[0]))
-                                    if self.cr.rowcount:
-                                        prod_updated += 1
                                 self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
                                 continue
 
