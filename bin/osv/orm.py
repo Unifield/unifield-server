@@ -3508,9 +3508,14 @@ class orm(orm_template):
                 continue
             conname = '%s_%s' % (self._table, key)
 
-            cr.execute("SELECT conname, pg_catalog.pg_get_constraintdef(oid, true) as condef FROM pg_constraint where conname=%s", (conname,))
-            existing_constraints = cr.dictfetchall()
 
+            cr.execute("""SELECT COALESCE(d.description, pg_get_constraintdef(c.oid))
+                FROM pg_constraint c
+                JOIN pg_class t ON t.oid = c.conrelid
+                LEFT JOIN pg_description d ON c.oid = d.objoid
+                WHERE t.relname = %s AND conname = %s""", (self._table, conname))
+
+            existing_constraints = cr.fetchall()
             sql_actions = {
                 'drop': {
                     'execute': False,
@@ -3534,10 +3539,10 @@ class orm(orm_template):
                 # constraint does not exists:
                 sql_actions['add']['execute'] = True
                 sql_actions['add']['msg_err'] = sql_actions['add']['msg_err'] % (sql_actions['add']['query'], )
-            elif con.lower() not in [item['condef'].lower() for item in existing_constraints]:
+            elif con not in [item[0] for item in existing_constraints]:
                 # constraint exists but its definition has changed:
                 sql_actions['drop']['execute'] = True
-                sql_actions['drop']['msg_ok'] = sql_actions['drop']['msg_ok'] % (existing_constraints[0]['condef'].lower(), )
+                sql_actions['drop']['msg_ok'] = sql_actions['drop']['msg_ok'] % (existing_constraints[0], )
                 sql_actions['add']['execute'] = True
                 sql_actions['add']['msg_err'] = sql_actions['add']['msg_err'] % (sql_actions['add']['query'], )
 
@@ -3547,6 +3552,8 @@ class orm(orm_template):
             for sql_action in [action for action in sql_actions if action['execute']]:
                 try:
                     cr.execute(sql_action['query'])
+                    if sql_action['order'] == 2: # add
+                        cr.execute('COMMENT ON CONSTRAINT "%s" ON "%s" IS %%s'%(conname, self._table), (con, )) # not_a_user_entry
                     cr.commit()
                     self.__schema.debug(sql_action['msg_ok'])
                 except:
