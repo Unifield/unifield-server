@@ -1014,7 +1014,7 @@ class ud_sync():
                         self.log('Nomen %s created' % (current_msfid, ))
                         current_id = nom_obj.create(self.cr, self.uid, nomen_data, context={'lang': 'en_MF'})
                         sync_action = 'created'
-                    elif not nom_obj.search_exists(self.cr, self.uid, [('id', '=', current_id), ('name', '=', nomen_data['name']), ('status', '=', nomen_data['status'])], context={'lang': 'en_MF'}):
+                    elif not nom_obj.search_exists(self.cr, self.uid, [('id', '=', current_id), ('name', '=ilike', nomen_data['name']), ('status', '=', nomen_data['status'])], context={'lang': 'en_MF'}):
                         self.log('Nomen %s updated uf id:%s' % (current_msfid, current_id))
                         nom_obj.write(self.cr, self.uid, current_id, nomen_data, context={'lang': 'en_MF'})
                         sync_action = 'updated'
@@ -1022,7 +1022,7 @@ class ud_sync():
                     french_label = False
                     if x['labels']['french']:
                         french_label = '%s - %s' % (name_prefix, x['labels']['french'])
-                        if french_label and (not current_ids or not nom_obj.search_exists(self.cr, self.uid, [('id', '=', current_id), ('name', '=', french_label)], context={'lang': 'fr_MF'})):
+                        if french_label and (not current_ids or not nom_obj.search_exists(self.cr, self.uid, [('id', '=', current_id), ('name', '=ilike', french_label)], context={'lang': 'fr_MF'})):
                             nom_obj.write(self.cr, self.uid, current_id, {'name': french_label}, context={'lang': 'fr_MF'})
 
                     if level == 2:
@@ -1046,14 +1046,14 @@ class ud_sync():
 
                                 if not categ_obj.search_exists(self.cr, self.uid, [
                                     ('id', '=', categ_ids[0]),
-                                    ('name', '=', x['labels']['english']),
+                                    ('name', '=ilike', x['labels']['english']),
                                     ('msfid', '=', current_msfid),
                                     ('property_account_income_categ', '=', account_ids[0]),
                                     ('property_account_expense_categ', '=', account_ids[0])
                                 ], context={'lang': 'en_MF'}):
                                     self.log('Category %s updated uf id:%s' % (current_msfid, categ_id))
                                     categ_obj.write(self.cr, self.uid, categ_id, categ_data, context={'lang': 'en_MF'})
-                            if x['labels']['french'] and not categ_obj.search_exists(self.cr, self.uid, [('id', '=', categ_id), ('name', '=', x['labels']['french'])], context={'lang': 'fr_MF'}):
+                            if x['labels']['french'] and not categ_obj.search_exists(self.cr, self.uid, [('id', '=', categ_id), ('name', '=ilike', x['labels']['french'])], context={'lang': 'fr_MF'}):
                                 categ_obj.write(self.cr, self.uid, categ_id, {'name': x['labels']['french']}, context={'lang': 'fr_MF'})
 
                     if sync_action == 'created':
