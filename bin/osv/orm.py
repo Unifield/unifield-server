@@ -3509,7 +3509,7 @@ class orm(orm_template):
             conname = '%s_%s' % (self._table, key)
 
 
-            cr.execute("""SELECT COALESCE(d.description, pg_get_constraintdef(c.oid))
+            cr.execute("""SELECT lower(COALESCE(d.description, pg_get_constraintdef(c.oid)))
                 FROM pg_constraint c
                 JOIN pg_class t ON t.oid = c.conrelid
                 LEFT JOIN pg_description d ON c.oid = d.objoid
@@ -3539,10 +3539,10 @@ class orm(orm_template):
                 # constraint does not exists:
                 sql_actions['add']['execute'] = True
                 sql_actions['add']['msg_err'] = sql_actions['add']['msg_err'] % (sql_actions['add']['query'], )
-            elif con not in [item[0] for item in existing_constraints]:
+            elif con.lower() not in [item[0] for item in existing_constraints]:
                 # constraint exists but its definition has changed:
                 sql_actions['drop']['execute'] = True
-                sql_actions['drop']['msg_ok'] = sql_actions['drop']['msg_ok'] % (existing_constraints[0], )
+                sql_actions['drop']['msg_ok'] = sql_actions['drop']['msg_ok'] % (existing_constraints[0][0], )
                 sql_actions['add']['execute'] = True
                 sql_actions['add']['msg_err'] = sql_actions['add']['msg_err'] % (sql_actions['add']['query'], )
 
