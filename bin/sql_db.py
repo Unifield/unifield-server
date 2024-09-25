@@ -101,7 +101,6 @@ class Cursor(object):
         if p is not None:
             self._oc = p.get('operations.count')
             self._oe = p.get('operations.event')
-        # TODO JFB
         self._obj = self._cnx.cursor()
         self.__closed = False   # real initialisation value
         self.autocommit(False)
@@ -162,7 +161,6 @@ class Cursor(object):
             after = time.time()
             if self._oc:
                 delta = after-before
-                self._oc.histogram['sql'].add(delta)
                 if self._oe and delta > self._oe.SLOW_QUERY:
                     self._oe.remember_slow_query(query, delta)
         except psycopg2.ProgrammingError as pe:
