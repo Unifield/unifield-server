@@ -1363,10 +1363,10 @@ class product_attributes(osv.osv):
             root = etree.fromstring(res['arch'])
             found = False
 
-            field_name = 'golden_status'
+            field_node = 'field'
             if view_type == 'search':
-                field_name = 'is_ud_golden'
-            for field in root.xpath('//field[@name="%s"]' % field_name):
+                field_node = 'group'
+            for field in root.xpath('//%s[@name="golden_status"]' % field_node):
                 field.set('invisible', '0')
                 found = True
             if found:
