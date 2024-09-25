@@ -161,6 +161,7 @@ class Cursor(object):
             after = time.time()
             if self._oc:
                 delta = after-before
+                self._oc.histogram['sql'].add(delta)
                 if self._oe and delta > self._oe.SLOW_QUERY:
                     self._oe.remember_slow_query(query, delta)
         except psycopg2.ProgrammingError as pe:
