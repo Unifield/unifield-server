@@ -39,7 +39,7 @@ class account_accrual_import(osv.osv_memory):
     _name = 'account.accrual.import'
 
     _columns = {
-        'file': fields.binary(string="File", filters='*.xml, *.xls', required=True),
+        'file': fields.binary(string="File", filters='*.xls*', required=True),
         'filename': fields.char(string="Imported filename", size=256),
         'progression': fields.float(string="Progression", readonly=True),
         'message': fields.char(string="Message", size=256, readonly=True),
@@ -111,6 +111,14 @@ class account_accrual_import(osv.osv_memory):
         Closes the wizard and refreshes the accrual view
         """
         return {'type': 'ir.actions.act_window_close'}
+
+    def export_template_file(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        return {'type': 'ir.actions.report.xml', 'report_name': 'accrual_import_template_xlsx', 'context': context}
 
 
 account_accrual_import()

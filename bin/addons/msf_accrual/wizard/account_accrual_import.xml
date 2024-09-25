@@ -20,18 +20,19 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Import Accrual Lines">
-                    <label string="Select file to import" colspan="4" align="0.0"/>
-                    <newline/>
-                    <group col="4" colspan="4">
-                        <field name="file" filename="filename" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                        <field name="filename" invisible="1"/>
+                    <separator colspan="4" string="Select file to import" />
+                    <field name="file" filename="filename" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <field name="filename" invisible="1"/>
+                    <group colspan="4" col="4">
+                        <button name="export_template_file" colspan="1" align="0.0" string="Generate template file" type="object" icon="gtk-print" />
+                        <label colspan="3"/>
                     </group>
-                    <newline />
+                    <newline/>
                     <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
                     <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" widget="text"/>
                     <newline/>
                     <button name="button_update" type="object" string="Update" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
-                    <newline />
+                    <newline/>
                     <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', 'not in', ['error', 'ad_error'])]}"/>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'draft')]}">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
@@ -43,6 +44,17 @@
                 </form>
             </field>
         </record>
+
+        <report
+            id="accrual_import_template_xlsx"
+            string="Accrual Import Template File"
+            model="account.accrual.import"
+            name="accrual_import_template_xlsx"
+            report_type="openpyxl"
+            auto="False"
+            menu="False"
+            />
+
 
     </data>
 </openerp>
