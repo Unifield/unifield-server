@@ -868,7 +868,7 @@ class account_journal(osv.osv):
                                 raise osv.except_osv(_('Error'),
                                                      _("The journal %s cannot be inactivated because the balance of the "
                                                        "last register is not zero.") % journal.code)
-                    if journal.type == 'bank':
+                    if journal.type == 'bank' and not context.get('sync_update_execution'):
                         related_chq_id = self.search(cr, uid, [('bank_journal_id', '=', journal.id),
                                                                ('is_active', '=', 't')], context=context)
                         if related_chq_id:
