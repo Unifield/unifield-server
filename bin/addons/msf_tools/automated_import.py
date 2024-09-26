@@ -438,9 +438,11 @@ class Remote(object):
     def disconnect(self):
         self.connection.disconnect()
 
+
 class automated_import(osv.osv):
     _name = 'automated.import'
     _order = 'name, id'
+    _trace = True
 
     def _auto_init(self, cr, context=None):
         res = super(automated_import, self)._auto_init(cr, context)
@@ -1025,5 +1027,6 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             ids = [ids]
 
         return self.write(cr, uid, ids, {'active': False}, context=context)
+
 
 automated_import()

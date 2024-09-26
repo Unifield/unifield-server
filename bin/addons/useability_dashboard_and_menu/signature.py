@@ -30,7 +30,7 @@ class signature_follow_up(osv.osv):
                         when pick.type = 'out' and pick.subtype = 'standard' then 'stock.picking.out'
                         when pick.type = 'out' and pick.subtype = 'picking' then 'stock.picking.pick'
                         else s.signature_res_model end as doc_type,
-                    string_agg(l.name, ',') as roles,
+                    string_agg(distinct(l.name), ',') as roles,
                     bool_and(l.signed) as signed,
                     coalesce(po.name, so.name, invoice.number, invoice.name, pick.name, jour.code|| ' ' ||per.name) as doc_name,
                     min(case when l.signed then l.date else NULL end) as signature_date,

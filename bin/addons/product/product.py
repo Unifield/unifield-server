@@ -841,7 +841,7 @@ class product_product(osv.osv):
         'lst_price' : fields.function(_product_lst_price, method=True, type='float', string='Public Price', digits_compute=dp.get_precision('Sale Price')),
         'code': fields.function(_product_code, method=True, type='char', string='Reference'),
         'partner_ref' : fields.function(_product_partner_ref, method=True, type='char', string='Customer ref'),
-        'default_code' : fields.char('Reference', size=64),
+        'default_code' : fields.char('Reference', size=64, select=1),
         'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the product without removing it.", select=True),
         'variants': fields.char('Variants', size=64),
         'product_tmpl_id': fields.many2one('product.template', 'Product Template', required=True, ondelete="cascade", select=True),

@@ -201,7 +201,6 @@ class automated_import_job(osv.osv):
         except Exception as e:
             cr.rollback()
             self.write(cr, uid, [started_job_id], {
-                'filename': False,
                 'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'nb_processed_records': 0,
                 'nb_rejected_records': 0,
@@ -480,7 +479,7 @@ class automated_import_job(osv.osv):
                         trace_b = tools.ustr(traceback.format_exc())
                     self.infolog(cr, uid, '%s :: %s' % (import_data.name, trace_b))
                     self.write(cr, uid, [job.id], {
-                        'filename': False,
+                        'filename': filename,
                         'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                         'nb_processed_records': 0,
                         'nb_rejected_records': 0,

@@ -114,7 +114,7 @@ def get_analytic_state(self, cr, uid, ids, name, args, context=None):
                 res[line.id] = 'invalid'
                 continue
             # if FP is MSF Private Fund and no destination_id, it's also invalid (since US-10228).
-            if fp_analytic and fp_analytic == fp_id and not line.destination_id:
+            if fp_analytic and fp_analytic.id == fp_id and not line.destination_id:
                 res[line.id] = 'invalid'
                 continue
 

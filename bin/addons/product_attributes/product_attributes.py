@@ -661,7 +661,7 @@ class product_attributes(osv.osv):
             if arg[2]:
                 dom = [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard']), ('replace_product_id', '=', False)]
             else:
-                dom = [('international_status', '=', 'UniData'), ('active', '=', False), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]
+                dom = [('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f']), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]
 
         return dom
 

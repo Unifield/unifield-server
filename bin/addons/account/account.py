@@ -551,6 +551,15 @@ class account_account(osv.osv):
             for field in arch.xpath('//group[@name="mapping_value"]'):
                 field.set('invisible', '0')
             fvg['arch'] = etree.tostring(arch, encoding='unicode')
+
+        if view_type == 'form' and self.pool.get('res.company')._get_instance_oc(cr, uid) == 'ocp':
+            found = False
+            view_xml = etree.fromstring(fvg['arch'])
+            for field in view_xml.xpath('//field[@name="expat_restriction"]'):
+                found = True
+                field.set('invisible', "0")
+            if found:
+                fvg['arch'] = etree.tostring(view_xml, encoding='unicode')
         return fvg
 
 
@@ -1501,12 +1510,12 @@ class account_move(osv.osv):
             return [('id', '=', '0')]
 
     _columns = {
-        'name': fields.char('Number', size=64, required=True),
+        'name': fields.char('Number', size=64, required=True, select=1),
         'ref': fields.char('Reference', size=64),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}, select=1),
         'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear',
                                         string='Fiscal Year', store=False, write_relate=False),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}),
+        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, select=1),
         'state': fields.selection([('draft','Unposted'), ('posted','Posted')], 'State', required=True, readonly=True,
                                   help='All manually created new journal entry are usually in the state \'Unposted\', but you can set the option to skip that state on the related journal. In that case, they will be behave as journal entries automatically created by the system on document validation (invoices, bank statements...) and will be created in \'Posted\' state.'),
         'line_id': fields.one2many('account.move.line', 'move_id', 'Entries', states={'posted':[('readonly',True)]}),

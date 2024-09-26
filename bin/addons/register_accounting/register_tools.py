@@ -167,7 +167,12 @@ def _get_third_parties_name(self, cr, uid, vals, context=None):
         res = partner and partner[0] and partner[0].name or ''
     if 'employee_id' in vals and vals.get('employee_id', False):
         employee = self.pool.get('hr.employee').browse(cr, uid, [vals.get('employee_id')], context=context)
-        res = employee and employee[0] and employee[0].name or ''
+        empl_name = []
+        if employee and employee[0]:
+            if employee[0].section_code:
+                empl_name.append(employee[0].section_code)
+            empl_name.append(employee[0].name or '')
+        res = ' '.join(empl_name)
     if 'transfer_journal_id' in vals and vals.get('transfer_journal_id', False):
         journal = self.pool.get('account.journal').browse(cr, uid, [vals['transfer_journal_id']], context=context)
         res = journal and journal[0] and journal[0].code or ''

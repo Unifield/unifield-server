@@ -164,7 +164,20 @@ class hr_employee(osv.osv):
         'passport_id': fields.char('Passport No', size=64),
         'contract_start_date': fields.date('Contract Start Date'),
         'contract_end_date': fields.date('Contract End Date'),
+        'section_code': fields.selection([('FR', 'FR'), ('NOFR', 'NOFR')], 'Section Code'),
     }
+    def name_get(self, cr, uid, ids, context=None):
+        if not ids:
+            return []
+        data = self.read(cr, uid, ids, ['name','section_code'], context=context)
+        res = []
+        for empl in data:
+            name = []
+            if empl['section_code']:
+                name.append(empl['section_code'])
+            name.append(empl['name'])
+            res.append((empl['id'], ' '.join(name)))
+        return res
 
     def onchange_address_id(self, cr, uid, ids, address, context=None):
         if address:
