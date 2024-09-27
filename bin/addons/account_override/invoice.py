@@ -894,7 +894,7 @@ class account_invoice(osv.osv):
             partner = partner_obj.read(cr, uid, partner_id,
                                        ['active', 'name', 'ref'])
             if partner and not partner['active']:
-                if not ('real_doc_type' in vals and vals['real_doc_type'] in ('isi', 'ivi')):
+                if not ('real_doc_type' in vals and vals['real_doc_type'] in ('isi', 'ivi') and context.get('sync_update_execution')):
                     raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner and partner['name'] or '',))
 
             #US-1686: set supplier reference from partner
