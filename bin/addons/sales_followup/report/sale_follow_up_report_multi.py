@@ -83,7 +83,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
     def _get_order_line(self, order_id, report=None):
         ftf = ['id', 'line_number', 'state', 'state_to_display', 'order_id', 'product_id', 'product_uom_qty',
-               'product_uom', 'esti_dd', 'confirmed_delivery_date', 'move_ids', 'mml_status', 'msl_status']
+               'product_uom', 'esti_dd', 'confirmed_delivery_date', 'move_ids', 'comment', 'mml_status', 'msl_status']
         if report and report.msl_non_conform:
             sol_ids = self.pool.get('sale.followup.multi.wizard').get_line_ids_non_msl(self.cr, self.uid, order_id)
             for sol in  self.pool.get('sale.order.line').browse(self.cr, self.uid, sol_ids, fields_to_fetch=ftf, context=self.localcontext):
@@ -179,6 +179,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             data = {
                 'state': line.state,
                 'state_display': line_state_display_dict.get(line.state_to_display),
+                'comment': line.comment,
                 'mml_status': self.getSel(line, 'mml_status') or '-',
                 'msl_status': self.getSel(line, 'msl_status') or '-',
             }
