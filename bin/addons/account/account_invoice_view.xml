@@ -784,7 +784,7 @@
             <field name="priority">212</field>
             <field name="arch" type="xml">
                 <tree string="Invoice"
-                      colors="blue:state in ('draft') and is_partner_active == True;black:state in ('proforma','proforma2', 'open') and is_partner_active == True;gray:state in ('cancel') and is_partner_active == True;red:is_partner_active == False">
+                      colors="blue:state in ('draft') and is_partner_active == True;black:state in ('proforma','proforma2', 'open') and is_partner_active == True;gray:state in ('cancel') and is_partner_active == True;red:state in ('draft') and is_partner_active == False">
                     <field name="document_date"/>
                     <field name="supplier_reference"/>
                     <field name="date_invoice"/>
