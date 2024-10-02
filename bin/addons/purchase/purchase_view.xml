@@ -489,7 +489,23 @@
                             </group>
                             <separator string="Invoices" colspan="4"/>
                             <newline/>
-                            <field name="invoice_ids" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
+                            <field name="invoice_ids" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}">
+                                <tree string="Invoice">
+                                    <field name="document_date"/>
+                                    <field name="supplier_reference"/>
+                                    <field name="date_invoice"/>
+                                    <field name="number"/>
+                                    <field name="partner_id"/>
+                                    <field name="name"/>
+                                    <field name="date_due"/>
+                                    <field name="origin"/>
+                                    <field name="line_count"/>
+                                    <field name="currency_id"/>
+                                    <field name="residual"/>
+                                    <field name="amount_total"/>
+                                    <field name="state_for_po"/>
+                                </tree>
+                            </field>
                             <newline/>
                             <separator string="Down Payments" colspan="4"/>
                             <newline/>
