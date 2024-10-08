@@ -2,9 +2,9 @@
 <openerp>
     <data>
 
-        <record id="wizard_account_accrual_import_errors_tree" model="ir.ui.view">
-            <field name="name">wizard.account.accrual.import.errors.tree</field>
-            <field name="model">account.accrual.import.errors</field>
+        <record id="wizard_msf_accrual_import_errors_tree" model="ir.ui.view">
+            <field name="name">wizard.msf.accrual.import.errors.tree</field>
+            <field name="model">msf.accrual.import.errors</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Information">
@@ -14,9 +14,9 @@
         </record>
 
         <!-- Import accrual wizard -->
-        <record model="ir.ui.view" id="wizard_account_accrual_import_form">
-            <field name='name'>wizard.account.accrual.import.form</field>
-            <field name='model'>account.accrual.import</field>
+        <record model="ir.ui.view" id="wizard_msf_accrual_import_form">
+            <field name='name'>wizard.msf.accrual.import.form</field>
+            <field name='model'>msf.accrual.import</field>
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Import Accrual Lines">
@@ -48,7 +48,7 @@
         <report
             id="accrual_import_template_xlsx"
             string="Accrual Import Template File"
-            model="account.accrual.import"
+            model="msf.accrual.import"
             name="accrual_import_template_xlsx"
             report_type="openpyxl"
             auto="False"

@@ -123,11 +123,11 @@ class msf_accrual_line(osv.osv):
         """
         if isinstance(ids, int):
             ids = [ids]
-        wiz_id = self.pool.get('account.accrual.import').create(cr, uid, {'accrual_id': ids[0]}, context=context)
+        wiz_id = self.pool.get('msf.accrual.import').create(cr, uid, {'accrual_id': ids[0]}, context=context)
         return {
             'name': _('Import Accrual Lines'),
             'type': 'ir.actions.act_window',
-            'res_model': 'account.accrual.import',
+            'res_model': 'msf.accrual.import',
             'target': 'new',
             'view_mode': 'form,tree',
             'view_type': 'form',
