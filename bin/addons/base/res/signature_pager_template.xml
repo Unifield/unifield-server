@@ -1,7 +1,7 @@
 <page string="Signature" name="signature_tab">
     <group colspan="2" />
 
-    <group colspan="4" col="4">
+    <group colspan="6" col="6">
         <button name="add_user_signatures"
             string="Manage Users allowed to sign"
             type="object"
@@ -10,6 +10,13 @@
             attrs="{'readonly': ['|', '|', ('signature_is_closed', '=', True), ('signature_state', '=', 'signed'), ('signed_off_line', '=', True)]}"
             ignore_access_error="1"
         />
+        <group colspan="2" attrs="{'invisible': [('allowed_to_be_locked', '=', False)]}">
+            <button name="lock_doc_for_sign" string="Lock PO to allow signatures" type="object" icon="terp-locked"
+                attrs="{'invisible': [('doc_locked_for_sign', '=', True)]}" />
+            <button name="unlock_doc_for_sign" string="Remove signatures to unlock PO" type="object" icon="gtk-open"
+                attrs="{'invisible': [('doc_locked_for_sign', '=', False)]}"
+                confirm="Warning! This action will remove all signatures on this PO, do you wish to go ahead ?" />
+        </group>
         <group colspan="2" col="14">
             <field name="signed_off_line" readonly="1" />
             <button name="activate_offline" type="object" string="Sign Off-line" attrs="{'invisible': ['|', '|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('signature_state', '!=', False), ('allowed_to_be_signed_unsigned', '=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="6"/>
@@ -18,7 +25,9 @@
         </group>
         <newline />
         <field name="allowed_to_be_signed_unsigned" invisible="1" />
-        <field name="signature_line_ids" readonly="1" nolabel="1" colspan="4" on_change="sig_line_change()" mode="tree">
+        <field name="allowed_to_be_locked" invisible="1" />
+        <field name="doc_locked_for_sign" invisible="1" />
+        <field name="signature_line_ids" readonly="1" nolabel="1" colspan="6" on_change="sig_line_change()" mode="tree">
             <tree string="Signatures">
                 <field name="name" />
                 <field name="is_active" />
@@ -28,15 +37,15 @@
                 <field name="date" />
                 <field name="format_value" />
                 <field name="ready_to_sign" invisible="True" />
-                <button name="open_sign_wizard" string="Sign" icon="gtk-paste-v" attrs="{'invisible': ['|', '|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('ready_to_sign', '=', False), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False)]}" type="object" />
+                <button name="open_sign_wizard" string="Sign" icon="gtk-paste-v" attrs="{'invisible': ['|', '|', '|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('ready_to_sign', '=', False), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False), '&amp;', ('allowed_to_be_locked', '=', True), ('doc_locked_for_sign', '=', False)]}" type="object" />
                 <button name="action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', '|', '|', ('user_id', '!=', uid), ('signature_is_closed', '=', True), ('signed', '=', False), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
                 <button name="super_action_unsign" string="Unsign" icon="unsign.png" attrs="{'invisible': ['|', '|', '|', '|', ('user_id', '=', uid), ('signature_is_closed', '=', True), ('signed', '=', False), ('signed_off_line', '=', True), ('allowed_to_be_signed_unsigned', '=', False)]}" type="object" confirm="Do you want to reset this signature ?"/>
                 <field name="backup" />
                 <field name="signed" />
             </tree>
         </field>
-        <field name="signature_state" />
-        <group colspan="2" col="4">
+        <field name="signature_state" colspan="3" />
+        <group colspan="3" col="4">
             <button name="action_close_signature" string="Close Signature" type="object" icon="terp-locked" attrs="{'readonly': [('signature_is_closed', '=', True)]}" ignore_access_error="1" confirm="You are about to block signature on the document. This is not modifiable. Are you sure ?"/>
             <field name="signature_is_closed" />
         </group>

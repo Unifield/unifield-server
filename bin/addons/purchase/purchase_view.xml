@@ -164,6 +164,7 @@
                         <field name="alert_msl_mml" invisible="1"/>
                         <field name="catalogue_display_tab" invisible="1" />
                         <field name="catalogue_exists_text" invisible="1" />
+                        <field name="locked_by_signature" />
                         <group colspan="6">
                             <html>
                                 <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
@@ -196,6 +197,12 @@
                                     <translate>WARNING: Order line(s) not synchronized, please add an AD on line(s): </translate>
                                 </p>
                                 <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
+                                <p id="view_purchase_order_locked_for_signature" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                                    <translate>
+                                        WARNING: This PO uses e-signatures. To edit it, e-signatures must be removed.
+                                    </translate>
+                                    <br/>
+                                </p>
 
                                 <script language="javascript">
                                     var original_partner = false;
@@ -267,6 +274,11 @@
                                     if (catalogue_text) {
                                          $('#order_line_extra_text').html(catalogue_text);
                                     }
+                                    var is_locked_by_signature = $('#locked_by_signature').val();
+                                    if (is_locked_by_signature == "1") {
+                                        msg_dom = $('#view_purchase_order_locked_for_signature')
+                                        msg_dom.show();
+                                    }
 
                                 </script>
                             </html>
@@ -309,7 +321,7 @@
                     </group>
                     <field name="analytic_distribution_id" invisible="1"/>
                     <notebook colspan="4">
-                        <page string="Purchase Order">
+                        <page string="Purchase Order" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
                             <field name="allocation_setup" invisible="1"/>
                             <newline/>
                             <group name="partner_info" colspan="4" col="4">
@@ -419,7 +431,7 @@
                                 <!-- default form view -->
                             </field>
                         </page>
-                        <page string="Linked documents" attrs="{'invisible': [('categ', '!=', 'transport')]}">
+                        <page string="Linked documents" attrs="{'invisible': [('categ', '!=', 'transport')], 'readonly': [('locked_by_signature', '=', True)]}">
                             <separator colspan="4" string="Purchase Order"/>
                             <field name="transport_order_id" domain="[('rfq_ok', '=', False)]"/>
                             <newline/>
@@ -445,7 +457,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Delivery &amp; Invoicing">
+                        <page string="Delivery &amp; Invoicing" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
                             <group colspan="4" col="4">
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
@@ -479,7 +491,7 @@
                             <field name="date_approve" invisible="1"/>
                             <newline/>
                         </page>
-                        <page string="Invoices">
+                        <page string="Invoices" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
                             <group colspan="2" col="2">
                                 <separator string="Invoice Control" colspan="2"/>
                                 <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan', 'loan_return'])]}"/>
@@ -522,7 +534,7 @@
                                 </field>
 
                         </page>
-                        <page string="Notes">
+                        <page string="Notes" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
                             <group colspan="4" col="6">
                             <field name="import_in_progress" readonly="1" invisible="0"/>
                             <field name="auto_exported_ok" readonly="1"/>

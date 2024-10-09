@@ -58,6 +58,31 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF35.0
+    def us_13166_signature_lock_for_po(self, cr, uid, *a, **b):
+        """
+        Only allow users with the group Sign_document_creator_supply to lock/unlock the PO through the signature
+        Lock existing POs that have been signed
+        """
+        if _get_instance_level(self, cr, uid) == 'hq':
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            for group_name, model, b_name in [
+                ('Sign_document_creator_supply', 'purchase.order', ['lock_doc_for_sign', 'unlock_doc_for_sign']),
+            ]:
+                group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
+                if not group_ids:
+                    group_id = self.pool.get('res.groups').create(cr, uid, {'name': group_name})
+                else:
+                    group_id = group_ids[0]
+
+                if model and b_name:
+                    bar_ids = bar_obj.search(cr, uid, [('name', '=', b_name), ('model_id', 'in', model)])
+                    bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
+
+
+
+        return True
+
     # UF34.0
     def us_13398_ocb_unmerge_2_prod(self, cr, uid, *a, **b):
         '''

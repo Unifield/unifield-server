@@ -138,6 +138,24 @@ class signature(osv.osv):
             res[sign['id']] = allow
         return res
 
+    def _get_allowed_to_be_locked(self, cr, uid, ids, *a, **b):
+        '''
+        Check if locking the signature is allowed
+        For PO, supplier must be external. Not allowed otherwise
+        '''
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        for sign in self.read(cr, uid, ids, ['signature_res_model', 'signature_res_id']):
+            allow = False
+            model_obj = self.pool.get(sign['signature_res_model'])
+            if sign['signature_res_model'] == 'purchase.order' and sign['signature_res_id'] and \
+                    model_obj.read(cr, uid, sign['signature_res_id'], ['partner_type'])['partner_type'] == 'external':
+                allow = True
+            res[sign['id']] = allow
+        return res
+
     _columns = {
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
         'signature_res_model': fields.char('Model', size=254, select=1),
@@ -149,6 +167,12 @@ class signature(osv.osv):
         'signature_closed_date': fields.datetime('Date of signature closure', readonly=1),
         'signature_closed_user': fields.many2one('res.users', 'Closed by', readonly=1),
         'allowed_to_be_signed_unsigned': fields.function(_get_allowed_to_be_signed_unsigned, type='boolean', string='Allowed to be signed/un-signed', method=1),
+        'allowed_to_be_locked': fields.function(_get_allowed_to_be_locked, type='boolean', string='Allowed to be locked', method=1),
+        'doc_locked_for_sign': fields.boolean('Document is locked because of signature', readonly=True),
+    }
+
+    _defaults = {
+        'doc_locked_for_sign': False,
     }
 
     _sql_constraints = [
@@ -188,6 +212,20 @@ class signature(osv.osv):
             self._log_sign_state(cr, uid, cur_obj.signature_res_id, cur_obj.signature_res_model, cur_obj.signature_state, signature_state, context)
         return signature_state
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        if not context:
+            context = {}
+
+        # To prevent unwanted locking when the lock button is available before other data has been saved in the document
+        if 'doc_locked_for_sign' in vals and vals.get('doc_locked_for_sign', False):
+            for sign in self.read(cr, uid, ids, ['allowed_to_be_locked'], context=context):
+                if not sign['allowed_to_be_locked']:
+                    raise osv.except_osv(_('Warning'), _("You are not allowed to lock this document, please refresh the page"))
+
+        return super(signature, self).write(cr, uid, ids, vals, context=context)
+
 
 signature()
 
@@ -214,6 +252,7 @@ class signature_object(osv.osv):
 
     _columns = {
         'signature_id': fields.many2one('signature', 'Signature', required=True, ondelete='cascade'),
+        'locked_by_signature': fields.related('signature_id', 'doc_locked_for_sign', type='boolean', relation='signature', string='Locked by signature', help='To prevent edition on: PO'),
     }
 
     def action_close_signature(self, cr, uid, ids, context=None):
@@ -225,7 +264,6 @@ class signature_object(osv.osv):
             'signature_closed_user': real_uid,
         }, context=context)
         return True
-
 
     def sig_line_change(self, cr, uid, ids, context=None):
         states = dict(self._inherit_fields['signature_state'][2].selection)
@@ -396,7 +434,55 @@ class signature_object(osv.osv):
                     }, context=context)
         return new_id
 
+    def lock_doc_for_sign(self, cr, uid, ids, context=None):
+        """
+        Allow user to lock the document, but only if at least on signee has been added
+        """
+        if context is None:
+            context = {}
+
+        _register_log(self, cr, uid, ids, self._name, 'Document locked', False, True, 'write', context)
+
+        doc = _('document')
+        if self._name == 'purchase.order':
+            doc = _('PO')
+        cr.execute("""
+            SELECT sl.id FROM signature_line sl LEFT JOIN signature s ON sl.signature_id = s.id 
+            WHERE s.signature_res_model = %s AND s.signature_res_id IN %s AND user_id IS NOT NULL LIMIT 1
+        """, (self._name, tuple(ids)))
+        if not cr.fetchone():
+            raise osv.except_osv(_('Warning'),
+                                 _("In order to lock this %s for signature, signee user(s) should have been added") % (doc,))
+        self.write(cr, uid, ids, {'doc_locked_for_sign': True}, context=context)
+
+        return True
+
+    def unlock_doc_for_sign(self, cr, uid, ids, context=None):
+        """
+        Allow the document to be editable, but un-sign it in the process
+        """
+        if context is None:
+            context = {}
+
+        _register_log(self, cr, uid, ids, self._name, 'Document locked', True, False, 'write', context)
+
+        cr.execute("""
+            SELECT sl.id FROM signature_line sl LEFT JOIN signature s ON sl.signature_id = s.id 
+            WHERE s.signature_res_model = %s AND s.signature_res_id IN %s AND sl.signed = 't' 
+        """, (self._name, tuple(ids)))
+        to_unsign = []
+        for x in cr.fetchall():
+            to_unsign.append(x[0])
+        if to_unsign:
+            self.pool.get('signature.line').super_action_unsign(cr, uid, to_unsign, context=context)
+
+        self.write(cr, uid, ids, {'doc_locked_for_sign': False}, context=context)
+
+        return True
+
+
 signature_object()
+
 
 class signature_line(osv.osv):
     _name = 'signature.line'
