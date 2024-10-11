@@ -90,7 +90,7 @@
                             <field name="local_ref" />
                         </group>
 
-                        <group colspan="2" col="8" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                        <group colspan="2" col="8" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}">
                             <separator string="Asset Reference" colspan="2" />
                             <field name="serial_nb" colspan="8" />
                             <field name="brand" colspan="8" />
