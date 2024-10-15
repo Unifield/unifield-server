@@ -102,8 +102,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.cr.execute(self.liquidity_sql, params)
         cash_bank_res = self.cr.dictfetchall()
         cash_bank_res = self._filter_journal_status(cash_bank_res, date_to)
-        cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res,
-                                                                              encode=False, context=self.context)
+        cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res, context=self.context)
         res.extend(cash_bank_res)
         # Cheque registers
         # Chq Starting Balance
@@ -199,7 +198,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.cr.execute(cheque_sql, cheque_params)
         cheque_res = self.cr.dictfetchall()
         cheque_res = self._filter_journal_status(cheque_res, date_to)
-        cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, encode=False, context=self.context)
+        cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, context=self.context)
         res.extend(cheque_res)
         # sort result by instance code and by journal code
         sorted_res = sorted(res, key=lambda k: (k['instance'], k['code']))

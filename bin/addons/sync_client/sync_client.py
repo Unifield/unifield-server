@@ -386,15 +386,15 @@ def generate_new_hwid():
 def get_hardware_id():
     logger = logging.getLogger('sync.client')
     if sys.platform == 'win32':
-            # US-1746: on windows machine get the hardware id from the registry
-            # to avoid hwid change with new network interface (wifi adtapters,
-            # vpn, ...)
+        # US-1746: on windows machine get the hardware id from the registry
+        # to avoid hwid change with new network interface (wifi adtapters,
+        # vpn, ...)
 
         import winreg
         sub_key = 'SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0'
 
         try:
-                # check if there is hwid stored in the registry
+            # check if there is hwid stored in the registry
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, sub_key,
                                 0, winreg.KEY_READ) as registry_key:
                 hw_hash, regtype = winreg.QueryValueEx(registry_key, "HardwareId")
@@ -1410,6 +1410,12 @@ class Entity(osv.osv):
                 logger.replace(logger_index, 'Processing Export to HQ system (OCA) - Not yet exported')
                 logger.write()
             self._logger.info('Processing Export to HQ system (OCA) - Not yet exported')
+        elif self.pool.get('ocp.export.wizard').launch_auto_export(cr, uid, context=context):
+            if logger:
+                logger_index = logger.append()
+                logger.replace(logger_index, 'Processing Export to HQ system (OCP)')
+                logger.write()
+            self._logger.info('Processing Export to HQ system (OCP)')
         return True
 
     @sync_process()

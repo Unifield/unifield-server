@@ -125,6 +125,15 @@ class res_company(osv.osv):
             menu_obj.write(cr, uid, [import_prod_menu_id, update_prod_menu_id], {'active': level != 'project'}, context=context)
         return ret
 
+    def _get_instance_oc(self, cr, uid):
+        entity_obj = self.pool.get('sync.client.entity')
+        if not entity_obj:
+            return False
+        ids = entity_obj.search(cr, 1, [])
+        if ids:
+            return entity_obj.browse(cr, 1, ids[0], fields_to_fetch=['oc']).oc
+        return False
+
     def _get_instance_level(self, cr, uid):
         instance = self._get_instance_record(cr, uid)
         return instance and instance.level or False
