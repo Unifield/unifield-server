@@ -65,17 +65,17 @@ class patch_scripts(osv.osv):
         '''
         pick_obj = self.pool.get('stock.picking')
 
-        to_mixed, to_assign, to_confirmed, to_processed, to_empty = [], [], [], [], []
-        pick_ids = pick_obj.search(cr, uid, [('type', '=', 'out'), ('subtype', '=', 'picking'), ('is_subpick', '=', True)], context={})
-        for pick in pick_obj.browse(cr, uid, pick_ids, fields_to_fetch=['move_lines', 'is_subpick'], context={}):
+        to_mixed, to_assign, to_confirmed, to_empty = [], [], [], []
+        subpick_domain = [('type', '=', 'out'), ('subtype', '=', 'picking'), ('is_subpick', '=', True),
+                          ('state', 'in', ['confirmed', 'assigned'])]
+        pick_ids = pick_obj.search(cr, uid, subpick_domain, context={})
+        for pick in pick_obj.browse(cr, uid, pick_ids, fields_to_fetch=['move_lines'], context={}):
             available, confirmed = False, False
-            processed = True
             empty = len(pick.move_lines)
             for move in pick.move_lines:
                 if move.product_qty == 0.00 or move.state in ('cancel', 'done'):
                     continue
 
-                processed = False
                 if move.state != 'assigned':
                     confirmed = True
                 else:
@@ -90,8 +90,6 @@ class patch_scripts(osv.osv):
                 to_assign.append(pick.id)
             elif confirmed:
                 to_confirmed.append(pick.id)
-            elif processed:
-                to_processed.append(pick.id)
             elif empty == 0:
                 to_empty.append(pick.id)
 
@@ -104,12 +102,16 @@ class patch_scripts(osv.osv):
         if to_confirmed:
             cr.execute("""UPDATE stock_picking SET line_state = 'confirmed' WHERE id IN %s""", (tuple(to_confirmed),))
             self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Not available'" % (len(to_confirmed),))
-        if to_processed:
-            cr.execute("""UPDATE stock_picking SET line_state = 'processed' WHERE id IN %s""", (tuple(to_processed),))
-            self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Processed'" % (len(to_processed),))
         if to_empty:
             cr.execute("""UPDATE stock_picking SET line_state = 'empty' WHERE id IN %s""", (tuple(to_empty),))
             self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Empty'" % (len(to_empty),))
+        # To processed
+        cr.execute("""
+            UPDATE stock_picking SET line_state = 'processed' 
+            WHERE id IN (SELECT id FROM stock_picking WHERE type = 'out' AND subtype = 'picking' AND is_subpick = 't' 
+                AND state IN ('done', 'cancel'))
+        """)
+        self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Processed'" % (cr.rowcount,))
 
         return True
 
