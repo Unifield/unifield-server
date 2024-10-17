@@ -108,8 +108,7 @@ class patch_scripts(osv.osv):
         # To processed
         cr.execute("""
             UPDATE stock_picking SET line_state = 'processed' 
-            WHERE id IN (SELECT id FROM stock_picking WHERE type = 'out' AND subtype = 'picking' AND is_subpick = 't' 
-                AND state IN ('done', 'cancel'))
+            WHERE type = 'out' AND subtype = 'picking' AND is_subpick = 't' AND state IN ('done', 'cancel')
         """)
         self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Processed'" % (cr.rowcount,))
 
