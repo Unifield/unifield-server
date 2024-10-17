@@ -232,10 +232,10 @@ class account_invoice_sync(osv.osv):
         po_obj = self.pool.get('purchase.order')
         stock_picking_obj = self.pool.get('stock.picking')
         invoice_dict = invoice_data.to_dict()
-        # the counterpart instance must exist and be active
-        partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', '=', True)], limit=1, context=context)
+        # the counterpart instance must exist
+        partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', 'in', ['t', 'f'])], limit=1, context=context)
         if not partner_ids:
-            raise osv.except_osv(_('Error'), _("The partner %s doesn't exist or is inactive.") % source)
+            raise osv.except_osv(_('Error'), _("The partner %s doesn't exist.") % source)
         partner_id = partner_ids[0]
         partner = partner_obj.browse(cr, uid, partner_id, fields_to_fetch=['property_account_payable', 'name'], context=context)
         journal_type = invoice_dict.get('journal_id', {}).get('type', '')

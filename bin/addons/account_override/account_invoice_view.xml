@@ -305,11 +305,12 @@
             <field name="type">tree</field>
             <field name="priority">21</field>
             <field name="arch" type="xml">
-                <tree string="Intermission Voucher" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
+                <tree string="Intermission Voucher" colors="blue:state in ('draft') and is_partner_active == True;black:state in ('proforma','proforma2','open') and is_partner_active == True;gray:state in ('cancel') and is_partner_active == True;red:is_partner_active == False">
                     <field name="document_date"/>
                     <field name="date_invoice"/>
                     <field name="number"/>
                     <field name="partner_id"/>
+                    <field name="is_partner_active" invisible="1"/>
                     <field name="name"/>
                     <field name="origin"/>
                     <field name="counterpart_inv_number"/>
