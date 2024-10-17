@@ -24,7 +24,7 @@
                     <field name="export_format" string="Export type"/>
                     <field name="currency_id" string="Display currency"
                            domain="[('active', 'in', ['True', 'False']), ('currency_table_id', '=', fx_table_id)]"
-                           attrs="{'invisible': [('export_format', '=', 'xls')]}"/>
+                           attrs="{'invisible': [('export_format', '=', 'xls')], 'required': [('fx_table_id', '!=', False), ('export_format', '=', 'pdf')]}"/>
                     <newline/>
                     <group colspan="6" col="4">
                         <label string="" colspan="2"/>

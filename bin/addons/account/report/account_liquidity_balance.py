@@ -41,11 +41,13 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.currency_id = False
         self.fx_table_id = False
         self.sub_totals = False
+        self.general_total = False
         self.context = {}
         super(account_liquidity_balance, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'get_register_data': self._get_register_data,
             'get_subtotals' : self._get_subtotals,
+            'get_general_total': self._get_general_total,
         })
 
     def _filter_journal_status(self, reg_data, date_to):
@@ -89,6 +91,16 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
 
         if not date_from or not date_to:
             raise osv.except_osv(_('Error'), _('Start date and/or End date missing.'))
+
+        currency_id = self.currency_id or self.pool.get('res.users').browse(self.cr, self.uid, self.uid, self.context).company_id.currency_id.id
+        if self.fx_table_id:
+            self.cr.execute("""SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = '%s' """, (currency_id,))
+        else:
+            self.cr.execute(
+                "SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1",
+                (currency_id, date_to))
+        functional_to_display_rate = self.cr.dictfetchall()[0]
+
         period_title = self.period_title or ''
         # Cash and Bank registers
         reg_types = ('cash', 'bank')
@@ -204,17 +216,37 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         sorted_res = sorted(res, key=lambda k: (k['instance'], k['code']))
         # sum closing balances by booking currencies
         sub_totals = {}
-        for register in sorted_res:
+        general_total = False
+        for i, register in enumerate(sorted_res):
+            # Get current register currency rate
+            self.cr.execute(
+                "SELECT currency_id, name, rate FROM res_currency_rate "
+                "WHERE "
+                "   currency_id = (SELECT currency FROM account_journal WHERE id = (SELECT DISTINCT journal_id FROM account_bank_statement WHERE name = %s )) AND "
+                "   name <= %s ORDER BY name desc LIMIT 1",
+                (register['name'], date_to))
+            functional_to_reg_curr_rate = self.cr.dictfetchall()
+            if not functional_to_reg_curr_rate:
+                raise osv.except_osv(_('Error'), _('Could not find the rate of the display/functional currency at date %s.') % (date_to))
+            functional_to_reg_curr_rate = functional_to_reg_curr_rate[0]
+            sorted_res[i].update({'output_value': register['closing'] / functional_to_reg_curr_rate['rate'] * functional_to_display_rate['rate']})
             if register['currency'] in sub_totals:
-                sub_totals[register['currency']] += register['closing']
+                sub_totals[register['currency']] ['closings'] += register['closing']
+                sub_totals[register['currency']]['output_value'] += register['output_value']
             else:
-                sub_totals[register['currency']] = register['closing']
+                sub_totals[register['currency']] = {}
+                sub_totals[register['currency']]['closings'] = register['closing']
+                sub_totals[register['currency']]['output_value'] = register['output_value']
         self.sub_totals = sub_totals
+        self.general_total = sum([subtotal.get('output_value') for subtotal in sub_totals.values()])
 
         return sorted_res
 
     def _get_subtotals(self):
         return self.sub_totals
+
+    def _get_general_total(self):
+        return self.general_total
 
     def set_context(self, objects, data, ids, report_type=None):
         # get the selection made by the user

@@ -108,8 +108,11 @@ class liquidity_balance_wizard(osv.osv_memory):
                              'date_to': wiz.date_to or False,
                              })
         # Get the selected output currency and currency table
-        data['form'].update({'currency_id': wiz.currency_id and wiz.currency_id.name or
+        data['form'].update({'currency_name': wiz.currency_id and wiz.currency_id.name or
                                             self.pool.get('res.users').browse(cr, uid, uid, context).company_id.currency_id.name,
+                             'currency_id': wiz.currency_id and wiz.currency_id.id or
+                                              self.pool.get('res.users').browse(cr, uid, uid,
+                                                                                context).company_id.currency_id.id,
                              'fx_table_id': wiz.fx_table_id and wiz.fx_table_id.id or False,
                              })
 

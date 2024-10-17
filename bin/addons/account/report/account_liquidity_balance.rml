@@ -154,10 +154,10 @@
           <parawrap style="P3Right">[[ line['journal_status'] or '' ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ '0.0' ]]</parawrap>
+          <parawrap style="P3Right">[[ formatLang(line['output_value']) or '-' ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ 'currency_id' in data['form'] and data['form']['currency_id'] or '']]</parawrap>
+          <parawrap style="P3Right">[[ 'currency_name' in data['form'] and data['form']['currency_name'] or '-']]</parawrap>
         </td>
       </tr>
     </blockTable>
@@ -177,7 +177,7 @@
           <parawrap style="P3Right">[[ 'Sub-Total In' ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ formatLang(sub_total[1] or 0.0) ]]</parawrap>
+          <parawrap style="P3Right">[[ formatLang(sub_total[1].get('closings', False) or '-') ]]</parawrap>
         </td>
         <td>
           <parawrap style="P3Right">[[ sub_total[0] ]]</parawrap>
@@ -186,10 +186,10 @@
           <parawrap style="P3Right"></parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ '0.0' ]]</parawrap>
+          <parawrap style="P3Right">[[ formatLang(sub_total[1].get('output_value', False) or '-') ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ 'currency_id' in data['form'] and data['form']['currency_id'] or '' ]]</parawrap>
+          <parawrap style="P3Right">[[ 'currency_name' in data['form'] and data['form']['currency_name'] or '-' ]]</parawrap>
         </td>
       </tr>
     </blockTable>
@@ -208,10 +208,10 @@
           <parawrap style="P3Right"></parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ '0.0' ]]</parawrap>
+          <parawrap style="P3Right">[[ formatLang(get_general_total()) or '-' ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ 'currency_id' in data['form'] and data['form']['currency_id'] or '' ]]</parawrap>
+          <parawrap style="P3Right">[[ 'currency_name' in data['form'] and data['form']['currency_name'] or '-' ]]</parawrap>
         </td>
       </tr>
     </blockTable>
