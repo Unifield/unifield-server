@@ -1788,15 +1788,26 @@ class Connection(osv.osv):
                     self._password = password
                     con.password = password
                 else:
-                    self._password = con.login
+                    self._password = tools.config.get('sync_user_password', con.login)
             if login is None:
-                login=con.login
+                login = con.login
             cnx = rpc.Connection(connector, con.database, login, self._password)
             con._cache = {}
             if cnx.user_id:
                 self._uid = cnx.user_id
             else:
                 raise osv.except_osv('Not Connected', "Not connected to server. Please check password and connection status in the Connection Manager")
+
+            # Update the credentials in the config file if they are empty
+            save_sync_login, save_sync_pass = False, False
+            if login and not tools.config.get('sync_user_login'):
+                tools.config['sync_user_login'] = login
+                save_sync_login = True
+            if self._password and not tools.config.get('sync_user_password'):
+                tools.config['sync_user_password'] = self._password
+                save_sync_pass = True
+            if save_sync_login or save_sync_pass:
+                tools.config.save_sync_credentials(login, self._password)
         except socket.error as e:
             raise osv.except_osv(_("Error"), _(e.strerror))
         except osv.except_osv:
