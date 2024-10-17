@@ -58,6 +58,20 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF35.0
+    def us_13291_oca_delete_default_ad_destination(self, cr, uid, *a, **b):
+        '''
+        Remove the default destination put on AD
+        '''
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'oca':
+            cr.execute("""
+                DELETE FROM ir_values WHERE key = 'default' AND key2 IS NULL AND meta = 'web' AND name = 'destination_id'
+            """)
+            self.log_info(cr, uid, "US-13291: %s default destinations were removed" % (cr.rowcount,))
+
+        return True
+
     # UF34.0
     def us_13398_ocb_unmerge_2_prod(self, cr, uid, *a, **b):
         '''
