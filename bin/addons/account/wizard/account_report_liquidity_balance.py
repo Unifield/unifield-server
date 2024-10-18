@@ -25,6 +25,7 @@ from tools.translate import _
 
 from time import strftime
 from time import strptime
+import datetime
 
 class liquidity_balance_wizard(osv.osv_memory):
     _name = 'liquidity.balance.wizard'
@@ -151,6 +152,10 @@ class liquidity_balance_wizard(osv.osv_memory):
             if wiz.period_id:
                 period_title = wiz.period_id.name
             data['title'] = "%s - %s" % (_('Liquidity Balance Report'), period_title)
+            data['target_filename'] = ("%s %s %s %s" %
+                                       (_('Liquidity Balance'), period_title_filename, instance,
+                                        datetime.datetime.now().strftime("%Y%m%d")))
+
             if wiz.currency_id:
                 currency_str = "%s: %s" % (_('Currency'), wiz.currency_id.name)
                 header_infos.append(currency_str)

@@ -248,6 +248,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
     def _get_general_total(self):
         return self.general_total
 
+
     def set_context(self, objects, data, ids, report_type=None):
         # get the selection made by the user
         self.period_id = data['form'].get('period_id', False)

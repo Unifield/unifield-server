@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<document filename="Liquidity_Balances.pdf">
+<document>
   <template pageSize="(842.0,595.0)" title="Liquidity Balance Report" allowSplitting="20">
     <pageTemplate id="first">
       <frame id="first" x1="28.0" y1="57.0" width="817" height="481"/>
@@ -78,12 +78,12 @@
     <blockTable colWidths="816.0" style="Tableau3">
       <tr>
         <td>
-          <para style="P3Bold">Selection</para>
+          <para style="P3Bold">[[ translate('Selection') ]]</para>
         </td>
       </tr>
       <tr>
         <td>
-          <para style="P3BoldLeft">[[ 'header' in data and data['header'] or '-' ]]</para>
+          <para style="P3BoldLeft">[[ 'header' in data and data['header'] or '' ]]</para>
         </td>
       </tr>
     </blockTable>
@@ -91,37 +91,37 @@
     <blockTable colWidths="45.0,45.0,185.0,58.0,78.0,73.0,75.0,40.0,65.0,76.0,76.0" style="Tableau3">
       <tr>
         <td>
-          <para style="P3Bold">Instance</para>
+          <para style="P3Bold">[[ translate('Instance') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">Code</para>
+          <para style="P3Bold">[[ translate('Code') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">Name</para>
+          <para style="P3Bold">[[ translate('Name') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">Period</para>
+          <para style="P3Bold">[[ translate('Period') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">Starting Balance</para>
+          <para style="P3Bold">[[ translate('Starting Balance') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">Movements</para>
+          <para style="P3Bold">[[ translate('Movements') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">Closing balance</para>
+          <para style="P3Bold">[[ translate('Closing balance') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">Currency</para>
+          <para style="P3Bold">[[ translate('Currency') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">Journal status</para>
+          <para style="P3Bold">[[ translate('Journal status') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">Closing balance Functional/output value</para>
+          <para style="P3Bold">[[ translate('Closing balance Functional/output value') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">Currency Functional/output</para>
+          <para style="P3Bold">[[ translate('Currency Functional/output') ]]</para>
         </td>
       </tr>
       <tr>
@@ -174,7 +174,7 @@
           <parawrap style="P3Right"></parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ 'Sub-Total In' ]]</parawrap>
+          <parawrap style="P3Right">[[ translate('Sub-Total In') ]]</parawrap>
         </td>
         <td>
           <parawrap style="P3Right">[[ formatLang(sub_total[1].get('closings', False) or '-') ]]</parawrap>
@@ -202,7 +202,7 @@
           <parawrap></parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ 'General Total In' ]]</parawrap>
+          <parawrap style="P3Right">[[ translate('General Total In') ]]</parawrap>
         </td>
         <td>
           <parawrap style="P3Right"></parawrap>
