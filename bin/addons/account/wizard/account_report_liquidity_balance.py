@@ -153,7 +153,7 @@ class liquidity_balance_wizard(osv.osv_memory):
                 period_title = wiz.period_id.name
             data['title'] = "%s - %s" % (_('Liquidity Balance Report'), period_title)
             data['target_filename'] = ("%s %s %s %s" %
-                                       (_('Liquidity Balance'), period_title_filename, instance,
+                                       (_('Liquidity Balance'), period_title, instance,
                                         datetime.datetime.now().strftime("%Y%m%d")))
 
             if wiz.currency_id:
