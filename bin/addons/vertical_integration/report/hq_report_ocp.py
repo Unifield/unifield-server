@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import osv
+from osv import osv, fields
 from tools.translate import _
 import pooler
 import time
@@ -35,6 +35,18 @@ import zipfile
 import tempfile
 from tools.misc import Path
 import os
+
+class ocp_employee_mapping(osv.osv):
+    _name = 'ocp.employee.mapping'
+    _columns = {
+        'arcole': fields.char('Arcole', size=32, index=1),
+        'workday': fields.char('Worday', size=32, index=1),
+        'section_code': fields.char('Section', size=8),
+    }
+    _sql_constraints = [
+        ('arcole_uniq', 'unique(arcole)', 'arcole must be unique !'),
+    ]
+ocp_employee_mapping()
 
 class finance_archive(finance_export.finance_archive):
     """
@@ -1121,6 +1133,7 @@ class hq_report_ocp_workday(hq_report_ocp):
             tot_func = 0
             all_tot = {}
 
+        employee_mapping = {}
         for sql, obj in [
                 (analytic_query, 'account.analytic.line'),
                 (move_line_query, 'account.move.line')]:
@@ -1147,6 +1160,13 @@ class hq_report_ocp_workday(hq_report_ocp):
 
                     else:
                         amls.add(row['id'])
+
+                    if row['journal_type'] == 'correction_hq' and row['partner_txt']:
+                        if row['partner_txt'] not in employee_mapping:
+                            new_cr.execute('''select workday from ocp_employee_mapping where arcole=%s''', (row['partner_txt'],))
+                            if new_cr.rowcount:
+                                emp_r = new_cr.fetchone()
+                                row['partner_txt'] = emp_r[0]
 
                     local_employee = row['employee_type'] and row['employee_type'] != 'ex'
 
