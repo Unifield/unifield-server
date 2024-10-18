@@ -430,7 +430,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                        c.name AS "booking_currency",
                        CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit,
                        CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit,
-                       cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id, hr.name_resource as hr_name,
+                       cc.name AS "functional_currency", coalesce(hr.former_identification_id, hr.identification_id) as "emplid", aml.partner_id, hr.name_resource as hr_name,
                        CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type
                 FROM account_analytic_line AS al, 
                      account_account AS a, 
@@ -486,7 +486,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             'bs_entries': """
                 SELECT aml.id, SUBSTR(i.code, 1, 3), j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date,
                        a.code, aml.partner_txt, '', SUBSTR(i.code, 1, 3), '', aml.debit_currency, aml.credit_currency, c.name,
-                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", aml.partner_id,
+                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, coalesce(hr.former_identification_id, hr.identification_id) as "Emplid", aml.partner_id,
                        hr.name_resource as hr_name, j.type
                 FROM account_move_line aml 
                 LEFT JOIN hr_employee hr ON hr.id = aml.employee_id
