@@ -495,6 +495,25 @@ class product_asset(osv.osv):
     def _get_journal_domain(self, cr, uid, context=None):
         return ['|', ('type', 'in', ['purchase', 'intermission']), '&', ('instance_id.level', '=', 'coordo'), ('type', 'in', ['correction_hq', 'hq'])]
 
+    def _get_inital_line_account_id(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        not_invoice = []
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['move_line_id', 'from_invoice'], context=context):
+            if x.from_invoice:
+                if x.move_line_id and x.move_line_id.account_id:
+                    ret[x.id] = x.move_line_id.account_id.id
+                else:
+                    ret[x.id] = False
+            else:
+                not_invoice.append(x.id)
+        if not_invoice:
+            cr.execute("select asset_id, asset_bs_depreciation_account_id from product_asset_line where is_initial_line='t' and asset_id in %s", (tuple(not_invoice),))
+            for x in cr.fetchall():
+                ret[x[0]] = x[1]
+        return ret
+
+
+
     _columns = {
         # asset
         'name': fields.char('Asset Code', size=128, readonly=True),
@@ -557,6 +576,7 @@ class product_asset(osv.osv):
         'prorata': fields.boolean('Prorata Temporis'),
         'depreciation_method': fields.selection([('straight', 'Straight Line')], 'Depreciation Method'),
         'period_id': fields.function(misc.get_fake, fnct_search=_search_period_id, method=True, type='many2one', relation='account.period', string='Start Period', domain=[('special', '=', False)]),
+        'inital_line_account_id': fields.function(_get_inital_line_account_id,  method=True, type='many2one', relation='account.account', string='Initial B/S account'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -806,8 +826,9 @@ class product_asset(osv.osv):
 
 
     def button_dispose(self, cr, uid, ids, context=None):
-        asset = self.browse(cr, uid, ids[0], fields_to_fetch=['move_line_id'], context=context)
-        wiz_id = self.pool.get('product.asset.disposal').create(cr, uid, {'asset_id': ids[0], 'disposal_bs_account': asset.move_line_id and asset.move_line_id.account_id.id or False}, context=context)
+        asset = self.browse(cr, uid, ids[0], fields_to_fetch=['inital_line_account_id'], context=context)
+
+        wiz_id = self.pool.get('product.asset.disposal').create(cr, uid, {'asset_id': ids[0], 'disposal_bs_account': asset.inital_line_account_id and asset.inital_line_account_id.id or False}, context=context)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'product.asset.disposal',
@@ -1230,21 +1251,29 @@ class product_asset_line(osv.osv):
 
             entries = [
                 {
-                    #'debit_currency': line.amount,
-                    #'credit_currency': 0,
                     'amount_currency': line.amount,
                     'account_id': line.asset_pl_account_id.id,
                     'analytic_distribution_id': line.analytic_distribution_id.id or False,
                     'asset_line_id': line.id,
                 }, {
-                    #'debit_currency': 0,
-                    #'credit_currency': line.amount,
                     'amount_currency': -1*line.amount,
                     'account_id': line.asset_bs_depreciation_account_id.id,
                     'analytic_distribution_id': False,
                 }
             ]
 
+            if line.is_disposal:
+                balance_amount = line.asset_id.depreciation_amount
+                entries += [{
+                    'amount_currency': -1*balance_amount,
+                    'account_id': line.asset_bs_depreciation_account_id and line.asset_bs_depreciation_account_id.id or False,
+                    'analytic_distribution_id': False,
+                }, {
+                    'amount_currency': balance_amount,
+                    'account_id': line.asset_id.asset_bs_depreciation_account_id.id,
+                    'analytic_distribution_id': False,
+                }
+                ]
             update_data['move_id'] = account_move_obj.create(cr, uid, {
                 'document_date': line.date,
                 'date': line.date,
@@ -1261,7 +1290,6 @@ class product_asset_line(osv.osv):
                         'product_id': line.asset_id.product_id.id,
                         'reference': line.asset_id.move_line_id.move_id.name,
                         'amount_currency': x['amount_currency'],
-                        #'credit_currency': x['credit_currency'],
                         'account_id': x['account_id'],
                         'analytic_distribution_id': x['analytic_distribution_id'],
                         'document_date': line.date,
@@ -1347,6 +1375,7 @@ class product_asset_disposal(osv.osv_memory):
             'asset_id': wiz.asset_id.id
 
         })
+
         asset_line_obj.button_generate_unposted_entries(cr, uid, [new_line_id], context=context)
 
         return {'type': 'ir.actions.act_window_close'}
