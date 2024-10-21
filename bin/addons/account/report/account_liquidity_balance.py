@@ -94,12 +94,13 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
 
         currency_id = self.currency_id or self.pool.get('res.users').browse(self.cr, self.uid, self.uid, self.context).company_id.currency_id.id
         if self.fx_table_id:
+            # When the fx_table is used, the currencies are restricted to only those present in that fx_table, so we can use the following simple query
             self.cr.execute("""SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = '%s' """, (currency_id,))
         else:
             self.cr.execute(
                 "SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1",
                 (currency_id, date_to))
-        functional_to_display_rate = self.cr.dictfetchall()[0]
+        display_currency_rate = self.cr.dictfetchall()[0]
 
         period_title = self.period_title or ''
         # Cash and Bank registers
@@ -218,18 +219,31 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         sub_totals = {}
         general_total = False
         for i, register in enumerate(sorted_res):
-            # Get current register currency rate
-            self.cr.execute(
-                "SELECT currency_id, name, rate FROM res_currency_rate "
-                "WHERE "
-                "   currency_id = (SELECT currency FROM account_journal WHERE id = (SELECT DISTINCT journal_id FROM account_bank_statement WHERE name = %s )) AND "
-                "   name <= %s ORDER BY name desc LIMIT 1",
-                (register['name'], date_to))
-            functional_to_reg_curr_rate = self.cr.dictfetchall()
-            if not functional_to_reg_curr_rate:
-                raise osv.except_osv(_('Error'), _('Could not find the rate of the display/functional currency at date %s.') % (date_to))
-            functional_to_reg_curr_rate = functional_to_reg_curr_rate[0]
-            sorted_res[i].update({'output_value': register['closing'] / functional_to_reg_curr_rate['rate'] * functional_to_display_rate['rate']})
+            # Get the rate of current register currency
+            if self.fx_table_id:
+                self.cr.execute(
+                    "SELECT rcr.currency_id, rcr.name, rcr.rate "
+                    "FROM res_currency curr1, res_currency curr2, res_currency_rate rcr, account_bank_statement st, account_journal j "
+                    "WHERE "
+                    "   st.name = %s AND "
+                    "   j.id = st.journal_id AND "
+                    "   curr2.id = j.currency AND "
+                    "   curr1.name = curr2.name AND "
+                    "   curr1.currency_table_id = %s AND "
+                    "   rcr.currency_id = curr1.id",
+                (register['name'], self.fx_table_id))
+            else:
+                self.cr.execute(
+                    "SELECT currency_id, name, rate FROM res_currency_rate "
+                    "WHERE "
+                    "   currency_id = (SELECT currency FROM account_journal WHERE id = (SELECT DISTINCT journal_id FROM account_bank_statement WHERE name = %s )) AND "
+                    "   name <= %s ORDER BY name desc LIMIT 1",
+                    (register['name'], date_to))
+            register_currency_rate = self.cr.dictfetchall()
+            if not register_currency_rate:
+                raise osv.except_osv(_('Error'), _('Could not find the rate of the display/functional currency at date %s or in the currency table.') % (date_to))
+            register_currency_rate = register_currency_rate[0]
+            sorted_res[i].update({'output_value': register['closing'] / register_currency_rate['rate'] * display_currency_rate['rate']})
             if register['currency'] in sub_totals:
                 sub_totals[register['currency']] ['closings'] += register['closing']
                 sub_totals[register['currency']]['output_value'] += register['output_value']
