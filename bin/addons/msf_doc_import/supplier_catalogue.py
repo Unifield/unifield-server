@@ -86,6 +86,7 @@ class supplier_catalogue(osv.osv):
         else:
             raise osv.except_osv(_('Error'), ('Given partner not found'))
         if not catalogue_id:
+            data['ranking'] = 3
             catalogue_id = self.create(cr, uid, data, context=context)
             catalogue_id = [catalogue_id]
             self.button_confirm(cr, uid, catalogue_id, context=context)

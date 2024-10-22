@@ -30,12 +30,6 @@ class product_supplierinfo(osv.osv):
     _name = 'product.supplierinfo'
     _inherit = 'product.supplierinfo'
 
-    def _get_order_id(self, cr, uid, ids, fields, arg, context=None):
-        r = {}
-        for supinfo in self.read(cr, uid, ids, ['sequence']):
-            r[supinfo['id']] = supinfo['sequence']
-        return r
-
     def _get_manu_price_dates(self, cr, uid, ids, fields, arg, context=None):
         if not context:
             context = {}
@@ -63,7 +57,6 @@ class product_supplierinfo(osv.osv):
         'second_manufacturer_id': fields.many2one('res.partner', string='Second Manufacturer', domain=[('manufacturer', '=', 1)]),
         'third_manufacturer_id': fields.many2one('res.partner', string='Third Manufacturer', domain=[('manufacturer', '=', 1)]),
         'company_id': fields.many2one('res.company','Company',select=1),
-        'sequence_bis': fields.function(_get_order_id, method=True, type="integer", help="Assigns the priority to the list of product supplier.", string="Ranking"),
         'check_manufacturer': fields.function(_get_manu_price_dates, method=True, type="boolean", string="Manufacturer", multi="compt_f"),
         'get_first_price': fields.function(_get_manu_price_dates, method=True, type="float", string="Indicative Price", digits_compute=dp.get_precision('Purchase Price Computation'), multi="compt_f"),
         'get_first_currency': fields.function(_get_manu_price_dates, method=True, type="many2one", relation="res.currency", string="Currency", multi="compt_f"),
@@ -76,6 +69,7 @@ class product_supplierinfo(osv.osv):
         'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
         'active': True,
     }
+
 
 product_supplierinfo()
 

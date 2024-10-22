@@ -58,6 +58,31 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF35.0
+    def us_12228_update_supplierinfo_sequence(self, cr, uid, *a, **b):
+        '''
+        Update the data of the 'sequence' field of product_supplierinfo to match the new selection
+        '''
+        # old 4 and the other into 18 ('4')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 18 WHERE sequence NOT IN (-99, 0, 1, 2, 3)""")
+
+        # old -99 into 13 ('-99')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 13 WHERE sequence = -99""")
+
+        # old 0 into 14 ('0')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 14 WHERE sequence = 0""")
+
+        # old 1 into 15 ('1')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 15 WHERE sequence = 1""")
+
+        # old 2 into 16 ('2')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 16 WHERE sequence = 2""")
+
+        # old 3 into 17 ('3')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 17 WHERE sequence = 3""")
+
+        return True
+
     # UF34.0
     def us_13398_ocb_unmerge_2_prod(self, cr, uid, *a, **b):
         '''

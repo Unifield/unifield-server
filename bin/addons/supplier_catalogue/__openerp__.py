@@ -43,6 +43,7 @@
         "wizard/catalogue_export_lines_view.xml",
         "supplier_catalogue_report.xml",
         "security/ir.model.access.csv",
+        "wizard/catalogue_update_lines_ranking_wizard_view.xml",
     ],
     'installable': True,
     'active': False,

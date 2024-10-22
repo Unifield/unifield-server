@@ -636,20 +636,20 @@ class tender(osv.osv):
                     updated = True
                     # get the product
                     product = line.product_id
-                    # find the corresponding suppinfo with sequence -99
-                    info_99_list = info_obj.search(cr, uid, [('product_id', '=', product.product_tmpl_id.id),
-                                                             ('name', '=', line.purchase_order_line_id.order_id.partner_id.id),
-                                                             ('sequence', '=', -99), ], context=context)
+                    # find the corresponding suppinfo
+                    info_list = info_obj.search(cr, uid, [('product_id', '=', product.product_tmpl_id.id),
+                                                          ('name', '=', line.purchase_order_line_id.order_id.partner_id.id)
+                                                          ], context=context)
 
-                    if info_99_list:
+                    if info_list:
                         # we drop it
-                        info_obj.unlink(cr, uid, info_99_list, context=context)
+                        info_obj.unlink(cr, uid, info_list, context=context)
 
                     # create the new one
                     values = {'name': line.supplier_id.id,
                               'product_name': False,
                               'product_code': False,
-                              'sequence': -99,
+                              'sequence': 3,
                               #'product_uom': line.product_uom.id,
                               #'min_qty': 0.0,
                               #'qty': function

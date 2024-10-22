@@ -3093,20 +3093,19 @@ class purchase_order(osv.osv):
                 if line.price_unit and line.product_id:
                     # get the product
                     product = line.product_id
-                    # find the corresponding suppinfo with sequence -99
-                    info_99_list = info_obj.search(cr, uid, [('product_id', '=', product.product_tmpl_id.id),
-                                                             ('sequence', '=', -99)],
+                    # find the corresponding suppinfo
+                    info_list = info_obj.search(cr, uid, [('product_id', '=', product.product_tmpl_id.id)],
                                                    order='NO_ORDER', context=context)
 
-                    if info_99_list:
+                    if info_list:
                         # we drop it
-                        info_obj.unlink(cr, uid, info_99_list, context=context)
+                        info_obj.unlink(cr, uid, info_list, context=context)
 
                     # create the new one
                     values = {'name': rfq.partner_id.id,
                               'product_name': False,
                               'product_code': False,
-                              'sequence': -99,
+                              'sequence': 3,
                               'product_id': product.product_tmpl_id.id,
                               'delay': int(rfq.partner_id.default_delay),
                               }

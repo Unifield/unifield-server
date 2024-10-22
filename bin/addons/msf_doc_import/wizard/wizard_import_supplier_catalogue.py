@@ -48,6 +48,7 @@ The columns should be in this order (* indicates that the field cannot be empty)
   - SoQ Rounding
   - Min. Order Qty
   - Comment
+  - Ranking
 """)
 
 
@@ -109,7 +110,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
         """
         columns_header = [('Product code*', 'string'), ('Product description', 'string'), ('Supplier Code', 'string'), ('Product UoM*', 'string'),
                           ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('SoQ Rounding', 'number'), ('Min Order Qty', 'number'),
-                          ('Comment', 'string')]
+                          ('Comment', 'string'), ('Ranking', 'string')]
         lines_not_imported = [] # list of list
         t_dt = type(datetime.datetime.now())
         for line in kwargs.get('line_with_error'):
@@ -157,18 +158,21 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
 
         cr = pooler.get_db(cr).cursor()
 
-
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.file:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
             fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file))
-            rows,reader = fileobj.getRows(), fileobj.getRows() # because we got 2 iterations
+            rows, reader = fileobj.getRows(), fileobj.getRows()  # because we got 2 iterations
             # take all the lines of the file in a list of dict
             file_values = wiz_common_import.get_file_values(cr, uid, ids, rows, False, error_list, False, context)
             total_line_num = len([row for row in fileobj.getRows()])
             percent_completed = 0
             ignore_lines, complete_lines = 0, 0
+
+            ranks = {_('1st choice'): 1, _('2nd choice'): 2, _('3rd choice'): 3, _('4th choice'): 4, _('5th choice'): 5,
+                     _('6th choice'): 6, _('7th choice'): 7, _('8th choice'): 8, _('9th choice'): 9,
+                     _('10th choice'): 10, _('11th choice'): 11, _('12th choice'): 12}
 
             next(reader)
             line_num = 1
@@ -176,7 +180,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                 error_list_line = []
                 to_correct_ok = False
                 row_len = len(row)
-                if row_len != 9:
+                if row_len != 10:
                     all_empty = True
                     for x in range(0, row_len):
                         if row.cells[x].data:
@@ -186,12 +190,12 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                     if all_empty:
                         continue
 
-                    error_list_line.append(_("You should have exactly 9 columns in this order: Product code*, Product description, Supplier Code, Product UoM*, Min Quantity*, Unit Price*, SoQ Rounding, Min Order Qty, Comment."))
+                    error_list_line.append(_("You should have exactly 10 columns in this order: Product code*, Product description, Supplier Code, Product UoM*, Min Quantity*, Unit Price*, SoQ Rounding, Min Order Qty, Comment, Ranking."))
                 comment = []
                 p_comment = False
                 catalog_line_id = False
                 try:
-                    #Product code
+                    # Product code
                     try:
                         product_code = row.cells[0].data
                     except TypeError:
@@ -227,7 +231,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                             error_list_line.append(_("This line contains the product '%s' which is a duplicate in another catalogue for the same supplier! Please remove the product from the import or the other catalogue before trying to import.") % (invalid_prod[0],))
 
                     supplier_code = len(row.cells)>=3 and row.cells[2].data
-                    #Product UoM
+                    # Product UoM
                     p_uom = len(row.cells)>=4 and row.cells[3].data
                     if not p_uom:
                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
@@ -247,7 +251,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                             uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
                             error_list_line.append(_("The UoM '%s' was not found.") % p_uom)
                             to_correct_ok = True
-                    #[utp-129]: check consistency of uom
+                    # [utp-129]: check consistency of uom
                     # I made the check on uom_id according to the constraint _check_uom in unifield-addons/product/product.py (l.744) so that we keep the consistency even when we create a supplierinfo directly from the product
                     if default_code != obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]:
                         if not self.pool.get('uom.tools').check_uom(cr, uid, default_code, uom_id, context):
@@ -258,7 +262,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                             error_list_line.append(_('The UoM "%s" was not consistent with the UoM\'s category ("%s") of the product "%s".'
                                                      ) % (browse_uom.name, browse_product.uom_id.category_id.name, browse_product.default_code))
 
-                    #Product Min Qty
+                    # Product Min Qty
                     if not len(row.cells)>=5 or not row.cells[4].data :
                         p_min_qty = 1.0
                     else:
@@ -267,7 +271,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                         else:
                             error_list_line.append(_('Please, format the line number %s, column "Min Qty".') % (line_num,))
 
-                    #Product Unit Price
+                    # Product Unit Price
                     if not len(row.cells)>=6 or not row.cells[5].data:
                         p_unit_price = 1.0
                         to_correct_ok = True
@@ -278,7 +282,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                         else:
                             error_list_line.append(_('Please, format the line number %s, column "Unit Price".') % (line_num,))
 
-                    #Product Rounding
+                    # Product Rounding
                     if not len(row.cells)>=7 or not row.cells[6].data:
                         p_rounding = False
                     else:
@@ -287,7 +291,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                         else:
                             error_list_line.append(_('Please, format the line number %s, column "SoQ rounding".') % (line_num,))
 
-                    #Product Min Order Qty
+                    # Product Min Order Qty
                     if not len(row.cells)>=8 or not row.cells[7].data:
                         p_min_order_qty = 0
                     else:
@@ -296,11 +300,24 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                         else:
                             error_list_line.append(_('Please, format the line number %s, column "Min Order Qty".') % (line_num,))
 
-                    #Product Comment
+                    # Product Comment
                     if len(row.cells)>=9 and row.cells[8].data:
                         comment.append(ustr(row.cells[8].data))
                     if comment:
                         p_comment = ', '.join(comment)
+
+                    # Ranking
+                    ranking = False
+                    if len(row.cells) >= 10 and row.cells[9].data:
+                        if ranks.get(row.cells[9].data):
+                            ranking = ranks[row.cells[9].data]
+                        else:
+                            to_correct_ok = True
+                            error_list_line.append(_('The Ranking "%s" is not consistent with the available ranks of a catalogue.')
+                                                   % (row.cells[9].data,))
+                    if not row.cells[9].data and obj.catalogue_id.state == 'confirmed' and not obj.catalogue_id.ranking:
+                        to_correct_ok = True
+                        error_list_line.append(_('The Ranking is mandatory on a confirmed catalogue line if there is none at header level.'))
 
                     if error_list_line:
                         error_list_line.insert(0, _('Line %s of the file was exported in the file of the lines not imported:') % (line_num,))
@@ -342,6 +359,8 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                                 to_write['comment'] = p_comment
                             if cl_obj.product_code != supplier_code:
                                 to_write['product_code'] = supplier_code
+                            if cl_obj.ranking != ranking:
+                                to_write['ranking'] = ranking
                             # Check Min. Qty rounding quantity
                             qty_check = obj_catalog_line.change_uom_qty(cr, uid, cl_obj.id,
                                                                         to_write.get('line_uom_id', cl_obj.line_uom_id.id),
@@ -363,6 +382,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                             'min_order_qty': p_min_order_qty,
                             'comment': p_comment,
                             'product_code': supplier_code,
+                            'ranking': ranking,
                         }
                         # Check Min. Qty rounding quantity
                         qty_check = obj_catalog_line.change_uom_qty(cr, uid, False,
@@ -391,9 +411,9 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                     to_write['catalogue_id'] = obj.catalogue_id.id
 
                     if not catalog_line_id:
-                        obj_catalog_line.create(cr, uid, to_write)
+                        obj_catalog_line.create(cr, uid, to_write, context=context)
                     else:
-                        obj_catalog_line.write(cr, uid, catalog_line_id, to_write)
+                        obj_catalog_line.write(cr, uid, catalog_line_id, to_write, context=context)
 
                     percent_completed = float(line_num-1)/float(total_line_num-1)*100.0
                     complete_lines += 1
