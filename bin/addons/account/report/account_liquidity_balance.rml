@@ -118,10 +118,10 @@
           <para style="P3Bold">[[ translate('Journal status') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">[[ translate('Closing balance Functional/output value') ]]</para>
+          <para style="P3Bold">[[ translate('Closing balance output value') ]]</para>
         </td>
         <td>
-          <para style="P3Bold">[[ translate('Currency Functional/output') ]]</para>
+          <para style="P3Bold">[[ translate('Currency output') ]]</para>
         </td>
       </tr>
       <tr>
