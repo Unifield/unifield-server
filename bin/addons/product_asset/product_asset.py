@@ -236,11 +236,21 @@ class product_asset(osv.osv):
         if context is None:
             context = {}
 
-        if context.get('sync_update_execution') and self.pool.get('res.company')._get_instance_level(cr, uid) != 'project':
+        instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
+
+        if context.get('sync_update_execution') and instance_level != 'project':
             # prevent an update from project to overwrite data
             for f in  ['asset_type_id', 'useful_life_id', 'asset_bs_depreciation_account_id', 'asset_pl_account_id', 'start_date', 'move_line_id']:
                 if f in vals:
                     del(vals[f])
+
+        # from coordo do not overwritte brand, serial, ...
+        if context.get('sync_update_execution') and instance_level == 'project':
+            current_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+            if current_instance_id == vals.get('used_instance_id'):
+                for f in ['serial_nb', 'brand', 'type', 'model', 'year']:
+                    if f in vals:
+                        del(vals[f])
 
         # fetch the product
         if 'product_id' in vals:
@@ -259,6 +269,12 @@ class product_asset(osv.osv):
 
         return super(product_asset, self).write(cr, uid, ids, vals, context)
 
+    def _after_update_send(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+        cr.execute("update product_asset set create_update_sent='t' where id in %s" , (tuple(ids), ))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         '''
         override create method to force readonly fields to be saved to db
@@ -273,6 +289,7 @@ class product_asset(osv.osv):
         if from_sync:
             vals['from_sync'] = True
             vals['state'] = 'open'
+            vals['create_update_sent'] = True
 
         # fetch the product
         if 'product_id' in vals and not context.get('from_import'):
@@ -479,6 +496,21 @@ class product_asset(osv.osv):
             res[_id] = level
         return res
 
+    def _search_instance_level(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        current_instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
+        for arg in args:
+            if arg[0] == 'instance_level' and arg[1] != '=':
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % name)
+            if arg[2] == current_instance_level:
+                return []
+            else:
+                return [('id', '=', 0)]
+        return []
+
     def _search_period_id(self, cr, uid, obj, name, args, context=None):
         if context is None:
             context = {}
@@ -512,6 +544,34 @@ class product_asset(osv.osv):
                 ret[x[0]] = x[1]
         return ret
 
+    def _get_used_in_current_instance(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+        cr.execute('''select asset.id from product_asset asset, res_company c where asset.used_instance_id = c.instance_id and asset.id in %s ''', (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = True
+
+        return ret
+
+    def _search_used_in_current_instance(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        current_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+        for arg in args:
+            if arg[0] == 'used_in_current_instance' and arg[1] != '=':
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % name)
+            if arg[2]:
+                cond = '='
+            else:
+                cond = '!='
+            return [('used_instance_id', cond, current_instance_id)]
+        return []
 
 
     _columns = {
@@ -527,12 +587,14 @@ class product_asset(osv.osv):
         'nomenclature_description': fields.char('Product Nomenclature', size=128, readonly=True), # from product when merged - to be added in _getRelatedProductFields and add dependency to module product_nomenclature
         'hq_ref': fields.char('HQ Reference', size=128),
         'local_ref': fields.char('Local Reference', size=128),
-        # asset reference
+        # asset reference declared in parent instance for sync purpose
         'serial_nb': fields.char('Serial Number', size=128), #required=True),
         'brand': fields.char('Brand', size=128), # required=True),
         'type': fields.char('Type', size=128), # required=True),
         'model': fields.char('Model', size=128), # required=True),
         'year': fields.char('Year', size=4),
+        'used_in_current_instance': fields.function(_get_used_in_current_instance, method=True, string='Used in current instance', type='boolean', fnct_search=_search_used_in_current_instance),
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], 'State', readonly=1),
         # remark
         'comment': fields.text('Comment'),
         # traceability
@@ -555,11 +617,11 @@ class product_asset(osv.osv):
         # event history
         'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
         # UF-1617: field only used for sync purpose
-        'instance_id': fields.many2one('msf.instance', string="Instance Creator", readonly=True, required=False),
+        'instance_id': fields.many2one('msf.instance', string='Instance Creator', readonly=True, required=False),
+        'used_instance_id': fields.many2one('msf.instance', string='Instance of use', join=True, required=True, domain="[('instance_to_display_ids', '=', True)]"),
         'xmlid_name': fields.char('XML Code, hidden field', size=128),
         'from_invoice': fields.boolean('From Invoice', readonly=1),
         'from_sync': fields.boolean('From Sync', readonly=1),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], 'State', readonly=1),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
         'useful_life_id': fields.many2one('product.asset.useful.life', 'Useful Life', ondelete='restrict'),
@@ -572,11 +634,12 @@ class product_asset(osv.osv):
         'lock_open': fields.boolean('Lock fields in openstate', readonly='1'),
         'has_posted_lines': fields.function(_get_has_posted_lines, string='Has at least one posted line', type='boolean', method=True),
         'can_be_disposed': fields.function(_get_can_be_disposed, string='Can be diposed', type='boolean', method=True),
-        'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', method=True),
+        'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', fnct_search=_search_instance_level, method=True),
         'prorata': fields.boolean('Prorata Temporis'),
         'depreciation_method': fields.selection([('straight', 'Straight Line')], 'Depreciation Method'),
         'period_id': fields.function(misc.get_fake, fnct_search=_search_period_id, method=True, type='many2one', relation='account.period', string='Start Period', domain=[('special', '=', False)]),
         'inital_line_account_id': fields.function(_get_inital_line_account_id,  method=True, type='many2one', relation='account.account', string='Initial B/S account'),
+        'create_update_sent': fields.boolean('1st Update sent', readonly=True)
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -610,6 +673,8 @@ class product_asset(osv.osv):
         'journal_id': _get_default_journal,
         'instance_level': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_level(cr, uid),
         'quantity_divisor': False,
+        'used_instance_id': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_id(cr, uid),
+        'create_update_sent': False,
     }
 
     _sql_constraints = [('asset_name_uniq', 'unique(name)', 'Asset Code must be unique.')]

@@ -984,7 +984,9 @@ class Entity(osv.osv):
             offset_recovery = 0
             max_seq = min(max_seq+max_seq_pack, total_max_seq)
 
-        if _get_instance_level(self, cr, uid) == 'coordo':
+        instance_level = _get_instance_level(self, cr, uid)
+        asset_rule_id = False
+        if instance_level == 'coordo':
             rule_obj = self.pool.get('sync.client.rule')
             prod_rule_id = rule_obj.search(cr, uid, [('sequence_number', '=', 604), ('model', '=', 'product.product')])
             if prod_rule_id:
@@ -992,6 +994,22 @@ class Entity(osv.osv):
                 prod_ids = self.pool.get('product.product')._get_ids_to_push(cr, uid, prod_rule, context=context)
                 if prod_ids:
                     self.pool.get('ir.model.data').mark_resend(cr, uid, 'product.product', prod_ids, context=context)
+                    cr.commit()
+
+        # product.asset: brand, serial ... updated on one side, sent update even if update received from the other side
+        if instance_level == 'project':
+            asset_rule_id = 558
+        elif instance_level== 'coordo':
+            asset_rule_id = 557
+
+        if asset_rule_id:
+            rule_obj = self.pool.get('sync.client.rule')
+            asset_rule_id = rule_obj.search(cr, uid, [('sequence_number', '=', asset_rule_id), ('model', '=', 'product.asset')])
+            if asset_rule_id:
+                asset_rule = rule_obj.browse(cr, uid, asset_rule_id[0], context=context)
+                asset_ids = self.pool.get('product.asset')._get_ids_to_push(cr, uid, asset_rule, context=context)
+                if asset_ids:
+                    self.pool.get('ir.model.data').mark_resend(cr, uid, 'product.asset', asset_ids, context=context)
                     cr.commit()
 
         trigger_analyze = self.pool.get('ir.config_parameter').get_param(cr, 1, 'ANALYZE_NB_UPDATES')
