@@ -90,6 +90,10 @@ class msf_accrual_import(osv.osv_memory):
         cr = pooler.get_db(dbname).cursor()
         errors = []
         ad_errors = []
+        accounts = {}
+        ccs = {}
+        dests = {}
+        fps = {}
         accrual_line_expense_obj = self.pool.get('msf.accrual.line.expense')
         account_obj = self.pool.get('account.account')
         errors_obj = self.pool.get('msf.accrual.import.errors')
@@ -160,12 +164,14 @@ class msf_accrual_import(osv.osv_memory):
                     if not expense_account_code:
                         errors.append(_("Line %s: the expense account (mandatory) is missing.") % (line_num,))
                     else:
-                        account_ids = account_obj.search(cr, uid, [('code', '=', expense_account_code), ('restricted_area', '=', 'accruals')], limit=1, context=context)
-                        if not account_ids:
-                            errors.append(_("Line %s: the account %s doesn't exist or isn't allowed for accrual expense lines.") % (line_num, expense_account_code))
-                        else:
-                            expense_account = account_obj.browse(cr, uid, account_ids[0], context=context)
-                            vals['expense_account_id'] = expense_account.id
+                        if not accounts.get(expense_account_code, False):
+                            account_ids = account_obj.search(cr, uid, [('code', '=', expense_account_code), ('restricted_area', '=', 'accruals')], limit=1, context=context)
+                            if not account_ids:
+                                errors.append(_("Line %s: the account %s doesn't exist or isn't allowed for accrual expense lines.") % (line_num, expense_account_code))
+                            else:
+                                expense_account = account_obj.browse(cr, uid, account_ids[0], context=context)
+                                accounts[expense_account_code] = expense_account.id
+                        vals['expense_account_id'] = accounts.get(expense_account_code)
                     if not accrual_amount:
                         errors.append(_("Line %s: the accrual amount booking (mandatory) is missing.") % (line_num,))
                     else:
@@ -185,32 +191,38 @@ class msf_accrual_import(osv.osv_memory):
                     cc_ids, fp_ids, dest_ids = [], [], []
                     if cost_center_vals:
                         for cc_code in cost_center_vals:
-                            cc_id = aac_obj.search(cr, uid, [('code', '=', cc_code), ('category', '=', 'OC'), ('type', '!=', 'view')], context=context)
-                            if not cc_id:
-                                errors.append(_("Line %s: the cost center %s doesn't exist.") % (line_num, cc_code))
-                            else:
-                                cc_ids.append(cc_id[0])
+                            if not ccs.get(cc_code, False):
+                                cc_id = aac_obj.search(cr, uid, [('code', '=', cc_code), ('category', '=', 'OC'), ('type', '!=', 'view')], context=context)
+                                if not cc_id:
+                                    errors.append(_("Line %s: the cost center %s doesn't exist.") % (line_num, cc_code))
+                                else:
+                                    ccs[cc_code] = cc_id[0]
+                            cc_ids.append(ccs.get(cc_code))
                     if funding_pool_vals:
                         for fp_code in funding_pool_vals:
-                            fp_id = aac_obj.search(cr, uid, [('code', '=', fp_code), ('category', '=', 'FUNDING'), ('type', '!=', 'view')], context=context)
-                            if not fp_id:
-                                errors.append(_("Line %s: the funding pool %s doesn't exist.") % (line_num, fp_code))
-                            else:
-                                fp_ids.append(fp_id[0])
+                            if not fps.get(fp_code, False):
+                                fp_id = aac_obj.search(cr, uid, [('code', '=', fp_code), ('category', '=', 'FUNDING'), ('type', '!=', 'view')], context=context)
+                                if not fp_id:
+                                    errors.append(_("Line %s: the funding pool %s doesn't exist.") % (line_num, fp_code))
+                                else:
+                                    fps[fp_code] = fp_id[0]
+                            fp_ids.append(fps.get(fp_code, False))
                     if destination_vals:
                         for dest_code in destination_vals:
-                            dest_id = aac_obj.search(cr, uid, [('code', '=', dest_code), ('category', '=', 'DEST'), ('type', '!=', 'view')], context=context)
-                            if not dest_id:
-                                errors.append(_("Line %s: the destination %s doesn't exist.") % (line_num, dest_code))
-                            else:
-                                dest_ids.append(dest_id[0])
-                    if not(cc_ids and fp_ids and dest_ids and percentage_vals and expense_account and accrual_amount and description and not errors):
+                            if not dests.get(dest_code, False):
+                                dest_id = aac_obj.search(cr, uid, [('code', '=', dest_code), ('category', '=', 'DEST'), ('type', '!=', 'view')], context=context)
+                                if not dest_id:
+                                    errors.append(_("Line %s: the destination %s doesn't exist.") % (line_num, dest_code))
+                                else:
+                                    dests[dest_code] = dest_id[0]
+                            dest_ids.append(dests.get(dest_code, False))
+                    if not(cc_ids and fp_ids and dest_ids and percentage_vals and accounts.get(expense_account_code, False) and accrual_amount and description and not errors):
                         continue
 
                     distrib_id = ana_obj.create(cr, uid, {'name': 'Line Distribution Import'}, context=context)
                     for i, percentage in enumerate(percentage_vals):
-                        ad_state, ad_error = ana_obj.analytic_state_from_info(cr, uid, expense_account.id, dest_ids[i],
-                                                                              cc_ids[i], fp_ids[i],
+                        ad_state, ad_error = ana_obj.analytic_state_from_info(cr, uid, accounts.get(expense_account_code),
+                                                                              dest_ids[i], cc_ids[i], fp_ids[i],
                                                                               posting_date=accrual.date,
                                                                               document_date=accrual.document_date,
                                                                               check_analytic_active=True,
