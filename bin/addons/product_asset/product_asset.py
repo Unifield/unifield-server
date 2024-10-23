@@ -248,9 +248,11 @@ class product_asset(osv.osv):
         if context.get('sync_update_execution') and instance_level == 'project':
             current_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
             if current_instance_id == vals.get('used_instance_id'):
-                for f in ['serial_nb', 'brand', 'type', 'model', 'year']:
+                for f in ['serial_nb', 'brand', 'type', 'model', 'year', 'comment', 'project_po', 'project_po', 'international_po', 'arrival_date', 'receipt_place']:
                     if f in vals:
                         del(vals[f])
+            elif vals.get('state') != 'cancel':
+                vals['state'] = 'deprecated'
 
         # fetch the product
         if 'product_id' in vals:
@@ -269,10 +271,24 @@ class product_asset(osv.osv):
 
         return super(product_asset, self).write(cr, uid, ids, vals, context)
 
+    def _update_owners_list(self, cr, uid, ids, context=None):
+        if not ids:
+            return False
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
+            cr.execute(''' insert into asset_owner_instance_rel (asset_id, instance_id)
+                (select asset.id, asset.used_instance_id from product_asset asset, msf_instance i
+                    where i.id = asset.used_instance_id and i.level = 'project' and asset.id in %s)
+                on conflict do nothing
+            ''', (tuple(ids), ))
+
     def _after_update_send(self, cr, uid, ids, context=None):
         if not ids:
             return True
         cr.execute("update product_asset set create_update_sent='t' where id in %s" , (tuple(ids), ))
+        self._update_owners_list(cr, uid, ids, context=context)
         return True
 
     def create(self, cr, uid, vals, context=None):
@@ -288,8 +304,11 @@ class product_asset(osv.osv):
 
         if from_sync:
             vals['from_sync'] = True
-            vals['state'] = 'open'
             vals['create_update_sent'] = True
+            if self.pool.get('res.company')._get_instance_level(cr, uid) == 'project':
+                vals['lock_open'] = True # transfer to new project: lock fields
+            else:
+                vals['state'] = 'open' # received at coo as open
 
         # fetch the product
         if 'product_id' in vals and not context.get('from_import'):
@@ -304,7 +323,10 @@ class product_asset(osv.osv):
         if 'instance_id' not in vals or not vals['instance_id']:
             vals['instance_id'] = self.pool.get('res.company')._get_instance_id(cr, uid)
 
-        return super(product_asset, self).create(cr, uid, vals, context)
+        new_id = super(product_asset, self).create(cr, uid, vals, context)
+        if from_sync:
+            self._update_owners_list(cr, uid, new_id, context=context)
+        return new_id
 
     def change_quantity_divisor(self, cr, uid, ids, quantity_divisor, move_line_id, context=None):
         if move_line_id and quantity_divisor:
@@ -554,7 +576,6 @@ class product_asset(osv.osv):
         cr.execute('''select asset.id from product_asset asset, res_company c where asset.used_instance_id = c.instance_id and asset.id in %s ''', (tuple(ids),))
         for x in cr.fetchall():
             ret[x[0]] = True
-
         return ret
 
     def _search_used_in_current_instance(self, cr, uid, obj, name, args, context=None):
@@ -594,7 +615,7 @@ class product_asset(osv.osv):
         'model': fields.char('Model', size=128), # required=True),
         'year': fields.char('Year', size=4),
         'used_in_current_instance': fields.function(_get_used_in_current_instance, method=True, string='Used in current instance', type='boolean', fnct_search=_search_used_in_current_instance),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], 'State', readonly=1),
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('running', 'Active'), ('cancel', 'Cancel'), ('deprecated', 'Fully Deprecated'), ('disposed', 'Disposed')], 'State', readonly=1),
         # remark
         'comment': fields.text('Comment'),
         # traceability
@@ -639,7 +660,8 @@ class product_asset(osv.osv):
         'depreciation_method': fields.selection([('straight', 'Straight Line')], 'Depreciation Method'),
         'period_id': fields.function(misc.get_fake, fnct_search=_search_period_id, method=True, type='many2one', relation='account.period', string='Start Period', domain=[('special', '=', False)]),
         'inital_line_account_id': fields.function(_get_inital_line_account_id,  method=True, type='many2one', relation='account.account', string='Initial B/S account'),
-        'create_update_sent': fields.boolean('1st Update sent', readonly=True)
+        'create_update_sent': fields.boolean('1st Update sent', readonly=True),
+        'target_instance_history_ids': fields.many2many('msf.instance', 'asset_owner_instance_rel', 'asset_id', 'instance_id', 'List of owners (accurate at Coo)'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -953,7 +975,7 @@ class product_asset(osv.osv):
             }
         return {}
 
-    def test_and_set_done(self, cr , uid, ids, context=None):
+    def test_and_set_deprecated(self, cr , uid, ids, context=None):
         if isinstance(ids, int):
             ids = [ids]
         cr.execute('''
@@ -974,7 +996,7 @@ class product_asset(osv.osv):
         ''', (tuple(ids), ))
         to_close = [x[0] for x in cr.fetchall()]
         if to_close:
-            self.write(cr, uid, to_close, {'state': 'done'}, context=context)
+            self.write(cr, uid, to_close, {'state': 'deprecated'}, context=context)
             return True
         return False
 
@@ -1092,7 +1114,7 @@ class product_asset_event(osv.osv):
         'comment': fields.text('Comment'),
         'asset_name': fields.related('asset_id', 'name', type='char', readonly=True, size=128, store=False, write_relate=False, string="Asset"),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
-        'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], readonly=1),
+        'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Active'), ('cancel', 'Cancel'), ('deprecated', 'Fully Deprecated'), ('disposed', 'Disposed')], readonly=1),
     }
 
     _defaults = {

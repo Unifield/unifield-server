@@ -1591,7 +1591,7 @@ class account_move(osv.osv):
                                             {'state':'posted'})
 
         if asset_ids_to_check:
-            self.pool.get('product.asset').test_and_set_done(cr, uid, asset_ids_to_check, context=context)
+            self.pool.get('product.asset').test_and_set_deprecated(cr, uid, asset_ids_to_check, context=context)
         return a
 
     def button_validate(self, cursor, user, ids, context=None):
