@@ -259,36 +259,21 @@ class account_invoice(osv.osv):
     def _get_state_for_po(self, cr, uid, ids, field_name=None, arg=None, context=None):
         if not ids:
             return {}
+        if not context:
+            context = {}
         res = {}
-        aml_obj = self.pool.get('account.move.line')
-        acc_obj = self.pool.get('account.account')
-        absl_obj = self.pool.get('account.bank.statement.line')
-        acc_list = acc_obj.search(cr, uid, [('type', 'in', ['payable', 'receivable'])])
+        res_open = self._get_imported_state(cr, uid, ids, context=context)
         for inv in self.browse(cr, uid, ids, context):
             state_for_po = inv.state
             if state_for_po == 'open':
-                if inv.move_id:
-                    absl_ids = absl_obj.search(cr, uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])], context=context)
-                    account = inv.account_id
-                    if absl_ids and account and (account.id in acc_list):
-                        state_for_po = 'open_imported'
-                        aml_id = aml_obj.search(cr, uid, [('account_id', '=', account.id),
-                                                                ('is_counterpart', '=', True),
-                                                                ('move_id', '=', inv.move_id.id)], context=context)
-                        aml = aml_obj.browse(cr, uid, aml_id, context)
-                        if aml:
-                            residual = aml[0].amount_residual_import_inv
-                            if residual and abs(residual - inv.amount_total) < 0.001:
-                                state_for_po = 'open_not_imported'
-                            elif residual and residual < inv.amount_total and residual > 0.001:
-                                state_for_po = 'open_partial_imported'
-                        else:
-                            state_for_po = 'open_not_imported'
-                    else:
-                        state_for_po = 'open_not_imported'
+                if res_open[inv.id] == 'imported':
+                    state_for_po = 'open_imported'
+                elif res_open[inv.id] == 'not':
+                    state_for_po = 'open_not_imported'
+                elif res_open[inv.id] == 'partial':
+                    state_for_po = 'open_partial_imported'
             res[inv.id] = state_for_po
         return res
-
 
     _columns = {
         'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),
