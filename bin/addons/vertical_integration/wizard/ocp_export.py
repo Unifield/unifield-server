@@ -71,7 +71,7 @@ class ocp_fin_sync(osv.osv):
                 'has_next_page': True,
             }
             if prev_id:
-                prev_session = self.browse(cr, uid, prev_id[0])
+                prev_session = self.browse(cr, 1, prev_id[0])
                 data['previous_auditrail_id'] = prev_session.max_auditrail_id
 
             self.create(cr, 1, data)
