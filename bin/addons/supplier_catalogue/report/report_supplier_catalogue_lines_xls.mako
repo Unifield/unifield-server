@@ -94,7 +94,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.rounding or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.min_order_qty or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(line, 'ranking')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(line, 'ranking') or ''|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(line, 'mml_status')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(line, 'msl_status')|x}</Data></Cell>
     </Row>

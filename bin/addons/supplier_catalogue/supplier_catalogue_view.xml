@@ -173,7 +173,9 @@
                     <field name="rounding" on_change="change_soq_quantity(rounding, line_uom_id)" />
                     <field name="min_order_qty" />
                     <field name="comment" />
+                    <field name="ranking" attrs="{'required': [('required_ranking', '=', True)]}" />
                     <field name="catalogue_id" invisible="1" readonly="1" />
+                    <field name="required_ranking" invisible="1" />
                 </form>
             </field>
         </record>
@@ -189,7 +191,7 @@
                     <field name="line_number" readonly="1"/>
                     <field name="product_id" on_change="product_change(product_id, min_qty, min_order_qty, catalogue_id)" />
                     <field name="product_code" />
-                    <field name="line_uom_id" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" 
+                    <field name="line_uom_id" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)"
                            domain="[('uom_by_product', '=', product_id)]" />
                     <field name="min_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty, False)" />
                     <field name="unit_price" />

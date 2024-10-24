@@ -197,7 +197,10 @@ class supplier_catalogue(osv.osv):
                     pricelist_ids = []
                     if 'line_ids' in vals:
                         # lines are being edited
-                        line_ids = [x[1] for x in vals['line_ids'] if x]
+                        if isinstance(vals['line_ids'], int) or isinstance(vals['line_ids'], str):
+                            line_ids = [vals['line_ids']]
+                        else:
+                            line_ids = [x[1] for x in vals['line_ids'] if x]
                         line_result = line_obj.read(cr, uid, line_ids, ['partner_info_id'], context=context)
                         pricelist_ids = [x['partner_info_id'][0] for x in line_result if x['partner_info_id']]
 
