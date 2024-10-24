@@ -1674,7 +1674,7 @@ class product_asset_import_entries(osv.osv_memory):
                             (current_line_num, line[cols['External Asset ID']] or '_', line[cols['Serial Number']] or '_'))
                     else:
                         if not asset_type_cache.get(line[cols['Asset Type']], False):
-                            asset_type_ids = self.pool.get('product.asset.type').search(cr, uid, [('name', '=', line[cols['Asset Type']])])
+                            asset_type_ids = self.pool.get('product.asset.type').search(cr, uid, [('name', '=', line[cols['Asset Type']])], context=context)
                             if asset_type_ids:
                                 asset_type_cache[line[cols['Asset Type']]] = asset_type_ids[0]
                             else:

@@ -178,7 +178,7 @@
                 <field name="res_model">msf.accrual.line</field>
                 <field name="view_type">form</field>
                 <field name="view_mode">tree,form</field>
-                <field name="context">{}</field>
+                <field name="context">{'search_default_draft': 1, 'search_default_filter_running': 1}</field>
             </record>
 
             <menuitem action="action_msf_accrual_line_tree" id="menu_action_msf_accrual_line_tree" parent="account.menu_finance_periodical_processing" sequence="1"/>

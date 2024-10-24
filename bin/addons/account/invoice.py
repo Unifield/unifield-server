@@ -364,6 +364,7 @@ class account_invoice(osv.osv):
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position', readonly=True, states={'draft':[('readonly',False)]}),
         'is_draft': fields.boolean('Is draft', help='used to sort invoices (draft on top)', readonly=1),
         'is_asset_activated': fields.function(_get_is_asset_activated, method=True, type='boolean', string='Asset Active'),
+        'is_partner_active': fields.related('partner_id', 'active', type='boolean', string='Partner Active', store=False, write_relate=False),
     }
     _defaults = {
         'type': _get_type,
