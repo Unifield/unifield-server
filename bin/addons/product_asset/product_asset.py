@@ -1038,20 +1038,6 @@ class product_asset_event(osv.osv):
     _order = 'date desc, id desc'
     _trace = True
 
-    eventTypeSelection = [('reception', 'Reception'),
-                          ('startUse', 'Start Use'),
-                          ('repairing', 'Repairing'),
-                          ('endUse', 'End Use'),
-                          ('obsolete', 'Obsolete'),
-                          ('loaning', 'Loaning'),
-                          ('transfer', 'Transfer (internal)'),
-                          ('donation', 'Donation (external)'),
-                          ('other', 'Other'),
-                          ('damage', 'Damage'),
-                          ('missing', 'Missing'),
-                          ('sale', 'Sale'),
-                          ]
-
     def name_get(self, cr, uid, ids, context=None):
         '''
         override because no name field is defined
@@ -1127,6 +1113,18 @@ class product_asset_event(osv.osv):
 
         return result
 
+    def _get_event_used_in_current_instance(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+        cr.execute('''select l.id from product_asset_event l, res_company c where l.instance_id = c.instance_id and l.id in %s ''', (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
+
     _columns = {
         # event information
         'date': fields.date('Date', required=True, select=1),
@@ -1134,7 +1132,7 @@ class product_asset_event(osv.osv):
         'proj_code': fields.char('Project Code', size=128),
         'event_type_id': fields.many2one('product.asset.event.type', 'Event Type', required=True, add_empty=True),
         # selection
-        'asset_id': fields.many2one('product.asset', 'Asset Code', required=True, ondelete='cascade', domain=[('state', '=', 'running')]),
+        'asset_id': fields.many2one('product.asset', 'Asset Code', required=True, ondelete='cascade', domain=[('state', 'in', ['running', 'deprecated']), ('used_in_current_instance', '=', True)]),
         'product_id': fields.many2one('product.product', 'Product', readonly=True, ondelete='cascade'),
         'serial_nb': fields.char('Serial Number', size=128, readonly=True),
         'brand': fields.char('Brand', size=128, readonly=True), # from asset
@@ -1144,11 +1142,13 @@ class product_asset_event(osv.osv):
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
         'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Active'), ('cancel', 'Cancel'), ('deprecated', 'Fully Deprecated'), ('disposed', 'Disposed')], readonly=1),
         'instance_id': fields.many2one('msf.instance', 'Event Created at', readonly=1),
+        'event_used_in_current_instance': fields.function(_get_event_used_in_current_instance, method=True, string='Used in current instance', type='boolean'),
     }
 
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d'),
         'instance_id': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_id(cr, uid),
+        'event_used_in_current_instance': True,
     }
 
 product_asset_event()

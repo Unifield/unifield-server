@@ -104,10 +104,10 @@
 
                         <group colspan="2" col="4">
                             <separator string="Comment" colspan="4" />
-                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('used_in_current_instance', '=', False)]}"/>
+                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'deprecated']), ('used_in_current_instance', '=', False)]}"/>
                         </group>
 
-                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('used_in_current_instance', '=', False)]}">
+                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'deprecated']), ('used_in_current_instance', '=', False)]}">
                             <separator string="Traceability" colspan="2" />
                             <field name="project_po" />
                             <field name="orig_mission_code" />
@@ -136,13 +136,14 @@
                     <page string="Event History">
                         <group colspan="2" col="2">
                             <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [ '|', ('state', 'not in', ['open', 'running', 'deprecated']), ('used_in_current_instance', '=', False)]}">
-                                <tree string="Events" editable="top">
+                                <tree string="Events" editable="top" noteditable="not event_used_in_current_instance">
                                     <field name="date" />
                                     <field name="instance_id" />
                                     <field name="event_type_id" widget="selection"/>
                                     <field name="location" />
                                     <field name="proj_code" />
                                     <field name="comment" />
+                                    <field name="event_used_in_current_instance" invisible="1"/>
                                 </tree>
                             </field>
                         </group>
@@ -194,7 +195,7 @@
                     <field name="has_posted_lines" invisible="1" />
                     <field name="can_be_disposed" invisible="1" />
                     <field name="instance_level" invisible="1" />
-                    <field name="used_in_current_instance" invisible="1" />
+                    <field name="used_in_current_instance"  invisible="1"/>
                     <field name="state" />
                     <field name="from_invoice"  />
                     <group colspan="6" col="12">
@@ -297,8 +298,8 @@
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Asset Event">
-
-                <group colspan="2" col="2" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
+                <field name="event_used_in_current_instance" invisible="1" />
+                <group colspan="2" col="2" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'deprecated'])]}">
                     <separator string="Event Information" colspan="2" />
                     <field name="date" />
                     <field name="instance_id" />
@@ -308,7 +309,7 @@
                     <field name="proj_code" />
                 </group>
 
-                <group colspan="2" col="2" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
+                <group colspan="2" col="2" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'deprecated'])]}">
                     <separator string="Selection" colspan="2" />
                     <field name="asset_id" on_change="onChangeAssetId(asset_id)" />
                     <field name="product_id" />
@@ -316,9 +317,8 @@
                     <field name="brand" />
                     <field name="model" />
                 </group>
-                <group colspan="2" col="4" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
+                <group colspan="2" col="4" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'deprecated'])]}">
                     <separator string="Comment" colspan="4" />
-                    <!-- display hack -->
                     <group colspan="1" col="1"></group>
                     <field name="comment" nolabel="True" colspan="3" />
                 </group>
