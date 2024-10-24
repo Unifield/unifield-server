@@ -11,7 +11,7 @@
                     <field name="selected" invisible="1" />
                     <field colspan="2" name="ranking" readonly="1" />
                     <group colspan="2" col="3">
-                        <button name="update_lines_ranking_selected" string="Yes - Selected Lines" type="object"
+                        <button name="update_lines_ranking_selected" string="Yes - Selected lines" type="object"
                                 icon="gtk-apply" attrs="{'invisible': [('selected', '=', False)]}" />
                         <button name="update_lines_ranking" string="Yes - All lines" type="object" icon="gtk-apply" />
                         <button special="cancel" string="No" icon="gtk-cancel"/>
