@@ -93,7 +93,7 @@
                             <field name="local_ref" />
                         </group>
 
-                        <group colspan="2" col="8" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running']), ('used_in_current_instance', '=', False)]}">
+                        <group colspan="2" col="8" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'deprecated']), ('used_in_current_instance', '=', False)]}">
                             <separator string="Asset Reference" colspan="2" />
                             <field name="serial_nb" colspan="8" />
                             <field name="brand" colspan="8" />

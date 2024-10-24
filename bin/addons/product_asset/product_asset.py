@@ -1488,7 +1488,7 @@ class product_asset_disposal(osv.osv_memory):
         new_line_id = asset_line_obj.create(cr, uid, {
             'is_disposal': True,
             'date': wiz.disposal_date,
-            'asset_pl_account_id': wiz.disposal_expense_account.id,
+            'asset_pl_account_id': abs(wiz.asset_id.disposal_amount) > 0.001 and wiz.disposal_expense_account.id or wiz.asset_id.asset_bs_depreciation_account_id.id,
             'asset_bs_depreciation_account_id': wiz.disposal_bs_account.id,
             'amount': wiz.asset_id.disposal_amount,
             'asset_id': wiz.asset_id.id
