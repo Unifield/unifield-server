@@ -1114,7 +1114,7 @@ class supplier_catalogue_line(osv.osv):
                                  'rounding': new_vals.get('rounding', line.rounding),
                                  'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),
                                  'comment': new_vals.get('comment', line.comment),
-                                 'sequence': new_vals.get('ranking', line.catalogue_id.ranking),
+                                 'sequence': new_vals.get('ranking', line.ranking) or line.catalogue_id.ranking,
                                  })
                 new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
             elif cat_state != 'draft' and line.partner_info_id:
@@ -1123,7 +1123,7 @@ class supplier_catalogue_line(osv.osv):
                               'uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
                               'rounding': new_vals.get('rounding', line.rounding),
                               'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),
-                              'sequence': new_vals.get('ranking', False),
+                              'sequence': new_vals.get('ranking', line.ranking),
                               }
                 # Update the pricelist line on product supplier information tab
                 if 'product_code' in new_vals and line.partner_info_id.suppinfo_id.product_code != new_vals['product_code']:
@@ -1139,7 +1139,7 @@ class supplier_catalogue_line(osv.osv):
                                  'unit_price': new_vals.get('unit_price', line.unit_price),
                                  'rounding': new_vals.get('rounding', line.rounding),
                                  'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),
-                                 'sequence': new_vals.get('ranking', line.catalogue_id.ranking),})
+                                 'sequence': new_vals.get('ranking', line.ranking) or line.catalogue_id.ranking,})
                 new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
             elif cat_state == 'draft':
                 #utp1033
