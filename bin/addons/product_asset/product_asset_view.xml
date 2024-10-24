@@ -135,9 +135,10 @@
                     </page>
                     <page string="Event History">
                         <group colspan="2" col="2">
-                            <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [('state', 'not in', ['open', 'running'])]}">
+                            <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [ '|', ('state', 'not in', ['open', 'running', 'deprecated']), ('used_in_current_instance', '=', False)]}">
                                 <tree string="Events" editable="top">
                                     <field name="date" />
+                                    <field name="instance_id" />
                                     <field name="event_type_id" widget="selection"/>
                                     <field name="location" />
                                     <field name="proj_code" />
@@ -300,9 +301,11 @@
                 <group colspan="2" col="2" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
                     <separator string="Event Information" colspan="2" />
                     <field name="date" />
+                    <field name="instance_id" />
+                    <field name="event_type_id" widget="selection"/>
+                    <newline />
                     <field name="location" />
                     <field name="proj_code" />
-                    <field name="event_type_id" widget="selection"/>
                 </group>
 
                 <group colspan="2" col="2" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
@@ -334,6 +337,7 @@
             <tree string="Asset Events">
                 <field name="date" />
                 <field name="asset_id" />
+                <field name="instance_id" />
                 <field name="product_id" />
                 <field name="asset_type_id" />
                 <field name="event_type_id" />

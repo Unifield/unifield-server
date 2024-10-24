@@ -47,7 +47,7 @@ class product_asset_event_type(osv.osv):
     _columns = {
         'name': fields.char('Name', size=512, required=True, translate=1),
         'is_disposal': fields.boolean('Is Disposal'),
-        'expense_account_id': fields.many2one('account.account', 'P&L account', domain=[('user_type_code', 'in', ['expense', 'income'])]), #TODO FIX DOMAIN ?
+        'expense_account_id': fields.many2one('account.account', 'P&L account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
         'active': fields.boolean('Active')
     }
     _defaults = {
@@ -253,6 +253,22 @@ class product_asset(osv.osv):
                         del(vals[f])
             elif vals.get('state') != 'cancel':
                 vals['state'] = 'deprecated'
+                if vals.get('used_instance_id'):
+                    new_owner_instance = False
+                    event_type_id = False
+                    ctx = {}
+                    for to_log_event in self.search(cr, uid, [('id', 'in', ids), ('used_instance_id', '=', current_instance_id)], context=context):
+                        if not new_owner_instance:
+                            new_owner_instance = self.pool.get('msf.instance').browse(cr, uid, vals['used_instance_id'], context=context)
+                            event_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_asset', 'asset_event_type_transfer_owner')[1]
+                            ctx = context.copy()
+                            ctx['sync_update_execution'] = False
+                        self.pool.get('product.asset.event').create(cr, uid, {
+                            'asset_id': to_log_event,
+                            'event_type_id': event_type_id,
+                            'location': new_owner_instance.name,
+                            'proj_code': new_owner_instance.code
+                        }, context=ctx)
 
         # fetch the product
         if 'product_id' in vals:
@@ -1115,10 +1131,12 @@ class product_asset_event(osv.osv):
         'asset_name': fields.related('asset_id', 'name', type='char', readonly=True, size=128, store=False, write_relate=False, string="Asset"),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
         'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Active'), ('cancel', 'Cancel'), ('deprecated', 'Fully Deprecated'), ('disposed', 'Disposed')], readonly=1),
+        'instance_id': fields.many2one('msf.instance', 'Event Created at', readonly=1),
     }
 
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d'),
+        'instance_id': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_id(cr, uid),
     }
 
 product_asset_event()

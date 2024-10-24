@@ -978,10 +978,12 @@ class product_asset(osv.osv):
             return {}
 
         res = {}
+        for _id in ids:
+            res[_id] = []
         cr.execute('''
             select asset.id, array_agg(distinct((i.instance)))
                 from product_asset asset
-                left join asset_owner_instance_rel rel on rel.asset_id = asset_id
+                left join asset_owner_instance_rel rel on rel.asset_id = asset.id
                 left join msf_instance i on i.id = rel.instance_id or i.id = asset.used_instance_id
             where
                 asset.id in %s and
@@ -991,7 +993,6 @@ class product_asset(osv.osv):
         for x in cr.fetchall():
             res[x[0]] = x[1]
 
-        print(res)
         return res
 
 product_asset()
