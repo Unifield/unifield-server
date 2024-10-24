@@ -485,7 +485,7 @@ class product_asset(osv.osv):
         for x in cr.fetchall():
             ret[x[0]] = {'depreciation_amount': x[1]}
             if x[2]:
-                ret[x[0]]['disposal_amount'] = x[2] - x[1]
+                ret[x[0]]['disposal_amount'] = round(x[2] - x[1], 2)
 
         return ret
 
@@ -513,14 +513,12 @@ class product_asset(osv.osv):
             from
                 product_asset a
                 left join product_asset_line l on l.asset_id = a.id
-                left join account_move m on m.asset_id = a.id and m.state = 'draft'
             where
                 a.id in %s and
-                a.state = 'running'
+                a.state in ('running', 'deprecated')
             group by a.id
             having  (
                 count(l.is_disposal='t' or NULL) = 0
-                and (count(m.id) > 0 or count(l.move_id is NULL or NULL) > 0)
             )
         ''', (tuple(ids), ))
         for x in cr.fetchall():
@@ -992,27 +990,41 @@ class product_asset(osv.osv):
         return {}
 
     def test_and_set_deprecated(self, cr , uid, ids, context=None):
+        print('tests', ids)
         if isinstance(ids, int):
             ids = [ids]
+        if not ids:
+            return False
+
         cr.execute('''
             select
-                a.id
-            from
-                product_asset a
-                left join product_asset_line l on l.asset_id = a.id
-                left join account_move_line ml on ml.asset_line_id = l.id
-                left join account_move m on m.id = ml.move_id and m.state = 'posted'
+                distinct on (l.asset_id, l.is_disposal) l.asset_id, l.is_disposal, m.state, l.amount
+            from product_asset_line l
+            left join account_move m on m.id = l.move_id
             where
-                a.id in %s and
-                a.state = 'running'
-            group by a.id
-            having  (
-                count(l.id) = count(m.id)
-            )
+                l.asset_id in %s
+            order by l.asset_id, l.is_disposal desc, l.date desc
         ''', (tuple(ids), ))
-        to_close = [x[0] for x in cr.fetchall()]
-        if to_close:
-            self.write(cr, uid, to_close, {'state': 'deprecated'}, context=context)
+        # l.is_disposal desc: to get first the is_disposal line
+        to_deprecated = []
+        to_disposed = []
+        nothing = {}
+        for x in cr.fetchall():
+            if x[1]:
+                if x[2] == 'posted':
+                    to_disposed.append(x[0])
+                    nothing[x[0]] = True
+                elif x[3]:
+                    # this is a disposal line that contains the last depcrecation entry
+                    nothing[x[0]] = True
+            elif x[0] not in nothing and x[2] == 'posted':
+                to_deprecated.append(x[0])
+
+        if to_deprecated:
+            self.write(cr, uid, to_deprecated, {'state': 'deprecated'}, context=context)
+        if to_disposed:
+            self.write(cr, uid, to_disposed, {'state': 'disposed'}, context=context)
+        if to_deprecated or to_disposed:
             return True
         return False
 
@@ -1326,7 +1338,7 @@ class product_asset_line(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please post entries in chronological order, following entries are draft:\n%s') % '\n'.join(error))
 
         for line in self.browse(cr, uid, ids, context=context):
-            if line.asset_id.state != 'running':
+            if line.asset_id.state not in ('running', 'deprecated'):
                 continue
             update_data = {}
             context.update({'date': line.date})
@@ -1354,18 +1366,20 @@ class product_asset_line(osv.osv):
             else:
                 entry_name =  _('Depreciation Asset %s') % line.asset_id.name
 
-            entries = [
-                {
-                    'amount_currency': line.amount,
-                    'account_id': line.asset_pl_account_id.id,
-                    'analytic_distribution_id': line.analytic_distribution_id.id or False,
-                    'asset_line_id': line.id,
-                }, {
-                    'amount_currency': -1*line.amount,
-                    'account_id': line.asset_bs_depreciation_account_id.id,
-                    'analytic_distribution_id': False,
-                }
-            ]
+            entries = []
+            if line.amount:
+                entries = [
+                    {
+                        'amount_currency': line.amount,
+                        'account_id': line.asset_pl_account_id.id,
+                        'analytic_distribution_id': line.analytic_distribution_id.id or False,
+                        'asset_line_id': line.id,
+                    }, {
+                        'amount_currency': -1*line.amount,
+                        'account_id': line.asset_bs_depreciation_account_id.id,
+                        'analytic_distribution_id': False,
+                    }
+                ]
 
             if line.is_disposal:
                 balance_amount = line.asset_id.depreciation_amount
@@ -1449,8 +1463,8 @@ class product_asset_disposal(osv.osv_memory):
         if nb_draft:
             raise osv.except_osv(_('Error !'), _('Date of disposal %s does not match: there are %d unposted entries') % (wiz.disposal_date, nb_draft))
 
-        if not asset_line_obj.search_exists(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('last_dep_day', '>', wiz.disposal_date)], context=context):
-            raise osv.except_osv(_('Error !'), _('Asset already fully deprecated at %s') % wiz.disposal_date)
+        #if not asset_line_obj.search_exists(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('last_dep_day', '>', wiz.disposal_date)], context=context):
+        #    raise osv.except_osv(_('Error !'), _('Asset already fully deprecated at %s') % wiz.disposal_date)
 
         draft_lines = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>', last_disposal_entry)], context=context)
         if draft_lines:
