@@ -2447,7 +2447,7 @@ class stock_picking(osv.osv):
         res = {}
 
         for pick in self.browse(cr, uid, ids, context=context):
-            if pick.type != 'out' or pick.subtype != 'picking' or pick.state != 'draft':
+            if pick.type != 'out' or pick.subtype != 'picking':
                 res[pick.id] = False
                 continue
 
@@ -2457,7 +2457,7 @@ class stock_picking(osv.osv):
             processed = True
             empty = len(pick.move_lines)
             for move in pick.move_lines:
-                if move.product_qty == 0.00 or move.state == 'cancel':
+                if move.product_qty == 0.00 or move.state == 'cancel' or (pick.is_subpick and move.state == 'done'):
                     continue
 
                 processed = False
@@ -2476,7 +2476,7 @@ class stock_picking(osv.osv):
                 res[pick.id] = 'assigned'
             elif confirmed:
                 res[pick.id] = 'confirmed'
-            elif processed and empty:
+            elif processed and (empty or pick.is_subpick):
                 res[pick.id] = 'processed'
             elif empty == 0:
                 res[pick.id] = 'empty'

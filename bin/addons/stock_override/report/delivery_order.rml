@@ -10,22 +10,22 @@
         </pageTemplate>-->
 
         <pageTemplate>
-            <frame id="first" x1="28.0" y1="28.0" width="786" height="520"/>
+            <frame id="first" x1="8.0" y1="8.0" width="826" height="540"/>
             <pageGraphics>
-                <drawString x="28.0" y="560.0">DELIVERY ORDER [[ '%s (%s)' % (objects[0].name, getSel(objects[0],'state')) ]]</drawString>
-                <image x="28.0" y="505" height="35.0" >[[ company.logo or removeParentNode('image') ]]</image>
+                <drawString x="20.0" y="565.0">DELIVERY ORDER [[ '%s (%s)' % (objects[0].name, getSel(objects[0],'state')) ]]</drawString>
+                <image x="670.0" y="555" height="35.0" >[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8"/>
-                <drawString x="765" y="550.0">Page : <pageNumber /></drawString>
-                <drawString x="800" y="550.0">/</drawString>
-                <drawString x="805" y="550.0"><pageCount /> </drawString>
+                <drawString x="775" y="555.0">Page : <pageNumber /></drawString>
+                <drawString x="810" y="555.0">/</drawString>
+                <drawString x="815" y="555.0"><pageCount /> </drawString>
                 <fill color="black"/>
                 <stroke color="black"/>
                 <setFont name="DejaVu Sans" size="8"/>
-                <drawString x="25" y="550"> [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]  [[ time.strftime("%H:%M") ]]</drawString>
+                <drawString x="15" y="555"> [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]  [[ time.strftime("%H:%M") ]]</drawString>
                 <setFont name="DejaVu Sans Bold" size="10"/>
-                <drawString x="382" y="550">[[ company.partner_id.name ]]</drawString>
+                <drawString x="382" y="555">[[ company.partner_id.name ]]</drawString>
                 <stroke color="#000000"/>
-                <lines>25 545 818 545</lines>
+                <lines>15 550 828 550</lines>
             </pageGraphics>
         </pageTemplate>
 
@@ -103,13 +103,8 @@
 
         [[ repeatIn(objects, 'picking') ]]
 
-        <!-- Big title -->
-        <para style="HeaderW">
-            <font color="white"> </font>
-        </para>
-
         <!-- Header Information -->
-        <blockTable colWidths="120.0,110.0,120.0,120.0,130.0,120.0" style="HeaderInfo">
+        <blockTable colWidths="90.0,190.0,100.0,180.0,130.0,100.0" style="HeaderInfo">
             <tr>
                 <td>
                     <para style="HeaderRight">Reference :</para>
@@ -218,7 +213,7 @@
 
 
         <section>
-        <blockTable colWidths="19.0,85.0,100.0,50.0,51.0,40.0,30.0,50.0,70.0,55.0,65.0,65.0,40.0,20.0,20.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="19.0,85.0,130.0,75.0,51.0,40.0,30.0,50.0,70.0,55.0,65.0,65.0,40.0,20.0,20.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -316,7 +311,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="204.0,101.0,70.0,385.0" style="TotalInfo">
+        <blockTable colWidths="234.0,126.0,70.0,385.0" style="TotalInfo">
             <tr>
                 <td>
                     <para> </para>
@@ -339,15 +334,15 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="760.0" style="NotesInfo">
+        <blockTable colWidths="815.0" style="NotesInfo">
             <tr>
                 <td>
                   <para style="LNotes" alignment="LEFT">Notes :</para>
-                  <para style="LNotes" alignment="LEFT">[[ picking.note ]]</para>
+                  <para style="LNotes" alignment="LEFT">[[ picking.note or removeParentNode('para') ]]</para>
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="760.0" style="NotesInfoBas" >
+        <blockTable colWidths="815.0" style="NotesInfoBas" >
             <tr>
                 <td>
                   <para style="LNotes" alignment="LEFT"></para>
@@ -359,7 +354,7 @@
             <font color="white"> </font>
         </para>
         
-        <blockTable colWidths="84.0,159.0,159.0,159.0,159.0" style="FooterInfo" keepWithNext="1">
+        <blockTable colWidths="74.0,178.0,178.0,178.0,178.0" style="FooterInfo" keepWithNext="1">
             <tr>
                 <td>
                     <para style="LFooter"> </para>

@@ -1131,5 +1131,11 @@
             <field name="method">us_13291_oca_delete_default_ad_destination</field>
         </record>
 
+        <record id="us_11803_12201_12333_lines_state_to_subpick" model="patch.scripts">
+            <field name="method">us_11803_12201_12333_lines_state_to_subpick</field>
+        </record>
+
+
+
     </data>
 </openerp>
