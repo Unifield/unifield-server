@@ -127,8 +127,10 @@ class msf_accrual_line(osv.osv):
             context = {}
         import_obj = self.pool.get('msf.accrual.import')
         xmlstring = ''
-        with open('addons/msf_accrual/wizard/Accrual_Lines_Import_Template_File.xlsx', 'rb') as f:
+        with open('./addons/msf_accrual/wizard/Accrual_Lines_Import_Template_File.xlsx', 'rb') as f:
             xmlstring = f.read()
+        if not xmlstring:
+            osv.except_osv(_('Warning !'), _("The generation of the import template file failed."))
         filename_template = 'Accrual_Lines_Import_Template_File.xlsx'
         file = base64.b64encode(xmlstring)
         wiz_id = import_obj.create(cr, uid, {'accrual_id': ids[0],
