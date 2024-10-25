@@ -278,7 +278,31 @@ class signature_object(osv.osv):
         ftf = ['signature_id', 'signature_res_model', 'signature_line_ids']
         if self._name == 'account.bank.statement':
             ftf += ['journal_id']
+        if self._name == 'purchase.order':
+            ftf += ['partner_type', 'order_line', 'analytic_distribution_id']
         doc = self.browse(cr, uid, ids[0], fields_to_fetch=ftf, context=context)
+
+        # Checks on specific document types to see if signatures can be added
+        error_msg = ''
+        if self._name == 'purchase.order' and doc.partner_type == 'external':
+            if not doc.order_line:
+                error_msg = _('there are no lines')
+            else:
+                if not doc.analytic_distribution_id:
+                    cr.execute("""SELECT line_number FROM purchase_order_line 
+                        WHERE order_id = %s AND analytic_distribution_id IS NULL ORDER BY line_number""", (doc.id,))
+                    lines_no_ad = ', '.join([str(x[0]) for x in cr.fetchall()])
+                    if lines_no_ad:
+                        error_msg = _('the lines number %s have no AD') % (lines_no_ad,)
+                if not error_msg:
+                    cr.execute("""SELECT line_number FROM purchase_order_line 
+                        WHERE order_id = %s AND price_unit = 0""", (doc.id,))
+                    lines_no_price = ', '.join([str(x[0]) for x in cr.fetchall()])
+                    if lines_no_price:
+                        error_msg = _('the lines number %s have a unit price of 0') % (lines_no_price,)
+
+            if error_msg:
+                raise osv.except_osv(_('Warning'), _('Document can not be signed as %s') % (error_msg,))
 
         wiz_data = {
             'name': doc_name,
@@ -374,8 +398,8 @@ class signature_object(osv.osv):
             default = {}
         fields_to_reset = [
             'signature_id', 'signature_line_ids',
-            'signature_state', 'signed_off_line', 'signature_is_closed',
-            'signature_closed_date', 'signature_closed_user', 'signature_res_id', 'signature_res_model'
+            'signature_state', 'signed_off_line', 'signature_is_closed', 'signature_closed_date',
+            'signature_closed_user', 'signature_res_id', 'signature_res_model', 'doc_locked_for_sign'
         ]
         to_del = []
         for ftr in fields_to_reset:

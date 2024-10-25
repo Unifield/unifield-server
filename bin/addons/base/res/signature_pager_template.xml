@@ -10,7 +10,7 @@
             attrs="{'readonly': ['|', '|', ('signature_is_closed', '=', True), ('signature_state', '=', 'signed'), ('signed_off_line', '=', True)]}"
             ignore_access_error="1"
         />
-        <group colspan="2" attrs="{'invisible': [('allowed_to_be_locked', '=', False)]}">
+        <group colspan="2" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('allowed_to_be_locked', '=', False), ('allowed_to_be_signed_unsigned', '=', False)]}">
             <button name="lock_doc_for_sign" string="Lock PO to allow signatures" type="object" icon="terp-locked"
                 attrs="{'invisible': [('doc_locked_for_sign', '=', True)]}" />
             <button name="unlock_doc_for_sign" string="Remove signatures to unlock PO" type="object" icon="gtk-open"
