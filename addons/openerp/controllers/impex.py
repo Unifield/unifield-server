@@ -111,7 +111,10 @@ class ImpEx(SecuredController):
 
         default = []
         if params._terp_listheaders:
-            default = [x.split(',',1) for x in params._terp_listheaders]
+            if isinstance(params._terp_listheaders, list):
+                default = [x.split(',', 1) for x in params._terp_listheaders]
+            else:
+                default = [params._terp_listheaders.split(',', 1)]
         elif kw.get('_terp_fields2') and kw.get('fields') and params.fields2:
             default = []
             for i in range(0, len(kw.get('fields'))):
