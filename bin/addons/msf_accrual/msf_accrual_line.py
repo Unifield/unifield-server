@@ -23,7 +23,7 @@ from osv import fields, osv
 from tools.translate import _
 import datetime
 from base import currency_date
-
+import base64
 
 class msf_accrual_line(osv.osv):
     # this object actually corresponds to the "Accruals" and not to their lines...
@@ -123,7 +123,17 @@ class msf_accrual_line(osv.osv):
         """
         if isinstance(ids, int):
             ids = [ids]
-        wiz_id = self.pool.get('msf.accrual.import').create(cr, uid, {'accrual_id': ids[0]}, context=context)
+        if context is None:
+            context = {}
+        import_obj = self.pool.get('msf.accrual.import')
+        xmlstring = ''
+        with open('addons/msf_accrual/wizard/Accrual_Lines_Import_Template_File.xlsx', 'rb') as f:
+            xmlstring = f.read()
+        filename_template = 'Accrual_Lines_Import_Template_File.xlsx'
+        file = base64.b64encode(xmlstring)
+        wiz_id = import_obj.create(cr, uid, {'accrual_id': ids[0],
+                                             'filename_template': filename_template,
+                                             'file': file,}, context=context)
         return {
             'name': _('Import Accrual Lines'),
             'type': 'ir.actions.act_window',

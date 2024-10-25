@@ -21,6 +21,5 @@
 from . import wizard_accrual_validation
 from . import wizard_accrual_reversal
 from . import msf_accrual_import
-from . import accrual_import_template
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

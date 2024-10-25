@@ -21,12 +21,9 @@
             <field name='arch' type='xml'>
                 <form string="Import Accrual Lines">
                     <separator colspan="4" string="Select file to import" />
-                    <field name="file" filename="filename" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <field name="file" filename="filename_template" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     <field name="filename" invisible="1"/>
-                    <group colspan="4" col="4">
-                        <button name="export_template_file" colspan="1" align="0.0" string="Generate template file" type="object" icon="gtk-print" />
-                        <label colspan="3"/>
-                    </group>
+                    <field name="filename_template" invisible="1"  />
                     <newline/>
                     <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
                     <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" widget="text"/>
@@ -44,16 +41,6 @@
                 </form>
             </field>
         </record>
-
-        <report
-            id="accrual_import_template_xlsx"
-            string="Accrual Import Template File"
-            model="msf.accrual.import"
-            name="accrual_import_template_xlsx"
-            report_type="openpyxl"
-            auto="False"
-            menu="False"
-            />
 
 
     </data>

@@ -39,6 +39,7 @@ class msf_accrual_import(osv.osv_memory):
     _columns = {
         'file': fields.binary(string="File", filters='*.xls*', required=True),
         'filename': fields.char(string="Imported filename", size=256),
+        'filename_template': fields.char('Templates', size=256),
         'progression': fields.float(string="Progression", readonly=True),
         'message': fields.char(string="Message", size=256, readonly=True),
         'state': fields.selection([('draft', 'Created'), ('inprogress', 'In Progress'), ('error', 'Error'), ('ad_error', 'AD Error'), ('done', 'Done')],
@@ -328,14 +329,6 @@ class msf_accrual_import(osv.osv_memory):
         Closes the wizard and refreshes the accrual view
         """
         return {'type': 'ir.actions.act_window_close'}
-
-    def export_template_file(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, int):
-            ids = [ids]
-
-        return {'type': 'ir.actions.report.xml', 'report_name': 'accrual_import_template_xlsx', 'context': context}
 
 
 msf_accrual_import()
