@@ -24,6 +24,10 @@ from tools.translate import _
 import datetime
 from base import currency_date
 import base64
+from . import GENERIC_MESSAGE
+from . import ACCRUAL_LINES_COLUMNS_FOR_IMPORT
+from openpyxl import load_workbook
+from io import BytesIO
 
 class msf_accrual_line(osv.osv):
     # this object actually corresponds to the "Accruals" and not to their lines...
@@ -117,7 +121,7 @@ class msf_accrual_line(osv.osv):
             res[acc_id] = ml_obj.search(cr, uid, [('accrual_line_id', '=', acc_id)], order='move_id', context=context)
         return res
 
-    def import_accrual(self, cr, uid, ids, data, context=None):
+    def import_accrual(self, cr, uid, ids, context=None):
         """
         Opens the Import Accrual Lines wizard
         """
@@ -126,16 +130,24 @@ class msf_accrual_line(osv.osv):
         if context is None:
             context = {}
         import_obj = self.pool.get('msf.accrual.import')
-        xmlstring = ''
-        with open('./addons/msf_accrual/wizard/Accrual_Lines_Import_Template_File.xlsx', 'rb') as f:
-            xmlstring = f.read()
-        if not xmlstring:
+        # pre-load the template file in order to have the 'save as' button
+        wb = load_workbook(filename='./addons/msf_accrual/wizard/Accrual_Lines_Import_Template_File.xlsx')
+        if not wb:
             osv.except_osv(_('Warning !'), _("The generation of the import template file failed."))
+        sheet = wb.active
+        for row in sheet.rows:
+            for i, cell in enumerate(row):
+                cell.value = _(ACCRUAL_LINES_COLUMNS_FOR_IMPORT[i])
         filename_template = 'Accrual_Lines_Import_Template_File.xlsx'
-        file = base64.b64encode(xmlstring)
+        buffer = BytesIO()
+        wb.save(buffer)
+        file = base64.b64encode(buffer.getvalue())
         wiz_id = import_obj.create(cr, uid, {'accrual_id': ids[0],
                                              'filename_template': filename_template,
-                                             'file': file,}, context=context)
+                                             'file': file,
+                                             'message': """%s %s""" %
+                                                        (_(GENERIC_MESSAGE), ', '.join([_(f) for f in ACCRUAL_LINES_COLUMNS_FOR_IMPORT]), ),
+                                             }, context=context)
         return {
             'name': _('Import Accrual Lines'),
             'type': 'ir.actions.act_window',
@@ -144,6 +156,7 @@ class msf_accrual_line(osv.osv):
             'view_mode': 'form,tree',
             'view_type': 'form',
             'res_id': [wiz_id],
+            'context': context,
         }
 
     _columns = {

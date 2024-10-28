@@ -31,6 +31,8 @@ import threading
 import pooler
 import logging
 import tools
+from .. import GENERIC_MESSAGE
+from .. import ACCRUAL_LINES_COLUMNS_FOR_IMPORT
 
 
 class msf_accrual_import(osv.osv_memory):
@@ -60,27 +62,30 @@ class msf_accrual_import(osv.osv_memory):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         return super(msf_accrual_import, self).create(cr, real_uid, vals, context=context)
 
-    def _check_col_length(self, percent_col, cc_col, dest_col, fp_col, line_num, errors):
-        return self.pool.get('account.invoice.import')._check_col_length(percent_col, cc_col, dest_col, fp_col, line_num, errors)
+    def _check_col_length(self, percent_col, cc_col, dest_col, fp_col, line_num, errors, context=None):
+        if context is None:
+            context = {}
+        return self.pool.get('account.invoice.import')._check_col_length(percent_col, cc_col, dest_col, fp_col, line_num, errors, context=context)
 
-    def _check_percent_values(self, percent_col, line_num, errors):
+    def _check_percent_values(self, percent_col, line_num, errors, context= None):
         '''
         Check if the Percent Column values adds up to exactly 100
         '''
-        return self.pool.get('account.invoice.import')._check_percent_values(percent_col, line_num, errors)
+        if context is None:
+            context = {}
+        return self.pool.get('account.invoice.import')._check_percent_values(percent_col, line_num, errors, context=context)
 
-    def check_header_colnames(self, colnames):
-        header_names = ['Description', 'Reference', 'Expense Account', 'Accrual Amount Booking', 'Percentage', 'Cost Center', 'Destination', 'Funding Pool']
-        error_message = _('The header column names do not match to the header of the import file template :'
-                          'Description | Reference | Expense Account | Accrual Amount Booking | Percentage | Cost Center | Destination | Funding Pool')
+    def check_header_colnames(self, colnames, context=None):
+        if context is None:
+            context = {}
+        header_names = [_(f) for f in ACCRUAL_LINES_COLUMNS_FOR_IMPORT]
+        error_message = _('The header column names should be: %s') % (', '.join(header_names))
         if len(header_names) != len(colnames):
             raise osv.except_osv(_('Warning'), error_message)
         for i, col in enumerate(colnames):
             if header_names[i] != col:
                 raise osv.except_osv(_('Warning'), error_message)
         return True
-
-
 
     def _import(self, dbname, uid, ids, context=None):
         """
@@ -136,7 +141,7 @@ class msf_accrual_import(osv.osv_memory):
                 for line_num, row in enumerate(rows):
                     if line_num == 0:
                         header = [x.value for x in row]
-                        self.check_header_colnames(header)
+                        self.check_header_colnames(header, context=context)
                         continue
                     vals = {'line_number': line_num, 'accrual_line_id': wiz.accrual_id.id}
                     # get the data
@@ -187,8 +192,8 @@ class msf_accrual_import(osv.osv_memory):
                         errors.append(_("Line %s: Funding pool codes (mandatory) are missing.") % (line_num,))
                     if percentage_vals and cost_center_vals and destination_vals and funding_pool_vals:
                         if isinstance(percentage_vals, list):
-                            self._check_col_length(percentage_vals, cost_center_vals, destination_vals, funding_pool_vals, line_num, errors)
-                            self._check_percent_values(percentage_vals, line_num, errors)
+                            self._check_col_length(percentage_vals, cost_center_vals, destination_vals, funding_pool_vals, line_num, errors,context=context)
+                            self._check_percent_values(percentage_vals, line_num, errors, context=context)
                     cc_ids, fp_ids, dest_ids = [], [], []
                     if cost_center_vals:
                         for cc_code in cost_center_vals:

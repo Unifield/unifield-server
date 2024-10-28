@@ -21,12 +21,16 @@
             <field name='arch' type='xml'>
                 <form string="Import Accrual Lines">
                     <separator colspan="4" string="Select file to import" />
-                    <field name="file" filename="filename_template" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                    <field name="filename" invisible="1"/>
-                    <field name="filename_template" invisible="1"  />
+                    <group>
+                        <field name="file" filename="filename_template" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                        <field name="filename" invisible="1"/>
+                        <field name="filename_template" invisible="1"  />
+                    </group>
                     <newline/>
-                    <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
-                    <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" widget="text"/>
+                    <group>
+                        <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
+                        <field name="message" nolabel="1" widget="text"/>
+                    </group>
                     <newline/>
                     <button name="button_update" type="object" string="Update" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
                     <newline/>
