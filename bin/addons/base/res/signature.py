@@ -252,7 +252,7 @@ class signature_object(osv.osv):
 
     _columns = {
         'signature_id': fields.many2one('signature', 'Signature', required=True, ondelete='cascade'),
-        'locked_by_signature': fields.related('signature_id', 'doc_locked_for_sign', type='boolean', relation='signature', string='Locked by signature', help='To prevent edition on: PO'),
+        'locked_by_signature': fields.related('signature_id', 'doc_locked_for_sign', type='boolean', relation='signature', string='Locked by signature', help='To prevent edition on: PO', write_relate=True),
     }
 
     def action_close_signature(self, cr, uid, ids, context=None):
@@ -307,6 +307,7 @@ class signature_object(osv.osv):
         wiz_data = {
             'name': doc_name,
             'signature_id': doc.signature_id.id,
+            'doc_locked_for_sign': doc.signature_id.doc_locked_for_sign,
         }
         view_id = [self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'signature_add_user_wizard_form')[1]]
         x = 0
@@ -368,7 +369,7 @@ class signature_object(osv.osv):
         for sign in self.read(cr, uid, ids, ['allowed_to_be_signed_unsigned'], context=context):
             if not sign['allowed_to_be_signed_unsigned']:
                 raise osv.except_osv(_('Warning'), _("You are not allowed to remove the signature of this document in this state, please refresh the page"))
-        self.write(cr, uid, ids, {'signed_off_line': True, 'signature_state': False}, context=context)
+        self.write(cr, uid, ids, {'signed_off_line': True, 'signature_state': False, 'locked_by_signature': False}, context=context)
         return True
 
     def activate_offline_reset(self, cr, uid, ids, context=None):
@@ -464,17 +465,15 @@ class signature_object(osv.osv):
         """
         if context is None:
             context = {}
+        if not ids:
+            return True
 
         _register_log(self, cr, uid, ids, self._name, 'Document locked', False, True, 'write', context)
 
         doc = _('document')
         if self._name == 'purchase.order':
             doc = _('PO')
-        cr.execute("""
-            SELECT sl.id FROM signature_line sl LEFT JOIN signature s ON sl.signature_id = s.id 
-            WHERE s.signature_res_model = %s AND s.signature_res_id IN %s AND user_id IS NOT NULL LIMIT 1
-        """, (self._name, tuple(ids)))
-        if not cr.fetchone():
+        if not self.read(cr, uid, ids[0], ['signature_state'], context=context)['signature_state']:
             raise osv.except_osv(_('Warning'),
                                  _("In order to lock this %s for signature, signee user(s) should have been added") % (doc,))
         self.write(cr, uid, ids, {'doc_locked_for_sign': True}, context=context)
@@ -828,6 +827,7 @@ class signature_add_user_wizard(osv.osv_memory):
     _columns = {
         'name': fields.char('Document', size=256, readonly=1),
         'signature_id': fields.many2one('signature', readonly=1),
+        'doc_locked_for_sign': fields.boolean('Document is locked because of signature', readonly=True),
     }
 
     def __init__(self, pool, cr):
@@ -835,7 +835,7 @@ class signature_add_user_wizard(osv.osv_memory):
         for x in range(0, self._max_role):
             self._columns.update({
                 'line_id_%d' % x: fields.many2one('signature.line',  'Signature Line', readonly=1),
-                'role_%d' % x : fields.char('Role', size=256, readonly=1),
+                'role_%d' % x: fields.char('Role', size=256, readonly=1),
                 'active_%d' % x: fields.boolean('Active'),
                 'backup_%d' % x: fields.boolean('Back up'),
                 'legal_name_%d' % x: fields.char('Legal Name', size=256, readonly=1),
@@ -845,8 +845,7 @@ class signature_add_user_wizard(osv.osv_memory):
             })
         super(signature_add_user_wizard, self).__init__(pool, cr)
 
-
-    def change_user(self, cr, uid, ids, user_id, row, context=None):
+    def change_user(self, cr, uid, ids, user_id, row, doc_locked_for_sign, context=None):
         values = {
             'legal_name_%s' % row: False,
             'username_%s' % row: False,
@@ -855,6 +854,12 @@ class signature_add_user_wizard(osv.osv_memory):
             u = self.pool.get('res.users').browse(cr, uid, user_id, fields_to_fetch=['login', 'esignature_id'], context=context)
             values['legal_name_%s' % row] = u.esignature_id and u.esignature_id.legal_name or ''
             values['username_%s' % row] = u.login
+        elif doc_locked_for_sign:
+            addu_wiz = self.read(cr, uid, ids[0], ['login_%s' % row], context=context)
+            return {
+                'value': {'login_%s' % row: addu_wiz['login_%s' % row]},
+                'warning': {'title': _('Warning!'), 'message': _('You can not remove a signee if the document is locked')}
+            }
 
         return {'value': values}
 
@@ -908,7 +913,7 @@ class signature_add_user_wizard(osv.osv_memory):
                     added += """
                         <field name="role_%(x)d" colspan="2" nolabel="1" />
                         <field name="active_%(x)d" colspan="2" nolabel="1" halign="center" on_change="change_active(active_%(x)d, '%(x)d')" %(readonly)s/>
-                        <field name="login_%(x)d" colspan="2" nolabel="1" on_change="change_user(login_%(x)d, '%(x)d')" %(attr_ro)s />
+                        <field name="login_%(x)d" colspan="2" nolabel="1" on_change="change_user(login_%(x)d, '%(x)d', doc_locked_for_sign)" %(attr_ro)s />
                         <field name="backup_%(x)d" colspan="2" nolabel="1" halign="center" %(attr_ro)s />
                         <field name="username_%(x)d" colspan="2" nolabel="1" />
                         <field name="legal_name_%(x)d" colspan="2" nolabel="1" />

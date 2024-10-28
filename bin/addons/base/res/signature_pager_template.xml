@@ -10,7 +10,7 @@
             attrs="{'readonly': ['|', '|', ('signature_is_closed', '=', True), ('signature_state', '=', 'signed'), ('signed_off_line', '=', True)]}"
             ignore_access_error="1"
         />
-        <group colspan="2" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('allowed_to_be_locked', '=', False), ('allowed_to_be_signed_unsigned', '=', False)]}">
+        <group colspan="2" attrs="{'invisible': ['|', ('allowed_to_be_locked', '=', False), ('allowed_to_be_signed_unsigned', '=', False)], 'readonly': [('signature_is_closed', '=', True)]}">
             <button name="lock_doc_for_sign" string="Lock PO to allow signatures" type="object" icon="terp-locked"
                 attrs="{'invisible': [('doc_locked_for_sign', '=', True)]}" />
             <button name="unlock_doc_for_sign" string="Remove signatures to unlock PO" type="object" icon="gtk-open"
@@ -19,9 +19,9 @@
         </group>
         <group colspan="2" col="14">
             <field name="signed_off_line" readonly="1" />
-            <button name="activate_offline" type="object" string="Sign Off-line" attrs="{'invisible': ['|', '|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('signature_state', '!=', False), ('allowed_to_be_signed_unsigned', '=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="6"/>
-            <button name="activate_offline_reset" type="object" string="Sign Off-line" attrs="{'invisible': ['|', '|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('signature_state', '=', False), ('allowed_to_be_signed_unsigned', '=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="6" confirm="Warning, by setting this document as 'signed off-line' all online signatures will be removed from this document and all signatures must be handled outside of system."/>
-            <button name="disable_offline" type="object" string="Sign On-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', False), ('signature_state', '!=', False)]}" icon="gtk-connect" ignore_access_error="1" colspan="6" />
+            <button name="activate_offline" type="object" string="Sign Off-line" attrs="{'invisible': ['|', '|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('signature_state', '!=', False), ('allowed_to_be_signed_unsigned', '=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="4"/>
+            <button name="activate_offline_reset" type="object" string="Sign Off-line" attrs="{'invisible': ['|', '|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', True), ('signature_state', '=', False), ('allowed_to_be_signed_unsigned', '=', False)]}" icon="gtk-disconnect" ignore_access_error="1" colspan="4" confirm="Warning, by setting this document as 'signed off-line' all online signatures will be removed from this document and all signatures must be handled outside of system."/>
+            <button name="disable_offline" type="object" string="Sign On-line" attrs="{'invisible': ['|', '|', ('signature_is_closed', '=', True), ('signed_off_line', '=', False), ('signature_state', '!=', False)]}" icon="gtk-connect" ignore_access_error="1" colspan="4" />
         </group>
         <newline />
         <field name="allowed_to_be_signed_unsigned" invisible="1" />
