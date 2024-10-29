@@ -560,13 +560,13 @@
                         <page string="Supplier Catalogue" view_id="purchase.purchase_order_form_catalogue" attrs="{'invisible': [('catalogue_display_tab', '=', False)]}" />
                         &signature_template;
                     </notebook>
-                    <group col="11" colspan="4" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
+                    <group col="11" colspan="4">
                         <group colspan="12" col="19" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}">
                             <field name="display_intl_transport_ok" invisible="1"/>
                             <field name="intl_supplier_ok" invisible="1"/>
                             <label align="1.0" string="Estimated transport costs : " colspan="3"/>
-                            <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '=', True)]}" nolabel="1"/>
-                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '=', True)]}" nolabel="1"/>
+                            <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': ['|', ('shipped_rate', '=', True), ('locked_by_signature', '=', True)]}" nolabel="1"/>
+                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': ['|', ('shipped_rate', '=', True), ('locked_by_signature', '=', True)]}" nolabel="1"/>
                             <label colspan="13"/>
                             <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
                         </group>
