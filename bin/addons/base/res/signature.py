@@ -283,26 +283,30 @@ class signature_object(osv.osv):
         doc = self.browse(cr, uid, ids[0], fields_to_fetch=ftf, context=context)
 
         # Checks on specific document types to see if signatures can be added
-        error_msg = ''
+        errors_msg = []
         if self._name == 'purchase.order' and doc.partner_type == 'external':
             if not doc.order_line:
-                error_msg = _('there are no lines')
+                errors_msg.append(_('there are no lines'))
             else:
                 if not doc.analytic_distribution_id:
                     cr.execute("""SELECT line_number FROM purchase_order_line 
                         WHERE order_id = %s AND analytic_distribution_id IS NULL ORDER BY line_number""", (doc.id,))
                     lines_no_ad = ', '.join([str(x[0]) for x in cr.fetchall()])
                     if lines_no_ad:
-                        error_msg = _('the lines number %s have no AD') % (lines_no_ad,)
-                if not error_msg:
-                    cr.execute("""SELECT line_number FROM purchase_order_line 
-                        WHERE order_id = %s AND price_unit = 0""", (doc.id,))
-                    lines_no_price = ', '.join([str(x[0]) for x in cr.fetchall()])
-                    if lines_no_price:
-                        error_msg = _('the lines number %s have a unit price of 0') % (lines_no_price,)
+                        errors_msg.append(_('the lines number %s have no AD') % (lines_no_ad,))
+                cr.execute("""SELECT line_number FROM purchase_order_line 
+                    WHERE order_id = %s AND price_unit = 0 ORDER BY line_number""", (doc.id,))
+                lines_no_price = ', '.join([str(x[0]) for x in cr.fetchall()])
+                if lines_no_price:
+                    errors_msg.append(_('the lines number %s have a unit price of 0') % (lines_no_price,))
+                cr.execute("""SELECT line_number FROM purchase_order_line 
+                    WHERE order_id = %s AND confirmed_delivery_date IS NULL ORDER BY line_number""", (doc.id,))
+                lines_no_cdd = ', '.join([str(x[0]) for x in cr.fetchall()])
+                if lines_no_cdd:
+                    errors_msg.append(_('the lines number %s have no confirmed delivery date') % (lines_no_cdd,))
 
-            if error_msg:
-                raise osv.except_osv(_('Warning'), _('Document can not be signed as %s') % (error_msg,))
+            if errors_msg:
+                raise osv.except_osv(_('Warning'), _('Document can not be signed as %s') % ('; '.join(errors_msg),))
 
         wiz_data = {
             'name': doc_name,
@@ -366,10 +370,14 @@ class signature_object(osv.osv):
 
     def activate_offline(self, cr, uid, ids, context=None):
         _register_log(self, cr, uid, ids, self._name, 'Sign offline', False, True, 'write', context)
-        for sign in self.read(cr, uid, ids, ['allowed_to_be_signed_unsigned'], context=context):
+        vals = {'signed_off_line': True, 'signature_state': False}
+        for sign in self.read(cr, uid, ids, ['allowed_to_be_signed_unsigned', 'locked_by_signature'], context=context):
             if not sign['allowed_to_be_signed_unsigned']:
                 raise osv.except_osv(_('Warning'), _("You are not allowed to remove the signature of this document in this state, please refresh the page"))
-        self.write(cr, uid, ids, {'signed_off_line': True, 'signature_state': False, 'locked_by_signature': False}, context=context)
+            if sign['locked_by_signature']:
+                vals['locked_by_signature'] = False
+                _register_log(self, cr, uid, ids, self._name, 'Document locked', True, False, 'write', context)
+        self.write(cr, uid, ids, vals, context=context)
         return True
 
     def activate_offline_reset(self, cr, uid, ids, context=None):
