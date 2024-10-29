@@ -101,7 +101,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar</field>
 			<field name="domain">[('type','=','out'), ('subtype', '=', 'standard')]</field>
-			<field name="context">{'picking_screen': False, 'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'}</field>
+			<field name="context">{'picking_screen': False, 'contact_display': 'partner_address', 'search_default_draft': 1, 'search_default_confirmed': 1, 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'}</field>
 			<field name="search_view_id" ref="stock.view_picking_out_search"/>
 			<field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
 		</record>
@@ -486,9 +486,8 @@
 			<field name="arch" type="xml">
 				<search string="Picking Lists &amp; Picking Tickets">
 					<group col="8" colspan="4">
-						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
+                        <filter icon="terp-camera_test" name="confirmed" string="Not Available" domain="[('state','=','confirmed')]" />
 						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
-						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
 						<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                         <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
 						<separator orientation="vertical"/>
@@ -497,14 +496,17 @@
 						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('overall_qty','=', 0.0)]" />
 						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('overall_qty','!=', 0.0)]" />
 						<separator orientation="vertical"/>
+                        <filter icon="gtk-paste-v" name="picking_ticket" string="Picking Ticket" domain="[('is_subpick', '=', True)]" />
+						<filter icon="gtk-paste" name="picking_list" string="Picking List" domain="[('is_subpick', '=', False)]" />
+						<separator orientation="vertical"/>
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
 						<field name="details"/>
-                        <field name="packing_list" />
-                        <field name="order_category" />
                         <newline />
 						<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
+                        <field name="packing_list" />
+                        <field name="order_category" />
 						<field name="date" />
 						<field name="min_date" />
 						<field name="product_id" />
@@ -547,7 +549,7 @@
 					<group col="8" colspan="4">
 						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
 						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
-						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
+						<filter icon="terp-camera_test" name="confirmed" string="Not Available" domain="[('state','=','confirmed')]" />
 						<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                         <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
 						<separator orientation="vertical"/>
@@ -1191,7 +1193,7 @@
 				<search string="Packing">
 					<group col="8" colspan="4">
                         <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft'])]"  />
-                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
+                        <filter icon="terp-camera_test" name="confirmed" string="Not Available" domain="[('state','=','confirmed')]" />
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','in',['assigned', 'shipped', 'updated'])]" />
 						<filter icon="terp-dialog-close" name="done" string="Dispatched" domain="[('state','=','done')]" />
                         <filter icon="gtk-yes" name="delivered" string="Received" domain="[('state', '=', 'delivered')]" />
