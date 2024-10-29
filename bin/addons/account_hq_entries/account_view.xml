@@ -17,12 +17,12 @@
                     <field name="date"/>
                     <field name="period_id"/>
                     <field name="account_id"
-                           domain="[('restricted_area', '=', 'hq_lines_correction'), ('filter_active', '=', True)]"
                            context="{'date': date}"
                            attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="partner_txt"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
+                    <field name="is_asset" on_change="onchange_asset_status(is_asset)"/>
                     <field name="cost_center_id"
                            on_change="onchange_cost_center(cost_center_id, analytic_id)"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
@@ -132,6 +132,7 @@
                   <group colspan="4" col="4">
                       <field name="is_original" string="Original Entry" readonly="1"/>
                       <field name="is_split" string="Split Entry" readonly="1"/>
+                      <field name="is_asset" string="Is Asset?" readonly="1"/>
                   </group>
               </form>
           </field>

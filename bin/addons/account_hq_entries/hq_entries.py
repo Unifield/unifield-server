@@ -137,6 +137,7 @@ class hq_entries(osv.osv):
         'is_account_partner_compatible': fields.function(_get_is_account_partner_compatible, method=True, type='boolean', string='Account and partner compatible ?'),
         'current_instance_level': fields.function(_get_current_instance_level, method=True, type='char',
                                                   string='Current Instance Level', store=False, readonly=True),
+        'is_asset': fields.boolean(string="Asset", help="Is an asset?"),
     }
 
     _defaults = {
@@ -145,6 +146,7 @@ class hq_entries(osv.osv):
         'is_original': lambda *a: False,
         'is_split': lambda *a: False,
         'is_account_partner_compatible': lambda *a: True,
+        'is_asset': lambda *a: False,
     }
 
     def _check_active_account(self, cr, uid, ids, context=None):
@@ -353,6 +355,15 @@ class hq_entries(osv.osv):
         return self.pool.get('analytic.distribution').\
             onchange_ad_destination(cr, uid, ids, destination_id=destination_id, funding_pool_id=funding_pool_id, account_id=account_id)
 
+    def onchange_asset_status(self, cr, uid, ids, is_asset=False, context=None):
+        if isinstance(ids, int):
+            ids = [ids]
+        domain = [('restricted_area', '=', 'hq_lines_correction'), ('filter_active', '=', True)]
+        account_id_first_value = self.browse(cr, uid, ids[0], fields_to_fetch=['account_id_first_value'], context=context).account_id_first_value.id
+        if is_asset:
+            domain = [('type', '=', 'other'), ('user_type_code', '=', 'asset')]
+            return {'value': {'account_id': False}, 'domain':{'account_id':domain}}
+        return {'value': {'account_id': account_id_first_value}, 'domain':{'account_id':domain}}
 
     def _check_cc(self, cr, uid, ids, context=None):
         """
