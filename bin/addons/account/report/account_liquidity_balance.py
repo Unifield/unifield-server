@@ -223,22 +223,22 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                 if self.fx_table_id:
                     self.cr.execute(
                         "SELECT rcr.currency_id, rcr.name, rcr.rate "
-                        "FROM res_currency curr1, res_currency curr2, res_currency_rate rcr, account_bank_statement st, account_journal j "
+                        "FROM res_currency curr, res_currency_rate rcr "
                         "WHERE "
-                        "   st.name = %s AND "
-                        "   j.id = st.journal_id AND "
-                        "   curr2.id = j.currency AND "
-                        "   curr1.name = curr2.name AND "
-                        "   curr1.currency_table_id = %s AND "
-                        "   rcr.currency_id = curr1.id",
-                    (register['name'], self.fx_table_id))
+                        "   curr.name = %s AND "
+                        "   curr.currency_table_id = %s AND "
+                        "   rcr.currency_id = curr.id",
+                    (register['currency'], self.fx_table_id))
                 else:
                     self.cr.execute(
-                        "SELECT currency_id, name, rate FROM res_currency_rate "
+                        "SELECT rcr.currency_id, rcr.name, rcr.rate "
+                        "FROM res_currency curr, res_currency_rate rcr "
                         "WHERE "
-                        "   currency_id = (SELECT currency FROM account_journal WHERE id = (SELECT DISTINCT journal_id FROM account_bank_statement WHERE name = %s )) AND "
-                        "   name <= %s ORDER BY name desc LIMIT 1",
-                        (register['name'], date_to))
+                        "   curr.name = %s AND "
+                        "   curr.currency_table_id is Null AND"
+                        "   rcr.currency_id = curr.id AND "
+                        "   rcr.name <= %s ORDER BY rcr.name desc LIMIT 1",
+                        (register['currency'], date_to))
                 register_currency_rate = self.cr.dictfetchall()
                 if not register_currency_rate:
                     raise osv.except_osv(_('Error'), _('Could not find the rate of the display currency at date %s or in the currency table.') % (date_to))
