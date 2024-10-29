@@ -251,8 +251,8 @@ class product_asset(osv.osv):
                 for f in ['serial_nb', 'brand', 'type', 'model', 'year', 'comment', 'project_po', 'project_po', 'international_po', 'arrival_date', 'receipt_place']:
                     if f in vals:
                         del(vals[f])
-            elif vals.get('state') != 'cancel':
-                vals['state'] = 'deprecated'
+            else:
+                vals['state'] = 'disposed'
                 if vals.get('used_instance_id'):
                     new_owner_instance = False
                     event_type_id = False
@@ -629,7 +629,7 @@ class product_asset(osv.osv):
         'model': fields.char('Model', size=128), # required=True),
         'year': fields.char('Year', size=4),
         'used_in_current_instance': fields.function(_get_used_in_current_instance, method=True, string='Used in current instance', type='boolean', fnct_search=_search_used_in_current_instance),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('running', 'Active'), ('cancel', 'Cancel'), ('deprecated', 'Fully Deprecated'), ('disposed', 'Disposed')], 'State', readonly=1),
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('running', 'Active'), ('deprecated', 'Fully Deprecated'), ('disposed', 'Disposed')], 'State', readonly=1),
         # remark
         'comment': fields.text('Comment'),
         # traceability
@@ -728,12 +728,6 @@ class product_asset(osv.osv):
                 vals['lock_open'] = True
             self.write(cr, uid, draft_id, vals, context=context)
 
-        return True
-
-    def button_cancel_asset(self, cr, uid, ids, context=None):
-        cancel_ids = self.search(cr, uid, [('id', 'in', ids), ('state', 'in', ['draft', 'open'])], context=context)
-        if cancel_ids:
-            self.write(cr, uid, cancel_ids, {'state': 'cancel'}, context=context)
         return True
 
 
@@ -1140,7 +1134,7 @@ class product_asset_event(osv.osv):
         'comment': fields.text('Comment'),
         'asset_name': fields.related('asset_id', 'name', type='char', readonly=True, size=128, store=False, write_relate=False, string="Asset"),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
-        'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Active'), ('cancel', 'Cancel'), ('deprecated', 'Fully Deprecated'), ('disposed', 'Disposed')], readonly=1),
+        'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Active'), ('deprecated', 'Fully Deprecated'), ('disposed', 'Disposed')], readonly=1),
         'instance_id': fields.many2one('msf.instance', 'Event Created at', readonly=1),
         'event_used_in_current_instance': fields.function(_get_event_used_in_current_instance, method=True, string='Used in current instance', type='boolean'),
     }
