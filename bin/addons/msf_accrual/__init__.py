@@ -22,7 +22,7 @@ from tools.translate import _
 
 GENERIC_MESSAGE = _("""
         IMPORTANT : The file should be in xlsx format.
-        The columns should be in this values: """)
+        The header column names should be: """)
 ACCRUAL_LINES_COLUMNS_FOR_IMPORT = [
     _('Description'),
     _('Reference'),

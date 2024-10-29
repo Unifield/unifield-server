@@ -28,6 +28,7 @@ from . import GENERIC_MESSAGE
 from . import ACCRUAL_LINES_COLUMNS_FOR_IMPORT
 from openpyxl import load_workbook
 from io import BytesIO
+from tools.misc import file_open
 
 class msf_accrual_line(osv.osv):
     # this object actually corresponds to the "Accruals" and not to their lines...
@@ -130,11 +131,15 @@ class msf_accrual_line(osv.osv):
         if context is None:
             context = {}
         import_obj = self.pool.get('msf.accrual.import')
+
         # pre-load the template file in order to have the 'save as' button
-        wb = load_workbook(filename='./addons/msf_accrual/wizard/Accrual_Lines_Import_Template_File.xlsx')
-        if not wb:
-            osv.except_osv(_('Warning !'), _("The generation of the import template file failed."))
-        sheet = wb.active
+        try:
+            f = file_open('msf_accrual/wizard/Accrual_Lines_Import_Template_File.xlsx', "rb")
+            wb = load_workbook(filename=f)
+            sheet = wb.active
+        except:
+            raise osv.except_osv(_('Warning !'), _("The generation of the import template file failed."))
+
         for row in sheet.rows:
             for i, cell in enumerate(row):
                 cell.value = _(ACCRUAL_LINES_COLUMNS_FOR_IMPORT[i])

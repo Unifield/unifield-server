@@ -31,7 +31,6 @@ import threading
 import pooler
 import logging
 import tools
-from .. import GENERIC_MESSAGE
 from .. import ACCRUAL_LINES_COLUMNS_FOR_IMPORT
 
 
