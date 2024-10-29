@@ -282,7 +282,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
 SpreadsheetReport('report.account.liquidity.balance', 'account.bank.statement',
                   'addons/account/report/account_liquidity_balance.mako', parser=account_liquidity_balance)
 # PDF report
-report_sxw.report_sxw('report.account.liquidity.balance_pdf', 'account.bank.statement',
+report_sxw.report_sxw('report.account.liquidity.balance.pdf', 'account.bank.statement',
                       'addons/account/report/account_liquidity_balance.rml',parser=account_liquidity_balance,
                       header='internal landscape')
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

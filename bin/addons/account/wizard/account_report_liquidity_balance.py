@@ -164,7 +164,7 @@ class liquidity_balance_wizard(osv.osv_memory):
 
             return {
                 'type': 'ir.actions.report.xml',
-                'report_name': 'account.liquidity.balance_pdf',
+                'report_name': 'account.liquidity.balance.pdf',
                 'datas': data,
                 'context': context,
             }
