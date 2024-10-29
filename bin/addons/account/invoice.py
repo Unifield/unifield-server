@@ -261,18 +261,18 @@ class account_invoice(osv.osv):
             return {}
         if not context:
             context = {}
+
         res = {}
-        res_open = self._get_imported_state(cr, uid, ids, context=context)
-        for inv in self.browse(cr, uid, ids, context):
-            state_for_po = inv.state
-            if state_for_po == 'open':
-                if res_open[inv.id] == 'imported':
-                    state_for_po = 'open_imported'
-                elif res_open[inv.id] == 'not':
-                    state_for_po = 'open_not_imported'
-                elif res_open[inv.id] == 'partial':
-                    state_for_po = 'open_partial_imported'
-            res[inv.id] = state_for_po
+        open_invoice_ids = []
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context):
+            if inv.state != 'open':
+                res[inv.id] = inv.state
+            else:
+                open_invoice_ids.append(inv.id)
+
+        if open_invoice_ids:
+            for res_id, state in self._get_imported_state(cr, uid, open_invoice_ids, context=context).items():
+                res[res_id] = state
         return res
 
     _columns = {
@@ -386,9 +386,9 @@ class account_invoice(osv.osv):
                                         selection=[('draft','Draft'),
                                                    ('proforma','Pro-forma'),
                                                    ('proforma2','Pro-forma'),
-                                                   ('open_not_imported', 'Open Invoice not imported'),
-                                                   ('open_imported', 'Open Invoice imported'),
-                                                   ('open_partial_imported', 'Open Invoice partially imported'),
+                                                   ('not', 'Open Invoice not imported'),
+                                                   ('imported', 'Open Invoice imported'),
+                                                   ('partial', 'Open Invoice partially imported'),
                                                    ('paid','Paid'),
                                                    ('done', 'Done'),
                                                    ('inv_close','Closed'),
