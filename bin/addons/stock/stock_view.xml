@@ -768,7 +768,7 @@
                 <search string="Search Stock Picking">
                     <group col="10" colspan="4">
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Available Pickings"/>
-                        <filter icon="terp-camera_test" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Pickings"/>
+                        <filter icon="terp-camera_test" string="Not Available" domain="[('state','=','confirmed')]" help="Not Available Pickings"/>
                         <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Pickings already processed"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" groups="base.group_extended"/>
@@ -841,7 +841,7 @@
                 <search string="Picking list">
                     <group col="8" colspan="4">
                         <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft'])]" help="Delivery orders which are in draft state" />
-                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Delivery Orders"/>
+                        <filter icon="terp-camera_test" name="confirmed" string="Not Available" domain="[('state','=','confirmed')]" help="Not Available Delivery Orders"/>
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
                         <filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Delivery orders already processed"/>
                         <separator orientation="vertical"/>
@@ -879,7 +879,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','out')]</field>
-            <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1}</field>
+            <field name="context">{'contact_display': 'partner_address', 'search_default_draft': 1, 'search_default_confirmed': 1, 'search_default_available': 1}</field>
             <field name="search_view_id" ref="view_picking_out_search"/>
             <field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
         </record>
@@ -999,7 +999,7 @@
                 <search string="Internal Picking List">
                     <group col="8" colspan="4">
                         <filter icon="terp-document-new" name="draft" string="Draft"  domain="[('state', '=', 'draft')]" />
-                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Internal Moves" />
+                        <filter icon="terp-camera_test" name="confirmed" string="Not Available" domain="[('state','=','confirmed')]" help="Not Available Internal Moves" />
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Internal Moves"/>
                         <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Internal Moves already processed"/>
                         <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
@@ -1038,7 +1038,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','internal')]</field>
-            <field name="context">{'contact_display': 'partner_address', "search_default_sysint":1, 'subtype': 'internal', 'picking_type': 'internal_move'}</field>
+            <field name="context">{'contact_display': 'partner_address', "search_default_draft":1, "search_default_confirmed":1, "search_default_available":1, "search_default_sysint":1, 'subtype': 'internal', 'picking_type': 'internal_move'}</field>
             <field name="search_view_id" ref="view_picking_internal_search"/>
             <field name="help">Internal Moves display all inventory operations you have to perform in your warehouse. All operations can be categorized into stock journals, so that each worker has his own list of operations to perform in his own journal. Most operations are prepared automatically by OpenERP according to your preconfigured logistics rules, but you can also record manual stock operations.</field>
         </record>
@@ -1172,7 +1172,7 @@
                         <filter icon="terp-go-today" string="Today" domain="['&amp;', ('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders processed Today or planned for Today"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" help="Stock moves that have been processed"/>
-                        <filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Confirmed, Available or Waiting"/>
+                        <filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Not Available, Available or Waiting"/>
                         <filter icon="terp-camera_test" string="Ready" name="ready" domain="[('state','=','assigned')]" help="Stock moves that are Available (Ready to process)"/>
                         <separator orientation="vertical"/>
                         <field name="product_id"/>

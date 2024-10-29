@@ -20,7 +20,7 @@
 ##############################################################################
 
 name = 'openerp-server'
-version = 'UF34.1'
+version = 'UF35.0dev'
 major_version = '9.0'
 description = 'OpenERP Server'
 long_desc = '''OpenERP is a complete ERP and CRM. The main features are accounting (analytic
