@@ -209,6 +209,18 @@ class account_account(osv.osv):
             res[account_id] = True
         return res
 
+    def _search_restricted_area_hq(self, cr, uid, ids, name, args, context=None):
+        if context is None:
+            context = {}
+
+        for x in args:
+            if x[0] == 'restricted_area_hq':
+                if x[2]: #asset is ticked
+                    return [('type', '=', 'other'), ('user_type_code', '=', 'asset'), ('is_not_hq_correctible', '=', False)]
+                return [('restricted_area', '=', 'hq_lines_correction')]
+
+        return args
+
     def _search_restricted_area(self, cr, uid, ids, name, args, context=None):
         """
         Search the right domain to apply to this account filter.
@@ -484,6 +496,7 @@ class account_account(osv.osv):
         'shrink_entries_for_hq': fields.boolean("Shrink entries for HQ export", help="Check this attribute if you want to consolidate entries on this account before they are exported to the HQ system."),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
         'restricted_area': fields.function(_get_restricted_area, fnct_search=_search_restricted_area, type='boolean', method=True, string="Is this account allowed?"),
+        'restricted_area_hq': fields.function(_get_restricted_area, fnct_search=_search_restricted_area_hq, type='boolean', method=True, string="Is this account allowed?"),
         'cash_domain': fields.function(_get_fake_cash_domain, fnct_search=_search_cash_domain, method=True, type='boolean', string="Domain used to search account in journals", help="This is only to change domain in journal's creation."),
         'balance': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Balance', multi='balance'),
         'debit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Debit', multi='balance'),

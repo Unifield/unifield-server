@@ -2,6 +2,7 @@
 <openerp>
     <data>
 
+
     <!-- HQ Entries tree view -->
         <record id="hq_entries_tree" model="ir.ui.view">
             <field name="name">HQ Entries List</field>
@@ -11,38 +12,41 @@
                 <tree string="HQ Entries List" editable="top" noteditable="user_validated==True or is_original==True" hide_new_button="1" colors="black:user_validated==True;green:is_split==True and user_validated==False and analytic_state!='invalid';blue:user_validated==False and analytic_state!='invalid' and is_original==False and is_split==False;gray:is_original==True and user_validated==False and analytic_state!='invalid';red:analytic_state=='invalid' and user_validated==False" limit="50">
                     <field name="current_instance_level" invisible="1"/>
                     <field name="account_user_type_code" invisible="1"/>
+                    <field name="original_asset_not_corrigible" invisible="1" />
                     <field name="name"/>
                     <field name="ref" attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="document_date"/>
                     <field name="date"/>
                     <field name="period_id"/>
                     <field name="account_id"
-                           domain="[('restricted_area', '=', 'hq_lines_correction'), ('filter_active', '=', True)]"
+                           domain="[('restricted_area_hq', '=', is_asset), ('filter_active', '=', True)]"
                            context="{'date': date}"
                            attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="partner_txt"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
+                    <field name="is_asset_display" displayon="noteditable" />
+                    <field name="is_asset" displayon="editable" on_change="onchange_asset_status(is_asset, account_id)" attrs="{'readonly': ['|', '|', ('current_instance_level', '=', 'section'), ('original_asset_not_corrigible', '=', True), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="cost_center_id"
                            on_change="onchange_cost_center(cost_center_id, analytic_id)"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
                            domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"
-                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
+                           attrs="{'readonly': ['|', '|', ('is_asset', '=', True), ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="destination_id"
                            on_change="onchange_destination(destination_id, analytic_id, account_id)"
                            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id), ('dest_compatible_with_cc_ids', '=', cost_center_id)]"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
-                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
+                           attrs="{'readonly': ['|', '|', ('is_asset', '=', True), ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="analytic_id"
                            domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('fp_compatible_with_cc_ids', '=', cost_center_id), ('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id))]"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"
-                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
+                           attrs="{'readonly': ['|', '|', ('is_asset', '=', True), ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="free_1_id"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
-                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
+                           attrs="{'readonly': ['|', '|', ('is_asset', '=', True), ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="free_2_id"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
-                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
+                           attrs="{'readonly': ['|', '|', ('is_asset', '=', True), ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="user_validated" invisible="1"/>
                     <field name="analytic_state" invisible="1"/>
                     <field name="is_original" invisible="1"/>
@@ -51,7 +55,6 @@
                 </tree>
             </field>
         </record>
-
     <!-- HQ Entries search view -->
         <record id="hq_entries_filter" model="ir.ui.view">
             <field name="name">HQ Entries</field>
@@ -132,6 +135,7 @@
                   <group colspan="4" col="4">
                       <field name="is_original" string="Original Entry" readonly="1"/>
                       <field name="is_split" string="Split Entry" readonly="1"/>
+                      <field name="is_asset" string="Is Asset?" readonly="1"/>
                   </group>
               </form>
           </field>

@@ -106,7 +106,7 @@ class hq_entries(osv.osv):
 
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True, select=1),
-        'account_user_type_code': fields.related('account_id', 'user_type_code', string="Account Type",
+        'account_user_type_code': fields.related('account_id_first_value', 'user_type_code', string="Account Type",
                                                  type='char', size=32, readonly=True, store=False),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]", select=1),
@@ -135,8 +135,11 @@ class hq_entries(osv.osv):
         'cc_changed': fields.function(_get_cc_changed, method=True, type='boolean', string='Have Cost Center changed?', help="When you change the cost center from the initial value (from a HQ Entry or a Split line), so the Cost Center changed is True."),
         'account_changed': fields.function(_get_account_changed, method=True, type='boolean', string='Have account changed?', help="When your entry have a different account from the initial one or from the original one."),
         'is_account_partner_compatible': fields.function(_get_is_account_partner_compatible, method=True, type='boolean', string='Account and partner compatible ?'),
+        'original_asset_not_corrigible': fields.related('account_id_first_value', 'prevent_hq_asset', string="Can be an asset?", type='boolean'),
         'current_instance_level': fields.function(_get_current_instance_level, method=True, type='char',
                                                   string='Current Instance Level', store=False, readonly=True),
+        'is_asset': fields.boolean(string="Asset", help="Is an asset?"),
+        'is_asset_display': fields.boolean(string="Asset", help="Is an asset?", readonly=1), # bug on onchange is_asset
     }
 
     _defaults = {
@@ -145,6 +148,7 @@ class hq_entries(osv.osv):
         'is_original': lambda *a: False,
         'is_split': lambda *a: False,
         'is_account_partner_compatible': lambda *a: True,
+        'is_asset': lambda *a: False,
     }
 
     def _check_active_account(self, cr, uid, ids, context=None):
@@ -353,6 +357,17 @@ class hq_entries(osv.osv):
         return self.pool.get('analytic.distribution').\
             onchange_ad_destination(cr, uid, ids, destination_id=destination_id, funding_pool_id=funding_pool_id, account_id=account_id)
 
+    def onchange_asset_status(self, cr, uid, ids, is_asset=False, account_id=False, context=None):
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if not is_asset:
+            account_id_first_value = self.browse(cr, uid, ids[0], fields_to_fetch=['account_id_first_value'], context=context).account_id_first_value.id
+            return {'value': {'account_id': account_id_first_value}}
+        if account_id:
+            if not self.pool.get('account.account').search_exists(cr, uid, [('id', '=', account_id), ('type', '=', 'other'), ('user_type_code', '=', 'asset'), ('is_not_hq_correctible', '=', False)], context=context):
+                return {'value': {'account_id': False}}
+        return {}
 
     def _check_cc(self, cr, uid, ids, context=None):
         """
@@ -378,7 +393,14 @@ class hq_entries(osv.osv):
                                              (hq_entry.cost_center_id.code or '', hq_entry.name))
         return True
 
+    def _duplicate_is_asset(self, cr, uid, vals, context=None):
+        if 'is_asset' in vals:
+            vals['is_asset_display'] = vals['is_asset']
+            return {'is_asset_display': vals['is_asset']}
+        return {}
+
     def create(self, cr, uid, vals, context=None):
+        self._duplicate_is_asset(cr, uid, vals, context)
         new_id = super(hq_entries, self).create(cr, uid, vals, context)
         self._check_active_account(cr, uid, [new_id], context=context)
         self._check_cc(cr, uid, [new_id], context=context)
@@ -403,9 +425,11 @@ class hq_entries(osv.osv):
             if 'is_original' in vals:  # US-4169 also enable to sync the is_original tag
                 sync_vals.update({'is_original': vals['is_original']})
             if sync_vals:
+                sync_vals.update(self._duplicate_is_asset(cr, uid, vals, context))
                 return super(hq_entries, self).write(cr, uid, ids, sync_vals, context)
             return True
 
+        self._duplicate_is_asset(cr, uid, vals, context)
         if 'account_id' in vals:
             account = self.pool.get('account.account').browse(cr, uid, [vals.get('account_id')])[0]
             for line in self.browse(cr, uid, ids):
