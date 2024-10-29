@@ -929,6 +929,10 @@ class supplier_catalogue(osv.osv):
         for x in cr.fetchall():
             products.append(x[0])
 
+        # US-13530: To reject the whole auto-import
+        if products and context.get('auto_import_ok'):
+            context['auto_import_catalogue_overlap'] = True
+
         return products
 
     def update_ranking(self, cr, uid, ids, context=None):
