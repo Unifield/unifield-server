@@ -472,20 +472,21 @@ class product_asset(osv.osv):
             ret[_id] = {'depreciation_amount': False,  'disposal_amount': False}
         cr.execute('''
             select
-                a.id, sum(l.amount), a.invo_value
+                a.id, sum(l.amount), a.invo_value, a.from_invoice, a.state
             from
-                product_asset a, product_asset_line l
+                product_asset a
+                left join product_asset_line l on a.id = l.asset_id and l.move_id is not null
             where
-                a.id = l.asset_id
-                and a.id in %s
-                and l.move_id is not null
+                a.id in %s
                 and coalesce(l.is_initial_line, 'f') = 'f'
-            group by a.id
+            group by a.id, a.invo_value, a.from_invoice, a.state
         ''', (tuple(ids), ))
         for x in cr.fetchall():
-            ret[x[0]] = {'depreciation_amount': x[1]}
-            if x[2]:
-                ret[x[0]]['disposal_amount'] = round(x[2] - x[1], 2)
+            ret[x[0]] = {'depreciation_amount': x[1] or 0}
+            if not x[1] and not x[3] and x[4] in ('deprecated', 'disposed'):
+                ret[x[0]]['disposal_amount'] = 0
+            elif x[2]:
+                ret[x[0]]['disposal_amount'] = round(x[2] - (x[1] or 0), 2)
 
         return ret
 
@@ -515,7 +516,7 @@ class product_asset(osv.osv):
                 left join product_asset_line l on l.asset_id = a.id
             where
                 a.id in %s and
-                a.state in ('running', 'deprecated')
+                a.state in ('open', 'running', 'deprecated')
             group by a.id
             having  (
                 count(l.is_disposal='t' or NULL) = 0
@@ -575,6 +576,8 @@ class product_asset(osv.osv):
             else:
                 not_invoice.append(x.id)
         if not_invoice:
+            for asset in self.pool.get('product.asset').browse(cr, uid, not_invoice, fields_to_fetch=['product_id'], context=context):
+                ret[asset.id] = asset.product_id.categ_id and asset.product_id.categ_id.asset_bs_account_id and asset.product_id.categ_id.asset_bs_account_id.id or False
             cr.execute("select asset_id, asset_bs_depreciation_account_id from product_asset_line where is_initial_line='t' and asset_id in %s", (tuple(not_invoice),))
             for x in cr.fetchall():
                 ret[x[0]] = x[1]
@@ -984,7 +987,6 @@ class product_asset(osv.osv):
         return {}
 
     def test_and_set_deprecated(self, cr , uid, ids, context=None):
-        print('tests', ids)
         if isinstance(ids, int):
             ids = [ids]
         if not ids:
@@ -1361,7 +1363,7 @@ class product_asset_line(osv.osv):
                 entry_name =  _('Depreciation Asset %s') % line.asset_id.name
 
             entries = []
-            if line.amount:
+            if abs(line.amount) > 0.001:
                 entries = [
                     {
                         'amount_currency': line.amount,
@@ -1377,16 +1379,17 @@ class product_asset_line(osv.osv):
 
             if line.is_disposal:
                 balance_amount = line.asset_id.depreciation_amount
-                entries += [{
-                    'amount_currency': -1*balance_amount,
-                    'account_id': line.asset_bs_depreciation_account_id and line.asset_bs_depreciation_account_id.id or False,
-                    'analytic_distribution_id': False,
-                }, {
-                    'amount_currency': balance_amount,
-                    'account_id': line.asset_id.asset_bs_depreciation_account_id.id,
-                    'analytic_distribution_id': False,
-                }
-                ]
+                if abs(balance_amount) > 0.001:
+                    entries += [{
+                        'amount_currency': -1*balance_amount,
+                        'account_id': line.asset_bs_depreciation_account_id and line.asset_bs_depreciation_account_id.id or False,
+                        'analytic_distribution_id': False,
+                    }, {
+                        'amount_currency': balance_amount,
+                        'account_id': line.asset_id.asset_bs_depreciation_account_id.id,
+                        'analytic_distribution_id': False,
+                    }]
+
             update_data['move_id'] = account_move_obj.create(cr, uid, {
                 'document_date': line.date,
                 'date': line.date,
@@ -1475,16 +1478,26 @@ class product_asset_disposal(osv.osv_memory):
                 'comment': wiz.comment,
             }, context=context)
 
+
         to_draft_post = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('move_id', '=', False)], context=context)
-        if to_draft_post:
+        if wiz.asset_id.state == 'open':
+            asset_line_obj.unlink(cr, uid, to_draft_post, context=context)
+            if not wiz.asset_id.from_invoice:
+                self.pool.get('product.asset').write(cr, uid, wiz.asset_id.id, {'state': 'disposed'},  context=context)
+                return {'type': 'ir.actions.act_window_close'}
+
+            self.pool.get('product.asset').write(cr, uid, wiz.asset_id.id, {'state': 'running'}, context=context)
+        elif to_draft_post:
             asset_line_obj.button_generate_unposted_entries(cr, uid, to_draft_post, context=context)
 
+
+        asset = self.pool.get('product.asset').browse(cr, uid, wiz.asset_id.id, fields_to_fetch=['disposal_amount'], context=context)
         new_line_id = asset_line_obj.create(cr, uid, {
             'is_disposal': True,
             'date': wiz.disposal_date,
             'asset_pl_account_id': abs(wiz.asset_id.disposal_amount) > 0.001 and wiz.disposal_expense_account.id or wiz.asset_id.asset_bs_depreciation_account_id.id,
             'asset_bs_depreciation_account_id': wiz.disposal_bs_account.id,
-            'amount': wiz.asset_id.disposal_amount,
+            'amount': asset.disposal_amount,
             'asset_id': wiz.asset_id.id
 
         })
