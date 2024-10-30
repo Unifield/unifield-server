@@ -80,7 +80,7 @@
                         </group>
                         <field name="used_instance_id" attrs="{'readonly': ['|', ('instance_level', '!=', 'coordo'), ('state', '=', 'disposed')]}" />
                     </group>
-                    <field name="product_id" on_change="onChangeProductId(product_id)" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '!=', 'draft')]}"/>
+                    <field name="product_id" on_change="onChangeProductId(product_id)" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '!=', 'draft')]}" required="1"/>
                     <field name="description" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '!=', 'draft')]}" />
                     <notebook colspan="4">
                     <page string="Asset Form">

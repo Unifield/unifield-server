@@ -25,8 +25,8 @@
                     <field name="partner_txt"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
-                    <field name="is_asset_display" displayon="noteditable" />
-                    <field name="is_asset" displayon="editable" on_change="onchange_asset_status(is_asset, account_id)" attrs="{'readonly': ['|', '|', ('current_instance_level', '=', 'section'), ('original_asset_not_corrigible', '=', True), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
+                    <field name="is_asset_display" displayon="noteditable" invisible="1"/>
+                    <field name="is_asset" displayon="editable" on_change="onchange_asset_status(is_asset, account_id)" attrs="{'readonly': ['|', '|', '|', ('is_split', '=', True), ('current_instance_level', '=', 'section'), ('original_asset_not_corrigible', '=', True), ('account_user_type_code', 'not in', ['expense', 'income'])]}" invisible="1"/>
                     <field name="cost_center_id"
                            on_change="onchange_cost_center(cost_center_id, analytic_id)"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"

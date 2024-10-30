@@ -614,7 +614,7 @@ class product_asset(osv.osv):
         'name': fields.char('Asset Code', size=128, readonly=True),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type'), # from product
         'description': fields.char('Asset Description', size=128),
-        'product_id': fields.many2one('product.product', 'Product', required=True, ondelete='cascade'),
+        'product_id': fields.many2one('product.product', 'Product', ondelete='cascade'),
         'external_asset_id': fields.char('External Asset ID', size=32),
         # msf codification
         'prod_int_code': fields.char('Product Code', size=128, readonly=True), # from product
@@ -655,7 +655,7 @@ class product_asset(osv.osv):
         'instance_id': fields.many2one('msf.instance', string='Instance Creator', readonly=True, required=False),
         'used_instance_id': fields.many2one('msf.instance', string='Instance of use', join=True, required=True, domain="[('instance_to_display_ids', '=', True)]"),
         'xmlid_name': fields.char('XML Code, hidden field', size=128),
-        'from_invoice': fields.boolean('From Invoice', readonly=1),
+        'from_invoice': fields.boolean('From system', readonly=1),
         'from_sync': fields.boolean('From Sync', readonly=1),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
