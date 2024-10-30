@@ -233,8 +233,9 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                             "WHERE "
                             "   curr.name = %s AND "
                             "   curr.currency_table_id = %s AND "
-                            "   rcr.currency_id = curr.id",
-                        (register['currency'], self.fx_table_id))
+                            "   rcr.currency_id = curr.id AND"
+                            "   rcr.name <= %s ORDER BY rcr.name desc LIMIT 1",
+                        (register['currency'], self.fx_table_id, date_to))
                     else:
                         register_currency_rate = table_curr_rates.get(self.fx_table_id, {}).get(register['currency'], False)
                 elif not curr_rates.get(register['currency'], {}).get(date_to, False):
