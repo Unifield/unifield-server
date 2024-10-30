@@ -6,10 +6,12 @@ from osv import fields
 from tools.translate import _
 from openpyxl import load_workbook
 from io import BytesIO
+from lxml import etree
 import threading
 import pooler
 import base64
 import time
+import datetime
 
 
 class ir_product_list_export_wizard(osv.osv_memory):
@@ -103,6 +105,7 @@ Otherwise, you can continue to use Unifield.""")
             ids = [ids]
 
         prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
 
         cr = pooler.get_db(dbname).cursor()
 
@@ -118,7 +121,7 @@ Otherwise, you can continue to use Unifield.""")
         lines_warn = []
         message = ''
         def_line = {'order_id': sale.id}
-        for cell in sheet.iter_rows(min_row=10, min_col=1, max_col=4):
+        for cell in sheet.iter_rows(min_row=10, min_col=1, max_col=8):
             if not cell[0].value:  # Stop looking at lines if there is no product
                 break
             line = def_line.copy()
@@ -139,14 +142,9 @@ Otherwise, you can continue to use Unifield.""")
                 lines.append([{}, _('Line %s: %s. ') % (line_num, p_msg), ''])
                 continue
 
-            ftf = ['name', 'standard_price', 'uom_id', 'procure_method']
+            ftf = ['name', 'standard_price', 'uom_id', 'procure_method', 'category_id']
             prod = prod_obj.browse(cr, uid, prod_ids[0], fields_to_fetch=ftf, context=context)
-            line.update({
-                'product_id': prod.id,
-                'name': prod.name,
-                'price_unit': prod.standard_price,
-                'uom_id': prod.uom_id.id,
-            })
+            line.update({'product_id': prod.id, 'name': prod.name})
 
             # Quantity
             qty = cell[2].value
@@ -162,21 +160,58 @@ Otherwise, you can continue to use Unifield.""")
             else:
                 line_err += _('The Quantity is mandatory for each line. ')
 
-            # Date of Stock Take
-            ds_date = cell[3].value
-            if ds_date:
-                if ds_date and (cell[3].data_type != 'd' or not cell[3].is_date):
-                    line_warn += _('%s: The Date of Stock Take must be a date. ') % (prod_name,)
-                    ds_date = False
-                if ds_date:
+            # Cost Price
+            price = cell[3].value
+            if qty:
+                if cell[3].data_type == 'n':
+                    line.update({'price_unit': price})
+                else:
                     try:
-                        ds_date = ds_date.strftime('%Y-%m-%d')  # Fix format
-                        if ds_date > sale.date_order:
-                            line_warn += _('The Date of Stock Take is not consistent! It should not be later than %s\'s creation date. ') % (sale.name,)
-                        else:
-                            line.update({'stock_take_date': ds_date})
+                        price = float(price.rstrip().replace(',', '.'))
+                        line.update({'price_unit': price})
                     except ValueError:
+                        line_err += _('The Cost Price must be a number. ')
+            else:
+                line.update({'price_unit': prod.standard_price})
+
+            # UoM
+            uom_name = cell[4].value
+            if uom_name:
+                uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', uom_name)], context=context)
+                if uom_ids:
+                    if prod.uom_id.category_id.id != uom_obj.read(cr, uid, uom_ids[0], ['category_id'], context=context)['category_id'][0]:
+                        line_err += _('The UoM %s is not compatible with the product UoM. ') % (cell[4].value, )
+                    else:
+                        line.update({'uom_id': uom_ids[0]})
+                else:
+                    line_err += _('The UoM %s was not found. ') % (cell[4].value, )
+            else:
+                line.update({'uom_id': prod.uom_id.id})
+
+            # Currency - Ignore
+
+            # Comment
+            if cell[6].value:
+                line.update({'comment': cell[6].value})
+
+            # Date of Stock Take
+            ds_date = cell[7].value
+            if ds_date:
+                if isinstance(ds_date, datetime.datetime):
+                    ds_date = ds_date.strftime('%Y-%m-%d')
+                    line.update({'stock_take_date': ds_date})
+                else:
+                    for format in ['%d-%m-%Y', '%d.%m.%Y']:
+                        try:
+                            ds_date = datetime.datetime.strptime(ds_date, format)
+                            line.update({'stock_take_date': ds_date.strftime('%Y-%m-%d')})
+                            break
+                        except:
+                            continue
+                    if not line.get('stock_take_date'):
                         line_warn += _('%s the Date of Stock Take %s is not correct. ') % (prod_name, ds_date)
+                if line.get('stock_take_date') and line['stock_take_date'] > sale.date_order:
+                    line_err += _('The Date of Stock Take is not consistent! It should not be later than %s\'s creation date. ') % (sale.name,)
 
             if line_err:
                 line_err = _('Line %s: ') % (line_num, ) + line_err

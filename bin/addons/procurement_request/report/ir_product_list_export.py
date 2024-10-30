@@ -24,13 +24,18 @@ class ir_product_list_export(XlsxReportParser):
 
         wiz = self.pool.get('ir.product.list.export.wizard').browse(self.cr, self.uid, self.ids[0], context=context)
         p_list = wiz and wiz.product_list_id or False
+        func_curr = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, context=context).company_id.currency_id
 
         sheet = self.workbook.active
 
         sheet.column_dimensions['A'].width = 30.0
         sheet.column_dimensions['B'].width = 70.0
         sheet.column_dimensions['C'].width = 15.0
-        sheet.column_dimensions['D'].width = 20.0
+        sheet.column_dimensions['D'].width = 15.0
+        sheet.column_dimensions['E'].width = 10.0
+        sheet.column_dimensions['F'].width = 10.0
+        sheet.column_dimensions['G'].width = 70.0
+        sheet.column_dimensions['H'].width = 20.0
 
         # Styles
         self.create_style_from_template('default_style', 'E1')
@@ -40,7 +45,8 @@ class ir_product_list_export(XlsxReportParser):
         line_header_style = self.create_style_from_template('line_header_style', 'A2')
         line_style = self.create_style_from_template('line_style', 'B2')
         number_style = self.create_style_from_template('number_style', 'C10')
-        date_style = self.create_style_from_template('date_style', 'D10')
+        float_style = self.create_style_from_template('float_style', 'D10')
+        date_style = self.create_style_from_template('date_style', 'H10')
 
         sheet.title = 'IR_Product_List_Export'
         # Header data
@@ -49,7 +55,7 @@ class ir_product_list_export(XlsxReportParser):
         cell_title.style = big_title_style
         self.apply_template_style('A1', cell_title)
         sheet.append([cell_title])
-        sheet.merged_cells.ranges.append("A1:D1")
+        sheet.merged_cells.ranges.append("A1:H1")
 
         cell_empty = WriteOnlyCell(sheet)
         cell_empty.style = line_style
@@ -66,13 +72,22 @@ class ir_product_list_export(XlsxReportParser):
         for top_header in top_headers:
             cell_th = WriteOnlyCell(sheet, value=top_header)
             cell_th.style = line_header_style
-            sheet.append([cell_th, cell_empty])
+            if top_header == _('Functional Currency'):
+                cell_curr = WriteOnlyCell(sheet, value=func_curr and func_curr.name or '')
+                cell_curr.style = line_style
+                sheet.append([cell_th, cell_curr])
+            else:
+                sheet.append([cell_th, cell_empty])
 
         # Lines data
         row_headers = [
             (_('Product Code')),
             (_('Product Description')),
             (_('Quantity')),
+            (_('Cost Price')),
+            (_('UoM')),
+            (_('Currency')),
+            (_('Comment')),
             (_('Date of Stock Take')),
         ]
         row_header = []
@@ -90,6 +105,10 @@ class ir_product_list_export(XlsxReportParser):
                 self.add_cell(list_line.ref, line_style)
                 self.add_cell(list_line.desc, line_style)
                 self.add_cell(0, number_style)
+                self.add_cell(list_line.name.standard_price or 0.00, float_style)
+                self.add_cell(list_line.name.uom_id.name or '', line_style)
+                self.add_cell(func_curr and func_curr.name or '', line_style)
+                self.add_cell(list_line.comment or '', line_style)
                 self.add_cell('', date_style, number_format='DD/MM/YYYY')
 
                 sheet.append(self.rows)
@@ -99,6 +118,10 @@ class ir_product_list_export(XlsxReportParser):
             self.add_cell('', line_style)
             self.add_cell('', line_style)
             self.add_cell(0, number_style)
+            self.add_cell(0, float_style)
+            self.add_cell('', line_style)
+            self.add_cell('', line_style)
+            self.add_cell('', line_style)
             self.add_cell('', date_style, number_format='DD/MM/YYYY')
 
             sheet.append(self.rows)

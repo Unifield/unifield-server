@@ -8,6 +8,11 @@
             <field name="priority">15</field>
             <field name="arch" type="xml">
                 <form string="IR export - product list">
+                    <html colspan="4">
+                        <h4>
+                        <translate>Please note that selecting an Internal Request will have no effect on the generated template, the IR will be <span style="font-weight: bold; color: red;">ignored</span></translate>
+                        </h4>
+                    </html>
                     <field colspan="2" name="product_list_id"/>
                     <button colspan="2" name="create_report" string="Export Template" type="object"/>
                 </form>
