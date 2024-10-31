@@ -315,7 +315,8 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                             to_correct_ok = True
                             error_list_line.append(_('The Ranking "%s" is not consistent with the available ranks of a catalogue.')
                                                    % (row.cells[9].data,))
-                    if not row.cells[9].data and obj.catalogue_id.state == 'confirmed' and not obj.catalogue_id.ranking:
+                    if obj.catalogue_id.state == 'confirmed' and not obj.catalogue_id.ranking and \
+                            (len(row.cells) >= 10 and not row.cells[9].data or len(row.cells) <= 9):
                         to_correct_ok = True
                         error_list_line.append(_('The Ranking is mandatory on a confirmed catalogue line if there is none at header level.'))
 

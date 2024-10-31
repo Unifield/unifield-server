@@ -176,6 +176,8 @@ class supplier_catalogue(osv.osv):
                     if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
                         delay = partner_obj.browse(cr, uid, vals['partner_id'], context=context).default_delay
                         new_supinfo_vals.update({'name': vals['partner_id'], 'delay': delay})
+                    if vals.get('ranking'):
+                        new_supinfo_vals['sequence'] = vals['ranking']
 
                     # Change pricelist data according to new data (only if there is change)
                     new_price_vals = {}
@@ -189,10 +191,27 @@ class supplier_catalogue(osv.osv):
                                 new_price_vals[prop] = vals[prop]
 
                     # Update the supplier info and price lines
-                    supplierinfo_ids = supinfo_obj.search(cr, uid,
-                                                          [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
+                    supplierinfo_ids = supinfo_obj.search(cr, uid, [('catalogue_id', 'in', ids)],
+                                                          order='NO_ORDER', context=context)
                     if new_supinfo_vals:
-                        supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
+                        # Separate the lines update between the ones that have a ranking from the lines and from the
+                        # lines that have a ranking from header
+                        if supplierinfo_ids and new_supinfo_vals.get('sequence'):
+                            cr.execute("""
+                                SELECT ps.id FROM product_supplierinfo ps 
+                                    LEFT JOIN supplier_catalogue_line cl ON cl.supplier_info_id = ps.id
+                                WHERE cl.ranking IS NOT NULL AND ps.id IN %s
+                            """, (tuple(supplierinfo_ids),))
+                            supplierinfo_no_seq_ids = [x[0] for x in cr.fetchall()]
+                            if supplierinfo_no_seq_ids:
+                                new_supinfo_no_seq_vals = new_supinfo_vals.copy()
+                                new_supinfo_no_seq_vals.pop('sequence')
+                                for ps_id in supplierinfo_no_seq_ids:
+                                    supplierinfo_ids.remove(ps_id)
+                                if new_supinfo_no_seq_vals:
+                                    supinfo_obj.write(cr, uid, supplierinfo_no_seq_ids, new_supinfo_no_seq_vals, context=context)
+                        if supplierinfo_ids:
+                            supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
 
                     pricelist_ids = []
                     if 'line_ids' in vals:
@@ -745,7 +764,8 @@ class supplier_catalogue(osv.osv):
                         to_correct_ok = True
                         error_list_line.append(_('The Ranking "%s" is not consistent with the available ranks of a catalogue.')
                                                % (row.cells[8].data,))
-                if not row.cells[8].data and obj.catalogue_id.state == 'confirmed' and not obj.catalogue_id.ranking:
+                if obj.catalogue_id.state == 'confirmed' and not obj.catalogue_id.ranking and \
+                        (len(row.cells) >= 9 and not row.cells[8].data or len(row.cells) <= 8):
                     to_correct_ok = True
                     error_list_line.append(_('The Ranking is mandatory on a confirmed catalogue line if there is none at header level.'))
 
@@ -930,7 +950,7 @@ class supplier_catalogue(osv.osv):
             products.append(x[0])
 
         # US-13530: To reject the whole auto-import
-        if products and context.get('auto_import_ok'):
+        if products and context.get('auto_import_ok') and not context.get('auto_import_catalogue_overlap'):
             context['auto_import_catalogue_overlap'] = True
 
         return products
@@ -1130,13 +1150,20 @@ class supplier_catalogue_line(osv.osv):
                               'uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
                               'rounding': new_vals.get('rounding', line.rounding),
                               'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),
-                              'sequence': new_vals.get('ranking', line.ranking),
                               }
+                supinfo_data = {}
+                if new_vals.get('ranking') and line.supplier_info_id.sequence != new_vals['ranking']:
+                    supinfo_data['sequence'] = new_vals['ranking']
+                elif not new_vals.get('ranking') and not line.ranking and line.catalogue_id.ranking \
+                        and line.supplier_info_id.sequence != line.catalogue_id.ranking:
+                    supinfo_data['sequence'] = line.catalogue_id.ranking
                 # Update the pricelist line on product supplier information tab
-                if 'product_code' in new_vals and line.partner_info_id.suppinfo_id.product_code != new_vals['product_code']:
-                    self.pool.get('product.supplierinfo').write(cr, uid, [line.partner_info_id.suppinfo_id.id], {'product_code': new_vals['product_code']})
-                self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id],
-                                                             pinfo_data, context=context)
+                if 'product_code' in new_vals and line.supplier_info_id.product_code != new_vals['product_code']:
+                    supinfo_data['product_code'] = new_vals['product_code']
+                if supinfo_data:
+                    self.pool.get('product.supplierinfo').write(cr, uid, [line.supplier_info_id.id], supinfo_data)
+
+                self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id], pinfo_data, context=context)
             elif cat_state != 'draft':
                 new_vals.update({'catalogue_id': new_vals.get('catalogue_id', line.catalogue_id.id),
                                  'product_id': new_vals.get('product_id', line.product_id.id),

@@ -1163,7 +1163,7 @@ class product_supplierinfo(osv.osv):
     }
     _defaults = {
         'qty': lambda *a: 0.0,
-        'sequence': lambda *a: 1,
+        'sequence': lambda *a: 3,
         'delay': lambda *a: 1,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'product.supplierinfo', context=c),
         'product_uom': _get_uom_id,
@@ -1187,7 +1187,7 @@ class product_supplierinfo(osv.osv):
         res = {}
         if not sequence:
             return res
-        if sequence in (13, 14, 15, 16, 17, 18):
+        if sequence in range(13, 19):
             current_sequence = ids and self.read(cr, uid, ids[0], ['sequence'], context=context)['sequence'] or False
             return {
                 'value': {'sequence': current_sequence},
