@@ -1536,7 +1536,7 @@ class msf_import_export(osv.osv_memory):
             else:
                 nb_imported_lines += 1
                 if import_brw.model_list_selection == 'supplier_catalogue_update':
-                    cr.execute("SAVEPOINT catalogue_auto_import")
+                    cr.execute("RELEASE SAVEPOINT catalogue_auto_import")
 
             self.write(cr, uid, [import_brw.id], {'total_lines_imported': nb_imported_lines}, context=context)
 
