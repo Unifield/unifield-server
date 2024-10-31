@@ -242,6 +242,53 @@ class res_partner(osv.osv):
 
         return [('id', operator, self.search(cr, uid, [('is_instance', '=', True)], context=context))]
 
+    def _get_allow_external_edition(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        res = {}
+
+        cr.execute("select id, locally_created from res_partner where id in %s", (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]] = x[1]
+
+        if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
+            cr.execute('''
+                select p.id
+                from
+                    res_partner p, msf_instance i, res_company c
+                where
+                    i.code=p.instance_creator
+                    and locally_created='f'
+                    and i.level='project'
+                    and i.state='inactive'
+                    and i.parent_id = c.instance_id
+                    and p.id in %s
+            ''', (tuple(ids),))
+
+            for x in cr.fetchall():
+                res[x[0]] = True
+
+        return res
+
+    def _search_allow_external_edition(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+        for arg in args:
+            if arg[0] == 'allow_external_edition':
+                if arg[1] != '=' or not arg[2]:
+                    raise osv.except_osv(_('Error'), _('Filter not implemented'))
+
+
+            if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
+                cr.execute("select code from msf_instance i, res_company c where i.level = 'project' and i.state='inactive' and i.parent_id = c.instance_id")
+                inactive_projects = [x[0] for x in cr.fetchall()]
+                return ['|', ('locally_created', '=', True), ('instance_creator', 'in', inactive_projects)]
+
+            return [('locally_created', '=', True)]
+        return []
+
+
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
         'partner_type': fields.selection(PARTNER_TYPE, string='Partner type', required=True),
@@ -301,11 +348,13 @@ class res_partner(osv.osv):
             string='Is a coordination ?',
         ),
         'locally_created': fields.boolean('Locally Created', help='Partner Created on this instance', readonly=1),
-        'instance_creator': fields.char('Instance Creator', size=64, readonly=1),
+        'allow_external_edition': fields.function(_get_allow_external_edition, type='boolean', method=True, fnct_search=_search_allow_external_edition, string="Editable ext. partner"),
+        'instance_creator': fields.char('Instance Creator', size=64, readonly=1, select=1),
     }
 
     _defaults = {
         'locally_created': lambda *a: True,
+        'allow_external_edition': True,
         'manufacturer': lambda *a: False,
         'transporter': lambda *a: False,
         'partner_type': lambda *a: 'external',
