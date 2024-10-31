@@ -276,16 +276,16 @@ class res_partner(osv.osv):
             return []
         for arg in args:
             if arg[0] == 'allow_external_edition':
-                if arg[1] != '=' or not arg[2]:
+                if arg[1] != '=' or arg[2]:
                     raise osv.except_osv(_('Error'), _('Filter not implemented'))
 
 
             if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
                 cr.execute("select code from msf_instance i, res_company c where i.level = 'project' and i.state='inactive' and i.parent_id = c.instance_id")
                 inactive_projects = [x[0] for x in cr.fetchall()]
-                return ['|', ('locally_created', '=', True), ('instance_creator', 'in', inactive_projects)]
+                return [('locally_created', '=', False), ('instance_creator', 'not in', inactive_projects)]
 
-            return [('locally_created', '=', True)]
+            return [('locally_created', '=', False)]
         return []
 
 
