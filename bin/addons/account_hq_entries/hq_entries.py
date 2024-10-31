@@ -440,7 +440,6 @@ class hq_entries(osv.osv):
             if 'is_original' in vals:  # US-4169 also enable to sync the is_original tag
                 sync_vals.update({'is_original': vals['is_original']})
             if sync_vals:
-                sync_vals.update(self._duplicate_is_asset(cr, uid, vals, context))
                 return super(hq_entries, self).write(cr, uid, ids, sync_vals, context)
             return True
 
