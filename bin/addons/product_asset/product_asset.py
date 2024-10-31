@@ -484,7 +484,7 @@ class product_asset(osv.osv):
         ''', (tuple(ids), ))
         for x in cr.fetchall():
             ret[x[0]] = {'depreciation_amount': x[1] or 0}
-            if not x[1] and not x[3] and not x[4] and x[5] in ('deprecated', 'disposed'):
+            if not x[1] and not x[3] and not x[4] and x[5] in ('depreciated', 'disposed'):
                 ret[x[0]]['disposal_amount'] = 0
             elif x[2]:
                 ret[x[0]]['disposal_amount'] = round(x[2] - (x[1] or 0), 2)
@@ -517,7 +517,7 @@ class product_asset(osv.osv):
                 left join product_asset_line l on l.asset_id = a.id
             where
                 a.id in %s and
-                a.state in ('open', 'running', 'deprecated')
+                a.state in ('open', 'running', 'depreciated')
             group by a.id
             having  (
                 count(l.is_disposal='t' or NULL) = 0
@@ -633,7 +633,7 @@ class product_asset(osv.osv):
         'model': fields.char('Model', size=128), # required=True),
         'year': fields.char('Year', size=4),
         'used_in_current_instance': fields.function(_get_used_in_current_instance, method=True, string='Used in current instance', type='boolean', fnct_search=_search_used_in_current_instance),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('running', 'Active'), ('deprecated', 'Fully Deprecated'), ('disposed', 'Disposed')], 'State', readonly=1),
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('running', 'Active'), ('depreciated', 'Fully Depreciated'), ('disposed', 'Disposed')], 'State', readonly=1),
         # remark
         'comment': fields.text('Comment'),
         # traceability
@@ -851,23 +851,23 @@ class product_asset(osv.osv):
         nb_month = asset.useful_life_id.year * 12
         start_dt = datetime.strptime(asset.start_date, '%Y-%m-%d')
         dep_value = float(asset.invo_value)/nb_month
-        sum_deprecated_value = 0
+        sum_depreciated_value = 0
         accumulated_rounded = 0
         date_first_entry = start_dt + relativedelta(months=1, day=1, days=-1)
 
         if False and asset.prorata:
             first_entry_nb_days = (start_dt + relativedelta(months=1, day=1) - start_dt).days
-            deprecated_value = dep_value / date_first_entry.day * first_entry_nb_days
+            depreciated_value = dep_value / date_first_entry.day * first_entry_nb_days
         else:
             start_dt = start_dt + relativedelta(day=1)
-            deprecated_value = dep_value
+            depreciated_value = dep_value
 
 
-        rounded_dep = round(deprecated_value, 2)
+        rounded_dep = round(depreciated_value, 2)
         if rounded_dep >= 0.01:
             to_create.append([date_first_entry, rounded_dep, start_dt, date_first_entry])
-            accumulated_rounded += deprecated_value - rounded_dep
-            sum_deprecated_value += rounded_dep
+            accumulated_rounded += depreciated_value - rounded_dep
+            sum_depreciated_value += rounded_dep
 
         for mt in range(1, nb_month):
             date = start_dt + relativedelta(months=mt+1, day=1, days=-1)
@@ -879,12 +879,12 @@ class product_asset(osv.osv):
             rounded_dep = round(value, 2)
             if rounded_dep >= 0.01:
                 to_create.append([date, rounded_dep, date + relativedelta(day=1), date])
-                sum_deprecated_value +=  rounded_dep
+                sum_depreciated_value +=  rounded_dep
                 accumulated_rounded += value - rounded_dep
             else:
                 accumulated_rounded += value
 
-        remaining = round(asset.invo_value - sum_deprecated_value, 2)
+        remaining = round(asset.invo_value - sum_depreciated_value, 2)
         if False and asset.prorata and remaining > 1:
             last_entry_date = start_dt + relativedelta(months=nb_month+1, day=1, days=-1)
             to_create.append([last_entry_date, remaining, last_entry_date + relativedelta(day=1), last_entry_date + relativedelta(day=start_dt.day)])
@@ -991,7 +991,7 @@ class product_asset(osv.osv):
             }
         return {}
 
-    def test_and_set_deprecated(self, cr , uid, ids, context=None):
+    def test_and_set_depreciated(self, cr , uid, ids, context=None):
         if isinstance(ids, int):
             ids = [ids]
         if not ids:
@@ -1007,7 +1007,7 @@ class product_asset(osv.osv):
             order by l.asset_id, l.is_disposal desc, l.date desc
         ''', (tuple(ids), ))
         # l.is_disposal desc: to get first the is_disposal line
-        to_deprecated = []
+        to_depreciated = []
         to_disposed = []
         nothing = {}
         for x in cr.fetchall():
@@ -1019,13 +1019,13 @@ class product_asset(osv.osv):
                     # this is a disposal line that contains the last depcrecation entry
                     nothing[x[0]] = True
             elif x[0] not in nothing and x[2] == 'posted':
-                to_deprecated.append(x[0])
+                to_depreciated.append(x[0])
 
-        if to_deprecated:
-            self.write(cr, uid, to_deprecated, {'state': 'deprecated'}, context=context)
+        if to_depreciated:
+            self.write(cr, uid, to_depreciated, {'state': 'depreciated'}, context=context)
         if to_disposed:
             self.write(cr, uid, to_disposed, {'state': 'disposed'}, context=context)
-        if to_deprecated or to_disposed:
+        if to_depreciated or to_disposed:
             return True
         return False
 
@@ -1133,7 +1133,7 @@ class product_asset_event(osv.osv):
         'proj_code': fields.char('Project Code', size=128),
         'event_type_id': fields.many2one('product.asset.event.type', 'Event Type', required=True, add_empty=True),
         # selection
-        'asset_id': fields.many2one('product.asset', 'Asset Code', required=True, ondelete='cascade', domain=[('state', 'in', ['running', 'deprecated']), ('used_in_current_instance', '=', True)]),
+        'asset_id': fields.many2one('product.asset', 'Asset Code', required=True, ondelete='cascade', domain=[('state', 'in', ['running', 'depreciated']), ('used_in_current_instance', '=', True)]),
         'product_id': fields.many2one('product.product', 'Product', readonly=True, ondelete='cascade'),
         'serial_nb': fields.char('Serial Number', size=128, readonly=True),
         'brand': fields.char('Brand', size=128, readonly=True), # from asset
@@ -1141,7 +1141,7 @@ class product_asset_event(osv.osv):
         'comment': fields.text('Comment'),
         'asset_name': fields.related('asset_id', 'name', type='char', readonly=True, size=128, store=False, write_relate=False, string="Asset"),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
-        'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Active'), ('deprecated', 'Fully Deprecated'), ('disposed', 'Disposed')], readonly=1),
+        'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Active'), ('depreciated', 'Fully Depreciated'), ('disposed', 'Disposed')], readonly=1),
         'instance_id': fields.many2one('msf.instance', 'Event Created at', readonly=1),
         'event_used_in_current_instance': fields.function(_get_event_used_in_current_instance, method=True, string='Used in current instance', type='boolean'),
     }
@@ -1339,7 +1339,7 @@ class product_asset_line(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please post entries in chronological order, following entries are draft:\n%s') % '\n'.join(error))
 
         for line in self.browse(cr, uid, ids, context=context):
-            if line.asset_id.state not in ('running', 'deprecated'):
+            if line.asset_id.state not in ('running', 'depreciated'):
                 continue
             update_data = {}
             context.update({'date': line.date})
@@ -1464,9 +1464,6 @@ class product_asset_disposal(osv.osv_memory):
         nb_draft = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>', last_disposal_entry), ('move_id.state', '=', 'draft')], count=True, context=context)
         if nb_draft:
             raise osv.except_osv(_('Error !'), _('Date of disposal %s does not match: there are %d unposted entries') % (wiz.disposal_date, nb_draft))
-
-        #if not asset_line_obj.search_exists(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('last_dep_day', '>', wiz.disposal_date)], context=context):
-        #    raise osv.except_osv(_('Error !'), _('Asset already fully deprecated at %s') % wiz.disposal_date)
 
         draft_lines = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>', last_disposal_entry)], context=context)
         if draft_lines:

@@ -93,7 +93,7 @@
                             <field name="local_ref" />
                         </group>
 
-                        <group colspan="2" col="8" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'deprecated']), ('used_in_current_instance', '=', False)]}">
+                        <group colspan="2" col="8" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'depreciated']), ('used_in_current_instance', '=', False)]}">
                             <separator string="Asset Reference" colspan="2" />
                             <field name="serial_nb" colspan="8" />
                             <field name="brand" colspan="8" />
@@ -104,10 +104,10 @@
 
                         <group colspan="2" col="4">
                             <separator string="Comment" colspan="4" />
-                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'deprecated']), ('used_in_current_instance', '=', False)]}"/>
+                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'depreciated']), ('used_in_current_instance', '=', False)]}"/>
                         </group>
 
-                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'deprecated']), ('used_in_current_instance', '=', False)]}">
+                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'depreciated']), ('used_in_current_instance', '=', False)]}">
                             <separator string="Traceability" colspan="2" />
                             <field name="project_po" />
                             <field name="orig_mission_code" />
@@ -135,7 +135,7 @@
                     </page>
                     <page string="Event History">
                         <group colspan="2" col="2">
-                            <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [ '|', ('state', 'not in', ['open', 'running', 'deprecated']), ('used_in_current_instance', '=', False)]}">
+                            <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [ '|', ('state', 'not in', ['open', 'running', 'depreciated']), ('used_in_current_instance', '=', False)]}">
                                 <tree string="Events" editable="top" noteditable="not event_used_in_current_instance">
                                     <field name="date" />
                                     <field name="instance_id" />
@@ -158,12 +158,12 @@
                             <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
                                 <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="3" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
                                 <button name="button_reset_distribution" string="Reset AD at line level" type="object"
-                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['disposed', 'deprecated'])]}"/>
+                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['disposed', 'depreciated'])]}"/>
                             </group>
                             <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
-                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="3" attrs="{'invisible': ['|', ('state', 'in', ['disposed', 'deprecated']), ('analytic_distribution_id', '!=', False)]}"/>
+                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="3" attrs="{'invisible': ['|', ('state', 'in', ['disposed', 'depreciated']), ('analytic_distribution_id', '!=', False)]}"/>
                                 <button name="button_reset_distribution" string="Reset AD at line level" type="object"
-                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['disposed', 'deprecated'])]}"/>
+                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['disposed', 'depreciated'])]}"/>
                             </group>
                             <field name="analytic_distribution_id" invisible="1"/>
                         </group>
@@ -206,7 +206,7 @@
                         <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|','|', ('instance_level', '=', 'project'), ('lock_open', '!=', False), ('state', '!=', 'open')]}" />
                         <button type="object" name="button_delete_draft_entries" string="Delete Lines" icon="terp-gtk-stop" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('lock_open', '=', False), ('state', '!=', 'open')]}" />
                         <button type="object" name="button_set_as_open" string="Set as Open" icon="gtk-goto-first" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
-                        <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('state', 'not in', ['running', 'deprecated', 'open']), ('can_be_disposed', '=', False)]}"/>
+                        <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('state', 'not in', ['running', 'depreciated', 'open']), ('can_be_disposed', '=', False)]}"/>
                     </group>
                 </group>
             </form>
@@ -251,7 +251,7 @@
                 <filter icon="terp-document-new" string="Draft" name="s_draft" domain="[('state', '=', 'draft')]"/>
                 <filter icon="terp-camera_test" string="Open" name="s_open" domain="[('state', '=', 'open')]"/>
                 <filter icon="gtk-media-play" string="Active" name="s_running" domain="[('state', '=', 'running')]"/>
-                <filter icon="terp-dialog-close" string="deprecated" name="deprecated" domain="[('state','=','deprecated')]" />
+                <filter icon="terp-dialog-close" string="Fully Depreciated" name="depreciated" domain="[('state','=','depreciated')]" />
                 <filter icon="gtk-cancel" string="Disposed" name="disposed" domain="[('state','=','disposed')]" />
                 <separator orientation="vertical"/>
 
@@ -300,7 +300,7 @@
         <field name="arch" type="xml">
             <form string="Asset Event">
                 <field name="event_used_in_current_instance" invisible="1" />
-                <group colspan="2" col="2" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'deprecated'])]}">
+                <group colspan="2" col="2" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'depreciated'])]}">
                     <separator string="Event Information" colspan="2" />
                     <field name="date" />
                     <field name="instance_id" />
@@ -310,7 +310,7 @@
                     <field name="proj_code" />
                 </group>
 
-                <group colspan="2" col="2" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'deprecated'])]}">
+                <group colspan="2" col="2" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'depreciated'])]}">
                     <separator string="Selection" colspan="2" />
                     <field name="asset_id" on_change="onChangeAssetId(asset_id)" />
                     <field name="product_id" />
@@ -318,7 +318,7 @@
                     <field name="brand" />
                     <field name="model" />
                 </group>
-                <group colspan="2" col="4" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'deprecated'])]}">
+                <group colspan="2" col="4" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'depreciated'])]}">
                     <separator string="Comment" colspan="4" />
                     <group colspan="1" col="1"></group>
                     <field name="comment" nolabel="True" colspan="3" />
