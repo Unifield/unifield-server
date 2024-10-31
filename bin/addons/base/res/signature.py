@@ -635,6 +635,7 @@ class signature_line(osv.osv):
 
 signature_line()
 
+
 class signature_image(osv.osv):
     _name = 'signature.image'
     _description = "Image of user signature in png"
@@ -669,9 +670,8 @@ class signature_image(osv.osv):
                 res[s.id] = today >= s.from_date
         return res
 
-
     _columns = {
-        'user_id': fields.many2one('res.users', required=1, string='User'),
+        'user_id': fields.many2one('res.users', required=1, string='User', domain=[('has_sign_group', '=', True)]),
         'login': fields.related('user_id', 'login', type='char', size=64, string='Login', readonly=1),
         'legal_name': fields.char('Legal name', size=64),
         'user_name': fields.char('User name', size=64),
@@ -683,6 +683,7 @@ class signature_image(osv.osv):
         'inactivation_date': fields.datetime('Inactivation Date', readonly=True),
         'is_active': fields.function(_get_is_active, method=1, type='boolean', string='Active'),
     }
+
 
 signature_image()
 

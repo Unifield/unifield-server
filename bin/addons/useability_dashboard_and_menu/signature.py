@@ -71,7 +71,7 @@ class signature_follow_up(osv.osv):
         for obj in ['purchase.order', 'sale.order', 'stock.picking', 'account.bank.statement', 'account.invoice']:
             st.update(dict(self.pool.get(obj)._columns['state'].selection))
         # Because PO 'confirmed' (Confirmed) is overridden by Pick 'confirmed' (Not Available)
-        st['confirmed_po'] = 'Confirmed'
+        st.update({'confirmed_po': 'Confirmed', 'closed_po': 'Closed'})
 
         return list(st.items())
 
@@ -86,23 +86,26 @@ class signature_follow_up(osv.osv):
         for sign_fup in self.browse(cr, uid, ids, fields_to_fetch=['doc_type', 'doc_state'], context=context):
             if sign_fup.doc_type == 'purchase.order' and sign_fup.doc_state == 'confirmed':
                 res[sign_fup.id] = 'confirmed_po'
+            elif sign_fup.doc_type == 'purchase.order' and sign_fup.doc_state == 'done':
+                res[sign_fup.id] = 'closed_po'
             else:
                 res[sign_fup.id] = sign_fup.doc_state
 
         return res
 
     _columns = {
-        'user_id': fields.many2one('res.users', 'User', readonly=1),
-        'doc_name': fields.char('Document Name', size=256, readonly=1),
+        'user_id': fields.many2one('res.users', 'User', domain=[('has_sign_group', '=', True)], readonly=1),
+        'doc_name': fields.char('Document ID', size=256, readonly=1),
         'doc_type': fields.selection([
-            ('purchase.order', 'PO'), ('sale.order.fo', 'FO'), ('sale.order.ir', 'IR'),
-            ('account.bank.statement.cash', 'Cash Register'), ('account.bank.statement.bank', 'Bank Register'),
-            ('account.bank.statement.cheque', 'Cheque Register'),
-            ('account.invoice.si', 'Supplier Invoice'), ('account.invoice.donation', 'Donation'),
-            ('stock.picking.in', 'IN'), ('stock.picking.out', 'OUT'), ('stock.picking.pick', 'Pick'),
+            ('purchase.order', 'Purchase Order (PO)'), ('sale.order.fo', 'Field Order (FO)'),
+            ('sale.order.ir', 'Internal Request (IR)'), ('account.bank.statement.cash', 'Cash Register'),
+            ('account.bank.statement.bank', 'Bank Register'), ('account.bank.statement.cheque', 'Cheque Register'),
+            ('account.invoice.si', 'Supplier Invoice (SI)'), ('account.invoice.donation', 'Donation'),
+            ('stock.picking.in', 'Incoming Shipment (IN)'), ('stock.picking.out', 'Delivery Order (Out)'),
+            ('stock.picking.pick', 'Picking Ticket (Pick)'),
         ], 'Document Type', readonly=1),
         'doc_id': fields.integer('Doc ID', readonly=1),
-        'status': fields.selection([('open', 'Open'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=1),
+        'status': fields.selection([('open', 'Unsigned'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=1),
         'doc_state': fields.selection(_get_all_states, string='Document State', readonly=1),
         'doc_state_display': fields.function(_get_doc_state_display, method=True, string='Document State', type='selection', selection=_get_all_states, readonly=True, store=False),
         'signed': fields.boolean('Signed', readonly=1),

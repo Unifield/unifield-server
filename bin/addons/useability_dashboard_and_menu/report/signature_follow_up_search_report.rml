@@ -57,7 +57,7 @@
         <blockTable style="table_title" colWidths="145.0,195.0,85.0,70.0,70.0,50.0,100.0,67.0">
             <tr>
                 <td><para style="title">User</para></td>
-                <td><para style="title">Document Name</para></td>
+                <td><para style="title">Document ID</para></td>
                 <td><para style="title">Document State</para></td>
                 <td><para style="title">Document Type</para></td>
                 <td><para style="title">Signature State</para></td>
