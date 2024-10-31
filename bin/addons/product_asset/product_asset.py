@@ -195,6 +195,7 @@ class product_asset(osv.osv):
         default.update({
             'name': False,
             'from_invoice': False,
+            'from_hq_entry': False,
             'from_sync': False,
             'event_ids': [],
             'instance_id': False,
@@ -279,7 +280,7 @@ class product_asset(osv.osv):
         if 'move_line_id' in vals:
             for current in self.browse(cr, uid, ids, context=context):
                 new_data = vals.copy()
-                if not current.from_invoice and not current.from_sync and (current.move_line_id.id != vals['move_line_id'] or 'quantity_divisor' in vals and current.quantity_divisor != vals['quantity_divisor']):
+                if not current.from_invoice and not current.from_hq_entry and  not current.from_sync and (current.move_line_id.id != vals['move_line_id'] or 'quantity_divisor' in vals and current.quantity_divisor != vals['quantity_divisor']):
                     new_data.update(self._getRelatedMoveLineFields(cr, uid, vals['move_line_id'], divisor=vals.get('quantity_divisor', current.quantity_divisor), context=context))
                 super(product_asset, self).write(cr, uid, current.id, new_data, context=context)
 
@@ -332,7 +333,7 @@ class product_asset(osv.osv):
             # add readonly fields to vals
             vals.update(self._getRelatedProductFields(cr, uid, productId, update_account=not from_sync))
 
-        if not from_sync and not vals.get('from_invoice') and not context.get('from_import') and 'move_line_id' in vals:
+        if not from_sync and not vals.get('from_invoice') and not vals.get('from_hq_entry') and not context.get('from_import') and 'move_line_id' in vals:
             vals.update(self._getRelatedMoveLineFields(cr, uid, vals['move_line_id'], divisor=vals.get('quantity_divisor'), context=context))
 
         # UF-1617: set the current instance into the new object if it has not been sent from the sync
@@ -472,7 +473,7 @@ class product_asset(osv.osv):
             ret[_id] = {'depreciation_amount': False,  'disposal_amount': False}
         cr.execute('''
             select
-                a.id, sum(l.amount), a.invo_value, a.from_invoice, a.state
+                a.id, sum(l.amount), a.invo_value, a.from_invoice, a.from_hq_entry, a.state
             from
                 product_asset a
                 left join product_asset_line l on a.id = l.asset_id and l.move_id is not null
@@ -483,7 +484,7 @@ class product_asset(osv.osv):
         ''', (tuple(ids), ))
         for x in cr.fetchall():
             ret[x[0]] = {'depreciation_amount': x[1] or 0}
-            if not x[1] and not x[3] and x[4] in ('deprecated', 'disposed'):
+            if not x[1] and not x[3] and not x[4] and x[5] in ('deprecated', 'disposed'):
                 ret[x[0]]['disposal_amount'] = 0
             elif x[2]:
                 ret[x[0]]['disposal_amount'] = round(x[2] - (x[1] or 0), 2)
@@ -567,8 +568,8 @@ class product_asset(osv.osv):
     def _get_inital_line_account_id(self, cr, uid, ids, field_name, args, context=None):
         ret = {}
         not_invoice = []
-        for x in self.browse(cr, uid, ids, fields_to_fetch=['move_line_id', 'from_invoice'], context=context):
-            if x.from_invoice:
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['move_line_id', 'from_invoice', 'from_hq_entry'], context=context):
+            if x.from_invoice or x.from_hq_entry:
                 if x.move_line_id and x.move_line_id.account_id:
                     ret[x.id] = x.move_line_id.account_id.id
                 else:
@@ -658,7 +659,8 @@ class product_asset(osv.osv):
         'instance_id': fields.many2one('msf.instance', string='Instance Creator', readonly=True, required=False),
         'used_instance_id': fields.many2one('msf.instance', string='Instance of use', join=True, required=True, domain="[('instance_to_display_ids', '=', True)]"),
         'xmlid_name': fields.char('XML Code, hidden field', size=128),
-        'from_invoice': fields.boolean('From system', readonly=1),
+        'from_invoice': fields.boolean('From Invoice', readonly=1),
+        'from_hq_entry': fields.boolean('From HQ Entry', readonly=1),
         'from_sync': fields.boolean('From Sync', readonly=1),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
@@ -691,6 +693,9 @@ class product_asset(osv.osv):
 
         if self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft'), ('from_invoice', '=', True)], context=context):
             error.append(_('Asset from invoice can not be deleted.'))
+
+        if self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft'), ('from_hq_entry', '=', True)], context=context):
+            error.append(_('Asset from HQ Entry can not be deleted.'))
 
         if error:
             raise osv.except_osv(_('Error !'), '\n'.join(error))
@@ -801,7 +806,7 @@ class product_asset(osv.osv):
         default_j = False
         asset = self.browse(cr, uid, ids[0], context=context)
         if asset.start_date < asset.invo_date:
-            raise osv.except_osv(_('Error !'), _('Asset %s: Start Date (%s) must be after Invoice Date (%s).') % (
+            raise osv.except_osv(_('Error !'), _('Asset %s: Start Date (%s) must be after Journal Item Date (%s).') % (
                 asset.name,
                 tools_obj.get_date_formatted(cr, uid, datetime=asset.start_date, context=context),
                 tools_obj.get_date_formatted(cr, uid, datetime=asset.invo_date, context=context),
@@ -886,7 +891,7 @@ class product_asset(osv.osv):
         else:
             to_create[-1][1] = to_create[-1][1] + remaining
 
-        if to_create and not asset.from_invoice:
+        if to_create and not asset.from_invoice and not asset.from_hq_entry:
             bs_prod_account_id = asset.product_id.categ_id and asset.product_id.categ_id.asset_bs_account_id and asset.product_id.categ_id.asset_bs_account_id.id or False
             if not bs_prod_account_id:
                 raise osv.except_osv(_('Error'), _('Product Category %s has no Asset Balance Sheet Account') % (asset.product_id.categ_id and asset.product_id.categ_id.name or asset.product_id.default_code, ))
@@ -1482,7 +1487,7 @@ class product_asset_disposal(osv.osv_memory):
         to_draft_post = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('move_id', '=', False)], context=context)
         if wiz.asset_id.state == 'open':
             asset_line_obj.unlink(cr, uid, to_draft_post, context=context)
-            if not wiz.asset_id.from_invoice:
+            if not wiz.asset_id.from_invoice and not wiz.asset_id.from_hq_entry:
                 self.pool.get('product.asset').write(cr, uid, wiz.asset_id.id, {'state': 'disposed'},  context=context)
                 return {'type': 'ir.actions.act_window_close'}
 

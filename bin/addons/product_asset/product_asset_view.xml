@@ -118,8 +118,8 @@
 
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
-                            <field name="move_line_id" required="1" colspan="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
-                            <field name="quantity_divisor"  attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_quantity_divisor(quantity_divisor, move_line_id)"/>
+                            <field name="move_line_id" required="1" colspan="4" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('from_hq_entry', '=', True), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
+                            <field name="quantity_divisor"  attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('from_hq_entry', '=', True), ('from_invoice', '=', True)]}" on_change="change_quantity_divisor(quantity_divisor, move_line_id)"/>
                             <field name="invo_value" required="1"/>
                             <field name="invo_currency" required="1"/>
                             <field name="invo_date" required="1"/>
@@ -197,7 +197,10 @@
                     <field name="instance_level" invisible="1" />
                     <field name="used_in_current_instance"  invisible="1"/>
                     <field name="state" />
-                    <field name="from_invoice"  />
+                    <group colspan="2" col="4">
+                        <field name="from_invoice"  />
+                        <field name="from_hq_entry"  />
+                    </group>
                     <group colspan="6" col="12">
                         <button type="object" name="button_open_asset" string="Open" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                         <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|','|', ('instance_level', '=', 'project'), ('lock_open', '!=', False), ('state', '!=', 'open')]}" />

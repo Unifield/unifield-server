@@ -519,7 +519,7 @@ class hq_entries_validation(osv.osv_memory):
                         'invo_date': line.date,
                         'invo_value': line.amount,
                         'invo_currency': line.currency_id.id,
-                        'from_invoice': True,
+                        'from_hq_entry': True,
                         'move_line_id': asset_line_id[0],
                         'start_date': line.date,
                     }, context=context)
