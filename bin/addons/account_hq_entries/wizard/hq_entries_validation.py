@@ -512,7 +512,7 @@ class hq_entries_validation(osv.osv_memory):
                 self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id,
                                                                    corrected_distrib_id, context=context)
                 if line.is_asset and self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok'):
-                    asset_line_id = acc_move_line_obj.search(cr, uid, [('reversal_line_id', '=', all_lines[line.id])], context=context)
+                    asset_line_id = acc_move_line_obj.search(cr, uid, [('corrected_line_id', '=', all_lines[line.id])], context=context)
                     self.pool.get('product.asset').create(cr, uid, {
                         'description': line.name,
                         'quantity_divisor': 1,
