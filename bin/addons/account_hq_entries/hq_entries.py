@@ -378,7 +378,7 @@ class hq_entries(osv.osv):
 
         for line in self.browse(cr, uid, ids, fields_to_fetch=['account_id_first_value'], context=context):
             if line.account_id_first_value.prevent_hq_asset:
-                raise {
+                return {
                     'warning': {
                         'title': _('Error'),
                         'message': _('The account %s could not be capitalized') % line.account_id_first_value.code

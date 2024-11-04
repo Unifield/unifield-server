@@ -278,6 +278,7 @@ class product_asset(osv.osv):
             vals.update(self._getRelatedProductFields(cr, uid, productId, update_account=False))
 
         if 'move_line_id' in vals:
+            # for manual asset
             for current in self.browse(cr, uid, ids, context=context):
                 new_data = vals.copy()
                 if not current.from_invoice and not current.from_hq_entry and  not current.from_sync and (current.move_line_id.id != vals['move_line_id'] or 'quantity_divisor' in vals and current.quantity_divisor != vals['quantity_divisor']):
@@ -285,6 +286,15 @@ class product_asset(osv.osv):
                 super(product_asset, self).write(cr, uid, current.id, new_data, context=context)
 
             return True
+        elif 'quantity_divisor' in vals:
+            # from HQ Entry
+            for current in self.browse(cr, uid, ids, context=context):
+                new_data = vals.copy()
+                if current.state == 'draft' and current.from_hq_entry and current.quantity_divisor != vals['quantity_divisor']:
+                    new_data['invo_value'] = round(float(current.move_line_id.debit_currency) / (vals['quantity_divisor'] or 1), 2)
+                super(product_asset, self).write(cr, uid, current.id, new_data, context=context)
+            return True
+
 
         return super(product_asset, self).write(cr, uid, ids, vals, context)
 
