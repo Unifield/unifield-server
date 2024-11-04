@@ -469,6 +469,10 @@ class orm_template(object):
                                                context=context
                                                )
 
+    def _after_update_send(self, cr, uid, ids, context=None):
+        ''' Method called when a sync update is sent to the sync server '''
+        pass
+
     def view_init(self, cr, uid, fields_list, context=None):
         """Override this method to do specific things when a view on the object is opened."""
         pass
