@@ -36,9 +36,6 @@
                     <field name="second_manufacturer_id" />
                     <field name="third_manufacturer_id" />
                 </xpath>
-                <xpath expr="field[@name='sequence']" position="replace">
-                    <field name="sequence_bis" />
-                </xpath>
             </field>
         </record>
 

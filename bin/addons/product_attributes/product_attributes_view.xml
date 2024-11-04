@@ -255,7 +255,7 @@
                             <field colspan="4" name="seller_ids" nolabel="1">
                                 <form>
                                     <field name="name" on_change="onchange_supplier(name)" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
-                                    <field name="sequence" />
+                                    <field name="sequence" on_change="onchange_sequence(sequence)" />
                                     <field name="product_code" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
                                     <field name="product_name" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
                                     <!-- utp-129: we filter the product_uom according to the uom_id of the product because of the constraint
@@ -284,9 +284,9 @@
                                         </tree>
                                     </field>
                                 </form>
-                                <tree>
+                                <tree colors="red:sequence in (13, 14, 15, 16, 17, 18)">
                                     <field name="editable" invisible="1" />
-                                    <field name="sequence_bis"/>
+                                    <field name="sequence"/>
                                     <field name="name"/>
                                     <field name="product_code" />
                                     <field name="delay"/>

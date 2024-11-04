@@ -1139,6 +1139,10 @@
             <field name="method">us_12912_catalogue_lines_partner_id</field>
         </record>
 
+        <record id="us_12228_update_supplierinfo_sequence" model="patch.scripts">
+            <field name="method">us_12228_update_supplierinfo_sequence</field>
+        </record>
+
 
 
     </data>

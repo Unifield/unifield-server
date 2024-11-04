@@ -83,6 +83,9 @@ class supplier_catalogue(osv.osv):
         if context is None:
             context = {}
 
+        if context.get('sync_update_execution'):
+            vals['ranking'] = 3
+
         res = super(supplier_catalogue, self).create(cr, uid, vals, context=context)
 
         # UTP-746: now check if the partner is inactive, then set this catalogue also to become inactive
@@ -132,7 +135,7 @@ class supplier_catalogue(osv.osv):
         for catalogue in self.browse(cr, uid, ids, context=context):
             if catalogue.from_sync and not context.get('sync_update_execution'):
                 for val in vals:
-                    if val != 'active':
+                    if val not in ('active', 'ranking'):
                         raise osv.except_osv(_('Error'), _('You can not modify a catalogue created from sync'))
             # Track Changes
             if catalogue.state != 'draft' and vals.get('active') is not None and vals['active'] != catalogue.active:
@@ -175,6 +178,8 @@ class supplier_catalogue(osv.osv):
                     if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
                         delay = partner_obj.browse(cr, uid, vals['partner_id'], context=context).default_delay
                         new_supinfo_vals.update({'name': vals['partner_id'], 'delay': delay})
+                    if vals.get('ranking'):
+                        new_supinfo_vals['sequence'] = vals['ranking']
 
                     # Change pricelist data according to new data (only if there is change)
                     new_price_vals = {}
@@ -188,15 +193,35 @@ class supplier_catalogue(osv.osv):
                                 new_price_vals[prop] = vals[prop]
 
                     # Update the supplier info and price lines
-                    supplierinfo_ids = supinfo_obj.search(cr, uid,
-                                                          [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
+                    supplierinfo_ids = supinfo_obj.search(cr, uid, [('catalogue_id', 'in', ids)],
+                                                          order='NO_ORDER', context=context)
                     if new_supinfo_vals:
-                        supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
+                        # Separate the lines update between the ones that have a ranking from the lines and from the
+                        # lines that have a ranking from header
+                        if supplierinfo_ids and new_supinfo_vals.get('sequence'):
+                            cr.execute("""
+                                SELECT ps.id FROM product_supplierinfo ps 
+                                    LEFT JOIN supplier_catalogue_line cl ON cl.supplier_info_id = ps.id
+                                WHERE cl.ranking IS NOT NULL AND ps.id IN %s
+                            """, (tuple(supplierinfo_ids),))
+                            supplierinfo_no_seq_ids = [x[0] for x in cr.fetchall()]
+                            if supplierinfo_no_seq_ids:
+                                new_supinfo_no_seq_vals = new_supinfo_vals.copy()
+                                new_supinfo_no_seq_vals.pop('sequence')
+                                for ps_id in supplierinfo_no_seq_ids:
+                                    supplierinfo_ids.remove(ps_id)
+                                if new_supinfo_no_seq_vals:
+                                    supinfo_obj.write(cr, uid, supplierinfo_no_seq_ids, new_supinfo_no_seq_vals, context=context)
+                        if supplierinfo_ids:
+                            supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
 
                     pricelist_ids = []
                     if 'line_ids' in vals:
                         # lines are being edited
-                        line_ids = [x[1] for x in vals['line_ids'] if x]
+                        if isinstance(vals['line_ids'], int) or isinstance(vals['line_ids'], str):
+                            line_ids = [vals['line_ids']]
+                        else:
+                            line_ids = [x[1] for x in vals['line_ids'] if x]
                         line_result = line_obj.read(cr, uid, line_ids, ['partner_info_id'], context=context)
                         pricelist_ids = [x['partner_info_id'][0] for x in line_result if x['partner_info_id']]
 
@@ -226,6 +251,11 @@ class supplier_catalogue(osv.osv):
                                              _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
                                              % (', '.join(invalid_prods),))
 
+                # Check the ranking
+                if 'ranking' in vals and not vals.get('ranking') and not catalogue.ranking_on_all_lines:
+                    raise osv.except_osv(_('Warning!'),
+                                         _('You can not remove the ranking on a confirmed catalogue if all lines do not have a ranking'))
+
         res = super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
 
         # Confirm the catalogue in case of partner change from instance partner to other partner
@@ -244,17 +274,20 @@ class supplier_catalogue(osv.osv):
 
         line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
 
-        catalogues = self.read(cr, uid, ids, ['state', 'active'], context=context)
+        catalogues = self.read(cr, uid, ids, ['state', 'active', 'ranking', 'ranking_on_all_lines'], context=context)
         if not all(x['state'] == 'draft' for x in catalogues):
             raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already confirmed. Please reload the page to update the status of this catalogue'))
 
-        # US-12606: Check if the products exist in another valid catalogue
         for catalogue in catalogues:
+            # US-12606: Check if the products exist in another valid catalogue
             if catalogue['active']:
                 invalid_prods = self.check_cat_prods_valid(cr, uid, catalogue['id'], [], None, None, context=context)
                 if invalid_prods:
                     raise osv.except_osv(_('Warning!'), _('This catalogue contains the product(s) %s which are duplicate(s) of another catalogue for the same supplier! Please remove the product(s) from this/other catalogue before confirming')
                                          % (', '.join(invalid_prods),))
+            if not catalogue['ranking'] and not catalogue['ranking_on_all_lines']:
+                raise osv.except_osv(_('Warning!'),
+                                     _('This Supplier Catalogue needs to have a ranking applied. Please select a ranking at header level or on every line'))
 
         # Update catalogues
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
@@ -439,16 +472,28 @@ class supplier_catalogue(osv.osv):
             res[_id] = level
         return res
 
+    def _get_ranking_on_all_lines(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if all lines have ranking
+        """
+        if context is None:
+            context = {}
+
+        res = {}
+        for cat in self.read(cr, uid, ids, ['line_ids'], context=context):
+            if not cat['line_ids'] or self.pool.get('supplier.catalogue.line').\
+                    search_exist(cr, uid, [('catalogue_id', '=', cat['id']), ('ranking', '=', False)], context=context):
+                res[cat['id']] = False
+            else:
+                res[cat['id']] = True
+        return res
+
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
-        'partner_id': fields.many2one('res.partner', string='Partner', required=True,
-                                      domain=[('supplier', '=', True)], select=1, join=True),
-        'period_from': fields.date(string='From',
-                                   help='Starting date of the catalogue.'),
-        'period_to': fields.date(string='To',
-                                 help='End date of the catalogue'),
-        'currency_id': fields.many2one('res.currency', string='Currency', required=True,
-                                       help='Currency used in this catalogue.'),
+        'partner_id': fields.many2one('res.partner', string='Partner', required=True, domain=[('supplier', '=', True)], select=1, join=True),
+        'period_from': fields.date(string='From', help='Starting date of the catalogue.'),
+        'period_to': fields.date(string='To', help='End date of the catalogue'),
+        'currency_id': fields.many2one('res.currency', string='Currency', required=True, help='Currency used in this catalogue.'),
         'comment': fields.text(string='Comment'),
         'line_ids': fields.one2many('supplier.catalogue.line', 'catalogue_id', string='Lines'),
         'supplierinfo_ids': fields.one2many('product.supplierinfo', 'catalogue_id', string='Supplier Info.'),
@@ -457,7 +502,7 @@ class supplier_catalogue(osv.osv):
                                    readonly=True, help='Indicate if the catalogue is currently active.'),
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""The file should be in XML Spreadsheet 2003 format. The columns should be in this order :
-                                        Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, SoQ Rounding, Min Order Qty, Comment."""),
+                                        Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, SoQ Rounding, Min Order Qty, Comment, Ranking."""),
         'data': fields.binary(string='File with errors',),
         'filename': fields.char(string='Lines not imported', size=256),
         'filename_template': fields.char(string='Template', size=256),
@@ -468,6 +513,10 @@ class supplier_catalogue(osv.osv):
         'state': fields.selection([('draft', 'Draft'), ('confirmed', 'Confirmed')], string='State', required=True, readonly=True),
         'from_sync': fields.function(_is_from_sync, type='boolean', string='Created by Sync', method=True),
         'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', method=True),
+        'ranking': fields.selection([(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'),
+                                     (5, '5th choice'), (6, '6th choice'), (7, '7th choice'), (8, '8th choice'),
+                                     (9, '9th choice'), (10, '10th choice'), (11, '11th choice'), (12, '12th choice')], string='Ranking'),
+        'ranking_on_all_lines': fields.function(_get_ranking_on_all_lines, string='All lines have ranking', type='boolean', method=True),
     }
 
     _defaults = {
@@ -540,7 +589,7 @@ class supplier_catalogue(osv.osv):
         """
         columns_header = [('Product code*', 'string'), ('Product description', 'string'), ('Product UoM*', 'string'),
                           ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('SoQ Rounding', 'number'), ('Min Order Qty', 'number'),
-                          ('Comment', 'string')]
+                          ('Comment', 'string'), ('Ranking', 'string')]
         lines_not_imported = [] # list of list
         t_dt = type(datetime.now())
         for line in kwargs.get('line_with_error'):
@@ -589,9 +638,13 @@ class supplier_catalogue(osv.osv):
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
             fileobj = SpreadsheetXML(xmlstring=base64.b64decode(obj.file_to_import))
-            rows,reader = fileobj.getRows(), fileobj.getRows() # because we got 2 iterations
+            rows,reader = fileobj.getRows(), fileobj.getRows()  # because we got 2 iterations
             # take all the lines of the file in a list of dict
             file_values = wiz_common_import.get_file_values(cr, uid, ids, rows, False, error_list, False, context)
+
+            ranks = {_('1st choice'): 1, _('2nd choice'): 2, _('3rd choice'): 3, _('4th choice'): 4, _('5th choice'): 5,
+                     _('6th choice'): 6, _('7th choice'): 7, _('8th choice'): 8, _('9th choice'): 9,
+                     _('10th choice'): 10, _('11th choice'): 11, _('12th choice'): 12}
 
             next(reader)
             line_num = 1
@@ -599,11 +652,11 @@ class supplier_catalogue(osv.osv):
                 error_list_line = []
                 to_correct_ok = False
                 row_len = len(row)
-                if row_len != 8:
-                    error_list_line.append(_("You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, SoQ Rounding, Min Order Qty, Comment."))
+                if row_len != 9:
+                    error_list_line.append(_("You should have exactly 9 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, SoQ Rounding, Min Order Qty, Comment, Ranking."))
                 comment = []
                 p_comment = False
-                #Product code
+                # Product code
                 try:
                     product_code = row.cells[0].data
                 except TypeError:
@@ -629,7 +682,7 @@ class supplier_catalogue(osv.osv):
                         to_correct_ok = True
                         error_list_line.append(_("The product '%s' was not found.") % product_code)
 
-                #Product UoM
+                # Product UoM
                 p_uom = len(row.cells)>=3 and row.cells[2].data
                 if not p_uom:
                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
@@ -649,7 +702,7 @@ class supplier_catalogue(osv.osv):
                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
                         error_list_line.append(_("The UoM '%s' was not found.") % p_uom)
                         to_correct_ok = True
-                #[utp-129]: check consistency of uom
+                # [utp-129]: check consistency of uom
                 # I made the check on uom_id according to the constraint _check_uom in unifield-addons/product/product.py (l.744) so that we keep the consistency even when we create a supplierinfo directly from the product
                 if default_code != obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]:
                     if not self.pool.get('uom.tools').check_uom(cr, uid, default_code, uom_id, context):
@@ -660,7 +713,7 @@ class supplier_catalogue(osv.osv):
                         error_list_line.append(_('The UoM "%s" was not consistent with the UoM\'s category ("%s") of the product "%s".'
                                                  ) % (browse_uom.name, browse_product.uom_id.category_id.name, browse_product.default_code))
 
-                #Product Min Qty
+                # Product Min Qty
                 if not len(row.cells)>=4 or not row.cells[3].data :
                     p_min_qty = 1.0
                 else:
@@ -669,7 +722,7 @@ class supplier_catalogue(osv.osv):
                     else:
                         error_list_line.append(_('Please, format the line number %s, column "Min Qty".') % (line_num,))
 
-                #Product Unit Price
+                # Product Unit Price
                 if not len(row.cells)>=5 or not row.cells[4].data :
                     p_unit_price = 1.0
                     to_correct_ok = True
@@ -680,7 +733,7 @@ class supplier_catalogue(osv.osv):
                     else:
                         error_list_line.append(_('Please, format the line number %s, column "Unit Price".') % (line_num,))
 
-                #Product Rounding
+                # Product Rounding
                 if not len(row.cells)>=6 or not row.cells[5].data:
                     p_rounding = False
                 else:
@@ -689,7 +742,7 @@ class supplier_catalogue(osv.osv):
                     else:
                         error_list_line.append(_('Please, format the line number %s, column "SoQ rounding".') % (line_num,))
 
-                #Product Min Order Qty
+                # Product Min Order Qty
                 if not len(row.cells)>=7 or not row.cells[6].data:
                     p_min_order_qty = 0
                 else:
@@ -698,11 +751,25 @@ class supplier_catalogue(osv.osv):
                     else:
                         error_list_line.append(_('Please, format the line number %s, column "Min Order Qty".') % (line_num,))
 
-                #Product Comment
+                # Product Comment
                 if len(row.cells)>=8 and row.cells[7].data:
                     comment.append(str(row.cells[7].data))
                 if comment:
                     p_comment = ', '.join(comment)
+
+                # Ranking
+                ranking = False
+                if len(row.cells) >= 9 and row.cells[8].data:
+                    if ranks.get(row.cells[8].data):
+                        ranking = ranks[row.cells[8].data]
+                    else:
+                        to_correct_ok = True
+                        error_list_line.append(_('The Ranking "%s" is not consistent with the available ranks of a catalogue.')
+                                               % (row.cells[8].data,))
+                if obj.catalogue_id.state == 'confirmed' and not obj.catalogue_id.ranking and \
+                        (len(row.cells) >= 9 and not row.cells[8].data or len(row.cells) <= 8):
+                    to_correct_ok = True
+                    error_list_line.append(_('The Ranking is mandatory on a confirmed catalogue line if there is none at header level.'))
 
                 if error_list_line:
                     error_list_line.insert(0, _('Line %s of the file was exported in the file of the lines not imported:') % (line_num,))
@@ -714,7 +781,7 @@ class supplier_catalogue(osv.osv):
                     continue
                 line_num += 1
 
-               # [utp-746] update prices of an already product in catalog
+                # [utp-746] update prices of an already product in catalog
                 criteria = [
                     ('catalogue_id', '=', obj.id),
                     ('product_id', '=', default_code),
@@ -740,6 +807,8 @@ class supplier_catalogue(osv.osv):
                             to_write['min_order_qty'] = p_min_order_qty
                         if cl_obj.comment != p_comment:
                             to_write['comment'] = p_comment
+                        if cl_obj.ranking != ranking:
+                            to_write['ranking'] = ranking
                         if to_write:
                             vals['line_ids'].append((1, catalog_line_id[0], to_write))
                 else:
@@ -752,6 +821,7 @@ class supplier_catalogue(osv.osv):
                         'rounding': p_rounding,
                         'min_order_qty': p_min_order_qty,
                         'comment': p_comment,
+                        'ranking': ranking,
                     }
                     vals['line_ids'].append((0, 0, to_write))
 
@@ -881,7 +951,35 @@ class supplier_catalogue(osv.osv):
         for x in cr.fetchall():
             products.append(x[0])
 
+        # US-13530: To reject the whole auto-import
+        if products and context.get('auto_import_ok') and not context.get('auto_import_catalogue_overlap'):
+            context['auto_import_catalogue_overlap'] = True
+
         return products
+
+    def update_ranking(self, cr, uid, ids, context=None):
+        '''
+        Display the wizard to apply the header ranking on lines
+        '''
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+
+        cat = self.read(cr, uid, ids[0], ['state', 'ranking'], context=context)
+        if not cat['ranking'] and cat['state'] != 'draft':
+            raise osv.except_osv(_('Error'), _("You can not empty the lines' ranking if the catalogue is not Draft"))
+        vals = {'catalogue_id': cat['id'], 'selected': context.get('button_selected_ids') and True or False, 'ranking': cat['ranking']}
+        wiz_id = self.pool.get('catalogue.update.lines.ranking.wizard').create(cr, uid, vals, context=context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'catalogue.update.lines.ranking.wizard',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
 
 
 supplier_catalogue()
@@ -922,7 +1020,7 @@ class supplier_catalogue_line(osv.osv):
         sup_id = sup_ids and sup_ids[0] or False
         if not sup_id:
             sup_id = supinfo_obj.create(cr, uid, {'name': catalogue.partner_id.id,
-                                                  'sequence': 0,
+                                                  'sequence': vals.get('sequence', 3),  # 3rd choice as default value
                                                   'delay': catalogue.partner_id.default_delay,
                                                   'product_id': tmpl_id,
                                                   'product_code': vals.get('product_code', False),
@@ -958,14 +1056,25 @@ class supplier_catalogue_line(osv.osv):
         '''
         Create a pricelist line on product supplier information tab
         '''
+        if context is None:
+            context = {}
         cat_obj = self.pool.get('supplier.catalogue')
         catalogue = False
         if vals.get('catalogue_id'):
-            ftf = ['state', 'active', 'from_sync', 'partner_id']
-            catalogue = cat_obj.browse(cr, uid, vals['catalogue_id'], fields_to_fetch=ftf, context=context)
-            if catalogue.from_sync and not context.get('sync_update_execution'):
-                raise osv.except_osv(_('Error'), _('You can not add a line to a catalogue created from sync'))
-            if catalogue.state != 'draft':
+            catalogue = cat_obj.read(cr, uid, vals['catalogue_id'], ['state', 'active', 'from_sync', 'ranking', 'partner_id'], context=context)
+
+        if context.get('sync_update_execution'):
+            vals['ranking'] = 3
+
+        if catalogue:
+            if not context.get('sync_update_execution'):
+                if catalogue['from_sync']:
+                    raise osv.except_osv(_('Error'), _('You can not add a line to a catalogue created from sync'))
+                if not vals.get('ranking') and catalogue['ranking']:
+                    vals['ranking'] = catalogue['ranking']
+            if catalogue['state'] != 'draft':
+                if not vals.get('ranking') and not catalogue['ranking']:
+                    raise osv.except_osv(_('Error'), _('The Ranking is mandatory on a confirmed catalogue line if there is none at header level'))
                 vals = self._create_supplier_info(cr, uid, vals, context=context)
             if catalogue.partner_id:
                 vals['partner_type'] = catalogue.partner_id.partner_type
@@ -1003,11 +1112,17 @@ class supplier_catalogue_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             if line.catalogue_id.from_sync and not context.get('sync_update_execution'):
-                raise osv.except_osv(_('Error'), _('You can not modify lines from a catalogue created from sync'))
+                for val in vals:
+                    if val != 'ranking':
+                        raise osv.except_osv(_('Error'), _('You can not modify lines from a catalogue created from sync'))
             new_vals = vals.copy()
             cat_state = cat_obj.read(cr, uid, new_vals.get('catalogue_id', line.catalogue_id.id), ['state'], context=context)['state']
             if 'product_id' in new_vals and 'line_uom_id' in new_vals and new_vals['product_id'] != prod_id and new_vals['line_uom_id'] != uom_id:
                 new_vals['to_correct_ok'] = False
+            # Check the ranking
+            if cat_state != 'draft' and 'ranking' in vals and not vals.get('ranking') and not line.catalogue_id.ranking:
+                raise osv.except_osv(_('Warning!'),
+                                     _('You can not remove the ranking on a line of a confirmed catalogue if there is no ranking at header level'))
             # If product is changed
             if cat_state != 'draft' and new_vals.get('product_id', line.product_id.id) != line.product_id.id:
                 c = context.copy()
@@ -1031,6 +1146,7 @@ class supplier_catalogue_line(osv.osv):
                                  'rounding': new_vals.get('rounding', line.rounding),
                                  'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),
                                  'comment': new_vals.get('comment', line.comment),
+                                 'sequence': new_vals.get('ranking', line.ranking) or line.catalogue_id.ranking,
                                  })
                 new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
             elif cat_state != 'draft' and line.partner_info_id:
@@ -1038,13 +1154,21 @@ class supplier_catalogue_line(osv.osv):
                               'price': new_vals.get('unit_price', line.unit_price),
                               'uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
                               'rounding': new_vals.get('rounding', line.rounding),
-                              'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty)
+                              'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),
                               }
+                supinfo_data = {}
+                if new_vals.get('ranking') and line.supplier_info_id.sequence != new_vals['ranking']:
+                    supinfo_data['sequence'] = new_vals['ranking']
+                elif not new_vals.get('ranking') and not line.ranking and line.catalogue_id.ranking \
+                        and line.supplier_info_id.sequence != line.catalogue_id.ranking:
+                    supinfo_data['sequence'] = line.catalogue_id.ranking
                 # Update the pricelist line on product supplier information tab
-                if 'product_code' in new_vals and line.partner_info_id.suppinfo_id.product_code != new_vals['product_code']:
-                    self.pool.get('product.supplierinfo').write(cr, uid, [line.partner_info_id.suppinfo_id.id], {'product_code': new_vals['product_code']})
-                self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id],
-                                                             pinfo_data, context=context)
+                if 'product_code' in new_vals and line.supplier_info_id.product_code != new_vals['product_code']:
+                    supinfo_data['product_code'] = new_vals['product_code']
+                if supinfo_data:
+                    self.pool.get('product.supplierinfo').write(cr, uid, [line.supplier_info_id.id], supinfo_data)
+
+                self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id], pinfo_data, context=context)
             elif cat_state != 'draft':
                 new_vals.update({'catalogue_id': new_vals.get('catalogue_id', line.catalogue_id.id),
                                  'product_id': new_vals.get('product_id', line.product_id.id),
@@ -1053,7 +1177,8 @@ class supplier_catalogue_line(osv.osv):
                                  'line_uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
                                  'unit_price': new_vals.get('unit_price', line.unit_price),
                                  'rounding': new_vals.get('rounding', line.rounding),
-                                 'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),})
+                                 'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty),
+                                 'sequence': new_vals.get('ranking', line.ranking) or line.catalogue_id.ranking,})
                 new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
             elif cat_state == 'draft':
                 #utp1033
@@ -1129,6 +1254,17 @@ class supplier_catalogue_line(osv.osv):
 
         return True
 
+    def _get_required_ranking(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Check if the ranking is required, depending on the catalogue state and ranking
+        '''
+        res = {}
+        for cat_line in self.browse(cr, uid, ids, fields_to_fetch=['catalogue_id'], context=context):
+            cat = cat_line.catalogue_id
+            res[cat_line.id] = cat.state == 'confirmed' and not cat.ranking and True or False
+
+        return res
+
     _columns = {
         'line_number': fields.integer(string='Line'),
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
@@ -1149,6 +1285,10 @@ class supplier_catalogue_line(osv.osv):
         'to_correct_ok': fields.boolean('To correct'),
         'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
         'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
+        'ranking': fields.selection([(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'),
+                                     (5, '5th choice'), (6, '6th choice'), (7, '7th choice'), (8, '8th choice'),
+                                     (9, '9th choice'), (10, '10th choice'), (11, '11th choice'), (12, '12th choice')], string='Ranking'),
+        'required_ranking': fields.function(_get_required_ranking, method=True, type='boolean', string='Is Ranking required'),
     }
 
     _defaults = {

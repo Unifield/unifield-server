@@ -1145,29 +1145,32 @@ class product_supplierinfo(osv.osv):
         return res
 
     _columns = {
-        'name' : fields.many2one('res.partner', 'Supplier', required=True,domain = [('supplier','=',True)], ondelete='cascade', help="Supplier of this product", select=True),
+        'name': fields.many2one('res.partner', 'Supplier', required=True, domain=[('supplier', '=', True)], ondelete='cascade', help="Supplier of this product", select=True),
         'product_name': fields.char('Supplier Product Name', size=128, help="This supplier's product name will be used when printing a request for quotation. Keep empty to use the internal one."),
         'product_code': fields.char('Supplier Product Code', size=64, help="This supplier's product code will be used when printing a request for quotation. Keep empty to use the internal one."),
-        'sequence' : fields.integer('Sequence', help="Assigns the priority to the list of product supplier."),
+        'sequence': fields.selection([(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'),
+                                      (5, '5th choice'), (6, '6th choice'), (7, '7th choice'), (8, '8th choice'),
+                                      (9, '9th choice'), (10, '10th choice'), (11, '11th choice'), (12, '12th choice'),
+                                      (13, '-99'), (14, '0'), (15, '1'), (16, '2'), (17, '3'), (18, '4')], 'Ranking',
+                                     help="Assigns the priority to the list of product supplier."),
         'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom', help="Choose here the Unit of Measure in which the prices and quantities are expressed below.", write_relate=False),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise.", related_uom='product_uom'),
         'qty': fields.function(_calc_qty, method=True, store=True, type='float', string='Quantity', multi="qty", help="This is a quantity which is converted into Default Uom.", related_uom='product_uom'),
-        'product_id' : fields.many2one('product.template', 'Product', required=True, ondelete='cascade', select=True),
+        'product_id': fields.many2one('product.template', 'Product', required=True, ondelete='cascade', select=True),
         'delay': fields.function(_get_seller_delay, method=True, type='integer', string='Indicative Delivery LT', help='Lead time in days between the confirmation of the purchase order and the reception of the products in your warehouse. Used by the scheduler for automatic computation of the purchase order planning.'),
         'pricelist_ids': fields.one2many('pricelist.partnerinfo', 'suppinfo_id', 'Supplier Pricelist'),
-        'company_id':fields.many2one('res.company','Company',select=1),
+        'company_id': fields.many2one('res.company', 'Company', select=1),
     }
     _defaults = {
         'qty': lambda *a: 0.0,
-        'sequence': lambda *a: 1,
+        'sequence': lambda *a: 3,
         'delay': lambda *a: 1,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'product.supplierinfo', context=c),
         'product_uom': _get_uom_id,
     }
+
     def _check_uom(self, cr, uid, ids, context=None):
-        for supplier_info in self.browse(cr, uid, ids, context=context,
-                                         fields_to_fetch=['product_uom',
-                                                          'product_id']):
+        for supplier_info in self.browse(cr, uid, ids, context=context, fields_to_fetch=['product_uom', 'product_id']):
             if supplier_info.product_uom and supplier_info.product_uom.category_id.id != supplier_info.product_id.uom_id.category_id.id:
                 return False
         return True
@@ -1176,6 +1179,24 @@ class product_supplierinfo(osv.osv):
         (_check_uom, 'Error: The default UOM and the Supplier Product UOM must be in the same category.', ['product_uom']),
     ]
     _order = 'sequence'
+
+    def onchange_sequence(self, cr, uid, ids, sequence=False, context=None):
+        """
+        Prevent old values to be selected
+        """
+        res = {}
+        if not sequence:
+            return res
+        if sequence in range(13, 19):
+            current_sequence = ids and self.read(cr, uid, ids[0], ['sequence'], context=context)['sequence'] or False
+            return {
+                'value': {'sequence': current_sequence},
+                'warning': {'title': _('Error'), 'message': _('You can not select this Rank manually')}
+            }
+
+        return res
+
+
 product_supplierinfo()
 
 
