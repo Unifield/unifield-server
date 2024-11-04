@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="action_ir_product_list_export_wizard_form_view" model="ir.ui.view">
+            <field name="name">ir.product.list.export.wizard.form.view</field>
+            <field name="model">ir.product.list.export.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">15</field>
+            <field name="arch" type="xml">
+                <form string="IR export - product list">
+                    <html colspan="4">
+                        <h4>
+                        <translate>Please note that selecting an Internal Request will have no effect on the generated template, the IR will be <span style="font-weight: bold; color: red;">ignored</span></translate>
+                        </h4>
+                    </html>
+                    <field colspan="2" name="product_list_id"/>
+                    <button colspan="2" name="create_report" string="Export Template" type="object"/>
+                </form>
+            </field>
+        </record>
+
+        <act_window
+            id="action_ir_product_list_export_wizard"
+            name="Export Product List IR Excel"
+            view_ids="procurement_request.procurement_request_tree_view"
+            res_model="ir.product.list.export.wizard"
+            src_model="sale.order"
+            view_mode='form'
+            view_type='form'
+            key2="client_print_multi"
+            target='new'
+        />
+
+        <report
+            id="report_ir_product_list_export"
+            string="Export Product List IR Excel"
+            model="ir.product.list.export"
+            name="report_ir_product_list_export"
+            target_filename="${_('Product List IR Excel Template')}"
+            report_type="openpyxl"
+            auto="False"
+            menu="False"
+         />
+
+        <record id="ir_product_list_import_wizard_form_view" model="ir.ui.view">
+            <field name="name">ir.product.list.import.wizard.form.view</field>
+            <field name="model">ir.product.list.import.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="IR import - product list">
+                    <separator colspan="4" string="Internal Request Information" />
+                    <field name="sale_id" />
+                    <group colspan="4" name="file" string="Import data">
+                        <group colspan="4">
+                            <field name="file_to_import" filename="filename" colspan="1" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="filename" invisible="1" />
+                        </group>
+                        <field name="state" />
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('state', 'not in', ['in_progress', 'error', 'done'])]}">
+                        <separator colspan="12" string="Import Information" />
+                        <field name="message" colspan="4" nolabel="1" widget="full_text"/>
+                    </group>
+                    <group name="buttons" colspan="4" col="6">
+                        <button name="go_to_ir" string="Close import" icon="gtk-cancel" type="object" states="draft,error,done" />
+                        <button name="update" string="Update" icon="gtk-execute" type="object" states="in_progress"/>
+                        <button name="import_ir" string="Import file" icon="gtk-go-forward" type="object" states="draft" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="menu_ir_product_list_import_wizard" model="ir.actions.server">
+            <field name="name">Import Product List IR Excel</field>
+            <field name="model_id" ref="model_sale_order"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.ir_product_list_import_call_wizard(context=context)</field>
+            <field name="sequence" eval="2"/>
+        </record>
+
+        <record id="action_ir_product_list_import_wizard" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">sale.order</field>
+            <field name="name">Import Product List IR Excel</field>
+            <field name="view_ids" ref="procurement_request.procurement_request_form_view" />
+            <field name="sequence" eval="2"/>
+            <field eval="'ir.actions.server,%d'%menu_ir_product_list_import_wizard" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+    </data>
+</openerp>

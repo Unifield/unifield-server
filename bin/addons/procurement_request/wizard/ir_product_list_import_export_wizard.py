@@ -1,0 +1,256 @@
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
+
+from osv import osv
+from osv import fields
+from tools.translate import _
+from openpyxl import load_workbook
+from io import BytesIO
+import threading
+import pooler
+import base64
+import time
+import datetime
+
+
+class ir_product_list_export_wizard(osv.osv_memory):
+    _name = 'ir.product.list.export.wizard'
+
+    _columns = {
+        'product_list_id': fields.many2one('product.list', string='Product List'),
+    }
+
+    def create_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        return {'type': 'ir.actions.report.xml', 'report_name': 'report_ir_product_list_export', 'datas': {'target_filename': _('Product List IR Excel Template')}, 'context': context}
+
+
+ir_product_list_export_wizard()
+
+
+class ir_product_list_import_wizard(osv.osv_memory):
+    _name = 'ir.product.list.import.wizard'
+    _rec_name = 'sale_id'
+
+    _columns = {
+        'sale_id': fields.many2one('sale.order', string='Internal Request', required=True, readonly=True),
+        'state': fields.selection([('draft', 'Draft'), ('in_progress', 'Import in progress'), ('error', 'Error'), ('done', 'Done')], string='State', readonly=True),
+        'file_to_import': fields.binary(string='File to import', filters='*.xls*'),
+        'filename': fields.char(size=64, string='Filename'),
+        'message': fields.text(string='Message', readonly=True, translate=True),
+    }
+
+    _defaults = {
+        'state': 'draft'
+    }
+
+    def go_to_ir(self, cr, uid, ids, context=None):
+        '''
+        Return to the initial view.
+        '''
+        if isinstance(ids, int):
+            ids = [ids]
+        act_obj = self.pool.get('ir.actions.act_window')
+        for wiz in self.browse(cr, uid, ids, context=context):
+            res = act_obj.open_view_from_xmlid(cr, uid, 'procurement_request.action_procurement_request', ['form', 'tree'], context=context)
+            res['res_id'] = wiz.sale_id.id
+            return res
+
+        return act_obj.open_view_from_xmlid(cr, uid, 'procurement_request.action_procurement_request', ['tree', 'form'], context=context)
+
+    def update(self, cr, uid, ids, context=None):
+        """
+        This button is only for updating the view.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        for wiz in self.browse(cr, uid, ids, fields_to_fetch=['sale_id', 'state'], context=context):
+            if wiz.state not in ('done', 'error'):
+                self.write(cr, uid, ids, {'message':
+                                          _(' Import in progress... \n Please wait that the import is finished before editing %s.')
+                                          % (wiz.sale_id and wiz.sale_id.name or _('the IR'),)})
+        return False
+
+    def import_ir(self, cr, uid, ids, context=None):
+        '''
+        Launch the thread for the import file
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        if not wiz.file_to_import:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+
+        thread = threading.Thread(target=self._import_ir, args=(cr.dbname, uid, ids, context))
+        thread.start()
+        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
+Otherwise, you can continue to use Unifield.""")
+
+        return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
+
+    def _import_ir(self, dbname, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+
+        cr = pooler.get_db(dbname).cursor()
+
+        start_time = time.time()
+        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['sale_id', 'file_to_import'], context=context)
+        sale = wiz.sale_id
+
+        wb = load_workbook(filename=BytesIO(base64.b64decode(wiz.file_to_import)), read_only=True)
+        sheet = wb.active
+
+        lines = []
+        lines_err = []
+        lines_warn = []
+        message = ''
+        def_line = {'order_id': sale.id}
+        for cell in sheet.iter_rows(min_row=10, min_col=1, max_col=8):
+            if not cell[0].value:  # Stop looking at lines if there is no product
+                break
+            line = def_line.copy()
+            line_err = ''
+            line_warn = ''
+            line_num = cell[0].row
+
+            # Product Code
+            prod_name = cell[0].value
+            prod_ids = prod_obj.search(cr, uid, [('default_code', '=ilike', prod_name)], context=context)
+            if not prod_ids:
+                lines.append([{}, _('Line %s: There is no active product %s. ') % (line_num, prod_name), ''])
+                continue
+
+            # Check constraints on products
+            p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_ids[0]],  vals={'constraints': ['consumption']}, context=context)
+            if p_error:
+                lines.append([{}, _('Line %s: %s. ') % (line_num, p_msg), ''])
+                continue
+
+            ftf = ['name', 'standard_price', 'uom_id', 'procure_method', 'category_id']
+            prod = prod_obj.browse(cr, uid, prod_ids[0], fields_to_fetch=ftf, context=context)
+            line.update({'product_id': prod.id, 'name': prod.name})
+
+            # Quantity
+            qty = cell[2].value
+            if qty:
+                if cell[2].data_type == 'n':
+                    line.update({'product_uom_qty': qty, 'product_uos_qty': qty})
+                else:
+                    try:
+                        qty = float(qty.rstrip().replace(',', '.'))
+                        line.update({'product_uom_qty': qty, 'product_uos_qty': qty})
+                    except ValueError:
+                        line_err += _('The Quantity must be a number. ')
+            else:
+                line_err += _('The Quantity is mandatory for each line. ')
+
+            # Cost Price
+            price = cell[3].value
+            if qty:
+                if cell[3].data_type == 'n':
+                    line.update({'price_unit': price})
+                else:
+                    try:
+                        price = float(price.rstrip().replace(',', '.'))
+                        line.update({'price_unit': price})
+                    except ValueError:
+                        line_err += _('The Cost Price must be a number. ')
+            else:
+                line.update({'price_unit': prod.standard_price})
+
+            # UoM
+            uom_name = cell[4].value
+            if uom_name:
+                uom_ids = uom_obj.search(cr, uid, [('name', '=ilike', uom_name)], context=context)
+                if uom_ids:
+                    if prod.uom_id.category_id.id != uom_obj.read(cr, uid, uom_ids[0], ['category_id'], context=context)['category_id'][0]:
+                        line_err += _('The UoM %s is not compatible with the product UoM. ') % (cell[4].value, )
+                    else:
+                        line.update({'uom_id': uom_ids[0]})
+                else:
+                    line_err += _('The UoM %s was not found. ') % (cell[4].value, )
+            else:
+                line.update({'uom_id': prod.uom_id.id})
+
+            # Currency - Ignore
+
+            # Comment
+            if cell[6].value:
+                line.update({'comment': cell[6].value})
+
+            # Date of Stock Take
+            ds_date = cell[7].value
+            if ds_date:
+                if isinstance(ds_date, datetime.datetime):
+                    ds_date = ds_date.strftime('%Y-%m-%d')
+                    line.update({'stock_take_date': ds_date})
+                else:
+                    for format in ['%d-%m-%Y', '%d.%m.%Y']:
+                        try:
+                            ds_date = datetime.datetime.strptime(ds_date, format)
+                            line.update({'stock_take_date': ds_date.strftime('%Y-%m-%d')})
+                            break
+                        except:
+                            continue
+                    if not line.get('stock_take_date'):
+                        line_warn += _('%s the Date of Stock Take %s is not correct. ') % (prod_name, ds_date)
+                if line.get('stock_take_date') and line['stock_take_date'] > sale.date_order:
+                    line_err += _('The Date of Stock Take is not consistent! It should not be later than %s\'s creation date. ') % (sale.name,)
+
+            if line_err:
+                line_err = _('Line %s: ') % (line_num, ) + line_err
+            if line_warn:
+                line_warn = _('Line %s: ') % (line_num, ) + line_warn
+            lines.append([line, line_err, line_warn])
+
+        wiz_state = 'done'
+        imp_lines = 0
+        for line, line_err, line_warn in lines:
+            if not line_err:
+                self.pool.get('sale.order.line').create(cr, uid, line, context=context)
+                imp_lines += 1
+            elif line_err:
+                lines_err.append(line_err)
+            if line_warn:
+                lines_warn.append(line_warn)
+        if lines_err:
+            message = '%s:\n%s' % (_('Errors'), "\n".join(lines_err))
+            wiz_state = 'error'
+
+        end_time = time.time()
+        total_time = str(round(end_time - start_time)) + _(' second(s)')
+        final_message = _(''' 
+Importation completed in %s!
+# of imported lines : %s on %s lines
+# of ignored lines: %s
+# of errors to correct: %s
+
+%s''') % (total_time, imp_lines, len(lines), len(lines) - imp_lines, len(lines_err), message)
+        if lines_warn:
+            final_message += "\n%s:\n%s" % (_('Warning'), "\n".join(lines_warn))
+
+        self.write(cr, uid, wiz.id, {'state': wiz_state, 'message': final_message}, context=context)
+
+        wb.close()  # Close manually because of readonly
+        cr.commit()
+        cr.close(True)
+
+        return True
+
+
+ir_product_list_import_wizard()
