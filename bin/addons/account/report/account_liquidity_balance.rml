@@ -139,13 +139,13 @@
           <parawrap style="P3Left">[[ line['period'] or '' ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ formatLang(line['opening'] or '0.0') ]]</parawrap>
+          <parawrap style="P3Right">[[ formatLang(line['opening']) or '0.0' ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ formatLang(line['calculated'] or '0.0') ]]</parawrap>
+          <parawrap style="P3Right">[[ formatLang(line['calculated']) or '0.0' ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3Right">[[ formatLang(line['closing'] or '0.0')]]</parawrap>
+          <parawrap style="P3Right">[[ formatLang(line['closing']) or '0.0']]</parawrap>
         </td>
         <td>
           <parawrap style="P3Right">[[ line['currency'] or '' ]]</parawrap>
