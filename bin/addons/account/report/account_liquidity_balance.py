@@ -286,7 +286,10 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         return sorted_res
 
     def _get_subtotals(self):
-        return self.sub_totals
+        # Default dict with 7 key-value pairs to fix the error when a register is empty
+        # With 7 being the number of cells in the subtotals part of the pdf liquidity balance report
+        default_subtotals = {'':{} for key in range(7)}
+        return self.sub_totals or default_subtotals
 
     def _get_general_total(self):
         return self.general_total
