@@ -1135,7 +1135,9 @@
             <field name="method">us_11803_12201_12333_lines_state_to_subpick</field>
         </record>
 
-
+        <record id="us_11182_12727_pi_signature" model="patch.scripts">
+            <field name="method">us_11182_12727_pi_signature</field>
+        </record>
 
     </data>
 </openerp>

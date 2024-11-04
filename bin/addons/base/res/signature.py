@@ -72,6 +72,11 @@ list_sign = {
         ('tr', _('Picked by'), True, 1),
         ('fr', _('Validated by'), True, 1),
     ],
+    'physical.inventory': [
+        ('wr', _('Warehouse Responsible'), True, 1),
+        ('sr', _('Supply Responsible'), True, 1),
+        ('so', _('Stock Owner'), True, 1),
+    ],
 }
 
 saved_name = {
@@ -80,6 +85,7 @@ saved_name = {
     'account.bank.statement': lambda doc: '%s %s' %(doc.journal_id.code, doc.period_id.name),
     'account.invoice': lambda doc: doc.name or doc.number,
     'stock.picking': lambda doc: doc.name,
+    'physical.inventory': lambda doc: doc.ref,
 }
 saved_value = {
     'purchase.order': lambda doc: round(doc.amount_total, 2),
@@ -87,6 +93,7 @@ saved_value = {
     'account.bank.statement': lambda doc: doc.journal_id.type in ('bank', 'cheque') and round(doc.balance_end, 2) or doc.journal_id.type == 'cash' and round(doc.msf_calculated_balance, 2) or 0,
     'account.invoice': lambda doc: round(doc.amount_total, 2),
     'stock.picking': lambda doc: False,
+    'physical.inventory': lambda doc: doc.discrepancy_lines_value,
 }
 
 saved_unit = {
@@ -95,6 +102,7 @@ saved_unit = {
     'account.bank.statement': lambda doc: doc.currency.name,
     'account.invoice': lambda doc: doc.currency_id.name,
     'stock.picking': lambda doc: doc.type == 'out' and doc.subtype == 'picking' and doc.total_qty_process_str or doc.total_qty_str,
+    'physical.inventory': lambda doc: doc.functional_currency_id.name,
 }
 
 saved_state = {
@@ -103,6 +111,7 @@ saved_state = {
     'account.bank.statement': lambda doc: doc.state,
     'account.invoice': lambda doc: doc.state,
     'stock.picking': lambda doc: doc.state,
+    'physical.inventory': lambda doc: doc.state,
 }
 
 
@@ -1135,6 +1144,8 @@ class signature_setup(osv.osv_memory):
                         elif obj.split('.')[-1] == 'out':
                             obj_type = 'out'
                         cond = "stock_picking o where o.signature_id is not null and o.type='%s' and o.subtype='%s'" % (obj_type, obj_subtype)
+                    elif obj == 'physical.inventory':
+                        cond = "physical_inventory o where o.signature_id is not null"
 
                     for role in list_sign[obj]:
                         cr.execute("""

@@ -59,6 +59,29 @@ class patch_scripts(osv.osv):
     }
 
     # UF35.0
+    def us_11182_12727_pi_signature(self, cr, uid, *a, **b):
+        '''
+        Add signatures to PIs
+        '''
+        if _get_instance_level(self, cr, uid) == 'hq':
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')])
+            if group_ids:
+                bar_ids = bar_obj.search(cr, uid, [('name', 'in', ['open_sign_wizard', 'action_unsign']),
+                                                   ('model_id', '=', 'physical.inventory')])
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_ids[0]])]})
+
+        cr.execute('SELECT id FROM physical_inventory WHERE signature_id IS NULL')  # not_a_user_entry
+        for x in cr.fetchall():
+            cr.execute("""
+                INSERT INTO signature (signature_res_model, signature_res_id, signed_off_line, signature_is_closed) 
+                VALUES ('physical.inventory', %s, 'f', 'f') returning id
+            """, (x[0],))
+            a = cr.fetchone()
+            cr.execute("UPDATE physical_inventory SET signature_id=%s WHERE id=%s", (a[0], x[0]))  # not_a_user_entry
+
+        return True
+
     def us_13291_oca_delete_default_ad_destination(self, cr, uid, *a, **b):
         '''
         Remove the default destination put on AD

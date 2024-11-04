@@ -132,6 +132,7 @@ class PhysicalInventory(osv.osv):
         'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
         'date_done': fields.datetime('Date done', readonly=True),
         'date_confirmed': fields.datetime('Date confirmed', readonly=True),
+        'functional_currency_id': fields.many2one('res.currency', 'Functional Currency', readonly=True),
         # 'inventory_id' and 'product_id' seem to be inverted in product_ids
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
                                         'product_id', 'inventory_id', string="Product selection", domain=[('type', 'not in', ['service_recep', 'consu'])], order_by="default_code"),
@@ -182,6 +183,7 @@ class PhysicalInventory(osv.osv):
         'max_filter_months': -1,
         'multiple_filter_months': False,
         'products_added': False,
+        'functional_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
 
     def create(self, cr, uid, values, context):

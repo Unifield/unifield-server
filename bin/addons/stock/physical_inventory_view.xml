@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE SIGNATURE_TEMPLATE [
+    <!ENTITY signature_template SYSTEM "../base/res/signature_pager_template.xml">
+]>
+
 <openerp>
     <data>
         <!-- Formulary -->
@@ -32,7 +36,7 @@
                     <field name="multiple_filter_months" invisible="1"/>
                     <field name="products_added" invisible="1" readonly="1"/>
                     <notebook colspan="4">
-                        <page string="Products" attrs="{'readonly': [('state', 'not in', ['draft'])]}">
+                        <page string="Products">
                             <group colspan="4" attrs="{'invisible': [('type', '=', False)]}">
                                 <button name="action_select_products" states="draft" string="Products Selection" type="object"
                                         icon="gtk-add" attrs="{'invisible': [('type', '=', 'correction')]}"/>
@@ -53,7 +57,7 @@
                                 </field>
                             </group>
                         </page>
-                        <page string="Counting sheet" attrs="{'invisible': [('state', 'in', ['draft'])], 'readonly': ['|', ('state', 'not in', ['counting', 'counted']), ('discrepancies_generated', '=', True)]}">
+                        <page string="Counting sheet" attrs="{'invisible': [('state', 'in', ['draft'])]}">
                             <group col="4" colspan="4"
                                 attrs="{'invisible': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
                                 <button name="export_pdf_counting_sheet" string="Export pdf counting sheet"
@@ -96,7 +100,7 @@
                                 </form>
                             </field>
                         </page>
-                        <page string="Discrepancy report" attrs="{'invisible': [('discrepancies_generated', '=', False)], 'readonly': [('state', 'not in', ['counted', 'validated'])]}">
+                        <page string="Discrepancy report" attrs="{'invisible': [('discrepancies_generated', '=', False)]}">
                             <group col="4" colspan="4">
                                 <group col="4" colspan="4">
                                     <label string="" />
@@ -202,6 +206,7 @@
                                 </tree>
                             </field>
                         </page>
+                        &signature_template;
                     </notebook>
                     <group col="2" colspan="2">
                         <field name="state"/>
