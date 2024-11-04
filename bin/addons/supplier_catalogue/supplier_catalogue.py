@@ -25,7 +25,7 @@ from osv import fields
 from tools.translate import _
 from tools.misc import _get_std_mml_status
 from datetime import date, datetime
-
+from msf_partner import PARTNER_TYPE
 
 import decimal_precision as dp
 
@@ -45,6 +45,7 @@ class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
     _description = 'Supplier catalogue'
     _order = 'period_from, period_to'
+    _trace = True
 
     def copy(self, cr, uid, catalogue_id, default=None, context=None):
         '''
@@ -441,7 +442,7 @@ class supplier_catalogue(osv.osv):
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'partner_id': fields.many2one('res.partner', string='Partner', required=True,
-                                      domain=[('supplier', '=', True)], select=1),
+                                      domain=[('supplier', '=', True)], select=1, join=True),
         'period_from': fields.date(string='From',
                                    help='Starting date of the catalogue.'),
         'period_to': fields.date(string='To',
@@ -894,6 +895,7 @@ class supplier_catalogue_line(osv.osv):
     # Inherits of product.product to an easier search of lines with product attributes
     _inherits = {'product.product': 'product_id'}
     _order = 'product_id, line_uom_id, min_qty'
+    _trace = True
 
     def _create_supplier_info(self, cr, uid, vals, context=None):
         '''
@@ -959,18 +961,19 @@ class supplier_catalogue_line(osv.osv):
         cat_obj = self.pool.get('supplier.catalogue')
         catalogue = False
         if vals.get('catalogue_id'):
-            catalogue = cat_obj.read(cr, uid, vals['catalogue_id'], ['state', 'active', 'from_sync'], context=context)
-
-        if catalogue:
-            if catalogue['from_sync'] and not context.get('sync_update_execution'):
+            ftf = ['state', 'active', 'from_sync', 'partner_id']
+            catalogue = cat_obj.browse(cr, uid, vals['catalogue_id'], fields_to_fetch=ftf, context=context)
+            if catalogue.from_sync and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Error'), _('You can not add a line to a catalogue created from sync'))
-            if catalogue['state'] != 'draft':
+            if catalogue.state != 'draft':
                 vals = self._create_supplier_info(cr, uid, vals, context=context)
+            if catalogue.partner_id:
+                vals['partner_type'] = catalogue.partner_id.partner_type
 
         ids = super(supplier_catalogue_line, self).create(cr, uid, vals, context=context)
 
         # US-12606: Check if the product exists in another valid catalogue
-        if vals.get('product_id') and catalogue and catalogue['state'] == 'confirmed' and catalogue['active']:
+        if vals.get('product_id') and catalogue and catalogue.state == 'confirmed' and catalogue.active:
             invalid_prod = cat_obj.check_cat_prods_valid(cr, uid, vals['catalogue_id'], [vals['product_id']], None,
                                                          None, context=context)
             if invalid_prod:
@@ -1142,6 +1145,7 @@ class supplier_catalogue_line(osv.osv):
         'comment': fields.char(size=64, string='Comment'),
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
+        'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
         'to_correct_ok': fields.boolean('To correct'),
         'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
         'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),

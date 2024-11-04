@@ -1135,6 +1135,10 @@
             <field name="method">us_11803_12201_12333_lines_state_to_subpick</field>
         </record>
 
+        <record id="us_12912_catalogue_lines_partner_id" model="patch.scripts">
+            <field name="method">us_12912_catalogue_lines_partner_id</field>
+        </record>
+
 
 
     </data>

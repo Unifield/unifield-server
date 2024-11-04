@@ -27,7 +27,7 @@
     Add management of supplier catalogue
     """,
     "website": "http://unifield.msf.org",
-    "depends" : ["product", "purchase", 
+    "depends" : ["product", "purchase",
                  "product_nomenclature",
                  "partner_modification",
                  "msf_partner",],
@@ -41,6 +41,7 @@
         "supplier_catalogue_data.xml",
         "wizard/catalogue_import_lines_view.xml",
         "wizard/catalogue_export_lines_view.xml",
+        "wizard/catalogue_export_track_changes_view.xml",
         "supplier_catalogue_report.xml",
         "security/ir.model.access.csv",
     ],
