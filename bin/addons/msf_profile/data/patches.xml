@@ -1129,6 +1129,10 @@
         <record id="us_13192_get_ud_not_golden" model="patch.scripts">
             <field name="method">us_13192_get_ud_not_golden</field>
         </record>
+	
+	<record id="us_13192_product_categ_property" model="patch.scripts">
+            <field name="method">us_13192_product_categ_property</field>
+        </record>
 
     </data>
 </openerp>

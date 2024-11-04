@@ -992,7 +992,6 @@ class ud_sync():
                         if 'Archived' in x.get('status', {}).get('label', ''):
                             continue
                         raise UDException('Parent nomenclature %s not found in UF' % (parent_msfid,))
-
                     current_ids = nom_obj.search(self.cr, self.uid, [('msfid', '=', current_msfid), ('level', '=', level)])
                     current_id = False
                     if current_ids:
@@ -1028,33 +1027,35 @@ class ud_sync():
                     if level == 2:
                         if x.get('accountCode') not in account_cache:
                             account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', x.get('accountCode'))])
-                            if not account_ids:
-                                raise UDException('%s account code %s not found' % (current_msfid, x.get('accountCode')))
-                            categ_ids = categ_obj.search(self.cr, self.uid, [('family_id', '=', current_id)])
-                            categ_data = {
-                                'name': x['labels']['english'],
-                                'msfid': current_msfid,
-                                'family_id': current_id,
-                                'property_account_income_categ': account_ids[0],
-                                'property_account_expense_categ': account_ids[0],
-                            }
-                            if not categ_ids:
-                                self.log('Category %s created' % (current_msfid, ))
-                                categ_id = categ_obj.create(self.cr, self.uid, categ_data, context={'lang': 'en_MF'})
-                            else:
-                                categ_id = categ_ids[0]
-
-                                if not categ_obj.search_exists(self.cr, self.uid, [
-                                    ('id', '=', categ_ids[0]),
-                                    ('name', '=ilike', x['labels']['english']),
-                                    ('msfid', '=', current_msfid),
-                                    ('property_account_income_categ', '=', account_ids[0]),
-                                    ('property_account_expense_categ', '=', account_ids[0])
-                                ], context={'lang': 'en_MF'}):
-                                    self.log('Category %s updated uf id:%s' % (current_msfid, categ_id))
-                                    categ_obj.write(self.cr, self.uid, categ_id, categ_data, context={'lang': 'en_MF'})
-                            if x['labels']['french'] and not categ_obj.search_exists(self.cr, self.uid, [('id', '=', categ_id), ('name', '=ilike', x['labels']['french'])], context={'lang': 'fr_MF'}):
-                                categ_obj.write(self.cr, self.uid, categ_id, {'name': x['labels']['french']}, context={'lang': 'fr_MF'})
+                            if account_ids:
+                                account_cache[x['accountCode']] = account_ids[0]
+                        account_id = account_cache.get(x.get('accountCode'))
+                        if not account_id:
+                            raise UDException('%s account code %s not found' % (current_msfid, x.get('accountCode')))
+                        categ_ids = categ_obj.search(self.cr, self.uid, [('family_id', '=', current_id)])
+                        categ_data = {
+                            'name': x['labels']['english'],
+                            'msfid': current_msfid,
+                            'family_id': current_id,
+                            'property_account_income_categ': account_id,
+                            'property_account_expense_categ': account_id,
+                        }
+                        if not categ_ids:
+                            self.log('Category %s created' % (current_msfid, ))
+                            categ_id = categ_obj.create(self.cr, self.uid, categ_data, context={'lang': 'en_MF'})
+                        else:
+                            categ_id = categ_ids[0]
+                            if not categ_obj.search_exists(self.cr, self.uid, [
+                                ('id', '=', categ_ids[0]),
+                                ('name', '=ilike', x['labels']['english']),
+                                ('msfid', '=', current_msfid),
+                                ('property_account_income_categ', '=', account_id),
+                                ('property_account_expense_categ', '=', account_id)
+                            ], context={'lang': 'en_MF'}):
+                                self.log('Category %s updated uf id:%s' % (current_msfid, categ_id))
+                                categ_obj.write(self.cr, self.uid, categ_id, categ_data, context={'lang': 'en_MF'})
+                        if x['labels']['french'] and not categ_obj.search_exists(self.cr, self.uid, [('id', '=', categ_id), ('name', '=ilike', x['labels']['french'])], context={'lang': 'fr_MF'}):
+                            categ_obj.write(self.cr, self.uid, categ_id, {'name': x['labels']['french']}, context={'lang': 'fr_MF'})
 
                     if sync_action == 'created':
                         created += 1

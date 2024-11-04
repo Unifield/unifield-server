@@ -58,6 +58,28 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
+    def us_13192_product_categ_property(self, cr, uid, *a, **b):
+        cr.execute('''
+            update product_category c 
+                set property_account_expense_categ = split_part(p.value_reference, ',', 2)::integer
+                from ir_property p
+                where
+                    p.name='property_account_expense_categ' and
+                    coalesce(p.value_reference, '') != '' and
+                    p.res_id = 'product.category,'||c.id
+        ''')
+
+        cr.execute('''
+            update product_category c 
+                set property_account_income_categ = split_part(p.value_reference, ',', 2)::integer
+                from ir_property p
+                where
+                    p.name='property_account_income_categ' and
+                    coalesce(p.value_reference, '') != '' and
+                    p.res_id = 'product.category,'||c.id
+        ''')
+
     def us_13192_get_ud_not_golden(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if instance and instance.level == 'section':
