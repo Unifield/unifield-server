@@ -12,7 +12,6 @@
                 <tree string="HQ Entries List" editable="top" noteditable="user_validated==True or is_original==True" hide_new_button="1" colors="black:user_validated==True;green:is_split==True and user_validated==False and analytic_state!='invalid';blue:user_validated==False and analytic_state!='invalid' and is_original==False and is_split==False;gray:is_original==True and user_validated==False and analytic_state!='invalid';red:analytic_state=='invalid' and user_validated==False" limit="50">
                     <field name="current_instance_level" invisible="1"/>
                     <field name="account_user_type_code" invisible="1"/>
-                    <field name="original_asset_not_corrigible" invisible="1" />
                     <field name="name"/>
                     <field name="ref" attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="document_date"/>
@@ -26,7 +25,7 @@
                     <field name="amount"/>
                     <field name="currency_id"/>
                     <field name="is_asset_display" displayon="noteditable" invisible="1"/>
-                    <field name="is_asset" displayon="editable" on_change="onchange_asset_status(is_asset, account_id)" attrs="{'readonly': ['|', '|', '|', ('is_split', '=', True), ('current_instance_level', '=', 'section'), ('original_asset_not_corrigible', '=', True), ('account_user_type_code', 'not in', ['expense', 'income'])]}" invisible="1"/>
+                    <field name="is_asset" displayon="editable" on_change="onchange_asset_status(is_asset, account_id)" attrs="{'readonly': ['|', '|', ('is_split', '=', True), ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}" invisible="1"/>
                     <field name="cost_center_id"
                            on_change="onchange_cost_center(cost_center_id, analytic_id)"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"

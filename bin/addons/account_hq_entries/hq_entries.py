@@ -376,6 +376,16 @@ class hq_entries(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['account_id_first_value'], context=context):
+            if line.account_id_first_value.prevent_hq_asset:
+                raise {
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _('The account %s could not be capitalized') % line.account_id_first_value.code
+                    },
+                    'value': {'is_asset': False},
+                }
+
         if not is_asset:
             account_id_first_value = self.browse(cr, uid, ids[0], fields_to_fetch=['account_id_first_value'], context=context).account_id_first_value.id
             return {'value': {'account_id': account_id_first_value}}
