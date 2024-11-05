@@ -1061,19 +1061,19 @@ class supplier_catalogue_line(osv.osv):
         cat_obj = self.pool.get('supplier.catalogue')
         catalogue = False
         if vals.get('catalogue_id'):
-            catalogue = cat_obj.read(cr, uid, vals['catalogue_id'], ['state', 'active', 'from_sync', 'ranking', 'partner_id'], context=context)
+            catalogue = cat_obj.browse(cr, uid, vals['catalogue_id'], fields_to_fetch=['state', 'active', 'from_sync', 'ranking', 'partner_id'], context=context)
 
         if context.get('sync_update_execution'):
             vals['ranking'] = 3
 
         if catalogue:
             if not context.get('sync_update_execution'):
-                if catalogue['from_sync']:
+                if catalogue.from_sync:
                     raise osv.except_osv(_('Error'), _('You can not add a line to a catalogue created from sync'))
-                if not vals.get('ranking') and catalogue['ranking']:
-                    vals['ranking'] = catalogue['ranking']
-            if catalogue['state'] != 'draft':
-                if not vals.get('ranking') and not catalogue['ranking']:
+                if not vals.get('ranking') and catalogue.ranking:
+                    vals['ranking'] = catalogue.ranking
+            if catalogue.state != 'draft':
+                if not vals.get('ranking') and not catalogue.ranking:
                     raise osv.except_osv(_('Error'), _('The Ranking is mandatory on a confirmed catalogue line if there is none at header level'))
                 vals = self._create_supplier_info(cr, uid, vals, context=context)
             if catalogue.partner_id:
