@@ -63,13 +63,12 @@ class patch_scripts(osv.osv):
         '''
         Add signatures to PIs
         '''
-        if _get_instance_level(self, cr, uid) == 'hq':
-            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
-            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')])
-            if group_ids:
-                bar_ids = bar_obj.search(cr, uid, [('name', 'in', ['open_sign_wizard', 'action_unsign']),
-                                                   ('model_id', '=', 'physical.inventory')])
-                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_ids[0]])]})
+        bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+        group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')])
+        if group_ids:
+            bar_ids = bar_obj.search(cr, uid, [('name', 'in', ['open_sign_wizard', 'action_unsign']),
+                                               ('model_id', '=', 'physical.inventory')])
+            bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_ids[0]])]})
 
         cr.execute('SELECT id FROM physical_inventory WHERE signature_id IS NULL')  # not_a_user_entry
         for x in cr.fetchall():

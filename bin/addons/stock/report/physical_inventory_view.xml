@@ -31,7 +31,7 @@
 
         <report
             id="physical_inventory_report_pdf"
-            string="Discrepancy Report"
+            string="Export Discrepancy Report"
             model="physical.inventory"
             name="physical_inventory_discrepancies_report_pdf"
             rml="stock/report/physical_inventory_discrepancies_report.rml"
