@@ -98,7 +98,24 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         if self.fx_table_id:
             # When the fx_table is used, the display currencies are mandatory and restricted to only those present in that fx_table,
             # so we can use the following simple query
-            self.cr.execute("""SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = '%s' """, (currency_id,))
+            self.cr.execute("WITH fxtable_rate AS ("
+                            "   (SELECT rcr.rate, rcr.name "
+                            "    FROM res_currency curr, res_currency_rate rcr "
+                            "    WHERE "
+                            "       curr.currency_table_id = %s AND "
+                            "       rcr.currency_id = %s AND"
+                            "       rcr.name <= %s ORDER BY rcr.name desc LIMIT 1) "
+                            "UNION "
+                            "   (SELECT rcr.rate, rcr.name "
+                            "    FROM res_currency curr, res_currency_rate rcr "
+                            "    WHERE "
+                            "       curr.currency_table_id = %s AND "
+                            "       rcr.currency_id = %s AND"
+                            "       rcr.name > %s AND "
+                            "       rcr.name <= %s ORDER BY rcr.name asc LIMIT 1)) "
+                            "SELECT rate FROM fxtable_rate ORDER BY name asc LIMIT 1 ",
+             (self.fx_table_id, self.currency_id, date_to, self.fx_table_id, self.currency_id, date_to, datetime.today().strftime('%Y-%m-%d')))
+
         elif self.currency_id and not self.fx_table_id:
             self.cr.execute(
                 "SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1",
@@ -228,14 +245,26 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                 if self.fx_table_id:
                     if not table_curr_rates.get(self.fx_table_id, {}).get(register['currency'], False):
                         self.cr.execute(
-                            "SELECT rcr.rate "
-                            "FROM res_currency curr, res_currency_rate rcr "
-                            "WHERE "
-                            "   curr.name = %s AND "
-                            "   curr.currency_table_id = %s AND "
-                            "   rcr.currency_id = curr.id AND"
-                            "   rcr.name <= %s ORDER BY rcr.name desc LIMIT 1",
-                        (register['currency'], self.fx_table_id, date_to))
+                            "WITH fxtable_rate AS ("
+                            "   (SELECT rcr.rate, rcr.name "
+                            "    FROM res_currency curr, res_currency_rate rcr "
+                            "    WHERE "
+                            "       curr.name = %s AND "
+                            "       curr.currency_table_id = %s AND "
+                            "       rcr.currency_id = curr.id AND"
+                            "       rcr.name <= %s ORDER BY rcr.name desc LIMIT 1) "
+                            "UNION "
+                            "   (SELECT rcr.rate, rcr.name "
+                            "    FROM res_currency curr, res_currency_rate rcr "
+                            "    WHERE "
+                            "       curr.name = %s AND "
+                            "       curr.currency_table_id = %s AND "
+                            "       rcr.currency_id = curr.id AND"
+                            "       rcr.name > %s AND "
+                            "       rcr.name <= %s ORDER BY rcr.name asc LIMIT 1)) "
+                            "SELECT rate FROM fxtable_rate ORDER BY name asc LIMIT 1 ",
+                        (register['currency'], self.fx_table_id, date_to, register['currency'], self.fx_table_id, date_to,
+                         datetime.today().strftime('%Y-%m-%d')))
                     else:
                         register_currency_rate = table_curr_rates.get(self.fx_table_id, {}).get(register['currency'], False)
                 elif not curr_rates.get(register['currency'], {}).get(date_to, False):
