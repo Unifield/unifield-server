@@ -32,9 +32,9 @@ class signature_follow_up(osv.osv):
                         else s.signature_res_model end as doc_type,
                     string_agg(distinct(l.name), ',') as roles,
                     bool_and(l.signed) as signed,
-                    coalesce(po.name, so.name, invoice.number, invoice.name, pick.name, jour.code|| ' ' ||per.name) as doc_name,
+                    coalesce(po.name, so.name, invoice.number, invoice.name, pick.name, jour.code|| ' ' ||per.name, phys.ref) as doc_name,
                     min(case when l.signed then l.date else NULL end) as signature_date,
-                    coalesce(po.state, so.state, invoice.state, st.state, pick.state) as doc_state,
+                    coalesce(po.state, so.state, invoice.state, st.state, pick.state, phys.state) as doc_state,
                     s.signature_is_closed as signature_is_closed,
                     coalesce(min(priol.prio) < min(l.prio), 'f') as wait_prio,
                     case
@@ -57,18 +57,20 @@ class signature_follow_up(osv.osv):
                 left join account_journal jour on jour.id = st.journal_id
 
                 left join stock_picking pick on pick.id =  s.signature_res_id and s.signature_res_model='stock.picking'
+                
+                left join physical_inventory phys on phys.id =  s.signature_res_id and s.signature_res_model='physical.inventory'
                 where
                     l.user_id is not null and s.signed_off_line = 'f'
                 group by
                     l.user_id, s.signature_res_id, s.signature_state, s.signature_res_model, s.signature_is_closed, po.name, so.name, jour.code, jour.type, per.name, pick.name,
                     invoice.real_doc_type, invoice.type, invoice.is_debit_note, invoice.is_inkind_donation, invoice.is_direct_invoice, invoice.is_intermission, invoice.number, invoice.name,
-                    po.state, so.state, so.procurement_request, invoice.state, st.name, pick.state, pick.type, pick.subtype, st.state
+                    po.state, so.state, so.procurement_request, invoice.state, st.name, pick.state, pick.type, pick.subtype, st.state, phys.ref, phys.state
             )
         """)
 
     def _get_all_states(self, cr, uid, context=None):
         st = {}
-        for obj in ['purchase.order', 'sale.order', 'stock.picking', 'account.bank.statement', 'account.invoice']:
+        for obj in ['purchase.order', 'sale.order', 'stock.picking', 'account.bank.statement', 'account.invoice', 'physical.inventory']:
             st.update(dict(self.pool.get(obj)._columns['state'].selection))
         # Because PO 'confirmed' (Confirmed) is overridden by Pick 'confirmed' (Not Available)
         st.update({'confirmed_po': 'Confirmed', 'closed_po': 'Closed'})
@@ -102,7 +104,7 @@ class signature_follow_up(osv.osv):
             ('account.bank.statement.bank', 'Bank Register'), ('account.bank.statement.cheque', 'Cheque Register'),
             ('account.invoice.si', 'Supplier Invoice (SI)'), ('account.invoice.donation', 'Donation'),
             ('stock.picking.in', 'Incoming Shipment (IN)'), ('stock.picking.out', 'Delivery Order (Out)'),
-            ('stock.picking.pick', 'Picking Ticket (Pick)'),
+            ('stock.picking.pick', 'Picking Ticket (Pick)'), ('physical.inventory', 'Physical Inventory')
         ], 'Document Type', readonly=1),
         'doc_id': fields.integer('Doc ID', readonly=1),
         'status': fields.selection([('open', 'Unsigned'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=1),
@@ -129,6 +131,7 @@ class signature_follow_up(osv.osv):
             'stock.picking.in': 'stock.action_picking_tree4',
             'stock.picking.out': 'stock.action_picking_tree',
             'stock.picking.pick': 'msf_outgoing.action_picking_ticket',
+            'physical.inventory': 'stock.action_physical_inventory',
         }
         if doc.doc_type.startswith('account.bank.statement'):
             register_type = doc.doc_type.split('.')[-1]

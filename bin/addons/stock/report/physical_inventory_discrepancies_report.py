@@ -52,3 +52,11 @@ class DiscrepanciesReportParser(report_sxw.rml_parse):
 
 
 SpreadsheetReport('report.physical_inventory_discrepancies_report_xls', 'physical.inventory', 'addons/stock/report/physical_inventory_discrepancies_report_xls.mako', parser=DiscrepanciesReportParser)
+
+report_sxw.report_sxw(
+    'report.physical_inventory_discrepancies_report_pdf',
+    'physical.inventory',
+    'addons/stock/report/physical_inventory_discrepancies_report.rml',
+    parser=DiscrepanciesReportParser,
+    header=False
+)

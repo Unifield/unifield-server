@@ -128,9 +128,9 @@ class PhysicalInventory(osv.osv):
     _columns = {
         'ref': fields.char('Reference', size=64, readonly=True, sort_column='id'),
         'name': fields.char('Details', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'date': fields.datetime('PI Creation date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'responsible': fields.char('Responsible', size=128, required=False, states={'closed': [('readonly',True)], 'cancel': [('readonly',True)]}),
-        'date_done': fields.datetime('Date done', readonly=True),
+        'date_done': fields.datetime('PI Closed date', readonly=True),
         'date_confirmed': fields.datetime('Date confirmed', readonly=True),
         # 'inventory_id' and 'product_id' seem to be inverted in product_ids
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
@@ -1050,16 +1050,35 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         return result
 
     def export_xls_discrepancy_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return True
         if self.search_exist(cr, uid, [('id', 'in', ids), ('discrepancies_generated', '=', False)]):
             raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
 
+        pi_name = self.read(cr, uid, ids[0], ['ref'], context=context)['ref'].replace('/', '_')
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'physical_inventory_discrepancies_report_xls',
-            'datas': {'ids': ids, 'target_filename': 'discrepancies'},
+            'datas': {'ids': ids, 'target_filename': '%s_discrepancies_report_%s' % (pi_name, time.strftime('%Y_%m_%d'))},
             'nodestroy': True,
             'context': context,
         }
+
+    def _get_report_name(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, int):
+            ids = [ids]
+
+        pi = self.read(cr, uid, ids[0], ['discrepancies_generated', 'ref'], context=context)
+        if not pi['discrepancies_generated']:
+            raise osv.except_osv(_('Error'), _('This report is only available for Physical Inventories with discrepancies already generated'))
+
+        return "%s_discrepancies_report_%s" % (pi['ref'].replace('/', '_'), time.strftime('%Y_%m_%d'))
 
     def action_counted(self, cr, uid, ids, context=None):
         if context is None:
