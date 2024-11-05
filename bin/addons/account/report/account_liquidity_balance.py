@@ -267,7 +267,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                          datetime.today().strftime('%Y-%m-%d')))
                     else:
                         register_currency_rate = table_curr_rates.get(self.fx_table_id, {}).get(register['currency'], False)
-                elif not curr_rates.get(register['currency'], {}).get(date_to, False):
+                elif not curr_rates.get(register['currency'], False):
                     self.cr.execute(
                         "SELECT rcr.rate "
                         "FROM res_currency curr, res_currency_rate rcr "
@@ -278,7 +278,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                         "   rcr.name <= %s ORDER BY rcr.name desc LIMIT 1",
                         (register['currency'], date_to))
                 else:
-                    register_currency_rate = curr_rates.get(register['currency'], {}).get(date_to, False)
+                    register_currency_rate = curr_rates.get(register['currency'], False)
                 if not register_currency_rate:
                     try:
                         register_currency_rate = self.cr.dictfetchall()
@@ -295,9 +295,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                         table_curr_rates[self.fx_table_id][register['currency']] = register_currency_rate
                 else:
                     if not curr_rates.get(register['currency'], False):
-                        curr_rates[register['currency']] = {}
-                    if not curr_rates[register['currency']].get(date_to, False):
-                        curr_rates[register['currency']][date_to] = register_currency_rate
+                        curr_rates[register['currency']] = register_currency_rate
 
             if register['currency'] in sub_totals:
                 sub_totals[register['currency']] ['closings'] += register['closing']
