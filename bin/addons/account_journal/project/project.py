@@ -75,7 +75,7 @@ class account_analytic_journal(osv.osv):
 
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True, help="Gives the type of the analytic journal. When it needs for a document \
-(eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
+(eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type.", select=1),
         'code': fields.char('Journal Code', size=8, required=True),
         'has_ajis': fields.function(_get_has_ajis, type='boolean', method=True, string='Has Analytic Journal Items', store=False),
     }
