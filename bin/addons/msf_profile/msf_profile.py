@@ -79,6 +79,11 @@ class patch_scripts(osv.osv):
             a = cr.fetchone()
             cr.execute("UPDATE physical_inventory SET signature_id=%s WHERE id=%s", (a[0], x[0]))  # not_a_user_entry
 
+        # To create signature lines on existing documents
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+
         return True
 
     def us_13291_oca_delete_default_ad_destination(self, cr, uid, *a, **b):
