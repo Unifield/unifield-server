@@ -846,6 +846,9 @@ Please check if these can be switched for UniData type product(s) instead, or co
             if not pol.product_id:
                 raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol.line_number)
 
+            if pol.state not in ('validated', 'validated_n'):
+                raise osv.except_osv(_('Error'), _('Line %s: The line is not in a validated state and can not be confirmed, please refresh the page') % pol.line_number)
+
             sourced_on_dpo = pol.from_dpo_line_id
 
             if pol.order_type != 'direct' and not pol.from_synchro_return_goods:
