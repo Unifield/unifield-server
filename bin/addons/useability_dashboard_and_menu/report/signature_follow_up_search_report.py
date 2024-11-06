@@ -30,6 +30,7 @@ def _get_filters_info(self, fields, search_domain, source, context=None):
         'stock.picking.in': _('Incoming Shipment (IN)'),
         'stock.picking.out': _('Delivery Order (Out)'),
         'stock.picking.pick': _('Picking Ticket (Pick)'),
+        'physical.inventory': _('Physical Inventory'),
     }
 
     data = []

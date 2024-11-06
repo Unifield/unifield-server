@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-
         <report
             id="report_closed_physical_inventory"
             string="Closed Inventory Export"
@@ -11,6 +10,7 @@
             auto="False"
             target_filename="${_('Closed Inventory Report')}"
             menu="True"
+            sequence="12"
             />
 
     </data>
