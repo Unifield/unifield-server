@@ -1266,7 +1266,7 @@ class supplier_catalogue_line(osv.osv):
         return res
 
     _columns = {
-        'line_number': fields.integer(string='Line'),
+        'line_number': fields.integer(string='Line', required=True),
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
         'product_code': fields.char('Supplier Code', size=64),
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
