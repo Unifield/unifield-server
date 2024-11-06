@@ -15,7 +15,7 @@
                     <xpath expr="/tree/field[@name='ref']" position="after">
                         <field name="active" invisible="1"/>
                         <field name="partner_type" />
-                        <field name="locally_created" invisible="1" />
+                        <field name="allow_external_edition" invisible="1" />
                         <field name="instance_creator" invisible="1" />
                         <field name="in_product" invisible="1" />
                         <field name="property_product_pricelist_purchase" invisible="1" />
@@ -48,7 +48,7 @@
                     <xpath expr="/form/group/group/field[@name='title']" position="replace">
                         <field name="partner_type" 
                             on_change="on_change_partner_type(partner_type, property_product_pricelist, property_product_pricelist_purchase)" />
-                        <field name="locally_created" invisible="1" />
+                        <field name="allow_external_edition" invisible="1" />
                     </xpath>
                     <xpath expr="/form/group/group[2]/field[@name='supplier']" position="after">
                         <field name="manufacturer" />
