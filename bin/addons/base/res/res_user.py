@@ -478,7 +478,7 @@ class users(osv.osv):
     def _get_has_signature(self, cr, uid, ids, name=None, arg=None, context=None):
         res = {}
         for u in self.browse(cr, uid, ids, fields_to_fetch=['esignature_id', 'signature_from', 'signature_to', 'signature_enabled'], context=context):
-            res[u.id] = {'has_signature': False, 'has_valid_signature': False, 'new_signature_required': False}
+            res[u.id] = {'has_signature': False, 'has_valid_signature': False, 'new_signature_required': False, 'has_sign_group': False}
             if u.esignature_id:
                 res[u.id]['has_signature'] = True
                 res[u.id]['has_valid_signature'] = True
@@ -490,6 +490,8 @@ class users(osv.osv):
                     res[u.id]['has_valid_signature'] = False
             elif u.signature_enabled and u['signature_from'] and fields.date.today() >= u['signature_from'] and (u['signature_to'] and fields.date.today() <= u['signature_to'] or not u['signature_to']):
                 res[u.id]['new_signature_required'] = True
+            if self.check_user_has_group(cr, u.id, 'Sign_user'):
+                res[u.id]['has_sign_group'] = True
         return res
 
     def _get_display_email_popup(self, cr, uid, ids, name=None, arg=None, context=None):
@@ -544,6 +546,7 @@ class users(osv.osv):
         'has_signature': fields.function(_get_has_signature, type='boolean', string='Has Signature', method=1, multi='sign_state'),
         'has_valid_signature': fields.function(_get_has_signature, type='boolean', string='Is Signature Valid', method=1, multi='sign_state'),
         'new_signature_required': fields.function(_get_has_signature, type='boolean', string='Is Signature required', method=1, multi='sign_state'),
+        'has_sign_group': fields.function(_get_has_signature, type='boolean', string='Is user part of the Sign_user group', method=1, store=True, multi='sign_state'),
         'signature_history_ids': fields.one2many('signature.image', 'user_id', string='De-activated Signatures', readonly=1, domain=[('inactivation_date', '!=', False)]),
 
         'force_password_change':fields.boolean('Change password on next login',

@@ -19,17 +19,17 @@ def _get_filters_info(self, fields, search_domain, source, context=None):
         raise osv.except_osv(_('Error!'), _('This method is only usable for the Signature Follow Up Search Exports'))
 
     DOC_TYPES = {
-        'purchase.order': _('PO'),
-        'sale.order.fo': _('FO'),
-        'sale.order.ir': _('IR'),
+        'purchase.order': _('Purchase Order (PO)'),
+        'sale.order.fo': _('Field Order (FO)'),
+        'sale.order.ir': _('Internal Request (IR)'),
         'account.bank.statement.cash': _('Cash Register'),
         'account.bank.statement.bank': _('Bank Register'),
         'account.bank.statement.cheque': _('Cheque Register'),
-        'account.invoice.si': _('Supplier Invoice'),
+        'account.invoice.si': _('Supplier Invoice (SI)'),
         'account.invoice.donation': _('Donation'),
-        'stock.picking.in': _('IN'),
-        'stock.picking.out': _('OUT'),
-        'stock.picking.pick': _('Pick'),
+        'stock.picking.in': _('Incoming Shipment (IN)'),
+        'stock.picking.out': _('Delivery Order (Out)'),
+        'stock.picking.pick': _('Picking Ticket (Pick)'),
     }
 
     data = []
@@ -55,7 +55,7 @@ def _get_filters_info(self, fields, search_domain, source, context=None):
                 value = _('Yes')
         elif filter[0] == 'status':
             if value == 'open':
-                name = _('Open')
+                name = _('Unsigned')
                 value = _('Yes')
             elif value == 'partial':
                 name = _('Partially Signed')
@@ -185,7 +185,7 @@ class signature_follow_up_search_report_xlsx(XlsxReportParser):
 
         row_headers = [
             (_('User')),
-            (_('Document Name')),
+            (_('Document ID')),
             (_('Document State')),
             (_('Type of Signature')),
             (_('Signature State')),
