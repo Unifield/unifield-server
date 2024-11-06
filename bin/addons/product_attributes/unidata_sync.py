@@ -251,7 +251,7 @@ unidata_project()
 
 class unidata_sync_log(osv.osv):
     _name = 'unidata.sync.log'
-    _description = 'UD Validation Sync'
+    _description = 'UD Pull Report'
     _rec_name = 'start_date'
     _order = 'id desc'
 
