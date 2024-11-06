@@ -1151,6 +1151,10 @@
             <field name="method">us_13192_product_categ_property</field>
         </record>
 
+        <record id="us_13166_signature_lock_for_po" model="patch.scripts">
+            <field name="method">us_13166_signature_lock_for_po</field>
+        </record>
+
 
     </data>
 </openerp>

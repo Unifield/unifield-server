@@ -1014,7 +1014,6 @@ class purchase_order(osv.osv):
             }
         return ret
 
-
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
