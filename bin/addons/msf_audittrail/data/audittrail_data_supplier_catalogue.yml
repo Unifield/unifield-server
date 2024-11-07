@@ -6,7 +6,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'supplier.catalogue')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['name', 'period_from', 'period_to', 'currency_id', 'partner_id', 'active', 'state', 'comment']
+        fields = ['name', 'period_from', 'period_to', 'currency_id', 'partner_id', 'active', 'state', 'comment', 'ranking']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
@@ -71,7 +71,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'supplier.catalogue.line')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['line_number', 'product_id', 'product_code', 'line_uom_id', 'min_qty', 'unit_price', 'rounding', 'min_order_qty', 'comment']
+        fields = ['line_number', 'product_id', 'product_code', 'line_uom_id', 'min_qty', 'unit_price', 'rounding', 'min_order_qty', 'comment', 'ranking']
         
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', 'in', fields)], context=context)
         field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'supplier.catalogue.line'), ('name', '=', 'line_number')], context=context)

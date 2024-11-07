@@ -1263,7 +1263,16 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 fct_object = model_pool.browse(cr, uid, model.id, fields_to_fetch=['model'], context=context).model
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']], context=context)
                 if field['name'] in sel:
-                    res = dict(sel[field['name']]['selection']).get(values)
+                    sel_vals = dict(sel[field['name']]['selection'])
+                    if sel_vals.get(values):
+                        res = sel_vals[values]
+                    else:
+                        try:  # if the selection is [(int, 'string'), (int, 'string'), ...]
+                            int_values = int(values)
+                            if int_values in sel_vals:
+                                res = sel_vals[int_values]
+                        except ValueError as e:
+                            res = False
                     if not res:  # if values is not found as key in selection
                         res = values
                 else:
