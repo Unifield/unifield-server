@@ -34,12 +34,14 @@ class ocb_vi_je_period_number(osv.osv):
     _name = 'ocb_vi.je_period_number'
 
     _columns = {
-        'move_id': fields.integer('JE Id', select=1, required=1),
+        'move_id': fields.integer('JE Id', select=1),
         'period_id': fields.integer('Period Id', select=1, required=1),
+        'entry_sequence': fields.char('Entry Seq.', size=64, select=1),
     }
 
     _sql_constraints = [
         ('unique_move_id_period_id', 'unique(move_id,period_id)', 'unique move_id/period_id'),
+        ('unique_entry_sequence_period_id', 'unique(entry_sequence ,period_id)', 'unique entry_sequence/period_id'),
     ]
 
 ocb_vi_je_period_number()
@@ -63,6 +65,7 @@ class ocb_vi_export_number(osv.osv):
         'move_line_id': fields.integer('JI Id', select=1),
         'analytic_line_id': fields.integer('AJI Id', select=1), #TODO m2o with ondelete cascade ?
         'coda_identifier': fields.char('Coda Identifier', size=32),
+        'entry_sequence': fields.char('Entry Seq', size=64, select=1),
     }
 
     _sql_constraints = [
@@ -143,9 +146,6 @@ class finance_archive(finance_export.finance_archive):
                 partner_name = tmp_line[partner_name_cl]
                 if partner_name and not partner_id:
                     # no partner_id, no employee_id ...
-                    # UFT-8 encoding
-                    if isinstance(partner_name, str):
-                        partner_name = partner_name.encode('utf-8')
                     if partner_name not in partner_search_dict:
                         partner_search_dict[partner_name] = partner_obj.search(cr, uid,
                                                                                [('name', '=ilike', partner_name),
@@ -382,11 +382,10 @@ liquidity_sql = """
             """
 
 
-def postprocess_liquidity_balances(self, cr, uid, data, encode=False, context=None):
+def postprocess_liquidity_balances(self, cr, uid, data, context=None):
     """
     Returns data after having replaced the Journal ID by the Journal Name in the current language
     (the language code should be stored in context['lang']).
-    Encodes the journal name to UTF-8 if encode is True.
     """
     # number and name of the column containing the journal id
     col_nbr = 2
@@ -403,24 +402,18 @@ def postprocess_liquidity_balances(self, cr, uid, data, encode=False, context=No
         if isinstance(tmp_l, list):
             if tmp_l[col_nbr]:
                 journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
-                if encode and type(journal_name) == str:
-                    journal_name = journal_name.encode('utf-8')
                 tmp_l[col_nbr] = journal_name
         # tuple
         elif isinstance(tmp_l, tuple):
             tmp_l = list(tmp_l)
             if tmp_l[col_nbr]:
                 journal_name = journal_obj.read(cr, uid, tmp_l[col_nbr], ['name'], context=context)['name']
-                if encode and type(journal_name) == str:
-                    journal_name = journal_name.encode('utf-8')
                 tmp_l[col_nbr] = journal_name
             tmp_l = tuple(tmp_l)  # restore back the initial format
         # dictionary
         elif isinstance(tmp_l, dict):
             if tmp_l[col_name]:
                 journal_name = journal_obj.read(cr, uid, tmp_l[col_name], ['name'], context=context)['name']
-                if encode and type(journal_name) == str:
-                    journal_name = journal_name.encode('utf-8')
                 tmp_l[col_new_name] = journal_name
                 del tmp_l[col_name]
         new_data.append(tmp_l)
@@ -627,7 +620,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                      inner join account_move AS am on am.id = aml.move_id
                      inner join account_period AS p2 on am.period_id = p2.id
                     left outer join hr_employee hr on hr.id = aml.employee_id
-                    left join ocb_vi_export_number ocb_vi on ocb_vi.move_id=aml.move_id and ocb_vi.move_line_id=aml.id and al.real_period_id=ocb_vi.period_id and coalesce(ocb_vi.analytic_line_id, 0)=coalesce(al.id, 0)
+                    left join ocb_vi_export_number ocb_vi on ocb_vi.entry_sequence=al.entry_sequence and ocb_vi.move_line_id=aml.id and al.real_period_id=ocb_vi.period_id and coalesce(ocb_vi.analytic_line_id, 0)=coalesce(al.id, 0)
                     left join account_export_mapping mapping on mapping.account_id = a.id
                 WHERE
                 aa3.category = 'FUNDING'
@@ -670,7 +663,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 INNER JOIN res_currency AS cc ON e.currency_id = cc.id
                 INNER JOIN msf_instance AS i ON aml.instance_id = i.id
                 LEFT JOIN account_analytic_line aal ON aal.move_id = aml.id
-                LEFT JOIN ocb_vi_export_number ocb_vi ON ocb_vi.move_id=aml.move_id AND ocb_vi.move_line_id=aml.id AND m.period_id=ocb_vi.period_id AND ocb_vi.analytic_line_id is null
+                LEFT JOIN ocb_vi_export_number ocb_vi ON ocb_vi.entry_sequence=m.name AND ocb_vi.move_line_id=aml.id AND m.period_id=ocb_vi.period_id AND ocb_vi.analytic_line_id is null
                 LEFT JOIN account_export_mapping mapping ON mapping.account_id = a.id
                 WHERE aal.id IS NULL
                 AND aml.period_id = %s
@@ -754,7 +747,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'object': 'account.analytic.line',
                 'select_1': """
                     SELECT
-                        aml.move_id, aml.id, al.id, al.real_period_id
+                        al.entry_sequence, aml.id, al.id, al.real_period_id
                 """,
                 'select_2': """
                     SELECT
@@ -799,7 +792,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
-                'select_1': "SELECT aml.move_id, aml.id, aal.id, m.period_id",
+                'select_1': "SELECT m.name, aml.id, aal.id, m.period_id",
                 'select_2': """
                     SELECT
                         aml.id, -- 0

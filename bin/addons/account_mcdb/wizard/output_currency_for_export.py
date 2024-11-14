@@ -35,7 +35,7 @@ class output_currency_for_export(osv.osv_memory):
 
     _columns = {
         'currency_id': fields.many2one('res.currency', string="Output currency", help="Give an output currency that would be used for export", required=False),
-        'fx_table_id': fields.many2one('res.currency.table', string="FX Table", required=False),
+        'fx_table_id': fields.many2one('res.currency.table', string="FX Table", required=False, domain=[('state', '=', 'valid')]),
         'export_format': fields.selection([('xls', 'Excel'), ('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
         'domain': fields.text('Domain'),
         'export_selected': fields.boolean('Export only the selected items', help="The output is limited to 5000 records"),
@@ -210,8 +210,8 @@ class output_currency_for_export(osv.osv_memory):
                     datas['header'] = datas['header'] + '; ' + currency_table_str
 
         elif wiz and not wiz.export_selected and choice == 'pdf':
-                # get the ids of the entries and the header to display
-                # (for gl.selector/analytic.selector report if we come from JI/AJI view)
+            # get the ids of the entries and the header to display
+            # (for gl.selector/analytic.selector report if we come from JI/AJI view)
             dom = self.get_dom_from_context(cr, uid, model, context)
             export_obj = self.pool.get(model)
             if export_obj:

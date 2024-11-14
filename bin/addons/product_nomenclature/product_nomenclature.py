@@ -235,18 +235,17 @@ class product_nomenclature(osv.osv):
             ids = [ids]
 
         res = {}
-
-        for nomen in self.browse(cr, uid, ids, context=context):
+        for nomen in self.browse(cr, uid, ids, fields_to_fetch=['type', 'level', 'sub_level'], context=context):
             name = ''
             if nomen.type == 'mandatory':
                 name = 'nomen_manda_%s' % nomen.level
             if nomen.type == 'optional':
                 name = 'nomen_sub_%s' % nomen.sub_level
-            products = self.pool.get('product.product').search(cr, uid, [(name, '=', nomen.id)], context=context)
+            products = self.pool.get('product.product').search(cr, uid, [(name, '=', nomen.id)], count=True, context=context)
             if not products:
                 res[nomen.id] = 0
             else:
-                res[nomen.id] = len(products)
+                res[nomen.id] = products
 
         return res
 
@@ -458,7 +457,7 @@ class product_nomenclature(osv.osv):
     _description = "Product Nomenclature"
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
-        'name': fields.char('Name', size=64, required=True, select=True, translate=1),
+        'name': fields.char('Name', size=128, required=True, select=True, translate=1),
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Full name', fnct_search=_search_complete_name),
         'custom_name': fields.function(_get_custom_name, method=True, type="char", string='Name', fnct_search=_search_custom_name),
         # technic fields - tree management
@@ -620,13 +619,52 @@ class product_template(osv.osv):
 
         return narg
 
+    def _get_archived_nomenclature(self, cr, uid, ids, fields, *a, **b):
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+
+        cr.execute('''
+            select
+                t.id
+            from
+                product_template t, product_nomenclature n
+            where
+                t.id in %s and
+                n.status = 'archived' and
+                (n.level = 2 and t.nomen_manda_2 = n.id or n.level = 3 and t.nomen_manda_3 = n.id)
+        ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
+
+    def _search_archived_nomenclature(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+
+        dom = []
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % (name,))
+            if arg[2]:
+                dom = ['|', ('nomen_manda_2.status', '=', 'archived'), ('nomen_manda_3.status', '=', 'archived')]
+            else:
+                dom = ['&', ('nomen_manda_2.status', '!=', 'archived'), ('nomen_manda_3.status', '!=', 'archived')]
+
+        return dom
     # ## EXACT COPY-PASTE TO order_nomenclature
     _columns = {
         # mandatory nomenclature levels
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', required=True, select=1),
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', required=True, select=1),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', required=True, select=1),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', required=True, select=1),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', required=True, select=1, join=True),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', required=True, select=1, join=True),
 
         # optional nomenclature levels
         'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1', select=1),
@@ -648,6 +686,7 @@ class product_template(osv.osv):
         'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
 
+        'archived_nomenclature': fields.function(_get_archived_nomenclature, method=True, type='boolean', string='Archived Nomenclature', fnct_search=_search_archived_nomenclature),
         # concatenation of nomenclature in a visible way
         'nomenclature_description': fields.char('Nomenclature', size=1024),
         'property_account_income': fields.many2one('account.account',

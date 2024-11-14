@@ -8,6 +8,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Add Users">
+                    <field name="doc_locked_for_sign" invisible="1"/>
                     <group colspan="4" col="4" name="list_values" />
                     <group colspan="4">
                       <button string="Cancel" name="cancel" type="object" icon="gtk-cancel" colspan="1"/>

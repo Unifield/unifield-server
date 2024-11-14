@@ -628,11 +628,11 @@
    <Row ss:AutoFitHeight="0">
     <Cell ss:Index="2" ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s20"><Data ss:Type="String">${_('Inventory Details')|x}</Data><NamedCell
+    <Cell ss:StyleID="s20"><Data ss:Type="String">${_('Inventory Reference')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].name or '' |x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].ref or '' |x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:Index="8" ss:StyleID="s20"><Data ss:Type="String">${_('Inventory date')|x}</Data><NamedCell
+    <Cell ss:Index="8" ss:StyleID="s20"><Data ss:Type="String">${_('PI Creation date')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s73" ss:MergeAcross="1"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="DateTime">${ to_excel(objects[0].date) }</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -666,15 +666,15 @@
       ss:Name="Print_Area"/></Cell>
    </Row>
    <Row>
-    <Cell ss:Index="5" ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:Index="2" ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s20"><Data ss:Type="String">${_('Inventory Details')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].name or '' |x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:Index="8" ss:StyleID="s20"><Data ss:Type="String">${_('PI Closed date')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s73" ss:MergeAcross="1"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="DateTime">${ to_excel(objects[0].date_done) }</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="17" ss:StyleID="s61"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -714,29 +714,19 @@
       ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:Height="15.75">
-    <Cell ss:Index="3" ss:StyleID="s20"><Data ss:Type="String">${_('Inventory resp Name')|x}</Data><NamedCell
+    <Cell ss:Index="3" ss:StyleID="s20"><Data ss:Type="String">${_('Inventory Responsible')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].responsible or '' |x }</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:Index="8" ss:StyleID="s25"><Data ss:Type="String">${_('Signature of responsible')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s59"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s59"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s59"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s59"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s59"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s56"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">${_('With discrepancies')|x}</Data><NamedCell
+    <Cell ss:Index="17" ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">${_('With discrepancies')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s58"><Data ss:Type="Number">${objects[0].discrepancy_lines_number}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -834,50 +824,50 @@
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Family')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Item code')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Product')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Description')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('UoM')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('UOM')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Unit price')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Unit Price')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('currency (functional)')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Currency')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Quantity Theoretical')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Theoretical Quantity')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Quantity counted')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Counted Quantity')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Batch no')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Batch number')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Expiry date')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Discrepancy')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Discrepancy Quantity')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Discrepancy Value')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total QTY before INV')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Theoretical Quantity for product')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total QTY after INV')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Counted Quantity for product')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Value after INV')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Counted Value for product')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Discrepancy')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Discrepancy for product')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Discrepancy Value')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Discrepancy Value for product')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Adjustment type')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Sub Reason Type')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Comments / actions (in case of discrepancy)')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Comments')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
 <% index = 0 %>
    </Row>
@@ -906,6 +896,181 @@
     <Cell ss:StyleID="s48"><Data ss:Type="String">${item.comment or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    % endfor
+   <Row ss:Height="15.75">
+    <Cell ss:Index="2" ss:StyleID="s23"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s23"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s56"><NamedCell ss:Name="Print_Titles"/></Cell>
+   </Row>
+   <Row ss:Height="15.75">
+    <Cell ss:Index="2" ss:StyleID="s23"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s23"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s56"><NamedCell ss:Name="Print_Titles"/></Cell>
+   </Row>
+   <Row ss:Height="15.75">
+    <Cell ss:Index="2" ss:StyleID="s23"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s23"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s60"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s56"><NamedCell ss:Name="Print_Titles"/></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="3" ss:StyleID="s61"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">${_('Warehouse Responsible')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s63" ss:MergeAcross="1"><Data ss:Type="String">${_('Supply Responsible')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s64" ss:MergeAcross="1"><Data ss:Type="String">${_('Stock Owner')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+   </Row>
+   <Row ss:Height="15.75">
+    <Cell ss:Index="2" ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s78"><Data ss:Type="String">${_('Name')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s58"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="String"></Data><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s57" ss:MergeAcross="1"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="String"></Data><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s65" ss:MergeAcross="1"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="String"></Data><NamedCell
+      ss:Name="Print_Area"/></Cell>
+   </Row>
+   <Row ss:Height="15.75">
+    <Cell ss:Index="2" ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s78"><Data ss:Type="String">${_('Date')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s58"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s58dec" ss:MergeAcross="1"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s66" ss:MergeAcross="1"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+   </Row>
+   <Row ss:Height="15.75">
+    <Cell ss:Index="2" ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
+      ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s80"><Data ss:Type="String">${_('Signature')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String"></Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s67" ss:MergeAcross="1"><Data ss:Type="String"></Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s68" ss:MergeAcross="1"><Data ss:Type="String"></Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+   </Row>
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>

@@ -140,7 +140,7 @@ class hr_employee(osv.osv):
         'birthday': fields.date("Date of Birth"),
         'ssnid': fields.char('SSN No', size=32, help='Social Security Number'),
         'sinid': fields.char('SIN No', size=32, help="Social Insurance Number"),
-        'identification_id': fields.char('Identification No', size=32),
+        'identification_id': fields.char('Identification No', size=32, select=1),
         'gender': fields.selection([('male', 'Male'),('female', 'Female')], 'Gender'),
         'marital': fields.many2one('hr.employee.marital.status', 'Marital Status'),
         'department_id':fields.many2one('hr.department', 'Department'),
@@ -164,7 +164,20 @@ class hr_employee(osv.osv):
         'passport_id': fields.char('Passport No', size=64),
         'contract_start_date': fields.date('Contract Start Date'),
         'contract_end_date': fields.date('Contract End Date'),
+        'section_code': fields.selection([('FR', 'FR'), ('NOFR', 'NOFR')], 'Section Code'),
     }
+    def name_get(self, cr, uid, ids, context=None):
+        if not ids:
+            return []
+        data = self.read(cr, uid, ids, ['name','section_code'], context=context)
+        res = []
+        for empl in data:
+            name = []
+            if empl['section_code']:
+                name.append(empl['section_code'])
+            name.append(empl['name'])
+            res.append((empl['id'], ' '.join(name)))
+        return res
 
     def onchange_address_id(self, cr, uid, ids, address, context=None):
         if address:

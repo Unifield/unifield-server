@@ -23,6 +23,23 @@
                         <field name="closed_ok" />
                         <field name="cancel_ok" />
                     </group>
+                    <separator colspan="4" string="Order categories" />
+                    <group colspan="4" col="8">
+                        <field name="medical_ok" />
+                        <field name="logistic_ok" />
+                        <field name="service_ok" />
+                        <field name="transport_ok" />
+                        <field name="other_ok" />
+                    </group>
+                    <separator colspan="4" string="Order types" />
+                    <group colspan="4" col="8">
+                        <field name="regular_ok" />
+                        <field name="donation_prog_ok" />
+                        <field name="donation_exp_ok" />
+                        <field name="donation_st_ok" />
+                        <field name="loan_ok" />
+                        <field name="loan_return_ok" />
+                    </group>
                     <separator colspan="4" string="Report parameters" />
                     <field name="msl_non_conform" />
                     <newline />
@@ -30,7 +47,7 @@
                     <field name="include_notes_ok" />
                     <separator colspan="4" string="Actions" />
                     <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="2" />
-                    <button name="print_pdf" string="PDF report" icon="gtk-print" type="object" colspan="2" />
+                    <button name="print_pdf" string="PDF report" icon="gtk-print" type="object" colspan="2" attrs="{'readonly': ['|', '|', '|', '|', '|', '|', '|', '|', '|', '|', ('medical_ok', '=', True), ('logistic_ok', '=', True), ('service_ok', '=', True), ('transport_ok', '=', True), ('other_ok', '=', True), ('regular_ok', '=', True), ('donation_prog_ok', '=', True), ('donation_exp_ok', '=', True), ('donation_st_ok', '=', True), ('loan_ok', '=', True), ('loan_return_ok', '=', True)]}" />
                 </form>
             </field>
         </record>

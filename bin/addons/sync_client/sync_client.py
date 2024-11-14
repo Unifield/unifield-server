@@ -386,15 +386,15 @@ def generate_new_hwid():
 def get_hardware_id():
     logger = logging.getLogger('sync.client')
     if sys.platform == 'win32':
-            # US-1746: on windows machine get the hardware id from the registry
-            # to avoid hwid change with new network interface (wifi adtapters,
-            # vpn, ...)
+        # US-1746: on windows machine get the hardware id from the registry
+        # to avoid hwid change with new network interface (wifi adtapters,
+        # vpn, ...)
 
         import winreg
         sub_key = 'SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0'
 
         try:
-                # check if there is hwid stored in the registry
+            # check if there is hwid stored in the registry
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, sub_key,
                                 0, winreg.KEY_READ) as registry_key:
                 hw_hash, regtype = winreg.QueryValueEx(registry_key, "HardwareId")
@@ -984,7 +984,9 @@ class Entity(osv.osv):
             offset_recovery = 0
             max_seq = min(max_seq+max_seq_pack, total_max_seq)
 
-        if _get_instance_level(self, cr, uid) == 'coordo':
+        instance_level = _get_instance_level(self, cr, uid)
+        asset_rule_id = False
+        if instance_level == 'coordo':
             rule_obj = self.pool.get('sync.client.rule')
             prod_rule_id = rule_obj.search(cr, uid, [('sequence_number', '=', 604), ('model', '=', 'product.product')])
             if prod_rule_id:
@@ -992,6 +994,22 @@ class Entity(osv.osv):
                 prod_ids = self.pool.get('product.product')._get_ids_to_push(cr, uid, prod_rule, context=context)
                 if prod_ids:
                     self.pool.get('ir.model.data').mark_resend(cr, uid, 'product.product', prod_ids, context=context)
+                    cr.commit()
+
+        # product.asset: brand, serial ... updated on one side, sent update even if update received from the other side
+        if instance_level == 'project':
+            asset_rule_id = 558
+        elif instance_level== 'coordo':
+            asset_rule_id = 557
+
+        if asset_rule_id:
+            rule_obj = self.pool.get('sync.client.rule')
+            asset_rule_id = rule_obj.search(cr, uid, [('sequence_number', '=', asset_rule_id), ('model', '=', 'product.asset')])
+            if asset_rule_id:
+                asset_rule = rule_obj.browse(cr, uid, asset_rule_id[0], context=context)
+                asset_ids = self.pool.get('product.asset')._get_ids_to_push(cr, uid, asset_rule, context=context)
+                if asset_ids:
+                    self.pool.get('ir.model.data').mark_resend(cr, uid, 'product.asset', asset_ids, context=context)
                     cr.commit()
 
         trigger_analyze = self.pool.get('ir.config_parameter').get_param(cr, 1, 'ANALYZE_NB_UPDATES')
@@ -1410,6 +1428,12 @@ class Entity(osv.osv):
                 logger.replace(logger_index, 'Processing Export to HQ system (OCA) - Not yet exported')
                 logger.write()
             self._logger.info('Processing Export to HQ system (OCA) - Not yet exported')
+        elif self.pool.get('ocp.export.wizard').launch_auto_export(cr, uid, context=context):
+            if logger:
+                logger_index = logger.append()
+                logger.replace(logger_index, 'Processing Export to HQ system (OCP)')
+                logger.write()
+            self._logger.info('Processing Export to HQ system (OCP)')
         return True
 
     @sync_process()
@@ -1782,15 +1806,26 @@ class Connection(osv.osv):
                     self._password = password
                     con.password = password
                 else:
-                    self._password = con.login
+                    self._password = tools.config.get('sync_user_password', con.login)
             if login is None:
-                login=con.login
+                login = con.login
             cnx = rpc.Connection(connector, con.database, login, self._password)
             con._cache = {}
             if cnx.user_id:
                 self._uid = cnx.user_id
             else:
                 raise osv.except_osv('Not Connected', "Not connected to server. Please check password and connection status in the Connection Manager")
+
+            # Update the credentials in the config file if they are empty
+            save_sync_login, save_sync_pass = False, False
+            if login and not tools.config.get('sync_user_login'):
+                tools.config['sync_user_login'] = login
+                save_sync_login = True
+            if self._password and not tools.config.get('sync_user_password'):
+                tools.config['sync_user_password'] = self._password
+                save_sync_pass = True
+            if save_sync_login or save_sync_pass:
+                tools.config.save_sync_credentials(login, self._password)
         except socket.error as e:
             raise osv.except_osv(_("Error"), _(e.strerror))
         except osv.except_osv:

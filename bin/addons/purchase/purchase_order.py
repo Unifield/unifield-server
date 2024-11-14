@@ -1014,7 +1014,6 @@ class purchase_order(osv.osv):
             }
         return ret
 
-
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
@@ -1512,7 +1511,7 @@ class purchase_order(osv.osv):
 
         # Check if there's source documents on lines
         if vals.get('order_type') and vals['order_type'] in ['loan', 'loan_return', 'donation_exp', 'donation_st', 'in_kind']:
-                # do not raise on existing non draft PO
+            # do not raise on existing non draft PO
             draft_po_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft'), ('is_a_counterpart', '=', False)], context=context)
             if draft_po_ids and pol_obj.search_exist(cr, uid, [('order_id', 'in', draft_po_ids), ('origin', '!=', False), ('state', '!=', 'cancel')], context=context):
                 raise osv.except_osv(
@@ -3080,52 +3079,6 @@ class purchase_order(osv.osv):
             pol_obj.write(cr, uid, pol_ids, {'taxes_id': [(6, 0, [])]}, context=context)
         return True
 
-    # CTRL
-    def update_supplier_info(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        update the supplier info of corresponding products
-        '''
-        info_obj = self.pool.get('product.supplierinfo')
-        pricelist_info_obj = self.pool.get('pricelist.partnerinfo')
-        for rfq in self.browse(cr, uid, ids, context=context):
-            for line in rfq.order_line:
-                # if the price is updated and a product selected
-                if line.price_unit and line.product_id:
-                    # get the product
-                    product = line.product_id
-                    # find the corresponding suppinfo with sequence -99
-                    info_99_list = info_obj.search(cr, uid, [('product_id', '=', product.product_tmpl_id.id),
-                                                             ('sequence', '=', -99)],
-                                                   order='NO_ORDER', context=context)
-
-                    if info_99_list:
-                        # we drop it
-                        info_obj.unlink(cr, uid, info_99_list, context=context)
-
-                    # create the new one
-                    values = {'name': rfq.partner_id.id,
-                              'product_name': False,
-                              'product_code': False,
-                              'sequence': -99,
-                              'product_id': product.product_tmpl_id.id,
-                              'delay': int(rfq.partner_id.default_delay),
-                              }
-
-                    new_info_id = info_obj.create(cr, uid, values, context=context)
-                    # price lists creation - 'pricelist.partnerinfo
-                    values = {'suppinfo_id': new_info_id,
-                              'min_quantity': 1.00,
-                              'price': line.price_unit,
-                              'uom_id': line.product_uom.id,
-                              'currency_id': line.currency_id.id,
-                              'valid_till': rfq.valid_till,
-                              'purchase_order_line_id': line.id,
-                              'comment': 'RfQ original quantity for price : %s' % line.product_qty,
-                              }
-                    pricelist_info_obj.create(cr, uid, values, context=context)
-
-        return True
-
     def generate_po_from_rfq(self, cr, uid, ids, context=None):
         '''
         generate a po from the selected request for quotation
@@ -3138,9 +3091,6 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, int):
             ids = [ids]
-
-        # update price lists
-        self.update_supplier_info(cr, uid, ids, context=context)
 
         rfq = self.browse(cr, uid, ids[0], context=context)
         if not rfq.amount_total:

@@ -86,6 +86,7 @@ WHITE_LIST_MODEL = [
     'product.asset.type',
     'product.asset.event.type',
     'product.asset.useful.life',
+    'product.asset.event',
     'product.category',
     'product.cold_chain',
     'product.heat_sensitive',

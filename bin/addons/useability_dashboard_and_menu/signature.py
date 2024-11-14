@@ -30,11 +30,11 @@ class signature_follow_up(osv.osv):
                         when pick.type = 'out' and pick.subtype = 'standard' then 'stock.picking.out'
                         when pick.type = 'out' and pick.subtype = 'picking' then 'stock.picking.pick'
                         else s.signature_res_model end as doc_type,
-                    string_agg(l.name, ',') as roles,
+                    string_agg(distinct(l.name), ',') as roles,
                     bool_and(l.signed) as signed,
-                    coalesce(po.name, so.name, invoice.number, invoice.name, pick.name, jour.code|| ' ' ||per.name) as doc_name,
+                    coalesce(po.name, so.name, invoice.number, invoice.name, pick.name, jour.code|| ' ' ||per.name, phys.ref) as doc_name,
                     min(case when l.signed then l.date else NULL end) as signature_date,
-                    coalesce(po.state, so.state, invoice.state, st.state, pick.state) as doc_state,
+                    coalesce(po.state, so.state, invoice.state, st.state, pick.state, phys.state) as doc_state,
                     s.signature_is_closed as signature_is_closed,
                     coalesce(min(priol.prio) < min(l.prio), 'f') as wait_prio,
                     case
@@ -57,34 +57,59 @@ class signature_follow_up(osv.osv):
                 left join account_journal jour on jour.id = st.journal_id
 
                 left join stock_picking pick on pick.id =  s.signature_res_id and s.signature_res_model='stock.picking'
+                
+                left join physical_inventory phys on phys.id =  s.signature_res_id and s.signature_res_model='physical.inventory'
                 where
                     l.user_id is not null and s.signed_off_line = 'f'
                 group by
                     l.user_id, s.signature_res_id, s.signature_state, s.signature_res_model, s.signature_is_closed, po.name, so.name, jour.code, jour.type, per.name, pick.name,
                     invoice.real_doc_type, invoice.type, invoice.is_debit_note, invoice.is_inkind_donation, invoice.is_direct_invoice, invoice.is_intermission, invoice.number, invoice.name,
-                    po.state, so.state, so.procurement_request, invoice.state, st.name, pick.state, pick.type, pick.subtype, st.state
+                    po.state, so.state, so.procurement_request, invoice.state, st.name, pick.state, pick.type, pick.subtype, st.state, phys.ref, phys.state
             )
         """)
 
-
     def _get_all_states(self, cr, uid, context=None):
         st = {}
-        for obj in ['purchase.order', 'sale.order', 'stock.picking', 'account.bank.statement', 'account.invoice']:
+        for obj in ['purchase.order', 'sale.order', 'stock.picking', 'account.bank.statement', 'account.invoice', 'physical.inventory']:
             st.update(dict(self.pool.get(obj)._columns['state'].selection))
+        # Because PO 'confirmed' (Confirmed) is overridden by Pick 'confirmed' (Not Available)
+        st.update({'confirmed_po': 'Confirmed', 'closed_po': 'Closed'})
+
         return list(st.items())
 
+    def _get_doc_state_display(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Get a more accurate state to display
+        '''
+        if context is None:
+            context = {}
+        res = {}
+
+        for sign_fup in self.browse(cr, uid, ids, fields_to_fetch=['doc_type', 'doc_state'], context=context):
+            if sign_fup.doc_type == 'purchase.order' and sign_fup.doc_state == 'confirmed':
+                res[sign_fup.id] = 'confirmed_po'
+            elif sign_fup.doc_type == 'purchase.order' and sign_fup.doc_state == 'done':
+                res[sign_fup.id] = 'closed_po'
+            else:
+                res[sign_fup.id] = sign_fup.doc_state
+
+        return res
+
     _columns = {
-        'user_id': fields.many2one('res.users', 'User', readonly=1),
-        'doc_name': fields.char('Document Name', size=256, readonly=1),
+        'user_id': fields.many2one('res.users', 'User', domain=[('has_sign_group', '=', True)], readonly=1),
+        'doc_name': fields.char('Document ID', size=256, readonly=1),
         'doc_type': fields.selection([
-            ('purchase.order', 'PO'), ('sale.order.fo', 'FO'), ('sale.order.ir', 'IR'),
-            ('account.bank.statement.cash', 'Cash Register'), ('account.bank.statement.bank', 'Bank Register'), ('account.bank.statement.cheque', 'Cheque Register'),
-            ('account.invoice.si', 'Supplier Invoice'), ('account.invoice.donation', 'Donation'),
-            ('stock.picking.in', 'IN'), ('stock.picking.out', 'OUT'), ('stock.picking.pick', 'Pick'),
+            ('purchase.order', 'Purchase Order (PO)'), ('sale.order.fo', 'Field Order (FO)'),
+            ('sale.order.ir', 'Internal Request (IR)'), ('account.bank.statement.cash', 'Cash Register'),
+            ('account.bank.statement.bank', 'Bank Register'), ('account.bank.statement.cheque', 'Cheque Register'),
+            ('account.invoice.si', 'Supplier Invoice (SI)'), ('account.invoice.donation', 'Donation'),
+            ('stock.picking.in', 'Incoming Shipment (IN)'), ('stock.picking.out', 'Delivery Order (Out)'),
+            ('stock.picking.pick', 'Picking Ticket (Pick)'), ('physical.inventory', 'Physical Inventory')
         ], 'Document Type', readonly=1),
         'doc_id': fields.integer('Doc ID', readonly=1),
-        'status': fields.selection([('open', 'Open'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=1),
+        'status': fields.selection([('open', 'Unsigned'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=1),
         'doc_state': fields.selection(_get_all_states, string='Document State', readonly=1),
+        'doc_state_display': fields.function(_get_doc_state_display, method=True, string='Document State', type='selection', selection=_get_all_states, readonly=True, store=False),
         'signed': fields.boolean('Signed', readonly=1),
         'signature_date': fields.datetime('Signature Date', readonly=1),
         'roles': fields.char('Roles', size=256, readonly=1),
@@ -106,6 +131,7 @@ class signature_follow_up(osv.osv):
             'stock.picking.in': 'stock.action_picking_tree4',
             'stock.picking.out': 'stock.action_picking_tree',
             'stock.picking.pick': 'msf_outgoing.action_picking_ticket',
+            'physical.inventory': 'stock.action_physical_inventory',
         }
         if doc.doc_type.startswith('account.bank.statement'):
             register_type = doc.doc_type.split('.')[-1]

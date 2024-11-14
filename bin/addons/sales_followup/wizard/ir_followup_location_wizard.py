@@ -61,38 +61,24 @@ class ir_followup_location_wizard(osv.osv_memory):
             string='Location',
             help="The requested Internal Location",
         ),
-        'order_ids': fields.text(
-            string='Orders',
-            readonly=True
-        ),
-        'order_id': fields.many2one(
-            'sale.order',
-            string='Order Ref.',
-        ),
-        'draft_ok': fields.boolean(
-            string='Draft',
-        ),
-        'validated_ok': fields.boolean(
-            string='Validated',
-        ),
-        'sourced_ok': fields.boolean(
-            string='Sourced',
-        ),
-        'confirmed_ok': fields.boolean(
-            string='Confirmed',
-        ),
-        'closed_ok': fields.boolean(
-            string='Closed',
-        ),
-        'cancel_ok': fields.boolean(
-            string='Cancelled',
-        ),
-        'only_bo': fields.boolean(
-            string='Pending order lines only (PDF)',
-        ),
-        'include_notes_ok': fields.boolean(
-            string='Include order lines note (PDF)',
-        ),
+        'order_ids': fields.text(string='Orders', readonly=True),
+        'order_id': fields.many2one('sale.order', string='Order Ref.'),
+        # States
+        'draft_ok': fields.boolean(string='Draft'),
+        'validated_ok': fields.boolean(string='Validated'),
+        'sourced_ok': fields.boolean(string='Sourced'),
+        'confirmed_ok': fields.boolean(string='Confirmed'),
+        'closed_ok': fields.boolean(string='Closed'),
+        'cancel_ok': fields.boolean(string='Cancelled'),
+        # Categories
+        'medical_ok': fields.boolean(string='Medical'),
+        'logistic_ok': fields.boolean(string='Logistic'),
+        'service_ok': fields.boolean(string='Service'),
+        'transport_ok': fields.boolean(string='Transport'),
+        'other_ok': fields.boolean(string='Other'),
+
+        'only_bo': fields.boolean(string='Pending order lines only (PDF)'),
+        'include_notes_ok': fields.boolean(string='Include order lines note (PDF)'),
         'msl_non_conform': fields.boolean('MSL/MML Non Conforming'),
     }
 
@@ -196,6 +182,29 @@ class ir_followup_location_wizard(osv.osv_memory):
 
         return state_domain
 
+    def _get_category_domain(self, wizard):
+        '''
+        Return a list of categories on which the FO should be filtered
+        '''
+        category_domain = []
+
+        if wizard.medical_ok:
+            category_domain.append('medical')
+
+        if wizard.logistic_ok:
+            category_domain.append('logistic')
+
+        if wizard.service_ok:
+            category_domain.append('service')
+
+        if wizard.transport_ok:
+            category_domain.append('transport')
+
+        if wizard.other_ok:
+            category_domain.append('other')
+
+        return category_domain
+
     def get_values(self, cr, uid, ids, context=None):
         '''
         Retrieve the data according to values in wizard
@@ -214,6 +223,7 @@ class ir_followup_location_wizard(osv.osv_memory):
 
             if wizard.msl_non_conform:
                 state_domain = self._get_state_domain(wizard)
+                category_domain = self._get_category_domain(wizard)
                 sql_param = {'instance_id': self.pool.get('res.company')._get_instance_id(cr, uid)}
                 sql_cond = ["nom.name='MED'", "nom.level = 0", "so.procurement_request = 't'", "creator.code = 'unidata'"]
                 if wizard.order_id:
@@ -231,6 +241,9 @@ class ir_followup_location_wizard(osv.osv_memory):
                 if state_domain:
                     sql_param['state'] = tuple(state_domain)
                     sql_cond.append(' so.state in %(state)s ')
+                if category_domain:
+                    sql_param['categ'] = tuple(category_domain)
+                    sql_cond.append(' so.categ in %(categ)s ')
 
                 # MML
                 cr.execute('''
@@ -286,6 +299,7 @@ class ir_followup_location_wizard(osv.osv_memory):
                 ir_ids = [wizard.order_id.id]
             else:
                 state_domain = self._get_state_domain(wizard)
+                category_domain = self._get_category_domain(wizard)
 
                 if wizard.location_id:
                     ir_domain.append(('location_requestor_id', '=', wizard.location_id.id))
@@ -298,6 +312,9 @@ class ir_followup_location_wizard(osv.osv_memory):
 
                 if state_domain:
                     ir_domain.append(('state', 'in', tuple(state_domain)))
+
+                if category_domain:
+                    ir_domain.append(('categ', 'in', tuple(category_domain)))
 
                 ir_ids = ir_obj.search(cr, uid, ir_domain, context=context)
 

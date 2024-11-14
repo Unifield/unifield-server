@@ -198,6 +198,10 @@
         <Column ss:AutoFitWidth="1" ss:Width="150.0" />
         ## Supplier
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        ## Order Category
+        <Column ss:AutoFitWidth="1" ss:Width="100.75" />
+        ## Order Type
+        <Column ss:AutoFitWidth="1" ss:Width="110.75" />
         ## Doc. Status
         <Column ss:AutoFitWidth="1" ss:Width="60.75" />
         ## Line Status
@@ -213,6 +217,8 @@
         ## product code
         <Column ss:AutoFitWidth="1" ss:Width="107.25" />
         ## product description
+        <Column ss:AutoFitWidth="1" ss:Width="239.25"  />
+        ## Comment
         <Column ss:AutoFitWidth="1" ss:Width="239.25"  />
         ## Qty Ordered
         <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
@@ -324,6 +330,8 @@
                 _('Customer ref'),
                 _('PO ref'),
                 _('Supplier'),
+                _('Order Category'),
+                _('Order Type'),
                 _('Doc. Status'),
                 _('Line Status'),
                 _('FO Details'),
@@ -332,6 +340,7 @@
                 _('Item'),
                 _('Code'),
                 _('Description'),
+                _('Comment'),
                 _('Qty ordered'),
                 _('UoM ordered'),
                 _('Qty delivered'),
@@ -364,6 +373,8 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.client_order_ref and o.short_client_ref or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('supplier_name', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'categ')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'order_type')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
@@ -388,6 +399,7 @@
                     <Cell ss:StyleID="line_center_grey"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('comment', '-') or ''|x}</Data></Cell>
                     % if line.get('ordered_qty'):
                     <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
                     % else:
@@ -460,6 +472,8 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.client_order_ref and o.short_client_ref or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('supplier_name', '')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'categ')|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'order_type')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('state_display', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
@@ -484,6 +498,7 @@
                     <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('comment', '-') or ''|x}</Data></Cell>
                     % if line.get('ordered_qty'):
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
                     % else:

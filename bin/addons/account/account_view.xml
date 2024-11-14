@@ -168,14 +168,14 @@
                         <field name="user_type_code" invisible="1"/>
                         <field name="is_analytic_addicted" invisible="1"/>
                         <field name="user_type" on_change="onchange_user_type(user_type, code)"/>
-                         <field name="shrink_entries_for_hq"/>
+                        <field name="shrink_entries_for_hq"/>
                         <field name="is_child_of_coa" invisible="1" />
                         <field name="display_in_reports" attrs="{'invisible': [('is_child_of_coa', '=', False)]}"  />
                         <field name="type_for_register"/>
                         <field name="accrual_account" />
                         <field name="is_not_hq_correctible" on_change="onchange_is_not_hq_correctible(is_not_hq_correctible)"/>
                         <newline/>
-                        <label string="" colspan="2"/>
+                        <field name="prevent_hq_asset" />
                         <field name="is_not_ad_correctable" on_change="onchange_is_not_ad_correctable(is_not_ad_correctable)"/>
                     </group>
                     <notebook colspan="4">
@@ -206,13 +206,19 @@
                         </page>
                         <page string="Allowed Partner types">
                             <group col="4" colspan="4">
-                                <group col="2" colspan="2">
+                                <group col="4" colspan="2">
                                     <field name="has_partner_type_internal" />
+                                    <newline />
                                     <field name="has_partner_type_external" />
+                                    <newline />
                                     <field name="has_partner_type_esc" />
                                     <newline />
                                     <field name="has_partner_type_local" />
+                                    <newline />
                                     <field name="has_partner_type_ex" />
+                                    <group colspan="2">
+                                        <field name="expat_restriction" attrs="{'invisible': [('has_partner_type_ex', '=', False)]}" invisible="1"/>
+                                    </group>
                                     <field name="has_partner_type_empty" />
                                     <newline />
                                     <field name="has_partner_type_book" />
@@ -264,6 +270,7 @@
                         <filter name="expense_account" string="Expense" domain="[('user_type.code','=', 'expense')]" icon="terp-stock_symbol-selection"/>
                         <filter name="income_account" string="Income" domain="[('user_type.code','=', 'income')]" icon="gtk-go-forward"/>
                         <filter name="asset_account" string="Assets" domain="[('user_type.code','=', 'asset')]" icon="terp-dolar"/>
+                        <filter name="prevent_hq_asset" string="Prevent assets on HQ entries" domain="[('prevent_hq_asset','=', True)]" icon="terp-dolar_ok!"/>
                         <separator orientation="vertical"/>
                         <newline/>
 

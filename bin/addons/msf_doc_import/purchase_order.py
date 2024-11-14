@@ -37,6 +37,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
 from service.web_services import report_spool
 
+
 class purchase_order_manual_export(osv.osv_memory):
     _name = 'purchase.order.manual.export'
 
@@ -72,16 +73,18 @@ class purchase_order_manual_export(osv.osv_memory):
 
         auto_job = self.pool.get('automated.export').browse(cr, uid, auto_job_ids[0], context=context)
 
-
-        processed, rejected, trash = self.pool.get('purchase.order').auto_export_validated_purchase_order(cr, uid, auto_job, [wiz.purchase_id.id], context=context)
+        processed, rejected, trash, filenames = self.pool.get('purchase.order').\
+            auto_export_validated_purchase_order(cr, uid, auto_job, [wiz.purchase_id.id], context=context)
         if not rejected:
             self.log(cr, uid, wiz.purchase_id.id, _('PO %s successfully exported') % wiz.purchase_id.name)
         else:
-            self.log(cr, uid, wiz.purchase_id.id, _('PO %s %d lines rejected') %  (wiz.purchase_id.name, len(rejected)))
+            self.log(cr, uid, wiz.purchase_id.id, _('PO %s %d lines rejected') % (wiz.purchase_id.name, len(rejected)))
 
         return {'type': 'ir.actions.act_window_close'}
 
+
 purchase_order_manual_export()
+
 
 class purchase_order(osv.osv):
     _inherit = 'purchase.order'
@@ -319,6 +322,9 @@ class purchase_order(osv.osv):
             # get po_id from file
             po_id = self.get_po_id_from_file(cr, uid, file_path, context=context)
             context['po_id'] = po_id
+            po = self.read(cr, uid, po_id, ['name', 'locked_by_signature'], context=context)
+            if po['locked_by_signature']:
+                raise osv.except_osv(_('Error'), _('%s: The automated import can not be used on a locked PO') % (po['name']))
             # create wizard.import.po.simulation.screen
             simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
             # launch simulate

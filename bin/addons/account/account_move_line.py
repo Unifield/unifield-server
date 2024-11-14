@@ -706,7 +706,7 @@ class account_move_line(osv.osv):
         'reconcile_id': fields.many2one('account.move.reconcile', 'Reconcile', readonly=True, ondelete='set null', select=2),
         'reconcile_partial_id': fields.many2one('account.move.reconcile', 'Partial Reconcile', readonly=True, ondelete='set null', select=2),
         'amount_currency': fields.float('Amount Currency', help="The amount expressed in an optional other currency if it is a multi-currency entry.", digits_compute=dp.get_precision('Account')),
-        'currency_id': fields.many2one('res.currency', 'Currency', help="The optional other currency if it is a multi-currency entry."),
+        'currency_id': fields.many2one('res.currency', 'Currency', help="The optional other currency if it is a multi-currency entry.", select=1),
         'period_id': fields.many2one('account.period', 'Period', required=True, select=2),
         'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear', string='Fiscal Year', store=False, write_relate=False),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, select=1),

@@ -201,7 +201,6 @@ class automated_import_job(osv.osv):
         except Exception as e:
             cr.rollback()
             self.write(cr, uid, [started_job_id], {
-                'filename': False,
                 'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'nb_processed_records': 0,
                 'nb_rejected_records': 0,
@@ -431,6 +430,10 @@ class automated_import_job(osv.osv):
                                 tools.cache.clean_caches_for_db(cr.dbname)
                                 tools.read_cache.clean_caches_for_db(cr.dbname)
 
+                            if import_data.function_id.model_id.model == 'supplier.catalogue' and \
+                                    context.get('auto_import_catalogue_overlap'):
+                                error_message.insert(0, _('No data will be imported until all the duplicates have been removed'))
+                                context.pop('auto_import_catalogue_overlap')
 
                         if context.get('rejected_confirmation'):
                             nb_rejected += context.get('rejected_confirmation')
@@ -480,7 +483,7 @@ class automated_import_job(osv.osv):
                         trace_b = tools.ustr(traceback.format_exc())
                     self.infolog(cr, uid, '%s :: %s' % (import_data.name, trace_b))
                     self.write(cr, uid, [job.id], {
-                        'filename': False,
+                        'filename': filename,
                         'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                         'nb_processed_records': 0,
                         'nb_rejected_records': 0,

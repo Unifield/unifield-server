@@ -119,13 +119,32 @@ class hq_report_oca(report_sxw.report_sxw):
                      currency.name,
                      field_activity]]
 
+    def get_rates(self, cr, uid, currency_id, date, rate_cache):
+        rate_cache.setdefault(currency_id, {})
+        if not date or not currency_id:
+            return 0
+        if date not in rate_cache[currency_id]:
+            rate = 0
+            cr.execute('''
+                select
+                    rate
+                from 
+                    res_currency_rate 
+                where 
+                    currency_id=%s and
+                    name <= %s
+                order by name DESC
+                limit 1''', (currency_id, date))
+            res = cr.fetchone()
+            rate_cache[currency_id][date] = res and res[0] or rate
+        return rate_cache[currency_id][date]
+
     def create(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
         # data should always be in English whatever the language settings
         context.update({'lang': 'en_MF'})
         pool = pooler.get_pool(cr.dbname)
-        rate_obj = pool.get('res.currency.rate')
         period_obj = pool.get('account.period')
         inst_obj = pool.get('msf.instance')
         aml_obj = pool.get('account.move.line')
@@ -276,6 +295,9 @@ class hq_report_oca(report_sxw.report_sxw):
                         booking_amounts = [round_debit_fctal, round_credit_fctal]
                         booking_curr = formatted_data[19:20]
                     # automatic corrections
+                    elif move_line.journal_id.type == 'accrual' and move_line.source_date:
+                        exchange_rate = self.get_rates(cr, uid, currency.id, move_line.source_date, rates)
+
                     elif move_line.journal_id.type == 'correction' and (move_line.corrected_line_id or move_line.reversal_line_id):
                         # If there are several levels of correction use the last one
                         corr_aml = move_line.corrected_line_id or move_line.reversal_line_id  # JI corrected or reversed
@@ -287,29 +309,10 @@ class hq_report_oca(report_sxw.report_sxw):
                             corr_aml = corr_aml.corrected_line_id or corr_aml
                             final_id = corr_aml.id
                         # rate of the original corrected entry
-                        if currency.id not in rates:
-                            rates[currency.id] = {}
-                        if corr_aml.date not in rates[currency.id]:
-                            rate = 0
-                            rate_ids = rate_obj.search(cr, uid, [('currency_id', '=', currency.id), ('name', '<=', corr_aml.date)],
-                                                       order='name DESC', limit=1, context=context)
-                            if rate_ids:
-                                rate = rate_obj.browse(cr, uid, rate_ids[0], fields_to_fetch=['rate'], context=context).rate
-                            rates[currency.id][corr_aml.date] = rate
-                        exchange_rate = rates[currency.id][corr_aml.date]
+                        exchange_rate =  self.get_rates(cr, uid, currency.id, corr_aml.date, rates)
                     # other lines
                     elif currency:
-                        # rate of the period selected
-                        if currency.id not in rates:
-                            rates[currency.id] = {}
-                        if period.date_start not in rates[currency.id]:
-                            rate = 0
-                            rate_ids = rate_obj.search(cr, uid, [('currency_id', '=', currency.id), ('name', '<=', period.date_start)],
-                                                       order='name DESC', limit=1, context=context)
-                            if rate_ids:
-                                rate = rate_obj.browse(cr, uid, rate_ids[0], fields_to_fetch=['rate'], context=context).rate
-                            rates[currency.id][period.date_start] = rate
-                        exchange_rate = rates[currency.id][period.date_start]
+                        exchange_rate = self.get_rates(cr, uid, currency.id, period.date_start, rates)
 
                     if (journal.code, journal.id, currency.id) not in main_lines:
                         main_lines[(journal.code, journal.id, currency.id)] = []
@@ -402,6 +405,8 @@ class hq_report_oca(report_sxw.report_sxw):
                                        analytic_line.amount > 0 and round_aal_fctal or "0.00"]
                     booking_curr = formatted_data[19:20]
                 # automatic corrections
+                elif analytic_line.journal_id.type == 'general' and analytic_line.source_date: #accrual
+                    exchange_rate = self.get_rates(cr, uid, currency.id, analytic_line.source_date, rates)
                 elif analytic_line.journal_id.type == 'correction' and (analytic_line.last_corrected_id or analytic_line.reversal_origin):
                     # If there are several levels of correction use the last one
                     corr_aal = analytic_line.last_corrected_id or analytic_line.reversal_origin  # AJI corrected or reversed
@@ -413,29 +418,10 @@ class hq_report_oca(report_sxw.report_sxw):
                         corr_aal = corr_aal.last_corrected_id or corr_aal
                         final_id = corr_aal.id
                     # rate of the original corrected entry
-                    if currency.id not in rates:
-                        rates[currency.id] = {}
-                    if corr_aal.date not in rates[currency.id]:
-                        rate = 0
-                        rate_ids = rate_obj.search(cr, uid, [('currency_id', '=', currency.id), ('name', '<=', corr_aal.date)],
-                                                   order='name DESC', limit=1, context=context)
-                        if rate_ids:
-                            rate = rate_obj.browse(cr, uid, rate_ids[0], fields_to_fetch=['rate'], context=context).rate
-                        rates[currency.id][corr_aal.date] = rate
-                    exchange_rate = rates[currency.id][corr_aal.date]
+                    exchange_rate = self.get_rates(cr, uid, currency.id, corr_aal.date, rates)
                 # other lines
                 elif currency:
-                    # rate of the period selected
-                    if currency.id not in rates:
-                        rates[currency.id] = {}
-                    if period.date_start not in rates[currency.id]:
-                        rate = 0
-                        rate_ids = rate_obj.search(cr, uid, [('currency_id', '=', currency.id), ('name', '<=', period.date_start)],
-                                                   order='name DESC', limit=1, context=context)
-                        if rate_ids:
-                            rate = rate_obj.browse(cr, uid, rate_ids[0], fields_to_fetch=['rate'], context=context).rate
-                        rates[currency.id][period.date_start] = rate
-                    exchange_rate = rates[currency.id][period.date_start]
+                    exchange_rate = self.get_rates(cr, uid, currency.id, period.date_start, rates)
 
                 if (journal.code, journal.id, currency.id) not in main_lines:
                     main_lines[(journal.code, journal.id, currency.id)] = []

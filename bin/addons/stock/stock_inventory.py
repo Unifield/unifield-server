@@ -196,7 +196,7 @@ class stock_inventory_line(osv.osv):
     _description = "Inventory Line"
     _columns = {
         'inventory_id': fields.many2one('stock.inventory', 'Inventory', ondelete='cascade', select=True),
-        'location_id': fields.many2one('stock.location', 'Location', required=True),
+        'location_id': fields.many2one('stock.location', 'Location'),
         'product_id': fields.many2one('product.product', 'Product', required=True, select=True),
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
         'product_qty': fields.float('Quantity', digits_compute=dp.get_precision('Product UoM'), related_uom='product_uom'),

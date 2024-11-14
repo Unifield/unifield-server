@@ -251,7 +251,7 @@ unidata_project()
 
 class unidata_sync_log(osv.osv):
     _name = 'unidata.sync.log'
-    _description = 'UD Validation Sync'
+    _description = 'UD Pull Report'
     _rec_name = 'start_date'
     _order = 'id desc'
 
@@ -283,6 +283,11 @@ class unidata_sync_log(osv.osv):
         'number_products_updated': fields.integer('# products updated', readonly=1),
         'number_products_created': fields.integer('# products created', readonly=1),
         'number_products_errors': fields.integer('# products errors', readonly=1),
+
+        'nomen_created': fields.integer('# nomen. created', readonly=1),
+        'nomen_updated': fields.integer('# nomen. updated', readonly=1),
+        'nomen_error': fields.integer('# nomen. errors', readonly=1),
+
         'sync_error': fields.one2many('unidata.pull_product.log', 'session_id', 'Sync Error', readonly=1),
         'error': fields.text('Error', readonly=1),
         'page_size': fields.integer('page size', readonly=1),
@@ -305,7 +310,7 @@ unidata_sync_log()
 
 class ud_sync():
 
-    def __init__(self, cr, uid, pool, max_retries=4, logger=False, context=None):
+    def __init__(self, cr, uid, pool, max_retries=4, logger=False, hidden_records=False, context=None):
         self.cr = cr
         self.uid = uid
         self.pool = pool
@@ -326,6 +331,11 @@ class ud_sync():
             'publishonweb': False,
             'mode': 2,
         }
+        if hidden_records:
+            self.ud_params.update({
+                'mode': 3,
+                'all': True,
+            })
         self.url = config['url']
         self.url_msl = config['url_msl']
         self.timeout = config['ud_timeout']
@@ -507,10 +517,13 @@ class ud_sync():
                     '05. Forbidden': 'forbidden',
                     '06. Rejected': 'stopped',
                     '08. Archived': 'archived',
-                    '01. Temporary Golden:': 'stopped',
+                    '01. Temporary Golden': 'stopped',
                     '01. Temporary Merge': 'stopped',
                     '07. Parked': 'archived',
                 },
+            },
+            'golden_status': {
+                'ud': 'state',
             },
             'sterilized': {
                 'ud': 'medical/sterile',
@@ -733,14 +746,19 @@ class ud_sync():
 
     def query(self, q_filter, page=1, url=None):
         params = self.ud_params.copy()
+
+        if url is not None and (url.endswith('families') or url.endswith('roots')):
+            params['all'] = False
+
         params['page'] = page
-        params['filter'] = q_filter
+        if q_filter:
+            params['filter'] = q_filter
 
         request_ok = False
         retry = 0
         while not request_ok:
             try:
-                self.log('OC: %s Page: %d, Filter: %s' % (self.oc, page, params['filter']))
+                self.log('OC: %s Page: %d, Filter: %s' % (self.oc, page, params.get('filter', '')))
                 if url is None:
                     url = self.url
 
@@ -772,7 +790,7 @@ class ud_sync():
             return text
         return BeautifulSoup(text, 'html.parser').get_text(' ', strip=True)
 
-    def map_ud_fields(self, ud_data, new_prod):
+    def map_ud_fields(self, ud_data, new_prod, session_id=False, create_missing_nomen=False):
         uf_values = {'en_MF': {}, 'fr_MF': {}}
         map_ff_fields = {
             'Form': 'form_value',
@@ -784,13 +802,14 @@ class ud_sync():
             uf_values['en_MF'][v] = False
             uf_values['fr_MF'][v] = False
 
-        for part in ud_data.get('description', {}).get('parts', []):
-            if part.get('header', {}).get('english') in map_ff_fields:
-                uf_values['en_MF'][map_ff_fields[part['header']['english']]] = self.remove_tag(part.get('text', {}).get('english', False))
-                fr_text = self.remove_tag(part.get('text', {}).get('french', False))
-                if not fr_text:
-                    fr_text = uf_values['en_MF'][map_ff_fields[part['header']['english']]]
-                uf_values['fr_MF'][map_ff_fields[part['header']['english']]] = fr_text
+        if ud_data.get('description', {}).get('status') == '53. Valid':
+            for part in ud_data.get('description', {}).get('parts', []):
+                if part.get('header', {}).get('english') in map_ff_fields:
+                    uf_values['en_MF'][map_ff_fields[part['header']['english']]] = self.remove_tag(part.get('text', {}).get('english', False))
+                    fr_text = self.remove_tag(part.get('text', {}).get('french', False))
+                    if not fr_text:
+                        fr_text = uf_values['en_MF'][map_ff_fields[part['header']['english']]]
+                    uf_values['fr_MF'][map_ff_fields[part['header']['english']]] = fr_text
 
         for uf_key in self.uf_config:
             for lang in self.uf_config[uf_key].get('lang', ['default']):
@@ -831,16 +850,10 @@ class ud_sync():
 
                     if uf_key == 'nomen_manda_1':
                         msfid = '%s-%s' % (ud_data['type'], ud_data['group']['code'])
-                        ud_key = 'group'
-                        msf_key = ud_data['group']['code']
                     elif uf_key == 'nomen_manda_2':
                         msfid = '%s-%s-%s%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'])
-                        ud_key = 'family'
-                        msf_key = '%s%s' % (ud_data['group']['code'], ud_data['family']['code'])
                     else:
                         msfid = '%s-%s-%s%s-%s' % (ud_data['type'], ud_data['group']['code'], ud_data['group']['code'], ud_data['family']['code'], ud_data['root']['code'])
-                        ud_key = 'root'
-                        msf_key = ud_data['root']['code']
 
                     #if previous_nom not in lang_values:
                     #    continue
@@ -848,63 +861,34 @@ class ud_sync():
 
                     if cache_key not in self.uf_product_cache[uf_key]:
                         domain = [('level', '=', self.uf_config[uf_key]['nomen_level']), ('parent_id', '=', uf_values['en_MF'][previous_nom]), ('msfid', '=', msfid)]
-                        nomen_id = self.pool.get('product.nomenclature').search(self.cr, self.uid, domain, context=self.context)
-                        created_nomen = False
-                        if not nomen_id:
-                            created_nomen = True
-                            self.log('==== create nomenclature %s'%msfid)
-                            nomen_data = {
-                                'name': '%s - %s' % (msf_key, ud_data[ud_key]['labels']['english']),
-                                'msfid': msfid,
-                                'parent_id':  uf_values['en_MF'][previous_nom],
-                                'level': self.uf_config[uf_key]['nomen_level'],
-                            }
-                            nomen_id = [self.pool.get('product.nomenclature').create(self.cr, self.uid, nomen_data, context={'lang': 'en_MF'})]
-                            if ud_data.get(ud_key, {}).get('labels', {}).get('french'):
-                                self.pool.get('product.nomenclature').write(self.cr, self.uid, nomen_id, {'name': '%s - %s'% (msf_key, ud_data[ud_key]['labels']['french'])}, context={'lang': 'fr_MF'})
-                            if uf_key == 'nomen_manda_2':
-                                self.log('===== create category %s'%msfid)
-                                account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', ud_data.get('accountCode', {}).get('code'))])
-                                if not account_ids:
-                                    raise UDException('Account code %s not found' % (ud_data.get('accountCode', {}).get('code')))
-                                account_id = account_ids[0]
-                                categ_id = self.pool.get('product.category').create(self.cr, self.uid, {
-                                    'name': ud_data['family']['labels']['english'],
-                                    'msfid': msfid,
-                                    'family_id': nomen_id[0],
-                                    'property_account_income_categ': account_id,
-                                    'property_account_expense_categ': account_id,
-                                }, context={'lang': 'en_MF'})
-                                if ud_data.get('family', {}).get('labels', {}).get('french'):
-                                    self.pool.get('product.category').write(self.cr, self.uid, categ_id, {'name': ud_data['family']['labels']['french']}, context={'lang': 'fr_MF'})
-                        else:
+                        nomen_ids = self.pool.get('product.nomenclature').search(self.cr, self.uid, domain, context=self.context)
+                        if nomen_ids:
+                            if len(nomen_ids) > 1:
+                                raise UDException('%s error %d records not found %s' % (uf_key, len(nomen_ids), cache_key))
+                            self.uf_product_cache[uf_key][cache_key] = nomen_ids[0]
+                        elif create_missing_nomen and uf_key in ('nomen_manda_2', 'nomen_manda_3'):
+                            nom_created, nom_updated, nom_error, nomen_id = self.update_single_nomenclature( uf_key=='nomen_manda_2' and 'families' or 'roots' , nomen_msf_id=msfid, session_id=session_id)
                             self.uf_product_cache[uf_key][cache_key] = nomen_id
-                    else:
-                        nomen_id = self.uf_product_cache[uf_key][cache_key]
-                    if not nomen_id or len(nomen_id) != 1:
+
+                    nomen_id = self.uf_product_cache[uf_key].get(cache_key)
+                    if not nomen_id:
                         raise UDException('%s error %s not found %s' % (uf_key, cache_key, nomen_id))
-                    if False and uf_key == 'nomen_manda_2':
+
+                    if uf_key == 'nomen_manda_2' and new_prod:
                         if msfid not in self.categ_account_cache:
-                            if not created_nomen:
-                                self.categ_account_cache[msfid] = self.pool.get('product.nomenclature').browse(self.cr, self.uid, nomen_id[0]).category_id.property_account_income_categ.code
-                                categ_account_code = self.categ_account_cache[msfid]
-                            else:
-                                categ_account_code = ud_data.get('accountCode', {}).get('code')
+                            self.categ_account_cache[msfid] = self.pool.get('product.nomenclature').browse(self.cr, self.uid, nomen_id).category_id.property_account_income_categ.code
 
-                        else:
-                            categ_account_code = self.categ_account_cache[msfid]
+                        prod_account_code = ud_data.get('accountCode', {}).get('code')
 
-                        if ud_data.get('accountCode', {}).get('code') != categ_account_code:
-                            account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', ud_data.get('accountCode', {}).get('code'))])
+                        if prod_account_code != self.categ_account_cache[msfid]:
+                            account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', prod_account_code)])
                             if not account_ids:
                                 raise UDException('Account code %s not found' % (ud_data.get('accountCode', {}).get('code')))
                             account_id = account_ids[0]
-                        else:
-                            account_id = False
-                        lang_values['property_account_income'] = account_id
-                        lang_values['property_account_expense'] = account_id
+                            lang_values['property_account_income'] = account_id
+                            lang_values['property_account_expense'] = account_id
 
-                    lang_values[uf_key] = nomen_id[0]
+                    lang_values[uf_key] = nomen_id
 
                 elif field_desc.get('relation'):
                     self.uf_product_cache.setdefault(uf_key, {})
@@ -939,7 +923,191 @@ class ud_sync():
 
         return uf_values
 
-    def update_products(self, q_filter, record_date, session_id=False):
+    def update_single_nomenclature(self, nom_type, nomen_msf_id="", session_id=False):
+        nom_obj = self.pool.get('product.nomenclature')
+        categ_obj = self.pool.get('product.category')
+        pull_log = self.pool.get('unidata.pull_product.log')
+
+        page = 1
+        parent_cache = {}
+        account_cache = {}
+        created = 0
+        updated = 0
+        nb_errors = 0
+
+        if nom_type == 'families':
+            level = 2
+        elif nom_type == 'roots':
+            level = 3
+        else:
+            raise Exception('update_single_nomenclature nom_type %s incorrect' % nom_type)
+
+        url = self.url.replace('articles', nom_type)
+        if nomen_msf_id:
+            split_parts = nomen_msf_id.split('-')
+            url = '%s/%s' % (url, "".join(split_parts[2:]))
+
+        current_id = False
+
+
+        while True:
+            js = self.query("", page=page, url=url)
+            if not js.get('rows'):
+                break
+            for x in js.get('rows'):
+                try:
+                    self.log('UD %s %s' % (nom_type, x))
+                    parent_msfid = ''
+                    current_msfid = ''
+                    self.cr.execute("SAVEPOINT nom_ud_update")
+
+                    if level == 2:
+                        if not x.get('main', {}).get('code') or not x.get('group',{}).get('code') or not x.get('id'):
+                            raise UDException('Missing info in UD: main.code, group.code or id')
+                        parent_msfid = '%s-%s' % (x.get('main', {}).get('code'), x.get('group',{}).get('code'))
+                        current_msfid = '%s-%s' % (parent_msfid, x.get('id'))
+                        name_prefix = x.get('id')
+                    else:
+                        if not x.get('main', {}).get('code') or not x.get('family', {}).get('id') or not x.get('code'):
+                            raise UDException('Missing info in UD:  main.code, family.id or code')
+                        parent_msfid = '%s-%s-%s' % (x.get('main', {}).get('code'), x.get('family', {}).get('id')[0], x.get('family', {}).get('id'))
+                        current_msfid = '%s-%s' % (parent_msfid, x.get('code'))
+                        name_prefix = x.get('code')
+
+                    if nomen_msf_id and nomen_msf_id != current_msfid:
+                        # case of single pull (from product)
+                        continue
+
+                    if not x.get('labels', {}).get('english'):
+                        raise UDException('Missing UD english label')
+
+                    if parent_msfid not in parent_cache:
+                        parent_ids = nom_obj.search(self.cr, self.uid, [('msfid', '=', parent_msfid), ('level', '=', level -1)])
+                        if not parent_ids:
+                            parent_cache[parent_msfid] = False
+                        else:
+                            parent_cache[parent_msfid] = parent_ids[0]
+
+                    if not parent_cache[parent_msfid]:
+                        if 'Archived' in x.get('status', {}).get('label', ''):
+                            continue
+                        raise UDException('Parent nomenclature %s not found in UF' % (parent_msfid,))
+                    current_ids = nom_obj.search(self.cr, self.uid, [('msfid', '=', current_msfid), ('level', '=', level)])
+                    current_id = False
+                    if current_ids:
+                        current_id = current_ids[0]
+
+                    nomen_data = {
+                        'name': '%s - %s' % (name_prefix, x['labels']['english']),
+                        'msfid': current_msfid,
+                        'parent_id': parent_cache[parent_msfid],
+                        'level': level,
+                        'status': 'Archived' in x.get('status', {}).get('label', '') and 'archived' or 'valid',
+                    }
+
+                    sync_action = False
+                    if not current_id:
+                        if nomen_data['status'] == 'archived' or 'Valid' not in x.get('status', {}).get('label', ''):
+                            self.log('Nomen %s creation ignored, status: %s' % (current_id, x.get('status', {}).get('label')))
+                            continue
+                        self.log('Nomen %s created' % (current_msfid, ))
+                        current_id = nom_obj.create(self.cr, self.uid, nomen_data, context={'lang': 'en_MF'})
+                        sync_action = 'created'
+                    elif not nom_obj.search_exists(self.cr, self.uid, [('id', '=', current_id), ('name', '=ilike', nomen_data['name']), ('status', '=', nomen_data['status'])], context={'lang': 'en_MF'}):
+                        self.log('Nomen %s updated uf id:%s' % (current_msfid, current_id))
+                        nom_obj.write(self.cr, self.uid, current_id, nomen_data, context={'lang': 'en_MF'})
+                        sync_action = 'updated'
+
+                    french_label = False
+                    if x['labels']['french']:
+                        french_label = '%s - %s' % (name_prefix, x['labels']['french'])
+                        if french_label and (not current_ids or not nom_obj.search_exists(self.cr, self.uid, [('id', '=', current_id), ('name', '=ilike', french_label)], context={'lang': 'fr_MF'})):
+                            nom_obj.write(self.cr, self.uid, current_id, {'name': french_label}, context={'lang': 'fr_MF'})
+
+                    if level == 2:
+                        if x.get('accountCode') not in account_cache:
+                            account_ids = self.pool.get('account.account').search(self.cr, self.uid, [('type', '!=', 'view'), ('code', '=', x.get('accountCode'))])
+                            if account_ids:
+                                account_cache[x['accountCode']] = account_ids[0]
+                        account_id = account_cache.get(x.get('accountCode'))
+                        if not account_id:
+                            raise UDException('%s account code %s not found' % (current_msfid, x.get('accountCode')))
+                        categ_ids = categ_obj.search(self.cr, self.uid, [('family_id', '=', current_id)])
+                        categ_data = {
+                            'name': x['labels']['english'],
+                            'msfid': current_msfid,
+                            'family_id': current_id,
+                            'property_account_income_categ': account_id,
+                            'property_account_expense_categ': account_id,
+                        }
+                        if not categ_ids:
+                            self.log('Category %s created' % (current_msfid, ))
+                            categ_id = categ_obj.create(self.cr, self.uid, categ_data, context={'lang': 'en_MF'})
+                        else:
+                            categ_id = categ_ids[0]
+                            if not categ_obj.search_exists(self.cr, self.uid, [
+                                ('id', '=', categ_ids[0]),
+                                ('name', '=ilike', x['labels']['english']),
+                                ('msfid', '=', current_msfid),
+                                ('property_account_income_categ', '=', account_id),
+                                ('property_account_expense_categ', '=', account_id)
+                            ], context={'lang': 'en_MF'}):
+                                self.log('Category %s updated uf id:%s' % (current_msfid, categ_id))
+                                categ_obj.write(self.cr, self.uid, categ_id, categ_data, context={'lang': 'en_MF'})
+                        if x['labels']['french'] and not categ_obj.search_exists(self.cr, self.uid, [('id', '=', categ_id), ('name', '=ilike', x['labels']['french'])], context={'lang': 'fr_MF'}):
+                            categ_obj.write(self.cr, self.uid, categ_id, {'name': x['labels']['french']}, context={'lang': 'fr_MF'})
+
+                    if sync_action == 'created':
+                        created += 1
+                    elif sync_action == 'updated':
+                        updated += 1
+
+                except Exception as e:
+                    self.cr.execute("ROLLBACK TO SAVEPOINT nom_ud_update")
+                    nb_errors += 1
+                    if isinstance(e, UDException):
+                        error = e.args[0]
+                    else:
+                        error = tools.misc.get_traceback(e)
+                    self.log('ERROR %s'% error)
+                    if session_id:
+                        pull_log.create(self.cr, self.uid, {
+                            'code': current_msfid,
+                            'log': 'Nomenclature %s: %s' % (nom_type, error),
+                            'json_data': x,
+                            'session_id': session_id,
+                        })
+                    if current_msfid:
+                        self.cr.execute('''insert into unidata_products_error (unique_key, type, code, date, first_date, log, json_data)
+                            values (%(code)s, 'nomenclature', %(code)s, NOW(), NOW(), %(log)s, %(json_data)s)
+                            on conflict (unique_key)  do update SET code = %(code)s, date=NOW(), log=%(log)s, json_data=%(json_data)s, fixed_date=NULL
+                        ''', {
+                            'code': current_msfid,
+                            'log': '%s: %s' % (nom_type, error),
+                            'json_data': '%s'%x,
+                        })
+                finally:
+                    self.cr.execute("RELEASE SAVEPOINT nom_ud_update")
+
+            page += 1
+            if len(js.get('rows')) < self.page_size:
+                break
+        return created, updated, nb_errors, current_id
+
+
+    def update_nomenclature(self, session_id=False):
+        created = 0
+        updated = 0
+        nb_errors = 0
+        self.cr.execute("update unidata_products_error set fixed_date=NOW() where type='nomenclature'")
+        for nom_type in ['families', 'roots']:
+            tmp_created, tmp_updated, tmp_nb_errors, last_id = self.update_single_nomenclature(nom_type, session_id=session_id)
+            created += tmp_created
+            updated += tmp_updated
+            nb_errors += tmp_nb_errors
+        return created, updated, nb_errors
+
+    def update_products(self, q_filter, record_date, session_id=False, create_missing_nomen=False, is_full=False):
         country_obj = self.pool.get('unidata.country')
         project_obj = self.pool.get('unidata.project')
         prod_obj = self.pool.get('product.product')
@@ -963,21 +1131,14 @@ class ud_sync():
                 break
 
             for x in js.get('rows'):
-                self.log('UD: %s' % x)
+                self.log('is_full: %s, UD: %s' % (is_full, x))
                 rows_seen += 1
                 try:
                     self.cr.execute("SAVEPOINT nom_ud_update")
-                    #prod_id = prod_obj.search(self.cr, self.uid, [('msfid', '=', x['id']), ('active', 'in', ['t', 'f'])], order='active desc, id', context=self.context)
-                    #if x.get('state') == 'Golden':
-                    #    continue
                     prod_ids = []
                     if not x.get('id'):
                         raise UDException('No msfid in API')
 
-                    if not x.get('formerCodes'):
-                        raise UDException('No formerCodes code')
-                    if not x.get('type') or not x.get('group', {}).get('code') or not x.get('family', {}).get('code') or not x.get('root', {}).get('code'):
-                        raise UDException('Nomenclature not set in UD')
 
                     prod_ids = prod_obj.search(self.cr, self.uid, [('msfid', '=', x.get('id')), ('active', 'in', ['t', 'f']), ('international_status', '=', self.unidata_id)], context=self.context)
                     if len(prod_ids) > 1:
@@ -985,18 +1146,31 @@ class ud_sync():
 
                     if len(prod_ids) == 0:
                         if not x.get('ocSubscriptions').get(self.oc):
-                            self.log('%s product ignored: ocSubscriptions False' % x['formerCodes'])
+                            self.log('%s product ignored: ocSubscriptions False' % x.get('formerCodes'))
                             continue
-                        self.log('%s product to create' % (x['formerCodes'], ))
+                        if x.get('state') != 'Golden':
+                            self.log('%s product ignored, not exists in UF, golden: %s' % (x.get('formerCodes'), x.get('state')))
+                            continue
+                        if x.get('lifeCycleStatus') in ('01. Preparation', '06. Rejected', '01. Temporary Golden', '01. Temporary Merge', '07. Parked'):
+                            self.log('%s product ignored, not exists in UF, lifeCycleStatus: %s' % (x.get('formerCodes'), x.get('lifeCycleStatus')))
+                            continue
+                        self.log('%s product to create' % (x.get('formerCodes'), ))
                     else:
                         if not x.get('ocSubscriptions').get(self.oc):
                             if not prod_obj.search(self.cr, self.uid, [('id', 'in', prod_ids), ('oc_subscription', '=', True), ('active', 'in', ['t', 'f'])], context=self.context):
+                                if x.get('state') != 'Golden' or is_full:
+                                    self.cr.execute("update product_product set golden_status=%s, ud_seen='t' where id=%s", (x.get('state'), prod_ids[0]))
                                 self.log('%s product ignored: ocSubscriptions False in UD and UF' % x['code'])
                                 continue
 
-                        self.log('%s product found %s' % (x['formerCodes'], prod_ids[0]))
+                        self.log('%s product found %s' % (x.get('formerCodes'), prod_ids[0]))
 
-                    product_values = self.map_ud_fields(x, new_prod=not bool(prod_ids))
+                    if not x.get('formerCodes'):
+                        raise UDException('No formerCodes code')
+                    if not x.get('type') or not x.get('group', {}).get('code') or not x.get('family', {}).get('code') or not x.get('root', {}).get('code'):
+                        raise UDException('Nomenclature not set in UD')
+
+                    product_values = self.map_ud_fields(x, new_prod=not bool(prod_ids), session_id=session_id, create_missing_nomen=create_missing_nomen)
 
                     c_restriction = []
                     p_restriction = []
@@ -1040,7 +1214,11 @@ class ud_sync():
                             current_value = prod_obj.browse(self.cr, self.uid, prod_ids[0], fields_to_fetch=product_values[lang].keys(), context={'lang': lang})
                             for key, value in product_values[lang].items():
                                 tmp_diff = False
-                                if key in ('oc_country_restrictions', 'oc_project_restrictions'):
+                                if value and current_value[key] and self.uf_config.get(key, {}).get('type') == 'date':
+                                    tmp_diff = value[0:10] !=  current_value[key][0:10]
+                                    if tmp_diff:
+                                        self.log('Field diff (date) %s, uf: *%s*, ud: *%s*'% (key, current_value[key], value))
+                                elif key in ('oc_country_restrictions', 'oc_project_restrictions'):
                                     if set(value[0][2]) != set([x.id for x in current_value[key]]):
                                         self.log('Field diff %s, uf: *%s*, ud: *%s*'% (key, [x.id for x in current_value[key]], value[0][2]))
                                         tmp_diff = True
@@ -1052,7 +1230,14 @@ class ud_sync():
                                     if value:
                                         self.log('Field diff m2o %s, uf: *%s*, ud: *%s*'% (key, current_value[key]['id'], value))
                                         tmp_diff = True
-                                elif current_value[key] != value and ( value is False and current_value[key] or value is not False):
+                                elif key == 'old_code':
+                                    if current_value[key] and value:
+                                        tmp_diff = set(current_value[key].split(';')) != set(value.split(';'))
+                                    else:
+                                        tmp_diff = current_value[key] != value
+                                    if tmp_diff:
+                                        self.log('Field diff old_code, uf: *%s*, ud: *%s*'% (current_value[key], value))
+                                elif current_value[key] != value and (value is False and current_value[key] or value is not False):
                                     self.log('Field diff %s, uf: *%s*, ud: *%s*'% (key, current_value[key], value))
                                     tmp_diff = True
                                 if tmp_diff:
@@ -1062,6 +1247,8 @@ class ud_sync():
                                 break
 
                         if not diff:
+                            if is_full:
+                                self.cr.execute("update product_product set ud_seen='t' where id=%s", (prod_ids[0], ))
                             self.log('==== same values %s %s' % (product_values.get('en_MF', {}).get('default_code'), prod_ids[0]))
                             continue
                         else:
@@ -1069,6 +1256,8 @@ class ud_sync():
 
                     try:
                         self.cr.execute("SAVEPOINT prod_ud_update")
+                        if is_full:
+                            product_values['en_MF']['ud_seen'] = True
                         if prod_ids:
                             self.log('==== write product id: %d, code: %s, msfid: %s, data: %s' % (prod_ids[0], x['code'], x['id'], product_values['en_MF']))
                             prod_obj.write(self.cr, self.uid, prod_ids[0], product_values['en_MF'], context={'lang': 'en_MF'})
@@ -1112,9 +1301,9 @@ class ud_sync():
                     else:
                         nb_errors += 1
                     if x.get('id', ''):
-                        self.cr.execute('''insert into unidata_products_error (msfid, code, former_codes, date, log, uf_product_id, json_data)
-                            values (%(msfid)s, %(code)s, %(former_codes)s, NOW(), %(log)s, %(uf_product_id)s, %(json_data)s)
-                            on conflict (msfid)  do update SET code = %(code)s, former_codes=%(former_codes)s, date=NOW(), log=%(log)s, uf_product_id=%(uf_product_id)s, json_data=%(json_data)s, fixed_date=NULL
+                        self.cr.execute('''insert into unidata_products_error (unique_key, msfid, code, former_codes, date, first_date, log, uf_product_id, json_data, type)
+                            values (%(msfid)s, %(msfid)s, %(code)s, %(former_codes)s, NOW(), NOW(), %(log)s, %(uf_product_id)s, %(json_data)s, 'product')
+                            on conflict (unique_key) do update SET code = %(code)s, former_codes=%(former_codes)s, date=NOW(), log=%(log)s, uf_product_id=%(uf_product_id)s, json_data=%(json_data)s, fixed_date=NULL
                         ''', {
                             'msfid': x.get('id'),
                             'code': x.get('code', ''),
@@ -1241,7 +1430,7 @@ class unidata_sync(osv.osv):
                         remove(log['log_file'])
                         to_reset.append(log['id'])
                     except:
-                        raise
+                        pass
 
             if to_reset:
                 log_obj.write(cr, uid, to_reset, {'log_file': False}, context=context)
@@ -1417,7 +1606,7 @@ class unidata_sync(osv.osv):
 
         oc = self.pool.get('sync.client.entity').get_entity(cr, uid, context).oc
         logger = logging.getLogger('unidata-sync-%s'% oc)
-        sync_obj = ud_sync(cr, uid, self.pool, logger=logger, context=context)
+        sync_obj = ud_sync(cr, uid, self.pool, logger=logger, hidden_records=True, context=context)
         page_size = sync_obj.page_size
 
         min_msfid = param_obj.get_param(cr, 1, 'LAST_MSFID_SYNC') or 0
@@ -1430,6 +1619,8 @@ class unidata_sync(osv.osv):
             # full or diff
             first_query = True
             param_obj.set_param(cr, 1, 'FORMER_UD_DATE_SYNC', last_ud_date_sync or '')
+
+        is_full = not last_ud_date_sync
 
         nuid = hasattr(nuid, 'realUid') and nuid.realUid or nuid
         session_id = session_obj.create(cr, uid, {'start_date': fields.datetime.now(), 'state': 'running', 'page_size': page_size, 'msfid_min': min_msfid, 'last_date': last_ud_date_sync, 'sync_type': sync_type, 'start_uid': nuid, 'server': 'ud'}, context=context)
@@ -1452,12 +1643,29 @@ class unidata_sync(osv.osv):
         cr.commit()
         logger.info('Sync start, page size: %s, last msfid: %s, last date: %s' % (page_size, min_msfid, last_ud_date_sync))
 
+        nomen_created, nomen_updated, nomen_error = sync_obj.update_nomenclature(session_id)
+        session_obj.write(cr, uid, session_id, {
+            'nomen_created': nomen_created,
+            'nomen_updated': nomen_updated,
+            'nomen_error': nomen_error
+        }, context=context)
+        cr.commit()
+
+        if is_full:
+            cr.execute('''
+                update product_product p set ud_seen='f'
+                    from product_international_status st
+                    where
+                        st.id = p.international_status and
+                        st.code = 'unidata'
+                ''')
+
         try:
             cr.execute('SAVEPOINT unidata_sync_log')
             last_loop = False
             max_id = 0
             # first tries previous errors
-            cr.execute('select distinct(msfid) from unidata_products_error where fixed_date is null')
+            cr.execute('select distinct(msfid) from unidata_products_error where fixed_date is null and coalesce(msfid, 0)!=0')
             query = []
             all_msfids = [x[0] for x in cr.fetchall()]
             if all_msfids:
@@ -1468,12 +1676,32 @@ class unidata_sync(osv.osv):
                     for x in nr_msfid:
                         query.append("msfIdentifier=%s" % x)
                     cr.execute('update unidata_products_error set fixed_date=NOW() where msfid in %s', (tuple(nr_msfid),))
-                    trash1, tmp_nb_prod, tmp_updated, tmp_total_nb_created, tmp_total_nb_errors = sync_obj.update_products(" or ".join(query), False, session_id)
-                    nb_prod +=tmp_nb_prod
+                    trash1, tmp_nb_prod, tmp_updated, tmp_total_nb_created, tmp_total_nb_errors = sync_obj.update_products(" or ".join(query), False, session_id, is_full=is_full)
+                    nb_prod += tmp_nb_prod
                     updated += tmp_updated
                     total_nb_created += tmp_total_nb_created
                     total_nb_errors += tmp_total_nb_errors
                     min_index += intervall
+
+            first_merged = param_obj.get_param(cr, 1, 'UD_GETALL_MERGED')
+            if first_merged == '1':
+                if not full:
+                    cr.execute('''
+                        update product_product p set golden_status='Golden'
+                            from product_international_status st
+                            where
+                                st.id = p.international_status and
+                                st.code = 'unidata'
+                        ''')
+                    trash1, tmp_nb_prod, tmp_updated, tmp_total_nb_created, tmp_total_nb_errors = sync_obj.update_products('(./metaData/state!="Golden")', False, session_id, is_full=is_full)
+                    nb_prod += tmp_nb_prod
+                    updated += tmp_updated
+                    total_nb_created += tmp_total_nb_created
+                    total_nb_errors += tmp_total_nb_errors
+                param_obj.set_param(cr, 1, 'UD_GETALL_MERGED', '0')
+                cr.commit()
+
+
             while not last_loop:
                 cr.execute('SAVEPOINT unidata_sync_log')
                 cr.execute("select min(msfid), max(msfid) from product_product p where id in (select id from product_product where coalesce(msfid,0)!=0 and msfid>%s order by msfid limit %s)", (min_msfid, page_size))
@@ -1498,7 +1726,7 @@ class unidata_sync(osv.osv):
                         'createdOn': createdOn,
                     }
 
-                s_date_to_record, rows_seen, prod_updated, nb_created, nb_errors = sync_obj.update_products(q_filter, first_query, session_id)
+                s_date_to_record, rows_seen, prod_updated, nb_created, nb_errors = sync_obj.update_products(q_filter, first_query, session_id, is_full=is_full)
                 if first_query and s_date_to_record:
                     logger.info('Set last date: %s', s_date_to_record)
                     param_obj.set_param(cr, 1, 'LAST_UD_DATE_SYNC', s_date_to_record)
@@ -1521,13 +1749,38 @@ class unidata_sync(osv.osv):
             logger.error('End of Script with error: %s' % error)
             handler.close()
             logger.removeHandler(handler)
-            session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'error', 'number_products_pulled': nb_prod, 'error': error, 'number_products_updated': updated, 'number_products_created': total_nb_created, 'number_products_errors': total_nb_errors}, context=context)
+            session_obj.write(cr, uid, session_id, {
+                'end_date': fields.datetime.now(),
+                'state': 'error',
+                'number_products_pulled': nb_prod,
+                'error': error,
+                'number_products_updated': updated,
+                'number_products_created': total_nb_created,
+                'number_products_errors': total_nb_errors,
+            }, context=context)
             return False
+
+        if is_full:
+            cr.execute('''
+                update product_product p set golden_status=''
+                    from product_international_status st
+                    where
+                        st.id = p.international_status and
+                        st.code = 'unidata' and
+                        p.ud_seen = 'f'
+                ''')
 
         logger.info('End of Script')
         handler.close()
         logger.removeHandler(handler)
-        session_obj.write(cr, uid, session_id, {'end_date': fields.datetime.now(), 'state': 'done', 'number_products_pulled': nb_prod, 'number_products_updated': updated, 'number_products_created': total_nb_created, 'number_products_errors': total_nb_errors}, context=context)
+        session_obj.write(cr, uid, session_id, {
+            'end_date': fields.datetime.now(),
+            'state': 'done',
+            'number_products_pulled': nb_prod,
+            'number_products_updated': updated,
+            'number_products_created': total_nb_created,
+            'number_products_errors': total_nb_errors
+        }, context=context)
         param_obj.set_param(cr, 1, 'LAST_MSFID_SYNC', '')
         return True
 
@@ -1621,7 +1874,7 @@ class unidata_pull_product_log(osv.osv):
         return res
 
     _columns = {
-        'msfid': fields.integer('MSF ID', required=1),
+        'msfid': fields.integer_null('MSF ID', select=1),
         'code': fields.char('UD Code', size=64, select=1),
         'former_codes': fields.char('Former Code', size=1024, select=1),
         'date': fields.datetime('Date', required=1, select=1),
@@ -1650,21 +1903,25 @@ class unidata_products_error(osv.osv):
         return res
 
     _columns = {
-        'msfid': fields.integer('MSF ID', required=1, select=1),
-        'code': fields.char('UD Code', size=64, select=1),
-        'former_codes': fields.char('Former Code', size=1024),
-        'date': fields.datetime('Date of last error', required=1, select=1),
-        'fixed_date': fields.datetime('Fixed at',  select=1),
-        'log': fields.text('Log'),
-        'uf_product_id': fields.text('UF product db id'),
-        'json_data': fields.text('UD Json'),
+        'unique_key': fields.char('Record key', size=64, required=1, readonly=1),
+        'msfid': fields.integer_null('MSF ID', select=1, readonly=1),
+        'code': fields.char('UD Code', size=64, select=1, readonly=1),
+        'former_codes': fields.char('Former Code', size=1024, readonly=1),
+        'date': fields.datetime('Date of last error', required=1, select=1, readonly=1),
+        'first_date': fields.datetime('Date of first error', select=1, readonly=1),
+        'fixed_date': fields.datetime('Fixed at',  select=1, readonly=1),
+        'log': fields.text('Log', readonly=1),
+        'uf_product_id': fields.text('UF product db id', readonly=1),
+        'json_data': fields.text('UD Json', readonly=1),
         'json_data_formated': fields.function(_get_json_data_formated, method=1, type='text',string='UD Json'),
+        'type': fields.selection([('product', 'Product'), ('nomenclature', 'Nomenclature')], string="Object", required=1, select=1, readonly=1),
     }
 
     _sql_constraints = [
-        ('unique_msfid', 'unique(msfid)', 'msfid already exists.'),
+        ('unique_key', 'unique(unique_key)', 'key already exists.'),
     ]
     _defaults = {
         'date': lambda *a, **b: fields.datetime.now(),
+        'type': 'product',
     }
 unidata_products_error()

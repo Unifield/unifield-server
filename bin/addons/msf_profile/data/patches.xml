@@ -1110,7 +1110,54 @@
             <field name="method">us_12916_11496_13123_donation_reason_type</field>
         </record>
 
+        <record id="us_13375_ocb_activate_iil" model="patch.scripts">
+            <field name="method">us_13375_ocb_activate_iil</field>
+        </record>
 
+        <record id="us_12472_hr_populate_expat_creation_date" model="patch.scripts">
+            <field name="method">us_12472_hr_populate_expat_creation_date</field>
+        </record>
+
+        <record id="us_12472_currency_workday_set_no_decimal" model="patch.scripts">
+            <field name="method">us_12472_currency_workday_set_no_decimal</field>
+        </record>
+
+        <record id="us_13398_ocb_unmerge_2_prod" model="patch.scripts">
+            <field name="method">us_13398_ocb_unmerge_2_prod</field>
+        </record>
+
+        <!-- UF35.0 -->
+        <record id="us_13291_oca_delete_default_ad_destination" model="patch.scripts">
+            <field name="method">us_13291_oca_delete_default_ad_destination</field>
+        </record>
+
+        <record id="us_11803_12201_12333_lines_state_to_subpick" model="patch.scripts">
+            <field name="method">us_11803_12201_12333_lines_state_to_subpick</field>
+        </record>
+
+        <record id="us_12912_catalogue_lines_partner_id" model="patch.scripts">
+            <field name="method">us_12912_catalogue_lines_partner_id</field>
+        </record>
+
+        <record id="us_12228_update_supplierinfo_sequence" model="patch.scripts">
+            <field name="method">us_12228_update_supplierinfo_sequence</field>
+        </record>
+
+        <record id="us_13192_get_ud_not_golden" model="patch.scripts">
+            <field name="method">us_13192_get_ud_not_golden</field>
+        </record>
+
+        <record id="us_13192_product_categ_property" model="patch.scripts">
+            <field name="method">us_13192_product_categ_property</field>
+        </record>
+
+        <record id="us_13166_signature_lock_for_po" model="patch.scripts">
+            <field name="method">us_13166_signature_lock_for_po</field>
+        </record>
+
+        <record id="us_11182_12727_pi_signature" model="patch.scripts">
+            <field name="method">us_11182_12727_pi_signature</field>
+        </record>
 
 
     </data>

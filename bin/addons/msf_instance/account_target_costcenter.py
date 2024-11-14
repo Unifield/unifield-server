@@ -60,7 +60,7 @@ class account_target_costcenter(osv.osv):
                                             }),
         'cost_center_name': fields.related('cost_center_id', 'name', string="Name", readonly=True, type="text"),
         'cost_center_status': fields.related('cost_center_id', 'filter_active', string="Is_Active", readonly=True, type="boolean"),
-        'is_target': fields.boolean('Is target'),
+        'is_target': fields.boolean('Is target', select=1),
         'is_top_cost_center': fields.boolean('Top cost centre for budget consolidation'),
         'is_po_fo_cost_center': fields.boolean('Cost centre picked for PO/FO reference'),
         'parent_id': fields.many2one('account.target.costcenter', 'Parent'),

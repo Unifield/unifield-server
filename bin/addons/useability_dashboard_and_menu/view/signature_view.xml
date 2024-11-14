@@ -13,12 +13,12 @@
                     <filter name="to_sign" string="To be signed" icon="gtk-paste"  domain="['&amp;', '&amp;', '&amp;', ('signed', '=', False), ('signature_is_closed', '=', False), ('wait_prio', '=', False), ('allowed_to_be_signed', '=', True)]"  />
                     <filter name="signed" string="Signed" icon="gtk-paste-v"  domain="[('signed', '=', True)]"  />
                     <separator orientation="vertical"/>
-                    <filter name="open" string="Open" icon="terp-check" domain="[('status', '=', 'open')]" />
+                    <filter name="open" string="Unsigned" icon="terp-check" domain="[('status', '=', 'open')]" />
                     <filter name="partial" string="Partially Signed" icon="terp-document-new" domain="[('status', '=', 'partial')]" />
                     <filter name="fully" string="Fully Signed" icon="terp-camera_test" domain="[('status', '=', 'signed')]" />
                     <separator orientation="vertical"/>
-                    <filter name="supply_doc" string="Supply" icon="terp-product" domain="[('doc_type', 'in', ['purchase.order', 'sale.order.fo', 'sale.order.ir', 'stock.picking.in', 'stock.picking.out', 'stock.picking.pick'])]" />
-                    <filter name="Finance_doc" string="Finance" icon="terp-stock_format-default" domain="[('doc_type', 'in', ['account.bank.statement.cash', 'account.bank.statement.bank', 'account.invoice.si', 'account.invoice.donation'])]" />
+                    <filter name="supply_doc" string="Supply" icon="terp-product" domain="[('doc_type', 'in', ['purchase.order', 'sale.order.fo', 'sale.order.ir', 'stock.picking.in', 'stock.picking.out', 'stock.picking.pick', 'physical.inventory'])]" />
+                    <filter name="Finance_doc" string="Finance" icon="terp-stock_format-default" domain="[('doc_type', 'in', ['account.bank.statement.cash', 'account.bank.statement.bank', 'account.invoice.si', 'account.invoice.donation', 'physical.inventory'])]" />
                     <separator orientation="vertical"/>
                     <field name="user_id" />
                     <field name="doc_name" />
@@ -36,10 +36,11 @@
             <field name="arch" type="xml">
                 <tree hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <field name="user_id" />
-                    <field name="doc_name" />
-                    <field name="doc_state" />
-                    <button name="open_doc" string="Open Document" type="object" icon="terp-gtk-go-back-rtl" />
                     <field name="doc_type" />
+                    <field name="doc_name" />
+                    <field name="doc_state" invisible="1" />
+                    <field name="doc_state_display" />
+                    <button name="open_doc" string="Open Document" type="object" icon="terp-gtk-go-back-rtl" />
                     <field name="roles" />
                     <field name="status" />
                     <field name="signed" widget="boolean"/>

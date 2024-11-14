@@ -205,7 +205,9 @@ class res_partner(osv.osv):
 
 #   _constraints = [(_check_ean_key, 'Error: Invalid ean code', ['ean13'])]
 
-    def name_get(self, cr, uid, ids, context={}):
+    def name_get(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         if not len(ids):
             return []
         if context.get('show_ref', False):
