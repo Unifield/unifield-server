@@ -201,6 +201,14 @@ class output_currency_for_export(osv.osv_memory):
             datas = {'ids': data_from_selector['ids']}
         elif wiz and wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
+            if choice == 'pdf':
+                dom = self.get_dom_from_context(cr, uid, model, context)
+                datas['header'] = mcdb_obj.get_selection_from_domain(cr, uid, dom, model, context=context)
+                if currency_str:
+                    datas['header'] = datas['header'] + '; ' + currency_str
+                if currency_table_str:
+                    datas['header'] = datas['header'] + '; ' + currency_table_str
+
         elif wiz and not wiz.export_selected and choice == 'pdf':
                 # get the ids of the entries and the header to display
                 # (for gl.selector/analytic.selector report if we come from JI/AJI view)
