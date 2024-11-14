@@ -187,13 +187,13 @@ class account_move_line(osv.osv):
             context = {}
         if not args:
             return []
-        where = ' AND '.join(['(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')' for x in args])
-        cursor.execute('SELECT id, SUM(debit_currency-credit_currency) FROM account_move_line \
-                     GROUP BY id, debit_currency, credit_currency having '+where) # not_a_user_entry
-        res = cursor.fetchall()
-        if not res:
-            return [('id', '=', '0')]
-        return [('id', 'in', [x[0] for x in res])]
+
+        try:
+            f = abs(float(args[0][2]))
+        except:
+            return [('id', '=', 0)]
+
+        return ['|', '&', ('debit_currency', '>', 0), ('debit_currency', args[0][1], f), '&', ('credit_currency', '>', 0), ('credit_currency', args[0][1], f)]
 
     def _get_is_reconciled(self, cr, uid, ids, field_names, args, context=None):
         """

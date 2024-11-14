@@ -580,13 +580,13 @@ class account_move_line(osv.osv):
             context = {}
         if not args:
             return []
-        where = ' AND '.join(['(abs(sum(debit-credit))'+x[1]+str(x[2])+')' for x in args])
-        cursor.execute('SELECT id, SUM(debit-credit) FROM account_move_line \
-                        GROUP BY id, debit, credit having '+where)  # not_a_user_entry
-        res = cursor.fetchall()
-        if not res:
-            return [('id', '=', '0')]
-        return [('id', 'in', [x[0] for x in res])]
+
+        try:
+            f = abs(float(args[0][2]))
+        except:
+            return [('id', '=', 0)]
+
+        return ['|', '&', ('debit', '>', 0), ('debit', args[0][1], f), '&', ('credit', '>', 0), ('credit', args[0][1], f)]
 
     def _invoice_search(self, cursor, user, obj, name, args, context=None):
         if not args:
