@@ -680,7 +680,7 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s62"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">${_('Number of line')|x}</Data><NamedCell
+    <Cell ss:StyleID="s63"><Data ss:Type="String">${_('Number of lines')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">${_('Value (%s)') % (objects[0].company_id.currency_id.name,)|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>

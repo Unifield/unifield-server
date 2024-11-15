@@ -146,7 +146,7 @@
         <td><para></para></td>
         <td><para></para></td>
         <td>
-          <para style="table_header_label_center">Number of line</para>
+          <para style="table_header_label_center">Number of lines</para>
         </td>
         <td>
           <para style="table_header_label_center">Value ([[ o.company_id.currency_id.name ]])</para>
