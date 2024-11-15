@@ -13,7 +13,7 @@
     <blockTableStyle id="TableHeader">
       <blockAlignment value="LEFT"/>
       <blockValign value="MIDDLE"/>
-      <lineStyle kind="GRID" colorName="black" start="7,0" stop="10,-1" thickness="0.5" />
+      <lineStyle kind="GRID" colorName="black" start="7,0" stop="10,-2" thickness="0.5" />
     </blockTableStyle>
     <blockTableStyle id="TableHeaderSign">
       <blockAlignment value="LEFT"/>
@@ -47,7 +47,7 @@
   <story>
   <pto>
   <pto_header>
-    <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.5cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,2.0cm,2.0cm,2.5cm,2.5cm,3.5cm,4.0cm,4.0cm,3.0cm,3.0cm,3.5cm,3.5cm,5.5cm" style="TableItemHeader">
+    <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.0cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,3.25cm,2.5cm,2.5cm,2.5cm,3.0cm,3.0cm,4.0cm,3.0cm,3.0cm,3.0cm,4.5cm,5.25cm" style="TableItemHeader">
       <tr>
         <td>
           <para style="table_item_header">Line #</para>
@@ -123,7 +123,7 @@
         </td>
       </tr>
     </blockTable>
-    <blockTable colWidths="5.0cm,5.0cm,5.0cm,4.0cm,2.0cm,6.0cm,8.5cm,5.0cm,4.5cm,4.0cm,5.0cm,14.0cm" style="TableHeader">
+    <blockTable colWidths="5.0cm,5.0cm,5.0cm,4.0cm,2.0cm,6.0cm,9.5cm,5.0cm,4.5cm,4.0cm,5.0cm,13.0cm" style="TableHeader">
       <tr>
         <td>
           <para style="table_header_label">Inventory Reference</para>
@@ -234,13 +234,27 @@
         </td>
         <td><para></para></td>
       </tr>
+      <tr>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+        <td><para></para></td>
+      </tr>
     </blockTable>
 
     <para style="whitespace">
       <font color="white"> </font>
     </para>
 
-    <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.5cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,2.0cm,2.0cm,2.5cm,2.5cm,3.5cm,4.0cm,4.0cm,3.0cm,3.0cm,3.5cm,3.5cm,5.5cm" style="TableItemHeader">
+    <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.0cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,3.25cm,2.5cm,2.5cm,2.5cm,3.0cm,3.0cm,4.0cm,3.0cm,3.0cm,3.0cm,4.5cm,5.25cm" style="TableItemHeader">
       <tr>
         <td>
           <para style="table_item_header">Line #</para>
@@ -309,7 +323,7 @@
     </blockTable>
     <section>
       <para style="default">[[ repeatIn([x for x in o.discrepancy_line_ids if not x.ignored], 'item') ]]</para>
-      <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.5cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,2.0cm,2.0cm,2.5cm,2.5cm,3.5cm,4.0cm,4.0cm,3.0cm,3.0cm,3.5cm,3.5cm,5.5cm" style="TableItem">
+      <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.0cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,3.25cm,2.5cm,2.5cm,2.5cm,3.0cm,3.0cm,4.0cm,3.0cm,3.0cm,3.0cm,4.5cm,5.25cm" style="TableItem">
         <tr>
           <td>
             <para style="table_item_data" alignment="CENTER">[[ item.line_no ]]</para>
@@ -342,7 +356,7 @@
             <para style="table_item_data">[[ item.batch_number or '' ]]</para>
           </td>
           <td>
-            <para style="table_item_data">[[ item.expiry_date and formatLang(item.expiry_date, date_time=True) or '' ]]</para>
+            <para style="table_item_data">[[ item.expiry_date and formatLang(item.expiry_date, date=True) or '' ]]</para>
           </td>
           <td>
             <para style="table_item_data">[[ item.discrepancy_qty ]]</para>
