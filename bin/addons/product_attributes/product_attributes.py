@@ -2007,12 +2007,11 @@ class product_attributes(osv.osv):
             elif prod_state and 'oc_subscription' not in vals:
                 # this will compute active
                 check_reactivate = True
-            elif vals.get('oc_subscription'):
+            elif vals.get('oc_subscription') and vals.get('golden_status', 'Golden') == 'Golden':
                 vals['active'] = True
                 if 'state' not in vals:
                     # only oc_subscription = True sent but no info on state / state_ud, we must recompute the mapping
                     reactivated_by_oc_subscription = True
-
         if not prod_state and 'state' in vals:
             if vals['state']:
                 state_id = vals['state']
@@ -3469,7 +3468,7 @@ class product_attributes(osv.osv):
         return self.pool.get('stock.mission.report.line').search_exist(cr, uid, srml_domain, context=context)
 
     def debug_ud(self, cr, uid, ids, context=None):
-        ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1, context=context)
+        ud = unidata_sync.ud_sync(cr, uid, self.pool, logger=logging.getLogger('single-ud-sync'), max_retries=1,  hidden_records=True, context=context)
         for x in self.read(cr, uid, ids, ['msfid', 'default_code'], context=context):
             if x['msfid']:
                 try:
