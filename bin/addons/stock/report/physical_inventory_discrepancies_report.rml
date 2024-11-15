@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <document filename="physical_inventory_discrepancies.pdf">
-  <template pageSize="(70.0cm,21.0cm)" title="Stock Inventory" author="" allowSplitting="20" showBoundary="0">
-    <pageTemplate id="first">
-      <frame id="first" x1="0" y1="0" width="70.0cm" height="21.0cm"/>
+  <template pageSize="(70.0cm,49.0cm)" title="Stock Inventory" author="" allowSplitting="20" showBoundary="0">
+    <pageTemplate id="all">
+      <frame id="all" x1="2" y1="-2" width="70.0cm" height="49.0cm"/>
     </pageTemplate>
   </template>
   <stylesheet>
@@ -13,7 +13,7 @@
     <blockTableStyle id="TableHeader">
       <blockAlignment value="LEFT"/>
       <blockValign value="MIDDLE"/>
-      <lineStyle kind="GRID" colorName="black" start="7,0" stop="10,-2" thickness="0.5" />
+      <lineStyle kind="GRID" colorName="black" start="7,0" stop="10,-1" thickness="0.5" />
     </blockTableStyle>
     <blockTableStyle id="TableHeaderSign">
       <blockAlignment value="LEFT"/>
@@ -34,20 +34,20 @@
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
-    <paraStyle name="default" rightIndent="0.0" leftIndent="0.0" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>" fontName="Helvetica" fontSize="12.0" leading="15" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="default" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="title" fontName="Helvetica-Bold" fontSize="12.0" leading="15" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="table_header_label" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>    <paraStyle name="tbl_header_left" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="table_header_label_center" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>    <paraStyle name="tbl_header_left" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="table_header_value" fontName="Helvetica" fontSize="9.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>    <paraStyle name="tbl_header_left" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="table_header_value_center" fontName="Helvetica" fontSize="9.0" leading="10" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>    <paraStyle name="tbl_header_left" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="table_header_label" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="table_header_label_center" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="table_header_value" fontName="Helvetica" fontSize="9.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="table_header_value_center" fontName="Helvetica" fontSize="9.0" leading="10" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="table_item_header" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="table_item_data" rightIndent="0.0" leftIndent="0.0" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="whitespace" fontName="Helvetica" fontSize="6.0" alignment="CENTER" leading="7.0" spaceBefore="100.0" spaceAfter="10.0"/>
+    <paraStyle name="whitespace" fontName="Helvetica" fontSize="6.0" alignment="CENTER" leading="7.0" spaceBefore="10.0" spaceAfter="10.0"/>
   </stylesheet>
   <story>
   <pto>
   <pto_header>
-    <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.0cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,2.0cm,2.5cm,2.5cm,2.5cm,3.5cm,4.0cm,4.0cm,3.0cm,3.0cm,3.5cm,3.5cm,5.5cm" style="TableItemHeader">
+    <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.5cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,2.0cm,2.0cm,2.5cm,2.5cm,3.5cm,4.0cm,4.0cm,3.0cm,3.0cm,3.5cm,3.5cm,5.5cm" style="TableItemHeader">
       <tr>
         <td>
           <para style="table_item_header">Line #</para>
@@ -116,7 +116,7 @@
     </blockTable>
   </pto_header>
     <para style="default">[[ repeatIn(objects,'o') ]] </para>
-    <blockTable colWidths="69.4cm" style="TableTitle">
+    <blockTable colWidths="70.0cm" style="TableTitle">
       <tr>
         <td>
           <para style="title">INVENTORY REPORT</para>
@@ -234,24 +234,13 @@
         </td>
         <td><para></para></td>
       </tr>
-      <tr>
-        <td><para></para></td>
-        <td><para></para></td>
-        <td><para></para></td>
-        <td><para></para></td>
-        <td><para></para></td>
-        <td><para></para></td>
-        <td><para></para></td>
-        <td><para></para></td>
-        <td><para></para></td>
-      </tr>
     </blockTable>
 
     <para style="whitespace">
       <font color="white"> </font>
     </para>
 
-    <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.0cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,2.0cm,2.5cm,2.5cm,2.5cm,3.5cm,4.0cm,4.0cm,3.0cm,3.0cm,3.5cm,3.5cm,5.5cm" style="TableItemHeader">
+    <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.5cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,2.0cm,2.0cm,2.5cm,2.5cm,3.5cm,4.0cm,4.0cm,3.0cm,3.0cm,3.5cm,3.5cm,5.5cm" style="TableItemHeader">
       <tr>
         <td>
           <para style="table_item_header">Line #</para>
@@ -320,7 +309,7 @@
     </blockTable>
     <section>
       <para style="default">[[ repeatIn([x for x in o.discrepancy_line_ids if not x.ignored], 'item') ]]</para>
-      <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.0cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,2.0cm,2.5cm,2.5cm,2.5cm,3.5cm,4.0cm,4.0cm,3.0cm,3.0cm,3.5cm,3.5cm,5.5cm" style="TableItem">
+      <blockTable colWidths="1.5cm,4.5cm,4.0cm,8.5cm,1.0cm,2.5cm,2.0cm,2.5cm,2.5cm,2.0cm,2.0cm,2.5cm,2.5cm,3.5cm,4.0cm,4.0cm,3.0cm,3.0cm,3.5cm,3.5cm,5.5cm" style="TableItem">
         <tr>
           <td>
             <para style="table_item_data" alignment="CENTER">[[ item.line_no ]]</para>
