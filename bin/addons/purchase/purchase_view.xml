@@ -363,9 +363,9 @@
                                 context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': False, 'from_fo': po_from_fo or po_from_ir or False}"
                                 on_change="order_line_change(order_line, show_default_msg, partner_id)"
                                 filter_selector="[('Show all', []), ('ESC Confirmed', [('esc_confirmed', '=', True)]), ('ESC Unconfirmed', [('esc_confirmed', '=', False)])], [('Show all', []), ('Show validated only', [('state', 'in', ['validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n'])]), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
-                                default_selector="['0', '4']" o2m_selectable="2" attrs="{'readonly': [('locked_by_signature', '=', True)]}"
+                                default_selector="['0', '4']" o2m_selectable="2"
                                 >
-                                <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description) or no_prod_nr_id != False; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated'] or no_prod_nr_id != False or po_locked == True" button_attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p'])]}" editable="both">
+                                <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description) or no_prod_nr_id != False; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated'] or no_prod_nr_id != False or po_locked == True" button_attrs="{'invisible': ['|', '|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p']), ('po_locked', '=', True)]}" editable="both">
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False), ('no_prod_nr_id', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
@@ -502,11 +502,11 @@
                             </group>
                             <separator string="Invoices" colspan="4"/>
                             <newline/>
-                            <field name="invoice_ids" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
+                            <field name="invoice_ids" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}" attrs="{'readonly': [('locked_by_signature', '=', True)]}"/>
                             <newline/>
                             <separator string="Down Payments" colspan="4"/>
                             <newline/>
-                            <field name="down_payment_ids" nolabel="1" colspan="4">
+                            <field name="down_payment_ids" nolabel="1" colspan="4" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
                                 <tree string="Down Payment">
                                     <field name="statement_id" string="Register"/>
                                     <field name="date"/>
@@ -517,22 +517,22 @@
                                     <field name="currency_id"/>
                                 </tree>
                             </field>
-                                <field name="has_tax_at_line_level" invisible="1" />
-                                <field name="tax_line" nolabel="1" attrs="{'invisible': ['|', ('partner_type', '!=', 'external'), ('order_type', '=', 'in_kind')], 'readonly': ['|', ('not_beyond_validated','=', False), ('has_tax_at_line_level', '=', True)]}">
-                                    <tree editable="bottom" string="Taxes">
-                                        <field name="account_tax_id" on_change="tax_code_change(account_tax_id, parent.amount_untaxed, parent.partner_id, context)" />
-                                        <field name="name"/>
+                            <field name="has_tax_at_line_level" invisible="1" />
+                            <field name="tax_line" nolabel="1" attrs="{'invisible': ['|', ('partner_type', '!=', 'external'), ('order_type', '=', 'in_kind')], 'readonly': ['|', '|', ('not_beyond_validated','=', False), ('has_tax_at_line_level', '=', True), ('locked_by_signature', '=', True)]}">
+                                <tree editable="bottom" string="Taxes">
+                                    <field name="account_tax_id" on_change="tax_code_change(account_tax_id, parent.amount_untaxed, parent.partner_id, context)" />
+                                    <field name="name"/>
 
-                                        <field name="account_id"
-                                               domain="[('type', 'not in', ['view', 'consolidation']),
-                                                        ('user_type_code', '=', 'tax')]"/>
+                                    <field name="account_id"
+                                           domain="[('type', 'not in', ['view', 'consolidation']),
+                                                    ('user_type_code', '=', 'tax')]"/>
 
-                                        <field name="partner_id" readonly="1"/>
-                                        <field name="base" readonly="1"/>
-                                        <field name="amount" />
-                                        <field name="base_amount" invisible="1"/>
-                                    </tree>
-                                </field>
+                                    <field name="partner_id" readonly="1"/>
+                                    <field name="base" readonly="1"/>
+                                    <field name="amount" />
+                                    <field name="base_amount" invisible="1"/>
+                                </tree>
+                            </field>
 
                         </page>
                         <page string="Notes" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
