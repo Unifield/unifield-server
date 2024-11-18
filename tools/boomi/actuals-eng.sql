@@ -8,7 +8,7 @@ drop view actuals_eng;
 create or replace view actuals_eng as ( select
     al.id as analytic_line_id,
     i.code as instance_code,
-    to_char(al.date, 'YYYY-MM-01') as period,
+    to_char(al.date, 'YYYY-MM-01')::date as period,
     al.entry_sequence,
     al.document_date,
     al.date as posting_date,
@@ -17,21 +17,28 @@ create or replace view actuals_eng as ( select
     c.name as book_currency,
     round(al.amount, 2) as func_amount,
     cur_table.currency_table_name as currency_table,
-    cur_table.rate as currency_table_rate,
-    round(al.amount_currency / cur_table.rate, 2) as func_amount_table_rate,
+    cur_table.rate as wefin_rate,
+    round(al.amount_currency / cur_table.rate, 2) as wefin_amount,
     al.name as description,
     al.ref as reference,
     cost_center.code as cost_center_code,
     dest.code as destination_code,
     fp.code as funding_code,
     a.code as account_code,
+    coalesce(tr.value, a.name) as account_name,
+    NULL::varchar as emplid,
+    NULL::varchar as employee_type,
     al.partner_txt as partner_txt,
+    NULL::integer as partner_id,
+    NULL::integer as account_move_line_id,
     case when i.level = 'section' then coalesce(parent.code, target_instance.code) else coalesce(parent.code, i.code) end as mission_code,
-    country.mapping_value as country_code
+    left(cost_center.code, 3) as country_code,
+    't'::boolean as  isCommitment
  from
     account_analytic_line al
     inner join account_analytic_journal j on j.id = al.journal_id and j.type = 'engagement'
     inner join account_account a on a.id = al.general_account_id
+    left join ir_translation tr on tr.name='account.account,name' and tr.lang='en_MF' and tr.type='model' and tr.res_id=a.id
     inner join account_analytic_account dest on dest.id = al.destination_id
     inner join account_analytic_account cost_center on cost_center.id = al.cost_center_id
     inner join msf_instance i on i.id = al.instance_id
@@ -59,3 +66,13 @@ create or replace view actuals_eng as ( select
  order by
      al.id
 );
+grant select on actuals_eng to boomi;
+
+drop view actuals_full;
+create or replace view actuals_full as (
+    select * from actuals
+    UNION
+    select * from actuals_eng
+);
+grant select on actuals_full to boomi;
+
