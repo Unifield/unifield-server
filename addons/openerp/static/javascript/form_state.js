@@ -590,7 +590,10 @@ function form_setReadonly(container, fieldName, readonly) {
             // Do not toggle on fields that are already supposed to be readonly/hidden, causes issues during write
             // Ignore buttons, as it prevent using them when the document is not in editing mode
             // Ignore paging to be able to use it on treeviews in forms as well as their filter_selector
-            jQuery($field).find(":input:not(.readonlyfield):not([type='hidden']):not([type='button']):not(.paging)")
+            jQuery($field).find(":input:not(.readonlyfield):not([type='hidden']):not([type='button']):not(.paging):not(.checkbox)")
+                .toggleClass('readonlyfield', readonly)
+                .attr({'disabled': readonly, 'readOnly': readonly});
+            jQuery($field).find("table:not(.readonlyfield):not([type='hidden']):not([disabled='button'])")
                 .toggleClass('readonlyfield', readonly)
                 .attr({'disabled': readonly, 'readOnly': readonly});
             return;
