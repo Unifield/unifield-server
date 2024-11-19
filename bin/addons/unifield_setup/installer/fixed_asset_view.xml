@@ -23,7 +23,7 @@
           <group string="res_config_contents" position="replace">
               <group colspan="5"  attrs="{'invisible': [('is_inactivable', '=', True)] }">
                 <html colspan="5">
-                    <h2><translate>Asset cannot be disabled. Please close the running assets first.</translate></h2>
+                    <h2><translate>Asset cannot be disabled. Please close the active assets first.</translate></h2>
                 </html>
               </group>
               <group colspan="5">
