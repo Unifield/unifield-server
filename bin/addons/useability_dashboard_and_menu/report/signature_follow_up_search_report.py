@@ -30,7 +30,7 @@ def _get_filters_info(self, fields, search_domain, source, context=None):
         'stock.picking.in': _('Incoming Shipment (IN)'),
         'stock.picking.out': _('Delivery Order (Out)'),
         'stock.picking.pick': _('Picking Ticket (Pick)'),
-        'physical.inventory': _('Physical Inventory'),
+        'physical.inventory': _('Physical Inventory (PI)'),
     }
 
     data = []
@@ -212,7 +212,7 @@ class signature_follow_up_search_report_xlsx(XlsxReportParser):
 
             self.add_cell(sign.user_id and sign.user_id.name or '', line_style)
             self.add_cell(sign.doc_name or '', line_style)
-            self.add_cell(self.getSel(sign, 'doc_state') or '', line_style)
+            self.add_cell(self.getSel(sign, 'doc_state_display') or '', line_style)
             self.add_cell(self.getSel(sign, 'doc_type') or '', line_style)
             self.add_cell(self.getSel(sign, 'status') or '', line_style)
             self.add_cell(sign.signed > 0 and _('Yes') or _('No'), line_style)
