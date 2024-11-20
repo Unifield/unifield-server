@@ -593,9 +593,6 @@ function form_setReadonly(container, fieldName, readonly) {
             jQuery($field).find(":input:not(.readonlyfield):not([type='hidden']):not([type='button']):not(.paging):not(.checkbox)")
                 .toggleClass('readonlyfield', readonly)
                 .attr({'disabled': readonly, 'readOnly': readonly});
-            jQuery($field).find("table:not(.readonlyfield):not([type='hidden']):not([disabled='button'])")
-                .toggleClass('readonlyfield', readonly)
-                .attr({'disabled': readonly, 'readOnly': readonly});
             return;
         }
     }
