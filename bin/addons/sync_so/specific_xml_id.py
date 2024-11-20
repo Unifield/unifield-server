@@ -464,6 +464,8 @@ class msf_instance(osv.osv):
         changed_state_ids = []
 
         if context.get('sync_update_execution') and vals.get('state') in ['active', 'inactive']:
+            if vals.get('state') == 'inactive' and self._has_undisposed_assets(cr, uid, ids, context=context):
+                raise osv.except_osv('Error', 'The instance cannot be decommissioned yet, it still owns undisposed assets.')
             changed_state_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '!=', vals['state'])], context=context)
 
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
@@ -485,6 +487,16 @@ class msf_instance(osv.osv):
                     partner_obj.write(cr, uid, p_id, {'active': active}, context={})  # empty context: in sync ctx active field is disabled
 
         return res
+
+    def _has_undisposed_assets(self, cr, uid, ids, context=None):
+        if not ids:
+            return False
+        if isinstance(ids, int):
+            ids = [ids]
+        if context is None:
+            context = {}
+        asset_obj = self.pool.get('product.asset')
+        return asset_obj.search_exists(cr, uid, [('used_instance_id', 'in', ids), ('state', '!=', 'disposed')], context=context)
 
 msf_instance()
 
