@@ -9,6 +9,7 @@ from osv import fields
 from product_nomenclature.product_nomenclature import RANDOM_XMLID_CODE_PREFIX
 import time
 import netsvc
+from tools.translate import _
 
 # Note:
 #
@@ -465,7 +466,7 @@ class msf_instance(osv.osv):
 
         if context.get('sync_update_execution') and vals.get('state') in ['active', 'inactive']:
             if vals.get('state') == 'inactive' and self._has_undisposed_assets(cr, uid, ids, context=context):
-                raise osv.except_osv('Error', 'The instance cannot be decommissioned yet, it still owns undisposed assets.')
+                raise osv.except_osv(_('Error'), _('The instance cannot be decommissioned yet, it still owns undisposed assets.'))
             changed_state_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '!=', vals['state'])], context=context)
 
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
