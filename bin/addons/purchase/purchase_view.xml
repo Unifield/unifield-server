@@ -365,14 +365,16 @@
                                 filter_selector="[('Show all', []), ('ESC Confirmed', [('esc_confirmed', '=', True)]), ('ESC Unconfirmed', [('esc_confirmed', '=', False)])], [('Show all', []), ('Show validated only', [('state', 'in', ['validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n'])]), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="['0', '4']" o2m_selectable="2"
                                 >
-                                <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description) or no_prod_nr_id != False; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated'] or no_prod_nr_id != False or po_locked == True" button_attrs="{'invisible': ['|', '|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p']), ('locked_by_signature', '=', True)]}" editable="both">
+                                <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description) or no_prod_nr_id != False; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated'] or no_prod_nr_id != False" button_attrs="{'invisible': ['|', '|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p']), ('locked_by_signature', '=', True)]}" editable="both" nopopup="po_locked==True">
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False), ('no_prod_nr_id', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
                                     <field name="default_name" displayon="noteditable"/>
 
-                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,nomen_manda_0,comment,context, parent.categ, False, linked_sol_id, select_fo, po_order_type, instance_sync_order_ref, rfq_ok)" attrs="{'readonly': [('tender_line_id', '!=', False)], 'required': [('comment', '=', False)]}" displayon="editable" />
-                                    <field name="comment"  attrs="{'required': [('product_id', '=', False)]}"/>
+                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ"
+                                           on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,nomen_manda_0,comment,context, parent.categ, False, linked_sol_id, select_fo, po_order_type, instance_sync_order_ref, rfq_ok)"
+                                           attrs="{'readonly': ['|', ('tender_line_id', '!=', False), ('po_locked', '=', True)], 'required': [('comment', '=', False)]}" displayon="editable" />
+                                    <field name="comment" attrs="{'required': [('product_id', '=', False)], 'readonly': [('po_locked', '=', True)]}"/>
                                     <field name="nomenclature_description" readonly="1" />
                                     <button name="openform"
                                         special="openform"
@@ -386,17 +388,21 @@
                                     <field name="internal_name" invisible="True"/>
                                     <field name="supplier_name" invisible="True"/>
                                     <field name="fake_id" invisible="True"/>
-                                    <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,'','', context)" string="Qty"/>
-                                    <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
-                                    <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, '', '', context)"/>
+                                    <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id"
+                                           on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,'','', context)"
+                                           string="Qty" attrs="{'readonly': [('po_locked', '=', True)]}"/>
+                                    <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)"
+                                           domain="[('uom_by_product', '=', product_id)]" attrs="{'readonly': [('po_locked', '=', True)]}"/>
+                                    <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, '', '', context)"
+                                           attrs="{'readonly': [('po_locked', '=', True)]}"/>
                                     <field name="price_subtotal"/>
                                     <field name="original_changed" readonly="1" string="CHG"/>
                                     <field name="change_price_ok" invisible="1"/>
                                     <field name="old_price_unit" invisible="1"/>
-                                    <field name="date_planned" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
+                                    <field name="date_planned" attrs="{'readonly': ['|', ('fake_state', 'not in', ['', 'draft']), ('po_locked', '=', True)]}"/>
                                     <field name="esti_dd" attrs="{'readonly': [('fake_state', 'not in', ['validated', 'validated_n'])]}"/>
-                                    <field name="confirmed_delivery_date"/>
-                                    <field name="stock_take_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft'])]}"/>
+                                    <field name="confirmed_delivery_date" attrs="{'readonly': [('fake_state', 'not in', ['', 'draft', 'validated', 'validated_n'])]}"/>
+                                    <field name="stock_take_date" attrs="{'readonly': ['|', ('fake_state', 'not in', ['', 'draft']), ('po_locked', '=', True)]}"/>
                                     <button name="button_analytic_distribution" string="Analytical distribution" type="object" context="{'partner_type': parent.partner_type}" icon="terp-stock_symbol-selection" attrs="{'invisible': [('no_prod_nr_id', '!=', False)]}"/>
                                     <field name="analytic_distribution_state_recap" string="A.D"/>
                                     <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
@@ -438,7 +444,7 @@
                             <newline/>
                             <separator colspan="2" string="Delivery documents"/>
                             <separator colspan="2" string="Shipment documents"/>
-                            <field name="picking_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('type', '=', 'out'), ('converted_to_standard', '=', True)]">
+                            <field name="picking_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('type', '=', 'out'), ('converted_to_standard', '=', True)]" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
                                 <tree string="Delivery Orders">
                                     <field name="name"/>
                                     <field name="reason_type_id"/>
@@ -447,7 +453,7 @@
                                     <field name="state"/>
                                 </tree>
                             </field>
-                            <field name="shipment_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('parent_id', '!=', False)]">
+                            <field name="shipment_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('parent_id', '!=', False)]" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
                                 <tree string="Shipments">
                                     <field name="name"/>
                                     <field name="partner_id"/>
@@ -458,27 +464,27 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Delivery &amp; Invoicing" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
+                        <page string="Delivery &amp; Invoicing">
                             <group colspan="4" col="4">
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
                                    <group colspan="2" col="4">
-                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)"/>
+                                    <field name="delivery_requested_date" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('locked_by_signature', '=', True)]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)"/>
                                     <field name="delivery_requested_date_modified" attrs="{'readonly': [('state', 'not in', ['draft_p', 'validated', 'validated_p'])]}" />
                                    </group>
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'estimated', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'draft_p', 'validated', 'validated_p')), ('locked_by_signature', '=', True)]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'estimated', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'draft_p', 'validated', 'validated_p')), '&amp;', ('state', '=', 'draft'), ('locked_by_signature', '=', True)]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p']), ('locked_by_signature', '=', True)]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
                                 </group>
-                                <field name="transport_type" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
-                                <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
-                                <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])], 'invisible': [('partner_type', '=', 'external')]}"/>
-                                <field name="shipment_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])], 'invisible': [('partner_type', '=', 'external')]}"/>
-                                <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '=', True), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}"/>
+                                <field name="transport_type" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)]}"/>
+                                <field name="est_transport_lead_time" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)]}"/>
+                                <field name="ready_to_ship_date" attrs="{'readonly': ['|', '|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)], 'invisible': [('partner_type', '=', 'external')]}"/>
+                                <field name="shipment_date" attrs="{'readonly': ['|', '|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)], 'invisible': [('partner_type', '=', 'external')]}"/>
+                                <field name="arrival_date" attrs="{'readonly': ['|', '|', ('shipped_rate', '=', True), ('state', '=', 'done'), ('locked_by_signature', '=', True)], 'invisible': [('internal_type', '!=', 'international')]}"/>
                             </group>
-                            <group colspan="2" col="2">
+                            <group colspan="2" col="2" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
                                 <separator string="Delivery" colspan="2"/>
                                 <field name="dest_partner_type" invisible="1" />
                                 <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('available_on_po_dpo', '=', active_id)]"/>
