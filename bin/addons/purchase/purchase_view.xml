@@ -164,7 +164,6 @@
                         <field name="alert_msl_mml" invisible="1"/>
                         <field name="catalogue_display_tab" invisible="1" />
                         <field name="catalogue_exists_text" invisible="1" />
-                        <field name="locked_by_signature" invisible="1" />
                         <group colspan="6">
                             <html>
                                 <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
@@ -274,8 +273,8 @@
                                     if (catalogue_text) {
                                          $('#order_line_extra_text').html(catalogue_text);
                                     }
-                                    var is_locked_by_signature = $('#locked_by_signature').val();
-                                    if (is_locked_by_signature == "1") {
+                                    var is_doc_locked_for_sign = $('#doc_locked_for_sign').val();
+                                    if (is_doc_locked_for_sign == "1") {
                                         msg_dom = $('#view_purchase_order_locked_for_signature')
                                         msg_dom.show();
                                     }
@@ -284,44 +283,44 @@
                             </html>
                         </group>
                         <field name="name"/>
-                        <field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" attrs="{'readonly': ['|', ('state', 'not in', ['draft']), ('locked_by_signature', '=', True)]}"/>
+                        <field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
                         <field name="invoiced" attrs="{'invisible':[('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p'))]}" readonly="1"/>
                         <newline/>
-                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection" attrs="{'readonly': ['|', ('state', 'not in', ['draft']), ('locked_by_signature', '=', True)]}"/>
+                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
                         <field name="partner_ref" invisible="1"/>
-                        <field name="short_partner_ref" on_change="onchange_short_partner_ref(short_partner_ref)" attrs="{'readonly': ['|', '|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)]}"/>
+                        <field name="short_partner_ref" on_change="onchange_short_partner_ref(short_partner_ref)" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <field name="shipped" attrs="{'invisible':[('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p'))]}" readonly="1"/>
                         <field name="shipped_rate" invisible="True" widget="boolean"/> <!-- Put to boolean for the conditions below -->
                         <field name="push_fo" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
                         <field name="nb_creation_message_nr" invisible="1"/>
                         <field name="ad_lines_message_nr" invisible="1"/>
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('order_type', '=', 'loan_return'), ('locked_by_signature', '=', True)]}"/>
-                        <field name="priority" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)]}"/>
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('order_type', '=', 'loan_return')]}"/>
+                        <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <newline/>
-                        <field name="categ" on_change="onchange_categ(categ)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('locked_by_signature', '=', True)]}"/>
-                        <field name="details" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('locked_by_signature', '=', True)]}"/>
+                        <field name="categ" on_change="onchange_categ(categ)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         <newline/>
                     </group>
                     <field name="parent_order_name" readonly="True" attrs="{'invisible': [('parent_order_name', '=', False)]}"/>
                     <newline/>
-                    <field name="loan_duration" attrs="{'invisible': [('order_type', 'not in', ['loan', 'loan_return'])], 'required': [('order_type', 'in', ['loan', 'loan_return'])], 'readonly': [('locked_by_signature', '=', True)]}"/>
+                    <field name="loan_duration" attrs="{'invisible': [('order_type', 'not in', ['loan', 'loan_return'])], 'required': [('order_type', 'in', ['loan', 'loan_return'])]}"/>
                     <newline/>
                     <field name="not_beyond_validated" invisible="1"/>
-                    <field name="show_default_msg" attrs="{'readonly': ['|', ('not_beyond_validated', '=', False), ('locked_by_signature', '=', True)]}"/>
-                    <field name="company_id" groups="base.group_multi_company" widget="selection" attrs="{'readonly': [('locked_by_signature', '=', True)]}"/>
+                    <field name="show_default_msg" attrs="{'readonly': [('not_beyond_validated', '=', False)]}"/>
+                    <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                     <newline/>
                     <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
-                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)]}"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('doc_locked_for_sign', '=', True)]}"/>
                     </group>
                     <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
-                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)]}"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('doc_locked_for_sign', '=', True)]}"/>
                     </group>
                     <field name="analytic_distribution_id" invisible="1"/>
                     <notebook colspan="4">
-                        <page string="Purchase Order" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
+                        <page string="Purchase Order">
                             <field name="allocation_setup" invisible="1"/>
                             <newline/>
                             <group name="partner_info" colspan="4" col="4">
@@ -330,32 +329,32 @@
                                 <field name="canceled_end" invisible="1"/>
                                 <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id, 'split_po': related_sourcing_id}), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
                                 <field name="partner_type"/>
-                                <field name="partner_address_id" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)]}"/>
+                                <field name="partner_address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="origin" readonly="1" widget="char"/>
                                 <field name="internal_type" string="Zone"/>
                                 <field name="customer_ref" invisible="1"/>
                                 <field name="short_customer_ref" widget="char"/>
-                                <field name="from_address" domain="[('partner_id', '=', company_id)]" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)]}"/>
+                                <field name="from_address" domain="[('partner_id', '=', company_id)]" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="dest_partner_names"/>
                                 <group colspan="2" col="3">
                                     <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p'])]}" />
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p']), ('locked_by_signature', '=', True)]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p']), ('doc_locked_for_sign', '=', True)]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="no_line" invisible="1"/>
                                     <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', '|', ('no_line', '=', False), ('state', 'not in', ['draft']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
-                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', '|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('locked_by_signature', '=', True)]}"/>
+                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', '|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('doc_locked_for_sign', '=', True)]}"/>
                                 </group>
-                                <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('locked_by_signature', '=', True)]}"/>
+                                <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('doc_locked_for_sign', '=', True)]}"/>
                             </group>
-                            <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':['|', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('locked_by_signature', '=', True)]}">
+                            <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':['|', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('doc_locked_for_sign', '=', True)]}">
                                 <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                                 <button name="wizard_import_ad" string="Import AD" icon="terp-stock_symbol-selection" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                                 <button name="button_cancel_lines" string="Cancel Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['&amp;', ('state', 'not in', ['draft', 'draft_p']), '|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['validated', 'validated_p'])]}" />
                                 <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" context="{'rfq_ok': False}"/>
                                 <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                             </group>
-                            <group colspan="4" col="4" attrs="{'invisible':['|', '&amp;', ('state', 'not in', ['validated', 'validated_p']), '|', ('partner_type', 'not in', ['esc', 'external']), ('state', 'not in', ['confirmed', 'confirmed_p']), ('locked_by_signature', '=', True)]}">
+                            <group colspan="4" col="4" attrs="{'invisible':['|', '&amp;', ('state', 'not in', ['validated', 'validated_p']), '|', ('partner_type', 'not in', ['esc', 'external']), ('state', 'not in', ['confirmed', 'confirmed_p']), ('doc_locked_for_sign', '=', True)]}">
                                 <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" />
                                 <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" />
                             </group>
@@ -365,7 +364,7 @@
                                 filter_selector="[('Show all', []), ('ESC Confirmed', [('esc_confirmed', '=', True)]), ('ESC Unconfirmed', [('esc_confirmed', '=', False)])], [('Show all', []), ('Show validated only', [('state', 'in', ['validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n'])]), ('Hide closed', [('state', 'not in', ['done', 'cancel', 'cancel_r'])]), ('Show closed only', [('state', '=', 'done')]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show cancelled only', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 default_selector="['0', '4']" o2m_selectable="2"
                                 >
-                                <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description) or no_prod_nr_id != False; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated'] or no_prod_nr_id != False" button_attrs="{'invisible': ['|', '|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p']), ('locked_by_signature', '=', True)]}" editable="both" nopopup="po_locked==True">
+                                <tree string="Lines" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo) or (not default_code and not nomenclature_description) or no_prod_nr_id != False; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'draft_p', 'validated_n', 'validated'] or no_prod_nr_id != False" button_attrs="{'invisible': ['|', '|', ('state', 'not in', ['draft', 'draft_p', 'validated_p', 'validated']), '&amp;', ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', 'in', ['validated', 'validated_p']), ('doc_locked_for_sign', '=', True)]}" editable="both" nopopup="po_locked==True">
                                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False), ('no_prod_nr_id', '=', False)]}" />
                                     <field name="line_number" readonly="1"/>
                                     <field name="default_code" displayon="noteditable"/>
@@ -438,13 +437,13 @@
                                 <!-- default form view -->
                             </field>
                         </page>
-                        <page string="Linked documents" attrs="{'invisible': [('categ', '!=', 'transport')], 'readonly': [('locked_by_signature', '=', True)]}">
+                        <page string="Linked documents" attrs="{'invisible': [('categ', '!=', 'transport')]">
                             <separator colspan="4" string="Purchase Order"/>
                             <field name="transport_order_id" domain="[('rfq_ok', '=', False)]"/>
                             <newline/>
                             <separator colspan="2" string="Delivery documents"/>
                             <separator colspan="2" string="Shipment documents"/>
-                            <field name="picking_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('type', '=', 'out'), ('converted_to_standard', '=', True)]" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
+                            <field name="picking_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('type', '=', 'out'), ('converted_to_standard', '=', True)]">
                                 <tree string="Delivery Orders">
                                     <field name="name"/>
                                     <field name="reason_type_id"/>
@@ -453,7 +452,7 @@
                                     <field name="state"/>
                                 </tree>
                             </field>
-                            <field name="shipment_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('parent_id', '!=', False)]" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
+                            <field name="shipment_transport_ids" colspan="2" nolabel="1" widget="many2many" domain="[('transport_order_id', '=', False), ('parent_id', '!=', False)]">
                                 <tree string="Shipments">
                                     <field name="name"/>
                                     <field name="partner_id"/>
@@ -469,22 +468,22 @@
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
                                    <group colspan="2" col="4">
-                                    <field name="delivery_requested_date" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('locked_by_signature', '=', True)]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)"/>
+                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)"/>
                                     <field name="delivery_requested_date_modified" attrs="{'readonly': [('state', 'not in', ['draft_p', 'validated', 'validated_p'])]}" />
                                    </group>
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'estimated', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'draft_p', 'validated', 'validated_p')), '&amp;', ('state', '=', 'draft'), ('locked_by_signature', '=', True)]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'estimated', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated', 'validated_p'))]}"/>
                                 </group>
                                 <group colspan="2" col="3">
-                                    <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
+                                    <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"/>
                                     <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
                                 </group>
-                                <field name="transport_type" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)]}"/>
-                                <field name="est_transport_lead_time" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)]}"/>
-                                <field name="ready_to_ship_date" attrs="{'readonly': ['|', '|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)], 'invisible': [('partner_type', '=', 'external')]}"/>
-                                <field name="shipment_date" attrs="{'readonly': ['|', '|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated']), ('locked_by_signature', '=', True)], 'invisible': [('partner_type', '=', 'external')]}"/>
-                                <field name="arrival_date" attrs="{'readonly': ['|', '|', ('shipped_rate', '=', True), ('state', '=', 'done'), ('locked_by_signature', '=', True)], 'invisible': [('internal_type', '!=', 'international')]}"/>
+                                <field name="transport_type" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])], 'invisible': [('partner_type', '=', 'external')]}"/>
+                                <field name="shipment_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])], 'invisible': [('partner_type', '=', 'external')]}"/>
+                                <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '=', True), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}"/>
                             </group>
-                            <group colspan="2" col="2" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
+                            <group colspan="2" col="2">
                                 <separator string="Delivery" colspan="2"/>
                                 <field name="dest_partner_type" invisible="1" />
                                 <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('available_on_po_dpo', '=', active_id)]"/>
@@ -498,21 +497,21 @@
                             <field name="date_approve" invisible="1"/>
                             <newline/>
                         </page>
-                        <page string="Invoices" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
+                        <page string="Invoices">
                             <group colspan="2" col="2">
                                 <separator string="Invoice Control" colspan="2"/>
                                 <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan', 'loan_return'])]}"/>
                                 <field name="unallocation_ok" attrs="{'readonly': ['|', ('cross_docking_ok', '=', True), ('allocation_setup', '!=', 'mixed')]}"/>
                                 <field name="fiscal_position" widget="selection" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <field name="invoice_address_id" domain="[('inv_address', 'in', [company_id])]" context="contact_display='partner_address'" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': ['|', ('state', 'in', ['confirmed', 'confirmed_p', 'done', 'cancel']), ('locked_by_signature', '=', True)]}"/>
+                                <field name="invoice_address_id" domain="[('inv_address', 'in', [company_id])]" context="contact_display='partner_address'" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'in', ['confirmed', 'confirmed_p', 'done', 'cancel'])]}"/>
                             </group>
                             <separator string="Invoices" colspan="4"/>
                             <newline/>
-                            <field name="invoice_ids" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}" attrs="{'readonly': [('locked_by_signature', '=', True)]}"/>
+                            <field name="invoice_ids" nolabel="1" colspan="4" context="{'type':'in_invoice', 'journal_type': 'purchase'}"/>
                             <newline/>
                             <separator string="Down Payments" colspan="4"/>
                             <newline/>
-                            <field name="down_payment_ids" nolabel="1" colspan="4" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
+                            <field name="down_payment_ids" nolabel="1" colspan="4">
                                 <tree string="Down Payment">
                                     <field name="statement_id" string="Register"/>
                                     <field name="date"/>
@@ -524,7 +523,7 @@
                                 </tree>
                             </field>
                             <field name="has_tax_at_line_level" invisible="1" />
-                            <field name="tax_line" nolabel="1" attrs="{'invisible': ['|', ('partner_type', '!=', 'external'), ('order_type', '=', 'in_kind')], 'readonly': ['|', '|', ('not_beyond_validated','=', False), ('has_tax_at_line_level', '=', True), ('locked_by_signature', '=', True)]}">
+                            <field name="tax_line" nolabel="1" attrs="{'invisible': ['|', ('partner_type', '!=', 'external'), ('order_type', '=', 'in_kind')], 'readonly': ['|', ('not_beyond_validated','=', False), ('has_tax_at_line_level', '=', True)]}">
                                 <tree editable="bottom" string="Taxes">
                                     <field name="account_tax_id" on_change="tax_code_change(account_tax_id, parent.amount_untaxed, parent.partner_id, context)" />
                                     <field name="name"/>
@@ -541,12 +540,12 @@
                             </field>
 
                         </page>
-                        <page string="Notes" attrs="{'readonly': [('locked_by_signature', '=', True)]}">
+                        <page string="Notes">
                             <group colspan="4" col="6">
                             <field name="import_in_progress" readonly="1" invisible="0"/>
                             <field name="auto_exported_ok" readonly="1"/>
                             <field name="can_be_auto_exported" invisible="1" />
-                            <button name="auto_export_manual" string="Run PO export job" attrs="{'invisible': ['|', ('can_be_auto_exported', '!=', True), ('locked_by_signature', '=', True)]}" type="object" icon="terp-camera_test" colspan="2"/>
+                            <button name="auto_export_manual" string="Run PO export job" attrs="{'invisible': ['|', ('can_be_auto_exported', '!=', True), ('doc_locked_for_sign', '=', True)]}" type="object" icon="terp-camera_test" colspan="2"/>
                             </group>
                             <field colspan="4" name="notes" nolabel="1"/>
                             <separator colspan="4" string="Message ESC"/>
@@ -571,8 +570,8 @@
                             <field name="display_intl_transport_ok" invisible="1"/>
                             <field name="intl_supplier_ok" invisible="1"/>
                             <label align="1.0" string="Estimated transport costs : " colspan="3"/>
-                            <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': ['|', ('shipped_rate', '=', True), ('locked_by_signature', '=', True)]}" nolabel="1"/>
-                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': ['|', ('shipped_rate', '=', True), ('locked_by_signature', '=', True)]}" nolabel="1"/>
+                            <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '=', True)]}" nolabel="1"/>
+                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '=', True)]}" nolabel="1"/>
                             <label colspan="13"/>
                             <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
                         </group>
@@ -580,13 +579,13 @@
                         <field name="amount_untaxed" sum="Untaxed amount"/>
                         <field name="amount_tax"/>
                         <field name="amount_total" sum="Total amount"/>
-                        <button name="button_dummy" string="Compute" type="object" icon="gtk-execute" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('locked_by_signature', '=', True)]}"/>
+                        <button name="button_dummy" string="Compute" type="object" icon="gtk-execute" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('doc_locked_for_sign', '=', True)]}"/>
                         <newline/>
                         <field name="functional_currency_id" readonly="1"/>
                         <field name="functional_amount_untaxed"/>
                         <field name="functional_amount_tax"/>
                         <field name="functional_amount_total"/>
-                        <button type="object" string="Remove taxes on lines" name="remove_line_tax" attrs="{'invisible': ['|', '|', ('has_tax_at_line_level', '=', False), ('not_beyond_validated', '=', False), ('locked_by_signature', '=', True)]}" icon="gtk-cut" confirm="Remove taxes on all PO lines ?"/>
+                        <button type="object" string="Remove taxes on lines" name="remove_line_tax" attrs="{'invisible': ['|', '|', ('has_tax_at_line_level', '=', False), ('not_beyond_validated', '=', False), ('doc_locked_for_sign', '=', True)]}" icon="gtk-cut" confirm="Remove taxes on all PO lines ?"/>
                         <newline/>
                         <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
                         <newline/>
@@ -594,9 +593,9 @@
                     </group>
                     <group colspan="4" col="16">
                         <field name="state" readonly="1"/>
-                        <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', '|',  ('state', 'not in', ['confirmed', 'confirmed_p']), ('order_type', '!=', 'direct'), '&amp;', ('dest_partner_type', 'in', ['internal', 'section', 'intermission']), ('po_version', '&gt;', 1)], 'readonly': [('locked_by_signature', '=', True)]}"/>
-                        <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', '|', '&amp;', ('state', 'not in', ['draft', 'draft_p']), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('partner_type', 'in', ['external', 'esc']), ('locked_by_signature', '=', True)]}" string="Cancel document" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
-                        <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel'), ('locked_by_signature', '=', True)]}"/>
+                        <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', '|',  ('state', 'not in', ['confirmed', 'confirmed_p']), ('order_type', '!=', 'direct'), '&amp;', ('dest_partner_type', 'in', ['internal', 'section', 'intermission']), ('po_version', '&gt;', 1)]}"/>
+                        <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', '|', '&amp;', ('state', 'not in', ['draft', 'draft_p']), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('partner_type', 'in', ['external', 'esc']), ('doc_locked_for_sign', '=', True)]}" string="Cancel document" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
+                        <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel'), ('doc_locked_for_sign', '=', True)]}"/>
                         <button name="validate_lines" states="draft,draft_p" string="Validate document" type="object" icon="gtk-go-forward" help="all the lines will be Validated where this status change is feasible" />
                         <button name="confirm_lines" states="validated,validated_p" string="Confirm document" icon="gtk-go-forward" type="object" help="all the lines will be Confirmed where this status change is feasible" />
                     </group>

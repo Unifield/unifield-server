@@ -259,20 +259,8 @@ class signature_object(osv.osv):
     # do not create table signature_object
     _auto = False
 
-    def _get_locked_by_signature(self, cr, uid, ids, field_name, args, context=None):
-        if context is None:
-            context = {}
-
-        res = {}
-        for obj in self.browse(cr, uid, ids, fields_to_fetch=['signature_id'], context=context):
-            res[obj.id] = obj.signature_id.doc_locked_for_sign
-
-        return res
-
     _columns = {
         'signature_id': fields.many2one('signature', 'Signature', required=True, ondelete='cascade'),
-        'locked_by_signature': fields.function(_get_locked_by_signature, type='boolean', string='Locked by signature',
-                                               method=True, readonly=True, help='To prevent edition on: PO', store=False),
     }
 
     def action_close_signature(self, cr, uid, ids, context=None):
