@@ -656,6 +656,8 @@ class signature_line(osv.osv):
                 group_name = 'Sign_document_creator_finance'
             elif sign_line.signature_id.signature_res_model in ['purchase.order', 'stock.picking', 'sale.order']:
                 group_name = 'Sign_document_creator_supply'
+            elif sign_line.signature_id.signature_res_model == 'physical.inventory':
+                group_name = 'Sign_user'
             if not group_name or (group_name and not user_obj.check_user_has_group(cr, uid, group_name)):
                 raise osv.except_osv(_('Warning'), _("You are not allowed to remove this signature"))
             if not sign_line.signature_id.allowed_to_be_signed_unsigned:
