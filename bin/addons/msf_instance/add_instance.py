@@ -40,7 +40,7 @@ class account_analytic_journal(osv.osv):
 
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True, translate=True),
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', required=True),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', required=True, select=1),
         'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?")
     }
 
@@ -111,7 +111,7 @@ class account_journal(osv.osv):
 
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True, translate=True),
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', required=True),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', required=True, select=1),
         'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?"),
         'is_coordo_editable': fields.function(_get_is_coordo_editable, type='boolean', method=True, readonly=True, store=False, string='Editable from Coordo', help="Is this journal from an inactive project and current instance a coordo?")
     }
@@ -268,7 +268,7 @@ class account_analytic_line(osv.osv):
     _inherit = 'account.analytic.line'
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
         'journal_id_fake': fields.function(_get_journal_id_fake, method=True, string='Journal', type='many2one', relation='account.analytic.journal.fake', fnct_search=_search_journal_id_fake)
     }
 
@@ -379,7 +379,7 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
         'journal_id_fake': fields.function(_get_journal_id_fake, method=True, string='Journal', type='many2one', relation='account.journal.fake', fnct_search=_search_journal_id_fake)
     }
 
@@ -439,7 +439,7 @@ class account_bank_statement(osv.osv):
     _inherit = 'account.bank.statement'
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -486,7 +486,7 @@ class account_bank_statement_line(osv.osv):
     _inherit = 'account.bank.statement.line'
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -525,7 +525,7 @@ class account_cashbox_line(osv.osv):
     _inherit = 'account.cashbox.line'
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -592,7 +592,7 @@ class account_analytic_account(osv.osv):
         return False
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
         'current_instance_type': fields.function(_get_current_instance_type, method=True, store=False, string='Instance type', type='selection', selection=[('section', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')], readonly=True),
     }
 
