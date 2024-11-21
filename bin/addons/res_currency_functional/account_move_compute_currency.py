@@ -229,9 +229,6 @@ class account_move_compute_currency(osv.osv):
             journal = self.pool.get('account.journal').read(cr, uid, j_id, ['currency'])
             if journal and journal.get('currency', False):
                 vals.update({'manual_currency_id': journal.get('currency')[0], 'block_manual_currency_id': True,})
-                # Add currency to context for journal items lines
-                if not 'manual_currency_id' in context:
-                    context['manual_currency_id'] = journal.get('currency')[0]
             tmp_res = super(account_move_compute_currency, self).write(cr, uid, [m.get('id')], vals, context)
             res.append(tmp_res)
         return res
