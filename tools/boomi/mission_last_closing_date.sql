@@ -19,16 +19,17 @@ create or replace view mission_last_closing_date as (
  order by
     i.code, date_start desc, p.number, i.id
 );
+grant select on mission_last_closing_date to boomi;
 
-
+drop view country_last_closing_date;
 create or replace view country_last_closing_date as (
   select
       distinct on (acc.code)
       acc.code as country_code,
       p.date_start as last_period_closed,
       max(st.write_date::timestamp(0)) as last_modification_date,
-      array_agg(i.code order by i.id) as missions,
-      array_agg(i.state order by i.id) as mission_status
+      array_to_string(array_agg(i.code order by i.id), ',') as missions,
+      array_to_string(array_agg(i.state order by i.id), ',') as mission_status
   from
     account_analytic_account acc
     inner join account_target_costcenter target on target.cost_center_id = acc.id
@@ -49,4 +50,6 @@ create or replace view country_last_closing_date as (
  order by
     acc.code, p.date_start desc, p.number desc
 );
+grant select on country_last_closing_date to boomi;
+
 
