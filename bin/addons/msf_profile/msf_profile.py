@@ -63,8 +63,8 @@ class patch_scripts(osv.osv):
         '''
         Tick "Prevent asset from HQ entries" on OCA CoA (from HQ) on all expense accounts except the capitalisable ones.
         '''
-        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.instance
-        if current_instance == 'HQ_OCA':
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance == 'HQ_OCA':
             acc_obj = self.pool.get('account.account')
             acc_user_type_ids = self.pool.get('account.account.type').search(cr, uid, [('code', '=', 'expense')])
             acc_to_update_ids = acc_obj.search(cr, uid, [('user_type', 'in', acc_user_type_ids),
@@ -75,14 +75,6 @@ class patch_scripts(osv.osv):
                                                                                                       '61150', '61160',
                                                                                                       '61170'))])
             acc_obj.write(cr, uid, acc_to_update_ids, {'prevent_hq_asset': True})
-            # trigger sync
-            cr.execute('''
-                UPDATE ir_model_data
-                    SET touched='[''prevent_hq_asset'']', last_modification = NOW()
-                WHERE
-                    module='sd' AND
-                    model='account.account' AND
-                    res_id IN %s''', (tuple(acc_to_update_ids),))
         return True
 
     def us_11182_12727_pi_signature(self, cr, uid, *a, **b):
