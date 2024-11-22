@@ -414,7 +414,7 @@ class automated_import_job(osv.osv):
 
                             if import_data.function_id.model_id.model == 'supplier.catalogue' and \
                                     context.get('auto_import_catalogue_default_rank'):
-                                error_message.insert(0, _('A default ranking of 3rd choice has been applied to the imported lines of this catalogue since no ranking was in file'))
+                                error_message.insert(0, _('A default ranking of 3rd choice has been applied to all lines imported into this catalogue since no ranking was in file'))
                                 context.pop('auto_import_catalogue_default_rank')
 
                         if rejected:
