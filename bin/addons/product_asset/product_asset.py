@@ -247,6 +247,8 @@ class product_asset(osv.osv):
 
         # from coordo do not overwritte brand, serial, ...
         if context.get('sync_update_execution') and instance_level == 'project':
+            if not self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok'):
+                raise osv.except_osv(_("Error"), _("The fixed asset feature is not activated on this instance."))
             current_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
             if current_instance_id == vals.get('used_instance_id'):
                 for f in ['serial_nb', 'brand', 'type', 'model', 'year', 'comment', 'project_po', 'project_po', 'international_po', 'arrival_date', 'receipt_place']:
