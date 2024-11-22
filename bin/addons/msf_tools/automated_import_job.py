@@ -412,6 +412,11 @@ class automated_import_job(osv.osv):
                         if processed:
                             nb_processed += self.generate_file_report(cr, uid, job, processed, headers, remote=remote)
 
+                            if import_data.function_id.model_id.model == 'supplier.catalogue' and \
+                                    context.get('auto_import_catalogue_default_rank'):
+                                error_message.insert(0, _('A default ranking of 3rd choice has been applied to the imported lines of this catalogue since no ranking was in file'))
+                                context.pop('auto_import_catalogue_default_rank')
+
                         if rejected:
                             is_success = False
                             nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, remote=remote, rejected=True)
