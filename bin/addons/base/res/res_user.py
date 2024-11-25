@@ -496,13 +496,15 @@ class users(osv.osv):
 
     def _get_display_email_popup(self, cr, uid, ids, name=None, arg=None, context=None):
         ret = {}
-        has_dpt = self.pool.get('hr.department').search_exists(cr, 1, [], context=context)
+        has_dpt = self.pool.get('hr.department').search_exists(cr, 1, [('is_active','=',True)], context=context)  # Search only active departments
         for x in self.browse(cr, uid, ids, fields_to_fetch=['synchronize', 'force_dept_email_popup', 'context_department_id', 'user_email'], context=context):
             if x.id == 1 or x.synchronize:
                 ret[x.id] = False
             elif x.force_dept_email_popup or (not x.context_department_id and has_dpt) or not x.user_email:
                 ret[x.id] = True
             elif not x.context_department_id and has_dpt:
+                ret[x.id] = True
+            elif has_dpt and x.context_department_id and not x.context_department_id.is_active:
                 ret[x.id] = True
             else:
                 ret[x.id] = False
