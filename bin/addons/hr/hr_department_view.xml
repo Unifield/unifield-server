@@ -50,8 +50,12 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Departments">
-                    <field name="name"/>
-                    <field name="manager_id" />
+                    <group colspan="4">
+                        <filter name="filter_is_active" icon="terp-check" string="Active" domain="[('is_active', '=', True)]"/>
+                        <filter name="filter_is_inactive" icon="gtk-dialog-error" string="Inactive" domain="[('is_active', '=', False)]"/>
+                        <field name="name"/>
+                        <field name="manager_id" />
+                    </group>
                 </search>
              </field>
          </record>
