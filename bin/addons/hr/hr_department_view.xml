@@ -37,10 +37,11 @@
             <field name="type">tree</field>
             <field name="field_parent">child_ids</field>
             <field name="arch" type="xml">
-                <tree string="Companies">
+                <tree string="Companies" colors="red:is_active==False;black:is_active==True">
                     <field name="complete_name"/>
                     <field name="company_id" groups="base.group_multi_company"/>
                     <field name="manager_id"/>
+                    <field name="is_active" invisible="1"/>
                 </tree>
             </field>
         </record>

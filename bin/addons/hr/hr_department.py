@@ -128,7 +128,7 @@ class res_users(osv.osv):
     _description = 'User'
 
     _columns = {
-        'context_department_id': fields.many2one('hr.department', 'Department'),
+        'context_department_id': fields.many2one('hr.department', 'Department', domain=[('is_active','=',True)]),
     }
 
 res_users()
