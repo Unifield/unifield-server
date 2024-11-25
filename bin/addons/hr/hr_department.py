@@ -63,10 +63,12 @@ class hr_department(osv.osv):
         'parent_id': fields.many2one('hr.department', 'Parent Department', select=True),
         'child_ids': fields.one2many('hr.department', 'parent_id', 'Child Departments'),
         'note': fields.text('Note'),
+        'is_active': fields.boolean('Active'),
     }
 
     _defaults = {
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'hr.department', context=c),
+        'is_active': True,
     }
 
     _order = 'complete_name, name, id'

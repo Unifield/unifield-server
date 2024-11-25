@@ -19,6 +19,7 @@
                         <field name="manager_id" select="1"/>
                         <field name="company_id" select="1" widget="selection" groups="base.group_multi_company"/>
                     </group>
+                    <field name="is_active" select="1"/>
                     <notebook colspan="4" >
                         <page string="Members">
                             <field colspan="4" name="member_ids" nolabel="1"/>
