@@ -3,7 +3,7 @@
 -- grant select on actuals to boomi;
 
 -- create index country_export_mapping_instance_id_index on country_export_mapping(instance_id);
-
+-- drop view actuals_full;
 drop view actuals;
 create or replace view actuals as ( select
     al.id as analytic_line_id,
@@ -22,12 +22,12 @@ create or replace view actuals as ( select
     al.name as description,
     al.ref as reference,
     cost_center.code as cost_center_code,
-    dest.code as destination_code,
+    case dest.code  when 'OPS' then 'TEMP00-OPS' else dest.code END as destination_code,
     fp.code as funding_code,
     a.code as account_code,
     coalesce(tr.value, a.name) as account_name,
     hr.identification_id as emplid,
-    CASE hr.employee_type WHEN 'local' then 'LRS' WHEN 'ex' then 'IMS' ELSE NULL END as employee_type,
+    case hr.employee_type when 'local' then 'LRS' when 'ex' then 'IMS' else NULL end as employee_type,
     al.partner_txt as partner_txt,
     aml.partner_id as partner_id,
     aml.id as account_move_line_id,

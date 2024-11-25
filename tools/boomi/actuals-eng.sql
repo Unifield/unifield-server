@@ -1,5 +1,6 @@
 -- SET client_encoding TO 'UTF8';
 -- select * from actuals where period >= '2024-08-01' and mission_code='HT_COOR';
+-- select * from actuals_full where period >= '2024-08-01' and mission_code='HT_COOR';
 -- create index account_target_costcenter_is_target_index on account_target_costcenter(is_target);
 -- select * from actuals_eng where period>='2024-01-01';
 -- grant select on actuals_eng to boomi;
@@ -22,7 +23,7 @@ create or replace view actuals_eng as ( select
     al.name as description,
     al.ref as reference,
     cost_center.code as cost_center_code,
-    dest.code as destination_code,
+    case dest.code when 'OPS' then 'TEMP00-OPS' else dest.code end as destination_code,
     fp.code as funding_code,
     a.code as account_code,
     coalesce(tr.value, a.name) as account_name,
