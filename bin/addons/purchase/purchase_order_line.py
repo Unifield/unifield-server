@@ -633,7 +633,7 @@ class purchase_order_line(osv.osv):
 
         res = {}
         for line in self.browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
-            res[line.id] = line.order_id.locked_by_signature
+            res[line.id] = line.order_id.doc_locked_for_sign
 
         return res
 
