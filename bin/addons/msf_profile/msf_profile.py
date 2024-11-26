@@ -73,7 +73,24 @@ class patch_scripts(osv.osv):
             if group_ids:
                 bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', '=', 'physical.inventory')])
                 bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+        return True
 
+    def us_13719_tick_prevent_asset_from_hq(self, cr, uid, *a, **b):
+        '''
+        Tick "Prevent asset from HQ entries" on OCA CoA (from HQ) on all expense accounts except the capitalisable ones.
+        '''
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance == 'HQ_OCA':
+            acc_obj = self.pool.get('account.account')
+            acc_user_type_ids = self.pool.get('account.account.type').search(cr, uid, [('code', '=', 'expense')])
+            acc_to_update_ids = acc_obj.search(cr, uid, [('user_type', 'in', acc_user_type_ids),
+                                                         ('code', 'not in', ('60100', '60110',
+                                                                             '60120', '61100',
+                                                                             '61110', '61120',
+                                                                             '61130', '61140',
+                                                                             '61150', '61160',
+                                                                             '61170'))])
+            acc_obj.write(cr, uid, acc_to_update_ids, {'prevent_hq_asset': True})
         return True
 
     def us_11182_12727_pi_signature(self, cr, uid, *a, **b):

@@ -1163,6 +1163,10 @@
             <field name="method">us_13692_13705_fix_pi_sign_bar</field>
         </record>
 
+        <record id="us_13719_tick_prevent_asset_from_hq" model="patch.scripts">
+            <field name="method">us_13719_tick_prevent_asset_from_hq</field>
+        </record>
+
 
     </data>
 </openerp>
