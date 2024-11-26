@@ -51,6 +51,40 @@ class hr_department(osv.osv):
             sub_child_ids = self._get_ids_to_update(cr, uid, child_ids, context=context)
         return ids + sub_child_ids
 
+    def onchange_active(self, cr, uid, ids, is_active, context=None):
+        """
+        Remove all department members when department is inactivated
+        """
+        res = {}
+        # Some verifications
+        if not context:
+            context = {}
+        if not ids:
+            return res
+        if isinstance(ids, int):
+            ids = [ids]
+        if not is_active:
+            user_obj = self.pool.get('res.users')
+            members_ids = user_obj.search(cr, uid, [('context_department_id', 'in', ids)], context=context)
+            if members_ids:
+                user_obj.write(cr, uid, members_ids, {'context_department_id': False}, context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        if context is None:
+            context = {}
+
+        # Remove all department members when department is inactivated
+        if 'is_active' in vals and not vals['is_active']:
+            user_obj = self.pool.get('res.users')
+            members_ids = user_obj.search(cr, uid, [('context_department_id', 'in', ids)], context=context)
+            if members_ids:
+                user_obj.write(cr, uid, members_ids, {'context_department_id': False}, context=context)
+        return super(hr_department, self).write(cr, uid, ids, vals, context=context)
+
+
     _name = "hr.department"
     _columns = {
         'name': fields.char('Department Name', size=64, required=True),
