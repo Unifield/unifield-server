@@ -596,7 +596,7 @@
                                 filter_selector="[('Show available lines', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show all lines', []), ('Show cancelled lines', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 >
                                 <tree
-                                    colors="grey:scrapped==True; red: mml_status == 'F' or msl_status == 'F' or inactive_product == True or to_correct_ok == True"
+                                    colors="grey:scrapped==True; red: mml_status == 'F' or msl_status == 'F' or inactive_product == True or to_correct_ok == True or expired_date &lt; current_date"
                                     string="Stock Moves"
                                     hide_new_button="context.get('from_wkf')"
                                     hide_delete_button="context.get('purchase_id')"

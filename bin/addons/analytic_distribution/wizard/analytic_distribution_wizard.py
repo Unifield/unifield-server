@@ -469,7 +469,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             res[el.id] = True
             # verify purchase state
             if el.purchase_id and (el.purchase_id.state not in ['draft', 'draft_p', 'validated_n', 'validated'] or
-                                   el.purchase_id.locked_by_signature):
+                                   el.purchase_id.doc_locked_for_sign):
                 res[el.id] = False
             # verify purchase line state and allow modification if the line is created by sync and blocked at validated
             if el.purchase_line_id and ((el.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and \
