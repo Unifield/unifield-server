@@ -437,7 +437,7 @@
                                 <!-- default form view -->
                             </field>
                         </page>
-                        <page string="Linked documents" attrs="{'invisible': [('categ', '!=', 'transport')]">
+                        <page string="Linked documents" attrs="{'invisible': [('categ', '!=', 'transport')]}">
                             <separator colspan="4" string="Purchase Order"/>
                             <field name="transport_order_id" domain="[('rfq_ok', '=', False)]"/>
                             <newline/>
