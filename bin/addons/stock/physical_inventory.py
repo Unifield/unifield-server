@@ -937,9 +937,12 @@ class PhysicalInventory(osv.osv):
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
             if row_index < 10:
                 continue
+            # To ignore the white spaces and the signature block at the bottom
+            if not row.cells[0].data and not row.cells[1].data:
+                break
             if len(row) != 21:
                 add_error(_("""The number of columns is incorrect, you should have exactly 20 columns in this order:
-Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theoretical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Sub Reason Type, Comments / actions (in case of discrepancy)"""),
+Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Quantity, Counted Quantity, Batch number, Expiry date, Discrepancy Quantity, Discrepancy Value, Total Theoretical Quantity for product, Total Counted Quantity for product, Total Counted Value for product, Total Discrepancy for product, Total Discrepancy Value for product, Adjustement type, Sub Reason Type, Comments / actions (in case of discrepancy)"""),
                           row_index, len(row))
                 break
 

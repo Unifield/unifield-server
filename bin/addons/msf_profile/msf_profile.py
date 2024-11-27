@@ -59,6 +59,40 @@ class patch_scripts(osv.osv):
     }
 
     # UF35.0
+    def us_13692_13705_fix_pi_sign_bar(self, cr, uid, *a, **b):
+        '''
+        Add the missing rights for signatures to PIs
+        '''
+        if not cr.table_exists('sync_server_user_rights'):
+            # exclude sync server
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            b_names = ['super_action_unsign', 'add_user_signatures', 'action_close_signature', 'activate_offline',
+                       'disable_offline', 'activate_offline_reset']
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
+
+            if group_ids:
+                bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', '=', 'physical.inventory')])
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+        return True
+
+    def us_13719_tick_prevent_asset_from_hq(self, cr, uid, *a, **b):
+        '''
+        Tick "Prevent asset from HQ entries" on OCA CoA (from HQ) on all expense accounts except the capitalisable ones.
+        '''
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance == 'HQ_OCA':
+            acc_obj = self.pool.get('account.account')
+            acc_user_type_ids = self.pool.get('account.account.type').search(cr, uid, [('code', '=', 'expense')])
+            acc_to_update_ids = acc_obj.search(cr, uid, [('user_type', 'in', acc_user_type_ids),
+                                                         ('code', 'not in', ('60100', '60110',
+                                                                             '60120', '61100',
+                                                                             '61110', '61120',
+                                                                             '61130', '61140',
+                                                                             '61150', '61160',
+                                                                             '61170'))])
+            acc_obj.write(cr, uid, acc_to_update_ids, {'prevent_hq_asset': True})
+        return True
+
     def us_11182_12727_pi_signature(self, cr, uid, *a, **b):
         '''
         Add signatures to PIs

@@ -486,8 +486,8 @@
 			<field name="arch" type="xml">
 				<search string="Picking Lists &amp; Picking Tickets">
 					<group col="8" colspan="4">
-                        <filter icon="terp-camera_test" name="confirmed" string="Not Available" domain="[('state','=','confirmed')]" />
-						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
+                        <filter icon="terp-camera_test" name="confirmed" string="Not Available" domain="[('line_state', '=', 'confirmed')]" />
+						<filter icon="terp-check" name="available" string="Available" domain="[('line_state', 'in', ['mixed', 'assigned'])]" />
 						<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                         <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
 						<separator orientation="vertical"/>

@@ -69,7 +69,7 @@
                 [[ repeatIn(getLines(), 'line') ]]
                 <td><para style="line">[[ line.user_id and line.user_id.name or '' ]]</para></td>
                 <td><para style="line">[[ line.doc_name or '' ]]</para></td>
-                <td><para style="line">[[ getSel(line, 'doc_state') ]]</para></td>
+                <td><para style="line">[[ getSel(line, 'doc_state_display') ]]</para></td>
                 <td><para style="line">[[ getSel(line, 'doc_type') ]]</para></td>
                 <td><para style="line">[[ getSel(line, 'status') ]]</para></td>
                 <td><para style="line">[[ line.signed > 0 and translate('Yes') or translate('No') ]]</para></td>

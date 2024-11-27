@@ -135,7 +135,7 @@ class supplier_catalogue(osv.osv):
         for catalogue in self.browse(cr, uid, ids, context=context):
             if catalogue.from_sync and not context.get('sync_update_execution'):
                 for val in vals:
-                    if val not in ('active', 'ranking'):
+                    if val not in ('active', 'ranking', 'line_ids'):
                         raise osv.except_osv(_('Error'), _('You can not modify a catalogue created from sync'))
             # Track Changes
             if catalogue.state != 'draft' and vals.get('active') is not None and vals['active'] != catalogue.active:
@@ -515,7 +515,7 @@ class supplier_catalogue(osv.osv):
         'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', method=True),
         'ranking': fields.selection([(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'),
                                      (5, '5th choice'), (6, '6th choice'), (7, '7th choice'), (8, '8th choice'),
-                                     (9, '9th choice'), (10, '10th choice'), (11, '11th choice'), (12, '12th choice')], string='Ranking'),
+                                     (9, '9th choice'), (10, '10th choice'), (11, '11th choice'), (12, '12th choice')], string='Supplier Ranking'),
         'ranking_on_all_lines': fields.function(_get_ranking_on_all_lines, string='All lines have ranking', type='boolean', method=True),
     }
 
@@ -1074,7 +1074,12 @@ class supplier_catalogue_line(osv.osv):
                     vals['ranking'] = catalogue.ranking
             if catalogue.state != 'draft':
                 if not vals.get('ranking') and not catalogue.ranking:
-                    raise osv.except_osv(_('Error'), _('The Ranking is mandatory on a confirmed catalogue line if there is none at header level'))
+                    if context.get('auto_import_ok'):
+                        if not context.get('auto_import_catalogue_default_rank'):
+                            context['auto_import_catalogue_default_rank'] = True
+                        vals['ranking'] = 3
+                    else:
+                        raise osv.except_osv(_('Error'), _('The Ranking is mandatory on a confirmed catalogue line if there is none at header level'))
                 vals = self._create_supplier_info(cr, uid, vals, context=context)
             if catalogue.partner_id:
                 vals['partner_type'] = catalogue.partner_id.partner_type
@@ -1111,7 +1116,7 @@ class supplier_catalogue_line(osv.osv):
         prod_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
 
         for line in self.browse(cr, uid, ids, context=context):
-            if line.catalogue_id.from_sync and not context.get('sync_update_execution'):
+            if line.catalogue_from_sync and not context.get('sync_update_execution'):
                 for val in vals:
                     if val != 'ranking':
                         raise osv.except_osv(_('Error'), _('You can not modify lines from a catalogue created from sync'))
@@ -1210,8 +1215,8 @@ class supplier_catalogue_line(osv.osv):
 
         # forbid supplier catalogue line coming from higher instance level to be manually deleted:
         to_unlink = set()
-        for cat_line in self.browse(cr, uid, ids, fields_to_fetch=['catalogue_id'], context=context):
-            if not cat_line.catalogue_id.from_sync or context.get('sync_update_execution', False):
+        for cat_line in self.browse(cr, uid, ids, fields_to_fetch=['catalogue_from_sync'], context=context):
+            if not cat_line['catalogue_from_sync'] or context.get('sync_update_execution', False):
                 to_unlink.add(cat_line.id)
             else:
                 raise osv.except_osv(
@@ -1287,8 +1292,9 @@ class supplier_catalogue_line(osv.osv):
         'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
         'ranking': fields.selection([(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'),
                                      (5, '5th choice'), (6, '6th choice'), (7, '7th choice'), (8, '8th choice'),
-                                     (9, '9th choice'), (10, '10th choice'), (11, '11th choice'), (12, '12th choice')], string='Ranking'),
+                                     (9, '9th choice'), (10, '10th choice'), (11, '11th choice'), (12, '12th choice')], string='Supplier Ranking'),
         'required_ranking': fields.function(_get_required_ranking, method=True, type='boolean', string='Is Ranking required'),
+        'catalogue_from_sync': fields.related('catalogue_id', 'from_sync', type='boolean', string='Created by Sync', write_relate=False),
     }
 
     _defaults = {

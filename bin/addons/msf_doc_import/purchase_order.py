@@ -322,8 +322,8 @@ class purchase_order(osv.osv):
             # get po_id from file
             po_id = self.get_po_id_from_file(cr, uid, file_path, context=context)
             context['po_id'] = po_id
-            po = self.read(cr, uid, po_id, ['name', 'locked_by_signature'], context=context)
-            if po['locked_by_signature']:
+            po = self.read(cr, uid, po_id, ['name', 'doc_locked_for_sign'], context=context)
+            if po['doc_locked_for_sign']:
                 raise osv.except_osv(_('Error'), _('%s: The automated import can not be used on a locked PO') % (po['name']))
             # create wizard.import.po.simulation.screen
             simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
