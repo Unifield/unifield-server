@@ -83,7 +83,7 @@ class product_supplierinfo(osv.osv):
         return res
 
     _columns = {
-        'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
+        'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade', select=1),
         'editable': fields.function(_get_editable, method=True, string='Editable', store=False, type='boolean'),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise.", related_uom='product_uom'),
     }

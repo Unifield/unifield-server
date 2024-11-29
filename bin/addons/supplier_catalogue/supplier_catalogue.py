@@ -1272,9 +1272,9 @@ class supplier_catalogue_line(osv.osv):
 
     _columns = {
         'line_number': fields.integer(string='Line', required=True),
-        'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
+        'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade', select=1),
         'product_code': fields.char('Supplier Code', size=64),
-        'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
+        'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade', select=1),
         'min_qty': fields.float(digits=(16,2), string='Min. Qty', required=True,
                                 help='Minimal order quantity to get this unit price.', related_uom='line_uom_id'),
         'line_uom_id': fields.many2one('product.uom', string='Product UoM', required=True,
@@ -1284,8 +1284,8 @@ class supplier_catalogue_line(osv.osv):
                                  help='The ordered quantity must be a multiple of this rounding value.', related_uom='line_uom_id'),
         'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty', related_uom='line_uom_id'),
         'comment': fields.char(size=64, string='Comment'),
-        'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
-        'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
+        'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info', select=1),
+        'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line', select=1),
         'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
         'to_correct_ok': fields.boolean('To correct'),
         'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
