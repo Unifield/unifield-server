@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class hr_department(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
@@ -53,29 +54,31 @@ class hr_department(osv.osv):
 
     def onchange_active(self, cr, uid, ids, is_active, context=None):
         """
-        Remove all department members when department is inactivated
+        Warning when the department has still members
         """
-        res = {}
         # Some verifications
         if not context:
             context = {}
         if not ids:
-            return res
+            return {}
         if isinstance(ids, int):
             ids = [ids]
+        message = {}
         if not is_active:
             user_obj = self.pool.get('res.users')
             members_ids = user_obj.search(cr, uid, [('context_department_id', 'in', ids)], context=context)
             if members_ids:
-                user_obj.write(cr, uid, members_ids, {'context_department_id': False}, context=context)
-        return res
+                message.update({
+                    'title': _('Warning'),
+                    'message': _('Are you sure you want to inactivate this department while it still has members?\nIf not, click on Cancel button.'),
+                })
+        return {'warning': message}
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
         if context is None:
             context = {}
-
         # Remove all department members when department is inactivated
         if 'is_active' in vals and not vals['is_active']:
             user_obj = self.pool.get('res.users')
