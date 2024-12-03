@@ -905,6 +905,12 @@ class product_asset(osv.osv):
             bs_prod_account_id = asset.product_id.categ_id and asset.product_id.categ_id.asset_bs_account_id and asset.product_id.categ_id.asset_bs_account_id.id or False
             if not bs_prod_account_id:
                 raise osv.except_osv(_('Error'), _('Product Category %s has no Asset Balance Sheet Account') % (asset.product_id.categ_id and asset.product_id.categ_id.name or asset.product_id.default_code, ))
+            if bs_prod_account_id and (asset.product_id.categ_id.asset_bs_account_id.type != 'other' or
+                                       asset.product_id.categ_id.asset_bs_account_id.user_type_code != 'asset'):
+                dep_lines_error = (_('Please correct the \'Asset B/S Depreciation Account\' of the Product-Category %s of asset %s:\n'
+                                    'The account used %s is not of type \'Asset\'') %
+                                   (asset.product_id.categ_id.name, asset.name, asset.product_id.categ_id.asset_bs_account_id.code))
+                raise osv.except_osv(_('Error !'), dep_lines_error)
 
             new_ad_id = False
             if asset.move_line_id.analytic_distribution_id:
