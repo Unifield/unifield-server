@@ -72257,12 +72257,6 @@ msgstr "  ¡Importación completa en %s! Nº de líneas importadas: %s en %s lí
 msgid "Mexico"
 msgstr "México"
 
-#. module: base
-#: field:res.config.users,date:0
-#: field:res.users,date:0
-msgid "Last Connection"
-msgstr "Última conexión"
-
 #. module: account_payment
 #: field:payment.line,state:0
 msgid "Communication Type"

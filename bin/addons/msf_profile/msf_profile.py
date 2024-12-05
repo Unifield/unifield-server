@@ -58,6 +58,15 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF36.0
+    def us_13755_remove_date_column_res_users(self, cr, uid, *a, **b):
+        '''
+        If the "date" columns still exists in res_users, delete it
+        '''
+        cr.execute("""ALTER TABLE res_users DROP COLUMN IF EXISTS date""")
+        
+        return True
+        
     # UF35.0
     def us_13692_13705_fix_pi_sign_bar(self, cr, uid, *a, **b):
         '''

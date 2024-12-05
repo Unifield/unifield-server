@@ -574,7 +574,6 @@ class users(osv.osv):
                                  string='Interface', help="Choose between the simplified interface and the extended one"),
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
-        'date': fields.datetime('Last Connection', readonly=True),
         'last_authentication': fields.function(_get_last_authentication, method=1, type='datetime', string='Last Authentication'),
         'synchronize': fields.boolean('Synchronize', help="Synchronize down this user", select=1),
         'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users.", select=1),

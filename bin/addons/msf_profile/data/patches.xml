@@ -1167,6 +1167,11 @@
             <field name="method">us_13719_tick_prevent_asset_from_hq</field>
         </record>
 
+        <!-- UF35.0 -->
+        <record id="us_13755_remove_date_column_res_users" model="patch.scripts">
+            <field name="method">us_13755_remove_date_column_res_users</field>
+        </record>
+
 
     </data>
 </openerp>
