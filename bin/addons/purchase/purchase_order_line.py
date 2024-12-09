@@ -622,6 +622,21 @@ class purchase_order_line(osv.osv):
                 po.catalogue_not_applicable='f'
         """, args) # not_a_user_entry
 
+    def _check_po_locked(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if the PO has been locked by signature
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
+            res[line.id] = line.order_id.doc_locked_for_sign
+
+        return res
+
     _columns = {
         'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
@@ -774,6 +789,7 @@ class purchase_order_line(osv.osv):
         'catalog_mismatch': fields.selection([('conform', 'Conform'), ('na', 'N/A'),('soq', 'SOQ') ,('price', 'Unit Price'), ('price_soq', 'Unit Price & SOQ')], 'Catalog Mismatch', size=64, readonly=1, select=1),
         'catalog_price_unit': fields.float_null('Catalogue Price Unit', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
         'catalog_soq': fields.float_null('Catalogue SoQ', digits=(16,2), readonly=1),
+        'po_locked': fields.function(_check_po_locked, method=True, string='Is PO signature-locked ?', type='boolean'),
     }
 
     _defaults = {

@@ -38,10 +38,16 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.date_to = False
         self.instance_ids = False
         self.period_title = False
+        self.currency_id = False
+        self.fx_table_id = False
+        self.sub_totals = False
+        self.general_total = False
         self.context = {}
         super(account_liquidity_balance, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'get_register_data': self._get_register_data,
+            'get_subtotals' : self._get_subtotals,
+            'get_general_total': self._get_general_total,
         })
 
     def _filter_journal_status(self, reg_data, date_to):
@@ -73,6 +79,8 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         res = []
         reg_obj = self.pool.get('account.bank.statement')
         period_obj = self.pool.get('account.period')
+        curr_rates = {}
+        table_curr_rates = {}
         date_from = date_to = False
         if self.date_from and self.date_to:
             date_from = self.date_from
@@ -85,6 +93,36 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
 
         if not date_from or not date_to:
             raise osv.except_osv(_('Error'), _('Start date and/or End date missing.'))
+
+        currency_id = self.currency_id
+        if self.fx_table_id:
+            # When the fx_table is used, the display currencies are mandatory and restricted to only those present in that fx_table,
+            # so we can use the following simple query
+            self.cr.execute("WITH fxtable_rate AS ("
+                            "   (SELECT rcr.rate, rcr.name "
+                            "    FROM res_currency curr, res_currency_rate rcr "
+                            "    WHERE "
+                            "       curr.currency_table_id = %s AND "
+                            "       rcr.currency_id = %s AND"
+                            "       rcr.name <= %s ORDER BY rcr.name desc LIMIT 1) "
+                            "UNION "
+                            "   (SELECT rcr.rate, rcr.name "
+                            "    FROM res_currency curr, res_currency_rate rcr "
+                            "    WHERE "
+                            "       curr.currency_table_id = %s AND "
+                            "       rcr.currency_id = %s AND"
+                            "       rcr.name > %s AND "
+                            "       rcr.name <= %s ORDER BY rcr.name asc LIMIT 1)) "
+                            "SELECT rate FROM fxtable_rate ORDER BY name asc LIMIT 1 ",
+                            (self.fx_table_id, self.currency_id, date_to, self.fx_table_id, self.currency_id, date_to, datetime.today().strftime('%Y-%m-%d')))
+
+        elif self.currency_id and not self.fx_table_id:
+            self.cr.execute(
+                "SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1",
+                (currency_id, date_to))
+        if self.currency_id:
+            display_currency_rate = self.cr.dictfetchall()[0]
+
         period_title = self.period_title or ''
         # Cash and Bank registers
         reg_types = ('cash', 'bank')
@@ -98,8 +136,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.cr.execute(self.liquidity_sql, params)
         cash_bank_res = self.cr.dictfetchall()
         cash_bank_res = self._filter_journal_status(cash_bank_res, date_to)
-        cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res,
-                                                                              encode=False, context=self.context)
+        cash_bank_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cash_bank_res, context=self.context)
         res.extend(cash_bank_res)
         # Cheque registers
         # Chq Starting Balance
@@ -195,11 +232,95 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.cr.execute(cheque_sql, cheque_params)
         cheque_res = self.cr.dictfetchall()
         cheque_res = self._filter_journal_status(cheque_res, date_to)
-        cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, encode=False, context=self.context)
+        cheque_res = reportvi.hq_report_ocb.postprocess_liquidity_balances(self, self.cr, self.uid, cheque_res, context=self.context)
         res.extend(cheque_res)
         # sort result by instance code and by journal code
         sorted_res = sorted(res, key=lambda k: (k['instance'], k['code']))
+        # sum closing balances by booking currencies
+        sub_totals = {}
+        for i, register in enumerate(sorted_res):
+            # Get the rate of current register currency
+            if self.currency_id:
+                register_currency_rate = False
+                if self.fx_table_id:
+                    if not table_curr_rates.get(self.fx_table_id, {}).get(register['currency'], False):
+                        self.cr.execute(
+                            "WITH fxtable_rate AS ("
+                            "   (SELECT rcr.rate, rcr.name "
+                            "    FROM res_currency curr, res_currency_rate rcr "
+                            "    WHERE "
+                            "       curr.name = %s AND "
+                            "       curr.currency_table_id = %s AND "
+                            "       rcr.currency_id = curr.id AND"
+                            "       rcr.name <= %s ORDER BY rcr.name desc LIMIT 1) "
+                            "UNION "
+                            "   (SELECT rcr.rate, rcr.name "
+                            "    FROM res_currency curr, res_currency_rate rcr "
+                            "    WHERE "
+                            "       curr.name = %s AND "
+                            "       curr.currency_table_id = %s AND "
+                            "       rcr.currency_id = curr.id AND"
+                            "       rcr.name > %s AND "
+                            "       rcr.name <= %s ORDER BY rcr.name asc LIMIT 1)) "
+                            "SELECT rate FROM fxtable_rate ORDER BY name asc LIMIT 1 ",
+                            (register['currency'], self.fx_table_id, date_to, register['currency'], self.fx_table_id, date_to,
+                             datetime.today().strftime('%Y-%m-%d')))
+                    else:
+                        register_currency_rate = table_curr_rates.get(self.fx_table_id, {}).get(register['currency'], False)
+                elif not curr_rates.get(register['currency'], False):
+                    self.cr.execute(
+                        "SELECT rcr.rate "
+                        "FROM res_currency curr, res_currency_rate rcr "
+                        "WHERE "
+                        "   curr.name = %s AND "
+                        "   curr.currency_table_id is Null AND"
+                        "   rcr.currency_id = curr.id AND "
+                        "   rcr.name <= %s ORDER BY rcr.name desc LIMIT 1",
+                        (register['currency'], date_to))
+                else:
+                    register_currency_rate = curr_rates.get(register['currency'], False)
+                if not register_currency_rate:
+                    try:
+                        register_currency_rate = self.cr.dictfetchall()
+                        register_currency_rate = register_currency_rate[0]['rate']
+                    except:
+                        raise osv.except_osv(_('Error'), _('Could not find the rate of the display currency at date %s or in the currency table.') % (date_to))
+
+                sorted_res[i].update({'output_value': register['closing'] / register_currency_rate * display_currency_rate['rate']})
+                # Store currency rate in a cache to reduce query calls
+                if self.fx_table_id:
+                    if not table_curr_rates.get(self.fx_table_id, False):
+                        table_curr_rates[self.fx_table_id] = {}
+                    if not table_curr_rates[self.fx_table_id].get(register['currency'], False):
+                        table_curr_rates[self.fx_table_id][register['currency']] = register_currency_rate
+                else:
+                    if not curr_rates.get(register['currency'], False):
+                        curr_rates[register['currency']] = register_currency_rate
+
+            if register['currency'] in sub_totals:
+                sub_totals[register['currency']] ['closings'] += register['closing']
+                if self.currency_id:
+                    sub_totals[register['currency']]['output_value'] += register['output_value']
+            else:
+                sub_totals[register['currency']] = {}
+                sub_totals[register['currency']]['closings'] = register['closing']
+                if self.currency_id:
+                    sub_totals[register['currency']]['output_value'] = register['output_value']
+        self.sub_totals = sub_totals
+        if self.currency_id:
+            self.general_total = sum([subtotal.get('output_value') for subtotal in sub_totals.values()])
+
         return sorted_res
+
+    def _get_subtotals(self):
+        # Default dict with 7 key-value pairs to fix the error when a register is empty
+        # With 7 being the number of cells in the subtotals part of the pdf liquidity balance report
+        default_subtotals = {'':{} for key in range(7)}
+        return self.sub_totals or default_subtotals
+
+    def _get_general_total(self):
+        return self.general_total
+
 
     def set_context(self, objects, data, ids, report_type=None):
         # get the selection made by the user
@@ -208,9 +329,16 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.date_to = data['form'].get('date_to', False)
         self.instance_ids = data['form'].get('instance_ids', False)
         self.period_title = data['form'].get('period_title', False)
+        self.currency_id = data['form'].get('currency_id', False)
+        self.fx_table_id = data['form'].get('fx_table_id', False)
         self.context = data.get('context', {})
         return super(account_liquidity_balance, self).set_context(objects, data, ids, report_type)
 
+# XLS Report
 SpreadsheetReport('report.account.liquidity.balance', 'account.bank.statement',
                   'addons/account/report/account_liquidity_balance.mako', parser=account_liquidity_balance)
+# PDF report
+report_sxw.report_sxw('report.account.liquidity.balance.pdf', 'account.bank.statement',
+                      'addons/account/report/account_liquidity_balance.rml',parser=account_liquidity_balance,
+                      header='internal landscape')
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -475,7 +475,7 @@ class configmanager(object):
         setattr(parser.values, option.dest, ','.join(result))
 
     def load(self):
-        p = configparser.ConfigParser()
+        p = configparser.ConfigParser(interpolation=None)
         try:
             p.read([self.rcfile])
             for (name,value) in p.items('options'):
@@ -558,22 +558,33 @@ class configmanager(object):
         return self.options[key]
 
     def _load_current(self):
-        config_file_parser = configparser.ConfigParser()
+        config_file_parser = configparser.ConfigParser(interpolation=None)
         config_file_parser.read(self.rcfile)
         if 'options' not in config_file_parser.sections():
-            config_file_parser['options'] = {'db_name': ''}
+            config_file_parser['options'] = {}
 
         if not config_file_parser['options'].get('db_name'):
             config_file_parser['options']['db_name'] = ''
+        if not config_file_parser['options'].get('sync_user_login'):
+            config_file_parser['options']['sync_user_login'] = ''
+        if not config_file_parser['options'].get('sync_user_password'):
+            config_file_parser['options']['sync_user_password'] = ''
         return config_file_parser
 
-    def _save_config(self, config_file_parser, dbs_set):
-        for to_del in ['False', '']:
-            dbs_set.discard(to_del)
+    def _save_config(self, config_file_parser, vals):
+        if vals.get('dbs_set'):
+            dbs_set = vals['dbs_set']
+            for to_del in ['False', '']:
+                dbs_set.discard(to_del)
 
-        all_loaded_dbs = ','.join(dbs_set)
-        config_file_parser['options']['db_name'] = all_loaded_dbs
-        self['db_name_file'] = all_loaded_dbs
+            all_loaded_dbs = ','.join(dbs_set)
+            config_file_parser['options']['db_name'] = all_loaded_dbs
+            self['db_name_file'] = all_loaded_dbs
+        if vals.get('sync_login'):
+            config_file_parser['options']['sync_user_login'] = vals['sync_login']
+        if vals.get('sync_pass') and isinstance(vals['sync_pass'], str):
+            # Do not put the clear password
+            config_file_parser['options']['sync_user_password'] = str(b64encode(bytes(vals['sync_pass'], 'utf8')), 'utf8')
 
         with open(self.rcfile, 'w') as configfile:
             config_file_parser.write(configfile)
@@ -587,12 +598,12 @@ class configmanager(object):
                 config_file_parser = self._load_current()
                 dbs = set(config_file_parser['options']['db_name'].split(','))
                 dbs.add(db_name)
-                self._save_config(config_file_parser, dbs)
+                self._save_config(config_file_parser, {'dbs_set': dbs})
                 logging.getLogger('server').info('Add %s in %s', db_name, self.rcfile)
             finally:
                 self.__lock.release()
         else:
-            logging.getLogger('server').warning('Unbale to lock file %s, db %s not added', self.rcfile, db_name)
+            logging.getLogger('server').warning('Unable to lock file %s, db %s not added', self.rcfile, db_name)
 
     def delete_db_name(self, db_name):
         if not db_name or not self.rcfile or not os.path.exists(config.rcfile):
@@ -603,12 +614,26 @@ class configmanager(object):
                 config_file_parser = self._load_current()
                 dbs = set(config_file_parser['options']['db_name'].split(','))
                 dbs.discard(db_name)
-                self._save_config(config_file_parser, dbs)
+                self._save_config(config_file_parser, {'dbs_set': dbs})
                 logging.getLogger('server').info('Delete %s in %s', db_name, self.rcfile)
             finally:
                 self.__lock.release()
         else:
-            logging.getLogger('server').warning('Unbale to lock file %s, db %s not added', config.rcfile, db_name)
+            logging.getLogger('server').warning('Unable to lock file %s, db %s not added', config.rcfile, db_name)
+
+    def save_sync_credentials(self, sync_login, sync_pass):
+        if (not sync_login and not sync_pass) or not self.rcfile or not os.path.exists(config.rcfile):
+            return False
+        locked = self.__lock.acquire(False)
+        if locked:
+            try:
+                config_file_parser = self._load_current()
+                self._save_config(config_file_parser, {'sync_login': sync_login, 'sync_pass': sync_pass})
+                logging.getLogger('server').info('Added sync credentials in %s', self.rcfile)
+            finally:
+                self.__lock.release()
+        else:
+            logging.getLogger('server').warning('Unable to lock file %s, sync credentials not added', config.rcfile)
 
 
 config = configmanager()

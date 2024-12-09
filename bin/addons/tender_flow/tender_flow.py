@@ -66,7 +66,6 @@ class tender(osv.osv):
             default = {}
         default.update({
             'internal_state': 'draft',  # UF-733: Reset the internal_state
-            'supplier_info_updated': False,
             'currency_id': False,
         })
         if not 'sale_order_id' in default:
@@ -173,7 +172,6 @@ class tender(osv.osv):
         'delivery_address': fields.many2one('res.partner.address', string='Delivery address', required=True),
         'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
         'diff_nb_rfq_supplier': fields.function(_diff_nb_rfq_supplier, method=True, type="boolean", string="Compare the number of rfqs and the number of suppliers", store=False),
-        'supplier_info_updated': fields.boolean(string="Did the Product's Suppliers have been updated", readonly=True, help="Flag to see if the 'Update Product's Suppliers' button has been used"),
         'currency_id': fields.many2one('res.currency', 'Currency for Comparison', help="Currency to use while comparing RfQs"),
     }
 
@@ -516,29 +514,6 @@ class tender(osv.osv):
 
         return True
 
-    def check_update_for_done(self, cr, uid, ids, context=None):
-        '''
-        Check if the tender has updated the product's supplier before closing it
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, int):
-            ids = [ids]
-
-        for tender in self.browse(cr, uid, ids, fields_to_fetch=['supplier_info_updated'], context=context):
-            if not tender.supplier_info_updated:
-                context['tender_id_to_close'] = tender.id
-                return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'check.products.supplier.updated.wizard',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'context': context,
-                }
-
-        return self.wkf_action_done(cr, uid, ids, context=context)
-
     def wkf_action_done(self, cr, uid, ids, context=None):
         '''
         check all rfq are updated (or cancel)
@@ -612,73 +587,6 @@ class tender(osv.osv):
             # open the wizard
             action = wiz_obj.start_compare_rfq(cr, uid, ids, context=c)
         return action
-
-    def update_supplier_info(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        update the supplier info of corresponding products
-        '''
-        info_obj = self.pool.get('product.supplierinfo')
-        pricelist_info_obj = self.pool.get('pricelist.partnerinfo')
-        # integrity check flag
-        integrity_test = kwargs.get('integrity_test', False)
-        for tender in self.browse(cr, uid, ids, context=context):
-            # flag if at least one update
-            updated = tender.tender_line_ids and False or True
-            # check if corresponding rfqs are in the good state
-            if integrity_test:
-                self.tender_integrity(cr, uid, tender, context=context)
-            for line in tender.tender_line_ids:
-                if line.line_state == 'cancel':
-                    continue
-                # if a supplier has been selected
-                if line.purchase_order_line_id:
-                    # set the flag
-                    updated = True
-                    # get the product
-                    product = line.product_id
-                    # find the corresponding suppinfo with sequence -99
-                    info_99_list = info_obj.search(cr, uid, [('product_id', '=', product.product_tmpl_id.id),
-                                                             ('name', '=', line.purchase_order_line_id.order_id.partner_id.id),
-                                                             ('sequence', '=', -99), ], context=context)
-
-                    if info_99_list:
-                        # we drop it
-                        info_obj.unlink(cr, uid, info_99_list, context=context)
-
-                    # create the new one
-                    values = {'name': line.supplier_id.id,
-                              'product_name': False,
-                              'product_code': False,
-                              'sequence': -99,
-                              #'product_uom': line.product_uom.id,
-                              #'min_qty': 0.0,
-                              #'qty': function
-                              'product_id': product.product_tmpl_id.id,
-                              'delay': int(line.supplier_id.default_delay),
-                              #'pricelist_ids': created just after
-                              #'company_id': default value
-                              }
-
-                    new_info_id = info_obj.create(cr, uid, values, context=context)
-                    # price lists creation - 'pricelist.partnerinfo
-                    values = {'suppinfo_id': new_info_id,
-                              'min_quantity': 1.00,
-                              'price': line.price_unit,
-                              'uom_id': line.product_uom.id,
-                              'currency_id': line.purchase_order_line_id.currency_id.id,
-                              'valid_till': line.purchase_order_id.valid_till,
-                              'purchase_order_line_id': line.purchase_order_line_id.id,
-                              'comment': 'RfQ original quantity for price : %s' % line.qty,
-                              }
-                    pricelist_info_obj.create(cr, uid, values, context=context)
-
-            # warn the user if no update has been performed
-            if not updated:
-                raise osv.except_osv(_('Warning !'), _('No information available for update!'))
-            else:
-                self.write(cr, uid, tender.id, {'supplier_info_updated': True}, context=context)
-
-        return True
 
     def create_po(self, cr, uid, ids, context=None):
         '''
@@ -2236,38 +2144,3 @@ class res_partner(osv.osv):
         'is_rfq_generated': fields.function(_get_is_rfq_generated, method=1, internal=1, type='boolean', string='RfQ Generated for the tender in context'),
     }
 res_partner()
-
-
-class check_products_supplier_updated_wizard(osv.osv_memory):
-    _name = 'check.products.supplier.updated.wizard'
-
-    _columns = {
-        'comment': fields.text('Comment'),
-    }
-
-    def yes_close_tender(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-
-        tender_obj = self.pool.get('tender')
-
-        if context.get('tender_id_to_close'):
-            comment = self.browse(cr, uid, ids[0], context=context).comment
-            if comment:
-                tend_notes = tender_obj.browse(cr, uid, context['tender_id_to_close'], fields_to_fetch=['notes'],
-                                               context=context).notes
-                new_notes = tend_notes and (tend_notes + ' ' + comment) or comment
-                tender_obj.write(cr, uid, context['tender_id_to_close'], {'notes': new_notes}, context=context)
-            tender_obj.wkf_action_done(cr, uid, [context['tender_id_to_close']], context=context)
-            context.pop('tender_id_to_close')
-
-        return {'type': 'ir.actions.act_window_close'}
-
-    def no_close_tender(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-
-        return {'type': 'ir.actions.act_window_close'}
-
-
-check_products_supplier_updated_wizard()

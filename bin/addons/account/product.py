@@ -24,22 +24,8 @@ from osv import fields, osv
 class product_category(osv.osv):
     _inherit = "product.category"
     _columns = {
-        'property_account_income_categ': fields.property(
-            'account.account',
-            type='many2one',
-            relation='account.account',
-            string="Income Account",
-            method=True,
-            view_load=True,
-            help="This account will be used for invoices to value sales for the current product category"),
-        'property_account_expense_categ': fields.property(
-            'account.account',
-            type='many2one',
-            relation='account.account',
-            string="Expense Account",
-            method=True,
-            view_load=True,
-            help="This account will be used for invoices to value expenses for the current product category"),
+        'property_account_income_categ': fields.many2one('account.account', 'Income Account', help="This account will be used for invoices to value sales for the current product category"),
+        'property_account_expense_categ': fields.many2one('account.account', 'Expense Account', help='This account will be used for invoices to value expenses for the current product category'),
         'asset_bs_account_id': fields.many2one('account.account', 'Asset Balance Sheet Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),

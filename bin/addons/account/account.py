@@ -551,6 +551,15 @@ class account_account(osv.osv):
             for field in arch.xpath('//group[@name="mapping_value"]'):
                 field.set('invisible', '0')
             fvg['arch'] = etree.tostring(arch, encoding='unicode')
+
+        if view_type == 'form' and self.pool.get('res.company')._get_instance_oc(cr, uid) == 'ocp':
+            found = False
+            view_xml = etree.fromstring(fvg['arch'])
+            for field in view_xml.xpath('//field[@name="expat_restriction"]'):
+                found = True
+                field.set('invisible', "0")
+            if found:
+                fvg['arch'] = etree.tostring(view_xml, encoding='unicode')
         return fvg
 
 
@@ -1492,12 +1501,12 @@ class account_move(osv.osv):
             return [('id', '=', '0')]
 
     _columns = {
-        'name': fields.char('Number', size=64, required=True),
+        'name': fields.char('Number', size=64, required=True, select=1),
         'ref': fields.char('Reference', size=64),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}, select=1),
         'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear',
                                         string='Fiscal Year', store=False, write_relate=False),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}),
+        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, select=1),
         'state': fields.selection([('draft','Unposted'), ('posted','Posted')], 'State', required=True, readonly=True,
                                   help='All manually created new journal entry are usually in the state \'Unposted\', but you can set the option to skip that state on the related journal. In that case, they will be behave as journal entries automatically created by the system on document validation (invoices, bank statements...) and will be created in \'Posted\' state.'),
         'line_id': fields.one2many('account.move.line', 'move_id', 'Entries', states={'posted':[('readonly',True)]}),
@@ -1557,7 +1566,7 @@ class account_move(osv.osv):
             #            raise osv.except_osv(_('Integrity Error !'), _('You cannot validate a non-balanced entry !\nMake sure you have configured Payment Term properly !\nIt should contain atleast one Payment Term Line with type "Balance" !'))
             raise osv.except_osv(_('Integrity Error!'), _('You cannot validate a non-balanced entry ! All lines should have a “Valid” state to validate the entry.'))
         obj_sequence = self.pool.get('ir.sequence')
-        asset_ids_to_check = []
+        asset_ids_to_check = set()
         for move in self.browse(cr, uid, valid_moves, fields_to_fetch=['name', 'journal_id', 'period_id', 'asset_id'], context=context):
             if move.name =='/':
                 new_name = False
@@ -1576,13 +1585,13 @@ class account_move(osv.osv):
                     self.write(cr, uid, [move.id], {'name':new_name})
 
             if move.asset_id:
-                asset_ids_to_check.append(move.asset_id.id)
+                asset_ids_to_check.add(move.asset_id.id)
 
         a = super(account_move, self).write(cr, uid, valid_moves,
                                             {'state':'posted'})
 
         if asset_ids_to_check:
-            self.pool.get('product.asset').test_and_set_done(cr, uid, asset_ids_to_check, context=context)
+            self.pool.get('product.asset').test_and_set_depreciated(cr, uid, list(asset_ids_to_check), context=context)
         return a
 
     def button_validate(self, cursor, user, ids, context=None):
@@ -2609,7 +2618,7 @@ class account_model_line(osv.osv):
     _description = "Account Model Entries"
     _columns = {
         'name': fields.char('Description', size=64, required=True),
-        'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the resources from lower sequences to higher ones"),
+        'sequence': fields.integer('Sequence', help="The sequence field is used to order the resources from lower sequences to higher ones"),
         'quantity': fields.float('Quantity', digits_compute=dp.get_precision('Account'), help="The optional quantity on entries"),
         'debit': fields.float('Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Credit', digits_compute=dp.get_precision('Account')),

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+
+		<report
+            id="catalogue_export_track_changes"
+            string="Export track changes"
+            model="supplier.catalogue"
+            name="catalogue.export.track.changes"
+            report_type="openpyxl"
+            header="False"
+            auto="False"
+            menu="True"
+            target_filename="${_('Catalogue')} ${name} -${_(' Track changes')}"
+            run_in_background="True"
+            sequence="100"
+         />
+
+	</data>
+</openerp>

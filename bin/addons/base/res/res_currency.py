@@ -158,6 +158,44 @@ class res_currency(osv.osv):
     _trace = True
     _order = "name"
 
+    def _auto_init(self, cr, context=None):
+        super(res_currency, self)._auto_init(cr, context)
+        if not cr.table_exists('hq_report_no_decimal'):
+            # used by ocp workday VI export to balance rounded JE
+            cr.execute("""
+                create table hq_report_no_decimal (
+                  id bigserial,
+                  account_move_id integer,
+                  account_move_line_id integer,
+                  account_analytic_line_id integer,
+                  original_amount decimal(16, 2),
+                  rounded_amount integer,
+                  period_id integer,
+                  instance_id integer,
+                  primary key (id)
+            )""")
+
+            cr.execute("create index hq_report_no_decimal_account_move_id on hq_report_no_decimal(account_move_id)")
+            cr.execute("create index hq_report_no_decimal_account_move_line_id on hq_report_no_decimal(account_move_line_id)")
+            cr.execute("create index hq_report_no_decimal_account_analytic_line_id on hq_report_no_decimal(account_analytic_line_id)")
+            cr.execute("create index hq_report_no_decimal_period_id on hq_report_no_decimal(period_id)")
+            cr.execute("create index hq_report_no_decimal_instance_id on hq_report_no_decimal(instance_id)")
+
+        if not cr.table_exists('hq_report_func_adj'):
+            cr.execute("""
+                create table hq_report_func_adj (
+                    id bigserial,
+                    account_analytic_line_id integer,
+                    original_amount decimal(16, 2),
+                    rounded_func_amount decimal(16, 2),
+                    period_id integer,
+                    instance_id integer,
+                    primary key (id)
+            )""")
+            cr.execute("create index hq_report_func_adj_account_analytic_line_id on hq_report_func_adj(account_analytic_line_id)")
+            cr.execute("create index hq_report_func_adj_period_id on hq_report_func_adj(period_id)")
+            cr.execute("create index hq_report_func_adj_instance_id on hq_report_func_adj(instance_id)")
+
     def _check_unicity_currency_name(self, cr, uid, ids, context=None):
         """
         Check that no currency have the same name and the same currency_table_id.
@@ -298,8 +336,8 @@ class res_currency(osv.osv):
         'base': fields.boolean('Base'),
         'currency_name': fields.char('Currency Name', size=64, required=True, translate=1),
 
-        'currency_table_id': fields.many2one('res.currency.table', 'Currency Table', ondelete='cascade'),
-        'reference_currency_id': fields.many2one('res.currency', 'Reference Currency', ondelete='cascade'),
+        'currency_table_id': fields.many2one('res.currency.table', 'Currency Table', ondelete='cascade', select=1),
+        'reference_currency_id': fields.many2one('res.currency', 'Reference Currency', ondelete='cascade', select=1),
         'is_section_currency': fields.boolean(string='Functional currency',
                                               help='If this box is checked, this currency is used as a functional currency for at least one section in MSF.'),
         'is_esc_currency': fields.boolean(string='ESC currency',
@@ -308,11 +346,13 @@ class res_currency(osv.osv):
                                             type='boolean', string='transport PO currencies'),
         'partner_currency': fields.function(_get_partner_currency, fnct_search=_src_partner_currency, type='boolean', method=True,
                                             string='Partner currency', store=False, help='Only technically to filter currencies according to partner type'),
+        'ocp_workday_decimal': fields.integer('OCP Workday decimal'),
     }
     _defaults = {
         'active': lambda *a: 0,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'res.currency', context=c),
         'accuracy': 4,
+        'ocp_workday_decimal': 2,
     }
 
     _sql_constraints = [
@@ -875,7 +915,7 @@ class res_currency_rate(osv.osv):
         'name': fields.date('Date', required=True, select=True),
         'rate': fields.float('Rate', digits=(12,6), required=True,
                              help='The rate of the currency to the currency of rate 1'),
-        'currency_id': fields.many2one('res.currency', 'Currency', readonly=True),
+        'currency_id': fields.many2one('res.currency', 'Currency', readonly=True, select=1),
     }
     _defaults = {
         'name': lambda *a: time.strftime('%Y-%m-%d'),

@@ -88,10 +88,13 @@ class account_move_line(osv.osv):
             res[ml.id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
-            curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
-            context.update({'currency_date': curr_date or strftime('%Y-%m-%d')})
+            if context.get('currency_table_id'):
+                context['currency_date'] =  strftime('%Y-%m-%d')
+            else:
+                curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
+                context.update({'currency_date': curr_date or strftime('%Y-%m-%d')})
             # Now call the common method to calculate the output values
-            if currency_id == company_currency_id:
+            if currency_id == company_currency_id and not context.get('currency_table_id', False):
                 res[ml.id].update({'output_amount': ml.debit - ml.credit, 'output_amount_debit': ml.debit, 'output_amount_credit': ml.credit})
             else:
                 amount = self.calculate_output(cr, uid, currency_id, ml, round=True, context=context)

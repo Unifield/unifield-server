@@ -101,7 +101,6 @@ class Cursor(object):
         if p is not None:
             self._oc = p.get('operations.count')
             self._oe = p.get('operations.event')
-        # TODO JFB
         self._obj = self._cnx.cursor()
         self.__closed = False   # real initialisation value
         self.autocommit(False)

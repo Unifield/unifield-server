@@ -1220,7 +1220,6 @@ class stock_move(osv.osv):
         return res
 
 
-
     _columns = {
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled'), ('hidden', 'Hidden')], 'State', readonly=True, select=True,
                                   help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
@@ -1680,7 +1679,6 @@ class stock_move(osv.osv):
 
         return defaults
 
-
     def _get_destruction_products(self, cr, uid, ids, product_ids=False, context=None, recursive=False):
         """ Finds the product quantity and price for particular location.
         """
@@ -1688,6 +1686,10 @@ class stock_move(osv.osv):
             context = {}
         if isinstance(ids, int):
             ids = [ids]
+
+        # Decimal precision of the product's standard price
+        acc_comput_dp = self.pool.get('decimal.precision').precision_get(cr, uid, 'Account Computation')
+        price_dp = acc_comput_dp is None and 5 or acc_comput_dp
 
         result = []
         for move in self.browse(cr, uid, ids, context=context):
@@ -1703,8 +1705,8 @@ class stock_move(osv.osv):
             result.append({
                 'prod_name': move.product_id.name,
                 'prod_code': move.product_id.code,
-                'prod_price': move.product_id.standard_price,
-                'sub_total': sub_total,
+                'prod_price': round(move.product_id.standard_price, price_dp),
+                'sub_total': round(sub_total, price_dp),
                 'currency': currency,
                 'origin': move.origin,
                 'expired_date': move.expired_date,

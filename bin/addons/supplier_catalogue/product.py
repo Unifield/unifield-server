@@ -83,7 +83,7 @@ class product_supplierinfo(osv.osv):
         return res
 
     _columns = {
-        'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
+        'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade', select=1),
         'editable': fields.function(_get_editable, method=True, string='Editable', store=False, type='boolean'),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise.", related_uom='product_uom'),
     }
@@ -213,10 +213,13 @@ class pricelist_partnerinfo(osv.osv):
         'valid_from': fields.date(string='Valid from'),
         'partner_id': fields.related('suppinfo_id', 'name', string='Partner', type='many2one', relation='res.partner', write_relate=False),
         'product_id': fields.related('suppinfo_id', 'product_id', string='Product', type='many2one', relation='product.template', write_relate=False),
-        'sequence': fields.function(_get_sequence, method=True, string='Sequence', type='integer',
+        'sequence': fields.function(_get_sequence, method=True, string='Ranking', type='selection',
+                                    selection=[(1, '1st choice'), (2, '2nd choice'), (3, '3rd choice'), (4, '4th choice'),
+                                               (5, '5th choice'), (6, '6th choice'), (7, '7th choice'), (8, '8th choice'),
+                                               (9, '9th choice'), (10, '10th choice'), (11, '11th choice'), (12, '12th choice'),
+                                               (13, '-99'), (14, '0'), (15, '1'), (16, '2'), (17, '3'), (18, '4')],
                                     store={'pricelist.partnerinfo': (lambda self, cr, uid, ids, c={}: ids, [], 20),
-                                           'product.supplierinfo': (_get_supplierinfo, ['sequence'], 20),
-                                           })
+                                           'product.supplierinfo': (_get_supplierinfo, ['sequence'], 20)})
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -240,6 +243,7 @@ class pricelist_partnerinfo(osv.osv):
         self._check_min_quantity(cr, uid, ids, context=context)
 
         return res
+
 
 pricelist_partnerinfo()
 

@@ -150,7 +150,8 @@ class automated_export_job(osv.osv):
                 error_message, filenames = [], []
                 state = 'done'
 
-                if job.export_id.function_id.model_id.model != 'wizard.hq.report.oca':
+
+                if job.export_id.function_id.model_id.model not in  ('wizard.hq.report.oca', 'ocp.export.wizard'):
                     processed, rejected, headers, filenames = getattr(
                         self.pool.get(job.export_id.function_id.model_id.model),
                         job.export_id.function_id.method_to_call

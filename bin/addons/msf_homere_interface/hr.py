@@ -26,6 +26,7 @@ from osv import fields
 from lxml import etree
 from tools.translate import _
 from msf_field_access_rights.osv_override import _get_instance_level
+import time
 
 class hr_payment_method(osv.osv):
     _name = 'hr.payment.method'
@@ -131,15 +132,15 @@ class hr_employee(osv.osv):
         return res
 
     _columns = {
-        'employee_type': fields.selection([('', ''), ('local', 'Local Staff'), ('ex', 'Expatriate employee')], string="Type", required=True),
+        'employee_type': fields.selection([('', ''), ('local', 'Local Staff'), ('ex', 'Expatriate employee')], string="Type", required=True, select=1),
         'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'funding_pool_id': fields.many2one('account.analytic.account', string="Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=False),
-        'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=False),
-        'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=False),
-        'homere_uuid_key': fields.char(string='Homere UUID', size=64, readonly=True, required=False),
+        'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=False, select=1),
+        'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=False, select=1),
+        'homere_uuid_key': fields.char(string='Homere UUID', size=64, readonly=True, required=False, select=1),
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True, write_relate=False),
@@ -151,6 +152,8 @@ class hr_employee(osv.osv):
         'bank_name': fields.char('Bank Name', size=256, required=False),
         'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
         'instance_creator': fields.char('Instance creator of the employee', size=64, readonly=1),
+        'expat_creation_date': fields.date('Creation Date', readonly=1),
+        'former_identification_id': fields.char('Former ID', size=32, readonly=1, help='Used for the OCP migration', select=1),
     }
 
     _defaults = {
@@ -160,6 +163,7 @@ class hr_employee(osv.osv):
         'homere_id_unique': lambda *a: '',
         'gender': lambda *a: 'unknown',
         'ex_allow_edition': lambda *a: True,
+        'expat_creation_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
     def _set_sync_update_as_run(self, cr, uid, data, sdref, context=None):
@@ -253,6 +257,8 @@ class hr_employee(osv.osv):
             vals['identification_id'] = vals['identification_id'].strip()
         if vals.get('job_name', False):
             vals['job_name'] = vals['job_name'].strip()
+        if vals.get('employee_type') == 'local':
+            vals['section_code'] = False
         allow_edition = False
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
             # Search Payroll functionnality preference (activated or not)
@@ -306,6 +312,7 @@ class hr_employee(osv.osv):
         if vals.get('employee_type', False):
             if vals.get('employee_type') == 'local':
                 local = True
+                vals['section_code'] = False
             elif vals.get('employee_type') == 'ex':
                 ex = True
         if (context.get('from', False) and context.get('from') in ['yaml', 'import']) or context.get('sync_update_execution', False):
@@ -367,6 +374,15 @@ class hr_employee(osv.osv):
         if not context:
             context = {}
         view = super(hr_employee, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if self.pool.get('res.company')._get_instance_oc(cr, uid) == 'ocp':
+            found = False
+            view_xml = etree.fromstring(view['arch'])
+            for field in view_xml.xpath('//field[@name="section_code"]'):
+                found = True
+                field.set('invisible', "0")
+            if found:
+                view['arch'] = etree.tostring(view_xml, encoding='unicode')
+
         if view_type in ['form', 'tree']:
             form = etree.fromstring(view['arch'])
             data_obj = self.pool.get('ir.model.data')

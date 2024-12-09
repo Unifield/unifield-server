@@ -218,6 +218,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="107.25" />
         ## product description
         <Column ss:AutoFitWidth="1" ss:Width="239.25"  />
+        ## Comment
+        <Column ss:AutoFitWidth="1" ss:Width="239.25"  />
         ## Qty Ordered
         <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
         ## UoM Ordered
@@ -338,6 +340,7 @@
                 _('Item'),
                 _('Code'),
                 _('Description'),
+                _('Comment'),
                 _('Qty ordered'),
                 _('UoM ordered'),
                 _('Qty delivered'),
@@ -396,6 +399,7 @@
                     <Cell ss:StyleID="line_center_grey"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('comment', '-') or ''|x}</Data></Cell>
                     % if line.get('ordered_qty'):
                     <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
                     % else:
@@ -494,6 +498,7 @@
                     <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('comment', '-') or ''|x}</Data></Cell>
                     % if line.get('ordered_qty'):
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
                     % else:
