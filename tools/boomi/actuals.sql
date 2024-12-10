@@ -65,7 +65,6 @@ create or replace view actuals as ( select
     ) cur_table on true
   where
     p.number not in (0, 16)
-    and am.state = 'posted'
     and j.type not in ('cur_adj')
     and i.level in ('coordo', 'project')
     order by
