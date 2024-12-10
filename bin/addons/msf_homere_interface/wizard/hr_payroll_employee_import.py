@@ -395,6 +395,12 @@ class hr_payroll_employee_import(osv.osv_memory):
             uuid_key = employee_data.get('uuid_key', False)
             nom = employee_data.get('nom', False)
             prenom = employee_data.get('prenom', False)
+            if nom == '' or not nom or prenom == '' or not prenom:
+                message = _('There are empty cells in nom or prenom columns of staff.csv file')
+                if code_staff:
+                    message = message + _(' for employee with code_staff %s') % code_staff
+                self.store_error(errors, wizard_id, message)
+                return False, created, updated
         except ValueError as e:
             raise osv.except_osv(_('Error'), _('The given file is probably corrupted!\n%s') % (e))
         # Process data
