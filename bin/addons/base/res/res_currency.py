@@ -336,8 +336,8 @@ class res_currency(osv.osv):
         'base': fields.boolean('Base'),
         'currency_name': fields.char('Currency Name', size=64, required=True, translate=1),
 
-        'currency_table_id': fields.many2one('res.currency.table', 'Currency Table', ondelete='cascade'),
-        'reference_currency_id': fields.many2one('res.currency', 'Reference Currency', ondelete='cascade'),
+        'currency_table_id': fields.many2one('res.currency.table', 'Currency Table', ondelete='cascade', select=1),
+        'reference_currency_id': fields.many2one('res.currency', 'Reference Currency', ondelete='cascade', select=1),
         'is_section_currency': fields.boolean(string='Functional currency',
                                               help='If this box is checked, this currency is used as a functional currency for at least one section in MSF.'),
         'is_esc_currency': fields.boolean(string='ESC currency',
@@ -915,7 +915,7 @@ class res_currency_rate(osv.osv):
         'name': fields.date('Date', required=True, select=True),
         'rate': fields.float('Rate', digits=(12,6), required=True,
                              help='The rate of the currency to the currency of rate 1'),
-        'currency_id': fields.many2one('res.currency', 'Currency', readonly=True),
+        'currency_id': fields.many2one('res.currency', 'Currency', readonly=True, select=1),
     }
     _defaults = {
         'name': lambda *a: time.strftime('%Y-%m-%d'),

@@ -28,5 +28,17 @@
             report_type="webkit"
             menu="False"
             />
+
+        <report
+            id="physical_inventory_report_pdf"
+            string="Export Discrepancy Report"
+            model="physical.inventory"
+            name="physical_inventory_discrepancies_report_pdf"
+            rml="stock/report/physical_inventory_discrepancies_report.rml"
+            auto="False"
+            target_filename="${eval(_get_report_name)}"
+            menu="True"
+            sequence="11"
+            />
     </data>
 </openerp>

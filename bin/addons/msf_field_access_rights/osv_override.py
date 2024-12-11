@@ -287,7 +287,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
     context = context or {}
     fields_view = super_fields_view_get(self, cr, uid, view_id, view_type, context, toolbar, submenu)
 
-    if uid != 1:
+    if uid != 1 or self._name == 'purchase.order':
 
         # get instance level. if not set, log warning, then return normal fields_view
         instance_level = _get_instance_level(self, cr, 1)

@@ -169,7 +169,7 @@
                     editable="top"
                     hide_delete_button="1"
                     hide_new_button="1"
-                    colors="red:integrity_status!='empty'"
+                    colors="red:integrity_status!='empty' or expiry_date &lt; current_date"
                     editable_style="new"
                     >
                     <!-- Invisible fields -->

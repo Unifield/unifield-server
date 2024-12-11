@@ -118,6 +118,9 @@
                     <field name="page_size" />
                     <field name="start_uid" />
                     <newline />
+                    <field name="nomen_updated" />
+                    <field name="nomen_created" />
+                    <field name="nomen_error" />
                     <field name="number_products_pulled" />
                     <field name="number_products_updated" />
                     <field name="number_products_created" />
@@ -156,10 +159,13 @@
                     <field name="start_date" />
                     <field name="end_date"  />
                     <field name="page_size" />
+                    <field name="nomen_updated" />
+                    <field name="nomen_created" />
+                    <field name="nomen_error" />
                     <field name="number_products_pulled" />
-		    <field name="number_products_updated" />
-		    <field name="number_products_created" />
-	            <field name="number_products_errors" />
+                    <field name="number_products_updated" />
+                    <field name="number_products_created" />
+                    <field name="number_products_errors" />
                     <field name="sync_type" />
                     <field name="state" />
                     <field name="log_exists" invisible="1" />
@@ -755,7 +761,9 @@
             <field name="arch" type="xml">
              <form string="UniData linkage error" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <field name="date" />
+                    <field name="first_date" />
                     <field name="fixed_date" />
+                    <field name="type" />
                     <field name="msfid" />
                     <field name="uf_product_id" />
                     <field name="code"  />
@@ -774,7 +782,9 @@
             <field name="arch" type="xml">
                 <tree string="UniData linkage errors" hide_new_button="1" hide_delete_button="1" noteditable="1" colors="red:not fixed_date">
                     <field name="date" />
+                    <field name="first_date" />
                     <field name="fixed_date"  />
+                    <field name="type" />
                     <field name="msfid" />
                     <field name="uf_product_id" />
                     <field name="code" />
@@ -799,6 +809,7 @@
                             <field name="code" />
                     <field name="former_codes" />
                     <field name="log" />
+                    <field name="type" />
                 </search>
             </field>
         </record>

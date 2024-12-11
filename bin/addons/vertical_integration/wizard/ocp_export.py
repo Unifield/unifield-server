@@ -71,7 +71,7 @@ class ocp_fin_sync(osv.osv):
                 'has_next_page': True,
             }
             if prev_id:
-                prev_session = self.browse(cr, uid, prev_id[0])
+                prev_session = self.browse(cr, 1, prev_id[0])
                 data['previous_auditrail_id'] = prev_session.max_auditrail_id
 
             self.create(cr, 1, data)
@@ -163,6 +163,9 @@ class ocp_fin_sync(osv.osv):
                 model_id = self.pool.get('ir.model').search(cr, 1, [('model', '=', 'account.journal')])[0]
                 field_ids = self.pool.get('ir.model.fields').search(cr, 1, [('model_id', '=', model_id), ('name', 'in', ['name', 'code', 'currency', 'is_active', 'inactivation_date', 'instance_id'])])
 
+                cond = ''
+                if not sess.previous_auditrail_id:
+                    cond = ' or l.id is null '
                 cr.execute('''
                     select
                         j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
@@ -172,15 +175,13 @@ class ocp_fin_sync(osv.osv):
                         inner join msf_instance i on i.id = j.instance_id
                         left join audittrail_log_line l on l.field_id in %s and l.res_id = j.id and l.object_id = %s
                     where
-                        l.id > %s and
-                        l.id <= %s and
-                        j.type = 'cash'
+                        j.type = 'cash' and (l.id > %s and l.id <= %s ''' + cond + ''')
                     group by
                         j.id, j.code, j.name, i.code, c.name, j.is_active, j.inactivation_date
                     order by j.code, j.id
                     offset %s
                     limit %s
-                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*limit, limit+1))
+                ''', (tuple(field_ids), model_id, sess.previous_auditrail_id, sess.max_auditrail_id, page_offset*limit, limit+1)) # not_a_user_entry
 
                 ret['records'] = [{'code': x[0] or '', 'name': x[1] or '', 'mission': x[2] and x[2][0:3] or '', 'currency': x[3] or '', 'active': x[4], 'inactivation_date': x[5] or False} for x in cr.fetchall()]
 

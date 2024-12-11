@@ -405,6 +405,7 @@ class hq_entries_validation(osv.osv_memory):
             distrib_cc_line_obj = self.pool.get('cost.center.distribution.line')
             journal_obj = self.pool.get('account.journal')
             analytic_journal_obj = self.pool.get('account.analytic.journal')
+            acc_move_line_obj = self.pool.get('account.move.line')
             # Search for the "Correction HQ" analytic journal
             acor_journal_id = analytic_journal_obj.get_correction_analytic_journal(cr, uid, corr_type='hq', context=context)
             # Tag active_ids as user validated
@@ -447,6 +448,16 @@ class hq_entries_validation(osv.osv_memory):
                 if line.analytic_state != 'valid':
                     self.write(cr, uid, [wiz.id], {'running': False})
                     raise osv.except_osv(_('Warning'), _('Invalid analytic distribution!'))
+
+                if line.is_asset:
+                    if line.is_split:
+                        raise osv.except_osv(_('Warning'), _('%s %s: a split line cannot be set as asset.') % (line.name, line.ref))
+                    if line.account_id_first_value.prevent_hq_asset:
+                        raise osv.except_osv(_('Warning'), _('Line %s %s: account %s cannot be capitalized.') % (line.name, line.ref, line.account_id_first_value.code))
+                    if not self.pool.get('account.account').search_exists(cr, uid, [('id', '=', line.account_id.id), ('type', '=', 'other'), ('user_type_code', '=', 'asset')], context=context):
+                        raise osv.except_osv(_('Warning'), _('Line %s %s: account %s cannot be used for an asset') % (line.name, line.ref, line.account_id.code))
+
+
                 # UTP-760: Do other modifications for split lines
                 if (line.is_original and line.split_ids) or (line.is_split and line.original_id):
                     split_change.append(line)
@@ -486,18 +497,33 @@ class hq_entries_validation(osv.osv_memory):
 
             for line in account_change:
                 curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
-                corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
-                    'funding_pool_lines': [(0, 0, {
-                        'percentage': 100,
-                        'analytic_id': line.analytic_id.id,
-                        'cost_center_id': line.cost_center_id.id,
-                        'currency_id': line.currency_id.id,
-                        'source_date': curr_date,
-                        'destination_id': line.destination_id.id,
-                    })]
-                })
+                corrected_distrib_id = False
+                if not line.is_asset:
+                    corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
+                        'funding_pool_lines': [(0, 0, {
+                            'percentage': 100,
+                            'analytic_id': line.analytic_id.id,
+                            'cost_center_id': line.cost_center_id.id,
+                            'currency_id': line.currency_id.id,
+                            'source_date': curr_date,
+                            'destination_id': line.destination_id.id,
+                        })]
+                    })
                 self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id,
                                                                    corrected_distrib_id, context=context)
+                if line.is_asset and self.pool.get('unifield.setup.configuration').get_config(cr, uid, key='fixed_asset_ok'):
+                    asset_line_id = acc_move_line_obj.search(cr, uid, [('corrected_line_id', '=', all_lines[line.id])], context=context)
+                    self.pool.get('product.asset').create(cr, uid, {
+                        'description': line.name,
+                        'quantity_divisor': 1,
+                        'invo_date': line.date,
+                        'invo_value': line.amount,
+                        'invo_currency': line.currency_id.id,
+                        'from_hq_entry': True,
+                        'move_line_id': asset_line_id[0],
+                        'start_date': line.date,
+                    }, context=context)
+
             for line in cc_change:
                 # actual distrib_id
                 distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]

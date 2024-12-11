@@ -75,9 +75,9 @@ class Histogram:
         return int(float(x)/self._scale)
 
     def add(self, x):
-        assert x >= 0
-        bnum = self._bnum(x)
-        self.buckets[bnum] += 1
+        if x >= 0:
+            bnum = self._bnum(x)
+            self.buckets[bnum] += 1
 
     def clear(self):
         self.buckets = [0]*len(self.buckets)

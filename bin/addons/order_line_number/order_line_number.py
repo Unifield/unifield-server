@@ -357,6 +357,7 @@ class supplier_catalogue(osv.osv):
 
         return super(supplier_catalogue, self).create(cr, uid, vals, context)
 
+
 supplier_catalogue()
 
 
@@ -377,6 +378,8 @@ class supplier_catalogue_line(osv.osv):
 
         add the corresponding line number
         '''
+        if context is None:
+            context = {}
         if self._name != 'supplier.catalogue.merged.line':
             # gather the line number from the sale order sequence
             order = self.pool.get('supplier.catalogue').browse(cr, uid, vals['catalogue_id'], context)
@@ -389,7 +392,9 @@ class supplier_catalogue_line(osv.osv):
 
         return result
 
+
 supplier_catalogue_line()
+
 
 class ir_sequence(osv.osv):
     '''

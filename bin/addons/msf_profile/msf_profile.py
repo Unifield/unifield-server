@@ -58,6 +58,239 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF35.0
+    def us_13692_13705_fix_pi_sign_bar(self, cr, uid, *a, **b):
+        '''
+        Add the missing rights for signatures to PIs
+        '''
+        if not cr.table_exists('sync_server_user_rights'):
+            # exclude sync server
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            b_names = ['super_action_unsign', 'add_user_signatures', 'action_close_signature', 'activate_offline',
+                       'disable_offline', 'activate_offline_reset']
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
+
+            if group_ids:
+                bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', '=', 'physical.inventory')])
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+        return True
+
+    def us_13719_tick_prevent_asset_from_hq(self, cr, uid, *a, **b):
+        '''
+        Tick "Prevent asset from HQ entries" on OCA CoA (from HQ) on all expense accounts except the capitalisable ones.
+        '''
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance == 'HQ_OCA':
+            acc_obj = self.pool.get('account.account')
+            acc_user_type_ids = self.pool.get('account.account.type').search(cr, uid, [('code', '=', 'expense')])
+            acc_to_update_ids = acc_obj.search(cr, uid, [('user_type', 'in', acc_user_type_ids),
+                                                         ('code', 'not in', ('60100', '60110',
+                                                                             '60120', '61100',
+                                                                             '61110', '61120',
+                                                                             '61130', '61140',
+                                                                             '61150', '61160',
+                                                                             '61170'))])
+            acc_obj.write(cr, uid, acc_to_update_ids, {'prevent_hq_asset': True})
+        return True
+
+    def us_11182_12727_pi_signature(self, cr, uid, *a, **b):
+        '''
+        Add signatures to PIs
+        '''
+        if not cr.table_exists('sync_server_user_rights'):
+            # exclude sync server
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', 'Sign_user')])
+            if group_ids:
+                bar_ids = bar_obj.search(cr, uid, [('name', 'in', ['open_sign_wizard', 'action_unsign']),
+                                                   ('model_id', '=', 'physical.inventory')])
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_ids[0]])]})
+
+        cr.execute('SELECT id FROM physical_inventory WHERE signature_id IS NULL')  # not_a_user_entry
+        for x in cr.fetchall():
+            cr.execute("""
+                INSERT INTO signature (signature_res_model, signature_res_id, signed_off_line, signature_is_closed) 
+                VALUES ('physical.inventory', %s, 'f', 'f') returning id
+            """, (x[0],))
+            a = cr.fetchone()
+            cr.execute("UPDATE physical_inventory SET signature_id=%s WHERE id=%s", (a[0], x[0]))  # not_a_user_entry
+
+        # To create signature lines on existing documents
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+
+        return True
+
+    def us_13291_oca_delete_default_ad_destination(self, cr, uid, *a, **b):
+        '''
+        Remove the default destination put on AD
+        '''
+        entity_obj = self.pool.get('sync.client.entity')
+        if entity_obj and entity_obj.get_entity(cr, uid).oc == 'oca':
+            cr.execute("""
+                DELETE FROM ir_values WHERE key = 'default' AND key2 IS NULL AND meta = 'web' AND name = 'destination_id'
+            """)
+            self.log_info(cr, uid, "US-13291: %s default destinations were removed" % (cr.rowcount,))
+        return True
+
+    def us_11803_12201_12333_lines_state_to_subpick(self, cr, uid, *a, **b):
+        '''
+        Set the line_state of existing sub-Picks
+        '''
+        pick_obj = self.pool.get('stock.picking')
+
+        to_mixed, to_assign, to_confirmed, to_empty = [], [], [], []
+        subpick_domain = [('type', '=', 'out'), ('subtype', '=', 'picking'), ('is_subpick', '=', True),
+                          ('state', 'in', ['confirmed', 'assigned'])]
+        pick_ids = pick_obj.search(cr, uid, subpick_domain, context={})
+        for pick in pick_obj.browse(cr, uid, pick_ids, fields_to_fetch=['move_lines'], context={}):
+            available, confirmed = False, False
+            empty = len(pick.move_lines)
+            for move in pick.move_lines:
+                if move.product_qty == 0.00 or move.state in ('cancel', 'done'):
+                    continue
+
+                if move.state != 'assigned':
+                    confirmed = True
+                else:
+                    available = True
+
+                if confirmed and available:
+                    break
+
+            if available and confirmed:
+                to_mixed.append(pick.id)
+            elif available:
+                to_assign.append(pick.id)
+            elif confirmed:
+                to_confirmed.append(pick.id)
+            elif empty == 0:
+                to_empty.append(pick.id)
+
+        if to_mixed:
+            cr.execute("""UPDATE stock_picking SET line_state = 'mixed' WHERE id IN %s""", (tuple(to_mixed),))
+            self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Partially available'" % (len(to_mixed),))
+        if to_assign:
+            cr.execute("""UPDATE stock_picking SET line_state = 'assigned' WHERE id IN %s""", (tuple(to_assign),))
+            self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Available'" % (len(to_assign),))
+        if to_confirmed:
+            cr.execute("""UPDATE stock_picking SET line_state = 'confirmed' WHERE id IN %s""", (tuple(to_confirmed),))
+            self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Not available'" % (len(to_confirmed),))
+        if to_empty:
+            cr.execute("""UPDATE stock_picking SET line_state = 'empty' WHERE id IN %s""", (tuple(to_empty),))
+            self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Empty'" % (len(to_empty),))
+        # To processed
+        cr.execute("""
+            UPDATE stock_picking SET line_state = 'processed' 
+            WHERE type = 'out' AND subtype = 'picking' AND is_subpick = 't' AND state IN ('done', 'cancel')
+        """)
+        self.log_info(cr, uid, "US-11803-12201-12333: The lines state of %s Picking Tickets was set to 'Processed'" % (cr.rowcount,))
+        return True
+
+    # UF34.0
+    def us_12912_catalogue_lines_partner_id(self, cr, uid, *a, **b):
+        '''
+        Give the partner_type of the catalogue's partner to their lines
+        '''
+        cr.execute("""
+            UPDATE supplier_catalogue_line cl SET partner_type = (SELECT p.partner_type FROM supplier_catalogue c 
+                LEFT JOIN res_partner p ON c.partner_id = p.id WHERE cl.catalogue_id = c.id)
+        """)
+        self.log_info(cr, uid, "US-12912: %s catalogue lines were updated to add partner data" % (cr.rowcount,))
+        return True
+
+
+    def us_12228_update_supplierinfo_sequence(self, cr, uid, *a, **b):
+        '''
+        Update the data of the 'sequence' field of product_supplierinfo to match the new selection
+        '''
+        # old 4 and the other into 18 ('4')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 18 WHERE sequence NOT IN (-99, 0, 1, 2, 3)""")
+
+        # old -99 into 13 ('-99')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 13 WHERE sequence = -99""")
+
+        # old 0 into 14 ('0')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 14 WHERE sequence = 0""")
+
+        # old 1 into 15 ('1')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 15 WHERE sequence = 1""")
+
+        # old 2 into 16 ('2')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 16 WHERE sequence = 2""")
+
+        # old 3 into 17 ('3')
+        cr.execute("""UPDATE product_supplierinfo SET sequence = 17 WHERE sequence = 3""")
+        return True
+
+
+    def us_13192_product_categ_property(self, cr, uid, *a, **b):
+        cr.execute('''
+            update product_category c
+                set property_account_expense_categ = split_part(p.value_reference, ',', 2)::integer
+                from ir_property p
+                where
+                    p.name='property_account_expense_categ' and
+                    coalesce(p.value_reference, '') != '' and
+                    p.res_id = 'product.category,'||c.id
+        ''')
+
+        cr.execute('''
+            update product_category c
+                set property_account_income_categ = split_part(p.value_reference, ',', 2)::integer
+                from ir_property p
+                where
+                    p.name='property_account_income_categ' and
+                    coalesce(p.value_reference, '') != '' and
+                    p.res_id = 'product.category,'||c.id
+        ''')
+        return True
+
+    def us_13192_get_ud_not_golden(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance and instance.level == 'section':
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'UD_GETALL_MERGED', '1')
+
+        cr.drop_constraint_if_exists('unidata_products_error', 'unidata_products_error_unique_msfid')
+        cr.execute('update unidata_products_error set unique_key = msfid')
+        return True
+
+    def us_13166_signature_lock_for_po(self, cr, uid, *a, **b):
+        """
+        Only allow users with the group Sign_document_creator_supply to lock/unlock the PO through the signature
+        Lock existing POs that have been signed
+        """
+        if cr.table_exists('sync_server_user_rights'):
+            return True
+
+        bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+        for group_name, model, b_name in [('Sign_document_creator_supply', 'purchase.order', ['lock_doc_for_sign', 'unlock_doc_for_sign']),]:
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
+            if not group_ids:
+                group_id = self.pool.get('res.groups').create(cr, uid, {'name': group_name})
+            else:
+                group_id = group_ids[0]
+
+            if model and b_name:
+                bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_name), ('model_id', '=', model)])
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, [group_id])]})
+
+        cr.execute("""
+            SELECT s.id FROM signature_line sl
+                LEFT JOIN signature s ON sl.signature_id = s.id LEFT JOIN purchase_order p ON s.signature_res_id = p.id
+            WHERE s.signature_res_model = 'purchase.order' AND sl.signed = 't' AND p.partner_type = 'external'
+            GROUP BY s.id
+        """)
+        sign_to_lock = []
+        for x in cr.fetchall():
+            sign_to_lock.append(x[0])
+        if sign_to_lock:
+            cr.execute("""UPDATE signature SET doc_locked_for_sign = 't' WHERE id IN %s""", (tuple(sign_to_lock),))
+        self.log_info(cr, uid, "US-13166: %d External POs were locked because of their signatures" % (cr.rowcount,))
+
+        return True
+
     # UF34.0
     def us_13398_ocb_unmerge_2_prod(self, cr, uid, *a, **b):
         '''

@@ -20,5 +20,6 @@
 ##############################################################################
 
 from . import supplier_catalogue_lines_xls
+from . import catalogue_export_track_changes_report
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

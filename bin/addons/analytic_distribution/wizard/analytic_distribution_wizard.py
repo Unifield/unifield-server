@@ -468,12 +468,13 @@ class analytic_distribution_wizard(osv.osv_memory):
         for el in self.browse(cr, uid, ids, context=context):
             res[el.id] = True
             # verify purchase state
-            if el.purchase_id and el.purchase_id.state not in ['draft', 'draft_p', 'validated_n', 'validated']:
+            if el.purchase_id and (el.purchase_id.state not in ['draft', 'draft_p', 'validated_n', 'validated'] or
+                                   el.purchase_id.doc_locked_for_sign):
                 res[el.id] = False
             # verify purchase line state and allow modification if the line is created by sync and blocked at validated
-            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and \
-                    not (not el.purchase_line_id.analytic_distribution_id and el.purchase_line_id.created_by_sync and
-                         el.purchase_line_id.state == 'sourced_v'):
+            if el.purchase_line_id and ((el.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and \
+                                         not (not el.purchase_line_id.analytic_distribution_id and el.purchase_line_id.created_by_sync and
+                                              el.purchase_line_id.state == 'sourced_v')) or el.purchase_line_id.po_locked):
                 res[el.id] = False
             # verify invoice state
             if el.invoice_id and el.invoice_id.state in ['open', 'paid', 'inv_close', 'cancel']:
