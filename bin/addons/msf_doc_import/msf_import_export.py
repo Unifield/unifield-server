@@ -1377,6 +1377,27 @@ class msf_import_export(osv.osv_memory):
                         if parent_type != 'view' or parent_category != 'FREE2':
                             raise Exception(_('The Parent Analytic Account must be a View type Free 2 account.'))
 
+                # Product-Category
+                if import_brw.model_list_selection == 'product_category':
+                    if data.get('donation_expense_account', False):
+                        donation_acc = acc_obj.browse(cr, uid, data.get('donation_expense_account'),
+                                                      fields_to_fetch=['type_for_register'], context=context)
+                        if not donation_acc or donation_acc.type_for_register != 'donation':
+                            raise Exception(_('Import error for product category "%s" : The Donation Account must be of type donation.')
+                                            % data.get('name', ''))
+                    if data.get('asset_bs_account_id', False):
+                        asset_acc = acc_obj.browse(cr, uid, data.get('asset_bs_account_id'),
+                                                   fields_to_fetch=['user_type'], context=context)
+                        if not asset_acc or asset_acc.user_type.code != 'asset':
+                            raise Exception(_('Import error for product category "%s" : The Asset Balance Sheet Account must be of type asset.')
+                                            % data.get('name', ''))
+                    if data.get('asset_bs_depreciation_account_id', False):
+                        asset_acc = acc_obj.browse(cr, uid, data.get('asset_bs_depreciation_account_id'),
+                                                   fields_to_fetch=['user_type'], context=context)
+                        if not asset_acc or asset_acc.user_type.code != 'asset':
+                            raise Exception(_('Import error for product category "%s" : The Asset B/S Depreciation Account must be of type asset.')
+                                            % data.get('name', ''))
+
                 if import_brw.model_list_selection == 'record_rules':
                     if not data.get('groups'):
                         data['groups'] = [(6, 0, [])]
