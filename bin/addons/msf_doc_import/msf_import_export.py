@@ -914,6 +914,9 @@ class msf_import_export(osv.osv_memory):
         forbid_creation_of = [] # list of product ids that will not be created
         last_empty_lines = []
 
+        donation_acc_ids = []
+        asset_acc_ids = []
+
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
             if all(not x for x in line_data):
@@ -1379,24 +1382,30 @@ class msf_import_export(osv.osv_memory):
 
                 # Product-Category
                 if import_brw.model_list_selection == 'product_category':
-                    if data.get('donation_expense_account', False):
+                    if data.get('donation_expense_account', False) and data.get('donation_expense_account') not  in donation_acc_ids:
                         donation_acc = acc_obj.browse(cr, uid, data.get('donation_expense_account'),
                                                       fields_to_fetch=['type_for_register'], context=context)
                         if not donation_acc or donation_acc.type_for_register != 'donation':
                             raise Exception(_('Import error for product category "%s" : The Donation Account must be of type donation.')
                                             % data.get('name', ''))
-                    if data.get('asset_bs_account_id', False):
+                        else:
+                            donation_acc_ids.append(data.get('donation_expense_account'))
+                    if data.get('asset_bs_account_id', False) and data.get('asset_bs_account_id') not in asset_acc_ids:
                         asset_acc = acc_obj.browse(cr, uid, data.get('asset_bs_account_id'),
                                                    fields_to_fetch=['user_type'], context=context)
                         if not asset_acc or asset_acc.user_type.code != 'asset':
                             raise Exception(_('Import error for product category "%s" : The Asset Balance Sheet Account must be of type asset.')
                                             % data.get('name', ''))
-                    if data.get('asset_bs_depreciation_account_id', False):
-                        asset_acc = acc_obj.browse(cr, uid, data.get('asset_bs_depreciation_account_id'),
+                        else:
+                            asset_acc_ids.append(data.get('asset_bs_account_id'))
+                    if data.get('asset_bs_depreciation_account_id', False) and data.get('asset_bs_depreciation_account_id') not in asset_acc_ids:
+                        dep_acc = acc_obj.browse(cr, uid, data.get('asset_bs_depreciation_account_id'),
                                                    fields_to_fetch=['user_type'], context=context)
-                        if not asset_acc or asset_acc.user_type.code != 'asset':
+                        if not dep_acc or dep_acc.user_type.code != 'asset':
                             raise Exception(_('Import error for product category "%s" : The Asset B/S Depreciation Account must be of type asset.')
                                             % data.get('name', ''))
+                        else:
+                            asset_acc_ids.append(data.get('asset_bs_depreciation_account_id'))
 
                 if import_brw.model_list_selection == 'record_rules':
                     if not data.get('groups'):
