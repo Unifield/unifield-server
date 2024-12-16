@@ -16,9 +16,10 @@ create or replace view actuals as ( select
     round(al.amount_currency, 2) as book_amount,
     c.name as book_currency,
     round(al.amount, 2) as func_amount,
-    cur_table.currency_table_name as currency_table,
-    cur_table.rate as wefin_rate,
-    round(al.amount_currency / cur_table.rate, 2) as wefin_amount,
+    coalesce(cur_table.currency_table_name, 'UF rate') as currency_table,
+    coalesce(cur_table.rate, real_fx_rate.rate) as wefin_rate,
+    coalesce(cur_table.fx_date, real_fx_rate.fx_date) as fx_from_date,
+    case when cur_table.rate is not null then round(al.amount_currency / cur_table.rate, 2) else round(al.amount, 2) end as wefin_amount,
     al.name as description,
     al.ref as reference,
     cost_center.code as cost_center_code,
@@ -51,7 +52,7 @@ create or replace view actuals as ( select
     inner join res_currency c on c.id = al.currency_id
     left outer join hr_employee hr on hr.id = aml.employee_id
     left join lateral (
-        select cur.name as currency_name, cur_table.name as currency_table_name, rate.rate from
+        select cur.name as currency_name, cur_table.name as currency_table_name, rate.rate, rate.name as fx_date from
             res_currency_table cur_table, res_currency cur, res_currency_rate rate
         where
             rate.name <= al.source_date and
@@ -63,9 +64,18 @@ create or replace view actuals as ( select
             order by rate.name desc, cur_table.id desc
         limit 1
     ) cur_table on true
+    left join lateral (
+        select rate.rate, rate.name as fx_date from
+            res_currency_rate rate
+        where
+            rate.name <= al.source_date and
+            rate.currency_id = al.currency_id
+            order by rate.name desc, id desc
+        limit 1
+    ) real_fx_rate on true
   where
     p.number not in (0, 16)
-    and j.type not in ('cur_adj')
+    and j.type not in ('cur_adj', 'revaluation')
     and i.level in ('coordo', 'project')
     order by
     al.id
