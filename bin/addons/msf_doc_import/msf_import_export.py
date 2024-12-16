@@ -1383,9 +1383,10 @@ class msf_import_export(osv.osv_memory):
                 # Product-Category
                 if import_brw.model_list_selection == 'product_category':
                     if data.get('donation_expense_account', False) and data.get('donation_expense_account') not  in donation_acc_ids:
-                        donation_acc = acc_obj.browse(cr, uid, data.get('donation_expense_account'),
-                                                      fields_to_fetch=['type_for_register'], context=context)
-                        if not donation_acc or donation_acc.type_for_register != 'donation':
+                        donation_id = acc_obj.search(cr, uid, [('id', '=', data.get('donation_expense_account')),
+                                                               ('restricted_area', '=', 'product_category_donation')],
+                                                     context=context)
+                        if not donation_id:
                             raise Exception(_('Import error for product category "%s" : The Donation Account must be of type donation.')
                                             % data.get('name', ''))
                         else:
