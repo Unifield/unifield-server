@@ -396,7 +396,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             nom = employee_data.get('nom', False)
             prenom = employee_data.get('prenom', False)
             if not nom and not prenom:
-                message = _('There is an employee with empty name staff.csv file')
+                message = _('There is an employee with empty name in staff.csv file')
                 if code_staff:
                     message = message + _(': employee with code_staff %s') % code_staff
                 self.store_error(errors, wizard_id, message)
