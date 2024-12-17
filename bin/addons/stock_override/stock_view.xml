@@ -310,7 +310,7 @@
                             <field name="reason_type_id" widget="selection"
                                    domain="[('internal_ok', '=', True)]" 
                                    attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-                            <field name="order_category"/>
+                            <field name="order_category" attrs="{'readonly': ['|', '|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('sale_id', '!=', False), ('previous_chained_pick_id', '!=', False)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('sale_id', '=', False), ('previous_chained_pick_id', '=', False)]}"/>
                             <field name="incoming_id" />
                             <field name="from_pick_cancel_id" attrs="{'invisible': [('from_pick_cancel_id', '=', False)]}" />
                         </group>
@@ -559,7 +559,7 @@
                                    attrs="{'readonly': ['|', '|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('claim', '=', True)]}"/>
                             <field name="customers" readonly="1" />
                             <field name="change_reason"/>
-                            <field name="order_category"/>
+                            <field name="order_category" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('purchase_id', '!=', False)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('purchase_id', '=', False)]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
@@ -893,7 +893,7 @@
                                 domain="[('partner_id', '=', partner_id2)]"
                                 required="1"
                                 />
-                            <field name="order_category"/>
+                            <field name="order_category" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('sale_id', '!=', False)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('sale_id', '=', False)]}"/>
                             <field name="reason_type_id"
                                 domain="[('outgoing_ok', '=', True), ('is_fs_out', '=', True)]"
                                 get_selection="list_reason_type_outgoing"

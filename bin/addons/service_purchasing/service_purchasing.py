@@ -204,6 +204,10 @@ class stock_picking(osv.osv):
                 result[obj.id]['order_category'] = obj.purchase_id.categ
             elif obj.rac_id:
                 result[obj.id]['order_category'] = obj.rac_id.categ
+            elif obj.order_category and obj.subtype == 'standard' and ((obj.type == 'in' and not obj.purchase_id) or
+                    (obj.type == 'internal' and not obj.sale_id and not obj.previous_chained_pick_id) or
+                    (obj.type == 'out' and not obj.sale_id)):  # IN/INT/OUT from scratch
+                result[obj.id]['order_category'] = obj.order_category
 
         return result
 
@@ -238,8 +242,25 @@ class stock_picking(osv.osv):
             context = {}
         return self.pool.get('stock.picking').search(cr, uid, [('rac_id', 'in', ids)], context=context)
 
+    def _set_order_category(self, cr, uid, ids, name, value, arg, context=None):
+        """
+        Set the order_category field if a value is given
+        """
+        if context is None:
+            context = {}
+        if not ids:
+            return True
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if value:
+            cr.execute("""UPDATE stock_picking SET order_category = %s WHERE id IN %s""", (value, tuple(ids)))
+
+        return True
+
     _columns = {
-        'order_category': fields.function(_vals_get23, method=True, type='selection', selection=ORDER_CATEGORY, string='Order Category', multi='vals_get23', readonly=True,
+        'order_category': fields.function(_vals_get23, method=True, fnct_inv=_set_order_category, type='selection',
+                                          selection=ORDER_CATEGORY, string='Order Category', multi='vals_get23', readonly=True,
                                           store={
                                               'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['purchase_id', 'sale_id'], 10),
                                               'purchase.order': (_get_purchase_ids, ['categ', ], 10),
@@ -248,5 +269,6 @@ class stock_picking(osv.osv):
                                           },
                                           ),
     }
+
 
 stock_picking()
