@@ -151,6 +151,13 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
         ''', (pol_id, ))
         res.append([data[0] for data in self.cr.fetchall()])
 
+        # Get the received quantities from the IN moves' linked to the PO line
+        self.cr.execute('''
+            SELECT SUM(CASE WHEN m.state = 'done' THEN m.product_qty ELSE 0 END) FROM stock_move m, stock_picking p
+            WHERE m.picking_id = p.id AND m.purchase_line_id = %s AND p.type = 'in' AND m.state != 'cancel'
+        ''', (pol_id,))
+        res.append(self.cr.fetchone()[0])
+
         return res
 
     def _get_lines(self, order_id, only_bo=False, report=False):
@@ -177,8 +184,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             po_name = '-'
             po_supplier = '-'
 
-            edd = False
-            cdd = False
+            edd, cdd = False, False
+            in_received_qty = 'N/A'
             if self.datas.get('is_rml') or self.localcontext.get('lang', False) == 'fr_MF':
                 date_format = '%d/%m/%Y'
             else:
@@ -200,6 +207,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         cdd = ', '.join([datetime.strptime(exp_date[:10], '%Y-%m-%d').strftime(date_format) for exp_date in in_data[1]])
                     elif len(in_data[1]) == 1:
                         cdd = in_data[1][0][:10]
+                    if linked_pol.state in ('confirmed', 'done'):
+                        in_received_qty = in_data[2]
             if not edd and line.esti_dd:
                 edd = line.esti_dd
             if not cdd and (line.confirmed_delivery_date or line.order_id.delivery_confirmed_date):
@@ -272,6 +281,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             data.update({
                                 'uom_id': line.product_uom.name,
                                 'ordered_qty': line.product_uom_qty,
+                                'received_qty': in_received_qty,
                                 'backordered_qty': 0.00,
                                 'first_line': True,
                             })
@@ -381,6 +391,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             'shipment': '-',
                             'uom_id': line.product_uom.name,
                             'ordered_qty': line.product_uom_qty,
+                            'received_qty': in_received_qty,
                             'backordered_qty': move.state not in ('cancel', 'cancel_r') and line.product_uom_qty or 0,
                             'delivered_uom': line.product_uom.name,
                             'first_line': True,
@@ -451,6 +462,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'delivered_qty': received_qty,
                         'delivered_uom': line.product_uom.name or '-',
                         'delivery_order': int_name or '-',
+                        'received_qty': in_received_qty,
                         'backordered_qty': line.order_id.state != 'cancel' and max(line.product_uom_qty - received_qty - cancel_qty, 0) or 0.00,
                         'edd': edd,
                         'cdd': cdd,
