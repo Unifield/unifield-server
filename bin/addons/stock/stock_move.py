@@ -144,6 +144,8 @@ class stock_move(osv.osv):
                     res[move.id]['order_category'] = order.categ
                 if 'order_type' in fields_name:
                     res[move.id]['order_type'] = order.order_type
+            elif move.picking_id.order_category:
+                res[move.id]['order_category'] = move.picking_id.order_category
 
         return res
 
