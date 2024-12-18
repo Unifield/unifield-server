@@ -517,13 +517,10 @@ class account_move_line(osv.osv):
     def _balance(self, cr, uid, ids, name, arg, context=None):
         if context is None:
             context = {}
-        c = context.copy()
-        c['initital_bal'] = True
-        sql = """SELECT l2.id, SUM(l1.debit-l1.credit)
-                    FROM account_move_line l1, account_move_line l2
-                    WHERE l2.account_id = l1.account_id
-                      AND l1.id <= l2.id
-                      AND l2.id IN %%s AND %s GROUP BY l2.id""" % self._query_get(cr, uid, obj='l1', context=c)  # ignore_sql_check
+        sql = """
+            SELECT l1.id, l1.debit-l1.credit
+            FROM account_move_line l1
+            WHERE l1.id IN %s """
 
         cr.execute(sql, [tuple(ids)])
         result = dict(cr.fetchall())
@@ -580,13 +577,13 @@ class account_move_line(osv.osv):
             context = {}
         if not args:
             return []
-        where = ' AND '.join(['(abs(sum(debit-credit))'+x[1]+str(x[2])+')' for x in args])
-        cursor.execute('SELECT id, SUM(debit-credit) FROM account_move_line \
-                        GROUP BY id, debit, credit having '+where)  # not_a_user_entry
-        res = cursor.fetchall()
-        if not res:
-            return [('id', '=', '0')]
-        return [('id', 'in', [x[0] for x in res])]
+
+        try:
+            f = abs(float(args[0][2]))
+        except:
+            return [('id', '=', 0)]
+
+        return ['|', '&', ('debit', '>', 0), ('debit', args[0][1], f), '&', ('credit', '>', 0), ('credit', args[0][1], f)]
 
     def _invoice_search(self, cursor, user, obj, name, args, context=None):
         if not args:
