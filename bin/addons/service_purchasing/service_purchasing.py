@@ -206,7 +206,7 @@ class stock_picking(osv.osv):
                 result[obj.id]['order_category'] = obj.rac_id.categ
             elif obj.order_category and obj.subtype == 'standard' and ((obj.type == 'in' and not obj.purchase_id) or
                     (obj.type == 'internal' and not obj.sale_id and not obj.previous_chained_pick_id) or
-                    (obj.type == 'out' and not obj.sale_id)):  # IN/INT/OUT from scratch
+                    (obj.type == 'out' and not obj.sale_id and not obj.purchase_id)):  # IN/INT/OUT from scratch
                 result[obj.id]['order_category'] = obj.order_category
 
         return result

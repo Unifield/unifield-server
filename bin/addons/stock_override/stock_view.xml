@@ -893,7 +893,7 @@
                                 domain="[('partner_id', '=', partner_id2)]"
                                 required="1"
                                 />
-                            <field name="order_category" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('sale_id', '!=', False)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('sale_id', '=', False)]}"/>
+                            <field name="order_category" attrs="{'readonly': ['|', '|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('sale_id', '!=', False), ('purchase_id', '!=', False)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('sale_id', '=', False), ('purchase_id', '=', False)]}"/>
                             <field name="reason_type_id"
                                 domain="[('outgoing_ok', '=', True), ('is_fs_out', '=', True)]"
                                 get_selection="list_reason_type_outgoing"
