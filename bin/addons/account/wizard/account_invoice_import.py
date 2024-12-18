@@ -61,7 +61,9 @@ class account_invoice_import(osv.osv_memory):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         return super(account_invoice_import, self).create(cr, real_uid, vals, context=context)
 
-    def _check_col_length(self, percent_col, cc_col, dest_col, fp_col, line_num, errors):
+    def _check_col_length(self, percent_col, cc_col, dest_col, fp_col, line_num, errors, context=None):
+        if context is None:
+            context = {}
         if isinstance(percent_col, list):
             if not isinstance(cc_col, list) or len(cc_col) != len(percent_col) or \
                     not isinstance(dest_col, list) or len(dest_col) != len(percent_col) or \
@@ -69,10 +71,12 @@ class account_invoice_import(osv.osv_memory):
                 errors.append(_('Line %s: Cost Center, Destination and Funding Pool columns should have '
                                 'the same number of values as Percentage column') % line_num)
 
-    def _check_percent_values(self, percent_col, line_num, errors):
+    def _check_percent_values(self, percent_col, line_num, errors, context=None):
         '''
         Check if the Percent Column values adds up to exactly 100
         '''
+        if context is None:
+            context = {}
         if isinstance(percent_col, list):
             try:
                 percent_vals = [float(percent_val) for percent_val in percent_col]

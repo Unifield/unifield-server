@@ -92,13 +92,11 @@
                         <button name="cancel_tender" type="object" string="Cancel" icon="gtk-cancel" attrs="{'invisible':[('state', 'in', ['cancel', 'done'])]}" />
                         <button name="button_generate" string="Generate RfQs" icon="gtk-convert" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'comparison']), '&amp;', ('state', '=', 'comparison'), ('diff_nb_rfq_supplier', '=', False)]}"/>
                         <button name="compare_rfqs" string="Compare RfQs" type="object" icon="gtk-find" attrs="{'invisible': ['|', ('state', '!=', 'comparison'), ('diff_nb_rfq_supplier', '=', True)]}" />
-                        <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit"
-                            attrs="{'invisible':['|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison')]}" />
                         <button name="check_continue_sourcing" states="comparison" type="object" string="Continue Sourcing Process" icon="gtk-go-forward"
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','=', False)]}" />
                         <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add"
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
-                        <button name="check_update_for_done" string="Closed" type="object" icon="gtk-go-forward"
+                        <button name="wkf_action_done" string="Closed" type="object" icon="gtk-go-forward"
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
                     </group>
                 </form>
@@ -679,34 +677,6 @@
                     <separator string="Actions" colspan="4" />
                     <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="Close window" />
                     <button colspan="2" type="object" icon="gtk-execute" name="cancel_po" string="Cancel RfQ" />
-                </form>
-            </field>
-        </record>
-
-        <record id="check_products_supplier_updated_wizard" model="ir.ui.view">
-            <field name="name">check.products.supplier.updated.wizard</field>
-            <field name="model">check.products.supplier.updated.wizard</field>
-            <field name="arch" type="xml">
-                <form string="Warning!">
-                    <group colspan="4" col="1">
-                        <html>
-                            <h3 style="text-align: center; margin: 10px; font-weight: normal"><translate>
-                                You are about to close this Tender without the details being sent to update the Product Supplier information, are you sure you wish to continue ?
-                            </translate></h3>
-                        </html>
-                    </group>
-                    <newline />
-                    <group colspan="4" col="1">
-                        <html>
-                            <span style="text-align: left; margin: 10px; font-weight: normal"><translate>
-                                Comment :
-                            </translate></span>
-                        </html>
-                        <field name="comment" nolabel="1" colspan="4" />
-                    </group>
-                    <newline />
-                    <button name="yes_close_tender" string="Continue" type="object" icon="terp-check" colspan="1" />
-                    <button name="no_close_tender" string="Return to previous screen" type="object" icon="gtk-cancel" colspan="1" />
                 </form>
             </field>
         </record>

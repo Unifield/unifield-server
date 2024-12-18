@@ -133,6 +133,7 @@ SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT = [
     (_('SoQ Rounding'), 'number'),
     (_('Min. Order Qty.'), 'number'),
     (_('Comment'), 'string'),
+    (_('Ranking'), 'string'),
 ]
 SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT = [x for (x,y) in SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT]
 

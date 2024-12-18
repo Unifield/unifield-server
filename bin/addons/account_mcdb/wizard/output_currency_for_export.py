@@ -35,7 +35,7 @@ class output_currency_for_export(osv.osv_memory):
 
     _columns = {
         'currency_id': fields.many2one('res.currency', string="Output currency", help="Give an output currency that would be used for export", required=False),
-        'fx_table_id': fields.many2one('res.currency.table', string="FX Table", required=False),
+        'fx_table_id': fields.many2one('res.currency.table', string="FX Table", required=False, domain=[('state', '=', 'valid')]),
         'export_format': fields.selection([('xls', 'Excel'), ('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
         'domain': fields.text('Domain'),
         'export_selected': fields.boolean('Export only the selected items', help="The output is limited to 5000 records"),

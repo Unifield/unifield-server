@@ -74,10 +74,13 @@
                     </group>
                     <field name="journal_id" />
                     <group colspan="2" col="4">
-                        <field name="asset_type_id" on_change="change_asset_type_id(asset_type_id, useful_life_id)" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
-                        <field name="useful_life_id" widget="selection" get_selection="get_selection_useful_life_id" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                        <group colspan="2" col="4">
+                            <field name="asset_type_id" on_change="change_asset_type_id(asset_type_id, useful_life_id)" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                            <field name="useful_life_id" widget="selection" get_selection="get_selection_useful_life_id" required="1" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}" />
+                        </group>
+                        <field name="used_instance_id" attrs="{'readonly': ['|', ('instance_level', '!=', 'coordo'), ('state', '=', 'disposed')]}" />
                     </group>
-                    <field name="product_id" on_change="onChangeProductId(product_id)" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '!=', 'draft')]}"/>
+                    <field name="product_id" on_change="onChangeProductId(product_id)" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '!=', 'draft')]}" required="1"/>
                     <field name="description" attrs="{'readonly': ['|', ('from_invoice', '=', True), ('state', '!=', 'draft')]}" />
                     <notebook colspan="4">
                     <page string="Asset Form">
@@ -90,7 +93,7 @@
                             <field name="local_ref" />
                         </group>
 
-                        <group colspan="2" col="8" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                        <group colspan="2" col="8" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'depreciated']), ('used_in_current_instance', '=', False)]}">
                             <separator string="Asset Reference" colspan="2" />
                             <field name="serial_nb" colspan="8" />
                             <field name="brand" colspan="8" />
@@ -101,10 +104,10 @@
 
                         <group colspan="2" col="4">
                             <separator string="Comment" colspan="4" />
-                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
+                            <field name="comment" nolabel="True" colspan="4" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'depreciated']), ('used_in_current_instance', '=', False)]}"/>
                         </group>
 
-                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}">
+                        <group colspan="2" col="2" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'open', 'running', 'depreciated']), ('used_in_current_instance', '=', False)]}">
                             <separator string="Traceability" colspan="2" />
                             <field name="project_po" />
                             <field name="orig_mission_code" />
@@ -115,14 +118,14 @@
 
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
-                            <field name="move_line_id" required="1" colspan="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
+                            <field name="move_line_id" required="1" colspan="4" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('from_hq_entry', '=', True), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
                             <field name="quantity_divisor"  attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_quantity_divisor(quantity_divisor, move_line_id)"/>
                             <field name="invo_value" required="1"/>
                             <field name="invo_currency" required="1"/>
                             <field name="invo_date" required="1"/>
                             <field name="invo_supplier_id" colspan="4" />
-                            <field name="invo_donator_code" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
-                            <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', 'in', ['cancel', 'done'])]}"/>
+                            <field name="invo_donator_code" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', '=', 'disposed')]}"/>
+                            <field name="invo_certif_depreciation" colspan="4" attrs="{'readonly': ['|', ('lock_open', '=', True), ('state', '=', 'disposed')]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Accounts" colspan="2" />
@@ -132,13 +135,15 @@
                     </page>
                     <page string="Event History">
                         <group colspan="2" col="2">
-                            <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [('state', 'not in', ['open', 'running'])]}">
-                                <tree string="Events" editable="top">
+                            <field colspan="4" name="event_ids" nolabel="1" mode="tree" attrs="{'readonly': [ '|', ('state', 'not in', ['open', 'running', 'depreciated']), ('used_in_current_instance', '=', False)]}">
+                                <tree string="Events" editable="top" noteditable="not event_used_in_current_instance">
                                     <field name="date" />
+                                    <field name="instance_id" />
                                     <field name="event_type_id" widget="selection"/>
                                     <field name="location" />
                                     <field name="proj_code" />
                                     <field name="comment" />
+                                    <field name="event_used_in_current_instance" invisible="1"/>
                                 </tree>
                             </field>
                         </group>
@@ -149,16 +154,16 @@
                         <newline />
                         <field name="depreciation_amount" />
                         <field name="disposal_amount" />
-                        <group col="6" colspan="4">
+                        <group col="6" colspan="4"  attrs="{'invisible': [('lock_open', '!=', False)]}">
                             <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
                                 <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="3" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
                                 <button name="button_reset_distribution" string="Reset AD at line level" type="object"
-                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['cancel', 'done'])]}"/>
+                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['disposed', 'depreciated'])]}"/>
                             </group>
                             <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
-                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="3" attrs="{'invisible': ['|', ('state', 'in', ['cancel', 'done']), ('analytic_distribution_id', '!=', False)]}"/>
+                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="3" attrs="{'invisible': ['|', ('state', 'in', ['disposed', 'depreciated']), ('analytic_distribution_id', '!=', False)]}"/>
                                 <button name="button_reset_distribution" string="Reset AD at line level" type="object"
-                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['cancel', 'done'])]}"/>
+                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', 'in', ['disposed', 'depreciated'])]}"/>
                             </group>
                             <field name="analytic_distribution_id" invisible="1"/>
                         </group>
@@ -190,16 +195,18 @@
                     <field name="has_posted_lines" invisible="1" />
                     <field name="can_be_disposed" invisible="1" />
                     <field name="instance_level" invisible="1" />
-                    <field name="from_sync" invisible="1" />
+                    <field name="used_in_current_instance"  invisible="1"/>
                     <field name="state" />
-                    <field name="from_invoice"  />
+                    <group colspan="2" col="4">
+                        <field name="from_invoice"  />
+                        <field name="from_hq_entry"  />
+                    </group>
                     <group colspan="6" col="12">
                         <button type="object" name="button_open_asset" string="Open" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                        <button type="object" name="button_cancel_asset" string="Cancel" icon="gtk-cancel" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'open']), ('lock_open', '!=', False)]}"  />
                         <button type="object" name="button_generate_draft_entries" string="Compute Lines" icon="terp-stock_format-scientific" attrs="{'invisible': ['|','|', ('instance_level', '=', 'project'), ('lock_open', '!=', False), ('state', '!=', 'open')]}" />
                         <button type="object" name="button_delete_draft_entries" string="Delete Lines" icon="terp-gtk-stop" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('lock_open', '=', False), ('state', '!=', 'open')]}" />
                         <button type="object" name="button_set_as_open" string="Set as Open" icon="gtk-goto-first" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('has_posted_lines', '!=', False), ('state', '!=', 'running')]}" />
-                        <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('state', '!=', 'running'), ('can_be_disposed', '=', False)]}"/>
+                        <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('state', 'not in', ['running', 'depreciated', 'open']), ('can_be_disposed', '=', False)]}"/>
                     </group>
                 </group>
             </form>
@@ -215,6 +222,7 @@
             <tree string="Asset Forms">
                 <field name="name" />
                 <field name="instance_id"/>
+                <field name="used_instance_id" />
                 <field name="move_line_id" />
                 <field name="asset_type_id" />
                 <field name="product_id" />
@@ -242,9 +250,9 @@
                 <separator orientation="vertical"/>
                 <filter icon="terp-document-new" string="Draft" name="s_draft" domain="[('state', '=', 'draft')]"/>
                 <filter icon="terp-camera_test" string="Open" name="s_open" domain="[('state', '=', 'open')]"/>
-                <filter icon="gtk-media-play" string="Running" name="s_running" domain="[('state', '=', 'running')]"/>
-                <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" />
-                <filter icon="gtk-cancel" string="Cancel" name="cancel" domain="[('state','=','cancel')]" />
+                <filter icon="gtk-media-play" string="Active" name="s_running" domain="[('state', '=', 'running')]"/>
+                <filter icon="terp-dialog-close" string="Fully Depreciated" name="depreciated" domain="[('state','=','depreciated')]" />
+                <filter icon="gtk-cancel" string="Disposed" name="disposed" domain="[('state','=','disposed')]" />
                 <separator orientation="vertical"/>
 
                 <field name="name"  />
@@ -291,16 +299,18 @@
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Asset Event">
-
-                <group colspan="2" col="2" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
+                <field name="event_used_in_current_instance" invisible="1" />
+                <group colspan="2" col="2" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'depreciated'])]}">
                     <separator string="Event Information" colspan="2" />
                     <field name="date" />
+                    <field name="instance_id" />
+                    <field name="event_type_id" widget="selection"/>
+                    <newline />
                     <field name="location" />
                     <field name="proj_code" />
-                    <field name="event_type_id" widget="selection"/>
                 </group>
 
-                <group colspan="2" col="2" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
+                <group colspan="2" col="2" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'depreciated'])]}">
                     <separator string="Selection" colspan="2" />
                     <field name="asset_id" on_change="onChangeAssetId(asset_id)" />
                     <field name="product_id" />
@@ -308,9 +318,8 @@
                     <field name="brand" />
                     <field name="model" />
                 </group>
-                <group colspan="2" col="4" attrs="{'readonly': [('asset_state', '!=', 'running')]}">
+                <group colspan="2" col="4" attrs="{'readonly': ['|', ('event_used_in_current_instance', '=', False), ('asset_state', 'not in', ['', 'running', 'depreciated'])]}">
                     <separator string="Comment" colspan="4" />
-                    <!-- display hack -->
                     <group colspan="1" col="1"></group>
                     <field name="comment" nolabel="True" colspan="3" />
                 </group>
@@ -329,6 +338,7 @@
             <tree string="Asset Events">
                 <field name="date" />
                 <field name="asset_id" />
+                <field name="instance_id" />
                 <field name="product_id" />
                 <field name="asset_type_id" />
                 <field name="event_type_id" />

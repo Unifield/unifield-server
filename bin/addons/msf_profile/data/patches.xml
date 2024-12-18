@@ -1135,6 +1135,37 @@
             <field name="method">us_11803_12201_12333_lines_state_to_subpick</field>
         </record>
 
+        <record id="us_12912_catalogue_lines_partner_id" model="patch.scripts">
+            <field name="method">us_12912_catalogue_lines_partner_id</field>
+        </record>
+
+        <record id="us_12228_update_supplierinfo_sequence" model="patch.scripts">
+            <field name="method">us_12228_update_supplierinfo_sequence</field>
+        </record>
+
+        <record id="us_13192_get_ud_not_golden" model="patch.scripts">
+            <field name="method">us_13192_get_ud_not_golden</field>
+        </record>
+
+        <record id="us_13192_product_categ_property" model="patch.scripts">
+            <field name="method">us_13192_product_categ_property</field>
+        </record>
+
+        <record id="us_13166_signature_lock_for_po" model="patch.scripts">
+            <field name="method">us_13166_signature_lock_for_po</field>
+        </record>
+
+        <record id="us_11182_12727_pi_signature" model="patch.scripts">
+            <field name="method">us_11182_12727_pi_signature</field>
+        </record>
+
+        <record id="us_13692_13705_fix_pi_sign_bar" model="patch.scripts">
+            <field name="method">us_13692_13705_fix_pi_sign_bar</field>
+        </record>
+
+        <record id="us_13719_tick_prevent_asset_from_hq" model="patch.scripts">
+            <field name="method">us_13719_tick_prevent_asset_from_hq</field>
+        </record>
 
 
     </data>

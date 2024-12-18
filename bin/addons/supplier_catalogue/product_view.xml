@@ -29,10 +29,6 @@
 						<attribute name="editable">top</attribute>-->
 						<attribute name="noteditable">editable==False</attribute>
 					</xpath>
-					
-					<xpath expr="//field[@name='sequence_bis']" position="before">
-						<field name="editable" invisible="1" />
-					</xpath>
 				</data>
 			</field>
 		</record>

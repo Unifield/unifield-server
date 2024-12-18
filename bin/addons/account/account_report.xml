@@ -110,6 +110,15 @@
             report_type="webkit"
             string="Liquidity Balance"/>
 
+        <report id="account_liquidity_balance_pdf"
+            auto="False"
+            menu="False"
+            header="True"
+            model="account.bank.statement"
+            name="account.liquidity.balance.pdf"
+            rml="account/report/account_liquidity_balance.rml"
+            string="Liquidity Balance"/>
+
         <!-- Employees Payment Order Report -->
         <report id="hr_payment_order_report"
                 string="Payment Orders Report"

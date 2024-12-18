@@ -18,6 +18,22 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+from tools.translate import _
+
+GENERIC_MESSAGE = _("""
+        IMPORTANT : The file should be in xlsx format.
+        The header column names should be: """)
+ACCRUAL_LINES_COLUMNS_FOR_IMPORT = [
+    _('Description'),
+    _('Reference'),
+    _('Expense Account'),
+    _('Accrual Amount Booking'),
+    _('Percentage'),
+    _('Cost Center'),
+    _('Destination'),
+    _('Funding Pool'),
+]
+
 from . import account
 from . import account_move_line
 from . import msf_accrual_line

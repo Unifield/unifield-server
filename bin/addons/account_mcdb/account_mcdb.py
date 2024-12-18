@@ -85,7 +85,7 @@ class account_mcdb(osv.osv):
                                    ('account.analytic.line', 'Analytic Journal Items'),
                                    ('combined.line', 'Both Journal Items and Analytic Journal Items')], string="Type"),
         'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency'),
-        'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
+        'fx_table_id': fields.many2one('res.currency.table', string="FX Table", domain=[('state', '=', 'valid')]),
         'analytic_account_cc_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_cc_mcdb", id1="mcdb_id", id2="analytic_account_id",
                                                     string="Cost Center"),
         'rev_analytic_account_cc_ids': fields.boolean('Exclude Cost Center selection'),

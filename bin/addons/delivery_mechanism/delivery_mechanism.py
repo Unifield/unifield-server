@@ -1367,7 +1367,10 @@ class stock_picking(osv.osv):
                 to_process = []
                 for ed in sorted(processed_out_moves_by_exp.keys()):
                     to_process += processed_out_moves_by_exp[ed]
-                move_obj.action_assign(cr, uid, to_process)
+                assign_expired = False
+                if with_ppl:
+                    assign_expired = True
+                move_obj.action_assign(cr, uid, to_process, assign_expired=assign_expired)
 
             # create track changes:
             for tc_data in track_changes_to_create:

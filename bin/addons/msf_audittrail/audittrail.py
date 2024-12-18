@@ -397,6 +397,7 @@ class hr_employee(osv.osv):
     _inherit = 'hr.employee'
     _trace = True
 
+
 hr_employee()
 
 
@@ -620,6 +621,11 @@ class audittrail_rule(osv.osv):
             else:
                 action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
+
+            # Do not create the Action on the right menu for catalogues
+            if thisrule.object_id.model == 'supplier.catalogue':
+                continue
+
             keyword = 'client_action_relate'
             value = 'ir.actions.act_window,' + str(action_id)
             obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False, view_ids=view_ids)
@@ -1257,7 +1263,16 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 fct_object = model_pool.browse(cr, uid, model.id, fields_to_fetch=['model'], context=context).model
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']], context=context)
                 if field['name'] in sel:
-                    res = dict(sel[field['name']]['selection']).get(values)
+                    sel_vals = dict(sel[field['name']]['selection'])
+                    if sel_vals.get(values):
+                        res = sel_vals[values]
+                    else:
+                        try:  # if the selection is [(int, 'string'), (int, 'string'), ...]
+                            int_values = int(values)
+                            if int_values in sel_vals:
+                                res = sel_vals[int_values]
+                        except ValueError:
+                            res = False
                     if not res:  # if values is not found as key in selection
                         res = values
                 else:

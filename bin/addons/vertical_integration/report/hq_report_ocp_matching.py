@@ -211,7 +211,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 INNER JOIN res_currency AS cc ON e.currency_id = cc.id
                 INNER JOIN account_journal AS j ON aml.journal_id = j.id
                 INNER JOIN account_period AS p ON p.id = aml.period_id
-                LEFT JOIN ocb_vi_export_number ocb_vi ON ocb_vi.move_line_id = aml.id AND ocb_vi.move_id=aml.move_id
+                LEFT JOIN ocb_vi_export_number ocb_vi ON ocb_vi.move_line_id = aml.id AND ocb_vi.entry_sequence=m.name
                 LEFT JOIN account_export_mapping mapping ON mapping.account_id = a.id
                 WHERE j.type not in %s
                 AND p.number not in (0, 16)

@@ -138,9 +138,9 @@ class hr_employee(osv.osv):
         'free1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=False),
-        'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=False),
-        'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=False),
-        'homere_uuid_key': fields.char(string='Homere UUID', size=64, readonly=True, required=False),
+        'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=False, select=1),
+        'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=False, select=1),
+        'homere_uuid_key': fields.char(string='Homere UUID', size=64, readonly=True, required=False, select=1),
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True, write_relate=False),
@@ -153,7 +153,7 @@ class hr_employee(osv.osv):
         'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
         'instance_creator': fields.char('Instance creator of the employee', size=64, readonly=1),
         'expat_creation_date': fields.date('Creation Date', readonly=1),
-        'former_identification_id': fields.char('Former ID', size=32, readonly=1, help='Used for the OCP migration'),
+        'former_identification_id': fields.char('Former ID', size=32, readonly=1, help='Used for the OCP migration', select=1),
     }
 
     _defaults = {

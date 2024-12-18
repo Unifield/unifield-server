@@ -47,7 +47,7 @@ class product_asset_event_type(osv.osv):
     _columns = {
         'name': fields.char('Name', size=512, required=True, translate=1),
         'is_disposal': fields.boolean('Is Disposal'),
-        'expense_account_id': fields.many2one('account.account', 'P&L account', domain=[('user_type_code', 'in', ['expense', 'income'])]), #TODO FIX DOMAIN ?
+        'expense_account_id': fields.many2one('account.account', 'P&L account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
         'active': fields.boolean('Active')
     }
     _defaults = {
@@ -195,6 +195,7 @@ class product_asset(osv.osv):
         default.update({
             'name': False,
             'from_invoice': False,
+            'from_hq_entry': False,
             'from_sync': False,
             'event_ids': [],
             'instance_id': False,
@@ -236,11 +237,39 @@ class product_asset(osv.osv):
         if context is None:
             context = {}
 
-        if context.get('sync_update_execution') and self.pool.get('res.company')._get_instance_level(cr, uid) != 'project':
+        instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
+
+        if context.get('sync_update_execution') and instance_level != 'project':
             # prevent an update from project to overwrite data
             for f in  ['asset_type_id', 'useful_life_id', 'asset_bs_depreciation_account_id', 'asset_pl_account_id', 'start_date', 'move_line_id']:
                 if f in vals:
                     del(vals[f])
+
+        # from coordo do not overwritte brand, serial, ...
+        if context.get('sync_update_execution') and instance_level == 'project':
+            current_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+            if current_instance_id == vals.get('used_instance_id'):
+                for f in ['serial_nb', 'brand', 'type', 'model', 'year', 'comment', 'project_po', 'project_po', 'international_po', 'arrival_date', 'receipt_place']:
+                    if f in vals:
+                        del(vals[f])
+            else:
+                vals['state'] = 'disposed'
+                if vals.get('used_instance_id'):
+                    new_owner_instance = False
+                    event_type_id = False
+                    ctx = {}
+                    for to_log_event in self.search(cr, uid, [('id', 'in', ids), ('used_instance_id', '=', current_instance_id)], context=context):
+                        if not new_owner_instance:
+                            new_owner_instance = self.pool.get('msf.instance').browse(cr, uid, vals['used_instance_id'], context=context)
+                            event_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_asset', 'asset_event_type_transfer_owner')[1]
+                            ctx = context.copy()
+                            ctx['sync_update_execution'] = False
+                        self.pool.get('product.asset.event').create(cr, uid, {
+                            'asset_id': to_log_event,
+                            'event_type_id': event_type_id,
+                            'location': new_owner_instance.name,
+                            'proj_code': new_owner_instance.code
+                        }, context=ctx)
 
         # fetch the product
         if 'product_id' in vals:
@@ -249,15 +278,45 @@ class product_asset(osv.osv):
             vals.update(self._getRelatedProductFields(cr, uid, productId, update_account=False))
 
         if 'move_line_id' in vals:
+            # for manual asset
             for current in self.browse(cr, uid, ids, context=context):
                 new_data = vals.copy()
-                if not current.from_invoice and not current.from_sync and (current.move_line_id.id != vals['move_line_id'] or 'quantity_divisor' in vals and current.quantity_divisor != vals['quantity_divisor']):
+                if not current.from_invoice and not current.from_hq_entry and  not current.from_sync and (current.move_line_id.id != vals['move_line_id'] or 'quantity_divisor' in vals and current.quantity_divisor != vals['quantity_divisor']):
                     new_data.update(self._getRelatedMoveLineFields(cr, uid, vals['move_line_id'], divisor=vals.get('quantity_divisor', current.quantity_divisor), context=context))
                 super(product_asset, self).write(cr, uid, current.id, new_data, context=context)
 
             return True
+        elif 'quantity_divisor' in vals:
+            # from HQ Entry
+            for current in self.browse(cr, uid, ids, context=context):
+                new_data = vals.copy()
+                if current.state == 'draft' and current.from_hq_entry and current.quantity_divisor != vals['quantity_divisor']:
+                    new_data['invo_value'] = round(float(current.move_line_id.debit_currency) / (vals['quantity_divisor'] or 1), 2)
+                super(product_asset, self).write(cr, uid, current.id, new_data, context=context)
+            return True
+
 
         return super(product_asset, self).write(cr, uid, ids, vals, context)
+
+    def _update_owners_list(self, cr, uid, ids, context=None):
+        if not ids:
+            return False
+        if isinstance(ids, int):
+            ids = [ids]
+
+        if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
+            cr.execute(''' insert into asset_owner_instance_rel (asset_id, instance_id)
+                (select asset.id, asset.used_instance_id from product_asset asset, msf_instance i
+                    where i.id = asset.used_instance_id and i.level = 'project' and asset.id in %s)
+                on conflict do nothing
+            ''', (tuple(ids), ))
+
+    def _after_update_send(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+        cr.execute("update product_asset set create_update_sent='t' where id in %s" , (tuple(ids), ))
+        self._update_owners_list(cr, uid, ids, context=context)
+        return True
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -272,7 +331,11 @@ class product_asset(osv.osv):
 
         if from_sync:
             vals['from_sync'] = True
-            vals['state'] = 'open'
+            vals['create_update_sent'] = True
+            if self.pool.get('res.company')._get_instance_level(cr, uid) == 'project':
+                vals['lock_open'] = True # transfer to new project: lock fields
+            else:
+                vals['state'] = 'open' # received at coo as open
 
         # fetch the product
         if 'product_id' in vals and not context.get('from_import'):
@@ -280,14 +343,17 @@ class product_asset(osv.osv):
             # add readonly fields to vals
             vals.update(self._getRelatedProductFields(cr, uid, productId, update_account=not from_sync))
 
-        if not from_sync and not vals.get('from_invoice') and not context.get('from_import') and 'move_line_id' in vals:
+        if not from_sync and not vals.get('from_invoice') and not vals.get('from_hq_entry') and not context.get('from_import') and 'move_line_id' in vals:
             vals.update(self._getRelatedMoveLineFields(cr, uid, vals['move_line_id'], divisor=vals.get('quantity_divisor'), context=context))
 
         # UF-1617: set the current instance into the new object if it has not been sent from the sync
         if 'instance_id' not in vals or not vals['instance_id']:
             vals['instance_id'] = self.pool.get('res.company')._get_instance_id(cr, uid)
 
-        return super(product_asset, self).create(cr, uid, vals, context)
+        new_id = super(product_asset, self).create(cr, uid, vals, context)
+        if from_sync:
+            self._update_owners_list(cr, uid, new_id, context=context)
+        return new_id
 
     def change_quantity_divisor(self, cr, uid, ids, quantity_divisor, move_line_id, context=None):
         if move_line_id and quantity_divisor:
@@ -417,20 +483,21 @@ class product_asset(osv.osv):
             ret[_id] = {'depreciation_amount': False,  'disposal_amount': False}
         cr.execute('''
             select
-                a.id, sum(l.amount), a.invo_value
+                a.id, sum(l.amount), a.invo_value, a.from_invoice, a.from_hq_entry, a.state
             from
-                product_asset a, product_asset_line l
+                product_asset a
+                left join product_asset_line l on a.id = l.asset_id and l.move_id is not null
             where
-                a.id = l.asset_id
-                and a.id in %s
-                and l.move_id is not null
+                a.id in %s
                 and coalesce(l.is_initial_line, 'f') = 'f'
-            group by a.id
+            group by a.id, a.invo_value, a.from_invoice, a.state
         ''', (tuple(ids), ))
         for x in cr.fetchall():
-            ret[x[0]] = {'depreciation_amount': x[1]}
-            if x[2]:
-                ret[x[0]]['disposal_amount'] = x[2] - x[1]
+            ret[x[0]] = {'depreciation_amount': x[1] or 0}
+            if not x[1] and not x[3] and not x[4] and x[5] in ('depreciated', 'disposed'):
+                ret[x[0]]['disposal_amount'] = 0
+            elif x[2]:
+                ret[x[0]]['disposal_amount'] = round(x[2] - (x[1] or 0), 2)
 
         return ret
 
@@ -458,14 +525,12 @@ class product_asset(osv.osv):
             from
                 product_asset a
                 left join product_asset_line l on l.asset_id = a.id
-                left join account_move m on m.asset_id = a.id and m.state = 'draft'
             where
                 a.id in %s and
-                a.state = 'running'
+                a.state in ('open', 'running', 'depreciated')
             group by a.id
             having  (
                 count(l.is_disposal='t' or NULL) = 0
-                and (count(m.id) > 0 or count(l.move_id is NULL or NULL) > 0)
             )
         ''', (tuple(ids), ))
         for x in cr.fetchall():
@@ -478,6 +543,21 @@ class product_asset(osv.osv):
         for _id in ids:
             res[_id] = level
         return res
+
+    def _search_instance_level(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        current_instance_level = self.pool.get('res.company')._get_instance_level(cr, uid)
+        for arg in args:
+            if arg[0] == 'instance_level' and arg[1] != '=':
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % name)
+            if arg[2] == current_instance_level:
+                return []
+            else:
+                return [('id', '=', 0)]
+        return []
 
     def _search_period_id(self, cr, uid, obj, name, args, context=None):
         if context is None:
@@ -495,12 +575,60 @@ class product_asset(osv.osv):
     def _get_journal_domain(self, cr, uid, context=None):
         return ['|', ('type', 'in', ['purchase', 'intermission']), '&', ('instance_id.level', '=', 'coordo'), ('type', 'in', ['correction_hq', 'hq'])]
 
+    def _get_inital_line_account_id(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        not_invoice = []
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['move_line_id', 'from_invoice', 'from_hq_entry'], context=context):
+            if x.from_invoice or x.from_hq_entry:
+                if x.move_line_id and x.move_line_id.account_id:
+                    ret[x.id] = x.move_line_id.account_id.id
+                else:
+                    ret[x.id] = False
+            else:
+                not_invoice.append(x.id)
+        if not_invoice:
+            for asset in self.pool.get('product.asset').browse(cr, uid, not_invoice, fields_to_fetch=['product_id'], context=context):
+                ret[asset.id] = asset.product_id.categ_id and asset.product_id.categ_id.asset_bs_account_id and asset.product_id.categ_id.asset_bs_account_id.id or False
+            cr.execute("select asset_id, asset_bs_depreciation_account_id from product_asset_line where is_initial_line='t' and asset_id in %s", (tuple(not_invoice),))
+            for x in cr.fetchall():
+                ret[x[0]] = x[1]
+        return ret
+
+    def _get_used_in_current_instance(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+        cr.execute('''select asset.id from product_asset asset, res_company c where asset.used_instance_id = c.instance_id and asset.id in %s ''', (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
+
+    def _search_used_in_current_instance(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        current_instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+        for arg in args:
+            if arg[0] == 'used_in_current_instance' and arg[1] != '=':
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % name)
+            if arg[2]:
+                cond = '='
+            else:
+                cond = '!='
+            return [('used_instance_id', cond, current_instance_id)]
+        return []
+
+
     _columns = {
         # asset
         'name': fields.char('Asset Code', size=128, readonly=True),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type'), # from product
         'description': fields.char('Asset Description', size=128),
-        'product_id': fields.many2one('product.product', 'Product', required=True, ondelete='cascade'),
+        'product_id': fields.many2one('product.product', 'Product', ondelete='cascade'),
         'external_asset_id': fields.char('External Asset ID', size=32),
         # msf codification
         'prod_int_code': fields.char('Product Code', size=128, readonly=True), # from product
@@ -508,12 +636,14 @@ class product_asset(osv.osv):
         'nomenclature_description': fields.char('Product Nomenclature', size=128, readonly=True), # from product when merged - to be added in _getRelatedProductFields and add dependency to module product_nomenclature
         'hq_ref': fields.char('HQ Reference', size=128),
         'local_ref': fields.char('Local Reference', size=128),
-        # asset reference
+        # asset reference declared in parent instance for sync purpose
         'serial_nb': fields.char('Serial Number', size=128), #required=True),
         'brand': fields.char('Brand', size=128), # required=True),
         'type': fields.char('Type', size=128), # required=True),
         'model': fields.char('Model', size=128), # required=True),
         'year': fields.char('Year', size=4),
+        'used_in_current_instance': fields.function(_get_used_in_current_instance, method=True, string='Used in current instance', type='boolean', fnct_search=_search_used_in_current_instance),
+        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('running', 'Active'), ('depreciated', 'Fully Depreciated'), ('disposed', 'Disposed')], 'State', readonly=1),
         # remark
         'comment': fields.text('Comment'),
         # traceability
@@ -536,11 +666,12 @@ class product_asset(osv.osv):
         # event history
         'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
         # UF-1617: field only used for sync purpose
-        'instance_id': fields.many2one('msf.instance', string="Instance Creator", readonly=True, required=False),
+        'instance_id': fields.many2one('msf.instance', string='Instance Creator', readonly=True, required=False),
+        'used_instance_id': fields.many2one('msf.instance', string='Instance of use', join=True, required=True, domain="[('instance_to_display_ids', '=', True)]"),
         'xmlid_name': fields.char('XML Code, hidden field', size=128),
         'from_invoice': fields.boolean('From Invoice', readonly=1),
+        'from_hq_entry': fields.boolean('From HQ Entry', readonly=1),
         'from_sync': fields.boolean('From Sync', readonly=1),
-        'state': fields.selection([('draft', 'Draft'), ('open', 'Open'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], 'State', readonly=1),
         'asset_bs_depreciation_account_id': fields.many2one('account.account', 'Asset B/S Depreciation Account', domain=[('type', '=', 'other'), ('user_type_code', '=', 'asset')]),
         'asset_pl_account_id': fields.many2one('account.account', 'Asset P&L Depreciation Account', domain=[('user_type_code', 'in', ['expense', 'income'])]),
         'useful_life_id': fields.many2one('product.asset.useful.life', 'Useful Life', ondelete='restrict'),
@@ -553,10 +684,13 @@ class product_asset(osv.osv):
         'lock_open': fields.boolean('Lock fields in openstate', readonly='1'),
         'has_posted_lines': fields.function(_get_has_posted_lines, string='Has at least one posted line', type='boolean', method=True),
         'can_be_disposed': fields.function(_get_can_be_disposed, string='Can be diposed', type='boolean', method=True),
-        'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', method=True),
+        'instance_level': fields.function(_get_instance_level, string='Instance Level', type='char', fnct_search=_search_instance_level, method=True),
         'prorata': fields.boolean('Prorata Temporis'),
         'depreciation_method': fields.selection([('straight', 'Straight Line')], 'Depreciation Method'),
         'period_id': fields.function(misc.get_fake, fnct_search=_search_period_id, method=True, type='many2one', relation='account.period', string='Start Period', domain=[('special', '=', False)]),
+        'inital_line_account_id': fields.function(_get_inital_line_account_id,  method=True, type='many2one', relation='account.account', string='Initial B/S account'),
+        'create_update_sent': fields.boolean('1st Update sent', readonly=True),
+        'target_instance_history_ids': fields.many2many('msf.instance', 'asset_owner_instance_rel', 'asset_id', 'instance_id', 'List of owners (accurate at Coo)'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -569,6 +703,9 @@ class product_asset(osv.osv):
 
         if self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft'), ('from_invoice', '=', True)], context=context):
             error.append(_('Asset from invoice can not be deleted.'))
+
+        if self.search_exists(cr, uid, [('id', 'in', ids), ('state', '=', 'draft'), ('from_hq_entry', '=', True)], context=context):
+            error.append(_('Asset from HQ Entry can not be deleted.'))
 
         if error:
             raise osv.except_osv(_('Error !'), '\n'.join(error))
@@ -590,6 +727,8 @@ class product_asset(osv.osv):
         'journal_id': _get_default_journal,
         'instance_level': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_level(cr, uid),
         'quantity_divisor': False,
+        'used_instance_id': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_id(cr, uid),
+        'create_update_sent': False,
     }
 
     _sql_constraints = [('asset_name_uniq', 'unique(name)', 'Asset Code must be unique.')]
@@ -607,12 +746,6 @@ class product_asset(osv.osv):
                 vals['lock_open'] = True
             self.write(cr, uid, draft_id, vals, context=context)
 
-        return True
-
-    def button_cancel_asset(self, cr, uid, ids, context=None):
-        cancel_ids = self.search(cr, uid, [('id', 'in', ids), ('state', 'in', ['draft', 'open'])], context=context)
-        if cancel_ids:
-            self.write(cr, uid, cancel_ids, {'state': 'cancel'}, context=context)
         return True
 
 
@@ -683,7 +816,7 @@ class product_asset(osv.osv):
         default_j = False
         asset = self.browse(cr, uid, ids[0], context=context)
         if asset.start_date < asset.invo_date:
-            raise osv.except_osv(_('Error !'), _('Asset %s: Start Date (%s) must be after Invoice Date (%s).') % (
+            raise osv.except_osv(_('Error !'), _('Asset %s: Start Date (%s) must be after Journal Item Date (%s).') % (
                 asset.name,
                 tools_obj.get_date_formatted(cr, uid, datetime=asset.start_date, context=context),
                 tools_obj.get_date_formatted(cr, uid, datetime=asset.invo_date, context=context),
@@ -728,23 +861,23 @@ class product_asset(osv.osv):
         nb_month = asset.useful_life_id.year * 12
         start_dt = datetime.strptime(asset.start_date, '%Y-%m-%d')
         dep_value = float(asset.invo_value)/nb_month
-        sum_deprecated_value = 0
+        sum_depreciated_value = 0
         accumulated_rounded = 0
         date_first_entry = start_dt + relativedelta(months=1, day=1, days=-1)
 
         if False and asset.prorata:
             first_entry_nb_days = (start_dt + relativedelta(months=1, day=1) - start_dt).days
-            deprecated_value = dep_value / date_first_entry.day * first_entry_nb_days
+            depreciated_value = dep_value / date_first_entry.day * first_entry_nb_days
         else:
             start_dt = start_dt + relativedelta(day=1)
-            deprecated_value = dep_value
+            depreciated_value = dep_value
 
 
-        rounded_dep = round(deprecated_value, 2)
+        rounded_dep = round(depreciated_value, 2)
         if rounded_dep >= 0.01:
             to_create.append([date_first_entry, rounded_dep, start_dt, date_first_entry])
-            accumulated_rounded += deprecated_value - rounded_dep
-            sum_deprecated_value += rounded_dep
+            accumulated_rounded += depreciated_value - rounded_dep
+            sum_depreciated_value += rounded_dep
 
         for mt in range(1, nb_month):
             date = start_dt + relativedelta(months=mt+1, day=1, days=-1)
@@ -756,19 +889,19 @@ class product_asset(osv.osv):
             rounded_dep = round(value, 2)
             if rounded_dep >= 0.01:
                 to_create.append([date, rounded_dep, date + relativedelta(day=1), date])
-                sum_deprecated_value +=  rounded_dep
+                sum_depreciated_value +=  rounded_dep
                 accumulated_rounded += value - rounded_dep
             else:
                 accumulated_rounded += value
 
-        remaining = round(asset.invo_value - sum_deprecated_value, 2)
+        remaining = round(asset.invo_value - sum_depreciated_value, 2)
         if False and asset.prorata and remaining > 1:
             last_entry_date = start_dt + relativedelta(months=nb_month+1, day=1, days=-1)
             to_create.append([last_entry_date, remaining, last_entry_date + relativedelta(day=1), last_entry_date + relativedelta(day=start_dt.day)])
         else:
             to_create[-1][1] = to_create[-1][1] + remaining
 
-        if to_create and not asset.from_invoice:
+        if to_create and not asset.from_invoice and not asset.from_hq_entry:
             bs_prod_account_id = asset.product_id.categ_id and asset.product_id.categ_id.asset_bs_account_id and asset.product_id.categ_id.asset_bs_account_id.id or False
             if not bs_prod_account_id:
                 raise osv.except_osv(_('Error'), _('Product Category %s has no Asset Balance Sheet Account') % (asset.product_id.categ_id and asset.product_id.categ_id.name or asset.product_id.default_code, ))
@@ -806,8 +939,9 @@ class product_asset(osv.osv):
 
 
     def button_dispose(self, cr, uid, ids, context=None):
-        asset = self.browse(cr, uid, ids[0], fields_to_fetch=['move_line_id'], context=context)
-        wiz_id = self.pool.get('product.asset.disposal').create(cr, uid, {'asset_id': ids[0], 'disposal_bs_account': asset.move_line_id and asset.move_line_id.account_id.id or False}, context=context)
+        asset = self.browse(cr, uid, ids[0], fields_to_fetch=['inital_line_account_id'], context=context)
+
+        wiz_id = self.pool.get('product.asset.disposal').create(cr, uid, {'asset_id': ids[0], 'disposal_bs_account': asset.inital_line_account_id and asset.inital_line_account_id.id or False}, context=context)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'product.asset.disposal',
@@ -867,28 +1001,41 @@ class product_asset(osv.osv):
             }
         return {}
 
-    def test_and_set_done(self, cr , uid, ids, context=None):
+    def test_and_set_depreciated(self, cr , uid, ids, context=None):
         if isinstance(ids, int):
             ids = [ids]
+        if not ids:
+            return False
+
         cr.execute('''
             select
-                a.id
-            from
-                product_asset a
-                left join product_asset_line l on l.asset_id = a.id
-                left join account_move_line ml on ml.asset_line_id = l.id
-                left join account_move m on m.id = ml.move_id and m.state = 'posted'
+                distinct on (l.asset_id, l.is_disposal) l.asset_id, l.is_disposal, m.state, l.amount
+            from product_asset_line l
+            left join account_move m on m.id = l.move_id
             where
-                a.id in %s and
-                a.state = 'running'
-            group by a.id
-            having  (
-                count(l.id) = count(m.id)
-            )
+                l.asset_id in %s
+            order by l.asset_id, l.is_disposal desc, l.date desc
         ''', (tuple(ids), ))
-        to_close = [x[0] for x in cr.fetchall()]
-        if to_close:
-            self.write(cr, uid, to_close, {'state': 'done'}, context=context)
+        # l.is_disposal desc: to get first the is_disposal line
+        to_depreciated = []
+        to_disposed = []
+        nothing = {}
+        for x in cr.fetchall():
+            if x[1]:
+                if x[2] == 'posted':
+                    to_disposed.append(x[0])
+                    nothing[x[0]] = True
+                elif x[3]:
+                    # this is a disposal line that contains the last depcrecation entry
+                    nothing[x[0]] = True
+            elif x[0] not in nothing and x[2] == 'posted':
+                to_depreciated.append(x[0])
+
+        if to_depreciated:
+            self.write(cr, uid, to_depreciated, {'state': 'depreciated'}, context=context)
+        if to_disposed:
+            self.write(cr, uid, to_disposed, {'state': 'disposed'}, context=context)
+        if to_depreciated or to_disposed:
             return True
         return False
 
@@ -901,20 +1048,6 @@ class product_asset_event(osv.osv):
     _description = "Event for asset follow up"
     _order = 'date desc, id desc'
     _trace = True
-
-    eventTypeSelection = [('reception', 'Reception'),
-                          ('startUse', 'Start Use'),
-                          ('repairing', 'Repairing'),
-                          ('endUse', 'End Use'),
-                          ('obsolete', 'Obsolete'),
-                          ('loaning', 'Loaning'),
-                          ('transfer', 'Transfer (internal)'),
-                          ('donation', 'Donation (external)'),
-                          ('other', 'Other'),
-                          ('damage', 'Damage'),
-                          ('missing', 'Missing'),
-                          ('sale', 'Sale'),
-                          ]
 
     def name_get(self, cr, uid, ids, context=None):
         '''
@@ -991,6 +1124,18 @@ class product_asset_event(osv.osv):
 
         return result
 
+    def _get_event_used_in_current_instance(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+        cr.execute('''select l.id from product_asset_event l, res_company c where l.instance_id = c.instance_id and l.id in %s ''', (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
+
     _columns = {
         # event information
         'date': fields.date('Date', required=True, select=1),
@@ -998,7 +1143,7 @@ class product_asset_event(osv.osv):
         'proj_code': fields.char('Project Code', size=128),
         'event_type_id': fields.many2one('product.asset.event.type', 'Event Type', required=True, add_empty=True),
         # selection
-        'asset_id': fields.many2one('product.asset', 'Asset Code', required=True, ondelete='cascade', domain=[('state', '=', 'running')]),
+        'asset_id': fields.many2one('product.asset', 'Asset Code', required=True, ondelete='cascade', domain=[('state', 'in', ['running', 'depreciated']), ('used_in_current_instance', '=', True)]),
         'product_id': fields.many2one('product.product', 'Product', readonly=True, ondelete='cascade'),
         'serial_nb': fields.char('Serial Number', size=128, readonly=True),
         'brand': fields.char('Brand', size=128, readonly=True), # from asset
@@ -1006,11 +1151,15 @@ class product_asset_event(osv.osv):
         'comment': fields.text('Comment'),
         'asset_name': fields.related('asset_id', 'name', type='char', readonly=True, size=128, store=False, write_relate=False, string="Asset"),
         'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from asset
-        'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Running'), ('done', 'Done'), ('cancel', 'Cancel')], readonly=1),
+        'asset_state': fields.related('asset_id', 'state', string='Asset State', type='selection', selection=[('draft', 'Draft'), ('running', 'Active'), ('depreciated', 'Fully Depreciated'), ('disposed', 'Disposed')], readonly=1),
+        'instance_id': fields.many2one('msf.instance', 'Event Created at', readonly=1),
+        'event_used_in_current_instance': fields.function(_get_event_used_in_current_instance, method=True, string='Used in current instance', type='boolean'),
     }
 
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d'),
+        'instance_id': lambda self, cr, uid, context: self.pool.get('res.company')._get_instance_id(cr, uid),
+        'event_used_in_current_instance': True,
     }
 
 product_asset_event()
@@ -1200,7 +1349,7 @@ class product_asset_line(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please post entries in chronological order, following entries are draft:\n%s') % '\n'.join(error))
 
         for line in self.browse(cr, uid, ids, context=context):
-            if line.asset_id.state != 'running':
+            if line.asset_id.state not in ('running', 'depreciated'):
                 continue
             update_data = {}
             context.update({'date': line.date})
@@ -1228,22 +1377,33 @@ class product_asset_line(osv.osv):
             else:
                 entry_name =  _('Depreciation Asset %s') % line.asset_id.name
 
-            entries = [
-                {
-                    #'debit_currency': line.amount,
-                    #'credit_currency': 0,
-                    'amount_currency': line.amount,
-                    'account_id': line.asset_pl_account_id.id,
-                    'analytic_distribution_id': line.analytic_distribution_id.id or False,
-                    'asset_line_id': line.id,
-                }, {
-                    #'debit_currency': 0,
-                    #'credit_currency': line.amount,
-                    'amount_currency': -1*line.amount,
-                    'account_id': line.asset_bs_depreciation_account_id.id,
-                    'analytic_distribution_id': False,
-                }
-            ]
+            entries = []
+            if abs(line.amount) > 0.001:
+                entries = [
+                    {
+                        'amount_currency': line.amount,
+                        'account_id': line.asset_pl_account_id.id,
+                        'analytic_distribution_id': line.analytic_distribution_id.id or False,
+                        'asset_line_id': line.id,
+                    }, {
+                        'amount_currency': -1*line.amount,
+                        'account_id': line.asset_bs_depreciation_account_id.id,
+                        'analytic_distribution_id': False,
+                    }
+                ]
+
+            if line.is_disposal:
+                balance_amount = line.asset_id.depreciation_amount
+                if abs(balance_amount) > 0.001:
+                    entries += [{
+                        'amount_currency': -1*balance_amount,
+                        'account_id': line.asset_bs_depreciation_account_id and line.asset_bs_depreciation_account_id.id or False,
+                        'analytic_distribution_id': False,
+                    }, {
+                        'amount_currency': balance_amount,
+                        'account_id': line.asset_id.asset_bs_depreciation_account_id.id,
+                        'analytic_distribution_id': False,
+                    }]
 
             update_data['move_id'] = account_move_obj.create(cr, uid, {
                 'document_date': line.date,
@@ -1261,7 +1421,6 @@ class product_asset_line(osv.osv):
                         'product_id': line.asset_id.product_id.id,
                         'reference': line.asset_id.move_line_id.move_id.name,
                         'amount_currency': x['amount_currency'],
-                        #'credit_currency': x['credit_currency'],
                         'account_id': x['account_id'],
                         'analytic_distribution_id': x['analytic_distribution_id'],
                         'document_date': line.date,
@@ -1316,9 +1475,6 @@ class product_asset_disposal(osv.osv_memory):
         if nb_draft:
             raise osv.except_osv(_('Error !'), _('Date of disposal %s does not match: there are %d unposted entries') % (wiz.disposal_date, nb_draft))
 
-        if not asset_line_obj.search_exists(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('last_dep_day', '>', wiz.disposal_date)], context=context):
-            raise osv.except_osv(_('Error !'), _('Asset already fully deprecated at %s') % wiz.disposal_date)
-
         draft_lines = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('date', '>', last_disposal_entry)], context=context)
         if draft_lines:
             asset_line_obj.unlink(cr, uid, draft_lines, context=context)
@@ -1334,19 +1490,30 @@ class product_asset_disposal(osv.osv_memory):
                 'comment': wiz.comment,
             }, context=context)
 
+
         to_draft_post = asset_line_obj.search(cr, uid, [('asset_id', '=', wiz.asset_id.id), ('move_id', '=', False)], context=context)
-        if to_draft_post:
+        if wiz.asset_id.state == 'open':
+            asset_line_obj.unlink(cr, uid, to_draft_post, context=context)
+            if not wiz.asset_id.from_invoice and not wiz.asset_id.from_hq_entry:
+                self.pool.get('product.asset').write(cr, uid, wiz.asset_id.id, {'state': 'disposed'},  context=context)
+                return {'type': 'ir.actions.act_window_close'}
+
+            self.pool.get('product.asset').write(cr, uid, wiz.asset_id.id, {'state': 'running'}, context=context)
+        elif to_draft_post:
             asset_line_obj.button_generate_unposted_entries(cr, uid, to_draft_post, context=context)
 
+
+        asset = self.pool.get('product.asset').browse(cr, uid, wiz.asset_id.id, fields_to_fetch=['disposal_amount'], context=context)
         new_line_id = asset_line_obj.create(cr, uid, {
             'is_disposal': True,
             'date': wiz.disposal_date,
-            'asset_pl_account_id': wiz.disposal_expense_account.id,
+            'asset_pl_account_id': abs(wiz.asset_id.disposal_amount) > 0.001 and wiz.disposal_expense_account.id or wiz.asset_id.asset_bs_depreciation_account_id.id,
             'asset_bs_depreciation_account_id': wiz.disposal_bs_account.id,
-            'amount': wiz.asset_id.disposal_amount,
+            'amount': asset.disposal_amount,
             'asset_id': wiz.asset_id.id
 
         })
+
         asset_line_obj.button_generate_unposted_entries(cr, uid, [new_line_id], context=context)
 
         return {'type': 'ir.actions.act_window_close'}

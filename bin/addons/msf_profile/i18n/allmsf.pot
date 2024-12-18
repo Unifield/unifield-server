@@ -15820,7 +15820,6 @@ msgid "Unable to find a valid period !"
 msgstr ""
 
 #. modules: product, msf_partner
-#: help:product.supplierinfo,sequence_bis:0
 #: help:product.supplierinfo,sequence:0
 msgid "Assigns the priority to the list of product supplier."
 msgstr ""
@@ -28489,7 +28488,6 @@ msgid "New real consumption report"
 msgstr ""
 
 #. modules: product_attributes, msf_partner
-#: field:product.supplierinfo,sequence_bis:0
 #: view:product.supplierinfo:0
 msgid "Ranking"
 msgstr ""
