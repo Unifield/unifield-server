@@ -776,11 +776,15 @@ class PhysicalInventory(osv.osv):
                 # Check UoM
                 product_uom_id = False
                 if row.cells[3].data:
-                    product_uom = row.cells[3].data.lower()
-                    if product_uom not in all_uom:
-                        add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
-                    else:
-                        product_uom_id = all_uom[product_uom]
+                    product_uom = row.cells[3].data
+                    try:
+                        product_uom = tools.ustr(product_uom).lower()
+                        if product_uom not in all_uom:
+                            add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
+                        else:
+                            product_uom_id = all_uom[product_uom]
+                    except ValueError:
+                        add_error(_("""UoM %s is not valid""") % product_uom, row_index, 3)
                 else:
                     add_error(_("""UoM is mandatory"""), row_index, 3)
 
@@ -831,9 +835,12 @@ class PhysicalInventory(osv.osv):
                                 expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
                             else:
                                 raise ValueError()
-                        except:
-                            if not year or year >= 1900:
-                                add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
+                        except Exception as e:
+                            err_type = type(e).__name__
+                            if not year or year >= 1900 or err_type == 'ParserError':
+                                add_error(_("""Expiry date '%s' is not valid""") % expiry_date, row_index, 6)
+                                if err_type == 'ParserError':
+                                    expiry_date = False
 
                         if year and year < 1900:
                             add_error(_('Expiry date: year must be after 1899'), row_index, 6)
