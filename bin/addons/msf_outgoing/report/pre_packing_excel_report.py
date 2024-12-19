@@ -29,7 +29,6 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
         super(pre_packing_excel_report_parser, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'getShipper': self.get_shipper,
             'getPickingShipper': self.get_picking_shipper,
             'getConsignee': self.get_consignee,
         })
@@ -87,15 +86,7 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
 
         return [res]
 
-    def get_shipper(self):
-        """
-        Return the shipper value for the given field
-        @param field: Name of the field to retrieve
-        @return: The value of the shipper field
-        """
-        return [self.pool.get('shipment').default_get(self.cr, self.uid, [])]
-
-    def get_picking_shipper(self):
+    def get_picking_shipper(self, pick):
         """
         The 'Shipper' fields must be filled automatically with the
         default address of the current instance
@@ -105,8 +96,12 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
         addr_obj = self.pool.get('res.partner.address')
 
         instance_partner = user_obj.browse(self.cr, self.uid, self.uid).company_id.partner_id
-        instance_addr_id = partner_obj.address_get(self.cr,self. uid, instance_partner.id)['default']
-        instance_addr = addr_obj.browse(self.cr, self.uid, instance_addr_id)
+        # If the Pick/PPL partner is the instance, use the doc's address instead of the default address
+        if pick and pick.partner_id2 and pick.address_id and pick.partner_id2.id == instance_partner.id:
+            instance_addr = pick.address_id
+        else:
+            instance_addr_id = partner_obj.address_get(self.cr, self.uid, instance_partner.id)['default']
+            instance_addr = addr_obj.browse(self.cr, self.uid, instance_addr_id)
 
         addr_street = ''
         addr_zip_city = ''
@@ -121,14 +116,14 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
         if instance_addr.country_id:
             addr_zip_city += instance_addr.country_id.name
 
-        return {
+        return [{
             'shipper_name': instance_partner.name,
             'shipper_contact': 'Supply responsible',
             'shipper_addr_street': addr_street,
             'shipper_addr_zip_city': addr_zip_city,
             'shipper_phone': instance_addr.phone,
             'shipper_email': instance_addr.email,
-        }
+        }]
 
 
 SpreadsheetReport(
