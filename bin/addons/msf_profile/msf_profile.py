@@ -403,8 +403,12 @@ class patch_scripts(osv.osv):
         return True
 
     def us_12274_populate_res_user_last_auth(self, cr, uid, *a, **b):
-        cr.execute('''insert into users_last_login (user_id, date)
-            (select id, date from res_users where date is not null) ''')
+        # Check if column exist before trying to populate its data
+        cr.execute("""SELECT column_name FROM information_schema.columns WHERE table_name = 'res_users' AND column_name = 'date'""")
+        has_col = cr.fetchone()
+        if has_col and has_col[0]:
+            cr.execute('''insert into users_last_login (user_id, date)
+                (select id, date from res_users where date is not null) ''')
         return True
 
     def us_12974_sync_server_instances_level(self, cr, uid, *a, **b):
