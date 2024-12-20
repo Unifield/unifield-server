@@ -59,11 +59,11 @@ class patch_scripts(osv.osv):
     }
 
     # UF36.0
-    def us_13755_remove_date_column_res_users(self, cr, uid, *a, **b):
+    def us_13755_13788_remove_columns_res_users(self, cr, uid, *a, **b):
         '''
-        If the "date" columns still exists in res_users, delete it
+        If the "date" and "email" columns still exist in res_users, delete them
         '''
-        cr.execute("""ALTER TABLE res_users DROP COLUMN IF EXISTS date""")
+        cr.execute("""ALTER TABLE res_users DROP COLUMN IF EXISTS date, DROP COLUMN IF EXISTS email""")
         
         return True
         

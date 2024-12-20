@@ -327,10 +327,10 @@ class users(osv.osv):
                                  _('"email_from" needs to be set to send welcome mails '
                                    'to users'))
             return False
-        if not user.get('email'):
+        if not user.get('user_email'):
             return False
 
-        return tools.email_send(email_from=None, email_to=[user['email']],
+        return tools.email_send(email_from=None, email_to=[user['user_email']],
                                 subject=self.get_welcome_mail_subject(
                                     cr, uid, context=context),
                                 body=self.get_welcome_mail_body(
@@ -529,11 +529,6 @@ class users(osv.osv):
                                         fnct_inv=_set_new_password,
                                         string='Change password', help="Only specify a value if you want to change the user password. "
                                         "This user will have to logout and login again!"),
-        'email': fields.char('E-mail', size=64,
-                             help='If an email is provided, the user will be sent a message '
-                             'welcoming him.\n\nWarning: if "email_from" and "smtp_server"'
-                             " aren't configured, it won't be possible to email new "
-                             "users."),
         'signature': fields.text('Signature', size=64),
         'address_id': fields.many2one('res.partner.address', 'Address'),
 
@@ -587,10 +582,10 @@ class users(osv.osv):
         'never_expire': fields.boolean('Password never expires', help="If unticked, the password must be changed every 6 months"),
         'display_dept_email_popup': fields.function(_get_display_email_popup, type='boolean', method=True, string='Display popup at login'),
         'force_dept_email_popup': fields.boolean('Force Popup'),
-        'dont_ask_department': fields.boolean("Don't ask for department", readonly=1), # deprecated
-        'nb_department_asked': fields.integer('Nb department popup displayed', readonly=1), # deprecated
-        'dont_ask_email': fields.boolean("Don't ask for email", readonly=1), # deprecated
-        'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1), # deprecated
+        'dont_ask_department': fields.boolean("Don't ask for department", readonly=1),  # deprecated
+        'nb_department_asked': fields.integer('Nb department popup displayed', readonly=1),  # deprecated
+        'dont_ask_email': fields.boolean("Don't ask for email", readonly=1),  # deprecated
+        'nb_email_asked': fields.integer('Nb email popup displayed', readonly=1),  # deprecated
         'reactivation_date': fields.datetime('Reactivation date', readonly=1),
     }
 
@@ -794,10 +789,8 @@ class users(osv.osv):
 
     # User can write to a few of her own fields (but not her groups for example)
     SELF_WRITEABLE_FIELDS = [
-        'menu_tips','view', 'password', 'signature', 'action_id', 'company_id',
-        'user_email', 'context_department_id',
-        'context_tz', 'context_lang',
-        'force_dept_email_popup'
+        'menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email', 'context_department_id',
+        'context_tz', 'context_lang', 'force_dept_email_popup'
     ]
 
     def list_department(self, cr, uid, context=None):

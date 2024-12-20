@@ -31,7 +31,7 @@
                     <field name="country_id"/>
                     <field name="state_id"/>
                     <field name="phone"/>
-                    <field name="email"/>
+                    <field name="user_email"/>
                     <field name="account_no"/>
                 </group>
                 <newline/>
