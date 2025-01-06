@@ -44,6 +44,7 @@
                     <field name="width" />
                     <field name="height" />
                     <field name="weight"  default_focus="1" />
+                    <field name="parcel_ids" widget="char" />
                 </tree>
             </field>
         </record>

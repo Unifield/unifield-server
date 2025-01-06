@@ -1119,6 +1119,14 @@ class stock_picking(osv.osv):
         'product_id': fields.function(_get_fake, method=True, type='many2one', relation='product.product', string='Product', help='Product to find in the lines', store=False, readonly=True),
         'alert_msl_mml': fields.function(_get_alert_msl_mml, method=True, type='char', string="Contains non-conform MML/MSL"),
         'details': fields.char(size=86, string='Details'),
+
+        'volume_set': fields.boolean('Volume set at PLL stage', readonly=1),
+        'weight_set': fields.boolean('Weight set at PLL stage', readonly=1),
+        'length': fields.float(digits=(16, 2), string='Length [cm]'),
+        'width': fields.float(digits=(16, 2), string='Width [cm]'),
+        'height': fields.float(digits=(16, 2), string='Height [cm]'),
+        'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
+
     }
 
     _defaults = {
