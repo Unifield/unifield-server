@@ -4137,28 +4137,21 @@ class stock_picking(osv.osv):
                 _('No data to process '),
             )
 
-        wizard = proc_obj.browse(cr, uid, wizard_ids, context=context)[0]
-
-        picking = wizard.picking_id
         pickings = {}
-        pickings.setdefault(picking.id, picking.name)
+        for wizard in proc_obj.browse(cr, uid, wizard_ids, context=context):
+            picking = wizard.picking_id
+            pickings.setdefault(picking.id, picking.name)
 
-        if picking.state != 'assigned':
-            raise osv.except_osv(
-                _('Error'),
-                _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
-            )
-        nb_processed = 0
-        new_packing_id = False
-        for family in wizard.family_ids:
-            move_to_write = [x.id for x in family.move_ids]
-            if not move_to_write:
-                continue
+            if picking.state != 'assigned':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The pre-packing list is not in \'Available\' state. Please check this and re-try')
+                )
 
             # Create the new packing
             # Copy to 'packing' stock.picking
             # Draft shipment is automatically created or updated if a shipment already exists
-            pack_number = '%s-%s' % (picking.name.split("/")[1], family.from_pack)
+            pack_number = picking.name.split("/")[1]
 
             pack_values = {
                 'name': 'PACK/' + pack_number,
@@ -4169,18 +4162,6 @@ class stock_picking(osv.osv):
                 'origin': picking.origin,
                 'move_lines': [],
                 'date': today,  # Set date as today for the new PACK object
-
-                'from_pack': family.from_pack,
-                'to_pack': family.to_pack,
-                'parcel_ids': family.parcel_ids,
-                'selected_number': family.to_pack - family.from_pack + 1,
-                'pack_type': family.pack_type and family.pack_type.id or False,
-                'length': family.length,
-                'width': family.width,
-                'height': family.height,
-                'weight': family.weight,
-                'volume_set': family.length * family.height * family.width > 0,
-                'weight_set': family.weight > 0,
             }
 
             # Change the context for copy
@@ -4210,26 +4191,47 @@ class stock_picking(osv.osv):
                 'location_dest_id': picking.warehouse_id.lot_distribution_id.id,
             }
 
-            # Create a move line in the Packing
-            context.update({
-                'keepLineNumber': True,
-                'non_stock_noupdate': True,
-            })
-            for move_to_copy in move_to_write:
-                move_obj.copy(cr, uid, move_to_copy, pack_move_data, context=context)
-            context.update({
-                'keepLineNumber': False,
-                'non_stock_noupdate': False,
-            })
+            nb_processed = 0
+            # Create the stock moves in the packing
+            for family in wizard.family_ids:
+                move_to_write = [x.id for x in family.move_ids]
+                if move_to_write:
+                    values = {
+                        'from_pack': family.from_pack,
+                        'to_pack': family.to_pack,
+                        'parcel_ids': family.parcel_ids,
+                        'selected_number': family.to_pack - family.from_pack + 1,
+                        'pack_type': family.pack_type and family.pack_type.id or False,
+                        'length': family.length,
+                        'width': family.width,
+                        'height': family.height,
+                        'weight': family.weight,
+                        'volume_set': family.length * family.height * family.width > 0,
+                        'weight_set': family.weight > 0,
+                    }
+                    move_obj.write(cr, uid, move_to_write, values, context=context)
 
-            nb_processed += 1
-            if job_id and nb_processed % 2:
-                self.pool.get('job.in_progress').write(cr, uid, [job_id], {'nb_processed': nb_processed})
+
+                # Create a move line in the Packing
+                context.update({
+                    'keepLineNumber': True,
+                    'non_stock_noupdate': True,
+                })
+                for move_to_copy in move_to_write:
+                    move_obj.copy(cr, uid, move_to_copy, pack_move_data, context=context)
+                context.update({
+                    'keepLineNumber': False,
+                    'non_stock_noupdate': False,
+                })
+
+                nb_processed += 1
+                if job_id and nb_processed % 2:
+                    self.pool.get('job.in_progress').write(cr, uid, [job_id], {'nb_processed': nb_processed})
 
 
-        # Trigger standard workflow on PPL
-        self.action_move(cr, uid, [picking.id])
-        wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
+            # Trigger standard workflow on PPL
+            self.action_move(cr, uid, [picking.id])
+            wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
 
         shipment_id = False
         shipment_name = False
