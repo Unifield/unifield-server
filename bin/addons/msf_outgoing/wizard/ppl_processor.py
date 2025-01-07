@@ -204,6 +204,7 @@ class ppl_processor(osv.osv):
         # disable "save as draft":
         self.write(cr, uid, ids, {'draft_step2': False}, context=context)
 
+        parcel_ids_error = []
         for wizard in self.browse(cr, uid, ids, context=context):
             treated_moves = 0
             has_vol = 0
@@ -219,6 +220,17 @@ class ppl_processor(osv.osv):
                 if family.length+family.width+family.height != 0 and family.length*family.width*family.height == 0:
                     error_vol = True
                 treated_moves += len(family.move_ids)
+
+                if family.parcel_ids:
+                    nb_p = len(family.parcel_ids.split(','))
+                    if nb_p != family.to_pack - family.from_pack + 1:
+                        parcel_ids_error.append(_('%s - %s, %d parcel IDs found') % (family.from_pack, family.to_pack, nb_p))
+
+            if parcel_ids_error:
+                raise osv.except_osv(
+                    _('Processing Error'),
+                    _('Inconsitent parcel IDs: %s') % ('\n'.join(parcel_ids_error),)
+                )
 
             nb_pick_moves = move_obj.search(cr, uid, [
                 ('picking_id', '=', wizard.picking_id.id),
@@ -263,6 +275,7 @@ class ppl_family_processor(osv.osv):
         ),
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
+        'parcel_ids': fields.text('Parcel Ids'),
         'pack_type': fields.many2one(
             'pack.type',
             string='Pack Type',

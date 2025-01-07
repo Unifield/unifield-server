@@ -179,7 +179,7 @@ class stock_picking(osv.osv):
             'resourced_original_remote_line': data.get('sale_line_id', False) and data['sale_line_id'].get('resourced_original_remote_line', False) or False,
 
         }
-        for k in ['from_pack', 'to_pack', 'weight', 'height', 'length', 'width']:
+        for k in ['from_pack', 'to_pack', 'weight', 'height', 'length', 'width', 'parcel_ids']:
             result[k] = data.get(k)
         return result
 
@@ -419,6 +419,7 @@ class stock_picking(osv.osv):
                                 'total_length': data['length'],
                                 'total_width': data['width'],
                                 'packing_list': data.get('packing_list'),
+                                'parcel_ids': data.get('parcel_ids'),
                                 'ppl_name': data.get('ppl_name'),
                             })
                         data['pack_info_id'] = pack_info_created[pack_key]
