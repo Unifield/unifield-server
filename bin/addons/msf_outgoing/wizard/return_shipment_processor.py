@@ -126,8 +126,8 @@ class return_shipment_processor(osv.osv):
                     'description_ppl': family.description_ppl,
                     'ppl_id': family.ppl_id and family.ppl_id.id or False,
                     'comment': family.comment,
+                    'shipment_line_id': family.id,
                 }
-
                 family_obj.create(cr, uid, family_vals, context=context)
 
         return True
@@ -310,6 +310,7 @@ class return_shipment_family_processor(osv.osv):
             string='Draft Packing Ref.',
             readonly=True,
         ),
+        'shipment_line_id': fields.many2one('pack.family.memory', string="Ship Line", readonly=True),
         'selected_number': fields.integer(string='Selected number'),
         'volume': fields.function(
             _get_pack_info,

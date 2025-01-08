@@ -39,7 +39,7 @@ class shipment_add_pack_processor(osv.osv):
 
         nb_processed = 0
         for pack_fam in wiz.family_ids:
-            nb_processed = ship_obj.attach_draft_pick_to_ship(cr, uid, shipment_id, pack_fam, context=context, job_id=job_id, nb_processed=nb_processed)
+            nb_processed = ship_obj.attach_draft_pick_to_ship(cr, uid, shipment_id, pack_fam.shipment_line_id, selected_number=pack_fam.selected_number, context=context, job_id=job_id, nb_processed=nb_processed)
 
         return True
 
