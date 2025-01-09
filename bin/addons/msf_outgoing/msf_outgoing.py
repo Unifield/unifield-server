@@ -627,6 +627,16 @@ class shipment(osv.osv):
                     selected_number, family.num_of_packs, family.sale_order_id and family.sale_order_id.name or '', family.ppl_id and family.ppl_id.name or ''
                 ))
 
+        # find the corresponding moves
+        moves_ids = move_obj.search(cr, uid, [
+            ('picking_id', '=', family.draft_packing_id.id),
+            ('shipment_line_id', '=', family.id),
+            ('state', '!=', 'done'),
+        ], context=context)
+
+        if not moves_ids:
+            return nb_processed
+
         picking = family.draft_packing_id
         for move in family.move_lines:
             if move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
@@ -710,12 +720,6 @@ class shipment(osv.osv):
             'state': 'assigned',
         }, context=context)
 
-        # find the corresponding moves
-        moves_ids = move_obj.search(cr, uid, [
-            ('picking_id', '=', family.draft_packing_id.id),
-            ('shipment_line_id', '=', family.id),
-            ('state', '!=', 'done'),
-        ], context=context)
         # For corresponding moves
         for move in move_obj.browse(cr, uid, moves_ids, context=context):
             # We compute the selected quantity
@@ -1075,7 +1079,7 @@ class shipment(osv.osv):
     def add_packs(self, cr, uid, ids, context=None):
         ship = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id', 'address_id'], context=context)
         other_ship_ids = self.search(cr, uid, [('state', '=', 'draft'), ('partner_id', '=', ship.partner_id.id), ('address_id', '=', ship.address_id.id)], context=context)
-        pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('state', '!=', 'done'), ('shipment_id', 'in', other_ship_ids)], context=context)
+        pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('state', 'not in', ['done', 'returned']), ('shipment_id', 'in', other_ship_ids)], context=context)
         if not pack_ids:
             raise osv.except_osv(_('Warning !'), _('No Pack Available'))
         proc_id = self.pool.get('shipment.add.pack.processor').create(cr, uid, {'shipment_id': ids[0]}, context=context)
