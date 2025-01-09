@@ -4836,9 +4836,28 @@ class pack_family_memory(osv.osv):
                 'fake_state': False,
                 'pack_state': False,
                 'currency_id': False,
+                'total_amount': 0,
             }
+
+        cr.execute('''
+            select p.id, pl.currency_id, cur.name, sum(sol.price_unit * m.product_qty) from
+                pack_family_memory p, sale_order so, product_pricelist pl, stock_move m, sale_order_line sol, res_currency cur
+            where
+                p.sale_order_id = so.id and
+                pl.id = so.pricelist_id and
+                m.shipment_line_id = p.id and
+                sol.id = m.sale_line_id and
+                cur.id = pl.currency_id and
+                p.id in %s
+            group by
+                p.id, pl.currency_id, cur.name
+            ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            result[x[0]]['currency_id'] = (x[1], x[2])
+            result[x[0]]['total_amount'] = x[3]
+
         for pf_memory in self.browse(cr, uid, ids, fields_to_fetch=['from_pack', 'to_pack',
-                                                                    'total_amount', 'weight', 'length', 'width', 'height', 'state', 'shipment_id'],
+                                                                    'weight', 'length', 'width', 'height', 'state', 'shipment_id'],
                                      context=context):
             values = result[pf_memory['id']]
 
@@ -4847,24 +4866,13 @@ class pack_family_memory(osv.osv):
                 num_of_packs = pf_memory['to_pack'] - pf_memory['from_pack'] + 1
                 values['num_of_packs'] = num_of_packs
             if num_of_packs:
-                values['amount'] = pf_memory['total_amount'] / num_of_packs
+                values['amount'] = values['total_amount'] / num_of_packs
             values['total_weight'] = pf_memory['weight'] * num_of_packs
             values['total_volume'] = round((pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0, 4)
             values['fake_state'] = pf_memory['state']
             values['pack_state'] = pf_memory.shipment_id.state
 
-        cr.execute('''
-            select p.id, pl.currency_id from
-                pack_family_memory p, sale_order so, product_pricelist pl
-            where
-                p.sale_order_id = so.id and
-                pl.id = so.pricelist_id and
-                p.id in %s
-            ''', (tuple(ids), ))
-        for x in cr.fetchall():
-            result[x[0]]['currency_id'] = x[1]
 
-# total amount ??
         return result
 
     _columns = {
@@ -4895,7 +4903,7 @@ class pack_family_memory(osv.osv):
         'pack_state': fields.function(_vals_get, method=True, type='char', string='Pack State', multi='get_vals'),
         'location_id': fields.many2one('stock.location', string='Src Loc.'),
         'location_dest_id': fields.many2one('stock.location', string='Dest. Loc.'),
-        'total_amount': fields.float('Total Amount'),
+        'total_amount': fields.function(_vals_get, method=True, type=' float', string='Total Amount',  multi='get_vals'),
         'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals'),
         'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
         'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='Nb. Parcels',  multi='get_vals'),
@@ -4975,14 +4983,17 @@ class pack_family_memory(osv.osv):
 
         cr.execute('''select m.id
             from
+                pack_family_memory p,
                 stock_move m,
                 product_uom u
             where
+                m.shipment_line_id = p.id and
                 m.product_uom = u.id and
                 u.rounding=1 and
-                (product_qty / (m.to_pack-m.from_pack+1)) %% 1 != 0 and
-                m.shipment_line_id in %s
-        ''', (tuple(ids), ))
+                (product_qty / (p.to_pack-p.from_pack+1)) %% 1 != 0 and
+                p.to_pack-p.from_pack+1 != %s and
+                p.id in %s
+        ''', (selected_number, tuple(ids)))
         if cr.rowcount:
             return {
                 'warning': {
