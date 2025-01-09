@@ -622,14 +622,15 @@
                         <field name="name" select="1" string="Reference"/>
                         <field name="partner_id" select="1" string="Supplier"/>
                         <field name="partner_ref" select="1" string="Supplier Ref."/>
+                        <field name="create_uid"/>
                     </group>
                     <newline/>
                     <group>
                         <field name="product_id"/>
                         <field name="origin"/>
+                        <field name="customer_ref"/>
                         <field name="dest_partner_names" />
                         <field name="details"/>
-                        <field name="create_uid"/>
                         <field name="date_order"/>
                     </group>
                     <newline/>
