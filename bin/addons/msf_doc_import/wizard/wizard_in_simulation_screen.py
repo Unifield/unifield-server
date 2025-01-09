@@ -799,6 +799,8 @@ Nothing has been imported because of %s. See below:
                         if wiz.with_pack:
 
                             pack_info = {'wizard_id': wiz.id}
+                            p_from = 0
+                            p_to = 0
                             for key in pack_header:
                                 pack_info[key] = values[x].get(key)
                                 if pack_coeff.get(key):

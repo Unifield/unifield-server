@@ -4823,7 +4823,10 @@ class pack_family_memory(osv.osv):
         '''
         get functional values
         '''
+        if not ids:
+            return {}
         result = {}
+
         for _id in ids:
             result[_id] = {
                 'amount': 0.0,
@@ -4832,6 +4835,7 @@ class pack_family_memory(osv.osv):
                 'num_of_packs': 0,
                 'fake_state': False,
                 'pack_state': False,
+                'currency_id': False,
             }
         for pf_memory in self.browse(cr, uid, ids, fields_to_fetch=['from_pack', 'to_pack',
                                                                     'total_amount', 'weight', 'length', 'width', 'height', 'state', 'shipment_id'],
@@ -4848,6 +4852,17 @@ class pack_family_memory(osv.osv):
             values['total_volume'] = round((pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0, 4)
             values['fake_state'] = pf_memory['state']
             values['pack_state'] = pf_memory.shipment_id.state
+
+        cr.execute('''
+            select p.id, pl.currency_id from
+                pack_family_memory p, sale_order so, product_pricelist pl
+            where
+                p.sale_order_id = so.id and
+                pl.id = so.pricelist_id and
+                p.id in %s
+            ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            result[x[0]]['currency_id'] = x[1]
 
 # total amount ??
         return result
@@ -4882,7 +4897,7 @@ class pack_family_memory(osv.osv):
         'location_dest_id': fields.many2one('stock.location', string='Dest. Loc.'),
         'total_amount': fields.float('Total Amount'),
         'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals'),
-        'currency_id': fields.many2one('res.currency', string='Currency'),
+        'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
         'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='Nb. Parcels',  multi='get_vals'),
         'selected_number': fields.integer('Nb. Parcels to Ship'),
         'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
