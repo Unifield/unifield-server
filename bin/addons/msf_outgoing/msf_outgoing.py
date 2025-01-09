@@ -1050,7 +1050,7 @@ class shipment(osv.osv):
                     self.pool.get('pack.family.memory').write(cr, uid, ship_line.id, {
                         'from_pack': initial_from_pack,
                         'to_pack': initial_to_pack,
-                        'selected_number': min(move.selected_number, selected_number),
+                        'selected_number': min(ship_line.selected_number, selected_number),
                     }, context=context)
                 else:
                     self.pool.get('pack.family.memory').unlink(cr, uid, ship_line.id, context=context)
