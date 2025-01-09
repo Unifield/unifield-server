@@ -65,7 +65,7 @@ class account_analytic_line(osv.osv):
         'currency_id': fields.many2one('res.currency', string="Book. Currency", required=True, readonly=True),
         'journal_id': fields.many2one('account.analytic.journal', 'Journal Code', required=True, ondelete='restrict', select=True, readonly=True),
         'journal_type': fields.related('journal_id', 'type', 'Journal type', readonly=True),
-        'move_id': fields.many2one('account.move.line', 'Entry Sequence', ondelete='restrict', select=True, readonly=True, domain="[('account_id.user_type.code', 'in', ['expense', 'income'])]"), # UF-1719: Domain added for search view
+        'move_id': fields.many2one('account.move.line', 'Entry Sequence', ondelete='restrict', select=True, readonly=True, domain="[('account_id.user_type.code', 'in', ['expense', 'income'])]", join='LEFT'), # UF-1719: Domain added for search view
         'invoice_id': fields.related('move_id', 'invoice', type='many2one', relation='account.invoice',
                                      string='Invoice', readonly=True, store=False),
         'purchase_order_id': fields.related('move_id', 'purchase_order_id', type='many2one', relation='purchase.order',
