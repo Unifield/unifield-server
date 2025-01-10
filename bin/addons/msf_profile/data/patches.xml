@@ -1167,6 +1167,9 @@
             <field name="method">us_13719_tick_prevent_asset_from_hq</field>
         </record>
 
+        <record id="us_13842_fix_sign_document_creator_supply_sdref" model="patch.scripts">
+            <field name="method">us_13842_fix_sign_document_creator_supply_sdref</field>
+        </record>
 
     </data>
 </openerp>

@@ -562,14 +562,26 @@ class account_mcdb(osv.osv):
             if wiz.reallocated:
                 if wiz.reallocated == 'reallocated':
                     # entries corrected by the system (= not marked as corrected manually)
+                    domain.append('|')
+                    domain.append('&')
+                    domain.append(('move_id.corrected', '=', True))
+                    domain.append(('is_reversal', '=', False))
+                    domain.append('&')
                     domain.append(('is_reallocated', '=', True))
                     domain.append('|')
                     domain.append(('move_id', '=', False))
                     domain.append(('move_id.is_manually_corrected', '=', False))
                 elif wiz.reallocated == 'unreallocated':
+                    domain.append('&')
+                    domain.append('|')
+                    domain.append('|')
+                    domain.append(('move_id', '=', False))
+                    domain.append(('move_id.corrected', '=', False))
+                    domain.append(('is_reversal', '=', True))
                     domain.append('|')
                     domain.append(('is_reallocated', '=', False))
                     domain.append(('move_id.is_manually_corrected', '=', True))
+
             # REVERSED field
             if wiz.reversed:
                 if wiz.reversed == 'reversed':
