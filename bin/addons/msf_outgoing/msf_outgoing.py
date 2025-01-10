@@ -637,6 +637,25 @@ class shipment(osv.osv):
         if not moves_ids:
             return nb_processed
 
+        sub_ship_parcels = False
+        remaining_parcels = False
+        if family.parcel_ids:
+            available_parcel = family.parcel_ids.split(',')
+            if len(available_parcel) != selected_number:
+                selected_parcels = []
+                if family.selected_parcel_ids:
+                    selected_parcels = family.selected_parcel_ids.split(',')
+                nb_parcel_selected = len(selected_parcels)
+                if nb_parcel_selected != selected_number:
+                    raise osv.except_osv(_('Warning'), _('You must select %d parcel ids, selected: %d') % (selected_number, nb_parcel_selected))
+
+                sub_ship_parcels = family.selected_parcel_ids
+                remaining_parcels = ','.join(list(set(available_parcel) - set(selected_parcels)))
+            else:
+                sub_ship_parcels = family.parcel_ids
+
+
+
         picking = family.draft_packing_id
         for move in family.move_lines:
             if move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
@@ -718,6 +737,8 @@ class shipment(osv.osv):
             'location_id': picking.warehouse_id.lot_distribution_id.id,
             'location_dest_id': data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
             'state': 'assigned',
+            'parcel_ids': sub_ship_parcels,
+            'select_parcel_ids': False,
         }, context=context)
 
         # For corresponding moves
@@ -777,6 +798,8 @@ class shipment(osv.osv):
                 'from_pack': initial_from_pack,
                 'to_pack':initial_to_pack,
                 'selected_number': min(new_max_selected, selected_number),
+                'parcel_ids': remaining_parcels,
+                'select_parcel_ids': False,
             }, context=context)
         else:
             self.pool.get('pack.family.memory').unlink(cr, uid, family.id, context=context)
@@ -4841,6 +4864,7 @@ class pack_family_memory(osv.osv):
                 'pack_state': False,
                 'currency_id': False,
                 'total_amount': 0,
+                'parcel_ids_error': False,
             }
 
         cr.execute('''
@@ -4860,7 +4884,7 @@ class pack_family_memory(osv.osv):
             result[x[0]]['currency_id'] = (x[1], x[2])
             result[x[0]]['total_amount'] = x[3]
 
-        for pf_memory in self.browse(cr, uid, ids, fields_to_fetch=['from_pack', 'to_pack',
+        for pf_memory in self.browse(cr, uid, ids, fields_to_fetch=['from_pack', 'to_pack', 'parcel_ids', 'selected_parcel_ids', 'selected_number',
                                                                     'weight', 'length', 'width', 'height', 'state', 'shipment_id'],
                                      context=context):
             values = result[pf_memory['id']]
@@ -4875,7 +4899,14 @@ class pack_family_memory(osv.osv):
             values['total_volume'] = round((pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0, 4)
             values['fake_state'] = pf_memory['state']
             values['pack_state'] = pf_memory.shipment_id.state
-
+            if pf_memory['selected_number'] and pf_memory['parcel_ids']:
+                nb_parcel = len(pf_memory['parcel_ids'].split(','))
+                if not pf_memory['selected_parcel_ids']:
+                    nb_parcel_selected = 0
+                else:
+                    nb_parcel_selected = len(pf_memory['selected_parcel_ids'].split(','))
+                if pf_memory['selected_number'] != nb_parcel and pf_memory['selected_number'] != nb_parcel_selected:
+                    values['parcel_ids_error'] = True
 
         return result
 
@@ -4888,13 +4919,13 @@ class pack_family_memory(osv.osv):
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
         'parcel_ids': fields.text('Parcel Ids'),
+        'selected_parcel_ids': fields.text('Selected Parcel Ids'),
         'parcel_comment': fields.char(string='Parcel Comment', size=256),
         'pack_type': fields.many2one('pack.type', string='Pack Type'),
         'length': fields.float(digits=(16, 2), string='Length [cm]'),
         'width': fields.float(digits=(16, 2), string='Width [cm]'),
         'height': fields.float(digits=(16, 2), string='Height [cm]'),
         'weight': fields.float(digits=(16, 2), string='Weight p.p [kg]'),
-        # functions
         'move_lines': fields.one2many('stock.move', 'shipment_line_id',  'Stock Moves'),
         'packing_list': fields.char('Supplier Packing List', size=30),
         'fake_state': fields.function(_vals_get, method=True, type='char', String='Fake state', multi='get_vals'),
@@ -4920,6 +4951,7 @@ class pack_family_memory(osv.osv):
         'volume_set': fields.boolean('Volume set at PPL'),
         'weight_set': fields.boolean('Weight set at PPL'),
         'quick_flow': fields.boolean('From quick flow'),
+        'parcel_ids_error': fields.function(_vals_get, method=True, type='boolean', string='Parcel Error', multi='get_vals'),
     }
 
     _defaults = {
@@ -5006,6 +5038,42 @@ class pack_family_memory(osv.osv):
             }
 
         return {}
+
+    def select_parcel_ids(self, cr, uid, ids, context=None):
+        ship_line = self.read(cr, uid, ids[0], ['parcel_ids', 'selected_parcel_ids', 'selected_number'], context=context)
+        if not ship_line['parcel_ids']:
+            raise osv.except_osv(_('Error !'), _('Parcel list is not defined.'))
+        wiz = self.pool.get('shipment.parcel.selection').create(cr, uid, {
+            'shipment_line_id': ids[0],
+            'parcel_number': ship_line['selected_number'],
+            'selected_item_ids': ship_line['selected_parcel_ids'],
+            'available_items_ids': ship_line['parcel_ids'],
+        }, context=context)
+
+        return {
+            'name': _("Select Parcel Ids"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'shipment.parcel.selection',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': wiz,
+            'target': 'new',
+            'context': context,
+        }
+        """
+        selected = set()
+        if ship_line['selected_parcel_ids']:
+            selected = set(ship_line['selected_parcel_ids'].split(','))
+
+        to_add = []
+        for x in ship_line['parcel_ids'].split(','):
+            item_id = self.pool.get('shipment.parcel.selection.item').create(cr, uid, {'name': x}, context=context)
+            if x in selected:
+                to_add.append(item_id)
+        if to_add:
+            self.pool.get('shipment.parcel.selection').write(cr, uid, wiz, {'item_ids': [(6, 0, to_add)]}, context=context)
+        """
+
 
 pack_family_memory()
 
