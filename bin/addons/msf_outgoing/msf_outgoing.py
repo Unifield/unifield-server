@@ -1222,6 +1222,11 @@ class shipment(osv.osv):
                 inital_pck_nb = ship_line.to_pack - ship_line.from_pack + 1
                 return_pck_nb = 0
 
+                stay_parcel_ids = False
+                if family.selected_parcel_ids:
+                    returned_parcel_ids = family.selected_parcel_ids.split(',')
+                    stay_parcel_ids = [x for x in family.parcel_ids.split(',') if x not in returned_parcel_ids]
+
                 for seq in stay:
                     seq.append(self.pool.get('pack.family.memory').copy(cr, uid, ship_line.id, {
                         'from_pack': seq[0],
@@ -1229,6 +1234,8 @@ class shipment(osv.osv):
                         'selected_number': seq[1] - seq[0] + 1,
                         'move_lines': [],
                         'state': 'assigned',
+                        'selected_parcel_ids': False,
+                        'parcel_ids': ','.join(stay_parcel_ids[seq[0]-1:seq[1] - seq[0] + 1]),
                     }, context=context))
                     return_pck_nb +=  seq[1] - seq[0] + 1
 
@@ -1244,6 +1251,8 @@ class shipment(osv.osv):
                         'not_shipped': True,
                         'location_id': draft_packing.warehouse_id.lot_distribution_id.id,
                         'location_dest_id': draft_packing.warehouse_id.lot_dispatch_id.id,
+                        'selected_parcel_ids': False,
+                        'parcel_ids': family.selected_parcel_ids,
                     }, context=context)
                     return_pck_nb += family.return_to - family.return_from + 1
 
@@ -1257,6 +1266,8 @@ class shipment(osv.osv):
                         'location_id': draft_packing.warehouse_id.lot_dispatch_id.id,
                         'draft_packing_id': draft_packing.id,
                         'location_dest_id': draft_packing.warehouse_id.lot_distribution_id.id,
+                        'selected_parcel_ids': False,
+                        'parcel_ids': family.selected_parcel_ids,
                     }, context=context)
 
 
