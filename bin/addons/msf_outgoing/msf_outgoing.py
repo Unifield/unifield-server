@@ -606,7 +606,7 @@ class shipment(osv.osv):
 
         return {}
 
-    def attach_draft_pick_to_ship(self, cr, uid, new_shipment_id, family, description_ppl=False, context=None, job_id=False, nb_processed=0, selected_number=None):
+    def attach_draft_pick_to_ship(self, cr, uid, new_shipment_id, family, description_ppl=False, context=None, job_id=False, nb_processed=0, selected_number=None, selected_parcel_ids=None):
         if context is None:
             context = {}
 
@@ -616,6 +616,9 @@ class shipment(osv.osv):
 
         if selected_number is None:
             selected_number = family.selected_number
+
+        if selected_parcel_ids is None:
+            selected_parcel_ids = family.selected_parcel_ids
 
         if not selected_number:
             return nb_processed
@@ -643,10 +646,10 @@ class shipment(osv.osv):
             available_parcel = family.parcel_ids.split(',')
             if len(available_parcel) != selected_number:
                 selected_parcels = []
-                if family.selected_parcel_ids:
-                    selected_parcels = family.selected_parcel_ids.split(',')
+                if selected_parcel_ids:
+                    selected_parcels = selected_parcel_ids.split(',')
 
-                sub_ship_parcels = family.selected_parcel_ids
+                sub_ship_parcels = selected_parcel_ids
                 remaining_parcels_array =  [x for x in available_parcel if x not in selected_parcels]
             else:
                 sub_ship_parcels = family.parcel_ids

@@ -15,6 +15,7 @@ class shipment_parcel_selection(osv.osv):
         'shipment_line_id': fields.many2one('pack.family.memory', string='Shipment Line', readonly=True, ondelete='cascade'),
         'return_line_id': fields.many2one('return.shipment.family.processor', string='Return to stock line', readonly=True, ondelete='cascade'),
         'return_shipment_line_id': fields.many2one('return.pack.shipment.family.processor', string='Return from Sub Ship to draft Ship line', readonly=True, ondelete='cascade'),
+        'add_pack_line_id': fields.many2one('shipment.add.pack.processor.line', string='Sub ship, add pack from draft pick', readonly=True, ondelete='cascade'),
         'parcel_number': fields.integer('Nb parcel to select', readonly=True),
         'selected_item_ids': fields.text('Selected Parcels'),
         'available_items_ids': fields.text('Available Parcels'),
@@ -39,10 +40,14 @@ class shipment_parcel_selection(osv.osv):
             # from draft ship return wizard
             write_obj = self.pool.get('return.shipment.family.processor')
             ship_line_id = sel.return_line_id.id
-        else:
+        elif sel.return_shipment_line_id:
             # from sub ship to draft ship
             write_obj = self.pool.get('return.pack.shipment.family.processor')
             ship_line_id = sel.return_shipment_line_id.id
+        else:
+            # wizard add pack to sub ship
+            write_obj = self.pool.get('shipment.add.pack.processor.line')
+            ship_line_id = sel.add_pack_line_id.id
 
         write_obj.write(cr, uid, ship_line_id, {'selected_parcel_ids': sel.selected_item_ids}, context=context)
 
