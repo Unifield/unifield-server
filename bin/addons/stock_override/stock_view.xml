@@ -310,7 +310,7 @@
                             <field name="reason_type_id" widget="selection"
                                    domain="[('internal_ok', '=', True)]" 
                                    attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-                            <field name="order_category" attrs="{'readonly': ['|', '|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('sale_id', '!=', False), ('previous_chained_pick_id', '!=', False)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('sale_id', '=', False), ('previous_chained_pick_id', '=', False)]}"/>
+                            <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', True)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', False)]}"/>
                             <field name="incoming_id" />
                             <field name="from_pick_cancel_id" attrs="{'invisible': [('from_pick_cancel_id', '=', False)]}" />
                         </group>
@@ -382,7 +382,7 @@
                                         <field name="name" invisible="1" colspan="4"/>
                                         <field name="from_wkf_line" invisible="1" />
                                         <field name="product_id"
-                                            on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)"
+                                            on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type, False, False, parent.order_category, parent.from_wkf, parent.claim)"
                                             context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction: {'location_id': location_dest_id}, 'search_default_not_restricted': 1}"
                                             colspan="4"
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
@@ -559,7 +559,7 @@
                                    attrs="{'readonly': ['|', '|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('claim', '=', True)]}"/>
                             <field name="customers" readonly="1" />
                             <field name="change_reason"/>
-                            <field name="order_category" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('purchase_id', '!=', False)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('purchase_id', '=', False)]}"/>
+                            <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', '|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', True), ('claim', '=', True)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', False), ('claim', '=', False)]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
@@ -642,7 +642,7 @@
                                         <field name="name" invisible="1" colspan="4"/>
                                         <field name="product_id"
                                             context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
-                                            on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type, purchase_line_id)"
+                                            on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type, purchase_line_id, False, parent.order_category, parent.from_wkf, parent.claim)"
                                             colspan="4"
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
                                              />
@@ -893,12 +893,12 @@
                                 domain="[('partner_id', '=', partner_id2)]"
                                 required="1"
                                 />
-                            <field name="order_category" attrs="{'readonly': ['|', '|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('sale_id', '!=', False), ('purchase_id', '!=', False)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('sale_id', '=', False), ('purchase_id', '=', False)]}"/>
+                            <field name="order_category" on_change="on_change_order_category(order_category)" attrs="{'readonly': ['|', '|', ('state', 'not in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', True), ('claim', '=', True)], 'required': [('state', 'in', ['draft', 'confirmed', 'assigned']), ('from_wkf', '=', False), ('claim', '=', False)]}"/>
                             <field name="reason_type_id"
                                 domain="[('outgoing_ok', '=', True), ('is_fs_out', '=', True)]"
                                 get_selection="list_reason_type_outgoing"
                                 widget="selection"
-                                attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
+                                attrs="{'readonly': ['|', '|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('claim', '=', True)]}"
                                 on_change="on_change_rt_out(partner_id2, reason_type_id)"
                                 />
                             <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}" />
@@ -974,7 +974,7 @@
                                         <field name="product_tbd" invisible="1" />
                                         <field name="product_id"
                                             context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" 
-                                            on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type, purchase_line_id, True)"
+                                            on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type, purchase_line_id, True, parent.order_category, parent.from_wkf, parent.claim)"
                                             attrs="{'readonly': ['|', '&amp;', ('from_wkf_line', '=', True), ('product_tbd', '=', False), ('state', '=', 'assigned')]}"
                                             colspan="4"
                                              />
@@ -1075,6 +1075,7 @@
                                                               ('is_company', '=', False),
                                                               ]}"/>
                                 <field name="cross_docking_ok" invisible="1"/>
+                                <field name="claim" invisible="1"/>
                                 <!--<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>-->
                                 <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object"  context="{'from_button': True}" />
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>

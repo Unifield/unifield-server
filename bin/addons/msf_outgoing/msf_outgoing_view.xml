@@ -249,7 +249,7 @@
                                     <field name="line_number" readonly="1"/>
                                     <field name="product_id"
                                             context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
-                                            on_change="onchange_product_id(product_id, location_id, location_dest_id, parent.address_id, parent.type, purchase_line_id, True, context)"
+                                            on_change="onchange_product_id(product_id, location_id, location_dest_id, parent.address_id, parent.type, purchase_line_id, True, False, False, False, context)"
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('fake_state', '=', 'assigned')]}"
                                             />
                                     <field name="comment" readonly="1"/>

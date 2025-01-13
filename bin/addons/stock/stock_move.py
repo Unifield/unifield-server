@@ -1149,8 +1149,9 @@ class stock_move(osv.osv):
 
         return {'value': result}
 
-    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
-                            loc_dest_id=False, address_id=False, parent_type=False, purchase_line_id=False, out=False, context=None):
+    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False,
+                            parent_type=False, purchase_line_id=False, out=False, parent_category=False, from_wkf=False,
+                            claim=False, context=None):
         """ On change of product id, if finds UoM, UoS, quantity and UoS quantity.
         @param prod_id: Changed Product id
         @param loc_id: Source location id
@@ -1158,7 +1159,6 @@ class stock_move(osv.osv):
         @param address_id: Address id of partner
         @return: Dictionary of values
         """
-
         result = {
             'value': {
                 'product_type': False,
@@ -1185,9 +1185,8 @@ class stock_move(osv.osv):
         prod_obj = self.pool.get('product.product')
         location_obj = self.pool.get('stock.location')
 
-
         product = prod_obj.browse(cr, uid, [prod_id], context=context)[0]
-        uos_id  = product.uos_id and product.uos_id.id or False
+        uos_id = product.uos_id and product.uos_id.id or False
         result['value'] = {
             'product_uom': product.uom_id.id,
             'product_uos': uos_id,
@@ -1224,7 +1223,6 @@ class stock_move(osv.osv):
         elif product.perishable:
             result['warning'] = {'title': _('Info'), 'message': _('The selected product is Perishable.')}
 
-
         location_id = loc_id and location_obj.browse(cr, uid, loc_id) or False
         location_dest_id = loc_dest_id and location_obj.browse(cr, uid, loc_dest_id) or False
         service_loc = location_obj.get_service_location(cr, uid)
@@ -1244,7 +1242,6 @@ class stock_move(osv.osv):
         for wh in self.pool.get('stock.warehouse').browse(cr, uid, wh_ids):
             packing_ids.append(wh.lot_packing_id.id)
             stock_ids.append(wh.lot_stock_id.id)
-
 
         if product.type and parent_type == 'in':
             # Set service location as destination for service products
@@ -1286,11 +1283,20 @@ class stock_move(osv.osv):
                 result['value'].update(location_id=stock_ids and stock_ids[0] or False)
             elif product.type == 'service_recep':
                 result['value'].update(location_id=id_cross)
-            # Destinatio location
+            # Destination location
             if product.type == 'consu' and not (loc_dest_id and (location_dest_id.output_ok or location_dest_id.usage == 'customer')):
                 # If we are not in Picking ticket and the dest. loc. is not output or customer, unset the dest.
                 if loc_id and loc_id not in packing_ids:
                     result['value'].update(location_dest_id=False)
+
+        # Check the consistency of products only in documents from scratch
+        if not from_wkf and not claim and prod_id and parent_category:
+            consistency_message = prod_obj.check_consistency(cr, uid, prod_id, parent_category, context=context)
+            if consistency_message:
+                result['warning'] = {
+                    'title': _('Warning'),
+                    'message': '%s \n %s' % (result.get('warning', {}).get('message', ''), consistency_message)
+                }
 
         return result
 
