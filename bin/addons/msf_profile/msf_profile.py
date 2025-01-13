@@ -58,6 +58,88 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_9592_pack_family_to_table(self, cr, uid, *a, **b):
+        cr.execute('''
+            insert into pack_family_memory (
+                    create_uid,
+                    create_date,
+                    write_uid,
+                    write_date,
+                    shipment_id,
+                    draft_packing_id,
+                    sale_order_id,
+                    ppl_id,
+                    from_pack,
+                    to_pack,
+                    parcel_comment,
+                    pack_type,
+                    length,
+                    width,
+                    height,
+                    weight,
+                    packing_list,
+                    location_id,
+                    location_dest_id,
+                    selected_number,
+                    description_ppl,
+                    not_shipped,
+                    comment,
+                    volume_set,
+                    weight_set,
+                    quick_flow,
+                    state,
+                    tmp_previous_pf
+                )
+                (
+                    select
+                        p.create_uid,
+                        p.create_date,
+                        p.write_uid,
+                        p.write_date,
+                        pf.shipment_id,
+                        pf.draft_packing_id,
+                        pf.sale_order_id,
+                        pf.ppl_id,
+                        pf.from_pack,
+                        pf.to_pack,
+                        pf.parcel_comment,
+                        pf.pack_type,
+                        pf.length,
+                        pf.width,
+                        pf.height,
+                        pf.weight,
+                        pf.packing_list,
+                        pf.location_id,
+                        pf.location_dest_id,
+                        pf.selected_number,
+                        pf.description_ppl,
+                        pf.not_shipped,
+                        pf.comment,
+                        pf.volume_set,
+                        pf.weight_set,
+                        pf.quick_flow,
+                        pf.state,
+                        pf.id
+
+                    from
+                        pack_family_memory_old pf
+                        left join stock_picking p on p.id = pf.draft_packing_id
+                )
+        ''')
+
+        cr.execute('''
+            update stock_move m
+                set shipment_line_id = pf.id
+            from pack_family_memory pf, pack_family_memory_old old
+            where
+                old.id = pf.tmp_previous_pf and
+                m.id=ANY(old.move_lines)
+            '''
+                   )
+
+        return True
+
+
     # UF35.0
     def us_13692_13705_fix_pi_sign_bar(self, cr, uid, *a, **b):
         '''

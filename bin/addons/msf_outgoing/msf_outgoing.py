@@ -4350,6 +4350,7 @@ class stock_picking(osv.osv):
                                                                                   'location_dest_id': picking.warehouse_id.lot_distribution_id.id,
                                                                                   'shipment_id': shipment_id,
                                                                                   'state': 'assigned',
+                                                                                  'packing_list': picking.packing_list,
                                                                               }, context=context)
                     pack_move_data['shipment_line_id'] = ship_line_id
 
@@ -5001,6 +5002,8 @@ class pack_family_memory(osv.osv):
         'weight_set': fields.boolean('Weight set at PPL'),
         'quick_flow': fields.boolean('From quick flow'),
         'parcel_ids_error': fields.function(_vals_get, method=True, type='boolean', string='Parcel Error', multi='get_vals'),
+
+        'tmp_previous_pf': fields.integer('pack_family_id', readonly=1, help="used for migration")
     }
 
     _defaults = {
