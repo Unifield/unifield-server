@@ -650,7 +650,7 @@ class shipment(osv.osv):
                     raise osv.except_osv(_('Warning'), _('You must select %d parcel ids, selected: %d') % (selected_number, nb_parcel_selected))
 
                 sub_ship_parcels = family.selected_parcel_ids
-                remaining_parcels = ','.join(list(set(available_parcel) - set(selected_parcels)))
+                remaining_parcels =  ','.join([x for x in available_parcel if x not in selected_parcels])
             else:
                 sub_ship_parcels = family.parcel_ids
 
@@ -1074,7 +1074,7 @@ class shipment(osv.osv):
                 if initial_from_pack or initial_to_pack:
                     remaining_pack_ids = False
                     if ship_line.parcel_ids:
-                        remaining_pack_ids = ','.join(set(ship_line.parcel_ids.split(',')) - set(family.selected_parcel_ids.split(',')))
+                        remaining_pack_ids = ','.join([x for x in ship_line.parcel_ids.split(',') if x not in family.selected_parcel_ids.split(',')])
                     self.pool.get('pack.family.memory').write(cr, uid, ship_line.id, {
                         'from_pack': initial_from_pack,
                         'to_pack': initial_to_pack,
@@ -1235,7 +1235,7 @@ class shipment(osv.osv):
                         'move_lines': [],
                         'state': 'assigned',
                         'selected_parcel_ids': False,
-                        'parcel_ids': ','.join(stay_parcel_ids[seq[0]-1:seq[1] - seq[0] + 1]),
+                        'parcel_ids': ','.join(stay_parcel_ids[family.from_pack - seq[0]:seq[1] - seq[0] + 1]),
                     }, context=context))
                     return_pck_nb +=  seq[1] - seq[0] + 1
 
