@@ -638,21 +638,21 @@ class shipment(osv.osv):
             return nb_processed
 
         sub_ship_parcels = False
-        remaining_parcels = False
+        remaining_parcels_array = []
         if family.parcel_ids:
             available_parcel = family.parcel_ids.split(',')
             if len(available_parcel) != selected_number:
                 selected_parcels = []
                 if family.selected_parcel_ids:
                     selected_parcels = family.selected_parcel_ids.split(',')
-                nb_parcel_selected = len(selected_parcels)
-                if nb_parcel_selected != selected_number:
-                    raise osv.except_osv(_('Warning'), _('You must select %d parcel ids, selected: %d') % (selected_number, nb_parcel_selected))
 
                 sub_ship_parcels = family.selected_parcel_ids
-                remaining_parcels =  ','.join([x for x in available_parcel if x not in selected_parcels])
+                remaining_parcels_array =  [x for x in available_parcel if x not in selected_parcels]
             else:
                 sub_ship_parcels = family.parcel_ids
+
+            if len(sub_ship_parcels.split(',')) != selected_number:
+                raise osv.except_osv(_('Warning'), _('You must select %d parcel ids, selected: %d') % (selected_number, len(sub_ship_parcels)))
 
 
 
@@ -798,9 +798,11 @@ class shipment(osv.osv):
                 'from_pack': initial_from_pack,
                 'to_pack':initial_to_pack,
                 'selected_number': min(new_max_selected, selected_number),
-                'parcel_ids': remaining_parcels,
+                'parcel_ids': ','.join(remaining_parcels_array),
                 'select_parcel_ids': False,
             }, context=context)
+            if family.parcel_ids and len(remaining_parcels_array) != initial_to_pack - initial_from_pack + 1:
+                raise osv.except_osv(_('Warning'), _('Number of kept parcel ids %d does not patch number of packs %d') % (len(remaining_parcels_array), initial_to_pack - initial_from_pack + 1))
         else:
             self.pool.get('pack.family.memory').unlink(cr, uid, family.id, context=context)
 
@@ -1011,6 +1013,13 @@ class shipment(osv.osv):
                     initial_to_pack = family.to_pack - family.selected_number
                     selected_number = initial_to_pack - initial_from_pack + 1
 
+                selected_parcel_ids = family.selected_parcel_ids
+                if family.parcel_ids and not selected_parcel_ids:
+                    selected_parcel_ids = family.parcel_ids
+
+                if family.parcel_ids and len(selected_parcel_ids.split(',')) != family.selected_number:
+                    raise osv.except_osv(_('Error'), _('Number of parcels %d does not match returned number %') % (len(selected_parcel_ids.split(',')), family.selected_number))
+
                 back_ship_line_id = self.pool.get('pack.family.memory').copy(cr, uid, ship_line.id, {
                     'from_pack': family.to_pack - family.selected_number + 1,
                     'to_pack': family.to_pack,
@@ -1018,7 +1027,7 @@ class shipment(osv.osv):
                     'state': 'returned',
                     'move_lines': False,
                     'not_shipped': True,
-                    'parcel_ids': family.selected_parcel_ids,
+                    'parcel_ids': selected_parcel_ids,
                     'select_parcel_ids': False,
                 }, context=context)
 
@@ -1074,7 +1083,12 @@ class shipment(osv.osv):
                 if initial_from_pack or initial_to_pack:
                     remaining_pack_ids = False
                     if ship_line.parcel_ids:
-                        remaining_pack_ids = ','.join([x for x in ship_line.parcel_ids.split(',') if x not in family.selected_parcel_ids.split(',')])
+                        remaining_pack_ids_array = [x for x in ship_line.parcel_ids.split(',') if x not in selected_parcel_ids.split(',')]
+                        remaining_pack_ids = ','.join([remaining_pack_ids])
+
+                        if len(remaining_pack_ids_array) != initial_to_pack - initial_from_pack + 1:
+                            raise osv.except_osv(_('Error'), _('Number of kept parcels %d does not match returned number %') % (len(remaining_pack_ids_array), initial_to_pack - initial_from_pack + 1))
+
                     self.pool.get('pack.family.memory').write(cr, uid, ship_line.id, {
                         'from_pack': initial_from_pack,
                         'to_pack': initial_to_pack,
@@ -1223,9 +1237,19 @@ class shipment(osv.osv):
                 return_pck_nb = 0
 
                 stay_parcel_ids = False
-                if family.selected_parcel_ids:
-                    returned_parcel_ids = family.selected_parcel_ids.split(',')
+                selected_parcel_ids = False
+
+                number_stay_pack = 0
+                if family.parcel_ids:
+                    selected_parcel_ids = family.selected_parcel_ids
+                    if not selected_parcel_ids:
+                        selected_parcel_ids = family.parcel_ids
+
+                    returned_parcel_ids = selected_parcel_ids.split(',')
                     stay_parcel_ids = [x for x in family.parcel_ids.split(',') if x not in returned_parcel_ids]
+
+                    if len(returned_parcel_ids) != family.return_to - family.return_from + 1:
+                        raise osv.except_osv( _('Error'), _('Number of returned parcels %d does not match selected parcels %d') % (family.return_to - family.return_from + 1, len(returned_parcel_ids)))
 
                 for seq in stay:
                     seq.append(self.pool.get('pack.family.memory').copy(cr, uid, ship_line.id, {
@@ -1237,8 +1261,12 @@ class shipment(osv.osv):
                         'selected_parcel_ids': False,
                         'parcel_ids': ','.join(stay_parcel_ids[family.from_pack - seq[0]:seq[1] - seq[0] + 1]),
                     }, context=context))
-                    return_pck_nb +=  seq[1] - seq[0] + 1
+                    number_stay_pack +=  seq[1] - seq[0] + 1
 
+                if family.parcel_ids and number_stay_pack != len(stay_parcel_ids):
+                    raise osv.except_osv( _('Error'), _('Number of kept parcels %d does not match selected parcels %d') % (number_stay_pack, len(stay_parcel_ids)))
+
+                return_pck_nb += number_stay_pack
                 # back move
                 back_ship_line_id = False
                 if family.return_from or family.return_to:
@@ -1252,7 +1280,7 @@ class shipment(osv.osv):
                         'location_id': draft_packing.warehouse_id.lot_distribution_id.id,
                         'location_dest_id': draft_packing.warehouse_id.lot_dispatch_id.id,
                         'selected_parcel_ids': False,
-                        'parcel_ids': family.selected_parcel_ids,
+                        'parcel_ids': selected_parcel_ids,
                     }, context=context)
                     return_pck_nb += family.return_to - family.return_from + 1
 
@@ -1267,7 +1295,7 @@ class shipment(osv.osv):
                         'draft_packing_id': draft_packing.id,
                         'location_dest_id': draft_packing.warehouse_id.lot_distribution_id.id,
                         'selected_parcel_ids': False,
-                        'parcel_ids': family.selected_parcel_ids,
+                        'parcel_ids': selected_parcel_ids,
                     }, context=context)
 
 
