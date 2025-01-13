@@ -214,9 +214,11 @@ class return_shipment_processor(osv.osv):
 
         negative_line_ids = []
         too_much_line_ids = []
+        parcels_error_ids = []
 
         for wizard in self.browse(cr, uid, ids, context=context):
             total_qty = 0.00
+            family_obj.write(cr, uid,[x.id for x in wizard.family_ids], {'integrity_status': 'empty'}, context=context)
 
             for family in wizard.family_ids:
                 if family.selected_number < 0.00:
@@ -226,11 +228,17 @@ class return_shipment_processor(osv.osv):
                 else:
                     total_qty += family.selected_number
 
+                if family.selected_number and family.parcel_ids_error:
+                    parcels_error_ids.append(family.id)
+
             if not total_qty:
                 raise osv.except_osv(
                     _('Processing Error'),
                     _('You must select a quantity to return before performing the return.'),
                 )
+
+        if parcels_error_ids:
+            family_obj.write(cr, uid, parcels_error_ids, {'integrity_status': 'parcels'}, context=context)
 
         if negative_line_ids:
             family_obj.write(cr, uid, negative_line_ids, {'integrity_status': 'negative'}, context=context)
@@ -238,7 +246,7 @@ class return_shipment_processor(osv.osv):
         if too_much_line_ids:
             family_obj.write(cr, uid, too_much_line_ids, {'integrity_status': 'return_qty_too_much'}, context=context)
 
-        if negative_line_ids or too_much_line_ids:
+        if negative_line_ids or too_much_line_ids or parcels_error_ids:
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': self._name,
@@ -283,6 +291,15 @@ class return_shipment_family_processor(osv.osv):
                 'num_of_packs': num_of_packs,
                 'selected_weight': line.weight * line.selected_number,
             }
+            if line['selected_number'] and line['parcel_ids']:
+                nb_parcel = len(line['parcel_ids'].split(','))
+                if not line['selected_parcel_ids']:
+                    nb_parcel_selected = 0
+                else:
+                    nb_parcel_selected = len(line['selected_parcel_ids'].split(','))
+                if line['selected_number'] != nb_parcel and line['selected_number'] != nb_parcel_selected:
+                    res[line.id]['parcel_ids_error'] = True
+
 
         return res
 
@@ -330,6 +347,9 @@ class return_shipment_family_processor(osv.osv):
             readonly=True,
             multi='pack_info',
         ),
+        'selected_parcel_ids': fields.text('Selected Parcel Ids'),
+        'parcel_ids': fields.related('shipment_line_id', 'parcel_ids', type='text', string='Parcel Ids'),
+        'parcel_ids_error': fields.function(_get_pack_info, method=True, type='boolean', string='Parcel Error', multi='pack_info'),
         'selected_weight': fields.function(
             _get_pack_info,
             method=True,
@@ -350,6 +370,7 @@ class return_shipment_family_processor(osv.osv):
                 ('ok', 'Ok'),
                 ('return_qty_too_much', 'Too much quantity selected'),
                 ('negative', 'Negative Value'),
+                ('parcels', 'Selected parcel ids'),
             ],
             readonly=True,
         ),
@@ -358,6 +379,29 @@ class return_shipment_family_processor(osv.osv):
     _defaults = {
         'integrity_status': 'empty',
     }
+
+    def select_parcel_ids(self, cr, uid, ids, context=None):
+        ship_line = self.read(cr, uid, ids[0], ['parcel_ids', 'selected_parcel_ids', 'selected_number'], context=context)
+        if not ship_line['parcel_ids']:
+            raise osv.except_osv(_('Error !'), _('Parcel list is not defined.'))
+        wiz = self.pool.get('shipment.parcel.selection').create(cr, uid, {
+            'return_line_id': ids[0],
+            'parcel_number': ship_line['selected_number'],
+            'selected_item_ids': ship_line['selected_parcel_ids'],
+            'available_items_ids': ship_line['parcel_ids'],
+        }, context=context)
+
+        return {
+            'name': _("Select Parcel Ids to Return to Stock"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'shipment.parcel.selection',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': wiz,
+            'target': 'new',
+            'keep_open': True,
+            'context': context,
+        }
 
 
 return_shipment_family_processor()

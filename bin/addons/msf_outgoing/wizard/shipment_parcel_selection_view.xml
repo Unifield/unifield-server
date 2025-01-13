@@ -65,7 +65,9 @@
                             }
 
                             $(document).ready(function() {
-                                $('#number_to_select').html($('#parcel_number').val());
+
+                                var to_select_number = $('#parcel_number').val()
+                                $('#number_to_select').html(to_select_number);
 
                                 var available_items_ids = $('#available_items_ids').val().split(',');
 
@@ -73,7 +75,7 @@
                                 var selected_item = $('#selected_item_ids').val()
                                 if (selected_item) {
                                     selected_item_ids=selected_item.split(',');
-                                } else {
+                                } else if (to_select_number >= available_items_ids.length / 2) {
                                     selected_item_ids = available_items_ids;
                                 }
 

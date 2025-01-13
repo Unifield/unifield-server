@@ -44,6 +44,8 @@
                     <field name="volume" readonly="1" />
                     <field name="weight" readonly="1" />
                     <field name="selected_number" string="Number to return" />
+                    <field name="parcel_ids_error" invisible="1" />
+                    <button name="select_parcel_ids" string="Select Parcel Ids" icon="terp-accessories-archiver-minus" type="object" attrs="{'invisible': [('parcel_ids_error', '=', False)]}" />
                     <field name="selected_weight" string="Weight to return [kg]" readonly="1" />
                     <field name="integrity_status" />
                 </tree>

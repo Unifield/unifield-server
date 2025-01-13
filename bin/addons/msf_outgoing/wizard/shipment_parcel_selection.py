@@ -12,7 +12,8 @@ class shipment_parcel_selection(osv.osv):
     _rec_name = 'date'
 
     _columns = {
-        'shipment_line_id': fields.many2one('pack.family.memory', string='Shipment Line', required=True, readonly=True, ondelete='cascade'),
+        'shipment_line_id': fields.many2one('pack.family.memory', string='Shipment Line', readonly=True, ondelete='cascade'),
+        'return_line_id': fields.many2one('return.shipment.family.processor', string='Return to stock line', readonly=True, ondelete='cascade'),
         'parcel_number': fields.integer('Nb parcel to select', readonly=True),
         'selected_item_ids': fields.text('Selected Parcels'),
         'available_items_ids': fields.text('Available Parcels'),
@@ -29,8 +30,21 @@ class shipment_parcel_selection(osv.osv):
         if nb_selected != sel.parcel_number:
             raise osv.except_osv(_('Error !'), _('%d Parcels expected, %d selected.') % (sel.parcel_number, nb_selected))
 
-        self.pool.get('pack.family.memory').write(cr, uid, sel.shipment_line_id.id, {'selected_parcel_ids': sel.selected_item_ids}, context=context)
+        if sel.shipment_line_id:
+            # from draft ship form view
+            write_obj = self.pool.get('pack.family.memory')
+            ship_line_id = sel.shipment_line_id.id
+        else:
+            # from draft ship return wizard
+            write_obj = self.pool.get('return.shipment.family.processor')
+            ship_line_id = sel.return_line_id.id
 
-        return {'type': 'ir.actions.act_window_close'}
+        write_obj.write(cr, uid, ship_line_id, {'selected_parcel_ids': sel.selected_item_ids}, context=context)
+
+
+        if sel.shipment_line_id:
+            return {'type': 'ir.actions.act_window_close'}
+
+        return {'type': 'ir.actions.refresh_popupo2m', 'o2m_refresh': 'family_ids'}
 
 shipment_parcel_selection()

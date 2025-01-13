@@ -1018,6 +1018,8 @@ class shipment(osv.osv):
                     'state': 'returned',
                     'move_lines': False,
                     'not_shipped': True,
+                    'parcel_ids': family.selected_parcel_ids,
+                    'select_parcel_ids': False,
                 }, context=context)
 
                 # Update the moves, decrease the quantities
@@ -1070,10 +1072,15 @@ class shipment(osv.osv):
                     move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty, 'qty_to_process': draft_initial_qty, 'qty_processed': qty_processed, 'pack_info_id': False}, context=context)
 
                 if initial_from_pack or initial_to_pack:
+                    remaining_pack_ids = False
+                    if ship_line.parcel_ids:
+                        remaining_pack_ids = ','.join(set(ship_line.parcel_ids.split(',')) - set(family.selected_parcel_ids.split(',')))
                     self.pool.get('pack.family.memory').write(cr, uid, ship_line.id, {
                         'from_pack': initial_from_pack,
                         'to_pack': initial_to_pack,
                         'selected_number': min(ship_line.selected_number, selected_number),
+                        'parcel_ids': remaining_pack_ids,
+                        'selected_parcel_ids': False,
                     }, context=context)
                 else:
                     self.pool.get('pack.family.memory').unlink(cr, uid, ship_line.id, context=context)
@@ -5051,7 +5058,7 @@ class pack_family_memory(osv.osv):
         }, context=context)
 
         return {
-            'name': _("Select Parcel Ids"),
+            'name': _("Select Shipment Parcel Ids"),
             'type': 'ir.actions.act_window',
             'res_model': 'shipment.parcel.selection',
             'view_mode': 'form',
@@ -5060,19 +5067,6 @@ class pack_family_memory(osv.osv):
             'target': 'new',
             'context': context,
         }
-        """
-        selected = set()
-        if ship_line['selected_parcel_ids']:
-            selected = set(ship_line['selected_parcel_ids'].split(','))
-
-        to_add = []
-        for x in ship_line['parcel_ids'].split(','):
-            item_id = self.pool.get('shipment.parcel.selection.item').create(cr, uid, {'name': x}, context=context)
-            if x in selected:
-                to_add.append(item_id)
-        if to_add:
-            self.pool.get('shipment.parcel.selection').write(cr, uid, wiz, {'item_ids': [(6, 0, to_add)]}, context=context)
-        """
 
 
 pack_family_memory()
