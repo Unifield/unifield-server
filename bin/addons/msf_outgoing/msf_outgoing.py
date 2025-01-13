@@ -411,9 +411,9 @@ class shipment(osv.osv):
         'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True, write_relate=False),
         'partner_id2': fields.many2one('res.partner', string='Customer', required=False),
         'partner_type': fields.related('partner_id', 'partner_type', type='selection', selection=PARTNER_TYPE, readonly=True),
-        'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
-        'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-        'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',),
+        'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals'),
+        'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
+        'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X'),
         'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
         'total_volume': fields.function(_vals_get, method=True, type='float', string='Total Volume[dm³]', multi='get_vals',),
         'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
@@ -4918,7 +4918,7 @@ class pack_family_memory(osv.osv):
             }
 
         cr.execute('''
-            select p.id, pl.currency_id, cur.name, sum(sol.price_unit * m.product_qty) from
+            select p.id, pl.currency_id, cur.name, round(sum(sol.price_unit * m.product_qty), 2) from
                 pack_family_memory p, sale_order so, product_pricelist pl, stock_move m, sale_order_line sol, res_currency cur
             where
                 p.sale_order_id = so.id and
@@ -4988,7 +4988,7 @@ class pack_family_memory(osv.osv):
         'pack_state': fields.function(_vals_get, method=True, type='char', string='Pack State', multi='get_vals'),
         'location_id': fields.many2one('stock.location', string='Src Loc.'),
         'location_dest_id': fields.many2one('stock.location', string='Dest. Loc.'),
-        'total_amount': fields.function(_vals_get, method=True, type=' float', string='Total Amount',  multi='get_vals'),
+        'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount',  multi='get_vals'),
         'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals'),
         'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
         'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='Nb. Parcels',  multi='get_vals'),
