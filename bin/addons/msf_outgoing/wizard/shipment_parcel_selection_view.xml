@@ -19,7 +19,7 @@
                                 <span  onclick="unselect_all()" class="button">Unselect All</span>
                             </div>
                             <div>
-                                Search Parcels: <input onkeyup="search_items(this)" />
+                                Search Parcels: <input onkeyup="search_items($(this).val())" id="parcel-search" /> <span onclick="$('#parcel-search').val(''); search_items();" class="button">Clear</span>
                             </div>
                             <div>
                                 <span id="number_to_select">0</span> parcels to selected, 
@@ -43,8 +43,7 @@
                                 }
                             }
 
-                            function search_items(inp) {
-                                var s = $(inp).val();
+                            function search_items(s) {
                                 if (!s) {
                                     $('#parcelids li').show();
                                 } else {
@@ -56,12 +55,20 @@
 
                             function select_all() {
                                 $('#parcelids li').addClass('selected');
+                                $('#parcelids input').attr('checked', true);
                                 update_number_selected()
                             }
 
                             function unselect_all() {
                                 $('#parcelids li').removeClass('selected');
+                                $('#parcelids input').attr('checked', false);
                                 update_number_selected()
+                            }
+
+                            function click_box() {
+                                $(this).toggleClass('selected'); 
+                                $(this).children("input").attr('checked', $(this).hasClass('selected'));
+                                update_number_selected();
                             }
 
                             $(document).ready(function() {
@@ -80,11 +87,13 @@
                                 }
 
                                 available_items_ids.forEach(function (f){
-                                    var myclass='';
+                                    var myclass = '';
+                                    var mycheck = '';
                                     if (selected_item_ids.includes(f)) {
-                                        myclass='selected';
+                                        myclass = 'selected';
+                                        mycheck = 'checked';
                                     }
-                                    $("&lt;li&gt;"+f+"&lt;/li&gt;").addClass(myclass).click(function(){$(this).toggleClass('selected'); update_number_selected();}).appendTo('#parcelids');
+                                     $("&lt;li&gt; &lt;input type='checkbox' "+mycheck+" / &gt;"+f+"&lt;/li&gt;").addClass(myclass).click(click_box).appendTo('#parcelids');
                                 })
 
                                 update_number_selected();
