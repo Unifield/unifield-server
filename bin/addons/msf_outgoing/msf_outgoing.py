@@ -1239,7 +1239,7 @@ class shipment(osv.osv):
                 inital_pck_nb = ship_line.to_pack - ship_line.from_pack + 1
                 return_pck_nb = 0
 
-                stay_parcel_ids = False
+                stay_parcel_ids = []
                 selected_parcel_ids = False
 
                 number_stay_pack = 0
