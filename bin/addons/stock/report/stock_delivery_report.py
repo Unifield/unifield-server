@@ -51,6 +51,7 @@ class stock_delivery_report(report_sxw.rml_parse):
                 'ship': ship and ship.name or '',
                 'origin': pick.origin or '',
                 'partner': pick.partner_id and pick.partner_id.name or '',
+                'details': ppl and ppl.details or pick.details or '',
                 'fo': fo,
                 'header': ppl or pick,
                 'line_num': move.line_number,
