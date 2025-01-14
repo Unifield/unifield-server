@@ -1130,14 +1130,13 @@ iframe.ui-dialog-content {
   width: 25%;
   border: 1px solid black;
   cursor: pointer;
-  background: lightcoral;
+  background: ghostwhite;
   float:left;
   display:inline;
-  text-decoration: line-through;
 }
 
 #parcelids .selected {
-    background: lightgreen;
+    background: lightgrey;
     text-decoration: none;
 }
 
@@ -1153,4 +1152,8 @@ iframe.ui-dialog-content {
 #parcels-form #parcel-list {
     margin-top: 10px;
     margin-bottom: 10px;
+}
+
+#parcels-form input {
+    margin-right: 4px;
 }
