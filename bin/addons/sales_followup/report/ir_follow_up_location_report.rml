@@ -189,7 +189,7 @@
 
     <section>
             [[ repeatIn(getOrders(r, only_bo=r.only_bo), 'o', 'section') ]]
-        <blockTable colWidths="33.0,74.0,109.0,80.0,40.0,40.0,40.0,40.0,40.0,70.0,40.0,42.0,42.0,42.0,20.0,20.0" style="LinesTable" repeatRows="2">
+        <blockTable colWidths="33.0,74.0,127.0,96.0,42.0,18.0,42.0,18.0,42.0,70.0,40.0,44.0,44.0,44.0,20.0,20.0" style="LinesTable" repeatRows="2">
 	    	<tr>
 	    		<td colspan="2">
                     <para style="Lines">Order ref:</para>
@@ -254,13 +254,13 @@
                     <para style="Lines"><i>Qty ordered</i></para>
 	    		</td>
 	    		<td>
-                    <para style="Lines"><i>Uom ordered</i></para>
+                    <para style="Lines"><i>UoM</i></para>
 	    		</td>
 	    		<td>
                     <para style="Lines"><i>Qty delivered</i></para>
 	    		</td>
 	    		<td>
-                    <para style="Lines"><i>Uom delivered</i></para>
+                    <para style="Lines"><i>UoM</i></para>
 	    		</td>
 	    		<td>
                     <para style="Lines"><i>Qty to deliver</i></para>
