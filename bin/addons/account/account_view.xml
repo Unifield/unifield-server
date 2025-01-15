@@ -197,6 +197,7 @@
                             <label string="" colspan="2"/>
                             <field name="destination_ids" nolabel="1" colspan="4" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]">
                                 <tree string="Destinations">
+                                    <field name="code"/>
                                     <field name="name"/>
                                     <field name="description"/>
                                     <field name="date_start"/>

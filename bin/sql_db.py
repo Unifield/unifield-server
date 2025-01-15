@@ -332,6 +332,11 @@ class Cursor(object):
         return self.fetchone()
 
 
+    @check
+    def sql_user_exists(self, username):
+        self.execute("SELECT rolname FROM pg_roles WHERE rolname=%s", (username, ))
+        return self.fetchone()
+
     def __build_dict(self, row):
         return {d.name: row[i] for i, d in enumerate(self._obj.description)}
 
