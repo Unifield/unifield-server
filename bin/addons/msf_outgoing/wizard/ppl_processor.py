@@ -229,7 +229,7 @@ class ppl_processor(osv.osv):
             if parcel_ids_error:
                 raise osv.except_osv(
                     _('Processing Error'),
-                    _('Inconsitent parcel IDs: %s') % ('\n'.join(parcel_ids_error),)
+                    _('Inconsitent parcel IDs, click on icon box to edit parcel IDs: %s') % ('\n'.join(parcel_ids_error),)
                 )
 
             nb_pick_moves = move_obj.search(cr, uid, [
@@ -265,6 +265,17 @@ class ppl_family_processor(osv.osv):
 
     _order = 'from_pack, id'
 
+    def _get_has_parcel(self, cr, uid, ids, name, arg, context=None):
+        ret = {}
+        for x in self.read(cr, uid, ids, ['from_pack', 'to_pack', 'parcel_ids'], context=context):
+            if not x['parcel_ids']:
+                ret[x['id']] = {'has_parcel': False, 'has_parcel_ids_error': False}
+            else:
+                nb = x['to_pack'] - x['from_pack'] + 1
+                ret[x['id']] = {'has_parcel': True, 'has_parcel_ids_error': nb != len(x['parcel_ids'].split(','))}
+
+        return ret
+
     _columns = {
         'wizard_id': fields.many2one(
             'ppl.processor',
@@ -276,6 +287,8 @@ class ppl_family_processor(osv.osv):
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
         'parcel_ids': fields.text('Parcel Ids'),
+        'has_parcel': fields.function(_get_has_parcel, type='boolean', method=True, string='Has pack IDs', multi='get_all'),
+        'has_parcel_ids_error': fields.function(_get_has_parcel, type='boolean', method=True, string='Has pack error IDs', multi='get_all'),
         'pack_type': fields.many2one(
             'pack.type',
             string='Pack Type',
@@ -313,6 +326,28 @@ class ppl_family_processor(osv.osv):
             })
 
         return res
+
+    def select_parcel_ids(self, cr, uid, ids, context=None):
+        ppl_line = self.read(cr, uid, ids[0], ['parcel_ids', 'from_pack', 'to_pack'], context=context)
+        if not ppl_line['parcel_ids']:
+            raise osv.except_osv(_('Error !'), _('Parcel list is not defined.'))
+        wiz = self.pool.get('shipment.parcel.ppl.selection').create(cr, uid, {
+            'ppl_line_id': ids[0],
+            'parcel_number': ppl_line['to_pack'] - ppl_line['from_pack'] + 1,
+            'parcel_ids': '\n'.join(ppl_line['parcel_ids'].split(',')),
+        }, context=context)
+
+        return {
+            'name': _("List PPL Parcel Ids"),
+            'type': 'ir.actions.act_window',
+            'res_model': 'shipment.parcel.ppl.selection',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': wiz,
+            'target': 'new',
+            'keep_open': True,
+            'context': context,
+        }
 
 ppl_family_processor()
 

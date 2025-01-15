@@ -1,6 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
+        <record id="shipment_parcel_selection_ppl_form_view" model="ir.ui.view">
+            <field name="name">shipment.parcel.selection.ppl.form.view</field>
+            <field name="model">shipment.parcel.ppl.selection</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="List PPL Parcel Ids">
+                    <separator string="One Parcel ID per line" colspan="4"/>
+                    <field name="parcel_number" invisible="1" />
+                    <html colspan="4">
+                        <div id="parcels-for">
+                            <div>
+                                <span id="number_to_select">0</span> parcels to selected,
+                                <span id="number_selected">0</span> selected parcels.
+                            </div>
+                        </div>
+                        <script language="javascript">
+                            function update_number_selected() {
+                                var to_select = $('#parcel_number').val();
+
+                                var cont = $('#parcel_ids').val();
+                                var selected = 0;
+
+                                cont.split(/\r|\r\n|\n/).forEach(function(line) {
+                                    if (line.replace(/\s+/g,"")) {
+                                        selected += 1;
+                                    }
+                                });
+
+                                $('#number_selected').html(selected);
+
+
+                                if ( selected == to_select) {
+                                    $("#select_parcels").show()
+                                } else {
+                                    $("#select_parcels").hide()
+
+                                }
+                            }
+
+                            $(document).ready(function() {
+
+                                var to_select_number = $('#parcel_number').val()
+                                $('#number_to_select').html(to_select_number);
+
+                                update_number_selected();
+                                $('#parcel_ids').bind('keyup', update_number_selected);
+
+                            });
+
+                        </script>
+                    </html>
+                    <group>
+                        <field name="parcel_ids" colspan="4" rowspan="30" nolabel="1" />
+                    </group>
+                    <newline />
+                    <button name="cancel" string="Cancel" type="object" icon="gtk-cancel"/>
+                    <button name="select_parcels" string="Ok" type="object" icon="gtk-ok"/>
+                </form>
+            </field>
+        </record>
+
 
         <record id="shipment_parcel_selection_form_view" model="ir.ui.view">
             <field name="name">shipment.parcel.selection.form.view</field>
@@ -113,7 +174,7 @@
 
                         </script>
                     </html>
-                    <button special="cancel" string="_Cancel" icon="gtk-cancel"/>
+                    <button name="cancel" string="Cancel" type="object" icon="gtk-cancel"/>
                     <button name="select_parcels" string="Ok" type="object" icon="gtk-ok"/>
             </form>
 

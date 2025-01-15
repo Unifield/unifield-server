@@ -3996,7 +3996,7 @@ class stock_picking(osv.osv):
                             'width': line.pack_info_id.total_width,
                             'height': line.pack_info_id.total_height,
                             'weight': line.pack_info_id.total_weight,
-                            'parcel_ids': line.pack_info_id.parcel_ids,
+                            #'parcel_ids': line.pack_info_id.parcel_ids,
                         })
 
                     context.update({
@@ -4147,6 +4147,8 @@ class stock_picking(osv.osv):
                 for fam in wiz.family_ids:
                     key='f%st%s' % (fam.from_pack, fam.to_pack)
                     existing_data[key] = {'pack_type': fam.pack_type and fam.pack_type.id or False, 'length': fam.length, 'width': fam.width, 'height': fam.height, 'weight': fam.weight, 'id': fam.id}
+                    if fam.parcel_ids:
+                        existing_data[key]['parcel_ids_array'] = fam.parcel_ids.split(',')
         else:
             wizard_id = ppl_processor.create(cr, uid, {'picking_id': ids[0]}, context=context)
 
@@ -4167,16 +4169,22 @@ class stock_picking(osv.osv):
                     'width': line.width,
                     'height': line.height,
                     'weight': line.weight,
-                    'parcel_ids': line.parcel_ids,
+                    'parcel_ids_array': [],
                 }
 
                 if existing_data.get(key):
                     families_data[key].update(existing_data[key])
                     del existing_data[key]
 
+            if line.pack_info_id.parcel_ids:
+                families_data[key]['parcel_ids_array'] += [x for x in line.pack_info_id.parcel_ids.split(',') if x not in families_data[key]['parcel_ids_array']]
+
             families_data[key]['move_ids'][0][2].append(line.id)
 
         for family_data in sorted(families_data.values(), key=lambda x: x.get('from_pack') or 0):
+            if 'parcel_ids_array' in family_data:
+                family_data['parcel_ids'] = ','.join(family_data['parcel_ids_array'])
+                del(family_data['parcel_ids_array'])
             if 'id' in family_data:
                 fam_id = family_data['id']
                 del family_data['id']
@@ -4318,6 +4326,14 @@ class stock_picking(osv.osv):
             for family in wizard.family_ids:
                 move_to_write = [x.id for x in family.move_ids]
                 if move_to_write:
+                    if family.parcel_ids:
+                        parcel_ids_array = family.parcel_ids.split(',')
+                        if len(parcel_ids_array) != family.to_pack - family.from_pack + 1:
+                            raise osv.except_osv(
+                                _('Error'),
+                                _('%s: from pack: %d, to pack %d: number of parcels %d does not match number of packs %d, click on the box icon to edit parcel ids') % (picking.name, family.from_pack, family.to_pack, len(parcel_ids_array), family.to_pack - family.from_pack + 1)
+                            )
+
                     ship_line_id = self.pool.get('pack.family.memory').create(cr, uid,
                                                                               {
                                                                                   'from_pack': family.from_pack,
@@ -4836,7 +4852,6 @@ class pack_family_memory_old(osv.osv):
                 p.shipment_id as shipment_id,
                 from_pack as from_pack,
                 to_pack as to_pack,
-                m.parcel_ids as parcel_ids,
                 array_agg(m.id) as move_lines,
                 min(packing_list) as packing_list,
                 bool_and(m.volume_set) as volume_set,
@@ -4869,7 +4884,7 @@ class pack_family_memory_old(osv.osv):
             left join sale_order_line sol on sol.id = m.sale_line_id
             left join product_pricelist pl on pl.id = so.pricelist_id
             where p.shipment_id is not null
-            group by p.shipment_id, p.details, p.description_ppl, from_pack, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, m.not_shipped, parcel_ids
+            group by p.shipment_id, p.details, p.description_ppl, from_pack, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, m.not_shipped
     )
     ''')
     _columns = {
