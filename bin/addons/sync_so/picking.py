@@ -180,7 +180,7 @@ class stock_picking(osv.osv):
 
         }
         for k in ['from_pack', 'to_pack', 'weight', 'height', 'length', 'width', 'parcel_ids']:
-            if not data.get(k) and data.get('shipment_line_id', {}).get(k):
+            if not data.get(k) and data.get('shipment_line_id') and data.get('shipment_line_id', {}).get(k):
                 result[k] = data['shipment_line_id'][k]
             else:
                 result[k] = data.get(k)
