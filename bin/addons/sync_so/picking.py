@@ -1275,17 +1275,3 @@ class stock_picking(osv.osv):
 
 stock_picking()
 
-class shipment(osv.osv):
-    _inherit = "shipment"
-
-    def on_change(self, cr, uid, changes, context=None):
-        if context is None \
-           or not context.get('sync_message_execution') \
-           or context.get('no_store_function'):
-            return
-        for id, changes in list(changes.items()):
-            logger = get_sale_purchase_logger(cr, uid, self, id, \
-                                              context=context)
-            logger.is_status_modified = True
-
-shipment()
