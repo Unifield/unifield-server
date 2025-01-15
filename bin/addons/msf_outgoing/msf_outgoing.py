@@ -35,17 +35,6 @@ from lxml import etree
 from tools.sql import drop_view_if_exists
 
 
-class stock_parcel_id(osv.osv):
-    _name = 'stock.parcel_id'
-
-    _columns = {
-        'name': fields.char('Parcel ID', size=256),
-        'pack_id': fields.integer('Pack id'),
-    }
-stock_parcel_id()
-
-
-
 class stock_warehouse(osv.osv):
     """
     Add new packing, dispatch and distribution locations for input
@@ -736,7 +725,6 @@ class shipment(osv.osv):
             'to_pack': family.to_pack,
             'selected_number': selected_number,
             'draft_packing_id': new_packing_id,
-            # TODO 'ppl_id': False,
             'location_id': picking.warehouse_id.lot_distribution_id.id,
             'location_dest_id': data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
             'state': 'assigned',
