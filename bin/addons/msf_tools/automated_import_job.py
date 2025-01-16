@@ -482,7 +482,9 @@ class automated_import_job(osv.osv):
                     cr.commit()
                 except Exception as e:
                     cr.rollback()
-                    if isinstance(e, osv.except_osv):
+                    if isinstance(e, tools.misc.ParsedException) and e.args:
+                        trace_b = e.args[0]
+                    elif isinstance(e, osv.except_osv):
                         trace_b = e.value
                     else:
                         trace_b = tools.ustr(traceback.format_exc())

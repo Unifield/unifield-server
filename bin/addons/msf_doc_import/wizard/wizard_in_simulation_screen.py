@@ -404,10 +404,13 @@ class wizard_import_in_simulation_screen(osv.osv):
                                             break
                                     if parcel_nr or parcel_id:
                                         if not parcel_id:
-                                            error.append(_('parcel_ids node %s, for parcel_nr %s, parcel_nr must be set') % (nb_pack, parcel_nr))
+                                            error.append(_('parcel_ids node %s, for parcel_nr %s, parcel_nr must be set') % (nb_pack, parcel_id))
+                                            break
+                                        if ',' in parcel_id:
+                                            error.append(_('parcel_ids node %s, for comma (,) is not allowed in parcel_id') % (nb_pack, parcel_id))
                                             break
                                         if not parcel_nr:
-                                            error.append(_('parcel_ids node %s, for parcel_id %s, parcel_id must be set') % (nb_pack, parcel_id))
+                                            error.append(_('parcel_ids node %s, for parcel_id %s, parcel_id must be set') % (nb_pack, parcel_nr))
                                             break
                                         if parcel_nr in values[index]['parcel_ids']:
                                             error.append(_('parcel_ids node %s, parcel_nr %s already used') % (nb_pack, parcel_nr))
@@ -714,7 +717,7 @@ the date has a wrong format: %s') % (index+1, str(e)))
                     file_parse_errors.append(str(e))
 
                 if context.get('auto_import_ok') and file_parse_errors:
-                    raise Exception('\n'.join(file_parse_errors))
+                    raise tools.misc.ParsedException('\n'.join(file_parse_errors))
 
                 '''
                 We check for each line if the number of columns is consistent
@@ -739,8 +742,6 @@ Nothing has been imported because of %s. See below:
 
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                     res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
-                    cr.commit()
-                    cr.close(True)
                     return res
 
                 '''
@@ -758,8 +759,6 @@ Nothing has been imported because of %s. See below:
                         % (origin, wiz.picking_id.name, wiz.origin)
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                     res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
-                    cr.commit()
-                    cr.close(True)
                     return res
                 header_values['imp_origin'] = wiz.origin
 
@@ -1170,21 +1169,20 @@ Nothing has been imported because of %s. See below:
                 self.write(cr, uid, [wiz.id], header_values, context=context)
 
                 res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
-                cr.commit()
-                cr.close(True)
                 return res
 
-            cr.commit()
-            cr.close(True)
 
+        except tools.misc.ParsedException:
+            cr.rollback()
+            raise
         except Exception as e:
             cr.rollback()
             logging.getLogger('in.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
-            cr.commit()
-            cr.close(True)
 
         finally:
+            cr.commit()
+            cr.close(True)
             # Clear the cache
             PRODUCT_CODE_ID = {}
             UOM_NAME_ID = {}
