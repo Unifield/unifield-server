@@ -47,14 +47,16 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
 
         if picking.partner_id2:
             consignee_partner = picking.partner_id2
-            consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
-            consignee_addr = None
+            if picking.sale_id and picking.sale_id.procurement_request and picking.address_id:
+                consignee_addr = picking.address_id
+            else:
+                consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
+                consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id)
 
             addr = ''
             addr_street = ''
             addr_zip_city = ''
-            if consignee_addr_id:
-                consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id)
+            if consignee_addr:
                 if consignee_addr.street:
                     addr += consignee_addr.street
                     addr += ' '
@@ -86,7 +88,7 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
 
         return [res]
 
-    def get_picking_shipper(self, pick):
+    def get_picking_shipper(self):
         """
         The 'Shipper' fields must be filled automatically with the
         default address of the current instance
@@ -96,12 +98,8 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
         addr_obj = self.pool.get('res.partner.address')
 
         instance_partner = user_obj.browse(self.cr, self.uid, self.uid).company_id.partner_id
-        # If the Pick/PPL partner is the instance, use the doc's address instead of the default address
-        if pick and pick.partner_id2 and pick.address_id and pick.partner_id2.id == instance_partner.id:
-            instance_addr = pick.address_id
-        else:
-            instance_addr_id = partner_obj.address_get(self.cr, self.uid, instance_partner.id)['default']
-            instance_addr = addr_obj.browse(self.cr, self.uid, instance_addr_id)
+        instance_addr_id = partner_obj.address_get(self.cr, self.uid, instance_partner.id)['default']
+        instance_addr = addr_obj.browse(self.cr, self.uid, instance_addr_id)
 
         addr_street = ''
         addr_zip_city = ''

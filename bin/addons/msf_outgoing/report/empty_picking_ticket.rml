@@ -208,7 +208,7 @@
                     </blockTable>
                 </td>
                 <td>
-                    [[ repeatIn(getPickingShipper(pt), 'ship', 'td') ]]
+                    [[ repeatIn(getPickingShipper(), 'ship', 'td') ]]
                     <para style="HeaderInfosTitle">Shipper:</para>
                     <para style="HeaderInfosTitle">[[ ship.get('shipper_name', '') ]]</para>
                     <para style="HeaderInfosTitle">[[ ship.get('shipper_contact', '') ]]</para>
