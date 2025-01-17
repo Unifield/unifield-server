@@ -658,7 +658,7 @@ class res_partner(osv.osv):
             address_obj = self.pool.get('res.partner.address')
             if write_vals is not None:
                 partner_type = 'partner_type' in write_vals and write_vals.get('partner_type', False)
-                name = 'name' in write_vals and write_vals.get('name', False)
+                name = 'name' in write_vals and write_vals.get('name', False) or ''
                 city = 'address' in write_vals and write_vals.get('address', False) and \
                        len(write_vals.get('address')) == 1 and \
                        len(write_vals.get('address')[0]) == 3 and \
@@ -667,7 +667,7 @@ class res_partner(osv.osv):
             else:
                 partner = self.browse(cr, uid, partner_id, fields_to_fetch=['partner_type', 'name', 'city'], context=context)
                 partner_type = partner.partner_type
-                name = partner.name
+                name = partner.name or ''
                 city = partner.city or ''
             if partner_type == 'external':
                 partner_domain = [('id', '!=', partner_id), ('name', '=ilike', name),
