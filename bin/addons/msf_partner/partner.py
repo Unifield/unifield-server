@@ -646,7 +646,7 @@ class res_partner(osv.osv):
             +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'])]
         )
 
-    def check_partner_unicity(self, cr, uid, partner_id, context=None):
+    def check_partner_unicity(self, cr, uid, partner_id, write_vals=None, context=None):
         """
         If the partner name is already used, check that the city is not empty AND not used by another partner with the
         same name. Checks are case insensitive, done with active and inactive External partners, and NOT done at synchro time.
@@ -656,10 +656,21 @@ class res_partner(osv.osv):
             context = {}
         if not context.get('sync_update_execution'):
             address_obj = self.pool.get('res.partner.address')
-            partner = self.browse(cr, uid, partner_id, fields_to_fetch=['partner_type', 'name', 'city'], context=context)
-            if partner.partner_type == 'external':
-                city = partner.city or ''  # city of the first address created for this partner
-                partner_domain = [('id', '!=', partner_id), ('name', '=ilike', partner.name),
+            if write_vals is not None:
+                partner_type = 'partner_type' in write_vals and write_vals.get('partner_type', False)
+                name = 'name' in write_vals and write_vals.get('name', False)
+                city = 'address' in write_vals and write_vals.get('address', False) and \
+                       len(write_vals.get('address')) == 1 and \
+                       len(write_vals.get('address')[0]) == 3 and \
+                       'city' in write_vals.get('address')[0][2] and \
+                        write_vals.get('address')[0][2].get('city') or ''
+            else:
+                partner = self.browse(cr, uid, partner_id, fields_to_fetch=['partner_type', 'name', 'city'], context=context)
+                partner_type = partner.partner_type
+                name = partner.name
+                city = partner.city or ''
+            if partner_type == 'external':
+                partner_domain = [('id', '!=', partner_id), ('name', '=ilike', name),
                                   ('partner_type', '=', 'external'), ('active', 'in', ['t', 'f'])]
                 duplicate_partner_ids = self.search(cr, uid, partner_domain, order='NO_ORDER', context=context)
                 if duplicate_partner_ids:
@@ -790,6 +801,9 @@ class res_partner(osv.osv):
                 and self.search(cr, uid, [('id', '!=', ids[0]), ('name', '=ilike', vals['name']), ('partner_type', '=', 'internal')], context=context):
             raise osv.except_osv(_('Error'), _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be modified and activated") % (vals['name'],))
 
+        # Check to avoid duplication of external partners.
+        if not context.get('sync_update_execution', False):
+            self.check_partner_unicity(cr, uid, partner_id=ids[0], write_vals=vals, context=context)
         ret = super(res_partner, self).write(cr, uid, ids, vals, context=context)
         self.check_same_pricelist(cr, uid, ids, context=context)
         return ret
