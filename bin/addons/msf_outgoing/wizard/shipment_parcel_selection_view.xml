@@ -109,7 +109,7 @@
                                     $('#parcelids li').show();
                                 } else {
                                     $('#parcelids li').each(function () {
-                                    $(this).toggle($(this).html().includes(s));
+                                        $(this).toggle($(this).children("input").attr('value').includes(s));
                                 });
                                 }
                             }
@@ -154,7 +154,7 @@
                                         myclass = 'selected';
                                         mycheck = 'checked';
                                     }
-                                     $("&lt;li&gt; &lt;input type='checkbox' "+mycheck+" / &gt;"+f+"&lt;/li&gt;").addClass(myclass).click(click_box).appendTo('#parcelids');
+                                     $("&lt;li&gt; &lt;input type='checkbox' "+mycheck+" value=" + f + " / &gt;"+f+"&lt;/li&gt;").addClass(myclass).click(click_box).appendTo('#parcelids');
                                 })
 
                                 update_number_selected();
@@ -163,8 +163,8 @@
                                 $('#select_parcels').removeAttr('onclick');
                                 $("#select_parcels").click(function() {
                                     list_selected = Array()
-                                    $('#parcelids li.selected').each(function(){
-                                        list_selected.push($(this).html());
+                                    $('#parcelids input:checked').each(function(){
+                                        list_selected.push($(this).attr('value'));
                                     });
                                     $('#selected_item_ids').val(list_selected.join(','));
 

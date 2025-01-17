@@ -1005,11 +1005,11 @@ class shipment(osv.osv):
                     selected_number = initial_to_pack - initial_from_pack + 1
 
                 selected_parcel_ids = family.selected_parcel_ids
-                if family.parcel_ids and not selected_parcel_ids:
+                if family.parcel_ids and (not selected_parcel_ids or len(family.parcel_ids.split(',')) == family.selected_number):
                     selected_parcel_ids = family.parcel_ids
 
                 if family.parcel_ids and len(selected_parcel_ids.split(',')) != family.selected_number:
-                    raise osv.except_osv(_('Error'), _('Number of parcels %d does not match returned number %') % (len(selected_parcel_ids.split(',')), family.selected_number))
+                    raise osv.except_osv(_('Error'), _('Number of parcels %d does not match returned number %d') % (len(selected_parcel_ids.split(',')), family.selected_number))
 
                 back_ship_line_id = self.pool.get('pack.family.memory').copy(cr, uid, ship_line.id, {
                     'from_pack': family.to_pack - family.selected_number + 1,
@@ -1075,10 +1075,9 @@ class shipment(osv.osv):
                     remaining_pack_ids = False
                     if ship_line.parcel_ids:
                         remaining_pack_ids_array = [x for x in ship_line.parcel_ids.split(',') if x not in selected_parcel_ids.split(',')]
-                        remaining_pack_ids = ','.join([remaining_pack_ids])
-
+                        remaining_pack_ids = ','.join(remaining_pack_ids_array)
                         if len(remaining_pack_ids_array) != initial_to_pack - initial_from_pack + 1:
-                            raise osv.except_osv(_('Error'), _('Number of kept parcels %d does not match returned number %') % (len(remaining_pack_ids_array), initial_to_pack - initial_from_pack + 1))
+                            raise osv.except_osv(_('Error'), _('Number of kept parcels %d does not match returned number %d') % (len(remaining_pack_ids_array), initial_to_pack - initial_from_pack + 1))
 
                     self.pool.get('pack.family.memory').write(cr, uid, ship_line.id, {
                         'from_pack': initial_from_pack,
