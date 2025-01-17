@@ -798,8 +798,6 @@ Nothing has been imported because of %s. See below:
                         if wiz.with_pack:
 
                             pack_info = {'wizard_id': wiz.id}
-                            p_from = 0
-                            p_to = 0
                             for key in pack_header:
                                 pack_info[key] = values[x].get(key)
                                 if pack_coeff.get(key):
@@ -808,9 +806,9 @@ Nothing has been imported because of %s. See below:
                                     pack_info[key] = '%s' % pack_info[key]
                             if pack_info.get('packing_list') and len(pack_info.get('packing_list', '')) > 30:
                                 values_line_errors.append(_('Packing List %s, max characters length is 30, found %s') % (pack_info.get('packing_list'), len(pack_info.get('packing_list', ''))))
+                            p_from = int(pack_info.get('parcel_from', 0))
+                            p_to = int(pack_info.get('parcel_to', 0))
                             if pack_info.get('parcel_ids'):
-                                p_from = int(pack_info.get('parcel_from'))
-                                p_to = int(pack_info.get('parcel_to'))
                                 if p_from <= p_to and len(pack_info.get('parcel_ids')) != p_to - p_from + 1:
                                     values_line_errors.append(_('Packing List %s, number of packs %s does not match the number of parcel ID %s') % (pack_info.get('packing_list'), p_to - p_from + 1, len(pack_info.get('parcel_ids'))))
                                 elif p_from <= p_to:
