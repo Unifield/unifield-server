@@ -32,6 +32,8 @@ from . import wizard
 from openobject.tools import expose, ast, no_session_refresh
 from openobject import ustr
 from openobject.i18n import _
+from openobject.i18n.format import format_decimal
+
 
 class List(SecuredController):
 
@@ -469,7 +471,7 @@ class List(SecuredController):
 
         total_sum = []
         for s in total:
-            total_sum.append(str(sum(round(s, 2))))
+            total_sum.append(format_decimal(sum(s)))
 
         return dict(sum = total_sum)
 
