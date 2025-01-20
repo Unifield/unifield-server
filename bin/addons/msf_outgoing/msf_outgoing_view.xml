@@ -1323,7 +1323,7 @@
                             <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])], 'notselectable': [('state', '!=', 'draft')]}"
                             filter_selector="[('Show all', []), ('Hide closed', [('state', '!=', 'done')]), ('Show closed only', [('state', '=', 'done')]), ('Hide returned', [('state', 'not in', ['returned', 'cancel'])]), ('Show returned only', [('state', 'in', ['returned', 'cancel'])])]"
                             default_selector="'3'" o2m_selectable="2">
-                                <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1" editable_style="new" noteditable="fake_state not in ['draft','assigned']">
+                                <tree string="Pack Families" colors="red: not_shipped or parcel_ids_error" editable="both" hide_new_button="1" hide_delete_button="1" editable_style="new" noteditable="fake_state not in ['draft','assigned']">
                                     <field name="parcel_ids" invisible="1" />
                                     <field name="fake_state" invisible="True" />
                                     <field name="sale_order_id" readonly="1"/>
