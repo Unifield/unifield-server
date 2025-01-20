@@ -82,7 +82,7 @@ class wizard_update_po_line_import(osv.osv_memory):
         if sql_wheres:
             sql_mod += ' AND (' + ' OR '.join(sql_wheres) + ')'
         cr.execute("""SELECT id FROM purchase_order_line WHERE order_id = %s AND line_number = %s"""
-                   % (po_id, line_num) + sql_used_ids + sql_mod + """ LIMIT 1""")
+                   % (po_id, line_num) + sql_used_ids + sql_mod + """ ORDER BY id LIMIT 1""")
 
         pol_ids = cr.fetchone()
         if pol_ids:

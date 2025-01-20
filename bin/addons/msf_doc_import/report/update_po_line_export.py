@@ -32,7 +32,7 @@ class update_po_line_export_parser(XlsxReportParser):
         sheet.column_dimensions['C'].width = 65.0
         sheet.column_dimensions['D'].width = 65.0
         sheet.column_dimensions['E'].width = 13.0
-        sheet.column_dimensions['F'].width = 13.0
+        sheet.column_dimensions['F'].width = 15.0
         sheet.column_dimensions['G'].width = 17.0
         sheet.column_dimensions['H'].width = 10.0
 
