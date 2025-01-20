@@ -499,15 +499,22 @@ class shipment(osv.osv):
         """
         Update the consignee values by default
         """
+        if context is None:
+            context = {}
+
         partner_obj = self.pool.get('res.partner')
         addr_obj = self.pool.get('res.partner.address')
         so_obj = self.pool.get('sale.order')
 
         if vals.get('partner_id2') and not context.get('create_shipment'):
+            # Consignee
             if vals.get('sale_id'):
                 sale_brw = so_obj.browse(cr, uid, vals['sale_id'], context=context)
                 consignee_partner = sale_brw.partner_id
-                consignee_addr_id = sale_brw.partner_shipping_id.id
+                if sale_brw.procurement_request and vals.get('address_id'):
+                    consignee_addr_id = vals['address_id']
+                else:
+                    consignee_addr_id = sale_brw.partner_shipping_id.id
             else:
                 consignee_partner = partner_obj.browse(cr, uid, vals.get('partner_id2'), context=context)
                 consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
