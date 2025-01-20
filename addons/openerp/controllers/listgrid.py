@@ -469,7 +469,7 @@ class List(SecuredController):
 
         total_sum = []
         for s in total:
-            total_sum.append(str(sum(s)))
+            total_sum.append(str(sum(round(s, 2))))
 
         return dict(sum = total_sum)
 
