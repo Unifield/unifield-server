@@ -68,6 +68,7 @@ class picking_ticket(report_sxw.rml_parse):
             'getStock': self.get_qty_available,
             'getNbItems': self.get_nb_items,
             'getLines': self.get_lines,
+            'getShipper': self.get_shipper,
             'getPickingShipper': self.get_picking_shipper,
             'getConsignee': self.get_consignee,
             'get_pdf_title': self.get_pdf_title,
@@ -135,6 +136,14 @@ class picking_ticket(report_sxw.rml_parse):
 
         return [res]
 
+    def get_shipper(self):
+        """
+        Return the shipper value for the given field
+        @param field: Name of the field to retrieve
+        @return: The value of the shipper field
+        """
+        return [self.pool.get('shipment').default_get(self.cr, self.uid, [])]
+
     def get_picking_shipper(self):
         """
         The 'Shipper' fields must be filled automatically with the
@@ -161,14 +170,14 @@ class picking_ticket(report_sxw.rml_parse):
         if instance_addr.country_id:
             addr_zip_city += instance_addr.country_id.name
 
-        return [{
+        return {
             'shipper_name': instance_partner.name,
             'shipper_contact': 'Supply responsible',
             'shipper_addr_street': addr_street,
             'shipper_addr_zip_city': addr_zip_city,
             'shipper_phone': instance_addr.phone,
             'shipper_email': instance_addr.email,
-        }]
+        }
 
     def get_lines(self, picking, is_pdf=True):
         """

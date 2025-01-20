@@ -29,6 +29,7 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
         super(pre_packing_excel_report_parser, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getShipper': self.get_shipper,
             'getPickingShipper': self.get_picking_shipper,
             'getConsignee': self.get_consignee,
         })
@@ -88,6 +89,14 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
 
         return [res]
 
+    def get_shipper(self):
+        """
+        Return the shipper value for the given field
+        @param field: Name of the field to retrieve
+        @return: The value of the shipper field
+        """
+        return [self.pool.get('shipment').default_get(self.cr, self.uid, [])]
+
     def get_picking_shipper(self):
         """
         The 'Shipper' fields must be filled automatically with the
@@ -114,14 +123,14 @@ class pre_packing_excel_report_parser(report_sxw.rml_parse):
         if instance_addr.country_id:
             addr_zip_city += instance_addr.country_id.name
 
-        return [{
+        return {
             'shipper_name': instance_partner.name,
             'shipper_contact': 'Supply responsible',
             'shipper_addr_street': addr_street,
             'shipper_addr_zip_city': addr_zip_city,
             'shipper_phone': instance_addr.phone,
             'shipper_email': instance_addr.email,
-        }]
+        }
 
 
 SpreadsheetReport(

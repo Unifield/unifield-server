@@ -447,6 +447,47 @@ class shipment(osv.osv):
         ir_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_outgoing', 'seq_shipment')
         return self.pool.get('ir.model.data').browse(cr, uid, ir_id).res_id
 
+    def default_get(self, cr, uid, fields, context=None, from_web=False):
+        """
+        The 'Shipper' fields must be filled automatically with the
+        default address of the current instance
+        """
+        user_obj = self.pool.get('res.users')
+        partner_obj = self.pool.get('res.partner')
+        addr_obj = self.pool.get('res.partner.address')
+
+        res = super(shipment, self).default_get(cr, uid, fields, context=context, from_web=from_web)
+
+        instance_partner = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id
+        instance_addr_id = partner_obj.address_get(cr, uid, instance_partner.id)['default']
+        instance_addr = addr_obj.browse(cr, uid, instance_addr_id, context=context)
+
+        addr = ''
+        if instance_addr.street:
+            addr += instance_addr.street
+            addr += ' '
+        if instance_addr.street2:
+            addr += instance_addr.street2
+            addr += ' '
+        if instance_addr.zip:
+            addr += instance_addr.zip
+            addr += ' '
+        if instance_addr.city:
+            addr += instance_addr.city
+            addr += ' '
+        if instance_addr.country_id:
+            addr += instance_addr.country_id.name
+
+        res.update({
+            'shipper_name': instance_partner.name,
+            'shipper_contact': 'Supply responsible',
+            'shipper_address': addr,
+            'shipper_phone': instance_addr.phone,
+            'shipper_email': instance_addr.email,
+        })
+
+        return res
+
     _defaults = {
         'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'sequence_id': _get_sequence,
@@ -466,31 +507,6 @@ class shipment(osv.osv):
         so_obj = self.pool.get('sale.order')
 
         if vals.get('partner_id2') and not context.get('create_shipment'):
-            # Shipper
-            instance_partner = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id
-            instance_addr_id = partner_obj.address_get(cr, uid, instance_partner.id)['default']
-            instance_addr = addr_obj.browse(cr, uid, instance_addr_id, context=context)
-
-            shpr_addr = ''
-            if instance_addr.street:
-                shpr_addr += instance_addr.street + ' '
-            if instance_addr.street2:
-                shpr_addr += instance_addr.street2 + ' '
-            if instance_addr.zip:
-                shpr_addr += instance_addr.zip + ' '
-            if instance_addr.city:
-                shpr_addr += instance_addr.city + ' '
-            if instance_addr.country_id:
-                shpr_addr += instance_addr.country_id.name
-
-            vals.update({
-                'shipper_name': instance_partner.name,
-                'shipper_contact': 'Supply responsible',
-                'shipper_address': shpr_addr,
-                'shipper_phone': instance_addr.phone,
-                'shipper_email': instance_addr.email,
-            })
-
             # Consignee
             if vals.get('sale_id'):
                 sale_brw = so_obj.browse(cr, uid, vals['sale_id'], context=context)
