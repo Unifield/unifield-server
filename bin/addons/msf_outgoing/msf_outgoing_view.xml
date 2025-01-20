@@ -1337,7 +1337,7 @@
                                     <field name="num_of_packs" tooltip="parcel_ids" readonly="1" />
                                     <field name="selected_number" string="Nb Parcels\nTo Ship" attrs="{'readonly': ['|', ('pack_state', '!=', 'draft'), ('fake_state', '!=', 'assigned')]}" readonly="0" on_change="change_selected_number(selected_number)"/>
                                     <field name="parcel_ids_error" invisible="1" />
-                                    <button name="select_parcel_ids" string="Select Parcel Ids" icon="terp-accessories-archiver-minus" type="object" attrs="{'invisible': [('parcel_ids_error', '=', False)]}" />
+                                    <button name="select_parcel_ids" string="Select Parcel Ids" icon="terp-accessories-archiver-minus" type="object" attrs="{'invisible': ['|', ('selected_number', '=', 0), ('parcel_ids', '=', False)]}" />
                                     <field name="pack_type" readonly="1" />
                                     <field name="total_volume" string="Total\nVolume[dm³]" attrs="{'readonly': ['|', ('volume_set', '=', True), ('fake_state', 'not in', ['draft', 'assigned'])]}" readonly="0"/>
                                     <field name="weight" string="Weight\nP.P.[KG]" readonly="1" />

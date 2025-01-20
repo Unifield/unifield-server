@@ -607,7 +607,7 @@ class shipment(osv.osv):
             selected_number = family.selected_number
 
         if selected_parcel_ids is None:
-            selected_parcel_ids = family.selected_parcel_ids
+            selected_parcel_ids = family.selected_parcel_ids or ''
 
         if not selected_number:
             return nb_processed
@@ -629,7 +629,7 @@ class shipment(osv.osv):
         if not moves_ids:
             return nb_processed
 
-        sub_ship_parcels = False
+        sub_ship_parcels = ''
         remaining_parcels_array = []
         if family.parcel_ids:
             available_parcel = family.parcel_ids.split(',')
@@ -1231,9 +1231,10 @@ class shipment(osv.osv):
 
                 number_stay_pack = 0
                 if family.parcel_ids:
-                    selected_parcel_ids = family.selected_parcel_ids
-                    if not selected_parcel_ids:
+                    if len(family.parcel_ids.split(',')) == family.return_to - family.return_from + 1:
                         selected_parcel_ids = family.parcel_ids
+                    else:
+                        selected_parcel_ids = family.selected_parcel_ids or ""
 
                     returned_parcel_ids = selected_parcel_ids.split(',')
                     stay_parcel_ids = [x for x in family.parcel_ids.split(',') if x not in returned_parcel_ids]

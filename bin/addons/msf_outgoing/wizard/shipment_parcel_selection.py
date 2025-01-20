@@ -24,7 +24,7 @@ class shipment_parcel_ppl_selection(osv.osv):
             for x in sel.parcel_ids.split('\n'):
                 line = x.strip()
                 if line:
-                    lines_ok.append(line)
+                    lines_ok.append(line.replace(',','-'))
             nb_selected = len(lines_ok)
 
         if nb_selected != sel.parcel_number:
@@ -36,6 +36,7 @@ class shipment_parcel_ppl_selection(osv.osv):
 
     def cancel(self, cr, uid, ids, context=None):
         return {'type': 'ir.actions.refresh_popupo2m', 'o2m_refresh': 'family_ids'}
+
 shipment_parcel_ppl_selection()
 
 class shipment_parcel_selection(osv.osv):

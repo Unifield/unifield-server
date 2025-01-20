@@ -407,7 +407,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                                             error.append(_('parcel_ids node %s, for parcel_nr %s, parcel_nr must be set') % (nb_pack, parcel_id))
                                             break
                                         if ',' in parcel_id:
-                                            error.append(_('parcel_ids node %s, for comma (,) is not allowed in parcel_id') % (nb_pack, parcel_id))
+                                            error.append(_('parcel_ids node %s, comma (,) is not allowed in parcel_id') % (nb_pack, parcel_id))
                                             break
                                         if not parcel_nr:
                                             error.append(_('parcel_ids node %s, for parcel_id %s, parcel_id must be set') % (nb_pack, parcel_nr))
@@ -521,12 +521,16 @@ class wizard_import_in_simulation_screen(osv.osv):
             elif process_pack_line:
                 if row.cells and row.cells[0].data == _('Parcel No.'):
                     process_parcel_id = True
-                    index -= 1
                     continue
 
                 if process_parcel_id and pack_index:
                     if row.cells[0] and row.cells[0].type == 'int' and len(row.cells) > 1:
-                        values[pack_index].setdefault('parcel_ids', {}).update({row.cells[0].data: row.cells[1].data})
+                        parcel_id = row.cells[1].data and row.cells[1].data.strip() or ''
+                        if parcel_id and ',' in parcel_id:
+                            error.append(_('Line %s:  comma (,) is not allowed in parcel_id') % (index,))
+                            break
+
+                        values[pack_index].setdefault('parcel_ids', {}).update({row.cells[0].data: row.cells[1].data and parcel_id})
                         continue
                     else:
                         process_parcel_id = False

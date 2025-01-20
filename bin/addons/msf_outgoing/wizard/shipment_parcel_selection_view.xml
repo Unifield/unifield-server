@@ -76,8 +76,8 @@
                     <html colspan="4">
                         <div id="parcels-form">
                             <div id="select-buttons">
-                                <span  onclick="select_all()" class="button">Select All</span>
-                                <span  onclick="unselect_all()" class="button">Unselect All</span>
+                                <span  onclick="select_all()" class="button parcel-select">Select All</span>
+                                <span  onclick="unselect_all()" class="button parcel-select">Unselect All</span>
                             </div>
                             <div>
                                 Search Parcels: <input onkeyup="search_items($(this).val())" id="parcel-search" /> <span onclick="$('#parcel-search').val(''); search_items();" class="button">Clear</span>
@@ -139,12 +139,20 @@
 
                                 var available_items_ids = $('#available_items_ids').val().split(',');
 
+                                var all_pack = to_select_number == available_items_ids.length
+
                                 var selected_item_ids = Array()
-                                var selected_item = $('#selected_item_ids').val()
-                                if (selected_item) {
-                                    selected_item_ids=selected_item.split(',');
-                                } else if (to_select_number >= available_items_ids.length / 2) {
+
+                                if (all_pack) {
                                     selected_item_ids = available_items_ids;
+                                    $('.parcel-select').hide();
+                                } else {
+                                    var selected_item = $('#selected_item_ids').val()
+                                    if (selected_item) {
+                                        selected_item_ids=selected_item.split(',');
+                                    } else if (to_select_number >= available_items_ids.length / 2) {
+                                        selected_item_ids = available_items_ids;
+                                    }
                                 }
 
                                 available_items_ids.forEach(function (f){
@@ -154,7 +162,13 @@
                                         myclass = 'selected';
                                         mycheck = 'checked';
                                     }
-                                     $("&lt;li&gt; &lt;input type='checkbox' "+mycheck+" value=" + f + " / &gt;"+f+"&lt;/li&gt;").addClass(myclass).click(click_box).appendTo('#parcelids');
+                                    if (all_pack) {
+                                        mycheck += ' disabled ';
+                                        onclick = '';
+                                    } else {
+                                        onclick = click_box;
+                                    }
+                                    $("&lt;li&gt; &lt;input type='checkbox' "+mycheck+" value=" + f + " / &gt;"+f+"&lt;/li&gt;").addClass(myclass).click(onclick).appendTo('#parcelids');
                                 })
 
                                 update_number_selected();
