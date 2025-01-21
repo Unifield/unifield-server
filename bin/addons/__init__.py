@@ -805,18 +805,19 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
 
             migrations.migrate_module(package, 'post')
 
+            # execute the selected functions
+            load_function(cr, m, idref, mode)
+
             if modobj:
                 ver = release.major_version + '.' + package.data.get('version', '1.0')
-                # Set new modules and dependencies
-                modobj.write(cr, 1, [mid], {'state': 'installed', 'latest_version': ver})
-                cr.commit()
                 # Update translations for all installed languages
                 modobj.update_translations(cr, 1, [mid], None)
                 cr.commit()
+                # Set new modules and dependencies
+                modobj.write(cr, 1, [mid], {'state': 'installed', 'latest_version': ver})
+                cr.commit()
 
             package.state = 'installed'
-            # execute the selected functions
-            load_function(cr, m, idref, mode)
 
             for kind in ('init', 'demo', 'update'):
                 if hasattr(package, kind):
