@@ -302,6 +302,7 @@ class return_shipment_family_processor(osv.osv):
             readonly=True,
             ondelete='cascade',
             help="Wizard to process the return of the shipment",
+            select=1,
         ),
         'sale_order_id': fields.many2one(
             'sale.order',

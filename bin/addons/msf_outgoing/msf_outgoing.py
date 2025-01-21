@@ -1113,7 +1113,7 @@ class shipment(osv.osv):
     def add_packs(self, cr, uid, ids, context=None):
         ship = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id', 'address_id'], context=context)
         other_ship_ids = self.search(cr, uid, [('state', '=', 'draft'), ('partner_id', '=', ship.partner_id.id), ('address_id', '=', ship.address_id.id)], context=context)
-        pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('state', 'not in', ['done', 'returned']), ('shipment_id', 'in', other_ship_ids)], context=context)
+        pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('state', 'not in', ['done', 'returned', 'cancel']), ('shipment_id', 'in', other_ship_ids)], context=context)
         if not pack_ids:
             raise osv.except_osv(_('Warning !'), _('No Pack Available'))
         proc_id = self.pool.get('shipment.add.pack.processor').create(cr, uid, {'shipment_id': ids[0]}, context=context)
@@ -4965,7 +4965,7 @@ class pack_family_memory(osv.osv):
 
     _columns = {
         'name': fields.char(string='Reference', size=1024),
-        'shipment_id': fields.many2one('shipment', string='Shipment'),
+        'shipment_id': fields.many2one('shipment', string='Shipment', select=1),
         'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
         'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
         'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
@@ -4987,7 +4987,7 @@ class pack_family_memory(osv.osv):
             ('assigned', 'Available'),
             ('returned', 'Returned'),
             ('cancel', 'Cancelled'),
-            ('done', 'Closed'), ], string='State'),
+            ('done', 'Closed'), ], string='State', select=1),
         'pack_state': fields.function(_vals_get, method=True, type='char', string='Pack State', multi='get_vals'),
         'location_id': fields.many2one('stock.location', string='Src Loc.'),
         'location_dest_id': fields.many2one('stock.location', string='Dest. Loc.'),
@@ -5173,7 +5173,7 @@ stock_reserved_products()
 class stock_move(osv.osv):
     _inherit = 'stock.move'
     _columns = {
-        'shipment_line_id': fields.many2one('pack.family.memory', 'Shipment Line'),
+        'shipment_line_id': fields.many2one('pack.family.memory', 'Shipment Line', select=1),
     }
 
     def copy_data(self, cr, uid, id, default=None, context=None):
