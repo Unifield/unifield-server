@@ -21,7 +21,7 @@
 
     <script type="text/javascript" src="/openerp/static/javascript/web_keyboard_shortcuts.js?v=7.0rc4b"></script>
 
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/style.css?v=16.0rc2"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/style.css?v=36.0rc1"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/menu.css?v=2.7b1"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/tips.css?v=7.0"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/waitbox.css"/>
