@@ -80,9 +80,11 @@ class wizard_update_po_line_import(osv.osv_memory):
             else:
                 sql_used_ids = ' AND id NOT IN %s' % (tuple(used_pol_ids),)
         if sql_wheres:
-            sql_mod += ' AND (' + ' OR '.join(sql_wheres) + ')'
-        cr.execute("""SELECT id FROM purchase_order_line WHERE order_id = %s AND line_number = %s"""
-                   % (po_id, line_num) + sql_used_ids + sql_mod + """ ORDER BY id LIMIT 1""")
+            sql_mod = ' AND (' + ' OR '.join(sql_wheres) + ')'
+        cr.execute("""
+            SELECT id FROM purchase_order_line WHERE order_id = %s AND line_number = %s AND state NOT IN ('cancel', 'cancel_r')"""
+                   % (po_id, line_num) + sql_used_ids + sql_mod + """ ORDER BY id LIMIT 1
+       """)
 
         pol_ids = cr.fetchone()
         if pol_ids:
