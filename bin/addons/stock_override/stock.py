@@ -725,7 +725,6 @@ class stock_picking(osv.osv):
                 netsvc.LocalService("workflow").trg_write(uid, 'stock.picking', pick_id, cr)
         return self.action_assign(cr, uid, ids, lefo=lefo, context=context)
 
-
     def export_pick(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -739,6 +738,13 @@ class stock_picking(osv.osv):
             'context': context,
         }
 
+    def export_out(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        return {'type': 'ir.actions.report.xml', 'report_name': 'report_out_export', 'context': context}
 
     @check_rw_warning
     def call_cancel_wizard(self, cr, uid, ids, context=None):
