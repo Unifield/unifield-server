@@ -1171,5 +1171,9 @@
             <field name="method">us_13842_fix_sign_document_creator_supply_sdref</field>
         </record>
 
+        <record id="us_13895_hide_import_generate_asset_menus" model="patch.scripts">
+            <field name="method">us_13895_hide_import_generate_asset_menus</field>
+        </record>
+
     </data>
 </openerp>
