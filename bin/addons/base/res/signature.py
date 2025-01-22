@@ -261,7 +261,6 @@ class signature_object(osv.osv):
 
     _columns = {
         'signature_id': fields.many2one('signature', 'Signature', required=True, ondelete='cascade'),
-        'locked_by_signature': fields.related('signature_id', 'doc_locked_for_sign', type='boolean', relation='signature', string='Locked by signature', help='To prevent edition on: PO', write_relate=True),
     }
 
     def action_close_signature(self, cr, uid, ids, context=None):
@@ -302,17 +301,12 @@ class signature_object(osv.osv):
                         WHERE order_id = %s AND analytic_distribution_id IS NULL ORDER BY line_number""", (doc.id,))
                     lines_no_ad = ', '.join([str(x[0]) for x in cr.fetchall()])
                     if lines_no_ad:
-                        errors_msg.append(_('the lines number %s have no AD') % (lines_no_ad,))
+                        errors_msg.append(_('the line number(s) %s have no AD') % (lines_no_ad,))
                 cr.execute("""SELECT line_number FROM purchase_order_line 
                     WHERE order_id = %s AND price_unit = 0 ORDER BY line_number""", (doc.id,))
                 lines_no_price = ', '.join([str(x[0]) for x in cr.fetchall()])
                 if lines_no_price:
-                    errors_msg.append(_('the lines number %s have a unit price of 0') % (lines_no_price,))
-                cr.execute("""SELECT line_number FROM purchase_order_line 
-                    WHERE order_id = %s AND confirmed_delivery_date IS NULL ORDER BY line_number""", (doc.id,))
-                lines_no_cdd = ', '.join([str(x[0]) for x in cr.fetchall()])
-                if lines_no_cdd:
-                    errors_msg.append(_('the lines number %s have no confirmed delivery date') % (lines_no_cdd,))
+                    errors_msg.append(_('the line number(s) %s have a unit price of 0') % (lines_no_price,))
 
             if errors_msg:
                 raise osv.except_osv(_('Warning'), _('Document can not be signed as %s') % ('; '.join(errors_msg),))
@@ -380,11 +374,11 @@ class signature_object(osv.osv):
     def activate_offline(self, cr, uid, ids, context=None):
         _register_log(self, cr, uid, ids, self._name, 'Sign offline', False, True, 'write', context)
         vals = {'signed_off_line': True, 'signature_state': False}
-        for sign in self.read(cr, uid, ids, ['allowed_to_be_signed_unsigned', 'locked_by_signature'], context=context):
+        for sign in self.read(cr, uid, ids, ['allowed_to_be_signed_unsigned', 'doc_locked_for_sign'], context=context):
             if not sign['allowed_to_be_signed_unsigned']:
                 raise osv.except_osv(_('Warning'), _("You are not allowed to remove the signature of this document in this state, please refresh the page"))
-            if sign['locked_by_signature']:
-                vals['locked_by_signature'] = False
+            if sign['doc_locked_for_sign']:
+                self.unlock_doc_for_sign(cr, uid, [sign['id']], context=context)
                 _register_log(self, cr, uid, ids, self._name, 'Document locked', True, False, 'write', context)
         self.write(cr, uid, ids, vals, context=context)
         return True
@@ -650,6 +644,8 @@ class signature_line(osv.osv):
                 group_name = 'Sign_document_creator_finance'
             elif sign_line.signature_id.signature_res_model in ['purchase.order', 'stock.picking', 'sale.order']:
                 group_name = 'Sign_document_creator_supply'
+            elif sign_line.signature_id.signature_res_model == 'physical.inventory':
+                group_name = 'Sign_user'
             if not group_name or (group_name and not user_obj.check_user_has_group(cr, uid, group_name)):
                 raise osv.except_osv(_('Warning'), _("You are not allowed to remove this signature"))
             if not sign_line.signature_id.allowed_to_be_signed_unsigned:
@@ -742,7 +738,8 @@ class signature_line(osv.osv):
         '''
         check_ur: used when sign offline by sign creator
         '''
-        sign_line = self.browse(cr, uid, ids[0], fields_to_fetch=['signature_id', 'name', 'user_name', 'value', 'unit'], context=context)
+        sign_lines = self.browse(cr, uid, ids, fields_to_fetch=['signature_id', 'name', 'user_name', 'value', 'unit'], context=context)
+        sign_line = sign_lines[0]
         if check_ur:
             sign_line._check_sign_unsign(check_unsign=True, check_super_unsign=check_super_unsign, context=context)
 
@@ -750,14 +747,23 @@ class signature_line(osv.osv):
         value = sign_line.value
         if value is False:
             value = ''
-        old = "signed by %s, %s %s" % (sign_line.user_name, value, sign_line.unit)
-        desc = 'Delete signature on role %s' % (sign_line.name, )
+        if len(sign_lines) > 1:
+            signers = []
+            for s_line in sign_lines:
+                signers.append('%s (%s)' % (s_line.name, s_line.user_name))
+            old = ', '.join(signers)
+            desc = 'All Signatures removed'
+        else:
+            old = "signed by %s, %s %s" % (sign_line.user_name, value, sign_line.unit)
+            desc = 'Delete signature on role %s' % (sign_line.name, )
         _register_log(self, cr, real_uid, sign_line.signature_id.signature_res_id, sign_line.signature_id.signature_res_model, desc, old, '', 'unlink', context)
 
         root_uid = hasattr(uid, 'realUid') and uid or fakeUid(1, uid)
         self.write(cr, root_uid, ids, {'signed': False, 'date': False, 'image_id': False, 'value': False, 'unit': False, 'legal_name': False, 'doc_state': False}, context=context)
         self.pool.get('signature')._set_signature_state(cr, root_uid, [sign_line.signature_id.id], context=context)
+
         return True
+
 
 signature_line()
 

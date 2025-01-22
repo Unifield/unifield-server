@@ -1296,7 +1296,8 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 sp.id, -- 26
                 p.order_type, -- 27
                 fo_partner.name, -- 28
-                COALESCE(pl.esti_dd, p.delivery_requested_date_modified) --29
+                COALESCE(pl.esti_dd, p.delivery_requested_date_modified), --29
+                p.details --30
             FROM purchase_order_line pl
                 LEFT JOIN purchase_order p ON p.id = pl.order_id
                 LEFT JOIN product_product pp ON pp.id = pl.product_id
@@ -1383,6 +1384,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
 
             lines.append({
                 'partner_name': line[15],
+                'details': line[30] or '',
                 'po_name': line[11],
                 'in_ref': line[22] or '',
                 'si_ref': si_ref,

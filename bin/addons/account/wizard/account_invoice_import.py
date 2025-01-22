@@ -337,7 +337,7 @@ class account_invoice_import(osv.osv_memory):
                         current_ad =  invoice_line_obj.browse(cr, uid, invoice_line_ids[0],fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
 
                         # create a new AD if diff from current AD on line
-                        if not current_ad or self._is_ad_diff(current_ad, cc_ids=cc_ids, dest_ids=dest_ids, fp_ids=fp_ids, percentages=percentage_vals):
+                        if not errors and (not current_ad or self._is_ad_diff(current_ad, cc_ids=cc_ids, dest_ids=dest_ids, fp_ids=fp_ids, percentages=percentage_vals)):
                             distrib_id = ana_obj.create(cr, uid, {'name': 'Line Distribution Import'}, context=context)
                             for i, percentage in enumerate(percentage_vals):
                                 ad_state, ad_error = ana_obj.analytic_state_from_info(cr, uid, account.id, dest_ids[i], cc_ids[i], fp_ids[i],

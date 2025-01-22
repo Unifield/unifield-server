@@ -73,7 +73,8 @@ class signature_follow_up(osv.osv):
         for obj in ['purchase.order', 'sale.order', 'stock.picking', 'account.bank.statement', 'account.invoice', 'physical.inventory']:
             st.update(dict(self.pool.get(obj)._columns['state'].selection))
         # Because PO 'confirmed' (Confirmed) is overridden by Pick 'confirmed' (Not Available)
-        st.update({'confirmed_po': 'Confirmed', 'closed_po': 'Closed'})
+        # FO, IR, PO, IN, Pick & Out ('done') Closed overridden by finance doc 'done' (Done)
+        st.update({'closed_doc': 'Closed', 'confirmed_po': 'Confirmed', 'disp_out': 'Dispatched', 'recv_out': 'Received'})
 
         return list(st.items())
 
@@ -85,11 +86,18 @@ class signature_follow_up(osv.osv):
             context = {}
         res = {}
 
-        for sign_fup in self.browse(cr, uid, ids, fields_to_fetch=['doc_type', 'doc_state'], context=context):
+        need_closed = ['sale.order.fo', 'sale.order.ir', 'purchase.order', 'stock.picking.in', 'stock.picking.out', 'stock.picking.pick']
+        for sign_fup in self.browse(cr, uid, ids, fields_to_fetch=['doc_type', 'doc_state', 'doc_id'], context=context):
             if sign_fup.doc_type == 'purchase.order' and sign_fup.doc_state == 'confirmed':
                 res[sign_fup.id] = 'confirmed_po'
-            elif sign_fup.doc_type == 'purchase.order' and sign_fup.doc_state == 'done':
-                res[sign_fup.id] = 'closed_po'
+            elif sign_fup.doc_type in need_closed and sign_fup.doc_state == 'done':
+                if sign_fup.doc_type == 'stock.picking.out' and sign_fup.doc_id:
+                    if self.pool.get('stock.picking').read(cr, uid, sign_fup.doc_id, ['delivered'], context=context)['delivered']:
+                        res[sign_fup.id] = 'recv_out'
+                    else:
+                        res[sign_fup.id] = 'disp_out'
+                else:
+                    res[sign_fup.id] = 'closed_doc'
             else:
                 res[sign_fup.id] = sign_fup.doc_state
 
@@ -104,7 +112,7 @@ class signature_follow_up(osv.osv):
             ('account.bank.statement.bank', 'Bank Register'), ('account.bank.statement.cheque', 'Cheque Register'),
             ('account.invoice.si', 'Supplier Invoice (SI)'), ('account.invoice.donation', 'Donation'),
             ('stock.picking.in', 'Incoming Shipment (IN)'), ('stock.picking.out', 'Delivery Order (Out)'),
-            ('stock.picking.pick', 'Picking Ticket (Pick)'), ('physical.inventory', 'Physical Inventory')
+            ('stock.picking.pick', 'Picking Ticket (Pick)'), ('physical.inventory', 'Physical Inventory (PI)')
         ], 'Document Type', readonly=1),
         'doc_id': fields.integer('Doc ID', readonly=1),
         'status': fields.selection([('open', 'Unsigned'), ('partial', 'Partially Signed'), ('signed', 'Fully Signed')], string='Signature State', readonly=1),

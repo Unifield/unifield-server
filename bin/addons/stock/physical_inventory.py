@@ -776,11 +776,15 @@ class PhysicalInventory(osv.osv):
                 # Check UoM
                 product_uom_id = False
                 if row.cells[3].data:
-                    product_uom = row.cells[3].data.lower()
-                    if product_uom not in all_uom:
-                        add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
-                    else:
-                        product_uom_id = all_uom[product_uom]
+                    product_uom = row.cells[3].data
+                    try:
+                        product_uom = tools.ustr(product_uom).lower()
+                        if product_uom not in all_uom:
+                            add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
+                        else:
+                            product_uom_id = all_uom[product_uom]
+                    except ValueError:
+                        add_error(_("""UoM %s is not valid""") % product_uom, row_index, 3)
                 else:
                     add_error(_("""UoM is mandatory"""), row_index, 3)
 
@@ -831,9 +835,12 @@ class PhysicalInventory(osv.osv):
                                 expiry_date = expiry_date_dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
                             else:
                                 raise ValueError()
-                        except:
-                            if not year or year >= 1900:
-                                add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
+                        except Exception as e:
+                            err_type = type(e).__name__
+                            if not year or year >= 1900 or err_type == 'ParserError':
+                                add_error(_("""Expiry date '%s' is not valid""") % expiry_date, row_index, 6)
+                                if err_type == 'ParserError':
+                                    expiry_date = False
 
                         if year and year < 1900:
                             add_error(_('Expiry date: year must be after 1899'), row_index, 6)
@@ -934,12 +941,12 @@ class PhysicalInventory(osv.osv):
         for x in self.pool.get('physical.inventory.discrepancy').fields_get(cr, uid, ['sub_reason_type'], context=context)['sub_reason_type']['selection']:
             sub_rt_dict_by_name[x[1]] = x[0]
 
-        nb_rows = discrepancy_report_file.getNbRows()
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
-            if row_index >= nb_rows - 7:  # To ignore the white spaces and the signature block at the bottom
-                break
             if row_index < 10:
                 continue
+            # To ignore the white spaces and the signature block at the bottom
+            if not row.cells[0].data and not row.cells[1].data:
+                break
             if len(row) != 21:
                 add_error(_("""The number of columns is incorrect, you should have exactly 20 columns in this order:
 Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Quantity, Counted Quantity, Batch number, Expiry date, Discrepancy Quantity, Discrepancy Value, Total Theoretical Quantity for product, Total Counted Quantity for product, Total Counted Value for product, Total Discrepancy for product, Total Discrepancy Value for product, Adjustement type, Sub Reason Type, Comments / actions (in case of discrepancy)"""),

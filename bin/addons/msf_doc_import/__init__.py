@@ -64,3 +64,4 @@ from . import supplier_catalogue
 from . import report
 from . import msf_import_export
 from . import msf_import_export_conf
+from . import oca_boomi

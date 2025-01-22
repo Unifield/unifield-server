@@ -123,6 +123,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="140.0" />
         ## Partner
         <Column ss:AutoFitWidth="1" ss:Width="110.0" />
+        ## Movement Doc Details
+        <Column ss:AutoFitWidth="1" ss:Width="240.0" />
         ## Order Type
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Order Category
@@ -223,6 +225,7 @@
             _('SHIP'),
             _('Origin'),
             _('Partner'),
+            _('Movement Doc Details'),
             _('Order Type'),
             _('Order Category'),
             _('Order Priority'),
@@ -255,6 +258,7 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['ship']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['origin']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['partner']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['details']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['fo'] and getSel(move['fo'], 'order_type') or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['header'] and getSel(move['header'], 'order_category') or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['fo'] and getSel(move['fo'], 'priority') or ''|x}</Data></Cell>

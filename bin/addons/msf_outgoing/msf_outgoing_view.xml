@@ -249,7 +249,7 @@
                                     <field name="line_number" readonly="1"/>
                                     <field name="product_id"
                                             context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
-                                            on_change="onchange_product_id(product_id, location_id, location_dest_id, parent.address_id, parent.type, purchase_line_id, True, context)"
+                                            on_change="onchange_product_id(product_id, location_id, location_dest_id, parent.address_id, parent.type, purchase_line_id, True, False, False, False, context)"
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('fake_state', '=', 'assigned')]}"
                                             />
                                     <field name="comment" readonly="1"/>
@@ -486,8 +486,8 @@
 			<field name="arch" type="xml">
 				<search string="Picking Lists &amp; Picking Tickets">
 					<group col="8" colspan="4">
-                        <filter icon="terp-camera_test" name="confirmed" string="Not Available" domain="[('state','=','confirmed')]" />
-						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
+                        <filter icon="terp-camera_test" name="confirmed" string="Not Available" domain="[('line_state', '=', 'confirmed')]" />
+						<filter icon="terp-check" name="available" string="Available" domain="[('line_state', 'in', ['mixed', 'assigned'])]" />
 						<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                         <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
 						<separator orientation="vertical"/>

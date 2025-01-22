@@ -58,7 +58,73 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_13842_fix_sign_document_creator_supply_sdref(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not current_instance:
+            return True
+
+        entity_obj = self.pool.get('sync.client.entity')
+        if not entity_obj:
+            return True
+        cr.execute("""
+            select d.name from res_groups g
+                left join ir_model_data d on d.model='res.groups' and d.res_id=g.id and d.module='sd'
+            where
+                g.name='Sign_document_creator_supply'
+        """)
+        r = cr.fetchone()
+        if r and r[0] == 'res_groups_Sign_document_creator_supply':
+            # instance impacted by the bug
+            real_sdref = {
+                'oca': 'b8c174f0-2483-11e5-9d58-0050569320a7/res_groups/86',
+                'ocb': '8461c7cf-a14a-11e4-8200-005056a95b32/res_groups/86',
+                'ocg': '1e206c21-b2ba-11e4-a614-005056290182/res_groups/86',
+                'ocp': '815afc40-73a2-11e8-912e-00505692792b/res_groups/87',
+            }
+
+            oc = entity_obj.get_entity(cr, uid).oc
+            if real_sdref.get(oc):
+                cr.execute("update ir_model_data set name=%s where name='res_groups_Sign_document_creator_supply' and model='res.groups' and module='sd'", (real_sdref.get(oc), ))
+                self.log_info(cr, uid, "US-13842: sdref changed on Sign_document_creator_supply %s" % (cr.rowcount,))
+
+        return True
+
+
     # UF35.0
+    def us_13692_13705_fix_pi_sign_bar(self, cr, uid, *a, **b):
+        '''
+        Add the missing rights for signatures to PIs
+        '''
+        if not cr.table_exists('sync_server_user_rights'):
+            # exclude sync server
+            bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+            b_names = ['super_action_unsign', 'add_user_signatures', 'action_close_signature', 'activate_offline',
+                       'disable_offline', 'activate_offline_reset']
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('name', 'in', ['Sign_document_creator_finance', 'Sign_document_creator_supply'])])
+
+            if group_ids:
+                bar_ids = bar_obj.search(cr, uid, [('name', 'in', b_names), ('model_id', '=', 'physical.inventory')])
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(6, 0, group_ids)]})
+        return True
+
+    def us_13719_tick_prevent_asset_from_hq(self, cr, uid, *a, **b):
+        '''
+        Tick "Prevent asset from HQ entries" on OCA CoA (from HQ) on all expense accounts except the capitalisable ones.
+        '''
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if current_instance and current_instance.instance == 'HQ_OCA':
+            acc_obj = self.pool.get('account.account')
+            acc_user_type_ids = self.pool.get('account.account.type').search(cr, uid, [('code', '=', 'expense')])
+            acc_to_update_ids = acc_obj.search(cr, uid, [('user_type', 'in', acc_user_type_ids),
+                                                         ('code', 'not in', ('60100', '60110',
+                                                                             '60120', '61100',
+                                                                             '61110', '61120',
+                                                                             '61130', '61140',
+                                                                             '61150', '61160',
+                                                                             '61170'))])
+            acc_obj.write(cr, uid, acc_to_update_ids, {'prevent_hq_asset': True})
+        return True
+
     def us_11182_12727_pi_signature(self, cr, uid, *a, **b):
         '''
         Add signatures to PIs
@@ -228,6 +294,10 @@ class patch_scripts(osv.osv):
         Lock existing POs that have been signed
         """
         if cr.table_exists('sync_server_user_rights'):
+            return True
+
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not current_instance:
             return True
 
         bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
