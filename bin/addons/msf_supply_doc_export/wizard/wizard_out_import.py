@@ -263,10 +263,12 @@ class wizard_out_import(osv.osv_memory):
 
             if line_data['qty_to_process'] is None:
                 raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should contain the quantity to process and cannot be empty, please fill it with "0" instead') % line_data['item'])
+
+            line_data = self.normalize_data(cr, uid, line_data)
+
             if line_data['qty_to_process'] and float(line_data['qty_to_process']) < 0:
                 raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should be greater than 0') % line_data['item'])
 
-            line_data = self.normalize_data(cr, uid, line_data)
             if line_data['qty']:
                 to_write = {}
 
