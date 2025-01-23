@@ -656,6 +656,8 @@ class res_partner(osv.osv):
             context = {}
         if not context.get('sync_update_execution'):
             address_obj = self.pool.get('res.partner.address')
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.instance
+            current_instance_code = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.code
             if write_vals is not None:
                 partner_type = 'partner_type' in write_vals and write_vals.get('partner_type', False)
                 name = 'name' in write_vals and write_vals.get('name', False) or ''
@@ -671,7 +673,8 @@ class res_partner(osv.osv):
                 city = partner.city or ''
             if partner_type == 'external':
                 partner_domain = [('id', '!=', partner_id), ('name', '=ilike', name),
-                                  ('partner_type', '=', 'external'), ('active', 'in', ['t', 'f'])]
+                                  ('partner_type', '=', 'external'), ('active', 'in', ['t', 'f']),
+                                  ('instance_creator', 'in', [current_instance, current_instance_code])]
                 duplicate_partner_ids = self.search(cr, uid, partner_domain, order='NO_ORDER', context=context)
                 if duplicate_partner_ids:
                     address_ids = address_obj.search(cr, uid, [('partner_id', 'in', duplicate_partner_ids)],
@@ -680,7 +683,7 @@ class res_partner(osv.osv):
                                                                       ('city', '=ilike', city)], context=context):
                         raise osv.except_osv(_('Warning'),
                                              _("The partner can't be saved because already exists under the same name for "
-                                               "the same city. Please change the partner name or city or use the existing partner."))
+                                               "the same city and created in the same instance. Please change the partner name or city or use the existing partner."))
 
     def _check_default_accounts(self, cr, uid, vals, context=None):
         """
@@ -801,9 +804,6 @@ class res_partner(osv.osv):
                 and self.search(cr, uid, [('id', '!=', ids[0]), ('name', '=ilike', vals['name']), ('partner_type', '=', 'internal')], context=context):
             raise osv.except_osv(_('Error'), _("There is already an Internal Partner with the name '%s'. The Intermission Partner could not be modified and activated") % (vals['name'],))
 
-        # Check to avoid duplication of external partners.
-        if not context.get('sync_update_execution', False):
-            self.check_partner_unicity(cr, uid, partner_id=ids[0], write_vals=vals, context=context)
         ret = super(res_partner, self).write(cr, uid, ids, vals, context=context)
         self.check_same_pricelist(cr, uid, ids, context=context)
         return ret

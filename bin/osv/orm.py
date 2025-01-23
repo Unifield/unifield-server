@@ -1368,6 +1368,9 @@ class orm_template(object):
         Method called by the Web on write
         """
         try:
+            # US-12430 to ensure that the check will not be called from a system call
+            if self._name == 'res.partner' and not context.get('sync_update_execution', False):
+                self.check_partner_unicity(cr, user, ids, vals, context=context)
             return self.write(cr, user, ids, vals, context=context)
         except AccessError as e:
             if ignore_access_error and e.mode == 'write' and e.model == self._name:
