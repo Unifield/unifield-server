@@ -121,8 +121,7 @@
                             <field name="default_code" />
                             <field name="default_name" />
 
-                            <field name="comment"  />
-                            <field name="nomenclature_description" />
+                            <field name="comment" />
                             <field name="supplier_code"  />
                             <field name="inactive_error" invisible="1"/>
                             <field name="inactive_product" invisible="1"/>
@@ -133,16 +132,17 @@
                             <field name="fake_id" invisible="1"/>
                             <field name="soq_updated" invisible="1"/>
                             <field name="product_qty" string="Qty" />
-                            <field name="product_uom" />
-                            <field name="price_unit" />
-                            <field name="price_subtotal"/>
+                            <field name="product_uom" string="UoM" />
+                            <field name="price_unit" string="PO Unit Price" />
+                            <field name="price_subtotal" string="PO Subtotal"/>
+                            <field name="catalog_price_unit"/>
+                            <field name="catalog_subtotal"/>
                             <field name="original_changed" string="CHG"/>
-                            <field name="date_planned" />
                             <field name="catalog_mismatch" />
                             <field name="po_state_stored" invisible="True"/>
                             <field name="state_to_display"/>
-                            <field name="mml_status" />
-                            <field name="msl_status" />
+                            <field name="mml_status" invisible="1" />
+                            <field name="msl_status" invisible="1" />
                         </tree>
                     </field>
                 </form>

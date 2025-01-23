@@ -622,6 +622,21 @@ class purchase_order_line(osv.osv):
                 po.catalogue_not_applicable='f'
         """, args) # not_a_user_entry
 
+    def _amount_line_catalog(self, cr, uid, ids, prop, arg, context=None):
+        res = {}
+        cur_obj = self.pool.get('res.currency')
+        tax_obj = self.pool.get('account.tax')
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.catalog_price_unit:
+                taxes = tax_obj.compute_all(cr, uid, line.taxes_id, line.catalog_price_unit, line.product_qty)
+                cur = line.order_id.pricelist_id.currency_id
+                res[line.id] = cur_obj.round(cr, uid, cur.rounding, taxes['total'])
+                if line.catalog_price_unit > 0 and res[line.id] < 0.01:
+                    res[line.id] = 0.01
+            else:
+                res[line.id] = False
+        return res
+
     def _check_po_locked(self, cr, uid, ids, field_name, args, context=None):
         """
         Check if the PO has been locked by signature
@@ -786,8 +801,9 @@ class purchase_order_line(osv.osv):
         'mml_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MML', multi='mml'),
         'msl_status': fields.function(_get_std_mml_status, method=True, type='selection', selection=[('T', 'Yes'), ('F', 'No'), ('na', '')], string='MSL', multi='mml'),
 
-        'catalog_mismatch': fields.selection([('conform', 'Conform'), ('na', 'N/A'),('soq', 'SOQ') ,('price', 'Unit Price'), ('price_soq', 'Unit Price & SOQ')], 'Catalog Mismatch', size=64, readonly=1, select=1),
-        'catalog_price_unit': fields.float_null('Catalogue Price Unit', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
+        'catalog_mismatch': fields.selection([('conform', 'Conform'), ('na', 'Not in catalogue'), ('soq', 'SOQ'), ('price', 'Unit Price'), ('price_soq', 'Unit Price & SOQ')], 'Catalog Mismatch', size=64, readonly=1, select=1),
+        'catalog_price_unit': fields.float_null('Catalogue Price', digits_compute=dp.get_precision('Purchase Price Computation'), readonly=1),
+        'catalog_subtotal': fields.function(_amount_line_catalog, method=True, type='float_null', string='Catalogue Subtotal', digits_compute=dp.get_precision('Purchase Price')),
         'catalog_soq': fields.float_null('Catalogue SoQ', digits=(16,2), readonly=1),
         'po_locked': fields.function(_check_po_locked, method=True, string='Is PO signature-locked ?', type='boolean'),
     }
