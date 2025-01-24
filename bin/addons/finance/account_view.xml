@@ -51,7 +51,7 @@
                             <page string="Journal Items">
                                 <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines': [], 'journal':journal_id, 'period_id':period_id, 'move_reference': ref}" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}">
                                     <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
-                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
+                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" attrs="{'invisible': [('imported', '=', True)]}"/>
                                         <field name="has_a_counterpart_transfer" invisible="1" />
                                         <field name="status_move" invisible="1"/>
                                         <field name="imported" invisible="1"/>
