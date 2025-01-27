@@ -22,7 +22,7 @@ class line_mismatch(XlsxReportParser):
         self.create_style_from_template('row_int', 'A11')
         self.create_style_from_template('row_text', 'B11')
         self.create_style_from_template('row_float', 'F11')
-        self.create_style_from_template('row_date', 'H11')
+        self.create_style_from_template('row_date', 'I11')
 
 
         self.duplicate_column_dimensions(default_width=10.75)
