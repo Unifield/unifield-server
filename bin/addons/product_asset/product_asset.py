@@ -1560,7 +1560,7 @@ class product_asset_generate_entries(osv.osv_memory):
             if asset_line_ids:
                 asset_line_obj.button_generate_unposted_entries(cr, uid, asset_line_ids, context=context)
 
-
+        context.update({'search_default_unposted':1})
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'account.action_account_moves_all_a', ['tree', 'form'],context=context)
         ji_with_ad_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_asset', 'view_account_move_line_asset_tree')
         views = []
@@ -1574,9 +1574,6 @@ class product_asset_generate_entries(osv.osv_memory):
         res['domain'] = ['&', ('move_id.asset_id', '!=', False), ('date', '<=', end_date)]
         res['popup_message'] = _('%d asset journal entries created') % (len(asset_line_ids),)
         return res
-
-
-        return
 
 
 
