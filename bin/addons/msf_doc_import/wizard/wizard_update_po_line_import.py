@@ -7,6 +7,7 @@ import base64
 import tools
 import time
 from io import BytesIO
+from datetime import datetime
 
 
 class wizard_update_po_line_import(osv.osv_memory):
@@ -27,7 +28,18 @@ class wizard_update_po_line_import(osv.osv_memory):
         if isinstance(ids, int):
             ids = [ids]
 
-        return {'type': 'ir.actions.report.xml', 'report_name': 'report_update_po_line_export', 'context': context}
+        filename = _('Update PO lines Export')
+        if ids:
+            po = self.browse(cr, uid, ids[0], fields_to_fetch=['po_id'], context=context).po_id
+            filename += ' ' + po.name
+        filename += ' ' + datetime.today().strftime('%d-%m-%Y_%H%M')
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'report_update_po_line_export',
+            'datas': {'target_filename': filename},
+            'context': context
+        }
 
     def go_to_po(self, cr, uid, ids, context=None):
         '''
