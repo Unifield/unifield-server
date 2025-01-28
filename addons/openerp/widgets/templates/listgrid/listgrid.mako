@@ -503,6 +503,9 @@ if (auto_field && auto_field.val()){
                                % if bothedit:
                                 else {
                                     jQuery(row).click(function(event) {
+                                        if (jQuery(event.target).is('img')) {
+                                            return;
+                                        }
                                         var rec_id = parseInt(jQuery(row).attr('record'), 10);
                                         if (rec_id) {
                                             new One2Many('${name}', false).edit(rec_id,  true);

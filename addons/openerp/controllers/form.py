@@ -1202,6 +1202,10 @@ class Form(SecuredController):
             action_type = rpc.RPCProxy('ir.actions.actions').read(act_id, ['type'], context)['type']
             action = rpc.session.execute('object', 'execute', action_type, 'read', act_id, False, context)
 
+        # US-9993 Track Changes: active_ids is [] when coming from Form view, only fix TC action to prevent regressions
+        if action.get('res_model') == 'audittrail.log.line' and not context.get('active_ids') and context.get('active_id'):
+            context['active_ids'] = [context.get('active_id')]
+
         if domain:
             if isinstance(domain, str):
                 domain = eval(domain)

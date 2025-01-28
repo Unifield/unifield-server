@@ -563,7 +563,11 @@ function form_setReadonly(container, fieldName, readonly) {
     }
 
     if (kind == 'boolean') {
-        var boolean_field = jQuery('input#'+field_id+'_checkbox_');
+        if ( field_id == '_terp_listfields/is_asset') {
+            var boolean_field = jQuery(idSelector(field_id+'_checkbox_'));
+        } else {
+            var boolean_field = jQuery('input#'+field_id+'_checkbox_');
+        }
         boolean_field.attr({'disabled':readonly, 'readOnly': readonly});
     }
 
@@ -575,10 +579,10 @@ function form_setReadonly(container, fieldName, readonly) {
         return;
     }
 
-    if (!type && ($field.hasClass('item-group'))) {
+    if (!type && $field.hasClass('item-group')) {
         jQuery($field).find(':input')
-                .toggleClass('readonlyfield', readonly)
-                .attr({'disabled': readonly, 'readOnly': readonly});
+            .toggleClass('readonlyfield', readonly)
+            .attr({'disabled': readonly, 'readOnly': readonly});
         return;
     }
     $field.attr({'disabled':readonly, 'readOnly': readonly});
