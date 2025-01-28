@@ -175,7 +175,7 @@
                         <field name="accrual_account" />
                         <field name="is_not_hq_correctible" on_change="onchange_is_not_hq_correctible(is_not_hq_correctible)"/>
                         <newline/>
-                        <field name="prevent_hq_asset" />
+                        <field name="prevent_capitalization" />
                         <field name="is_not_ad_correctable" on_change="onchange_is_not_ad_correctable(is_not_ad_correctable)"/>
                     </group>
                     <notebook colspan="4">
@@ -271,7 +271,7 @@
                         <filter name="expense_account" string="Expense" domain="[('user_type.code','=', 'expense')]" icon="terp-stock_symbol-selection"/>
                         <filter name="income_account" string="Income" domain="[('user_type.code','=', 'income')]" icon="gtk-go-forward"/>
                         <filter name="asset_account" string="Assets" domain="[('user_type.code','=', 'asset')]" icon="terp-dolar"/>
-                        <filter name="prevent_hq_asset" string="Prevent assets on HQ entries" domain="[('prevent_hq_asset','=', True)]" icon="terp-dolar_ok!"/>
+                        <filter name="prevent_capitalization" string="Prevent capitalization of entries" domain="[('prevent_capitalization','=', True)]" icon="terp-dolar_ok!"/>
                         <separator orientation="vertical"/>
                         <newline/>
 

@@ -30,11 +30,11 @@ class account_account(osv.osv):
 
     _columns = {
         'accrual_account': fields.boolean('Accrual Account'),
-        'prevent_hq_asset': fields.boolean('Prevent fixed assets on HQ entries'),
+        'prevent_capitalization': fields.boolean('Prevent capitalization of entries'),
     }
 
     _defaults = {
-        'prevent_hq_asset': lambda *a: False,
+        'prevent_capitalization': lambda *a: False,
         'accrual_account': lambda *a: False,
     }
 

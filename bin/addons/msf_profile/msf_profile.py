@@ -122,7 +122,7 @@ class patch_scripts(osv.osv):
                                                                              '61130', '61140',
                                                                              '61150', '61160',
                                                                              '61170'))])
-            acc_obj.write(cr, uid, acc_to_update_ids, {'prevent_hq_asset': True})
+            acc_obj.write(cr, uid, acc_to_update_ids, {'prevent_capitalization': True})
         return True
 
     def us_11182_12727_pi_signature(self, cr, uid, *a, **b):
