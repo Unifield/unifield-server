@@ -137,7 +137,7 @@ class hq_entries(osv.osv):
         'cc_changed': fields.function(_get_cc_changed, method=True, type='boolean', string='Have Cost Center changed?', help="When you change the cost center from the initial value (from a HQ Entry or a Split line), so the Cost Center changed is True."),
         'account_changed': fields.function(_get_account_changed, method=True, type='boolean', string='Have account changed?', help="When your entry have a different account from the initial one or from the original one."),
         'is_account_partner_compatible': fields.function(_get_is_account_partner_compatible, method=True, type='boolean', string='Account and partner compatible ?'),
-        'original_asset_not_corrigible': fields.related('account_id_first_value', 'prevent_capitalization', string="Can be an asset?", type='boolean'),
+        'original_asset_not_corrigible': fields.related('account_id_first_value', 'prevent_hq_asset', string="Can be an asset?", type='boolean'),
         'current_instance_level': fields.function(_get_current_instance_level, method=True, type='char',
                                                   string='Current Instance Level', store=False, readonly=True),
         'is_asset': fields.boolean(string="Asset", help="Is an asset?"),
@@ -377,7 +377,7 @@ class hq_entries(osv.osv):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, fields_to_fetch=['account_id_first_value'], context=context):
-            if line.account_id_first_value.prevent_capitalization:
+            if line.account_id_first_value.prevent_hq_asset:
                 return {
                     'warning': {
                         'title': _('Error'),

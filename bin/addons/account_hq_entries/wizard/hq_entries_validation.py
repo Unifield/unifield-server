@@ -452,7 +452,7 @@ class hq_entries_validation(osv.osv_memory):
                 if line.is_asset:
                     if line.is_split:
                         raise osv.except_osv(_('Warning'), _('%s %s: a split line cannot be set as asset.') % (line.name, line.ref))
-                    if line.account_id_first_value.prevent_capitalization:
+                    if line.account_id_first_value.prevent_hq_asset:
                         raise osv.except_osv(_('Warning'), _('Line %s %s: account %s cannot be capitalized.') % (line.name, line.ref, line.account_id_first_value.code))
                     if not self.pool.get('account.account').search_exists(cr, uid, [('id', '=', line.account_id.id), ('type', '=', 'other'), ('user_type_code', '=', 'asset')], context=context):
                         raise osv.except_osv(_('Warning'), _('Line %s %s: account %s cannot be used for an asset') % (line.name, line.ref, line.account_id.code))
