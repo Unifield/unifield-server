@@ -118,7 +118,11 @@
 
                         <group colspan="2" col="4">
                             <separator string="Invoice" colspan="4" />
-                            <field name="move_line_id" required="1" colspan="4" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('from_hq_entry', '=', True), ('from_invoice', '=', True)]}" on_change="change_invo_date(move_line_id, product_id)" />
+                            <field name="move_line_id" required="1" colspan="4"
+                                   attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('from_hq_entry', '=', True), ('from_invoice', '=', True)]}"
+                                   on_change="change_invo_date(move_line_id, product_id)"
+                                   domain="[('account_id.prevent_hq_asset', '=', False), ('journal_id.type', 'in', ['purchase', 'correction_hq', 'hq', 'intermission']),
+                                            ('debit', '>', 0), ('move_id.state', '=', 'posted'), ('account_id.user_type_code', 'in', ['asset', 'expense'])]"/>
                             <field name="quantity_divisor"  attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_invoice', '=', True)]}" on_change="change_quantity_divisor(quantity_divisor, move_line_id)"/>
                             <field name="invo_value" required="1"/>
                             <field name="invo_currency" required="1"/>
