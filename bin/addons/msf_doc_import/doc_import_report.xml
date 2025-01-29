@@ -86,6 +86,17 @@
             />
 
         <report
+            id="report_update_po_line_export"
+            string="Update PO lines Export"
+            model="wizard.update.po.line.import"
+            name="report_update_po_line_export"
+            report_type="openpyxl"
+            auto="False"
+            target_filename="Update PO lines Export"
+            menu="False"
+            />
+
+        <report
             id="export_po_fo_ad_line"
             string="PO/FO AD"
             model="wizard.import.ad.line"
