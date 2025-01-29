@@ -58,7 +58,7 @@ class wizard_accrual_reversal(osv.osv_memory):
                 start_number = 12
             dec_period_ids = period_obj.search(cr, uid,
                                                [('id', 'in', reversal_period_ids),
-                                                ('number', 'in', range(start_number, 16)),  # Period 16 excluded
+                                                ('number', 'in', list(range(start_number, 16))),  # Period 16 excluded
                                                 ('state', '=', 'draft')],
                                                order='number', limit=1, context=context)
             if not dec_period_ids:

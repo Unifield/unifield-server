@@ -90,6 +90,7 @@ class wizard_import_pick_line(osv.osv_memory):
         line_with_error = []
 
         for wiz_browse in self.browse(cr, uid, ids, context):
+            picking, categ_log = False, ''
             try:
                 picking = wiz_browse.picking_id
 
@@ -314,9 +315,15 @@ class wizard_import_pick_line(osv.osv_memory):
                 error_log += '\n'.join(error_list)
                 if error_log:
                     error_log = _("Reported errors for ignored lines : \n") + error_log
+                elif picking and not picking.from_wkf and not picking.claim:
+                    # Check category if document is form scratch
+                    categ_log = pick_obj.on_change_order_category(cr, uid, [picking.id], picking.order_category,
+                                                                  context=context).get('warning', {}).get('message', '').upper()
+                    categ_log = categ_log.replace('THIS', 'THE')
                 end_time = time.time()
                 total_time = str(round(end_time-start_time)) + _(' second(s)')
                 final_message = _(''' 
+    %s
     Importation completed in %s!
     # of imported lines : %s on %s lines
     # of ignored lines: %s
@@ -324,7 +331,7 @@ class wizard_import_pick_line(osv.osv_memory):
     %s
 
     %s
-    ''') % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
+    ''') % (categ_log, total_time, complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
                 wizard_vals = {'message': final_message, 'state': 'done'}
                 if line_with_error:
                     file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)

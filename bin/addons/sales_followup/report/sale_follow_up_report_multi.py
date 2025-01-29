@@ -86,7 +86,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                'product_uom', 'esti_dd', 'confirmed_delivery_date', 'move_ids', 'comment', 'mml_status', 'msl_status']
         if report and report.msl_non_conform:
             sol_ids = self.pool.get('sale.followup.multi.wizard').get_line_ids_non_msl(self.cr, self.uid, order_id)
-            for sol in  self.pool.get('sale.order.line').browse(self.cr, self.uid, sol_ids, fields_to_fetch=ftf, context=self.localcontext):
+            for sol in self.pool.get('sale.order.line').browse(self.cr, self.uid, sol_ids, fields_to_fetch=ftf, context=self.localcontext):
                 yield sol
             raise StopIteration
 
@@ -109,16 +109,27 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             return True
         return False
 
-    def in_line_data_expected_date(self, pol_id):
+    def in_line_data(self, pol_id):
         '''
-         Get data from the IN moves' linked to the PO
+        Get data from the IN moves' linked to the PO
         '''
+        res = []
+
+        # Get expected dates from the IN moves' linked to the PO
         self.cr.execute('''
             SELECT DISTINCT(m.date_expected) FROM stock_move m, stock_picking p
             WHERE m.picking_id = p.id AND m.purchase_line_id = %s AND p.type = 'in' AND m.state != 'cancel'
         ''', (pol_id,))
+        res.append([data[0] for data in self.cr.fetchall()])
 
-        return [data[0] for data in self.cr.fetchall()]
+        # Get the received quantities from the IN moves' linked to the PO line
+        self.cr.execute('''
+                    SELECT SUM(CASE WHEN m.state = 'done' THEN m.product_qty ELSE 0 END) FROM stock_move m, stock_picking p
+                    WHERE m.picking_id = p.id AND m.purchase_line_id = %s AND p.type = 'in' AND m.state != 'cancel'
+                ''', (pol_id,))
+        res.append(self.cr.fetchone()[0])
+
+        return res
 
     def _get_lines(self, order_id, grouped=False, only_bo=False, report=False):
         '''
@@ -151,8 +162,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
             supplier_name = '-'
 
-            edd = False
-            cdd = False
+            edd, cdd = False, False
+            received_qty = 'N/A'
             if self.localcontext.get('lang', False) == 'fr_MF':
                 date_format = '%d/%m/%Y'
             else:
@@ -166,11 +177,13 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 cdd = linked_pol.confirmed_delivery_date
                 supplier_name = linked_pol.order_id.partner_id.name
                 if line.product_id:
-                    in_data = self.in_line_data_expected_date(linked_pol.id)
-                    if len(in_data) > 1:
-                        cdd = ', '.join([datetime.strptime(exp_date[:10], '%Y-%m-%d').strftime(date_format) for exp_date in in_data])
-                    elif len(in_data) == 1:
-                        cdd = in_data[0][:10]
+                    in_data = self.in_line_data(linked_pol.id)
+                    if len(in_data[0]) > 1:
+                        cdd = ', '.join([datetime.strptime(exp_date[:10], '%Y-%m-%d').strftime(date_format) for exp_date in in_data[0]])
+                    elif len(in_data[0]) == 1:
+                        cdd = in_data[0][0][:10]
+                    if linked_pol.state in ('confirmed', 'done'):
+                        received_qty = in_data[1]
             if not edd and line.esti_dd:
                 edd = line.esti_dd
             if not cdd and (line.confirmed_delivery_date or line.order_id.delivery_confirmed_date):
@@ -209,6 +222,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         data.update({
                             'uom_id': line.product_uom.name,
                             'ordered_qty': line.product_uom_qty,
+                            'received_qty': received_qty,
                             'backordered_qty': 0.00,
                             'first_line': True,
                         })
@@ -318,6 +332,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'ordered_qty': line.product_uom_qty,
                         'delivered_uom': line.product_uom.name,
                         'delivered_qty': line.product_uom_qty,
+                        'received_qty': 'N/A',
                         'first_line': True,
                         'is_delivered': True,
                         'state': line.state,
@@ -339,6 +354,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
                         'delivered_qty': 0.00,
                         'delivered_uom': '-',
+                        'received_qty': received_qty,
                         'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' and not cancelled_move else 0.00,
                         'edd': edd,
                         'cdd': cdd,

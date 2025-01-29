@@ -221,16 +221,18 @@
         <Column ss:AutoFitWidth="1" ss:Width="239.25"  />
         ## Qty Ordered
         <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
-        ## UoM Ordered
-        <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
+        ## UoM
+        <Column ss:AutoFitWidth="1" ss:Width="24.75"  />
+        ## Qty Received
+        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
         ## Qty Delivered
         <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
-        ## UoM Delivered
-        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
-        ## Delivery Order
-        <Column ss:AutoFitWidth="1" ss:Width="120.0"  />
+        ## UoM
+        <Column ss:AutoFitWidth="1" ss:Width="24.75"  />
         ## Qty to deliver
         <Column ss:AutoFitWidth="1" ss:Width="50.5" />
+        ## Delivery Order
+        <Column ss:AutoFitWidth="1" ss:Width="120.0"  />
         ## EDD
         <Column ss:AutoFitWidth="1" ss:Width="50.0" />
         ## CDD
@@ -335,11 +337,12 @@
                 _('Description'),
                 _('Comment'),
                 _('Qty ordered'),
-                _('UoM ordered'),
+                _('UoM'),
+                _('Qty received'),
                 _('Qty delivered'),
-                _('UoM delivered'),
-                _('Delivery Order'),
+                _('UoM'),
                 _('Qty to deliver'),
+                _('Delivery Order'),
                 _('EDD'),
                 _('CDD'),
                 _('RTS Date'),
@@ -396,18 +399,24 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
+                    % if 'received_qty' in line and line.get('received_qty') != 'N/A':
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('received_qty', 0.00)}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
+                    % endif
                     % if line.get('delivered_qty') or not line.get('cancelled_move'):
                     <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('delivered_qty', 0)}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivery_order', '')|x}</Data></Cell>
                     % if line.get('cancelled_move'):
                     <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">0.00</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">-</Data></Cell>
                     % endif
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivery_order', '')|x}</Data></Cell>
                     % if line.get('edd'):
                         % if isDate(line['edd']):
                             % if getLang() == 'fr_MF':
@@ -484,13 +493,17 @@
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
+                    % if 'received_qty' in line and line.get('received_qty') != 'N/A':
+                    <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('received_qty', 0.00)}</Data></Cell>
+                    % else:
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
+                    % endif
                     % if line.get('delivered_qty') or not line.get('cancelled_move'):
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty', 0)}</Data></Cell>
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
-                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(line.get('delivery_order', '-') != '-' and line.get('delivery_order') or line.get('shipment', '-') != '-' and line.get('shipment')  or line.get('packing') or '-')|x}</Data></Cell>
                     % if not line.get('cancelled_move'):
                         % if line.get('extra_qty', False):
                         <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
@@ -500,6 +513,7 @@
                     % else:
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
                     % endif
+                    <Cell ss:StyleID="line_left"><Data ss:Type="String">${(line.get('delivery_order', '-') != '-' and line.get('delivery_order') or line.get('shipment', '-') != '-' and line.get('shipment')  or line.get('packing') or '-')|x}</Data></Cell>
                     % if line.get('edd'):
                         % if isDate(line['edd']):
                             % if getLang() == 'fr_MF':

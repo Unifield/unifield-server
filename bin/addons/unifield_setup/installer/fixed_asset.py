@@ -89,7 +89,7 @@ class fixed_asset_setup(osv.osv_memory):
         if asset_menu_id:
             self.pool.get('ir.ui.menu').write(cr, uid, asset_menu_id, {'active': payload.fixed_asset_ok}, context=context)
         if not payload.fixed_asset_ok and not payload.is_inactivable:
-            raise osv.except_osv(_('Warning'), _('Asset cannot be disabled. Please close the running assets first.'))
+            raise osv.except_osv(_('Warning'), _('Asset cannot be disabled. Please close the active assets first.'))
         setup_obj.write(cr, uid, [setup_id.id], {'fixed_asset_ok': payload.fixed_asset_ok}, context=context)
         if payload.fixed_asset_ok and self.pool.get('res.company')._get_instance_id(cr, uid):
             journal_obj = self.pool.get('account.journal')

@@ -625,7 +625,7 @@ class account_move_reconcile(osv.osv):
                     self.pool.get('account.move.line').log_reconcile(cr, uid, r, previous=prev, rec_name=name, context=context)
                 if context.get('sync_update_execution') and t:
                     if action_date:
-                        new_field = "unreconcile_date=NULL, unreconcile_txt='', reconcile_date=%s,"
+                        new_field = "unreconcile_date=NULL, unreconcile_txt='', reconcile_date=%s, reconcile_partial_id=NULL,"
                         sql_params.insert(0, action_date)
 
                     # during sync exec, check if invoices must be set as paid / closed

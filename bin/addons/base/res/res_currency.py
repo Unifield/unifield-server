@@ -160,6 +160,9 @@ class res_currency(osv.osv):
 
     def _auto_init(self, cr, context=None):
         super(res_currency, self)._auto_init(cr, context)
+        if not getattr(self, '_inherit', None):
+            for boomi_view in ['mission_last_closing_date', 'country_last_closing_date', 'actuals_full', 'actuals', 'actuals_eng']:
+                cr.execute("drop view if exists %s" % boomi_view) # not_a_user_entry
         if not cr.table_exists('hq_report_no_decimal'):
             # used by ocp workday VI export to balance rounded JE
             cr.execute("""
