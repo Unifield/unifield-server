@@ -866,7 +866,7 @@
                                 <script type="text/javascript">
                             $('#order_line\\/select_fo_text').css('display', 'none');
                             $('#order_line\\/select_fo_open').css('display', 'none');
-                            $('#order_line\\/select_fo_select').css('right', '-14px').css('top', '-8px');
+                            $('#order_line\\/select_fo_select').css('right', '-14px').css('top', '2px');
                             $('[for="order_line\\/select_fo"]').css('width', '1%%');
                             var mml_status = $('#order_line\\/mml_status').val() || $('#order_line\\/mml_status').text();
                             var msl_status = $('#order_line\\/msl_status').val() || $('#order_line\\/msl_status').text();
@@ -1066,7 +1066,7 @@
                                 <script type="text/javascript">
                             $('#order_line\\/select_fo_text').css('display', 'none');
                             $('#order_line\\/select_fo_open').css('display', 'none');
-                            $('#order_line\\/select_fo_select').css('right', '-14px').css('top', '-8px');
+                            $('#order_line\\/select_fo_select').css('right', '-14px').css('top', '2px');
                             $('[for="order_line\\/select_fo"]').css('width', '1%%');
                             setTimeout("$('#error_message_unifield').css('overflow', 'visible').css('border-width', '1px').css('height', 'auto');", 500);
                             </script>
