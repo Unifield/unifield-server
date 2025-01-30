@@ -744,7 +744,16 @@ class stock_picking(osv.osv):
         if isinstance(ids, int):
             ids = [ids]
 
-        return {'type': 'ir.actions.report.xml', 'report_name': 'report_out_export', 'context': context}
+        filename = _('OUT Excel Export')
+        if ids:
+            filename += ' ' + self.browse(cr, uid, ids[0], fields_to_fetch=['name'], context=context).name
+        filename += ' ' + datetime.today().strftime('%H:%M')
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'report_out_export',
+            'datas': {'target_filename': filename},
+            'context': context}
 
     @check_rw_warning
     def call_cancel_wizard(self, cr, uid, ids, context=None):

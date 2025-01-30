@@ -18,17 +18,6 @@ class wizard_out_import(osv.osv_memory):
     }
 
     def normalize_data(self, cr, uid, data):
-        if 'qty_to_process' in data:  # set to float
-            if not data['qty_to_process']:
-                data['qty_to_process'] = 0.0
-            if isinstance(data['qty_to_process'], str):
-                try:
-                    data['qty_to_process'] = float(data['qty_to_process'])
-                except:
-                    raise osv.except_osv(
-                        _('Error'), _('Line %s: Column "Qty to Process" must be a number') % data['item']
-                    )
-
         if 'qty' in data:  # set to float
             if not data['qty']:
                 data['qty'] = 0.0
@@ -138,9 +127,8 @@ class wizard_out_import(osv.osv_memory):
                     return False
 
         raise osv.except_osv(
-            _('Error'),
-            _('The total quantity of line #%s in the import file (%s) doesn\'t match with the total qty on screen')
-            % (line_data['item'], line_data['qty'])
+            _('Error'), _('Line %s: No matching line, unused by the import, was found on the popup using the Product Code %s')
+            % (line_data['item'], line_data['code'])
         )
 
     def checks_on_batch(self, cr, uid, ids, product, line_data, context=None):
@@ -170,8 +158,8 @@ class wizard_out_import(osv.osv_memory):
         if not product_ids:
             raise osv.except_osv(_('Error'), _('Product with code %s not found in database') % (line_data['code'],))
         else:
-            product = prod_obj.browse(cr, uid, product_ids[0], fields_to_fetch=['batch_management', 'perishable',
-                                                                                'type', 'subtype'], context=context)
+            ftf = ['batch_management', 'perishable', 'type', 'subtype', 'default_code']
+            product = prod_obj.browse(cr, uid, product_ids[0], fields_to_fetch=ftf, context=context)
             data.update({
                 'product': product
             })
@@ -264,12 +252,19 @@ class wizard_out_import(osv.osv_memory):
             if line_data['qty_to_process'] is None:
                 raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should contain the quantity to process and cannot be empty, please fill it with "0" instead') % line_data['item'])
 
-            line_data = self.normalize_data(cr, uid, line_data)
+            if not line_data['qty_to_process']:
+                line_data['qty_to_process'] = 0.0
+            if isinstance(line_data['qty_to_process'], str):
+                try:
+                    line_data['qty_to_process'] = float(line_data['qty_to_process'])
+                except:
+                    raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" must be a number') % line_data['item'])
 
-            if line_data['qty_to_process'] and float(line_data['qty_to_process']) < 0:
+            if line_data['qty_to_process'] and line_data['qty_to_process'] < 0:
                 raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should be greater than 0') % line_data['item'])
 
-            if line_data['qty']:
+            if line_data['qty_to_process']:
+                line_data = self.normalize_data(cr, uid, line_data)
                 to_write = {}
 
                 data = self.get_data(cr, uid, ids, line_data, context=context)

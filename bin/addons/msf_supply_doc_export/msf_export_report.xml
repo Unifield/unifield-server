@@ -232,7 +232,7 @@
             name="report_out_export"
             report_type="openpyxl"
             auto="False"
-            target_filename="OUT Excel Export"
+            target_filename="OUT Excel Export ${name}"
             menu="False"
             />
     </data>
