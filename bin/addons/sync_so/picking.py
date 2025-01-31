@@ -640,7 +640,7 @@ class stock_picking(osv.osv):
                     processed_in = self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context)
                     if processed_in:
                         in_name = self.browse(cr, uid, in_id, context=context)['name']
-                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (-%s-) already fully/partially cancelled/Closed" % (
+                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (-%s-) already fully/partially cancelled/Closed or relevant Back Order IN does not exist" % (
                             in_name, po_name,
                         )
                         self._logger.info(message)
