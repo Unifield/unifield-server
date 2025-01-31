@@ -41,6 +41,7 @@ import tempfile
 from tools import webdav
 from urllib.parse import urlparse
 
+
 class RemoteInterface(object):
     port = 0
     url = False
@@ -66,6 +67,7 @@ class RemoteInterface(object):
     def disconnect(self):
         return True
 
+
 class RemoteOneDrive(RemoteInterface):
     dav = False
 
@@ -83,9 +85,16 @@ class RemoteOneDrive(RemoteInterface):
 
     def connect(self):
         try:
-            self.dav = webdav.Client(host=self.host ,port=self.port, protocol=self.protocol, username=self.username, password=self.password, path=self.path)
+            self.dav = webdav.Client(host=self.host, port=self.port, protocol=self.protocol, username=self.username, password=self.password, path=self.path)
         except webdav.ConnectionFailed as e:
             raise Exception(_('Unable to connect: %s') % (e,))
+
+    def get_non_existing_folders(self, paths):
+        res = []
+        for path, remote in paths:
+            if remote and not self.dav.folder_exists(path):
+                res.append(path)
+        return res
 
     def list_files(self, path, startswith, already=None):
         if already is None:
@@ -137,6 +146,16 @@ class RemoteSFTP(RemoteInterface):
         except:
             raise Exception(_('Not able to connect to SFTP server at location %s') % (self.url, ))
 
+    def get_non_existing_folders(self, paths):
+        res = []
+        for path, remote in paths:
+            if remote:
+                try:
+                    self.sftp.stat(path)
+                except Exception as e:
+                    res.append(path)
+        return res
+
     def list_files(self, path, startswith, already=None):
         if already is None:
             already = []
@@ -175,6 +194,7 @@ class RemoteSFTP(RemoteInterface):
         except:
             pass
 
+
 class RemoteFTP(RemoteInterface):
     ftp = False
 
@@ -192,6 +212,19 @@ class RemoteFTP(RemoteInterface):
 
         return True
 
+    def get_non_existing_folders(self, paths):
+        res = []
+        current_dir = self.ftp.pwd()
+        for path, remote in paths:
+            if remote:
+                try:
+                    # Try to go to the path. If successful, go back to the current dir after
+                    self.ftp.cwd(path)
+                    self.ftp.cwd(current_dir)
+                except Exception as e:
+                    res.append(path)
+        return res
+
     def list_files(self, path, startswith, already=None):
         if already is None:
             already = []
@@ -200,7 +233,7 @@ class RemoteFTP(RemoteInterface):
         self.ftp.dir(path, files.append)
         file_names = []
         for file in files:
-            if file.startswith('d'): # directory
+            if file.startswith('d'):  # directory
                 continue
             if startswith and not file.split(' ')[-1].startswith(startswith):
                 continue
@@ -208,10 +241,9 @@ class RemoteFTP(RemoteInterface):
         for file in file_names:
             if file not in already:
                 dt = self.ftp.sendcmd('MDTM %s' % file).split(' ')[-1]
-                dt = time.strptime(dt, '%Y%m%d%H%M%S') # '20180228170748'
+                dt = time.strptime(dt, '%Y%m%d%H%M%S')  # '20180228170748'
                 res.append((dt, file))
         return res
-
 
     def get_file_content(self, path):
         def add_line(line):
@@ -253,7 +285,11 @@ class RemoteFTP(RemoteInterface):
         except:
             pass
 
+
 class Local(RemoteInterface):
+
+    def get_non_existing_folders(self, paths):
+        return []
 
     def list_files(self, path, startswith, already=None):
         """
@@ -276,6 +312,7 @@ class Local(RemoteInterface):
 
     def get_file_content(self, path):
         return open(path).read()
+
 
 class Remote(object):
     connection_type = False
@@ -337,6 +374,20 @@ class Remote(object):
         self.infolog(_('Connection succeeded'))
         return True
 
+    def get_non_existing_folders(self):
+        paths = [(self.source, self.source_is_remote), (self.path_success, self.path_succes_is_remote),
+                 (self.path_failure, self.path_failure_is_remote), (self.path_report, self.path_report_is_remote)]
+        remote_folders_not_exist = self.connection.get_non_existing_folders(paths)
+        if remote_folders_not_exist:
+            if len(remote_folders_not_exist) == 1:
+                msg = _("Remote path %s doesn't exist!") % (remote_folders_not_exist[0],)
+            else:
+                msg = _("Remote paths %s don't exist!") % (", ".join(remote_folders_not_exist),)
+            self.infolog(msg)
+            raise osv.except_osv(_('Warning'), msg)
+
+        return True
+
     def list_files(self, startwith, already=None):
         if already is None:
             already = []
@@ -357,6 +408,9 @@ class Remote(object):
             already = []
         logging.getLogger('automated.import').info(_('Getting the oldest file at location %s') % self.source)
 
+        # Check if the paths exist before trying to use them
+        self.get_non_existing_folders()
+
         res = self.list_files(startwith, already)
 
         for x in sorted(res, key=lambda x:x[0]):
@@ -375,13 +429,9 @@ class Remote(object):
     def move_to_process_path(self, filename, success, local_src=False):
         """
         Move the file `file` from `src_path` to `dest_path`
-        local_src : if empty use the source_path + filename
-                    else local_src + filename
+        local_src : if empty use the source_path + filename else local_src + filename
         :return: return True
-
         """
-
-
         if success:
             dest_path = self.path_success
             dest_is_remote = self.path_succes_is_remote
