@@ -35,6 +35,7 @@
         'report/po_follow_up_report.xml',
         'wizard/supplier_performance_wizard_view.xml',
         'report/supplier_performance_report_view.xml',
+        'wizard/wizard_out_import.xml',
     ],
     "demo_xml" : [],
     "test": [],
