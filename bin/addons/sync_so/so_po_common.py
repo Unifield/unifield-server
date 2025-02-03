@@ -445,11 +445,15 @@ class so_po_common(osv.osv_memory):
         '''
         if context is None:
             context = {}
+
+        nomen_obj = self.pool.get('product.nomenclature')
+
         res = {}
         src_values = order_line.to_dict()
         split_cancel_line = {}
 
         partner_type = self.get_partner_type(cr, uid, source, context)
+        nomen_not_found = False
 
         if src_values.get('product_uom'):
             res['product_uom'] = self.get_uom_id(cr, uid, order_line.product_uom, context=context)
@@ -518,24 +522,52 @@ class so_po_common(osv.osv_memory):
             res['name'] = order_line.comment
 
         if src_values.get('nomen_manda_0'):
-            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_0.id), context=context)
+            rec_id = nomen_obj.find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_0.id), context=context)
             if rec_id:
                 res['nomen_manda_0'] = rec_id
+            elif not src_values.get('product_id'):
+                nomen_0_ids = nomen_obj.search(cr, uid, [('level', '=', 0), ('msfid', '=', order_line.nomen_manda_0.msfid)], limit=1, context=context)
+                if nomen_0_ids:
+                    res['nomen_manda_0'] = nomen_0_ids[0]
+                else:
+                    nomen_not_found = True
 
         if src_values.get('nomen_manda_1'):
-            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_1.id), context=context)
+            rec_id = nomen_obj.find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_1.id), context=context)
             if rec_id:
                 res['nomen_manda_1'] = rec_id
+            elif not src_values.get('product_id'):
+                nomen_1_ids = nomen_obj.search(cr, uid, [('level', '=', 1), ('msfid', '=', order_line.nomen_manda_1.msfid)], limit=1, context=context)
+                if nomen_1_ids:
+                    res['nomen_manda_1'] = nomen_1_ids[0]
+                else:
+                    nomen_not_found = True
 
         if src_values.get('nomen_manda_2'):
-            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_2.id), context=context)
+            rec_id = nomen_obj.find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_2.id), context=context)
             if rec_id:
                 res['nomen_manda_2'] = rec_id
+            elif not src_values.get('product_id'):
+                nomen_2_ids = nomen_obj.search(cr, uid, [('level', '=', 2), ('msfid', '=', order_line.nomen_manda_2.msfid)], limit=1, context=context)
+                if nomen_2_ids:
+                    res['nomen_manda_2'] = nomen_2_ids[0]
+                else:
+                    nomen_not_found = True
 
         if src_values.get('nomen_manda_3'):
-            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_3.id), context=context)
+            rec_id = nomen_obj.find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_3.id), context=context)
             if rec_id:
                 res['nomen_manda_3'] = rec_id
+            elif not src_values.get('product_id'):
+                nomen_3_ids = nomen_obj.search(cr, uid, [('level', '=', 3), ('msfid', '=', order_line.nomen_manda_3.msfid)], limit=1, context=context)
+                if nomen_3_ids:
+                    res['nomen_manda_3'] = nomen_3_ids[0]
+                else:
+                    nomen_not_found = True
+
+        # Cause non-obvious issues when a line by nomenclature is created with missing nomenclatures
+        if not src_values.get('product_id') and nomen_not_found:
+            res['nomenclature_description'] = False
 
         if src_values.get('sync_sourced_origin'):
             res['origin'] = src_values.get('sync_sourced_origin')

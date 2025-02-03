@@ -1135,18 +1135,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ids = [ids]
 
         context['procurement_request'] = True
-        no_prod = self.search(cr, uid, [
-            ('id', 'in', ids),
-            ('product_id', '=', False),
-            ('order_id.procurement_request', '=', False),
-            ('supplier.partner_type', 'not in', ['esc', 'external']),
-        ], count=True, context=context)
-
-        if no_prod:
-            raise osv.except_osv(_('Warning'), _("""The product must be chosen before sourcing the line.
-                Please select it within the lines of the associated Field Order (through the "Field Orders" menu).
-                """))
-
         temp_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]
         temp_products = product_obj.search(cr, uid, [('international_status', '=', temp_status)], context=context)
         if temp_products:
