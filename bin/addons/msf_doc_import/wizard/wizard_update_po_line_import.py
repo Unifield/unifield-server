@@ -69,34 +69,42 @@ class wizard_update_po_line_import(osv.osv_memory):
         if context is None:
             context = {}
 
+        sql = """SELECT id FROM purchase_order_line 
+        WHERE order_id = %(po_id)s AND line_number = %(line_num)s AND state NOT IN ('cancel', 'cancel_r')"""
+        sql_cond = {'po_id': po_id, 'line_num': line_num}
+
         sql_wheres = []
         if prod_id and comment and qty:
-            sql_wheres.append("(product_id = %s AND comment = '%s' AND product_qty = %s)" % (prod_id, comment, qty))
+            sql_wheres.append("(product_id = %(prod_id)s AND comment = %(comment)s AND product_qty = %(qty)s)")
         if prod_id and comment:
-            sql_wheres.append("(product_id = %s AND comment = '%s')" % (prod_id, comment))
+            sql_wheres.append("(product_id = %(prod_id)s AND comment = %(comment)s)")
         if prod_id and qty:
-            sql_wheres.append("(product_id = %s AND product_qty = %s)" % (prod_id, qty))
+            sql_wheres.append("(product_id = %(prod_id)s AND product_qty = %(qty)s)")
         if comment and qty:
-            sql_wheres.append("(comment = '%s' AND product_qty = %s)" % (comment, qty))
+            sql_wheres.append("(comment = %(comment)s AND product_qty = %(qty)s)")
         if prod_id:
-            sql_wheres.append("product_id = %s" % (prod_id,))
+            sql_wheres.append("product_id = %(prod_id)s")
+            sql_cond['prod_id'] = prod_id
         if comment:
-            sql_wheres.append("comment = '%s'" % (comment,))
+            sql_wheres.append("comment = %(comment)s")
+            sql_cond['comment'] = comment
         if qty:
-            sql_wheres.append("product_qty = %s" % (qty,))
+            sql_wheres.append("product_qty = %(qty)s")
+            sql_cond['qty'] = qty
 
         sql_used_ids, sql_mod = '', ''
         if used_pol_ids:
             if len(used_pol_ids) == 1:
-                sql_used_ids = ' AND id != %s' % (used_pol_ids[0],)
+                sql_used_ids = ' AND id != %(used_pol_ids)s'
+                sql_cond['used_pol_ids'] = used_pol_ids[0]
             else:
-                sql_used_ids = ' AND id NOT IN %s' % (tuple(used_pol_ids),)
+                sql_used_ids = ' AND id NOT IN %(used_pol_ids)s'
+                sql_cond['used_pol_ids'] = tuple(used_pol_ids)
         if sql_wheres:
             sql_mod = ' AND (' + ' OR '.join(sql_wheres) + ')'
-        cr.execute("""
-            SELECT id FROM purchase_order_line WHERE order_id = %s AND line_number = %s AND state NOT IN ('cancel', 'cancel_r')"""
-                   % (po_id, line_num) + sql_used_ids + sql_mod + """ ORDER BY id LIMIT 1
-       """)
+
+        sql = sql + sql_used_ids + sql_mod + """ ORDER BY id LIMIT 1"""
+        cr.execute(sql, sql_cond)
 
         pol_ids = cr.fetchone()
         if pol_ids:
