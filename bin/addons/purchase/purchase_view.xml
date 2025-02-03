@@ -116,33 +116,27 @@
                     <field name="order_line_mismatch" colspan="4" nolabel="1" mode="tree"
                         filter_selector="[('Show all', []),  ('Hide Confirmed', [('state', 'not in', ['confirmed'])]), ('Hide Closed', [('state', 'not in', ['done'])]), ('Hide Confirmed, Closed &amp; Cancelled', [('state', 'not in', ['confirmed', 'done', 'cancel', 'cancel_r'])]), ('Hide cancelled', [('state', 'not in', ['cancel', 'cancel_r'])])]"
                         >
-                        <tree string="PO Lines Mismatch with Catalogues" hide_delete_button="True" colors="red: mml_status == 'F' or msl_status == 'F' or to_correct_ok == True or inactive_product == True or red_color == True or (not origin and from_fo); #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
+                        <tree string="PO Lines Mismatch with Catalogues" hide_delete_button="True" colors="red: inactive_product == True; orange:product_qty == 0.00;blue: soq_updated == True" editable="both">
                             <field name="line_number" />
                             <field name="default_code" />
                             <field name="default_name" />
 
-                            <field name="comment"  />
-                            <field name="nomenclature_description" />
+                            <field name="comment" />
                             <field name="supplier_code"  />
                             <field name="inactive_error" invisible="1"/>
                             <field name="inactive_product" invisible="1"/>
-                            <field name="to_correct_ok" invisible="1"/>
-                            <field name="red_color" invisible="1"/>
-                            <field name="origin" invisible="1"/>
-                            <field name="from_fo" invisible="1"/>
                             <field name="fake_id" invisible="1"/>
                             <field name="soq_updated" invisible="1"/>
                             <field name="product_qty" string="Qty" />
-                            <field name="product_uom" />
-                            <field name="price_unit" />
-                            <field name="price_subtotal"/>
+                            <field name="product_uom" string="UoM" />
+                            <field name="price_unit" string="PO Unit Price" />
+                            <field name="price_subtotal" string="PO Subtotal"/>
+                            <field name="catalog_price_unit"/>
+                            <field name="catalog_subtotal"/>
                             <field name="original_changed" string="CHG"/>
-                            <field name="date_planned" />
                             <field name="catalog_mismatch" />
                             <field name="po_state_stored" invisible="True"/>
                             <field name="state_to_display"/>
-                            <field name="mml_status" />
-                            <field name="msl_status" />
                         </tree>
                     </field>
                 </form>
