@@ -64,7 +64,18 @@ class patch_scripts(osv.osv):
         If the "date" and "email" columns still exist in res_users, delete them
         '''
         cr.execute("""ALTER TABLE res_users DROP COLUMN IF EXISTS date, DROP COLUMN IF EXISTS email""")
+        return True
 
+    def us_13895_hide_import_generate_asset_menus(self, cr, uid, *a, **b):
+        data_obj = self.pool.get('ir.model.data')
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+
+        generate_asset_menu_id = data_obj.get_object_reference(cr, uid, 'product_asset', 'menu_product_asset_generate_entries')[1]
+        import_asset_menu_id = data_obj.get_object_reference(cr, uid, 'product_asset', 'menu_product_asset_import_entries')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, [generate_asset_menu_id, import_asset_menu_id], {'active': instance.level != 'project'}, context={})
         return True
 
     # UF35.1

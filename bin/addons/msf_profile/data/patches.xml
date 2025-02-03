@@ -1176,6 +1176,10 @@
             <field name="method">us_13755_13788_remove_columns_res_users</field>
         </record>
 
+        <record id="us_13895_hide_import_generate_asset_menus" model="patch.scripts">
+            <field name="method">us_13895_hide_import_generate_asset_menus</field>
+        </record>
+
 
     </data>
 </openerp>
