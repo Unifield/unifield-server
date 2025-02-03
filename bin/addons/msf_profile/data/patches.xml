@@ -1171,5 +1171,11 @@
             <field name="method">us_13842_fix_sign_document_creator_supply_sdref</field>
         </record>
 
+        <!-- UF36.0 -->
+        <record id="us_13755_13788_remove_columns_res_users" model="patch.scripts">
+            <field name="method">us_13755_13788_remove_columns_res_users</field>
+        </record>
+
+
     </data>
 </openerp>

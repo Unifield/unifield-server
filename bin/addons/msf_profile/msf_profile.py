@@ -58,6 +58,16 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF36.0
+    def us_13755_13788_remove_columns_res_users(self, cr, uid, *a, **b):
+        '''
+        If the "date" and "email" columns still exist in res_users, delete them
+        '''
+        cr.execute("""ALTER TABLE res_users DROP COLUMN IF EXISTS date, DROP COLUMN IF EXISTS email""")
+
+        return True
+
+    # UF35.1
     def us_13842_fix_sign_document_creator_supply_sdref(self, cr, uid, *a, **b):
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if not current_instance:
@@ -86,7 +96,6 @@ class patch_scripts(osv.osv):
             if real_sdref.get(oc):
                 cr.execute("update ir_model_data set name=%s where name='res_groups_Sign_document_creator_supply' and model='res.groups' and module='sd'", (real_sdref.get(oc), ))
                 self.log_info(cr, uid, "US-13842: sdref changed on Sign_document_creator_supply %s" % (cr.rowcount,))
-
         return True
 
 
@@ -430,8 +439,12 @@ class patch_scripts(osv.osv):
         return True
 
     def us_12274_populate_res_user_last_auth(self, cr, uid, *a, **b):
-        cr.execute('''insert into users_last_login (user_id, date)
-            (select id, date from res_users where date is not null) ''')
+        # Check if column exist before trying to populate its data
+        cr.execute("""SELECT column_name FROM information_schema.columns WHERE table_name = 'res_users' AND column_name = 'date'""")
+        has_col = cr.fetchone()
+        if has_col and has_col[0]:
+            cr.execute('''insert into users_last_login (user_id, date)
+                (select id, date from res_users where date is not null) ''')
         return True
 
     def us_12974_sync_server_instances_level(self, cr, uid, *a, **b):
