@@ -929,14 +929,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     )
 
             if line.state not in ('draft', 'cancel') and line.product_id and line.supplier and not context.get('bypass_product_constraints'):
+                sourcing_not_donation = context.get('multiple_sourcing', False) and \
+                    line.order_id.order_type not in ['donation_prog', 'donation_exp', 'donation_st'] or False
                 # Check product constraints (no external supply, no storage...)
                 check_fnct = product_obj._get_restriction_error
-                self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
+                self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id,
+                                                sourcing_not_donation, check_fnct, context=context)
 
         return True
 
-    def _check_product_constraints(self, cr, uid, line_type='make_to_order', po_cft='po',
-                                   product_id=False, partner_id=False, check_fnct=False, *args, **kwargs):
+    def _check_product_constraints(self, cr, uid, line_type='make_to_order', po_cft='po', product_id=False,
+                                   partner_id=False, sourcing_not_donation=False, check_fnct=False, *args, **kwargs):
         """
         Check if the value of lines are compatible with the other
         values.
@@ -957,7 +960,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if not check_fnct:
             check_fnct = self.pool.get('product.product')._get_restriction_error
 
-        vals = {'obj_type': 'sale.order'}
+        vals = {'obj_type': 'sale.order', 'sourcing_not_donation': sourcing_not_donation}
         if line_type == 'make_to_order' and product_id and (po_cft == 'cft' or partner_id):
             if po_cft == 'cft':
                 vals['constraints'] = ['external']
@@ -2170,6 +2173,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 value.get('po_cft', line.po_cft),
                 line.product_id.id,
                 partner_id,
+                False,
                 check_fnct,
                 field_name='po_cft',
                 values=res,
@@ -2248,6 +2252,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         l_type,
                         line.po_cft,
                         line.product_id.id,
+                        False,
                         False,
                         check_fnct,
                         field_name='l_type',
@@ -2351,6 +2356,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 value.get('po_cft', line.po_cft),
                 line.product_id.id,
                 partner_id,
+                False,
                 check_fnct,
                 field_name='supplier',
                 values=result,
