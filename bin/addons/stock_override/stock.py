@@ -746,8 +746,10 @@ class stock_picking(osv.osv):
 
         filename = _('OUT Excel Export')
         if ids:
-            filename += ' ' + self.browse(cr, uid, ids[0], fields_to_fetch=['name'], context=context).name
-        filename += ' ' + datetime.today().strftime('%H:%M')
+            filename += ' ' + self.browse(cr, uid, ids[0], fields_to_fetch=['name'], context=context).name \
+                        + '_' + datetime.today().strftime('%H%M')
+        else:
+            filename += ' ' + datetime.today().strftime('%H%M')
 
         return {
             'type': 'ir.actions.report.xml',

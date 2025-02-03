@@ -127,7 +127,7 @@ class wizard_out_import(osv.osv_memory):
                     return False
 
         raise osv.except_osv(
-            _('Error'), _('Line %s: No matching line, unused by the import, was found on the popup using the Product Code %s')
+            _('Error'), _('Line %s: Does not correspond to the ordered line. Please correct the Product Code %s')
             % (line_data['item'], line_data['code'])
         )
 
