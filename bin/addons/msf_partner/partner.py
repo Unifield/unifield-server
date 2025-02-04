@@ -749,8 +749,17 @@ class res_partner(osv.osv):
     def write_web(self, cr, uid, ids, vals, context=None, ignore_access_error=False):
         if context is None:
             context = {}
+        if vals is None:
+            vals = {}
 
-        if vals and not vals.get('customer') and not vals.get('supplier'):
+        partner, no_customer, no_supplier = False, False, False
+        if ids:
+            partner = self.read(cr, uid, ids[0], ['customer', 'supplier'], context=context)
+        if ('customer' in vals and not vals.get('customer')) or ('customer' not in vals and partner and not partner['customer']):
+            no_customer = True
+        if ('supplier' in vals and not vals.get('supplier')) or ('supplier' not in vals and partner and not partner['supplier']):
+            no_supplier = True
+        if no_customer and no_supplier:
             raise osv.except_osv(
                 _('Error'),
                 _("It's mandatory to choose the role of a partner. Please select at least either Customer or Supplier")
@@ -822,11 +831,6 @@ class res_partner(osv.osv):
             context = {}
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
         self._check_default_accounts(cr, uid, vals, context=context)
-        if not context.get('sync_update_execution') and not vals.get('customer') and not vals.get('supplier'):
-            raise osv.except_osv(
-                _('Error'), 
-                _("It's mandatory to choose the role of a partner. Please select at least either Customer or Supplier")
-            )
 
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
@@ -859,6 +863,22 @@ class res_partner(osv.osv):
         new_id = super(res_partner, self).create(cr, uid, vals, context=context)
         self.check_partner_unicity(cr, uid, partner_id=new_id, context=context)
         self.check_same_pricelist(cr, uid, [new_id], context=context)
+
+        if not context.get('sync_update_execution'):
+            no_customer, no_supplier = False, False
+            partner = self.read(cr, uid, new_id, ['customer', 'supplier'], context=context)
+            if ('customer' in vals and not vals.get('customer')) or \
+                    ('customer' not in vals and partner and not partner['customer']):
+                no_customer = True
+            if ('supplier' in vals and not vals.get('supplier')) or \
+                    ('supplier' not in vals and partner and not partner['supplier']):
+                no_supplier = True
+            if no_customer and no_supplier:
+                raise osv.except_osv(
+                    _('Error'),
+                    _("It's mandatory to choose the role of a partner. Please select at least either Customer or Supplier")
+                )
+
         # US-3945: checking user's rights
         if not context.get('sync_update_execution') and uid != 1:
             instance_level = _get_instance_level(self, cr, uid)
