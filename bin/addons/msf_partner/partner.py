@@ -746,6 +746,26 @@ class res_partner(osv.osv):
                 raise osv.except_osv(_('Warning'),
                                      _("Impossible to deactivate a partner used in the tax line of an invoice."))
 
+    def write_web(self, cr, uid, ids, vals, context=None, ignore_access_error=False):
+        if context is None:
+            context = {}
+
+        type_changed = False
+        if vals and ('customer' in vals or 'supplier' in vals) and not vals.get('customer') and not vals.get('supplier'):
+            type_changed = True
+
+        res = super(res_partner, self).write_web(cr, uid, ids, vals, context=context, ignore_access_error=ignore_access_error)
+
+        if type_changed:
+            if isinstance(ids, int):
+                ids = [ids]
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('customer', '=', False), ('supplier', '=', False), ('active', 'in', ['t', 'f'])], context=context):
+                raise osv.except_osv(
+                    _('Error'),
+                    _("It's mandatory to choose the role of a partner. Please select at least either Customer or Supplier")
+                )
+        return res
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -810,6 +830,12 @@ class res_partner(osv.osv):
             context = {}
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
         self._check_default_accounts(cr, uid, vals, context=context)
+        if not context.get('sync_update_execution') and not vals.get('customer') and not vals.get('supplier'):
+            raise osv.except_osv(
+                _('Error'),
+                _("It's mandatory to choose the role of a partner. Please select at least either Customer or Supplier")
+            )
+
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
@@ -888,7 +914,6 @@ class res_partner(osv.osv):
                                                  )
 
         return new_id
-
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
