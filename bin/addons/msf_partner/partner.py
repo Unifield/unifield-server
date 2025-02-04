@@ -775,11 +775,14 @@ class res_partner(osv.osv):
         if type_changed:
             if isinstance(ids, int):
                 ids = [ids]
-            if self.search_exists(cr, uid, [('id', 'in', ids), ('customer', '=', False), ('supplier', '=', False), ('active', 'in', ['t', 'f'])], context=context):
+            partner_domain = [('id', 'in', ids), ('partner_type', '=', 'external'), ('customer', '=', False),
+                              ('supplier', '=', False), ('active', 'in', ['t', 'f'])]
+            if self.search_exists(cr, uid, partner_domain, context=context):
                 raise osv.except_osv(
                     _('Error'),
                     _("It's mandatory to choose the role of a partner. Please select at least either Customer or Supplier")
                 )
+
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
