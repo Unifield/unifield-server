@@ -760,6 +760,15 @@ class res_partner(osv.osv):
                 raise osv.except_osv(_('Warning'),
                                      _("Impossible to deactivate a partner used in the tax line of an invoice."))
 
+    def write_web(self, cr, user, ids, vals, context=None, ignore_access_error=False):
+        """
+        Method called by the web at Save or Save & Edit time
+        """
+        # US-12430 to ensure that the check will not be called from a system call
+        if self._name == 'res.partner' and not context.get('sync_update_execution', False):
+            self.check_partner_unicity(cr, user, ids, vals, context=context)
+        return super(res_partner, self).write_web(cr, user, ids, vals, context=context, ignore_access_error=False)
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
