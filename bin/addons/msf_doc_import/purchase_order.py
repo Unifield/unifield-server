@@ -688,7 +688,7 @@ The header column names should be: Line, Product Code, Product Description, Comm
             'res_id': wiz_id,
             'view_type': 'form',
             'view_mode': 'form',
-            'target': 'crush',
+            'target': 'same',
             'context': context,
         }
 
