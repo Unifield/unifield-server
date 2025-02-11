@@ -90,6 +90,10 @@ class wizard_export_vi_finance(osv.osv_memory):
         if not instance or instance.level != 'section':
             raise osv.except_osv(_('Warning'), _('Export is only available at HQ level.'))
 
+        set_as_already_exported = False
+        if instance.instance == 'OCP_HQ':
+            set_as_already_exported = True
+
         p_state_obj = self.pool.get('account.period.state')
         export_job_obj = self.pool.get('automated.export.job')
         nb_ok = 0
@@ -110,6 +114,8 @@ class wizard_export_vi_finance(osv.osv_memory):
                         month=period_state.period_id.number or 0,
                         date=time.strftime('%Y%m%d%H%M%S'),
                     )
+                    if period_state.already_exported:
+                        file_name = 'reopen_%s' % file_name
                     if not export_wiz.ftp_dest_ok:
                         out_file_name = os.path.join(export_wiz.dest_path, file_name)
                     else:
@@ -133,7 +139,7 @@ class wizard_export_vi_finance(osv.osv_memory):
                     obj = netsvc.LocalService(self._export_report_name)
                     obj.create(cr, uid, [], report_data, context=context)
                     out_file.close()
-                    p_state_obj.write(cr, uid, period_state.id, {'auto_export_vi': True}, context=context)
+                    p_state_obj.write(cr, uid, period_state.id, {'auto_export_vi': True, 'already_exported': set_as_already_exported}, context=context)
                     nb_ok += 1
                     msg.append('[%s] %s done' % (time.strftime('%Y-%m-%d %H:%M:%S'), period_state.instance_id.code))
                     cr.commit()
@@ -144,7 +150,7 @@ class wizard_export_vi_finance(osv.osv_memory):
 
             for period_state_ids in list(instance_seen.items()):
                 # overkill ? just in case of duplicates period_id / coordo_id
-                p_state_obj.write(cr, uid, period_state_ids, {'auto_export_vi': True}, context=context)
+                p_state_obj.write(cr, uid, period_state_ids, {'auto_export_vi': True, 'already_exported': set_as_already_exported}, context=context)
 
 
         if nb_ok and export_wiz.pause:
