@@ -32,7 +32,7 @@ class fixed_asset_setup(osv.osv_memory):
             context = {}
         pa_obj = self.pool.get('product.asset')
         al_obj = self.pool.get('product.asset.line')
-        if pa_obj.search_exist(cr, uid, [('state', 'not in', ('done', 'cancel'))], context=context):
+        if pa_obj.search_exist(cr, uid, [('state', 'not in', ('depreciated', 'disposed'))], context=context):
             return False
         if al_obj.search_exist(cr, uid, [('move_state', '=', 'draft')], context=context):
             return False
@@ -40,7 +40,7 @@ class fixed_asset_setup(osv.osv_memory):
 
     def _get_is_inactivable(self, cr, uid, ids, field_name, arg, context=None):
         """
-        return False if at least one Asset Form is not in done or cancel state or at least one asset entry is draft, return True otherwise.
+        return False if at least one Asset Form is not in Fully Depreciated or Disposed state or at least one asset entry is draft, return True otherwise.
         """
         if not ids:
             return {}
