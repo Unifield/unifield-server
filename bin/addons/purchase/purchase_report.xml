@@ -7,9 +7,9 @@
             name="report_line_mismatch"
             model="purchase.order"
             auto="False"
-            string="PO Lines Mismatch"
+            string="PO vs. Catalogue Mismatch"
             report_type="openpyxl"
-            target_filename="Catalogue mismatch ${name}"
+            target_filename="PO vs. Catalogue Mismatch ${name}"
             />
     </data>
 </openerp>

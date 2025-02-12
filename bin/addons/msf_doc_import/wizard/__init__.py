@@ -168,3 +168,4 @@ from . import wizard_return_from_unit_import
 from . import abstract_wizard_import
 from . import wizard_import_batch
 from . import wizard_import_ad_line
+from . import wizard_update_po_line_import

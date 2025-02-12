@@ -30,6 +30,9 @@ from datetime import datetime
 from osv import osv
 from tools.translate import _
 from base import currency_date
+from spreadsheet_xml.xlsx_write import XlsxReport
+from spreadsheet_xml.xlsx_write import XlsxReportParser
+from openpyxl.cell import WriteOnlyCell
 
 import pooler
 import time
@@ -216,8 +219,228 @@ class report_pick_export_xls(WebKitParser):
         a = super(report_pick_export_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
+
 report_pick_export_xls('report.pick.export.xls','stock.picking','addons/msf_supply_doc_export/report/report_pick_export_xls.mako', parser=picking_ticket_parser)
 
+
+class report_out_export_parser(XlsxReportParser):
+
+    def add_cell(self, value=None, style='default_style', number_format=None):
+        # None value set an xls empty cell
+        # False value set the xls False()
+        new_cell = WriteOnlyCell(self.workbook.active, value=value)
+        new_cell.style = style
+        if number_format:
+            new_cell.number_format = number_format
+        self.rows.append(new_cell)
+
+    def generate(self, context=None):
+        if context is None:
+            context = {}
+
+        move_obj = self.pool.get('stock.move')
+        proc_move_obj = self.pool.get('outgoing.delivery.move.processor')
+
+        out = self.pool.get('stock.picking').browse(self.cr, self.uid, self.ids[0], context=context)
+
+        sheet = self.workbook.active
+
+        sheet.column_dimensions['A'].width = 22.0
+        sheet.column_dimensions['B'].width = 45.0
+        sheet.column_dimensions['C'].width = 75.0
+        sheet.column_dimensions['D'].width = 55.0
+        sheet.column_dimensions['E'].width = 22.0
+        sheet.column_dimensions['F'].width = 15.0
+        sheet.column_dimensions['G'].width = 25.0
+        sheet.column_dimensions['H'].width = 25.0
+        sheet.column_dimensions['I'].width = 15.0
+        sheet.column_dimensions['J'].width = 15.0
+        sheet.column_dimensions['K'].width = 7.0
+        sheet.column_dimensions['L'].width = 20.0
+        sheet.column_dimensions['M'].width = 13.0
+        sheet.column_dimensions['N'].width = 5.0
+        sheet.column_dimensions['O'].width = 5.0
+        sheet.column_dimensions['P'].width = 5.0
+
+        # Styles
+        line_header_style = self.create_style_from_template('line_header_style', 'A1')
+        line_style = self.create_style_from_template('line_style', 'B1')
+        line_left_style = self.create_style_from_template('line_left_style', 'C2')
+        date_style = self.create_style_from_template('date_style', 'B3')
+        int_style = self.create_style_from_template('int_style', 'A11')
+        float_style = self.create_style_from_template('float_style', 'I11')
+
+        sheet.title = _('OUT Export')
+        # Header data
+        cell_rh = WriteOnlyCell(sheet, value=_('Reference'))
+        cell_rh.style = line_header_style
+        cell_r = WriteOnlyCell(sheet, value=out.name)
+        cell_r.style = line_style
+        cell_rqh = WriteOnlyCell(sheet, value=_('Requestor'))
+        cell_rqh.style = line_header_style
+        sheet.append([cell_rh, cell_r, cell_rqh])
+
+        cell_oh = WriteOnlyCell(sheet, value=_('Origin'))
+        cell_oh.style = line_header_style
+        cell_o = WriteOnlyCell(sheet, value=out.origin or '')
+        cell_o.style = line_style
+        cell_rq = WriteOnlyCell(sheet, value=out.requestor or '')
+        cell_rq.style = line_left_style
+        sheet.append([cell_oh, cell_o, cell_rq])
+
+        cell_cdh = WriteOnlyCell(sheet, value=_('Creation Date'))
+        cell_cdh.style = line_header_style
+        cell_cd = WriteOnlyCell(sheet, value=out.date and datetime.strptime(out.date, '%Y-%m-%d %H:%M:%S') or '')
+        cell_cd.style = date_style
+        cell_cd.number_format = 'DD/MM/YYYY HH:MM'
+        cell_dah = WriteOnlyCell(sheet, value=_('Delivery Address'))
+        cell_dah.style = line_header_style
+        sheet.append([cell_cdh, cell_cd, cell_dah])
+
+        cell_ph = WriteOnlyCell(sheet, value=_('Partner'))
+        cell_ph.style = line_header_style
+        cell_p = WriteOnlyCell(sheet, value=out.partner_id and out.partner_id.name or '')
+        cell_p.style = line_style
+        da_contact = out.partner_id and out.partner_id.partner_type == 'internal' and _('Supply responsible') \
+            or out.address_id and out.address_id.name or ''
+        cell_dac = WriteOnlyCell(sheet, value=da_contact)
+        cell_dac.style = line_left_style
+        sheet.append([cell_ph, cell_p, cell_dac])
+
+        cell_boh = WriteOnlyCell(sheet, value=_('Back Order ref.'))
+        cell_boh.style = line_header_style
+        cell_bo = WriteOnlyCell(sheet, value=out.backorder_id and out.backorder_id.name or '')
+        cell_bo.style = line_style
+        da_street = ''
+        if out.address_id:
+            if out.address_id.street:
+                da_street += out.address_id.street + ' '
+            if out.address_id.street2:
+                da_street += out.address_id.street2 + ' '
+            if out.address_id.zip:
+                da_street += out.address_id.zip + ' '
+            if out.address_id.city:
+                da_street += out.address_id.city
+        cell_dast = WriteOnlyCell(sheet, value=da_street)
+        cell_dast.style = line_left_style
+        sheet.append([cell_boh, cell_bo, cell_dast])
+
+        cell_och = WriteOnlyCell(sheet, value=_('Order Category'))
+        cell_och.style = line_header_style
+        categ = out.order_category and self.pool.get('ir.model.fields').\
+            get_selection(self.cr, self.uid, 'stock.picking', 'order_category', out.order_category, context=context) or ''
+        cell_oc = WriteOnlyCell(sheet, value=categ)
+        cell_oc.style = line_style
+        cell_daci = WriteOnlyCell(sheet, value=out.address_id and out.address_id.city or '')
+        cell_daci.style = line_left_style
+        sheet.append([cell_och, cell_oc, cell_daci])
+
+        cell_rth = WriteOnlyCell(sheet, value=_('Reason Type'))
+        cell_rth.style = line_header_style
+        cell_rt = WriteOnlyCell(sheet, value=out.reason_type_id and out.reason_type_id.complete_name or '')
+        cell_rt.style = line_style
+        cell_dap = WriteOnlyCell(sheet, value=out.address_id and out.address_id.phone or '')
+        cell_dap.style = line_left_style
+        sheet.append([cell_rth, cell_rt, cell_dap])
+
+        cell_deh = WriteOnlyCell(sheet, value=_('Details'))
+        cell_deh.style = line_header_style
+        cell_de = WriteOnlyCell(sheet, value=out.details or '')
+        cell_de.style = line_style
+        sheet.append([cell_deh, cell_de])
+
+        cell_esdh = WriteOnlyCell(sheet, value=_('Expected Ship Date'))
+        cell_esdh.style = line_header_style
+        cell_esd = WriteOnlyCell(sheet, value=out.min_date and datetime.strptime(out.min_date, '%Y-%m-%d %H:%M:%S') or '')
+        cell_esd.style = date_style
+        cell_esd.number_format = 'DD/MM/YYYY HH:MM'
+        sheet.append([cell_esdh, cell_esd])
+
+        row_headers = [
+            (_('Item')),
+            (_('Code')),
+            (_('Description')),
+            (_('Comment')),
+            (_('Asset')),
+            (_('Kit')),
+            (_('Src. Location')),
+            (_('Dest. Location')),
+            (_('Ordered Qty')),
+            (_('Qty to Process')),
+            (_('UoM')),
+            (_('Batch')),
+            (_('Expiry Date')),
+            (_('CC')),
+            (_('DG')),
+            (_('CS')),
+        ]
+
+        # Lines data
+        row_header = []
+        for header in row_headers:
+            cell_t = WriteOnlyCell(sheet, value=header)
+            cell_t.style = line_header_style
+            row_header.append(cell_t)
+        sheet.append(row_header)
+
+        move_domain = [('picking_id', '=', out.id)]
+        if out.state == 'assigned':  # Same behavior as Process popup, only available lines are exported
+            move_domain.append(('state', '=', 'assigned'))
+        move_line_ids = move_obj.search(self.cr, self.uid, move_domain, context=context)
+        if move_line_ids:
+            for move in move_obj.browse(self.cr, self.uid, move_line_ids, context=context):
+                # Check if there is any existing saved OUT processor
+                proc_move_domain = [('wizard_id.draft', '=', True), ('move_id', '=', move.id)]
+                prod_move_ids = proc_move_obj.search(self.cr, self.uid, proc_move_domain, context=context)
+                if prod_move_ids:
+                    for proc_move in proc_move_obj.browse(self.cr, self.uid, prod_move_ids, context=context):
+                        self.rows = []
+
+                        self.add_cell(move.line_number, int_style)
+                        self.add_cell(move.product_id and move.product_id.default_code or '', line_style)
+                        self.add_cell(move.product_id and move.product_id.name or '', line_style)
+                        self.add_cell(move.comment or '', line_style)
+                        self.add_cell(proc_move.asset_id and proc_move.asset_id.name or '', line_style)
+                        self.add_cell(proc_move.composition_list_id and proc_move.composition_list_id.composition_reference
+                                      or '', line_style)
+                        self.add_cell(move.location_id and move.location_id.name or '', line_style)
+                        self.add_cell(move.location_dest_id and move.location_dest_id.name or '', line_style)
+                        self.add_cell(proc_move.ordered_quantity, float_style)
+                        self.add_cell(proc_move.quantity or 0.00, float_style)
+                        self.add_cell(proc_move.uom_id and proc_move.uom_id.name or '', line_style)
+                        self.add_cell(proc_move.prodlot_id and proc_move.prodlot_id.name or '', line_style)
+                        self.add_cell(proc_move.expiry_date and datetime.strptime(proc_move.expiry_date, '%Y-%m-%d') or '',
+                                      date_style, number_format='DD/MM/YYYY')
+                        self.add_cell(move.kc_check and _('Yes') or _('No'), line_style)
+                        self.add_cell(move.dg_check and _('Yes') or _('No'), line_style)
+                        self.add_cell(move.np_check and _('Yes') or _('No'), line_style)
+
+                        sheet.append(self.rows)
+                else:
+                    self.rows = []
+
+                    self.add_cell(move.line_number, int_style)
+                    self.add_cell(move.product_id and move.product_id.default_code or '', line_style)
+                    self.add_cell(move.product_id and move.product_id.name or '', line_style)
+                    self.add_cell(move.comment or '', line_style)
+                    self.add_cell(move.asset_id and move.asset_id.name or '', line_style)
+                    self.add_cell(move.composition_list_id and move.composition_list_id.composition_reference or '', line_style)
+                    self.add_cell(move.location_id and move.location_id.name or '', line_style)
+                    self.add_cell(move.location_dest_id and move.location_dest_id.name or '', line_style)
+                    self.add_cell(move.product_qty, float_style)
+                    self.add_cell(0.00, float_style)
+                    self.add_cell(move.product_uom and move.product_uom.name or '', line_style)
+                    self.add_cell(move.prodlot_id and move.prodlot_id.name or '', line_style)
+                    self.add_cell(move.expired_date and datetime.strptime(move.expired_date, '%Y-%m-%d') or '',
+                                  date_style, number_format='DD/MM/YYYY')
+                    self.add_cell(move.kc_check and _('Yes') or _('No'), line_style)
+                    self.add_cell(move.dg_check and _('Yes') or _('No'), line_style)
+                    self.add_cell(move.np_check and _('Yes') or _('No'), line_style)
+
+                    sheet.append(self.rows)
+
+
+XlsxReport('report.report_out_export', parser=report_out_export_parser, template='addons/msf_supply_doc_export/report/report_out_export.xlsx')
 
 
 # PURCHASE ORDER and REQUEST FOR QUOTATION are the same object

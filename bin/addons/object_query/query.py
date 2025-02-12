@@ -492,7 +492,8 @@ class ir_fields(osv.osv):
 
         for field in self.browse(cr, uid, ids, context=context):
             res[field.id] = False
-            if self.pool.get(field.model_id.model)._columns[field.name]._properties:
+            columns = self.pool.get(field.model_id.model)._columns
+            if field.name in columns and columns[field.name]._properties:
                 res[field.id] = True
 
         return res

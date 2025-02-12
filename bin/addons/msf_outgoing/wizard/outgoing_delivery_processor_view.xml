@@ -23,6 +23,7 @@
                     </html>
                     <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
                     <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
+                    <button name="import_out" type="object" icon="gtk-execute" colspan="4" string="Import OUT" />
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree"
                            colspan="4" nolabel="1" />
