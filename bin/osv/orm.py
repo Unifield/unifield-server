@@ -3123,7 +3123,15 @@ class orm(orm_template):
         pass
 
     def _add_missing_o2m_index(self, cr, col_name, o2m_obj):
-        cr.execute("select count(1) from pg_class where relkind='r' and relname=%s", (self._table, ))
+        cr.execute("""SELECT count(1)
+                        FROM pg_class c, pg_attribute a
+                        WHERE 
+                            c.relname=%s AND
+                            a.attname=%s AND
+                            c.oid=a.attrelid AND
+                            c.relkind='r'
+                    """, (self._table, col_name))
+
         if not cr.fetchone()[0]:
             # ignore view
             return False
