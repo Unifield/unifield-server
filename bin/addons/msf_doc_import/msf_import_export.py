@@ -1399,14 +1399,14 @@ class msf_import_export(osv.osv_memory):
                                             % data.get('name', ''))
                         else:
                             asset_acc_ids[data.get('asset_bs_account_id')] = True
-                    if data.get('asset_bs_depreciation_account_id', False) and not asset_acc_ids.get(data.get('asset_bs_account_id'), False):
+                    if data.get('asset_bs_depreciation_account_id', False) and not asset_acc_ids.get(data.get('asset_bs_depreciation_account_id'), False):
                         dep_acc = acc_obj.browse(cr, uid, data.get('asset_bs_depreciation_account_id'),
                                                  fields_to_fetch=['user_type'], context=context)
                         if not dep_acc or dep_acc.user_type.code != 'asset':
                             raise Exception(_('Import error for product category "%s" : The Asset B/S Depreciation Account must be of type asset.')
                                             % data.get('name', ''))
                         else:
-                            asset_acc_ids[data.get('asset_bs_account_id')] = True
+                            asset_acc_ids[data.get('asset_bs_depreciation_account_id')] = True
 
                 if import_brw.model_list_selection == 'record_rules':
                     if not data.get('groups'):
