@@ -23,7 +23,7 @@
           <group string="res_config_contents" position="replace">
               <group colspan="5"  attrs="{'invisible': [('is_inactivable', '=', True)] }">
                 <html colspan="5">
-                    <h2><translate>Asset cannot be disabled. There is assets still in draft or open or active state.</translate></h2>
+                    <h2><translate>Asset cannot be disabled. There is still assets not in disposed state.</translate></h2>
                 </html>
               </group>
               <group colspan="5">

@@ -32,7 +32,7 @@ class fixed_asset_setup(osv.osv_memory):
             context = {}
         pa_obj = self.pool.get('product.asset')
         al_obj = self.pool.get('product.asset.line')
-        if pa_obj.search_exist(cr, uid, [('state', 'not in', ('depreciated', 'disposed'))], context=context):
+        if pa_obj.search_exist(cr, uid, [('state', '!=', 'disposed')], context=context):
             return False
         if al_obj.search_exist(cr, uid, [('move_state', '=', 'draft')], context=context):
             return False
@@ -40,7 +40,7 @@ class fixed_asset_setup(osv.osv_memory):
 
     def _get_is_inactivable(self, cr, uid, ids, field_name, arg, context=None):
         """
-        return False if at least one Asset Form is not in Fully Depreciated or Disposed state or at least one asset entry is draft, return True otherwise.
+        return False if at least one Asset Form is not in Disposed state or at least one asset entry is draft, return True otherwise.
         """
         if not ids:
             return {}
@@ -89,7 +89,7 @@ class fixed_asset_setup(osv.osv_memory):
         if asset_menu_id:
             self.pool.get('ir.ui.menu').write(cr, uid, asset_menu_id, {'active': payload.fixed_asset_ok}, context=context)
         if not payload.fixed_asset_ok and not payload.is_inactivable:
-            raise osv.except_osv(_('Warning'), _('Asset cannot be disabled. There is assets still in draft or open or active state.'))
+            raise osv.except_osv(_('Warning'), _('Asset cannot be disabled. There is still assets not in disposed state.'))
         setup_obj.write(cr, uid, [setup_id.id], {'fixed_asset_ok': payload.fixed_asset_ok}, context=context)
         if payload.fixed_asset_ok and self.pool.get('res.company')._get_instance_id(cr, uid):
             journal_obj = self.pool.get('account.journal')
