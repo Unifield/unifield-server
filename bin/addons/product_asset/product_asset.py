@@ -734,7 +734,7 @@ class product_asset(osv.osv):
         'create_update_sent': fields.boolean('1st Update sent', readonly=True),
         'target_instance_history_ids': fields.many2many('msf.instance', 'asset_owner_instance_rel', 'asset_id', 'instance_id', 'List of owners (accurate at Coo)'),
         'has_unposted_entries': fields.function(_get_has_unposted_entries, method=True, type='boolean',
-                                                store=False, string='Has unposted depreciation entries'),
+                                                store=False, string='Has unposted entries'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
