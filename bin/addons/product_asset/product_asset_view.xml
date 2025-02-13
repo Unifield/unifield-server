@@ -209,7 +209,7 @@
                         <field name="has_unposted_entries" invisible="1"/>
                         <button name="delete_unposted" type="object" icon="terp-gtk-stop"
                                 string="Delete Unposted Entries"
-                                attrs="{'readonly': [('has_unposted_entries', '=', False)]}"/>
+                                attrs="{'invisible': ['|', ('instance_level', '=', 'project'), ('has_unposted_entries', '=', False)]}"/>
                         <button type="object" name="button_dispose" string="Dispose" icon="gtk-quit" attrs="{'invisible': ['|', '|', ('instance_level', '=', 'project'), ('state', 'not in', ['running', 'depreciated', 'open']), ('can_be_disposed', '=', False)]}"/>
                     </group>
                 </group>
