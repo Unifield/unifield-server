@@ -628,6 +628,42 @@ class product_asset(osv.osv):
             return [('used_instance_id', cond, current_instance_id)]
         return []
 
+    def _get_has_unposted_entries(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns a dict with key = id of the asset,
+        and value = True if an unposted JE is linked to one of the depreciation lines, False otherwise
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+        res = {}
+        for asset in self.browse(cr, uid, ids, fields_to_fetch=['line_ids'], context=context):
+            res[asset.id] = False
+            for depline in asset.line_ids:
+                if depline.move_id and depline.move_id.state == 'draft':  # draft = Unposted state
+                    res[asset.id] = True
+                    break
+        return res
+
+    def delete_unposted(self, cr, uid, ids, context=None):
+        """
+        This method:
+        - searches for the unposted Journal Entries linked to the asset depreciation lines,
+        - deletes the unposted JEs, and the related JIs and AJIs
+        """
+        if context is None:
+            context = {}
+        je_obj = self.pool.get('account.move')
+        je_to_delete_ids = []
+        for asset in self.browse(cr, uid, ids, fields_to_fetch=['line_ids'], context=context):
+            for depline in asset.line_ids:
+                if depline.move_id and depline.move_id.state == 'draft':  # draft = Unposted state
+                    je_to_delete_ids.append(depline.move_id.id)
+        if je_to_delete_ids:
+            je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
+        return True
+
 
     _columns = {
         # asset
@@ -697,6 +733,8 @@ class product_asset(osv.osv):
         'inital_line_account_id': fields.function(_get_inital_line_account_id,  method=True, type='many2one', relation='account.account', string='Initial B/S account'),
         'create_update_sent': fields.boolean('1st Update sent', readonly=True),
         'target_instance_history_ids': fields.many2many('msf.instance', 'asset_owner_instance_rel', 'asset_id', 'instance_id', 'List of owners (accurate at Coo)'),
+        'has_unposted_entries': fields.function(_get_has_unposted_entries, method=True, type='boolean',
+                                                store=False, string='Has unposted depreciation entries'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
