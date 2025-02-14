@@ -111,6 +111,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="120.0" />
         ## Supplier
         <Column ss:AutoFitWidth="1" ss:Width="110.0" />
+        ## IN Details
+        <Column ss:AutoFitWidth="1" ss:Width="240.0" />
         ## Order Type
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Order Category
@@ -250,6 +252,7 @@
             _('Reason Type'),
             _('Purchase Order'),
             _('Supplier'),
+            _('IN Details'),
             _('Order Type'),
             _('Order Category'),
             _('Order Priority'),
@@ -293,6 +296,7 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_order']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['supplier']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['details']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'order_type') or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'categ') or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['purchase_id'] and getSel(move['purchase_id'], 'priority') or ''|x}</Data></Cell>

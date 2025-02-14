@@ -85,7 +85,7 @@ class publisher_warranty_contract(osv.osv):
             db_create_date = self.pool.get('ir.config_parameter').get_param(cr, uid, 'database.create_date')
             user = self.pool.get("res.users").browse(cr, uid, uid)
             user_name = user.name
-            email = user.email
+            email = user.user_email
 
             msg = {'contract_name': valid_contract.name,
                    'tb': tb,
@@ -103,7 +103,7 @@ class publisher_warranty_contract(osv.osv):
 
             add_arg = {"timeout":30}
             uo = urllib.request.urlopen(config.get("publisher_warranty_url"),
-                                 urllib.parse.urlencode({'arg0': msg, "action": "send",}),**add_arg)
+                                        urllib.parse.urlencode({'arg0': msg, "action": "send",}),**add_arg)
             try:
                 submit_result = uo.read()
             finally:

@@ -73,6 +73,7 @@
         'wizard/wizard_import_ppl_to_create_ship.xml',
         'wizard/wizard_return_from_unit_import_view.xml',
         'wizard/wizard_import_ad_line_view.xml',
+        'wizard/wizard_update_po_line_import_view.xml',
     ],
     "demo_xml": [],
     "test": [
