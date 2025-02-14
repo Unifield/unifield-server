@@ -921,15 +921,16 @@ class product_asset(osv.osv):
             new_ad_id = False
             if asset.move_line_id.analytic_distribution_id:
                 new_ad_id = self.pool.get('analytic.distribution').copy(cr, uid, asset.move_line_id.analytic_distribution_id.id, {}, context=context)
-            line_obj.create(cr, uid, {
-                'asset_id': asset.id,
-                'asset_bs_depreciation_account_id': bs_prod_account_id,
-                'asset_pl_account_id': asset.move_line_id.account_id.id,
-                'date': to_create[0][0],
-                'amount': -1*asset.invo_value,
-                'is_initial_line': True,
-                'analytic_distribution_id': new_ad_id,
-            }, context=context)
+            if not (asset.move_line_id.account_id.type == 'other' and asset.move_line_id.account_id.user_type_code == 'asset'):
+                line_obj.create(cr, uid, {
+                    'asset_id': asset.id,
+                    'asset_bs_depreciation_account_id': bs_prod_account_id,
+                    'asset_pl_account_id': asset.move_line_id.account_id.id,
+                    'date': to_create[0][0],
+                    'amount': -1*asset.invo_value,
+                    'is_initial_line': True,
+                    'analytic_distribution_id': new_ad_id,
+                }, context=context)
 
         for line in to_create:
             line_obj.create(cr, uid, {
