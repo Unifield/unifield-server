@@ -267,7 +267,7 @@ class product_nomenclature(osv.osv):
             sql = """
                 SELECT n.id FROM product_nomenclature n 
                 LEFT JOIN ir_translation t ON t.lang = %(lang)s AND t.name = 'product.nomenclature,name' AND t.res_id = n.id
-                WHERE (t.value = %(nomen_name)s OR n.name = %(nomen_name)s)
+                WHERE (t.value ILIKE %(nomen_name)s OR n.name ILIKE %(nomen_name)s)
             """ + sql_parent
             cr.execute(sql, sql_cond)
             ids = [x[0] for x in cr.fetchall()]
