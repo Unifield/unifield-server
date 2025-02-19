@@ -81,8 +81,6 @@
             <field name="view_mode">tree,form</field>
         </record>
 
-        
-        <menuitem id="product.parent_product_reporting" parent="product_attributes.menu_main_product" name="Reporting" />
         <menuitem
             id="export_report_inconsistencies_menu"
             action="export_report_inconsistencies_action"

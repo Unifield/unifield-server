@@ -1120,5 +1120,7 @@ action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.act
             </field>
         </record>
 
+        <!-- Product Reporting -->
+        <menuitem id="product.parent_product_reporting" parent="product_attributes.menu_main_product" name="Reporting" />
     </data>
 </openerp>
