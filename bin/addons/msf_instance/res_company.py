@@ -113,9 +113,6 @@ class res_company(osv.osv):
             # Hide Stock & Pipe per Product and per Instance Report in Coordo and Project
             stock_pipe_report_menu_id = data_obj.get_object_reference(cr, uid, 'msf_tools', 'stock_pipe_per_product_instance_menu')[1]
             menu_obj.write(cr, uid, stock_pipe_report_menu_id, {'active': level == 'section'}, context=context)
-            # Hide Product Status Inconsistencies in Project
-            report_prod_inconsistencies_menu_id = data_obj.get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
-            menu_obj.write(cr, uid, report_prod_inconsistencies_menu_id, {'active': level != 'project'}, context=context)
             # Hide Consolidated Mission Stock Report in HQ and Project
             consolidated_sm_report_menu_id = data_obj.get_object_reference(cr, uid, 'mission_stock', 'consolidated_mission_stock_wizard_menu')[1]
             menu_obj.write(cr, uid, consolidated_sm_report_menu_id, {'active': level == 'coordo'}, context=context)

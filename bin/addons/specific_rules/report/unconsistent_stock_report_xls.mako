@@ -72,9 +72,9 @@
     <Column ss:AutoFitWidth="1" ss:Width="75" />
     # Product Description
     <Column ss:AutoFitWidth="1" ss:Width="200" />
-    # BN-management
+    # Batch Number Mandatory
     <Column ss:AutoFitWidth="1" ss:Width="60" />
-    # ED-management
+    # Expiry Date Mandatory
     <Column ss:AutoFitWidth="1" ss:Width="60" />
     # BN
     <Column ss:AutoFitWidth="1" ss:Width="100" />
@@ -91,8 +91,8 @@
     <Row ss:AutoFitHeight="1">
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">${_('BN-management')|x}</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">${_('ED-management')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Batch Number Mandatory')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Expiry Date Mandatory')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('BN')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('ED')|x}</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">${_('Quantity')|x}</Data></Cell>

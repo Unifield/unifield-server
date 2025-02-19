@@ -1180,6 +1180,11 @@
             <field name="method">us_13895_hide_import_generate_asset_menus</field>
         </record>
 
+        <!-- UF37.0 -->
+        <record id="us_11801_show_prod_status_inconsistencies" model="patch.scripts">
+            <field name="method">us_11801_show_prod_status_inconsistencies</field>
+        </record>
+
 
     </data>
 </openerp>

@@ -787,7 +787,7 @@ class stock_mission_report(osv.osv):
                 search_level = ('section', 'coordo')
             else:
                 # on Coordo we want to pregenerate Coordo and Project MSR
-                search_level = ('coordo', 'poject')
+                search_level = ('coordo',)  # Was initially ('coordo', 'poject')
             instance_obj = self.pool.get('msf.instance')
             instance_ids = instance_obj.search(cr, uid,
                                                [('level', 'in', search_level)],
@@ -894,7 +894,7 @@ class stock_mission_report(osv.osv):
                            context=context)
 
                 # Create one line by product
-                cr.execute('''SELECT p.id, ps.code, p.active, p.state_ud, pis.code
+                cr.execute('''SELECT p.id, ps.code, p.active, p.state_ud, pis.code, p.standard_ok
                               FROM product_product p
                               INNER JOIN product_template pt ON p.product_tmpl_id = pt.id
                               LEFT JOIN product_status ps on pt.state = ps.id
@@ -907,7 +907,7 @@ class stock_mission_report(osv.osv):
                                 AND p.id = smrl.product_id)
                             ''', (report['id'],))
                 if report['local_report']:  # We only generate lines for the current instance
-                    for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
+                    for product, prod_state, prod_active, prod_state_ud, prod_creator, standard_ok in cr.fetchall():
                         line_obj.create(cr, uid, {
                             'product_id': product,
                             'mission_report_id': report['id'],
@@ -915,6 +915,7 @@ class stock_mission_report(osv.osv):
                             'state_ud': prod_state_ud,
                             'international_status_code': prod_creator,
                             'product_state': prod_state or '',
+                            'standard_ok': standard_ok or '',
                             #'product_amc': product_values.get(product, {}).get('product_amc', 0),
                             #'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
                         }, context=context)
@@ -1061,7 +1062,8 @@ class stock_mission_report(osv.osv):
                         product_state=state.code,
                         product_active=prod.active,
                         international_status_code=international_status.code,
-                        state_ud=prod.state_ud
+                        state_ud=prod.state_ud,
+                        standard_ok=prod.standard_ok
                     from
                         product_product prod, product_template tmp, product_international_status international_status, product_status state
                     where
@@ -1069,7 +1071,7 @@ class stock_mission_report(osv.osv):
                         prod.id = line.product_id and
                         state.id = tmp.state and
                         international_status.id = prod.international_status and
-                        (line.product_state != state.code or line.product_active != prod.active or line.international_status_code!=international_status.code or line.state_ud!=prod.state_ud) and
+                        (line.product_state != state.code or line.product_active != prod.active or line.international_status_code!=international_status.code or line.state_ud!=prod.state_ud or line.standard_ok!=prod.standard_ok) and
                         line.mission_report_id = %s
                         returning line.id
                 ''', (report_id,))
@@ -1077,7 +1079,7 @@ class stock_mission_report(osv.osv):
             if line_to_touch:
                 cr.execute('''update ir_model_data set
                         last_modification=NOW(),
-                        touched='[''product_state'', ''product_active'', ''international_status_code'', ''state_ud'']'
+                        touched='[''product_state'', ''product_active'', ''international_status_code'', ''state_ud'', ''standard_ok'']'
                     where
                         model='stock.mission.report.line' and
                         module='sd' and
@@ -1237,6 +1239,7 @@ class stock_mission_report(osv.osv):
                         'opdd_qty': line.opdd_qty or 0.00,
                         'updated': True,
                         'product_state': line.product_id.state and line.product_id.state.code,
+                        'standard_ok': line.product_id.standard_ok,
                         'used_in_transaction': True
                     }
                     if move[6]:
@@ -1691,6 +1694,7 @@ class stock_mission_report_line(osv.osv):
             _fnct_migrate=is_migration,
         ),
         'product_state': fields.char(size=128, string='Unifield state'),
+        'standard_ok': fields.char(size=128, string='Standardization Level'),
         # mandatory nomenclature levels
         'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type', write_relate=False),
         'nomen_manda_1': fields.related('product_id', 'nomen_manda_1', type='many2one', relation='product.nomenclature', string='Group', write_relate=False),
@@ -1798,6 +1802,7 @@ class stock_mission_report_line(osv.osv):
         'opdd_qty': 0.00,
         'instance_id': _get_default_destination_instance_id,
         'product_state': '',
+        'standard_ok': '',
         'state_ud': '',
         'international_status_code': '',
     }

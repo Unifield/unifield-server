@@ -82,11 +82,12 @@
         </record>
 
         
+        <menuitem id="product.parent_product_reporting" parent="product_attributes.menu_main_product" name="Reporting" />
         <menuitem
             id="export_report_inconsistencies_menu"
             action="export_report_inconsistencies_action"
-            parent="object_query.menu_preferences"
-            sequence="53" />
+            parent="product.parent_product_reporting"
+            sequence="1" />
 
     </data>
 </openerp>
