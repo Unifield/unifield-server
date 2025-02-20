@@ -655,13 +655,19 @@ class product_asset(osv.osv):
         if context is None:
             context = {}
         je_obj = self.pool.get('account.move')
+        asset_line_obj = self.pool.get('product.asset.line')
         je_to_delete_ids = []
+        disposal_to_delete_id = []
         for asset in self.browse(cr, uid, ids, fields_to_fetch=['line_ids'], context=context):
             for depline in asset.line_ids:
                 if depline.move_id and depline.move_id.state == 'draft':  # draft = Unposted state
                     je_to_delete_ids.append(depline.move_id.id)
+                    if depline.is_disposal:
+                        disposal_to_delete_id.append(depline.id)
         if je_to_delete_ids:
             je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
+        if disposal_to_delete_id:
+            asset_line_obj.unlink(cr, uid, disposal_to_delete_id, context=context)
         return True
 
 
