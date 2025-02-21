@@ -22,14 +22,14 @@ list_sign = {
         ('tr', _('Technical Responsible'), True, 2),
         ('fr', _('Finance Responsible'), True, 3),
         ('mr', _('Mission Responsible'), False, 4),
-        ('hq', _('HQ'), False, 5),
+        ('hq', _('HQ Responsible'), False, 5),
     ],
     'sale.order.fo': [
         ('sr', _('Supply Responsible'), True, 1),
         ('tr', _('Technical Responsible'), True, 2),
         ('fr', _('Finance Responsible'), True, 3),
         ('mr', _('Mission Responsible'), False, 4),
-        ('hq', _('HQ'), False, 5),
+        ('hq', _('HQ Responsible'), False, 5),
     ],
     'sale.order.ir': [
         ('tr', _('Technical Responsible'), True, 1),
@@ -58,14 +58,19 @@ list_sign = {
         ('mr', _('Mission Responsible'), False, 1),
     ],
     'stock.picking.in': [
-        ('tr', _('Receiver'), True, 1),
-        ('sr', _('Controller'), True, 2),
+        ('tr', _('Received by'), True, 1),
+        ('sr', _('Controlled by'), True, 2),
+    ],
+    'stock.picking.int': [
+        ('tr', _('Approved by'), True, 1),
+        ('sr', _('Storekeeper'), True, 2),
+        ('fr', _('Received by'), True, 3),
     ],
     'stock.picking.out': [
         ('sr', _('Approved by'), True, 1),
         ('tr', _('Logistic / Supply'), True, 1),
         ('fr', _('Storekeeper'), True, 1),
-        ('mr', _('Receiver'), True, 1),
+        ('mr', _('Received by'), True, 1),
     ],
     'stock.picking.pick': [
         ('sr', _('Approved by'), True, 1),
@@ -74,8 +79,8 @@ list_sign = {
     ],
     'physical.inventory': [
         ('wr', _('Warehouse Responsible'), True, 1),
-        ('sr', _('Supply Responsible'), True, 1),
-        ('so', _('Stock Owner'), True, 1),
+        ('sr', _('Supply Responsible'), True, 2),
+        ('so', _('Stock Owner'), True, 3),
     ],
 }
 
@@ -129,11 +134,14 @@ class signature(osv.osv):
             ret[_id] = available
         return ret
 
-    def _get_allowed_to_be_signed_unsigned(self, cr, uid, ids, *a, **b):
+    def _get_allowed_to_be_signed_unsigned(self, cr, uid, ids, field_name, args, context=None):
         '''
         Check if signature and un-signature is permitted on the document.
-        For FO/IR/PO, only draft and validated documents. No restrictions on others
+        For FO/IR/PO, only draft and validated documents. For PI, only validated and confirmed documents.
+        No restrictions on others
         '''
+        if context is None:
+            context = {}
         if isinstance(ids, int):
             ids = [ids]
 
@@ -141,8 +149,11 @@ class signature(osv.osv):
         for sign in self.read(cr, uid, ids, ['signature_res_model', 'signature_res_id']):
             allow = True
             model_obj = self.pool.get(sign['signature_res_model'])
-            if sign['signature_res_model'] in ('sale.order', 'purchase.order') and sign['signature_res_id'] and \
-                    model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] not in ('draft', 'draft_p', 'validated', 'validated_p'):
+            if (sign['signature_res_model'] in ('sale.order', 'purchase.order') and sign['signature_res_id'] and
+                    model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] not in ('draft', 'draft_p', 'validated', 'validated_p'))\
+                    or (sign['signature_res_model'] == 'physical.inventory' and sign['signature_res_id'] and
+                        model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] not in ('validated', 'confirmed') and
+                        not context.get('pi_cancel_reset')):
                 allow = False
             res[sign['id']] = allow
         return res
@@ -428,7 +439,7 @@ class signature_object(osv.osv):
         if vals and 'signature_line_ids' not in vals and \
                 (list_sign.get(self._name) or self._name in ['account.bank.statement', 'sale.order', 'stock.picking']) and \
                 self.pool.get('unifield.setup.configuration').get_config(cr, uid, 'signature') and \
-                (self._name != 'stock.picking' or self._name == 'stock.picking' and vals.get('type') in ['in', 'out'] and
+                (self._name != 'stock.picking' or self._name == 'stock.picking' and vals.get('type') in ['in', 'internal', 'out'] and
                  vals.get('subtype', False) in ['standard', 'picking', False]):
 
             line_obj = self.pool.get('signature.line')
@@ -456,7 +467,9 @@ class signature_object(osv.osv):
                 elif self._name == 'sale.order':
                     key = 'sale.order.%s' % (obj.procurement_request and 'ir' or 'fo')
                 elif self._name == 'stock.picking':
-                    key = 'stock.picking.%s' % (obj.type == 'out' and (obj.subtype == 'picking' and 'pick' or 'out') or 'in')
+                    key = 'stock.picking.%s' \
+                          % (obj.type == 'out' and (obj.subtype == 'picking' and 'pick' or 'out')
+                             or obj.type == 'internal' and 'int' or 'in')
                 else:
                     key = self._name
 
@@ -511,6 +524,28 @@ class signature_object(osv.osv):
             self.pool.get('signature.line').super_action_unsign(cr, uid, to_unsign, context=context)
 
         self.write(cr, uid, ids, {'doc_locked_for_sign': False}, context=context)
+
+        return True
+
+    def unsign_all(self, cr, uid, ids, context=None):
+        """
+        Unsign the signed lines
+        """
+        if not ids:
+            return True
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        to_unsign = []
+        for doc in self.browse(cr, uid, ids, fields_to_fetch=['signature_line_ids'], context=context):
+            for line in doc.signature_line_ids:
+                if line.signed:
+                    to_unsign.append(line.id)
+        if to_unsign:
+            # disable check if button has BAR (i.e: uid.realUid exists)
+            self.pool.get('signature.line').action_unsign(cr, uid, to_unsign, context=context, check_ur=not hasattr(uid, 'realUid'), check_super_unsign=True)
 
         return True
 
@@ -1269,7 +1304,9 @@ class signature_setup(osv.osv_memory):
                         cond = "account_invoice o where o.signature_id is not null and o.real_doc_type in ('donation', 'si') or (o.real_doc_type is null and o.type='in_invoice' and o.is_direct_invoice='f' and o.is_inkind_donation='f' and o.is_debit_note='f' and o.is_intermission='f') or (o.real_doc_type is null and o.type='in_invoice' and o.is_debit_note='f' and o.is_inkind_donation='t')"
                     elif obj.startswith('stock.picking'):
                         obj_type, obj_subtype = 'in', 'standard'
-                        if obj.split('.')[-1] == 'pick':
+                        if obj.split('.')[-1] == 'int':
+                            obj_type = 'internal'
+                        elif obj.split('.')[-1] == 'pick':
                             obj_type, obj_subtype = 'out', 'picking'
                         elif obj.split('.')[-1] == 'out':
                             obj_type = 'out'

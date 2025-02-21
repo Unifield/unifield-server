@@ -58,6 +58,36 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF37.0
+    def us_12270_13064_13353_sign_roles_and_int_sign(self, cr, uid, *a, **b):
+        '''
+        In the existing signature lines, change the "HQ" role into "HQ Responsible" for FO/PO, and change the
+        "Controller" and "Receiver" roles into "Controlled by" and "Received by"
+        Create the signature lines on existing INTs
+        '''
+        cr.execute("""
+            UPDATE signature_line sl SET name = 'HQ Responsible' FROM signature s 
+                WHERE sl.signature_id = s.id AND s.signature_res_model IN ('sale.order', 'purchase.order') AND sl.name = 'HQ'
+        """)
+        self.log_info(cr, uid, "US-12270-13064-13353: %s signature line's roles were updated to 'HQ Responsible'" % (cr.rowcount,))
+        cr.execute("""
+            UPDATE signature_line sl SET name = 'Controlled by' FROM signature s 
+                WHERE sl.signature_id = s.id AND s.signature_res_model = 'stock.picking' AND sl.name = 'Controller'
+        """)
+        self.log_info(cr, uid, "US-12270-13064-13353: %s signature line's roles were updated to 'Controlled by'" % (cr.rowcount,))
+        cr.execute("""
+            UPDATE signature_line sl SET name = 'Received by' FROM signature s 
+                WHERE sl.signature_id = s.id AND s.signature_res_model = 'stock.picking' AND sl.name = 'Receiver'
+        """)
+        self.log_info(cr, uid, "US-12270-13064-13353: %s signature line's roles were updated to 'Received by'" % (cr.rowcount,))
+
+        # To create signature lines on existing documents, the header signature was added with US-9406
+        setup_obj = self.pool.get('signature.setup')
+        sign_install = setup_obj.create(cr, uid, {})
+        setup_obj.execute(cr, uid, [sign_install])
+
+        return True
+
     # UF36.0
     def us_13755_13788_remove_columns_res_users(self, cr, uid, *a, **b):
         '''
