@@ -520,6 +520,11 @@ class PhysicalInventory(osv.osv):
         return self.resolve_discrepancies_anomalies(cr, uid, inventory_id, context=context)
 
     def re_generate_discrepancies(self, cr, uid, inventory_ids, context=None):
+        # Prevent the action if the signature is closed
+        for inv in self.read(cr, uid, inventory_ids, ['signature_id', 'signature_available', 'signature_is_closed'], context=context):
+            if inv['signature_id'] and inv['signature_available'] and inv['signature_is_closed']:
+                raise osv.except_osv(_('Error'), _('You can not re-generate the discrepancies if the signature has been closed'))
+
         # Unsign the signed lines
         self.unsign_all(cr, uid, inventory_ids, context=context)
 
@@ -1133,14 +1138,18 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
             context = {}
         discrep_line_obj = self.pool.get('physical.inventory.discrepancy')
 
+        # Remove discrepancies and reset discrepancies_generated boolean
+        ftf = ['discrepancy_line_ids', 'signature_id', 'signature_available', 'signature_is_closed']
+        for inv in self.read(cr, uid, ids, ftf, context=context):
+            # Prevent the action if the signature is closed
+            if inv['signature_id'] and inv['signature_available'] and inv['signature_is_closed']:
+                raise osv.except_osv(_('Error'), _('You can not recount if the signature has been closed'))
+            if inv['discrepancy_line_ids']:
+                discrep_line_obj.unlink(cr, uid, inv['discrepancy_line_ids'], context=context)
+
         # Unsign the signed lines
         self.unsign_all(cr, uid, ids, context=context)
 
-        # Remove discrepancies and reset discrepancies_generated boolean
-        for inv_id in ids:
-            discrep_line_ids = discrep_line_obj.search(cr, uid, [('inventory_id', '=', inv_id)], context=context)
-            if len(discrep_line_ids) > 0:
-                discrep_line_obj.unlink(cr, uid, discrep_line_ids, context=context)
         self.write(cr, uid, ids, {'state': 'counting', 'discrepancies_generated': False}, context=context)
         return {}
 
@@ -1373,18 +1382,22 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
 
     def action_cancel_draft(self, cr, uid, ids, context=None):
         """ Cancels the stock move and change inventory state to draft."""
+        ftf = ['move_ids', 'location_id', 'signature_id', 'signature_available', 'signature_is_closed']
+        for inv in self.read(cr, uid, ids, ftf, context=context):
+            # Prevent the action if the signature is closed
+            if inv['signature_id'] and inv['signature_available'] and inv['signature_is_closed']:
+                raise osv.except_osv(_('Error'), _('You can not reset to Draft if the signature has been closed'))
+            if inv['location_id']:
+                loc = self.pool.get('stock.location').read(cr, uid, inv['location_id'][0], ['name', 'active'], context=context)
+                if not loc['active']:
+                    raise osv.except_osv(_('Warning'), _("Location %s is inactive") % (loc['name'],))
+            self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
+
         # Unsign the signed lines
         context['pi_cancel_reset'] = True
         self.unsign_all(cr, uid, ids, context=context)
         if 'pi_cancel_reset' in context:
             context.pop('pi_cancel_reset')
-
-        for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
-            self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
-
-        for inv in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
-            if not inv.location_id.active:
-                raise osv.except_osv(_('Warning'), _("Location %s is inactive") % (inv.location_id.name,))
 
         self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False}, context=context)
         return {}
