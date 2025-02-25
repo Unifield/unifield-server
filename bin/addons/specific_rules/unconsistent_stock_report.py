@@ -524,11 +524,11 @@ class unconsistent_stock_report(osv.osv):
 
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         if company and company.instance_id:
-            instance_code = ' ' + company.instance_id.instance
+            instance_code = '_' + company.instance_id.instance
         else:
             instance_code = ''
         current_date = datetime.datetime.today().strftime('%Y_%m_%d_%H_%M')
-        filename = 'BN_ED_inconsistencies_report_%s_%s' % (instance_code, current_date)
+        filename = 'BN_ED_inconsistencies_report%s_%s' % (instance_code, current_date)
         data = {'ids': ids, 'context': context, 'target_filename': filename}
         return {
             'type': 'ir.actions.report.xml',
