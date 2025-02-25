@@ -126,7 +126,7 @@ class export_report_inconsistencies(osv.osv):
 
         # export datas :
         report_name = "inconsistencies.xls"
-        attachment_name = "inconsistencies_report_%s.xls" % time.strftime('%Y_%m_%d_%H_%M')
+        attachment_name = "Product_Status_inconsistencies_report_%s.xls" % time.strftime('%Y_%m_%d_%H_%M')
         rp_spool = report_spool()
         res_export = rp_spool.exp_report(cr.dbname, uid, report_name, report_ids, datas, context)
         file_res = {'state': False}

@@ -516,7 +516,7 @@ class unconsistent_stock_report(osv.osv):
         Retrieve the data and print the report in Excel format.
         '''
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
-            'file_name': 'Unconsistent stock report',
+            'file_name': 'BN_ED_inconsistencies_report',
             'report_name': 'unconsistent.stock.report_xls',
         }, context=context)
         context['background_id'] = background_id
@@ -528,7 +528,7 @@ class unconsistent_stock_report(osv.osv):
         else:
             instance_code = ''
         current_date = datetime.datetime.today().strftime('%Y_%m_%d_%H_%M')
-        filename = 'Unconsistent stock report %s %s' % (instance_code, current_date)
+        filename = 'BN_ED_inconsistencies_report_%s_%s' % (instance_code, current_date)
         data = {'ids': ids, 'context': context, 'target_filename': filename}
         return {
             'type': 'ir.actions.report.xml',
