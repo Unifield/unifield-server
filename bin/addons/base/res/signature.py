@@ -176,6 +176,26 @@ class signature(osv.osv):
             res[sign['id']] = allow
         return res
 
+    def _get_allowed_to_be_closed(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Check if the signature can be closed on the document.
+        For PI, only confirmed and closed documents. No restrictions on others
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, int):
+            ids = [ids]
+
+        res = {}
+        for sign in self.read(cr, uid, ids, ['signature_res_model', 'signature_res_id']):
+            allow = True
+            model_obj = self.pool.get(sign['signature_res_model'])
+            if sign['signature_res_model'] == 'physical.inventory' and sign['signature_res_id'] and \
+                    model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] != 'confirmed':
+                allow = False
+            res[sign['id']] = allow
+        return res
+
     _columns = {
         'signature_line_ids': fields.one2many('signature.line', 'signature_id', 'Lines'),
         'signature_res_model': fields.char('Model', size=254, select=1),
@@ -188,6 +208,7 @@ class signature(osv.osv):
         'signature_closed_user': fields.many2one('res.users', 'Closed by', readonly=1),
         'allowed_to_be_signed_unsigned': fields.function(_get_allowed_to_be_signed_unsigned, type='boolean', string='Allowed to be signed/un-signed', method=1),
         'allowed_to_be_locked': fields.function(_get_allowed_to_be_locked, type='boolean', string='Allowed to be locked', method=1),
+        'allowed_to_be_closed': fields.function(_get_allowed_to_be_closed, type='boolean', string='Allowed to be closed', method=1),
         'doc_locked_for_sign': fields.boolean('Document is locked because of signature', readonly=True),
     }
 
@@ -273,19 +294,6 @@ class signature_object(osv.osv):
     _columns = {
         'signature_id': fields.many2one('signature', 'Signature', required=True, ondelete='cascade'),
     }
-
-    def action_close_signature_pi(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-
-        signl_obj = self.pool.get('signature.line')
-        for inv in self.read(cr, uid, ids, ['signature_id', 'signature_available', 'signed_off_line'], context=context):
-            if inv['signature_id'] and inv['signature_available'] and not inv['signed_off_line'] and \
-                    len(signl_obj.search(cr, uid, [('signature_id', '=', inv['signature_id'][0]), ('name_key', 'in', ['wr', 'sr']),
-                                                   ('is_active', '=', True), ('signed', '=', True)], context=context)) != 2:
-                raise osv.except_osv(_('Error'), _('Both the Warehouse and Supply Responsible roles must be signed in order to close the signature'))
-
-        return self.action_close_signature(cr, uid, ids, context=context)
 
     def action_close_signature(self, cr, uid, ids, context=None):
         _register_log(self, cr, uid, ids, self._name, 'Close Signature', False, True, 'write', context)
