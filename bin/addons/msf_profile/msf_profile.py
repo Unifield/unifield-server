@@ -58,15 +58,6 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-    # UF37.0
-    def us_11801_show_prod_status_inconsistencies(self, cr, uid, *a, **b):
-        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
-        if not instance or instance.level != 'project':
-            return True
-        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
-        self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': True}, context={})
-        return True
-
     # UF36.0
     def us_13755_13788_remove_columns_res_users(self, cr, uid, *a, **b):
         '''
@@ -2932,7 +2923,7 @@ class patch_scripts(osv.osv):
         instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if not instance:
             return True
-        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'export_report_inconsistencies_menu')[1]
+        report_prod_inconsistencies_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'export_report_inconsistencies_menu')[1]
         self.pool.get('ir.ui.menu').write(cr, uid, report_prod_inconsistencies_menu_id, {'active': instance.level != 'project'}, context={})
         return True
 
