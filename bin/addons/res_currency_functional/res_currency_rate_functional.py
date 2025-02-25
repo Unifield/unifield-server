@@ -120,13 +120,13 @@ class res_currency_rate_functional(osv.osv):
             old_rates[rate_id]['rate'] = rate['rate']
             old_rates[rate_id]['date'] = rate['name']
         res = super(res_currency_rate_functional, self).write(cr, uid, ids, vals, context)
-        if 'name' in vals:
+        if 'name' in vals or 'rate' in vals:
             for r_id in ids:
-                date_changed = vals['name'] != old_rates[r_id]['date']
+                date_changed = 'name' in vals and vals['name'] != old_rates[r_id]['date']
                 # check if the rate has changed (rates in Unifield have an accuracy of 6 digits after the comma)
                 rate_changed = 'rate' in vals and abs(vals['rate'] - old_rates[r_id]['rate']) > 10**-7
                 if date_changed or rate_changed:
-                    date_for_recompute = vals['name']
+                    date_for_recompute = vals.get('name') or old_rates[r_id]['date']
                     if date_changed:
                         # use the earliest date for the re-computation
                         date_for_recompute = old_rates[r_id]['date'] < vals['name'] and old_rates[r_id]['date'] or vals['name']
