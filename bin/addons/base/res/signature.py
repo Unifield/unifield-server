@@ -191,7 +191,7 @@ class signature(osv.osv):
             allow = True
             model_obj = self.pool.get(sign['signature_res_model'])
             if sign['signature_res_model'] == 'physical.inventory' and sign['signature_res_id'] and \
-                    model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] != 'confirmed':
+                    model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] not in ('confirmed', 'closed'):
                 allow = False
             res[sign['id']] = allow
         return res
