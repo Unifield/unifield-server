@@ -295,6 +295,19 @@ class signature_object(osv.osv):
         'signature_id': fields.many2one('signature', 'Signature', required=True, ondelete='cascade'),
     }
 
+    def action_close_signature_pi(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        signl_obj = self.pool.get('signature.line')
+        for inv in self.read(cr, uid, ids, ['signature_id', 'signature_available', 'signed_off_line'], context=context):
+            if inv['signature_id'] and inv['signature_available'] and not inv['signed_off_line'] and \
+                    len(signl_obj.search(cr, uid, [('signature_id', '=', inv['signature_id'][0]), ('name_key', 'in', ['wr', 'sr']),
+                                                   ('is_active', '=', True), ('signed', '=', True)], context=context)) != 2:
+                raise osv.except_osv(_('Error'), _('Both the Warehouse and Supply Responsible roles must be signed in order to close the signature'))
+
+        return self.action_close_signature(cr, uid, ids, context=context)
+
     def action_close_signature(self, cr, uid, ids, context=None):
         _register_log(self, cr, uid, ids, self._name, 'Close Signature', False, True, 'write', context)
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
