@@ -1121,7 +1121,7 @@ action = self.view_docs_with_product(cr, uid, ids, menu_action='msf_outgoing.act
         </record>
 
         <!-- Product Reporting -->
-        <menuitem id="product.parent_product_reporting" parent="product_attributes.menu_main_product" name="Reporting" />
+        <menuitem id="product.parent_product_reporting" parent="product_attributes.menu_main_product" name="Reporting" sequence="11" />
 
         <record id="export_report_inconsistencies_action" model="ir.actions.act_window">
             <field name="name">Product Status Inconsistencies</field>
