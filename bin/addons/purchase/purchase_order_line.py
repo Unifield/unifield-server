@@ -922,6 +922,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         po_info = {}
+        missing_ad_lines = []
         for pol in self.browse(cr, uid, ids, context=context):
             po = pol.order_id
             if po.id not in po_info:
@@ -940,8 +941,12 @@ class purchase_order_line(osv.osv):
                 # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
                 if po.order_type in ('loan', 'loan_return', 'donation_st', 'donation_exp', 'in_kind') or po.push_fo:
                     return True
-                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
-                                     % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
+
+                # To display a single error when multiple lines have no AD
+                ad_pol_tuple = [pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or '']
+                if ad_pol_tuple not in missing_ad_lines:
+                    missing_ad_lines.append(ad_pol_tuple)
+                continue
 
             elif pol.analytic_distribution_state != 'valid':
                 id_ad = ad_obj.create(cr, uid, {})
@@ -970,10 +975,9 @@ class purchase_order_line(osv.osv):
                     'partner_type': pol.order_id.partner_id.partner_type,
                 })
 
-
             # check that the analytic accounts are active. Done at the end to use the newest AD of the pol (to re-browse)
             if po.partner_id.partner_type in ('section', 'intermission', 'internal') and \
-                    ( pol.state in ('validated', 'sourced_sy', 'sourced_v') or pol.state == 'draft' and pol.created_by_sync):
+                    (pol.state in ('validated', 'sourced_sy', 'sourced_v') or pol.state == 'draft' and pol.created_by_sync):
                 # do not check on po line confirmation from instance
                 continue
 
@@ -985,6 +989,15 @@ class purchase_order_line(osv.osv):
                 else:
                     prefix = _("Analytic Distribution at header level:\n")
                 ad_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix, from_supply=True)
+
+        if missing_ad_lines:
+            if len(missing_ad_lines) == 1:
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                                     % (missing_ad_lines[0][0], missing_ad_lines[0][1], missing_ad_lines[0][2]))
+            else:
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is missing for the lines %s. It must be added manually')
+                                     % (', '.join([str(missing_ad_line[1]) for missing_ad_line in missing_ad_lines]),))
+
         return True
 
 
@@ -2162,7 +2175,6 @@ class purchase_order_line(osv.osv):
                     'res_id': wiz_id,
                     'context': context}
 
-
     def create_or_update_commitment_voucher(self, cr, uid, ids, context=None):
         '''
         Update commitment voucher with current PO lines
@@ -2175,6 +2187,7 @@ class purchase_order_line(osv.osv):
         msf_pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
 
         import_commitments = self.pool.get('unifield.setup.configuration').get_config(cr, uid).import_commitments
+        missing_ad_lines = []
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.order_id.partner_id.partner_type == 'internal':
                 return False
@@ -2214,8 +2227,11 @@ class purchase_order_line(osv.osv):
                 ad_header = pol.order_id.analytic_distribution_id.cost_center_lines
 
             if not cc_lines and not ad_header:
-                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
-                                     % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
+                # To display a single error when multiple lines have no AD
+                ad_pol_tuple = [pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or '']
+                if ad_pol_tuple not in missing_ad_lines:
+                    missing_ad_lines.append(ad_pol_tuple)
+                continue
 
             new_cv_line = False
             if cv_version > 1:
@@ -2292,6 +2308,14 @@ class purchase_order_line(osv.osv):
                         'distribution_id': distrib_id,
                         'percentage': (current_add[key] / new_amount) * 100,
                     }, context=context)
+
+        if missing_ad_lines:
+            if len(missing_ad_lines) == 1:
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                                     % (missing_ad_lines[0][0], missing_ad_lines[0][1], missing_ad_lines[0][2]))
+            else:
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is missing for the lines %s. It must be added manually')
+                                     % (', '.join([str(missing_ad_line[1]) for missing_ad_line in missing_ad_lines]),))
 
         return True
 

@@ -146,6 +146,9 @@
                             <p id="nr_lines" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                 <translate>WARNING: Order line(s) not synchronized, code(s) does not exist</translate>
                             </p>
+                            <p id="msg_ad_lines_missing" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                <translate>WARNING: Analytic allocation is missing for the lines </translate>
+                            </p>
                             <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
                             <script language="javascript">
                                 var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
@@ -157,6 +160,11 @@
                                 var has_nr = $('#nb_creation_message_nr').val() || $('#nb_creation_message_nr').text();
                                 if (has_nr &amp;&amp; has_nr!= '0') {
                                     $('#nr_lines').show();
+                                }
+                                var has_ad_lines_missing = $('#ad_lines_missing_message').val() || $('#ad_lines_missing_message').text();
+                                if (has_ad_lines_missing) {
+                                    $('#msg_ad_lines_missing').append(has_ad_lines_missing);
+                                    $('#msg_ad_lines_missing').show();
                                 }
                                 var alert_msl_mml = $('#alert_msl_mml').val() || $('#alert_msl_mml').text();
                                 if (alert_msl_mml) {
@@ -176,6 +184,7 @@
                         <field name="shipped" invisible="1"/>
                         <field name="msg_big_qty" invisible="1"/>
                         <field name="nb_creation_message_nr" invisible="1"/>
+                        <field name="ad_lines_missing_message" invisible="1"/>
                         <field name="internal_type" invisible="1"/>
                         <field name="picked_rate" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>

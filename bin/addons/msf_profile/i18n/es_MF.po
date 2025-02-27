@@ -38452,12 +38452,6 @@ msgstr "Composition List"
 msgid "CFT"
 msgstr "Anuncio de licitación"
 
-#. module: analytic_distribution_supply
-#: code:addons/analytic_distribution_supply/sale.py:147
-#, python-format
-msgid "Analytic distribution is mandatory for this line: %s!"
-msgstr "¡La distribución analítica es obligatoria para esta línea: %s!"
-
 #. module: msf_audittrail
 #: help:audittrail.rule,log_action:0
 msgid "Select this if you want to keep track of actions on the object of this rule"

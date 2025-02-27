@@ -654,6 +654,29 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return ret
 
+    def _get_ad_lines_missing_message(self, cr, uid, ids, name, arg, context=None):
+        if not ids:
+            return {}
+
+        res = {}
+        for _id in ids:
+            res[_id] = 0
+
+        cr.execute("""
+            SELECT s.id, array_agg(DISTINCT(sl.line_number)) FROM sale_order_line sl, sale_order s 
+            WHERE sl.order_id = s.id AND s.analytic_distribution_id IS NULL AND sl.analytic_distribution_id IS NULL 
+                AND s.id IN %s
+            GROUP BY s.id
+        """, (tuple(ids),))
+        for x in cr.fetchall():
+            no_ad_lines = ', '.join(['%s' % (l,) for l in x[1][:20]])
+            if len(x[1]) > 20:
+                no_ad_lines += _(' and more')
+            no_ad_lines += _('. It must be added manually')
+            res[x[0]] = no_ad_lines
+
+        return res
+
     def _get_fake(self, cr, uid, ids, name, args, context=None):
         '''
         Fake method for 'product_id' field
@@ -783,6 +806,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
         'nb_creation_message_nr': fields.function(_get_nb_creation_message_nr, type='integer', method=1, string='Number of NR creation messages'),
+        'ad_lines_missing_message': fields.function(_get_ad_lines_missing_message, type='char', size=1024, method=1, string='Line number of lines missing AD'),
         'alert_msl_mml': fields.function(_get_header_msl_mml_alert, method=True, type='char', string="Contains non-conform MML/MSL"),
     }
 
