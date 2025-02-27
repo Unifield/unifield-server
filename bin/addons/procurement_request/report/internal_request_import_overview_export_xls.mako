@@ -190,7 +190,7 @@
         %endif
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Requested Date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Requested Delivery Date')}</Data></Cell>
         % if isDate(o.in_requested_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.in_requested_date | n}T00:00:00.000</Data></Cell>
         % else:

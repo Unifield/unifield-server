@@ -141,7 +141,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInfoBold">Requested date:</para>
+                    <para style="TextInfoBold">Requested Delivery date:</para>
                 </td>
                 <td>
                     <para style="TextInfoLeft">[[ formatLang(objects[0].requested_date, date=True) ]]</para>
@@ -152,7 +152,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInfoBold">Confirmed date:</para>
+                    <para style="TextInfoBold">Confirmed Delivery date:</para>
                 </td>
                 <td>
                     <para style="TextInfoLeft">[[ formatLang((objects[0].confirmed_date, date=True) ]]</para>
