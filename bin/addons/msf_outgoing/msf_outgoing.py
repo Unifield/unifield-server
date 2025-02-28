@@ -414,7 +414,7 @@ class shipment(osv.osv):
                                      'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
         }),
         'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals', fnct_search=_search_backshipment_id),
-        'parent_id': fields.many2one('shipment', string='Parent shipment'),
+        'parent_id': fields.many2one('shipment', string='Parent shipment', select=1),
         # TODO check if really deprecated ?
         'invoice_id': fields.many2one('account.invoice', string='Related invoice (deprecated)'),
         'additional_items_ids': fields.one2many('shipment.additionalitems', 'shipment_id', string='Additional Items'),

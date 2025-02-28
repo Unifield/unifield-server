@@ -52,5 +52,31 @@
           <field name="code">CIF</field>
         </record>
 
+        <record id="seq_type_transport_in" model="ir.sequence.type">
+            <field name="name">Inbound Transport</field>
+            <field name="code">transport.order.in</field>
+        </record>
+
+        <record id="seq_transport_in" model="ir.sequence">
+            <field name="name">Inbound Transport</field>
+            <field name="code">transport.order.in</field>
+            <field name="prefix">%(y)s/%(hqcode)s/%(instance)s/ITO</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
+        </record>
+
+        <record id="seq_type_transport_out" model="ir.sequence.type">
+            <field name="name">Outbound Transport</field>
+            <field name="code">transport.order.out</field>
+        </record>
+
+        <record id="seq_transport_out" model="ir.sequence">
+            <field name="name">Outbound Transport</field>
+            <field name="code">transport.order.out</field>
+            <field name="prefix">%(y)s/%(hqcode)s/%(instance)s/OTO</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
+        </record>
+
     </data>
 </openerp>

@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<openerp>
+    <data>
+        <record id="transport_order_in_planned_action" model="ir.actions.act_window">
+            <field name="name">Planned Inbound Cargo</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.in</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', '=', 'planned')]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="transport_order_in_preclearance_action" model="ir.actions.act_window">
+            <field name="name">Inbound Cargo Under Pre Clearance</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.in</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', 'in', ['preclearance', 'transit'])]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="transport_order_in_waiting_action" model="ir.actions.act_window">
+            <field name="name">Inbound Cargo Awaiting Parcel Reception</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.in</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', 'in', ['border', 'customs', 'warehouse'])]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="transport_order_out_planned_action" model="ir.actions.act_window">
+            <field name="name">Planned Outbound Cargo</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.out</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', '=', 'planned')]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="transport_order_out_transit_action" model="ir.actions.act_window">
+            <field name="name">Outbound Cargo in Transit</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.out</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="domain">[('state', '=', 'dispatched')]</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="board_transportation_form" model="ir.ui.view">
+            <field name="name">board.transportation.form</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="priority">200</field>
+            <field name="arch" type="xml">
+                <form />
+            </field>
+        </record>
+
+
+        <record id="board_transportation" model="ir.actions.act_window">
+            <field name="name">Transportation Dashboard</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="usage">menu</field>
+            <field name="view_id" ref="board_transportation_form"/>
+        </record>
+
+
+        <menuitem icon="terp-purchase" id="menu_transportation_root" name="Transportation" sequence="5" web_icon="images/purchases.png" web_icon_hover="images/purchases-hover.png" action="board_transportation"/>
+        <menuitem id="menu_transport_management" name="Transport Management" parent="menu_transportation_root" />
+
+        <record id="transport_order_in_search" model="ir.ui.view">
+            <field name="name">transport_order_in_search</field>
+            <field name="model">transport.order.in</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Inbound Transport Object">
+                    <group col="8" colspan="4">
+                        <filter icon="terp-document-new" name="planned" string="Planned" domain="[('state', '=', 'planned')]" />
+                        <filter icon="terp-check" name="under_preclearance" string="Under Preclearance" domain="[('state', '=', 'preclearance')]" />
+                        <filter icon="gtk-media-forward" name="in_transit" string="In Transit" domain="[('state', '=', 'transit')]" />
+                        <filter icon="gtk-goto-last" name="at_border" string="At Border" domain="[('state', '=', 'border')]" />
+                        <filter icon="gtk-paste-v" name="customs_cleared" string="Customs Cleared" domain="[('state', '=', 'customs')]" />
+                        <filter icon="gtk-home" name="at_warehouse" string="At Warehouse" domain="[('state', '=', 'warehouse')]" />
+                        <filter icon="gtk-close" name="closed" string="Closed" domain="[('state', '=', 'closed')]" />
+                        <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', '=', 'cancel')]" />
+                        <separator orientation="vertical"/>
+                        <newline />
+                        <field name="name" />
+                        <field name="supplier_partner_id" string="Supplier" />
+                        <field name="customer_partner_id" string="Customer"/>
+                        <field name="transport_partner_id" />
+                        <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
+                        <field name="incoming_search"  />
+                        <field name="transport_po_id" />
+                        <field name="cargo_category" />
+                        <field name="arrival_planned_date" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="transport_order_in_tree" model="ir.ui.view">
+            <field name="name">transport_order_in_tree</field>
+            <field name="model">transport.order.in</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Inbound Transport Object">
+                    <field name="name" />
+                    <field name="supplier_partner_id" string="Supplier" />
+                    <field name="customer_partner_id" string="Customer"/>
+                    <field name="transport_partner_id" />
+                    <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
+                    <!-- <field name="incoming_id" string="Incoming Shipment Reference" /> -->
+                    <field name="transport_po_id" />
+                    <field name="cargo_category" />
+                    <field name="arrival_planned_date" />
+                    <field name="details"  truncate="50"/>
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="transport_order_in_from" model="ir.ui.view">
+            <field name="name">transport_order_in_form</field>
+            <field name="model">transport.order.in</field>
+            <field name="type">form</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <form string="Inbound Transport Object">
+                    <field name="name" />
+                    <field name="original_cargo_ref" />
+                    <field name="shipment_type" />
+                    <field name="shipment_flow" />
+                    <field name="zone_type" />
+                    <field name="cargo_category" />
+                    <field name="creation_date" />
+                    <field name="ship_ref" />
+                    <field name="details" />
+                    <notebook colspan="4">
+                        <page string="Transport Object">
+                            <group colspan="4" col="8">
+                            <separator colspan="4" string="Transporter" />
+                            <separator colspan="4" string="Shipping" />
+                                <field name="transport_partner_id" />
+                                <field name="transport_mode" />
+                                <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)"/>
+                                <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id)]" />
+                            <separator colspan="4" string="Transit" />
+                            <separator colspan="4" string="Customer" />
+                                <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
+                                <field name="transit_address_id" domain="[('partner_id', '=', transit_address_id)]"/>
+                                <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)"/>
+                                <field name="customer_address_id" domain="[('partner_id', '=', customer_address_id)]"/>
+                                <group colspan="2" col="4">
+                                    <field name="departure_date" />
+                                    <field name="arrival_planned_date" />
+                                </group>
+                                <field name="transport_po_id" />
+                                <field name="incoterm_type" />
+                                <field name="incoterm_location" />
+                                <field name="notify_partner_id" />
+                            </group>
+                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}">
+                                <tree string="Lines" editable="top">
+                                    <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')])]" on_change="change_incoming(incoming_id)"/>
+                                    <field name="description" attrs="{'readonly': [('incoming_id', '!=', False)]}"/>
+                                    <field name="parcels_nb" />
+                                    <field name="volume" />
+                                    <field name="weight" />
+                                    <field name="kc" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
+                                    <field name="dg" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
+                                    <field name="cs" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
+                                </tree>
+
+                            </field>
+                        </page>
+
+                        <page string="Cargo">
+                        </page>
+
+                        <page string="Customs">
+                        </page>
+
+                        <page string="Notes">
+                            <field name="notes" nolabel="1" colspan="4" />
+                        </page>
+
+                    </notebook>
+                    <field name="state" />
+                </form>
+            </field>
+        </record>
+
+
+        <record id="transport_order_in_action" model="ir.actions.act_window">
+            <field name="name">Inbound Transport Object</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.in</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem action="transport_order_in_action" id="transport_order_in_menu" parent="menu_transport_management" sequence="6"/>
+
+
+        <record id="transport_order_out_search" model="ir.ui.view">
+            <field name="name">transport_order_out_search</field>
+            <field name="model">transport.order.out</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Outound Transport Object">
+                    <group col="8" colspan="4">
+                        <filter icon="terp-document-new" name="planned" string="Planned" domain="[('state', '=', 'planned')]" />
+                        <filter icon="terp-dialog-close" name="dispatched" string="Dispatched" domain="[('state', '=', 'dispatched')]" />
+                        <filter icon="gtk-close" name="closed" string="Closed" domain="[('state', '=', 'closed')]" />
+                        <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', '=', 'cancel')]" />
+                        <separator orientation="vertical"/>
+                        <newline />
+                        <field name="name" />
+                        <field name="supplier_partner_id" string="Supplier" />
+                        <field name="customer_partner_id" string="Customer"/>
+                        <field name="transport_partner_id" />
+                        <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
+                        <field name="shipment_search"  />
+                        <field name="transport_po_id" />
+                        <field name="cargo_category" />
+                        <field name="departure_date" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="transport_order_out_tree" model="ir.ui.view">
+            <field name="name">transport_order_out_tree</field>
+            <field name="model">transport.order.out</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Outbound Transport Object">
+                    <field name="name" />
+                    <field name="supplier_partner_id" string="Supplier" />
+                    <field name="customer_partner_id" string="Customer"/>
+                    <field name="transport_partner_id" />
+                    <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
+                    <!-- <field name="incoming_id" string="Incoming Shipment Reference" /> -->
+                    <field name="transport_po_id" />
+                    <field name="cargo_category" />
+                    <field name="arrival_planned_date" />
+                    <field name="details"  truncate="50"/>
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="transport_order_out_from" model="ir.ui.view">
+            <field name="name">transport_order_out_form</field>
+            <field name="model">transport.order.out</field>
+            <field name="type">form</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <form string="Outbound Transport Object">
+                    <field name="name" />
+                    <field name="original_cargo_ref" />
+                    <field name="shipment_type" />
+                    <field name="shipment_flow" />
+                    <field name="zone_type" />
+                    <field name="cargo_category" />
+                    <field name="creation_date" />
+                    <field name="ship_ref" />
+                    <field name="details" />
+                    <notebook colspan="4">
+                        <page string="Transport Object">
+                            <group colspan="4" col="8">
+                            <separator colspan="4" string="Transporter" />
+                            <separator colspan="4" string="Shipping" />
+                                <field name="transport_partner_id" />
+                                <field name="transport_mode" />
+                                <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)"/>
+                                <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id)]" />
+                            <separator colspan="4" string="Transit" />
+                            <separator colspan="4" string="Customer" />
+                                <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>
+                                <field name="transit_address_id" domain="[('partner_id', '=', transit_address_id)]"/>
+                                <field name="customer_partner_id" on_change="change_partner('customer', customer_partner_id, customer_address_id, context)" required="1"/>
+                                <field name="customer_address_id" domain="[('partner_id', '=', customer_address_id)]"/>
+                                <group colspan="2" col="4">
+                                    <field name="departure_date" />
+                                    <field name="arrival_planned_date" />
+                                </group>
+                                <field name="transport_po_id" />
+                                <field name="incoterm_type" />
+                                <field name="incoterm_location" />
+                                <field name="notify_partner_id" />
+                            </group>
+                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}">
+                                <tree string="Lines" editable="top">
+                                    <field name="shipment_id" domain="[('oto_line_domain', '=', [parent.customer_partner_id, context.get('parent_doc_id')])]" on_change="change_shipment_id(shipment_id)"/>
+                                    <field name="description" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="parcels_nb" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="volume" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="weight" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="kc" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="dg" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="cs" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                </tree>
+
+                            </field>
+                        </page>
+
+                        <page string="Cargo">
+                        </page>
+
+                        <page string="Customs">
+                        </page>
+
+                        <page string="Notes">
+                            <field name="notes" nolabel="1" colspan="4" />
+                        </page>
+
+                    </notebook>
+                    <field name="state" />
+                </form>
+            </field>
+        </record>
+
+
+        <record id="transport_order_out_action" model="ir.actions.act_window">
+            <field name="name">Outbound Transport Object</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.order.out</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem action="transport_order_out_action" id="transport_order_out_menu" parent="menu_transport_management" sequence="40"/>
+
+
+        <record id="board_transportation_form" model="ir.ui.view">
+            <field name="name">board.transportation.form</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="priority">200</field>
+            <field name="arch" type="xml">
+                <form>
+                    <hpaned>
+                        <child1>
+                            <action colspan="4" height="220" name="%(transport_order_in_planned_action)d" string="Planned Inbound Cargo" width="510" menu_ref="%(transport_order_in_menu)d"/>
+                            <action colspan="4" height="220" name="%(transport_order_in_preclearance_action)d" string="Inbound Cargo Under Pre Clearance" width="510" menu_ref="%(transport_order_in_menu)d"/>
+                            <action colspan="4" height="220" name="%(transport_order_in_waiting_action)d" string="Inbound Cargo Awaiting Parcel Reception" width="510" menu_ref="%(transport_order_in_menu)d" />
+                            <action colspan="4" height="220" name="%(transport_order_out_planned_action)d" string="Planned Outbound Cargo" width="510" menu_ref="%(transport_order_out_menu)d"/>
+                            <action colspan="4" height="220" name="%(transport_order_out_transit_action)d" string="Outbound Cargo in Transit" width="510" menu_ref="%(transport_order_out_menu)d"/>
+                        </child1>
+                    </hpaned>
+                </form>
+            </field>
+        </record>
+
+        <record id="transport_step_search" model="ir.ui.view">
+            <field name="name">transport_step_search</field>
+            <field name="model">transport.step</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Transport Steps">
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+        <record id="transport_step_tree" model="ir.ui.view">
+            <field name="name">transport_step_tree</field>
+            <field name="model">transport.step</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Transport Steps" editable="top">
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="transport_step_action" model="ir.actions.act_window">
+            <field name="name">Transport Steps</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">transport.step</field>
+            <field name="view_type">form</field>
+            <field name="context">{}</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem action="transport_step_action" id="transport_step_menu" parent="menu_transport_management" sequence="100"/>
+
+
+    </data>
+</openerp>
