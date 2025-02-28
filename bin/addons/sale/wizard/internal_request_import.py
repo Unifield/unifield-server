@@ -506,7 +506,7 @@ class internal_request_import(osv.osv):
                         except:
                             continue
                     if not header_values.get('imp_requested_date'):
-                        msg_val = _('Requested Date: The Requested Date \'%s\' is incorrect, you will need to correct this manually.') \
+                        msg_val = _('Requested Delivery Date: The Requested Delivery Date \'%s\' is incorrect, you will need to correct this manually.') \
                             % req_date
                         values_header_errors.append(msg_val)
                         err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'header_line': True,
