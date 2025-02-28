@@ -94,7 +94,7 @@
 
         <setNextTemplate name="second" />
 
-        <blockTable colWidths="112.0,250.0,410.0" style="DocInfo">
+        <blockTable colWidths="144.0,250.0,378.0" style="DocInfo">
             <tr>
                 <td>
                     <para style="TextInfoBold">Internal reference:</para>
