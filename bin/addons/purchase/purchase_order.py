@@ -1820,7 +1820,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
+        return {'name': _('Do you want to update the Requested Delivery Date of all/selected Order lines ?'), }
 
     def estimated_data(self, cr, uid, ids, context=None):
         '''

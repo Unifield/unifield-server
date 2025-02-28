@@ -693,7 +693,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
+        return {'name': _('Do you want to update the Requested Delivery Date of all/selected Order lines ?'), }
 
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
