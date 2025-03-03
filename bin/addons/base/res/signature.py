@@ -138,6 +138,7 @@ class signature(osv.osv):
         '''
         Check if signature and un-signature is permitted on the document.
         For FO/IR/PO, only draft and validated documents. For PI, only validated and confirmed documents.
+        For INT, only non-available and available documents.
         No restrictions on others
         '''
         if context is None:
@@ -155,6 +156,10 @@ class signature(osv.osv):
                         model_obj.read(cr, uid, sign['signature_res_id'], ['state'])['state'] not in ('validated', 'confirmed') and
                         not context.get('pi_cancel_reset')):
                 allow = False
+            elif sign['signature_res_model'] == 'stock.picking' and sign['signature_res_id']:
+                pick = model_obj.read(cr, uid, sign['signature_res_id'], ['type', 'subtype', 'state'])
+                if pick['type'] == 'internal' and pick['subtype'] == 'standard' and pick['state'] not in ('confirmed', 'assigned'):
+                    allow = False
             res[sign['id']] = allow
         return res
 
