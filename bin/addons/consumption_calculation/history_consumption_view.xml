@@ -27,7 +27,7 @@
                     <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                     <field name="location_dest_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
                     <group colspan="2" col="4">
-                        <field name="src_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" nolabel="1">
+                        <field name="src_location_ids" attrs="{'invisible': [('consumption_type', '!=', 'rr-amc')], 'readonly': [('status', '!=', 'draft')]}" on_change="change_location_ids(src_location_ids, dest_location_ids)" nolabel="1">
                             <tree string="Source">
                                 <field name="name" />
                                 <field name="usage" />

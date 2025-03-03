@@ -124,6 +124,22 @@ class product_history_consumption(osv.osv):
         self.write(cr, uid, ids, {'status': 'draft', 'error_msg': False}, context=context)
         return True
 
+    def change_location_ids(self, cr, uid, ids, src, dest, context=None):
+        """
+        Remove all internal locations from the destinations when the last source is removed
+        """
+        res = {}
+
+        if src and isinstance(src, list) and src[0] and isinstance(src[0], tuple) and len(dest[0]) == 3 and \
+                not src[0][2] and dest and isinstance(dest, list) and dest[0] and isinstance(dest[0], tuple) and \
+                len(dest[0]) == 3 and dest[0][2]:
+            loc_domain = [('id', 'in', dest[0][2]), ('usage', '=', 'internal')]
+            int_loc_dest_ids = self.pool.get('stock.location').search(cr, uid, loc_domain, context=context)
+            if int_loc_dest_ids:
+                res.update({'value': {'dest_location_ids': [loc for loc in dest[0][2] if loc not in int_loc_dest_ids]}})
+
+        return res
+
     def change_dest_location_ids(self, cr, uid, ids, dest, context=None):
         if not dest or not isinstance(dest, list) or not dest[0] or not isinstance(dest[0], tuple) or len(dest[0]) != 3 or not dest[0][2]:
             return {'value': {'disable_adjusted_rr_amc': False}}
