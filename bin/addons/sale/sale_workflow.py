@@ -113,7 +113,7 @@ class sale_order_line(osv.osv):
             if len(missing_ad_lines) == 1:
                 raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for this line: %s') % (missing_ad_lines[0][0],))
             else:
-                raise osv.except_osv(_('Warning'), _('Analytic allocation is missing for the lines %s. It must be added manually')
+                raise osv.except_osv(_('Warning'), _('Analytic distribution is missing for the lines %s. It must be added manually')
                                      % (', '.join([str(missing_ad_line[1]) for missing_ad_line in missing_ad_lines]),))
 
         return True
@@ -532,10 +532,10 @@ class sale_order_line(osv.osv):
 
         if missing_ad_lines:
             if len(missing_ad_lines) == 1:
-                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                raise osv.except_osv(_('Warning'), _('Analytic distribution is mandatory for %s on the line %s for the product %s! It must be added manually.')
                                      % (missing_ad_lines[0][0], missing_ad_lines[0][1], missing_ad_lines[0][2]))
             else:
-                raise osv.except_osv(_('Warning'), _('Analytic allocation is missing for the lines %s. It must be added manually')
+                raise osv.except_osv(_('Warning'), _('Analytic distribution is missing for the lines %s. It must be added manually')
                                      % (', '.join([str(missing_ad_line[1]) for missing_ad_line in missing_ad_lines]),))
 
         return True

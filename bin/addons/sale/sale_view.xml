@@ -147,7 +147,7 @@
                                 <translate>WARNING: Order line(s) not synchronized, code(s) does not exist</translate>
                             </p>
                             <p id="msg_ad_lines_missing" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
-                                <translate>WARNING: Analytic allocation is missing for the lines </translate>
+                                <translate>WARNING: Analytic distribution is missing for the lines </translate>
                             </p>
                             <p id="msl_mml" style="display:none; text-align:center; color:red; font-weight:bold; font-size:1.2em" />
                             <script language="javascript">

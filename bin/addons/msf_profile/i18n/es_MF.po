@@ -67109,8 +67109,8 @@ msgstr "en pedido"
 #. module: purchase_override
 #: code:addons/purchase_override/purchase.py:667
 #, python-format
-msgid "Analytic allocation is mandatory for this line: %s!"
-msgstr "¡La asignación analítica es obligatoria para esta línea: %s!"
+msgid "Analytic distribution is mandatory for this line: %s!"
+msgstr "¡La distribución analítica es obligatoria para esta línea: %s!"
 
 #. module: purchase
 #: help:purchase.order,pricelist_id:0
