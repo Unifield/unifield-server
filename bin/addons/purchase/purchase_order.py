@@ -1659,11 +1659,11 @@ class purchase_order(osv.osv):
         defaults.update({'from_procurement': False, 'tender_id': False})
         is_direct = False
         if self.search_exists(cr, uid, [('id', '=', id), ('order_type', '=', 'direct')], context=context):
-            company_id = self.pool.get('res.users').get_current_company(cr, uid)[0][0]
-            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_id, ['delivery'])['delivery']
+            company_partner_id = self.pool.get('res.users').get_current_company_partner_id(cr, uid)[0]
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_partner_id, ['delivery'])['delivery']
             defaults['order_type'] = 'regular'
-            defaults['dest_address_id'] = company_id
-            defaults['dest_partner_id'] = cp_address_id
+            defaults['dest_partner_id'] = company_partner_id
+            defaults['dest_address_id'] = cp_address_id
             defaults['customer_id'] = False
             is_direct = True
         if self.search_exists(cr, uid, [('id', '=', id), ('order_type', '=', 'loan_return')], context=context):
