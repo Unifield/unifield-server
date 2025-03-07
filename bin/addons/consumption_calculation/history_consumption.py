@@ -48,26 +48,32 @@ class product_history_consumption(osv.osv):
 
         return res
 
-    def _limit_number_location(self, loc_records, limit, context=None):
-        if not loc_records:
+    def _limit_number_data(self, data_records, limit, context=None):
+        if not data_records:
             return ''
 
-        size = len(loc_records)
+        size = len(data_records)
         if not limit or size <= limit:
-            return ', '.join([loc.name for loc in loc_records])
+            return ', '.join([data.name for data in data_records])
         hidden = size - limit
-        return ', '.join([loc.name for loc in loc_records[0:limit]]+['... +%d'%hidden])
+        return ', '.join([data.name for data in data_records[0:limit]]+['... +%d'%hidden])
 
     def _get_txt_loc(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         if context is None:
             context = {}
-        for x in self.browse(cr, uid, ids, fields_to_fetch=['consumption_type', 'location_id', 'location_dest_id', 'src_location_ids', 'dest_location_ids'], context=context):
+        ftf = ['consumption_type', 'location_id', 'location_dest_id', 'src_location_ids', 'dest_location_ids', 'ext_partner_ids']
+        for x in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
             if x.consumption_type == 'rac':
                 res[x.id] = {'txt_source': x.location_id.name, 'txt_destination': x.location_dest_id.name}
             elif x.consumption_type == 'rr-amc':
                 limit = context.get('limit_location', 10)
-                res[x.id] = {'txt_source': self._limit_number_location(x.src_location_ids, limit, context), 'txt_destination': self._limit_number_location(x.dest_location_ids, limit, context), 'disable_adjusted_rr_amc': bool(x.dest_location_ids)}
+                res[x.id] = {
+                    'txt_source': self._limit_number_data(x.src_location_ids, limit, context),
+                    'txt_destination': self._limit_number_data(x.dest_location_ids, limit, context),
+                    'txt_ext_partner': self._limit_number_data(x.ext_partner_ids, limit, context),
+                    'disable_adjusted_rr_amc': bool(x.dest_location_ids)
+                }
             else:
                 res[x.id] = {'txt_source': False, 'txt_destination': False}
         return res
@@ -82,10 +88,12 @@ class product_history_consumption(osv.osv):
         'adjusted_rr_amc': fields.boolean('Adjusted RR-AMC'),
         'location_id': fields.many2one('stock.location', string='Source Location', domain="[('usage', '=', 'internal')]"),
         'location_dest_id': fields.many2one('stock.location', string='Destination Location', domain="[('usage', '=', 'customer')]"),
-        'src_location_ids': fields.many2many('stock.location', 'src_location_hist_consumption_rel',  'histo_id', 'location_id', 'Source', domain="[('usage', '=', 'internal'), ('from_histo', '=', dest_location_ids), '|', ('location_category', '!=', 'transition'), ('cross_docking_location_ok', '=', True)]"),
-        'dest_location_ids': fields.many2many('stock.location', 'dest_location_hist_consumption_rel',  'histo_id', 'location_id', 'Destination', domain="[('usage', 'in', ['internal', 'customer']), ('from_histo', '=', src_location_ids), ('location_category', '!=', 'transition')]", context={'dest_location': True}),
-        'txt_source': fields.function(_get_txt_loc, type='char', method=1, string='Source', multi='get_txt'),
-        'txt_destination': fields.function(_get_txt_loc, type='char', method=1, string='Destination', multi='get_txt'),
+        'src_location_ids': fields.many2many('stock.location', 'src_location_hist_consumption_rel',  'histo_id', 'location_id', 'Source Locations', domain="[('usage', '=', 'internal'), ('from_histo', '=', dest_location_ids), '|', ('location_category', '!=', 'transition'), ('cross_docking_location_ok', '=', True)]"),
+        'dest_location_ids': fields.many2many('stock.location', 'dest_location_hist_consumption_rel',  'histo_id', 'location_id', 'Destination Locations', domain="[('usage', 'in', ['internal', 'customer']), ('from_histo', '=', src_location_ids), ('location_category', '!=', 'transition')]", context={'dest_location': True}),
+        'ext_partner_ids': fields.many2many('res.partner', 'ext_partner_hist_consumption_rel',  'histo_id', 'partner_id', 'External Partners', domain="[('partner_type', '=', 'external'), ('customer', '=', True)]"),
+        'txt_source': fields.function(_get_txt_loc, type='char', method=1, string='Source Locations', multi='get_txt'),
+        'txt_destination': fields.function(_get_txt_loc, type='char', method=1, string='Destination Locations', multi='get_txt'),
+        'txt_ext_partner': fields.function(_get_txt_loc, type='char', method=1, string='External Partners', multi='get_txt'),
         'disable_adjusted_rr_amc': fields.function(_get_txt_loc, type='boolean', method=1, string='Disable adjusted_rr_amc', multi='get_txt'),
         'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
         'nomen_id': fields.many2one('product.nomenclature', string='Products\' nomenclature level', ondelete='set null'),
@@ -130,7 +138,7 @@ class product_history_consumption(osv.osv):
         """
         res = {}
 
-        if src and isinstance(src, list) and src[0] and isinstance(src[0], tuple) and len(dest[0]) == 3 and \
+        if src and isinstance(src, list) and src[0] and isinstance(src[0], tuple) and len(src[0]) == 3 and \
                 not src[0][2] and dest and isinstance(dest, list) and dest[0] and isinstance(dest[0], tuple) and \
                 len(dest[0]) == 3 and dest[0][2]:
             loc_domain = [('id', 'in', dest[0][2]), ('usage', '=', 'internal')]
@@ -140,10 +148,35 @@ class product_history_consumption(osv.osv):
 
         return res
 
-    def change_dest_location_ids(self, cr, uid, ids, dest, context=None):
+    def change_dest_location_ids(self, cr, uid, ids, dest, partner, context=None):
+        other_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_customers')[1]
+        if dest and isinstance(dest, list) and dest[0] and isinstance(dest[0], tuple) and len(dest[0]) == 3 and \
+                dest[0][2] and partner and isinstance(partner, list) and partner[0] and isinstance(partner[0], tuple) and \
+                len(partner[0]) == 3 and partner[0][2] and other_customer in dest[0][2]:
+            return {
+                'value': {'dest_location_ids': [loc for loc in dest[0][2] if loc != other_customer]},
+                'warning': {
+                    'title': _('Warning!'),
+                    'message': _('You can not select the Other Customer Destination Location if an External Partner has been selected')
+                }
+            }
         if not dest or not isinstance(dest, list) or not dest[0] or not isinstance(dest[0], tuple) or len(dest[0]) != 3 or not dest[0][2]:
             return {'value': {'disable_adjusted_rr_amc': False}}
         return {'value': {'disable_adjusted_rr_amc': True, 'adjusted_rr_amc': False}}
+
+    def change_ext_partner_ids(self, cr, uid, ids, dest, partner, context=None):
+        other_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_customers')[1]
+        if dest and isinstance(dest, list) and dest[0] and isinstance(dest[0], tuple) and len(dest[0]) == 3 and \
+                dest[0][2] and partner and isinstance(partner, list) and partner[0] and isinstance(partner[0], tuple) and \
+                len(partner[0]) == 3 and partner[0][2] and other_customer in dest[0][2]:
+            return {
+                'value': {'ext_partner_ids': []},
+                'warning': {
+                    'title': _('Warning!'),
+                    'message': _('You can not select an External Partner if the Other Customer Destination Location has been selected')
+                }
+            }
+        return {}
 
     def clean_remove_negative_amc(self, cr, uid, vals, context=None):
         if vals:
@@ -372,6 +405,14 @@ class product_history_consumption(osv.osv):
             cons_prod_obj = self.pool.get('product.history.consumption.product')
 
             res = self.browse(cr, uid, ids[0], context=context)
+            partner_query = ''
+            if res.consumption_type == 'rr-amc' and res.ext_partner_ids:
+                ext_partner_ids = [p.id for p in res.ext_partner_ids]
+                if len(res.ext_partner_ids) == 1:
+                    partner_query = " AND s.type = 'out' AND s.partner_id = %s" % (ext_partner_ids[0],)
+                else:
+                    partner_query = " AND s.type = 'out' AND s.partner_id IN %s" % (tuple(ext_partner_ids),)
+                context['histo_partner_ids'] = ext_partner_ids
             if res.consumption_type == 'rac':
                 if res.location_dest_id:
                     cr.execute('''
@@ -391,7 +432,7 @@ class product_history_consumption(osv.osv):
                   FROM stock_move s
                     LEFT JOIN stock_location l ON l.id = s.location_id OR l.id = s.location_dest_id
                   WHERE l.usage in ('customer', 'internal')
-                ''')
+                ''' + partner_query)
             else:
                 context['histo_src_location_ids'] = [x.id for x in res.src_location_ids]
                 context['histo_dest_location_ids'] = [x.id for x in res.dest_location_ids]
@@ -399,12 +440,13 @@ class product_history_consumption(osv.osv):
                 if not context['histo_dest_location_ids'] and res.adjusted_rr_amc:
                     context['adjusted_rr_amc'] = True
 
-                cr.execute('''
+                query = '''
                     SELECT distinct(s.product_id)
                     FROM stock_move s
                     WHERE
                         location_id in %s or location_dest_id in %s
-                ''', (tuple(full_cond or [0]), tuple(full_cond or [0])))
+                ''' + partner_query
+                cr.execute(query, (tuple(full_cond or [0]), tuple(full_cond or [0])))
 
             product_ids = [x[0] for x in cr.fetchall()]
 
@@ -494,12 +536,9 @@ class product_history_consumption(osv.osv):
                             'product_id': product,
                             'consumption_id': res.id,
                             'cons_type': 'fmc',
-                            'value': round(total_by_prod.get(product,0)/float(nb_months), 2)}, context=context)
-
-
+                            'value': round(total_by_prod.get(product, 0)/float(nb_months), 2)}, context=context)
 
             self.write(cr, uid, ids, {'status': 'ready'}, context=context)
-
         except Exception as e:
             logging.getLogger('history.consumption').warn('Exception in read average', exc_info=True)
             cr.rollback()
@@ -722,9 +761,11 @@ class product_product(osv.osv):
 
             list_infos = ['%s: <label>%s</label>' % (to_xml(_('Type')), to_xml(' '.join(filter_info)))]
             if histo.txt_source:
-                list_infos.append('%s: <label>%s</label>' % (to_xml(_('Source')), to_xml(histo.txt_source)))
+                list_infos.append('%s: <label>%s</label>' % (to_xml(_('Source Locations')), to_xml(histo.txt_source)))
             if histo.txt_destination:
-                list_infos.append('%s: <label>%s</label>' % (to_xml(_('Destination')), to_xml(histo.txt_destination)))
+                list_infos.append('%s: <label>%s</label>' % (to_xml(_('Destination Locations')), to_xml(histo.txt_destination)))
+            if histo.txt_ext_partner:
+                list_infos.append('%s: <label>%s</label>' % (to_xml(_('External Partners')), to_xml(histo.txt_ext_partner)))
             if histo.sublist_id:
                 list_infos.append('%s: <label>%s</label>' % (to_xml(_('List')), to_xml(histo.sublist_id.name)))
             nomen_list = []

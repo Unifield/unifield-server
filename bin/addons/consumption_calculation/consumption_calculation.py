@@ -1849,6 +1849,7 @@ class product_product(osv.osv):
 
         src_locations = context.get('histo_src_location_ids') or context.get('amc_location_ids')
         dest_locations = context.get('histo_dest_location_ids')
+        ext_partners = context.get('histo_partner_ids')
         #if src_locations and not dest_locations:
         #    # SRC INTERNAL // SAME AS RR
         #    out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
@@ -1881,10 +1882,17 @@ class product_product(osv.osv):
         if not context.get('histo_src_location_ids') and context.get('histo_dest_location_ids'):
             # DEST EXTERNAL
             input_loc = get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-            domain += [ '|',
-                        '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
-                        '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
-                        ]
+            if ext_partners:
+                domain += [
+                    '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations),
+                    ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]), ('partner_id', 'in', ext_partners)
+                ]
+            else:
+                domain += [
+                    '|',
+                    '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
+                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', '!=', input_loc)
+                ]
 
             int_return_qery = '''
                 select
@@ -1909,16 +1917,24 @@ class product_product(osv.osv):
             # DEST: INTERNAL + EXTERNAL  OR EMPTY (same as segment RR-AMC)
             if not dest_locations:
                 dest_locations = self.pool.get('stock.location').search(cr, uid, [('id', 'not in', src_locations), ('usage', 'in', ['internal', 'customer']), ('location_category', '!=', 'transition')], context=context)
-            domain += ['|', '|', '|',
-                       # DEST & SRC: internal
-                       '&', '&', '&', '&', '&',
-                       ('type', '=', 'internal'), ('location_id', 'in', src_locations), ('location_id', 'not in', dest_locations), ('location_dest_id', 'in', dest_locations), ('location_dest_id', 'not in', src_locations), ('reason_type_id', '!=', internal_return),
-                       '&', '&', '&', '&', '&',
-                       ('type', '=', 'internal'), ('location_id', 'not in', src_locations), ('location_id', 'in', dest_locations), ('location_dest_id', 'not in', dest_locations), ('location_dest_id', 'in', src_locations), ('reason_type_id', '=', internal_return),
-                       # SRC INTERNAL , DEST: EXTERNAL
-                       '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
-                       '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
-                       ]
+            if ext_partners:
+                domain += [
+                    '&', '&', '&', '&', ('type', '=', 'out'), ('partner_id', 'in', ext_partners),
+                    ('location_dest_id', 'in', dest_locations), '|', ('location_id', 'in', src_locations),
+                    ('initial_location', 'in', src_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id])
+                ]
+            else:
+                domain += [
+                    '|', '|', '|',
+                    # DEST & SRC: internal
+                    '&', '&', '&', '&', '&',
+                    ('type', '=', 'internal'), ('location_id', 'in', src_locations), ('location_id', 'not in', dest_locations), ('location_dest_id', 'in', dest_locations), ('location_dest_id', 'not in', src_locations), ('reason_type_id', '!=', internal_return),
+                    '&', '&', '&', '&', '&',
+                    ('type', '=', 'internal'), ('location_id', 'not in', src_locations), ('location_id', 'in', dest_locations), ('location_dest_id', 'not in', dest_locations), ('location_dest_id', 'in', src_locations), ('reason_type_id', '=', internal_return),
+                    # SRC INTERNAL , DEST: EXTERNAL
+                    '&', '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', dest_locations), '|', ('location_id', 'in', src_locations), ('initial_location', 'in', src_locations), ('reason_type_id', 'not in', [return_id, return_good_id, replacement_id]),
+                    '&', '&', '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id]), ('location_id', 'in', dest_locations), ('location_dest_id', 'in', src_locations),
+                ]
 
             #INT chained return from unit wher src.In= dest and dest.INT = src
             int_return_qery = '''
@@ -1943,7 +1959,14 @@ class product_product(osv.osv):
             # no src, no dst
             internal_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context, order='NO_ORDER')
             customer_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
-            domain += ['|', '&', ('location_id', 'in', internal_locations), ('location_dest_id', 'in', customer_locations), '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id])]
+            if ext_partners:
+                domain += ['&', '&', ('location_id', 'in', internal_locations), ('location_dest_id', 'in', customer_locations), ('partner_id', 'in', ext_partners)]
+            else:
+                domain += [
+                    '|',
+                    '&', ('location_id', 'in', internal_locations), ('location_dest_id', 'in', customer_locations),
+                    '&', ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id])
+                ]
 
         return domain, int_return_qery, dest_locations
 
@@ -2015,6 +2038,8 @@ class product_product(osv.osv):
                 rcr_domain = ['&', ('rac_id.cons_location_id', 'in', context.get('histo_src_location_ids'))] + rcr_domain
             if context.get('histo_dest_location_ids'):
                 rcr_domain = ['&', ('rac_id.activity_id', 'in', context.get('histo_dest_location_ids'))] + rcr_domain
+            if context.get('histo_partner_ids'):
+                rcr_domain = ['&', '&', ('move_id.type', '=', 'out'), ('move_id.partner_id', 'in', context.get('histo_partner_ids'))] + rcr_domain
 
 
             racl_obj = self.pool.get('real.average.consumption.line')
