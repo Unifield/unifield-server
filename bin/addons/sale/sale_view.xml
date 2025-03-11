@@ -209,7 +209,7 @@
                             <field name="partner_id" on_change="onchange_partner_id(partner_id,order_type,date_order,est_transport_lead_time,context)" 
                                 context="{'search_default_customer':1}" 
                                 domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"
-                                attrs="{'readonly': ['|', ('fo_created_by_po_sync', '=', True), ('state', '!=', 'draft')]}"/>
+                                attrs="{'readonly': ['|', '|', ('fo_created_by_po_sync', '=', True), ('state', '!=', 'draft'), ('order_type', '=', 'loan_return')]}"/>
                             <field name="partner_type"/>
                             <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
                             <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
