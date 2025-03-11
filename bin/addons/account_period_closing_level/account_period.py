@@ -67,6 +67,11 @@ class account_period(osv.osv):
                 raise osv.except_osv(_('Warning'), _('There are %d running asset lines for the period. Please Generate Asset Entries before closing the period') % nb_asset_lines)
             return True
 
+    def _check_accruals(self, cr, uid, period_ids, context):
+        # check for draft accruals in this period
+        if self.pool.get('msf.accrual.line').search_exist(cr, uid, [('period_id', 'in', period_ids), ('state', '=', 'draft')], context=context):
+            raise osv.except_osv(_('Error'), _('You cannot close a period containing draft accrual lines!'))
+
     def action_set_state(self, cr, uid, ids, context):
         """
         Change period state
@@ -227,6 +232,7 @@ class account_period(osv.osv):
                         raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period") % (register.name,))
 
                 self._check_asset(cr, uid, period, context=context)
+                self._check_accruals(cr, uid, ids, context=context)
 
                 # prevent period closing if one of the registers of the previous period
                 # has no corresponding register in the period to close while the register's journal is still active. (except for period 13..16)
@@ -296,6 +302,7 @@ class account_period(osv.osv):
             if period.state == 'field-closed' and context['state'] == 'mission-closed':
                 self._check_asset(cr, uid, period, context=context)
                 self.check_unposted_entries(cr, uid, period.id, context=context)
+                self._check_accruals(cr, uid, ids, context=context)
 
         # check if unposted move lines are linked to this period
         if move_line_obj.search_exist(cr, uid, [('period_id', 'in', ids), ('state', '!=', 'valid')]):
