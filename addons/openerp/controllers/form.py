@@ -740,7 +740,10 @@ class Form(SecuredController):
         ctx = dict((params.context or {}), **rpc.session.context)
         ctx.update(params.button.context or {})
         if params.button.selected_ids:
-            s_ids = params.button.selected_ids if isinstance(params.button.selected_ids, list) else [params.button.selected_ids]
+            if isinstance(params.button.selected_ids, (dict, list)):
+                s_ids = params.button.selected_ids
+            else:
+                s_ids = [params.button.selected_ids]
             ctx['button_selected_ids'] = s_ids
         if params.button.selected_domain:
             ctx['selected_domain'] = params.button.selected_domain
