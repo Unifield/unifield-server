@@ -1122,7 +1122,8 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
             if inv['signature_id'] and inv['signature_available'] and not inv['signed_off_line'] and\
                     len(signl_obj.search(cr, uid, [('signature_id', '=', inv['signature_id'][0]), ('name_key', 'in', ['wr', 'sr']),
                                                    ('is_active', '=', True), ('signed', '=', True)], context=context)) != 2:
-                raise osv.except_osv(_('Error'), _('Both the Warehouse and Supply Responsible roles must be signed in order to close the Inventory'))
+                raise osv.except_osv(_('Error'),
+                                     _('Both the Warehouse and Supply Responsible roles must be signed in order to close the Inventory. If the signature is provided physically, please select "Signed Off Line"'))
 
         self.write(cr, uid, ids, {'state': 'closed', 'date_done': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)},
                    context=context)
@@ -1226,7 +1227,8 @@ Line #, Family, Product, Description, UOM, Unit Price, Currency, Theoretical Qua
             if inv['signature_id'] and inv['signature_available'] and not inv['signed_off_line'] and \
                     not signl_obj.search_exist(cr, uid, [('signature_id', '=', inv['signature_id'][0]), ('name_key', '=', 'wr'),
                                                          ('is_active', '=', True), ('signed', '=', True)], context=context):
-                raise osv.except_osv(_('Error'), _('The Warehouse Responsible role must be signed in order to confirm the Inventory'))
+                raise osv.except_osv(_('Error'),
+                                     _('The Warehouse Responsible role must be signed in order to confirm the Inventory. If the signature is provided physically, please select "Signed Off Line"'))
             move_ids = []
 
             # gather all information needed for the lines treatment first to do less requests

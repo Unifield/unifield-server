@@ -313,7 +313,8 @@ class signature_object(osv.osv):
             if inv['signature_id'] and inv['signature_available'] and inv['signature_res_model'] == 'physical.inventory' and not inv['signed_off_line'] and \
                     len(signl_obj.search(cr, uid, [('signature_id', '=', inv['signature_id'][0]), ('name_key', 'in', ['wr', 'sr']),
                                                    ('is_active', '=', True), ('signed', '=', True)], context=context)) != 2:
-                raise osv.except_osv(_('Error'), _('Both the Warehouse and Supply Responsible roles must be signed in order to close the signature'))
+                raise osv.except_osv(_('Error'),
+                                     _('Both the Warehouse and Supply Responsible roles must be signed in order to close the signature. If the signature is provided physically, please select "Signed Off Line"'))
 
         _register_log(self, cr, uid, ids, self._name, 'Close Signature', False, True, 'write', context)
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
