@@ -74,6 +74,7 @@ class expression(object):
         self.__all_tables = []
         self.__joins = []
         self.__leftjoins = {}
+        self.__all_left_tables = []
         self.__main_table = None # 'root' table. set by parse()
         self.__DUMMY_LEAF = (1, '=', 1) # a dummy leaf that must not be parsed or sql generated
 
@@ -147,8 +148,10 @@ class expression(object):
                     if join_type:
                         new_working_table = working_table.pool.get(field._obj)
                         if join_type == 'LEFT':
-                            # experimental condition used on product.asser.line
-                            self.__leftjoins.setdefault('"%s"'%main_table._table, []).append([new_working_table._table, this_fk, other_fk, 'LEFT JOIN'])
+                            if new_working_table._table not in self.__all_left_tables:
+                                # experimental condition used on product.asset.line
+                                self.__leftjoins.setdefault('"%s"'%main_table._table, []).append([new_working_table._table, this_fk, other_fk, 'LEFT JOIN'])
+                                self.__all_left_tables.append(new_working_table._table)
                         else:
                             if new_working_table not in self.__all_tables:
                                 self.__joins.append('%s.%s=%s.%s' % (new_working_table._table, other_fk, main_table._table, this_fk))

@@ -99,7 +99,7 @@
                         <field name="customer_partner_id" string="Customer"/>
                         <field name="transport_partner_id" />
                         <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
-                        <field name="incoming_search"  />
+                        <field name="incoming_ids"  />
                         <field name="transport_po_id" />
                         <field name="cargo_category" />
                         <field name="arrival_planned_date" />
@@ -120,7 +120,7 @@
                     <field name="customer_partner_id" string="Customer"/>
                     <field name="transport_partner_id" />
                     <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
-                    <!-- <field name="incoming_id" string="Incoming Shipment Reference" /> -->
+                    <field name="incoming_ids" />
                     <field name="transport_po_id" />
                     <field name="cargo_category" />
                     <field name="arrival_planned_date" />
@@ -174,7 +174,7 @@
                                 <tree string="Lines" editable="top">
                                     <field name="incoming_id" domain="[('ito_line_domain', '=', [parent.supplier_partner_id, context.get('parent_doc_id')])]" on_change="change_incoming(incoming_id)"/>
                                     <field name="description" attrs="{'readonly': [('incoming_id', '!=', False)]}"/>
-                                    <field name="parcels_nb" />
+                                    <field name="parcels_nb" required="1"/>
                                     <field name="volume" />
                                     <field name="weight" />
                                     <field name="kc" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
@@ -233,7 +233,7 @@
                         <field name="customer_partner_id" string="Customer"/>
                         <field name="transport_partner_id" />
                         <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
-                        <field name="shipment_search"  />
+                        <field name="shipment_ids"  />
                         <field name="transport_po_id" />
                         <field name="cargo_category" />
                         <field name="departure_date" />
@@ -254,7 +254,7 @@
                     <field name="customer_partner_id" string="Customer"/>
                     <field name="transport_partner_id" />
                     <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
-                    <!-- <field name="incoming_id" string="Incoming Shipment Reference" /> -->
+                    <field name="shipment_ids"  />
                     <field name="transport_po_id" />
                     <field name="cargo_category" />
                     <field name="arrival_planned_date" />
@@ -272,18 +272,18 @@
             <field name="arch" type="xml">
                 <form string="Outbound Transport Object">
                     <field name="name" />
-                    <field name="original_cargo_ref" />
-                    <field name="shipment_type" />
-                    <field name="shipment_flow" />
-                    <field name="zone_type" />
-                    <field name="cargo_category" />
-                    <field name="creation_date" />
-                    <field name="ship_ref" />
-                    <field name="details" />
+                    <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="shipment_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
+                    <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <notebook colspan="4">
                         <page string="Transport Object">
-                            <group colspan="4" col="8">
-                            <separator colspan="4" string="Transporter" />
+                            <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
+                            <separator colspan="4" string="Transporter"  />
                             <separator colspan="4" string="Shipping" />
                                 <field name="transport_partner_id" />
                                 <field name="transport_mode" />
@@ -304,33 +304,78 @@
                                 <field name="incoterm_location" />
                                 <field name="notify_partner_id" />
                             </group>
-                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}">
+                            <field name="line_ids" colspan="4" nolabel="1" context="{'parent_doc_id': active_id}" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
                                 <tree string="Lines" editable="top">
-                                    <field name="shipment_id" domain="[('oto_line_domain', '=', [parent.customer_partner_id, context.get('parent_doc_id')])]" on_change="change_shipment_id(shipment_id)"/>
+                                    <field name="shipment_id" domain="[('oto_line_domain', '=', [parent.customer_partner_id, context.get('parent_doc_id')])]" attrs="{'readonly': [('is_split', '=', True)]}" on_change="change_shipment_id(shipment_id)"/>
+                                    <field name="is_split" />
                                     <field name="description" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
-                                    <field name="parcels_nb" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="parcels_nb" attrs="{'readonly': [('shipment_id', '!=', False)]}" required="1"/>
                                     <field name="volume" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="weight" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="kc" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="dg" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="cs" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <button name="button_split" type="object" icon="terp-stock_effects-object-colorize" string="Split" attrs="{'invisible': ['|', '|', ('state', '!=', 'planned'), ('shipment_id', '=', 'False'), ('shipment_state', 'not in', ['done', 'delivered'])]}" />
+                                    <field name="shipment_state" />
                                 </tree>
 
                             </field>
                         </page>
 
-                        <page string="Cargo">
+                        <page string="Cargo" on_change="change_line()">
+                            <group colspan="4" col="6">
+                                <field name="cargo_weight" />
+                                <field name="cargo_volume" />
+                                <field name="cargo_parcels" />
+                                <field name="container_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                                <field name="container_size" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                                <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                            </group>
+                            <field name="manifest_link" widget="url" />
+                            <field name="packing_link" widget="url" />
+                            <field name="invoice_link" widget="url" />
+                            <field name="donation_link" widget="url" />
                         </page>
 
-                        <page string="Customs">
+                        <page string="Customs" attrs="{'invisible': ['|', ['state', 'in', ['planned', 'cancel']], ('zone_type', 'not in', ['int', 'regional'])]}">
+                            <field name="customs_regime" attrs="{'readonly': [('state', '=', 'cancel')]}"/>
+                            <newline />
+                            <field name="transport_fees_ids" nolabel="1" colspan="4"
+                                    filter_selector="[('Show all', []),  ('Validated Only', [('validated', '=', True)]), ('Hide Validate', [('validated', '=', False)])]"
+                                    o2m_selectable="2"
+                                >
+                                <tree string="Fees" editable="top" noteditable="validated==True" hide_delete_button="1">
+                                    <field name="name" />
+                                    <field name="value" />
+                                    <field name="currency_id" />
+                                    <field name="details" />
+                                    <field name="validated" />
+                                    <button name="button_validate_fees" string="Validate" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="terp-check" header="True"/>
+                                    <button name="unlink" string="Delete" confirm="Do you really want to delete the record ?" attrs="{'invisible': [('validated', '=', True)]}" type="object" icon="gtk-del"/>
+                                </tree>
+                            </field>
                         </page>
 
+                        <page string="Steps">
+                            <field name="transport_step_ids" nolabel="1" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}">
+                                <tree string="Steps" editable="top">
+                                    <field name="step_id" />
+                                    <field name="name" />
+                                </tree>
+                            </field>
+                        </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" colspan="4" />
                         </page>
 
                     </notebook>
                     <field name="state" />
+                    <group colspan="2" col="6">
+                        <button string="Dispatch" states="planned" type="object" name="button_dispatch" icon="terp-dialog-close" />
+                        <button string="Validate" states="dispatched" type="object" name="button_validate"  icon="terp-check" />
+                        <button string="Cancel document" states="planned,dispatched,closed" type="object" name="button_cancel" icon="gtk-cancel"/>
+                    </group>
+
                 </form>
             </field>
         </record>
@@ -403,6 +448,38 @@
 
         <menuitem action="transport_step_action" id="transport_step_menu" parent="menu_transport_management" sequence="100"/>
 
+        <record id="transport_order_out_line_form_split" model="ir.ui.view">
+            <field name="name">transport_order_out_line_form_split</field>
+            <field name="model">transport.order.out.line</field>
+            <field name="type">form</field>
+            <field name="priority" eval="200" />
+            <field name="arch" type="xml">
+                <form string="Outound Transport Split">
+                    <field name="transport_id" readonly="1" />
+                    <field name="shipment_id" readonly="1" />
+                    <field name="pack_family_ids" colspan="4" nolabel="1" o2m_selectable="2">
+                        <tree string="Tick a line to remove the item from current OTO" noteditable="1" hide_new_button="1" hide_delete_button="1">
+                            <field name="sale_order_id"  filter_selector="1" />
+                            <field name="ppl_id"  filter_selector="1" />
+                            <field name="num_of_packs" />
+                            <field name="total_volume" />
+                            <field name="total_weight" />
+                        </tree>
+                    </field>
+                    <field name="item_ids" colspan="4" nolabel="1" o2m_selectable="2">
+                        <tree string="Tick a line to remove the item from current OTO" noteditable="1" hide_new_button="1" hide_delete_button="1" editable="top">
+                            <field name="name" filter_selector="1" />
+                            <field name="comment" filter_selector="1" />
+                            <field name="nb_parcels" />
+                            <field name="volume" />
+                            <field name="weight" />
+                        </tree>
+                    </field>
+                    <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                    <button string="Group checked lines in a new OTO" type="object" name="split_oto" icon="terp-stock_effects-object-colorize" set_ids="pack_family_ids,item_ids" />
+                </form>
+            </field>
+        </record>
 
     </data>
 </openerp>

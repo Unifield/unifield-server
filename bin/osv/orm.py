@@ -1400,7 +1400,7 @@ class orm_template(object):
                 field_col = self._columns[f]
                 if allfields and f not in allfields:
                     continue
-                res[f] = {'type': field_col._type}
+                res[f] = {'type': field_col._type, 'copy': field_col.copy}
                 if hasattr(field_col, '_with_null') and field_col._with_null:
                     res[f]['with_null'] = True
                 if hasattr(field_col, 'null_value') and field_col.null_value:
@@ -5113,7 +5113,7 @@ class orm(orm_template):
         fields = self.fields_get(cr, uid, context=context)
         to_read = []
         for f in fields:
-            if 'function' not in fields[f]:
+            if 'function' not in fields[f] and fields[f]['copy']:
                 to_read.append(f)
         data = self.read(cr, uid, [id,], to_read, context=context_wo_lang)
         if data:
@@ -5133,11 +5133,15 @@ class orm(orm_template):
                 if f in data:
                     del data[f]
             elif ftype == 'many2one':
+                if not fields[f]['copy']:
+                    continue
                 try:
                     data[f] = data[f] and data[f][0]
                 except:
                     pass
             elif ftype in ('one2many', 'one2one'):
+                if not fields[f]['copy']:
+                    continue
                 res = []
                 rel = self.pool.get(fields[f]['relation'])
                 if data[f]:
@@ -5154,6 +5158,8 @@ class orm(orm_template):
                             res.append((0, 0, d))
                 data[f] = res
             elif ftype == 'many2many':
+                if not fields[f]['copy']:
+                    continue
                 data[f] = [(6, 0, data[f])]
 
         del data['id']

@@ -68,7 +68,7 @@ class _column(object):
                  domain=None, context=None, states=None, priority=0,
                  change_default=False, size=None, ondelete="set null",
                  translate=False, select=False, manual=False, internal=False,
-                 hide_default_menu=False, **args):
+                 hide_default_menu=False, copy=True, **args):
         """
 
         The 'manual' keyword argument specifies if the field is a custom one.
@@ -84,6 +84,7 @@ class _column(object):
         self.readonly = readonly
         self.required = required
         self.size = size
+        self.copy = copy
         self.help = args.get('help', '')
         self.priority = priority
         self.change_default = change_default

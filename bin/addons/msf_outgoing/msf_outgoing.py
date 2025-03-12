@@ -437,6 +437,7 @@ class shipment(osv.osv):
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title', internal="1"),
         'has_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Pack(s)'),
         'has_ret_loan': fields.function(_check_loan, method=True, type='boolean', multi='check_loan', string='Has Loan Return Pack(s)'),
+        'oto_line_ids': fields.one2many('transport.order.out.line', 'shipment_id', 'OTO line'),
     }
 
     def _get_sequence(self, cr, uid, context=None):
@@ -1900,7 +1901,7 @@ class shipment_additionalitems(osv.osv):
 
     _columns = {
         'name': fields.char(string='Additional Item', size=1024, required=True),
-        'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, on_delete='cascade'),
+        'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, on_delete='cascade', join='LEFT'),
         'nb_parcels': fields.integer('Nb Parcels'),
         'comment': fields.char(string='Comment', size=1024),
         'volume': fields.float(digits=(16, 2), string='Volume[dm³]'),
@@ -1909,6 +1910,7 @@ class shipment_additionalitems(osv.osv):
         'kc': fields.boolean('CC', help='Defines whether the additional item must respect the cold chain.'),
         'dg': fields.boolean('DG', help='Defines whether the additional item is a dangerous good.'),
         'cs': fields.boolean('CS', help='Defines whether the additional item is a controlled substance.'),
+        'oto_line_id': fields.many2one('transport.order.out.line', 'OTO line', join='LEFT'),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='tree', context=None, toolbar=False, submenu=False):
@@ -4965,7 +4967,7 @@ class pack_family_memory(osv.osv):
 
     _columns = {
         'name': fields.char(string='Reference', size=1024),
-        'shipment_id': fields.many2one('shipment', string='Shipment', select=1),
+        'shipment_id': fields.many2one('shipment', string='Shipment', select=1, join='LEFT'),
         'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
         'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
         'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
@@ -5006,7 +5008,8 @@ class pack_family_memory(osv.osv):
         'quick_flow': fields.boolean('From quick flow'),
         'parcel_ids_error': fields.function(_vals_get, method=True, type='boolean', string='Parcel Error', multi='get_vals'),
 
-        'tmp_previous_pf': fields.integer('pack_family_id', readonly=1, help="used for migration")
+        'tmp_previous_pf': fields.integer('pack_family_id', readonly=1, help="used for migration"),
+        'oto_line_id': fields.many2one('transport.order.out.line', 'OTO line', join='LEFT'),
     }
 
     _defaults = {

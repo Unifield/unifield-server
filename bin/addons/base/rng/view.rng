@@ -335,6 +335,7 @@
             <rng:optional><rng:attribute name="attrs"/></rng:optional>
             <rng:optional><rng:attribute name="invisible"/></rng:optional>
             <rng:optional><rng:attribute name="view_id"/></rng:optional>
+            <rng:optional><rng:attribute name="on_change"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
                     <rng:element name="newline"><rng:empty/></rng:element>
