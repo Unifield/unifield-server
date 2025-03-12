@@ -1047,6 +1047,7 @@ class users(osv.osv):
                        dont_ask_department=False,
                        nb_department_asked=False,
                        reactivation_date=False,
+                       last_password_change=time.strftime('%Y-%m-%d %H:%M:%S'),
                        )
         copydef.update(default)
         return super(users, self).copy(cr, uid, id, copydef, context)

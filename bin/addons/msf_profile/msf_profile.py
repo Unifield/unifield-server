@@ -58,6 +58,20 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF37.0
+    def us_14040_14046_fix_duplicated_users_data(self, cr, uid, *a, **b):
+        '''
+        Set users_last_login.date to NULL on users whose user_last_login.date < res_users.create_date
+        Set res_users.last_password_change date to res_users.create_date on users whose
+        res_users.last_password_change < res_users.create_date or whose res_users.last_password_change < 16/06/2021
+        '''
+        cr.execute("""UPDATE users_last_login ll SET date = NULL FROM res_users u 
+            WHERE ll.user_id = u.id AND ll.date IS NOT NULL AND ll.date < u.create_date""")
+        cr.execute("""UPDATE res_users SET last_password_change = create_date WHERE last_password_change IS NOT NULL
+            AND (last_password_change < create_date OR last_password_change < '2021-06-16 18:00:00')""")
+
+        return True
+
     # UF36.0
     def us_13755_13788_remove_columns_res_users(self, cr, uid, *a, **b):
         '''

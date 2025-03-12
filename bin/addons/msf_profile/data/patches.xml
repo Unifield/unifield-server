@@ -1180,6 +1180,9 @@
             <field name="method">us_13895_hide_import_generate_asset_menus</field>
         </record>
 
-
+        <!-- UF37.0 -->
+        <record id="us_14040_14046_fix_duplicated_users_data" model="patch.scripts">
+            <field name="method">us_14040_14046_fix_duplicated_users_data</field>
+        </record>
     </data>
 </openerp>
