@@ -77,75 +77,6 @@ class transport_order(osv.osv):
                 'cargo_volume': 0,
                 'cargo_parcels': 0,
             }
-        cr.execute('''
-            select
-                oto.id,
-                sum(pack.to_pack - pack.from_pack + 1),
-                sum(pack.weight * (pack.to_pack - pack.from_pack + 1)),
-                sum(pack.length * pack.width * pack.height * (pack.to_pack - pack.from_pack + 1) / 1000.0)
-            from
-                transport_order_out oto
-                inner join transport_order_out_line line on oto.id = line.transport_id
-                inner join shipment ship on line.shipment_id = ship.id
-                left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split and pack.oto_line_id = line.id or not line.is_split)
-                left join stock_move m on m.id = m.shipment_line_id
-                left join product_product p on p.id = m.product_id
-            where
-                oto.id in %s and
-                oto.state = 'planned'
-            group by oto.id''', (tuple(ids), ))
-
-        for x in cr.fetchall():
-            res[x[0]] = {
-                'cargo_parcels': x[1] or 0,
-                'cargo_weight': x[2] or 0,
-                'cargo_volume': x[3] or 0,
-            }
-
-        cr.execute('''
-            select
-                oto.id,
-                sum(add.nb_parcels),
-                sum(add.weight),
-                sum(add.volume)
-            from
-                transport_order_out oto
-                inner join transport_order_out_line line on oto.id = line.transport_id
-                inner join shipment ship on line.shipment_id = ship.id
-                left join shipment_additionalitems add on add.shipment_id = ship.id and (line.is_split and add.oto_line_id = line.id or not line.is_split)
-            where
-                oto.id in %s and
-                oto.state = 'planned'
-            group by oto.id''', (tuple(ids), ))
-
-        for x in cr.fetchall():
-            res[x[0]] = {
-                'cargo_parcels': res[x[0]]['cargo_parcels'] + (x[1] or 0),
-                'cargo_weight': res[x[0]]['cargo_weight'] + (x[2] or 0),
-                'cargo_volume': res[x[0]]['cargo_volume'] + (x[3] or 0),
-            }
-
-        cr.execute('''
-            select
-                oto.id,
-                sum(line.parcels_nb),
-                sum(line.weight),
-                sum(line.volume)
-            from
-                transport_order_out oto, transport_order_out_line line
-            where
-                oto.id = line.transport_id and
-                (line.shipment_id is null or oto.state != 'planned') and
-                oto.id in %s
-            group by oto.id
-            ''', (tuple(ids), ))
-        for x in cr.fetchall():
-            res[x[0]] = {
-                'cargo_parcels': res[x[0]]['cargo_parcels'] + (x[1] or 0),
-                'cargo_weight': res[x[0]]['cargo_weight'] + (x[2] or 0),
-                'cargo_volume': res[x[0]]['cargo_volume'] + (x[3] or 0),
-            }
-
         return res
 
     _columns = {
@@ -191,9 +122,9 @@ class transport_order(osv.osv):
             ('temp', 'Temporary Importation'),
         ], 'Customs Regime'),
 
-        'cargo_weight': fields.function(_get_total, type='float', method=True, string='Total Cargo Weight [kg]', multi='_total'),
-        'cargo_volume': fields.function(_get_total, type='float', method=True, string='Total Cargo Volume [dm3]', multi='_total'),
-        'cargo_parcels':  fields.function(_get_total, type='integer', method=True, string='Total Number of Parcels', multi='_total'),
+        'cargo_weight': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Weight [kg]', multi='_total'),
+        'cargo_volume': fields.function(lambda self, *a: self._get_total(*a), type='float', method=True, string='Total Cargo Volume [dm3]', multi='_total'),
+        'cargo_parcels':  fields.function(lambda self, *a: self._get_total(*a), type='integer', method=True, string='Total Number of Parcels', multi='_total'),
         'container_type': fields.selection([('dry', 'Dry'), ('reefer', 'Reefer')], 'Container Type'),
         'container_size': fields.selection([('20ft', '20 ft'), ('40ft', '40 ft')], 'Container Size'),
         'truck_payload': fields.selection([('1-3T', '1-3 tons'), ('3-6T', '3-6 tons'), ('6-9T', '6-9 tons'), ('9-12T', '9-12 tons'), ('12-24T', '12-24 tons'), ('24-30T', '24-30 tons')], 'Truck Payload'),
@@ -277,6 +208,35 @@ class transport_order_in(osv.osv):
     _table = 'transport_order_in'
     _description = 'Inbound Transport Order'
 
+    def _get_total(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+        res = super(transport_order_in, self)._get_total(cr, uid, ids, field_name, args, context=context)
+        cr.execute('''
+            select
+                ito.id,
+                sum(line.parcels_nb),
+                sum(line.weight),
+                sum(line.volume)
+            from
+                transport_order_in ito, transport_order_in_line line
+            where
+                ito.id = line.transport_id and
+                ito.id in %s
+            group by ito.id
+            ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            res[x[0]] = {
+                'cargo_parcels': res[x[0]]['cargo_parcels'] + (x[1] or 0),
+                'cargo_weight': res[x[0]]['cargo_weight'] + (x[2] or 0),
+                'cargo_volume': res[x[0]]['cargo_volume'] + (x[3] or 0),
+            }
+
+        return res
+
+
     def _search_incoming_ids(self, cr, uid, obj, name, args, context=None):
         dom = []
         for arg in args:
@@ -324,10 +284,13 @@ class transport_order_in(osv.osv):
         ], 'State', readonly=1, copy=False),
         'transport_fees_ids': fields.one2many('transport.order.fees', 'transport_in_id', 'Fees', copy=False),
         'transport_step_ids': fields.one2many('transport.order.step', 'transport_in_id', 'Steps', copy=False),
+        'oto_created': fields.boolean('Corresponding OTO created', readonly=True, copy=False),
+        'oto_id': fields.many2one('transport.order.out', 'OTO', readonly=True, copy=False),
     }
     _defaults = {
         'shipment_type': 'in',
         'state': 'planned',
+        'oto_created': False,
     }
 
     #def write(self, cr, uid, ids, vals, context=None):
@@ -340,6 +303,72 @@ class transport_order_in(osv.osv):
             raise osv.except_osv(_('Warning'), _('%s supplier %s is not consistent with %s') % (errors[0][0], errors[0][1], errors[0][2]))
         return True
 
+    def _process_step(self, cr, uid, ids, current_step, context=None):
+        to_process_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', current_step)], context=context)
+        if to_process_ids:
+            all_st = [x[0] for x in self._columns['state'].selection]
+            next_st = all_st[all_st.index(current_step)+1]
+            self.write(cr, uid, to_process_ids, {'state': next_st}, context=context)
+        return True
+
+    def button_process(self, cr, uid, ids, context=None):
+        return self._process_step(cr, uid, ids, 'planned', context=context)
+
+    def button_dispatch(self, cr, uid, ids, context=None):
+        return self._process_step(cr, uid, ids, 'preclearance', context=context)
+
+    def button_arrive(self, cr, uid, ids, context=None):
+        return self._process_step(cr, uid, ids, 'transit', context=context)
+
+    def button_clear_customs(self, cr, uid, ids, context=None):
+        return self._process_step(cr, uid, ids, 'border', context=context)
+
+    def button_delivery(self, cr, uid, ids, context=None):
+        return self._process_step(cr, uid, ids, 'customs', context=context)
+
+    def button_reception(self, cr, uid, ids, context=None):
+        return self._process_step(cr, uid, ids, 'warehouse', context=context)
+
+    def button_cancel(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+
+    def button_create_oto(self, cr, uid, ids, context=None):
+        to_dup = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'closed'), ('oto_created', '=', False)], context=context)
+        print(to_dup)
+        if to_dup:
+            for x in self.read(cr, uid, ids, context=context):
+                data = {}
+                for to_copy_flat in [
+                    'original_cargo_ref', 'shipment_flow',
+                    'zone_type', 'cargo_category', 'ship_ref',
+                    'incoterm_location', 'details'
+                ]:
+                    data[to_copy_flat] = x[to_copy_flat]
+
+                for to_copy_rel in [
+                    'notify_partner_id', 'incoterm_type',
+                    'customer_partner_id', 'customer_address_id'
+                ]:
+                    if x[to_copy_rel]:
+                        data[to_copy_rel] = x[to_copy_rel][0]
+
+                data.update({
+                    'shipment_type': 'out',
+                    'supplier_partner_id': self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id,
+                    'line_ids': [],
+                })
+
+                for line in self.pool.get('transport.order.in.line').read(cr, uid, x['line_ids'], [
+                    'description', 'parcels_nb', 'volume', 'weight', 'amount', 'kc', 'dg', 'cs'
+                ], context=context):
+                    del line['id']
+                    data['line_ids'].append((0, 0, line))
+
+                new_id = self.pool.get('transport.order.out').create(cr, uid, data, context=context)
+                self.write(cr, uid, x['id'], {'oto_created': True, 'oto_id': new_id}, context=context)
+
+        return True
+
 transport_order_in()
 
 class transport_order_out(osv.osv):
@@ -347,6 +376,84 @@ class transport_order_out(osv.osv):
     _name = 'transport.order.out'
     _table = 'transport_order_out'
     _description = 'Outbound Transport Order'
+
+    def _get_total(self, cr, uid, ids, field_name, args, context=None):
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+        res = super(transport_order_out, self)._get_total(cr, uid, ids, field_name, args, context=context)
+
+        cr.execute('''
+            select
+                oto.id,
+                sum(pack.to_pack - pack.from_pack + 1),
+                sum(pack.weight * (pack.to_pack - pack.from_pack + 1)),
+                sum(pack.length * pack.width * pack.height * (pack.to_pack - pack.from_pack + 1) / 1000.0)
+            from
+                transport_order_out oto
+                inner join transport_order_out_line line on oto.id = line.transport_id
+                inner join shipment ship on line.shipment_id = ship.id
+                left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split and pack.oto_line_id = line.id or not line.is_split)
+                left join stock_move m on m.id = m.shipment_line_id
+                left join product_product p on p.id = m.product_id
+            where
+                oto.id in %s and
+                oto.state = 'planned'
+            group by oto.id''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            res[x[0]] = {
+                'cargo_parcels': x[1] or 0,
+                'cargo_weight': x[2] or 0,
+                'cargo_volume': x[3] or 0,
+            }
+
+        cr.execute('''
+            select
+                oto.id,
+                sum(add.nb_parcels),
+                sum(add.weight),
+                sum(add.volume)
+            from
+                transport_order_out oto
+                inner join transport_order_out_line line on oto.id = line.transport_id
+                inner join shipment ship on line.shipment_id = ship.id
+                left join shipment_additionalitems add on add.shipment_id = ship.id and (line.is_split and add.oto_line_id = line.id or not line.is_split)
+            where
+                oto.id in %s and
+                oto.state = 'planned'
+            group by oto.id''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            res[x[0]] = {
+                'cargo_parcels': res[x[0]]['cargo_parcels'] + (x[1] or 0),
+                'cargo_weight': res[x[0]]['cargo_weight'] + (x[2] or 0),
+                'cargo_volume': res[x[0]]['cargo_volume'] + (x[3] or 0),
+            }
+
+        cr.execute('''
+            select
+                oto.id,
+                sum(line.parcels_nb),
+                sum(line.weight),
+                sum(line.volume)
+            from
+                transport_order_out oto, transport_order_out_line line
+            where
+                oto.id = line.transport_id and
+                (line.shipment_id is null or oto.state != 'planned') and
+                oto.id in %s
+            group by oto.id
+            ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            res[x[0]] = {
+                'cargo_parcels': res[x[0]]['cargo_parcels'] + (x[1] or 0),
+                'cargo_weight': res[x[0]]['cargo_weight'] + (x[2] or 0),
+                'cargo_volume': res[x[0]]['cargo_volume'] + (x[3] or 0),
+            }
+
+        return res
 
     def _search_shipment_ids(self, cr, uid, obj, name, args, context=None):
         dom = []
