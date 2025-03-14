@@ -284,6 +284,15 @@
         <field name="search_view_id" ref="asset_search_form_view" />
     </record>
 
+    <report id="asset_register_report_xlsx"
+            string="Fixed Assets Register"
+            model="product_asset"
+            name="asset.register.report.xlsx"
+            report_type="openpyxl"
+            auto="False"
+            menu="True" />
+
+
     <!-- Assets in SALES>Products -->
     <menuitem id="menu_asset_sales" name="Assets" parent="account.menu_finance_periodical_processing" sequence="20" active_config="fixed_asset_ok"/>
     <menuitem action="asset_normal_action" id="menu_assets_sales"
