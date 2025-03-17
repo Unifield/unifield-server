@@ -289,6 +289,7 @@
             model="product.asset"
             name="asset.register.report.xlsx"
             report_type="openpyxl"
+            target_filename="${_('Fixed_Assets_Register')}"
             auto="False"
             menu="True" />
 

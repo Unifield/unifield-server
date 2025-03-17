@@ -37,7 +37,7 @@ class asset_parser(XlsxReportParser):
         total_style = self.create_style_from_template('total_style', 'B8')
 
 
-        self.duplicate_row_dimensions(range(1, 16))
+        self.duplicate_row_dimensions(range(1, 6))
         self.duplicate_column_dimensions(default_width=15)
 
         sheet.title = _('Fixed Assets Register')
@@ -130,6 +130,7 @@ class asset_parser(XlsxReportParser):
             asset_count += 1
             asset_row = []
             asset = asset_obj.browse(self.cr, self.uid, asset_id, fields_to_fetch= asset_fields, context=context)
+            sheet.row_dimensions[asset_count + 5].height = 45
             for field in row_headers:
                 if field == _('Asset code'):
                     cell_value = asset.name or ''
@@ -139,7 +140,7 @@ class asset_parser(XlsxReportParser):
                     cell_value = asset.move_line_id and asset.move_line_id.period_id and asset.move_line_id.period_id.name or ''
                 if field == _('Product code'):
                     cell_value = asset.prod_int_code or ''
-                if field == _('Product description'):
+                if field == _('Product Description'):
                     cell_value = asset.prod_int_name or ''
                 if field == _('Serial Number'):
                     cell_value = asset.serial_nb or ''
@@ -191,7 +192,6 @@ class asset_parser(XlsxReportParser):
 
             sheet.append(asset_row)
 
-        total_row = []
         total_title = _('Summary: ') + 'Total'
         total_cell = WriteOnlyCell(sheet, value=total_title)
         total_style.border = Border(top=medium, left=thin, right=thin, bottom=medium)
@@ -217,7 +217,9 @@ class asset_parser(XlsxReportParser):
                     [total_init_value_cell, total_accumul_depr_cell, remain_net_value_book_cell, remain_net_value_func_cell] +\
                     [empty_total_cell, last_empty_cell]
 
+        sheet.row_dimensions[asset_count + 5].height = 20
         sheet.append(total_row)
+
         return True
 
 XlsxReport('report.asset.register.report.xlsx', parser=asset_parser, template='addons/product_asset/report/Fixed_assets_register_mockup.xlsx')
