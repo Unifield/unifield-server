@@ -3346,7 +3346,7 @@ class sale_order_line(osv.osv):
                                                                         {'constraints': 'consumption'}, context=context)
             else:
                 self._check_product_constraints(cr, uid, vals.get('type'), vals.get('po_cft'), product_id, partner_id,
-                                                check_fnct=False, context=context)
+                                                False, check_fnct=False, context=context)
 
         # Internal request
         if order_data:

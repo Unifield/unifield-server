@@ -136,7 +136,57 @@ class patch_scripts(osv.osv):
                 m.id=ANY(old.move_lines)
             '''
                    )
+        return True
 
+    # UF36.0
+    def us_13755_13788_remove_columns_res_users(self, cr, uid, *a, **b):
+        '''
+        If the "date" and "email" columns still exist in res_users, delete them
+        '''
+        cr.execute("""ALTER TABLE res_users DROP COLUMN IF EXISTS date, DROP COLUMN IF EXISTS email""")
+        return True
+
+    def us_13895_hide_import_generate_asset_menus(self, cr, uid, *a, **b):
+        data_obj = self.pool.get('ir.model.data')
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+
+        generate_asset_menu_id = data_obj.get_object_reference(cr, uid, 'product_asset', 'menu_product_asset_generate_entries')[1]
+        import_asset_menu_id = data_obj.get_object_reference(cr, uid, 'product_asset', 'menu_product_asset_import_entries')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, [generate_asset_menu_id, import_asset_menu_id], {'active': instance.level != 'project'}, context={})
+        return True
+
+    # UF35.1
+    def us_13842_fix_sign_document_creator_supply_sdref(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not current_instance:
+            return True
+
+        entity_obj = self.pool.get('sync.client.entity')
+        if not entity_obj:
+            return True
+        cr.execute("""
+            select d.name from res_groups g
+                left join ir_model_data d on d.model='res.groups' and d.res_id=g.id and d.module='sd'
+            where
+                g.name='Sign_document_creator_supply'
+        """)
+        r = cr.fetchone()
+        if r and r[0] == 'res_groups_Sign_document_creator_supply':
+            # instance impacted by the bug
+            real_sdref = {
+                'oca': 'b8c174f0-2483-11e5-9d58-0050569320a7/res_groups/86',
+                'ocb': '8461c7cf-a14a-11e4-8200-005056a95b32/res_groups/86',
+                'ocg': '1e206c21-b2ba-11e4-a614-005056290182/res_groups/86',
+                'ocp': '815afc40-73a2-11e8-912e-00505692792b/res_groups/87',
+            }
+
+            oc = entity_obj.get_entity(cr, uid).oc
+            if real_sdref.get(oc):
+                cr.execute("update ir_model_data set name=%s where name='res_groups_Sign_document_creator_supply' and model='res.groups' and module='sd'", (real_sdref.get(oc), ))
+                self.log_info(cr, uid, "US-13842: sdref changed on Sign_document_creator_supply %s" % (cr.rowcount,))
         return True
 
 
@@ -346,6 +396,10 @@ class patch_scripts(osv.osv):
         if cr.table_exists('sync_server_user_rights'):
             return True
 
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not current_instance:
+            return True
+
         bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
         for group_name, model, b_name in [('Sign_document_creator_supply', 'purchase.order', ['lock_doc_for_sign', 'unlock_doc_for_sign']),]:
             group_ids = self.pool.get('res.groups').search(cr, uid, [('name', '=', group_name)])
@@ -476,8 +530,12 @@ class patch_scripts(osv.osv):
         return True
 
     def us_12274_populate_res_user_last_auth(self, cr, uid, *a, **b):
-        cr.execute('''insert into users_last_login (user_id, date)
-            (select id, date from res_users where date is not null) ''')
+        # Check if column exist before trying to populate its data
+        cr.execute("""SELECT column_name FROM information_schema.columns WHERE table_name = 'res_users' AND column_name = 'date'""")
+        has_col = cr.fetchone()
+        if has_col and has_col[0]:
+            cr.execute('''insert into users_last_login (user_id, date)
+                (select id, date from res_users where date is not null) ''')
         return True
 
     def us_12974_sync_server_instances_level(self, cr, uid, *a, **b):

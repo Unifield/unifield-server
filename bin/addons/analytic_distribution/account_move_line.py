@@ -110,7 +110,7 @@ class account_move_line(osv.osv):
         return res
 
     _columns = {
-        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select=1),
         'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True,
                                                    help="This informs system that we can display or not an analytic button", store=False),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',

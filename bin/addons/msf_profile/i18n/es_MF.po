@@ -56268,7 +56268,6 @@ msgstr "Propiedades de compra"
 #. modules: base, base_setup, unifield_setup
 #: field:res.config.users,email:0
 #: field:res.partner,email:0
-#: field:res.users,email:0
 #: field:base.setup.company,email:0
 #: field:base.setup.company,bill_email:0
 #: field:base.setup.company,ship_email:0
@@ -59926,14 +59925,6 @@ msgid " * The 'Draft' state is used when a user is encoding a new and unconfirme
 "* The 'Posted' state is used when user create voucher,a voucher number is generated and voucher entries are created in account                         \n"
 "* The 'Cancelled' state is used when user cancel voucher."
 msgstr " * El estado 'Borrador' se utiliza cuando un usuario está codificando un bono nuevo sin confirmar. * Estado 'Pro-forma' cuando el bono está en estado 'pro-forma', el bono no tiene un número asignado. * El estado \"Contabilizado\" se utiliza cuando el usuario crea un bono, se genera un número de bono y asientos del bono se crean en la cuenta * El estado \"Cancelado\" se utiliza cuando el usuario cancela el bono."
-
-#. module: base
-#: help:res.config.users,email:0
-#: help:res.users,email:0
-msgid "If an email is provided, the user will be sent a message welcoming him.\n"
-"\n"
-"Warning: if \"email_from\" and \"smtp_server\" aren't configured, it won't be possible to email new users."
-msgstr "Si el usuario proporciona un correo electrónico, este recibirá un mensaje de bienvenida. Advertencia: si \"email_from\" y \"smtp_server\" no están configurados, no se podrá enviar correos electrónicos a los nuevos usuarios."
 
 #. module: account
 #: help:account.bank.statement.line,sequence:0
@@ -72256,12 +72247,6 @@ msgstr "  ¡Importación completa en %s! Nº de líneas importadas: %s en %s lí
 #: selection:base.setup.company,ship_country_id:0
 msgid "Mexico"
 msgstr "México"
-
-#. module: base
-#: field:res.config.users,date:0
-#: field:res.users,date:0
-msgid "Last Connection"
-msgstr "Última conexión"
 
 #. module: account_payment
 #: field:payment.line,state:0

@@ -127,7 +127,7 @@
                         <group>
                             <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
                             <separator orientation="vertical"/>
-                            <filter icon="terp-document-new" string="Unposted" domain="[('move_id.state','=','draft')]" help="Unposted Journal Items"/>
+                            <filter name="unposted" icon="terp-document-new" string="Unposted" domain="[('move_id.state','=','draft')]" help="Unposted Journal Items"/>
                             <filter name="posted" icon="terp-camera_test" string="Posted" domain="[('move_id.state','=','posted')]" help="Posted Journal Items"/>
                             <separator orientation="vertical"/>
                             <filter

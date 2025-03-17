@@ -600,6 +600,7 @@ product will be shown.""",
                     m.price_currency_id as price_currency_id,
                     p.currency_id as product_currency_id,
                     pick.name as pick_name,
+                    pick.details as details,
                     m.date as date,
                     uom.name as uom_name,
                     nom.name as nom_name,
@@ -613,6 +614,7 @@ product will be shown.""",
                     lot.life_date as life_date,
                     COALESCE(pick.origin, m.origin) as origin,
                     pi.ref as pi_name,
+                    pi.name as pi_details,
                     m.comment,
                     case when m.sale_line_id is not null and not so.procurement_request then so.order_type when m.purchase_line_id is not null then po.order_type end as order_type,
                     case when m.sale_line_id is not null then so.categ when m.purchase_line_id is not null then po.categ end as order_category,
@@ -727,6 +729,7 @@ product will be shown.""",
                         PARTNER_TYPES.get(move['partner_type']) or '',
                         reason_info.get(move['reason_type_id']) or '',
                         move['pi_name'] or move['pick_name'] or move['move_name'] or '',
+                        move['pi_name'] and move['pi_details'] or move['details'] or '',
                         move['pi_name'] and move['move_name'] or move['origin'] or '',
                         move['comment'] or '',
                         ORDER_TYPES.get(move['order_type']) or '',
@@ -855,7 +858,7 @@ product will be shown.""",
 
             row_count += 1
             pos = 0
-            headers = [(_('Product Code'), '', 25), (_('Product Description'), '', 70), (_('UoM'), '', 11),  (_('Product Main Type'), '', 11),  (_('Stock Move Date'), date_time_format,20), (_('Batch'), '',30), (_('Exp Date'), date_format, 11), (_('Quantity'), '', 10), (_('Unit Price (%s)') % (currency.name,), '', 10), (_('Movement value (%s)') % (currency.name,) , '', 10), (_('Ave. Cost Price Value (%s)') % (currency.name,), '', 10), (_('Ave. Price Movement value (%s)') % (currency.name,) , '', 10), (_('BN stock after movement (instance)'), '', 10), (_('Total stock after movement (instance)'), '', 10),  (_('Source'), '', 40), (_('Destination'), '', 40), (_('Partner'), '', 30), (_('Partner Type'), '', 15), (_('Reason Type'), '', 30), (_('Document Ref.'), '', 40), (_('Origin'), '', 70), (_('Line Comment'), '', 60), (_('Order Type'), '', 15), (_('Order Category'), '', 11)]
+            headers = [(_('Product Code'), '', 25), (_('Product Description'), '', 70), (_('UoM'), '', 11),  (_('Product Main Type'), '', 11),  (_('Stock Move Date'), date_time_format,20), (_('Batch'), '',30), (_('Exp Date'), date_format, 11), (_('Quantity'), '', 10), (_('Unit Price (%s)') % (currency.name,), '', 10), (_('Movement value (%s)') % (currency.name,) , '', 10), (_('Ave. Cost Price Value (%s)') % (currency.name,), '', 10), (_('Ave. Price Movement value (%s)') % (currency.name,) , '', 10), (_('BN stock after movement (instance)'), '', 10), (_('Total stock after movement (instance)'), '', 10),  (_('Source'), '', 40), (_('Destination'), '', 40), (_('Partner'), '', 30), (_('Partner Type'), '', 15), (_('Reason Type'), '', 30), (_('Document Ref.'), '', 40), (_('Movement Doc Details'), '', 70), (_('Origin'), '', 70), (_('Line Comment'), '', 60), (_('Order Type'), '', 15), (_('Order Category'), '', 11)]
 
             for header_row, col_type, size in headers:
                 sheet.col(pos).width = size * 256

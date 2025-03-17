@@ -224,6 +224,24 @@ class Client(object):
             files.append(item)
         return files
 
+    def folder_exists(self, remote_path):
+        if not remote_path.startswith(self.path):
+            remote_path = posixpath.join(self.path, remote_path)
+        request_url = "%s_api/web/getfolderbyserverrelativeurl('%s')" % (self.baseurl, remote_path)
+        options = RequestOptions(request_url)
+        options.method = HttpMethod.Get
+        options.set_header("X-HTTP-Method", "GET")
+        options.set_header('accept', 'application/json;odata=verbose')
+        self.request.authenticate_request(options)
+        self.request.ensure_form_digest(options)
+        result = requests.get(url=request_url, headers=options.headers, auth=options.auth)
+        if result.status_code == 404:
+            return False
+        elif result.status_code not in (200, 201):
+            raise requests.exceptions.RequestException(self.parse_error(result))
+
+        result = result.json()
+        return result['d'].get('Exists', False)
 
     def download(self, remote_path, filename):
         if not remote_path.startswith(self.path):

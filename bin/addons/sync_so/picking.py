@@ -276,6 +276,7 @@ class stock_picking(osv.osv):
         # objects
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
+        pol_obj = self.pool.get('purchase.order.line')
         move_obj = self.pool.get('stock.move')
         warehouse_obj = self.pool.get('stock.warehouse')
 
@@ -314,12 +315,17 @@ class stock_picking(osv.osv):
         if shipment_ref:
             shipment_ref = source + "." + shipment_ref
 
+        beyond_validated = False
         if po_id:
             po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
             in_name_goods_return = False
             for move_line in pick_dict['move_lines']:
                 if move_line.get('sale_line_id') and move_line.get('sale_line_id', {}).get('in_name_goods_return'):
                     in_name_goods_return = move_line['sale_line_id']['in_name_goods_return'].split(".")[-1]
+                if move_line.get('sale_line_id') and move_line.get('sale_line_id', {}).get('sync_linked_pol'):
+                    pol_id = int(move_line['sale_line_id']['sync_linked_pol'].split('/')[-1])
+                    if pol_id and pol_obj.read(cr, uid, pol_id, ['state'], context=context)['state'] not in ['validated_n', 'validated']:
+                        beyond_validated = True
             if in_name_goods_return:
                 # search for the right IN in case of synchro of multiple missing/replacement IN
                 in_id = self.pool.get('stock.picking')\
@@ -638,10 +644,14 @@ class stock_picking(osv.osv):
                     processed_in = self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context)
                     if processed_in:
                         in_name = self.browse(cr, uid, in_id, context=context)['name']
-                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (-%s-) already fully/partially cancelled/Closed" % (
+                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (-%s-) already fully/partially cancelled/Closed or relevant Back Order IN does not exist" % (
                             in_name, po_name,
                         )
-                        raise RunWithoutException(message)
+                        self._logger.info(message)
+                        if po_id and not beyond_validated:
+                            raise Exception(message)
+                        else:
+                            raise RunWithoutException(message)
                 if not same_in and not processed_in:
                     message = "Sorry, this seems to be an extra ship. This feature is not available now!"
             else:

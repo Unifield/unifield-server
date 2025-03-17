@@ -3418,13 +3418,21 @@ class purchase_order(osv.osv):
         }
         audit_line_obj.create(cr, uid, vals, context=context)
 
-
     def export_line_mismatch(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        po_name = ''
+        if ids:
+            po_name = ' ' + self.read(cr, uid, ids[0], ['name'], context=context)['name']
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'report_line_mismatch',
+            'datas': {'target_filename': 'PO vs. Catalogue Mismatch%s' % (po_name,)},
             'context': context
         }
+
 
 purchase_order()
 

@@ -288,7 +288,7 @@
                     </xpath>
                 <group string="res_config_contents" position="replace">
                   <field name="name"/>
-                  <field name="email"/>
+                  <field name="user_email"/>
                   <field name="login"/>
                   <field name="password" password="True"/>
                   <field name="context_lang"/>

@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class hr_department(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
@@ -51,6 +52,42 @@ class hr_department(osv.osv):
             sub_child_ids = self._get_ids_to_update(cr, uid, child_ids, context=context)
         return ids + sub_child_ids
 
+    def onchange_active(self, cr, uid, ids, is_active, context=None):
+        """
+        Warning when the department has still members
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not ids:
+            return {}
+        if isinstance(ids, int):
+            ids = [ids]
+        message = {}
+        if not is_active:
+            user_obj = self.pool.get('res.users')
+            members_ids = user_obj.search(cr, uid, [('context_department_id', 'in', ids)], context=context)
+            if members_ids:
+                message.update({
+                    'title': _('Warning'),
+                    'message': _('Are you sure you want to inactivate this department while it still has members?\nIf not, click on Cancel button.'),
+                })
+        return {'warning': message}
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        if context is None:
+            context = {}
+        # Remove all department members when department is inactivated
+        if 'is_active' in vals and not vals['is_active']:
+            user_obj = self.pool.get('res.users')
+            members_ids = user_obj.search(cr, uid, [('context_department_id', 'in', ids)], context=context)
+            if members_ids:
+                user_obj.write(cr, uid, members_ids, {'context_department_id': False}, context=context)
+        return super(hr_department, self).write(cr, uid, ids, vals, context=context)
+
+
     _name = "hr.department"
     _columns = {
         'name': fields.char('Department Name', size=64, required=True),
@@ -63,10 +100,12 @@ class hr_department(osv.osv):
         'parent_id': fields.many2one('hr.department', 'Parent Department', select=True),
         'child_ids': fields.one2many('hr.department', 'parent_id', 'Child Departments'),
         'note': fields.text('Note'),
+        'is_active': fields.boolean('Active'),
     }
 
     _defaults = {
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'hr.department', context=c),
+        'is_active': True,
     }
 
     _order = 'complete_name, name, id'
@@ -126,7 +165,7 @@ class res_users(osv.osv):
     _description = 'User'
 
     _columns = {
-        'context_department_id': fields.many2one('hr.department', 'Department'),
+        'context_department_id': fields.many2one('hr.department', 'Department', domain=[('is_active','=',True)]),
     }
 
 res_users()

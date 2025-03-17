@@ -95,14 +95,16 @@ class picking_ticket(report_sxw.rml_parse):
 
         if picking.partner_id2:
             consignee_partner = picking.partner_id2
-            consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
-            consignee_addr = None
+            if picking.sale_id and picking.sale_id.procurement_request and picking.address_id:
+                consignee_addr = picking.address_id
+            else:
+                consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
+                consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id)
 
             addr = ''
             addr_street = ''
             addr_zip_city = ''
-            if consignee_addr_id:
-                consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id)
+            if consignee_addr:
                 if consignee_addr.street:
                     addr += consignee_addr.street
                     addr += ' '
@@ -152,7 +154,7 @@ class picking_ticket(report_sxw.rml_parse):
         addr_obj = self.pool.get('res.partner.address')
 
         instance_partner = user_obj.browse(self.cr, self.uid, self.uid).company_id.partner_id
-        instance_addr_id = partner_obj.address_get(self.cr,self. uid, instance_partner.id)['default']
+        instance_addr_id = partner_obj.address_get(self.cr, self.uid, instance_partner.id)['default']
         instance_addr = addr_obj.browse(self.cr, self.uid, instance_addr_id)
 
         addr_street = ''

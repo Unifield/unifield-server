@@ -795,7 +795,7 @@ def do_pg_update():
     # 8. start server
     # MAJOR ONLY: 9. Alter tables again to back out workaround
 
-    warn("Postgres major update from %s to %s" % (oldVer, newVer))
+    warn("Postgres update from %s to %s" % (oldVer, newVer))
     import tools
 
     stopped = False
@@ -819,6 +819,20 @@ def do_pg_update():
             pg_old = r'..\pgsql'
         if not os.path.exists(pg_old):
             raise RuntimeError('PostgreSQL install directory %s not found.' % pg_old)
+
+        cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-A', '-t', '-c', "SHOW server_version", 'postgres' ]
+        out = None
+        try:
+            out = subprocess.check_output(cmd, stderr=log, env=env, encoding='utf8')
+            if out:
+                out = out.strip()
+        except subprocess.CalledProcessError as e:
+            warn("problem running psql: %s" % e)
+
+        if out != oldVer:
+            warn('Current version %s does not match patch version %s' % (out, oldVer))
+            _archive_patch(pf)
+            return
 
         pg_trash = r'..\psql_old_%s' % oldVer
         if os.path.exists(pg_trash):
