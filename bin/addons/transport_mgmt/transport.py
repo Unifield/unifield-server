@@ -314,6 +314,67 @@ class transport_order_in(osv.osv):
     def button_process(self, cr, uid, ids, context=None):
         return self._process_step(cr, uid, ids, 'planned', context=context)
 
+    def copy_all(self, cr, uid, ids, context=None):
+        to_process_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'planned')], context=context)
+        if not to_process_ids:
+            return False
+
+        cr.execute('''
+            update transport_order_in_line set
+                process_parcels_nb=parcels_nb,
+                process_volume=volume,
+                process_weight=weight,
+                process_kc=kc,
+                process_dg=dg,
+                process_cs=cs,
+                process_amount=amount
+            where
+                transport_id = %s ''', (to_process_ids[0], )
+                   )
+
+        return to_process_ids[0]
+
+    def uncopy_all(self, cr, uid, ids, context=None):
+        to_process_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'planned')], context=context)
+        if not to_process_ids:
+            return False
+
+        cr.execute('''
+            update transport_order_in_line set
+                process_parcels_nb=0,
+                process_volume=null,
+                process_weight=null,
+                process_kc=kc,
+                process_dg=dg,
+                process_cs=cs,
+                process_amount=0,
+            where
+                transport_id = %s ''', (to_process_ids[0], )
+                   )
+
+        return to_process_ids[0]
+
+    def button_wizard_cancel(self, cr, uid, ids, context=None):
+        return {'type': 'ir.actions.act_window_close'}
+
+    def button_process_lines(self, cr, uid, ids, context=None):
+        new_id = self.copy_all(cr, uid, ids, context=context)
+        if not new_id:
+            return True
+
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'transport_mgmt', 'transport_order_in_partial')
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'transport.order.in',
+            'res_id': new_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'view_id': [view_id[1]],
+        }
+
     def button_dispatch(self, cr, uid, ids, context=None):
         return self._process_step(cr, uid, ids, 'preclearance', context=context)
 
@@ -331,10 +392,67 @@ class transport_order_in(osv.osv):
 
     def button_cancel(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        return True
+
+    def button_wizard_process(self, cr, uid, ids, context=None):
+        to_dup = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'planned')], context=context)
+
+        if not to_dup:
+            return True
+
+        back_id = False
+        remaining_lines = []
+        updated_lines = []
+
+        lines_id = self.pool.get('transport.order.in.line').search(cr, uid, [('transport_id', 'in', to_dup), ('process_parcels_nb', '>', 0)], context=context)
+        if not lines_id:
+            return True
+        # new ITO with remaining
+        cr.execute("select exists(select id from transport_order_in_line where transport_id in %s and process_parcels_nb < parcels_nb)", (tuple(to_dup),))
+        if cr.fetchone()[0]:
+            back_id = self.copy(cr, uid, to_dup[0], context=context)
+
+        ito = self.browse(cr, uid, ids[0], fields_to_fetch=['line_ids'], context=context)
+        for line in ito.line_ids:
+            if back_id:
+                if not line['process_parcels_nb']:
+                    remaining_lines.append((4, line.id))
+                else:
+                    if line['process_parcels_nb'] < line['parcels_nb']:
+                        remaining_lines.append((0, 0, {
+                            'incoming_id': line.incoming_id and line.incoming_id.id or False,
+                            'description': line.description,
+                            'parcels_nb': line.parcels_nb - line.process_parcels_nb,
+                            'volume': line.volume - line.process_volume,
+                            'weight': line.weight - line.process_weight,
+                            'kc': line.kc,
+                            'dg': line.dg,
+                            'cs': line.cs,
+                            'amount': max(0, line.amount - line.process_amount),
+                            'comment': line.comment,
+                        }))
+
+                    updated_lines.append((1, line.id,{
+                        'parcels_nb': line.process_parcels_nb,
+                        'volume': line.process_volume,
+                        'weight':line.process_weight,
+                        'kc': line.process_kc,
+                        'dg': line.process_dg,
+                        'cs': line.process_cs,
+                        'amount': line.process_amount
+                    }))
+
+        if remaining_lines:
+            self.write(cr, uid, back_id, {'line_ids': remaining_lines}, context=context)
+            ito_name = self.read(cr, uid, back_id, ['name'], context=context)['name']
+            self.log(cr, uid, back_id, _('Backorder ITO %s created') % (ito_name), context=context)
+
+        self.write(cr, uid, to_dup[0], {'line_ids': updated_lines, 'state': 'preclearance'}, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
 
     def button_create_oto(self, cr, uid, ids, context=None):
         to_dup = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'closed'), ('oto_created', '=', False)], context=context)
-        print(to_dup)
         if to_dup:
             for x in self.read(cr, uid, ids, context=context):
                 data = {}
@@ -359,13 +477,15 @@ class transport_order_in(osv.osv):
                 })
 
                 for line in self.pool.get('transport.order.in.line').read(cr, uid, x['line_ids'], [
-                    'description', 'parcels_nb', 'volume', 'weight', 'amount', 'kc', 'dg', 'cs'
+                    'description', 'parcels_nb', 'volume', 'weight', 'amount', 'comment', 'kc', 'dg', 'cs'
                 ], context=context):
                     del line['id']
                     data['line_ids'].append((0, 0, line))
 
                 new_id = self.pool.get('transport.order.out').create(cr, uid, data, context=context)
                 self.write(cr, uid, x['id'], {'oto_created': True, 'oto_id': new_id}, context=context)
+                oto_name = self.pool.get('transport.order.out').read(cr, uid, new_id, ['name'], context=context)['name']
+                self.pool.get('transport.order.out').log(cr, uid, new_id, _('OTO %s created') % (oto_name), context=context)
 
         return True
 
@@ -395,8 +515,6 @@ class transport_order_out(osv.osv):
                 inner join transport_order_out_line line on oto.id = line.transport_id
                 inner join shipment ship on line.shipment_id = ship.id
                 left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split and pack.oto_line_id = line.id or not line.is_split)
-                left join stock_move m on m.id = m.shipment_line_id
-                left join product_product p on p.id = m.product_id
             where
                 oto.id in %s and
                 oto.state = 'planned'
@@ -571,6 +689,7 @@ class transport_order_line(osv.osv):
         'volume': fields.float_null('Volume [dm3]', digits=(16,2)),
         'weight': fields.float_null('Weight [kg]', digits=(16,2)),
         'amount': fields.float_null('Value', digits=(16,2)),
+        'comment': fields.char('Comment', size=1024),
         # TODO currency ?
         # TODO state
         'kc': fields.boolean('CC', help='Cold Chain'),
@@ -612,6 +731,14 @@ class transport_order_in_line(osv.osv):
     _columns = {
         'transport_id': fields.many2one('transport.order.in', 'Transport', required=True, select=True, join=True, ondelete='cascade'),
         'incoming_id': fields.many2one('stock.picking', 'Incoming', select=1, domain=[('type', '=', 'in')], join='LEFT'),
+
+        'process_parcels_nb': fields.integer_null('Number of Parcels'),
+        'process_volume': fields.float_null('Volume [dm3]', digits=(16,2)),
+        'process_weight': fields.float_null('Weight [kg]', digits=(16,2)),
+        'process_amount': fields.float('Value', digits=(16,2)),
+        'process_kc': fields.boolean('CC'),
+        'process_dg': fields.boolean('DG'),
+        'process_cs': fields.boolean('CS'),
     }
     def create(self, cr, uid, vals, context=None):
         return super(transport_order_in_line, self).create(cr, uid, vals, context=context)
@@ -619,11 +746,20 @@ class transport_order_in_line(osv.osv):
     def change_incoming(self, cr, uid, id, incoming_id, context=None):
         if incoming_id:
             cr.execute('''
-                select pick.details, bool_or(is_kc), bool_or(dangerous_goods='True'), bool_or(cs_txt='X')
+                select pick.details, bool_or(is_kc), bool_or(dangerous_goods='True'), bool_or(cs_txt='X'), sum(m.price_unit * m.product_qty / rate.rate)
                 from
                     stock_picking pick
                     left join stock_move m on m.picking_id = pick.id
                     left join product_product p on p.id = m.product_id
+                    left join lateral (
+                        select rate.rate, rate.name as fx_date from
+                            res_currency_rate rate
+                        where
+                            rate.name <= coalesce(pick.physical_reception_date, pick.min_date) and
+                            rate.currency_id = m.price_currency_id
+                            order by rate.name desc, id desc
+                        limit 1
+                    ) rate on true
                 where
                     pick.id = %s
                 group by pick.id''', (incoming_id, ))
@@ -633,7 +769,24 @@ class transport_order_in_line(osv.osv):
                     'description': x[0],
                     'kc': x[1],
                     'dg': x[2],
-                    'cs': x[3]
+                    'cs': x[3],
+                    'amount': x[4],
+                }
+            }
+        return {}
+
+    def change_nb_parcels(self, cr, uid, id, original_nb, new_nb, volume, weight, amount):
+        if original_nb and new_nb:
+            if new_nb > original_nb:
+                return {
+                    'warning': {'message': _('Number of parcels cannot be greater than original nb. parcels (%d)') % original_nb},
+                    'value': {'process_parcels_nb': original_nb},
+                }
+            return {
+                'value': {
+                    'process_volume': round(volume / original_nb * new_nb, 2),
+                    'process_weight': round(weight / original_nb * new_nb, 2),
+                    'process_amount': round(amount / original_nb * new_nb, 2),
                 }
             }
         return {}
@@ -734,13 +887,24 @@ class transport_order_out_line(osv.osv):
                     bool_or(p.cs_txt='X'),
                     sum(pack.to_pack - pack.from_pack + 1),
                     sum(pack.weight * (pack.to_pack - pack.from_pack + 1)),
-                    sum(pack.length * pack.width * pack.height * (pack.to_pack - pack.from_pack + 1) / 1000.0)
+                    sum(pack.length * pack.width * pack.height * (pack.to_pack - pack.from_pack + 1) / 1000.0),
+                    sum(m.price_unit * m.product_qty / rate.rate)
                 from
                     transport_order_out_line line
                     inner join shipment ship on line.shipment_id = ship.id
                     left join pack_family_memory pack on pack.state not in ('returned', 'cancel') and pack.shipment_id = ship.id and (line.is_split and pack.oto_line_id = line.id or not line.is_split)
-                    left join stock_move m on m.id = m.shipment_line_id
+                    left join stock_move m on pack.id = m.shipment_line_id
                     left join product_product p on p.id = m.product_id
+                    left join lateral (
+                        select rate.rate, rate.name as fx_date from
+                            res_currency_rate rate
+                        where
+                            rate.name <= ship.shipment_actual_date and
+                            rate.currency_id = m.price_currency_id
+                            order by rate.name desc, id desc
+                        limit 1
+                    ) rate on true
+
                 where
                     line.id in %s
                 group by line.id, ship.id''', (tuple(ids), ))
@@ -753,6 +917,7 @@ class transport_order_out_line(osv.osv):
                     'parcels_nb': x[6] or False,
                     'weight': x[7] or False,
                     'volume': x[8] or False,
+                    'amount': x[9] and round(x[9], 2) or False,
                 }
 
             cr.execute('''
@@ -763,7 +928,8 @@ class transport_order_out_line(osv.osv):
                     bool_or(add.cs),
                     sum(add.nb_parcels),
                     sum(add.weight),
-                    sum(add.volume)
+                    sum(add.volume),
+                    sum(value)
                 from
                     transport_order_out_line line
                     inner join shipment ship on line.shipment_id = ship.id
@@ -779,6 +945,7 @@ class transport_order_out_line(osv.osv):
                     'parcels_nb': (res[x[0]]['parcels_nb'] + (x[4] or False)) or False,
                     'weight': (res[x[0]]['weight'] + (x[5] or False)) or False,
                     'volume': (res[x[0]]['volume'] + (x[6] or False)) or False,
+                    'amount':(res[x[0]]['amount'] + (x[7] and round(x[7], 2) or False)) or False,
                 }
 
         return res
@@ -796,7 +963,10 @@ class transport_order_out_line(osv.osv):
                     ship.id = %s
                 group by ship.id''', (shipment_id, ))
             x = cr.fetchone()
-            ship_info = self.pool.get('shipment').read(cr, uid, shipment_id, ['num_of_packs', 'total_volume', 'total_weight', 'state'])
+            ship_info = self.pool.get('shipment').read(cr, uid, shipment_id, ['num_of_packs', 'total_volume', 'total_weight', 'state', 'total_amount', 'currency_id', 'shipment_actual_date'])
+            if ship_info['total_amount'] and ship_info['currency_id']:
+                comp_currency = self.pool.get('res.users').get_company_currency_id(cr, uid)
+                ship_info['total_amount'] = round(self.pool.get('res.currency').compute(cr, uid, ship_info['currency_id'][0], comp_currency, ship_info['total_amount'], context={'currency_date': ship_info['shipment_actual_date']}), 2)
             return {
                 'value': {
                     'description': x[0],
@@ -807,6 +977,7 @@ class transport_order_out_line(osv.osv):
                     'volume': ship_info['total_volume'],
                     'weight': ship_info['total_weight'],
                     'state': ship_info['state'],
+                    'amount': ship_info['total_amount'],
                 }
             }
         return {}
@@ -831,6 +1002,7 @@ class transport_order_out_line(osv.osv):
             self.pool.get('shipment.additionalitems').write(cr, uid, item_ids, {'oto_line_id': doc.id}, context=context)
 
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'transport_mgmt', 'transport_order_out_line_form_split')
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'transport.order.out.line',

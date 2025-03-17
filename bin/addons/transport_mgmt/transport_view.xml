@@ -139,7 +139,7 @@
                 <form string="Inbound Transport Object">
                     <field name="name" />
                     <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
-                    <field name="shipment_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="shipment_type"  />
                     <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
@@ -177,6 +177,8 @@
                                     <field name="parcels_nb" required="1"/>
                                     <field name="volume" />
                                     <field name="weight" />
+                                    <field name="amount" />
+                                    <field name="comment" />
                                     <field name="kc" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
                                     <field name="dg" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
                                     <field name="cs" attrs="{'readonly': [('incoming_id', '!=', False)]}" />
@@ -186,13 +188,13 @@
                         </page>
 
                         <page string="Cargo" on_change="change_line()">
-                            <group colspan="4" col="6" attrs="{'readonly': [('state', 'in', ['planned'])]}">
+                            <group colspan="4" col="6">
                                 <field name="cargo_parcels" />
                                 <field name="cargo_volume" />
                                 <field name="cargo_weight" />
-                                <field name="container_type"  />
-                                <field name="container_size"  />
-                                <field name="truck_payload" />
+                                <field name="container_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                                <field name="container_size" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                                <field name="truck_payload" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                             </group>
                             <field name="manifest_link" widget="url"  attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
                             <field name="packing_link" widget="url" attrs="{'readonly': [('state', 'in', ['closed', 'cancel'])]}" />
@@ -237,6 +239,7 @@
                     <field name="state" />
                     <group colspan="2" col="14">
                         <button string="Process" states="planned" type="object" name="button_process" icon="terp-check" />
+                        <button string="Process Lines" states="planned" type="object" name="button_process_lines" icon="gtk-indent" />
                         <button string="Dispatch" states="preclearance" type="object" name="button_dispatch" icon="gtk-media-forward" />
                         <button string="Arrive in Country" states="transit" type="object" name="button_arrive" icon="gtk-goto-last" />
                         <button string="Clear Customs" states="border" type="object" name="button_clear_customs" icon="gtk-paste-v" />
@@ -245,6 +248,47 @@
                         <button string="Create Outbound Transport Order for these goods" type="object" name="button_create_oto" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('state', '!=', 'closed') ,('oto_created', '=', True)]}" />
                         <field name="oto_created" attrs="{'invisible': [('oto_created', '=', False)]}" />
                         <button string="Cancel document" states="planned,preclearance,transit,border,customs,warehouse" type="object" name="button_cancel" icon="gtk-cancel"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="transport_order_in_partial" model="ir.ui.view">
+            <field name="name">transport_order_in_form</field>
+            <field name="model">transport.order.in</field>
+            <field name="type">form</field>
+            <field name="priority" eval="160" />
+            <field name="arch" type="xml">
+                <form string="Partial Process">
+                    <field name="name" />
+                    <group colspan="4">
+                        <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all"  />
+                        <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all"  />
+                    </group>
+
+                    <field name="line_ids" colspan="4" nolabel="1" >
+                        <tree string="Lines" editable="top" hide_delete_button="1" hide_new_button="1">
+                            <field name="incoming_id" readonly="1"/>
+                            <field name="description" readonly="1"/>
+                            <field name="parcels_nb" readonly="1" string="Original\nNb parcels"/>
+                            <field name="volume" readonly="1" string="Original\nVolume"/>
+                            <field name="weight" readonly="1" string="Original\nWeight"/>
+                            <field name="amount" readonly="1" string="Original\nValue" />
+                            <field name="kc" readonly="1" string="Original\nCC"/>
+                            <field name="dg" readonly="1" string="Original\nDG"/>
+                            <field name="cs" readonly="1" string="Original\nCS"/>
+                            <field name="process_parcels_nb" required="1" on_change="change_nb_parcels(parcels_nb, process_parcels_nb, volume, weight, amount)"/> <!-- TODO: process more -->
+                            <field name="process_volume" />
+                            <field name="process_weight"  />
+                            <field name="process_amount" />
+                            <field name="process_kc"  />
+                            <field name="process_dg"  />
+                            <field name="process_cs"  />
+                        </tree>
+                    </field>
+                    <group colspan="2" col="14">
+                        <button string="Process" type="object" name="button_wizard_process" icon="terp-check" />
+                        <button string="Cancel" type="object" name="button_wizard_cancel" icon="gtk-cancel"/>
                     </group>
                 </form>
             </field>
@@ -322,7 +366,7 @@
                 <form string="Outbound Transport Object">
                     <field name="name" />
                     <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
-                    <field name="shipment_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="shipment_type" />
                     <field name="shipment_flow" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="zone_type" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="cargo_category" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
@@ -361,6 +405,8 @@
                                     <field name="parcels_nb" attrs="{'readonly': [('shipment_id', '!=', False)]}" required="1"/>
                                     <field name="volume" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="weight" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="amount" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
+                                    <field name="comment" />
                                     <field name="kc" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="dg" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
                                     <field name="cs" attrs="{'readonly': [('shipment_id', '!=', False)]}" />
