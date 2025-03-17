@@ -284,13 +284,16 @@ class transport_order_in(osv.osv):
         ], 'State', readonly=1, copy=False),
         'transport_fees_ids': fields.one2many('transport.order.fees', 'transport_in_id', 'Fees', copy=False),
         'transport_step_ids': fields.one2many('transport.order.step', 'transport_in_id', 'Steps', copy=False),
+        'parent_ito_id': fields.many2one('transport.order.in', 'Backorder of', readonly=True, copy=False),
         'oto_created': fields.boolean('Corresponding OTO created', readonly=True, copy=False),
         'oto_id': fields.many2one('transport.order.out', 'OTO', readonly=True, copy=False),
+        'from_sync': fields.boolean('From sync', readonly=True, copy=False),
     }
     _defaults = {
         'shipment_type': 'in',
         'state': 'planned',
         'oto_created': False,
+        'from_sync': False,
     }
 
     #def write(self, cr, uid, ids, vals, context=None):
@@ -410,7 +413,7 @@ class transport_order_in(osv.osv):
         # new ITO with remaining
         cr.execute("select exists(select id from transport_order_in_line where transport_id in %s and process_parcels_nb < parcels_nb)", (tuple(to_dup),))
         if cr.fetchone()[0]:
-            back_id = self.copy(cr, uid, to_dup[0], context=context)
+            back_id = self.copy(cr, uid, to_dup[0], {'parent_ito_id': to_dup[0]},context=context)
 
         ito = self.browse(cr, uid, ids[0], fields_to_fetch=['line_ids'], context=context)
         for line in ito.line_ids:
@@ -614,6 +617,8 @@ class transport_order_out(osv.osv):
         ], 'State', readonly=1, copy=False),
         'transport_fees_ids': fields.one2many('transport.order.fees', 'transport_out_id', 'Fees', copy=False),
         'transport_step_ids': fields.one2many('transport.order.step', 'transport_out_id', 'Steps', copy=False),
+        'parent_oto_id': fields.many2one('transport.order.out', 'Backorder of', readonly=True, copy=False),
+        'next_partner_id': fields.many2one('res.partner', 'Sync to', readonly=True, copy=False),
     }
     _defaults = {
         'shipment_type': 'out',
@@ -1023,7 +1028,7 @@ class transport_order_out_line(osv.osv):
             return {'type': 'ir.actions.act_window_close'}
 
         line = self.browse(cr, uid, ids[0], context=context)
-        new_oto_id = self.pool.get('transport.order.out').copy(cr, uid, line.transport_id.id, {'line_ids': []}, context=context)
+        new_oto_id = self.pool.get('transport.order.out').copy(cr, uid, line.transport_id.id, {'line_ids': [], 'parent_oto_id': line.transport_id.id}, context=context)
         pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('oto_line_id', '=', line.id)], context=context)
         add_ids = self.pool.get('shipment.additionalitems').search(cr, uid, [('oto_line_id', '=', line.id)], context=context)
         if len(add_ids) == len(context['button_selected_ids']['item_ids']) and len(pack_ids) == len(context['button_selected_ids']['pack_family_ids']):
