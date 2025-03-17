@@ -1381,23 +1381,29 @@ function listgridValidation(_list, o2m, record_id, inline) {
         if(o2m || confirm('The record has been modified \n Do you want to save it ?')) {
             new ListView(_list).save(current_id, record_id, inline);
         }
-    } else{
-        if(o2m) {
-            if(record_id == undefined || record_id == -1) {
-                b1 = jQuery('[id="' + _list + '_btn_"]')
-                b2 = jQuery('[id="' + _list + '_btn2_"]')
-                if ((b1 || b2) && !b1.is(':visible') && !b2.is(':visible')) {
-                    return false;
-                }
-                o2m_obj.create();
-            } else {
-                o2m_obj.edit(record_id);
-            }
-        } else if(record_id == -1) {
-            new ListView(_list).create();
-        } else {
-            new ListView(_list).edit(record_id);
+        return
+    } else if (o2m_obj) {
+
+        var edit_line_id = $('tr.editors').attr('record');
+        if (edit_line_id) {
+            ListView(_list).reload();
         }
+    }
+    if(o2m) {
+        if(record_id == undefined || record_id == -1) {
+            b1 = jQuery('[id="' + _list + '_btn_"]')
+            b2 = jQuery('[id="' + _list + '_btn2_"]')
+            if ((b1 || b2) && !b1.is(':visible') && !b2.is(':visible')) {
+                return false;
+            }
+            o2m_obj.create();
+        } else {
+            o2m_obj.edit(record_id);
+        }
+    } else if(record_id == -1) {
+        new ListView(_list).create();
+    } else {
+        new ListView(_list).edit(record_id);
     }
 }
 

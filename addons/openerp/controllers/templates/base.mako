@@ -10,7 +10,7 @@
     <script type="text/javascript" src="/openerp/static/javascript/scripts.js"></script>
     <script type="text/javascript" src="/openerp/static/javascript/form.js?v=35.0rc1"></script>
     <script type="text/javascript" src="/openerp/static/javascript/form_state.js?v=35.0rc1"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=34.0rc2"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=36.0rc1"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/m2o.js?v=14.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/m2m.js?v=27.0rc1"></script>
