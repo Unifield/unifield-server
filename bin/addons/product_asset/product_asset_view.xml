@@ -286,7 +286,7 @@
 
     <report id="asset_register_report_xlsx"
             string="Fixed Assets Register"
-            model="product_asset"
+            model="product.asset"
             name="asset.register.report.xlsx"
             report_type="openpyxl"
             auto="False"
