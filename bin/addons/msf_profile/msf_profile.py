@@ -4118,6 +4118,9 @@ class patch_scripts(osv.osv):
         return True
 
     def us_6498_set_qty_to_process(self, cr, uid, *a, **b):
+        return True
+        """
+        old patch script disabled
         cr.execute('''
             update stock_move
                 set selected_number=to_pack-from_pack+1
@@ -4127,6 +4130,7 @@ class patch_scripts(osv.osv):
         ''')
         self._logger.warn('Set qty to process on %d stock.move' % cr.rowcount)
         return True
+        """
 
     # UF14.0
     def us_6342_cancel_ir(self, cr, uid, *a, **b):
