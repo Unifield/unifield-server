@@ -59,6 +59,9 @@ class patch_scripts(osv.osv):
     }
 
     def us_9592_pack_family_to_table(self, cr, uid, *a, **b):
+        if not cr.table_exists('pack_family_memory_old'):
+            return True
+
         cr.execute('''
             insert into pack_family_memory (
                     create_uid,
