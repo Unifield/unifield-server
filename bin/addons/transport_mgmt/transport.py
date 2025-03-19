@@ -207,6 +207,113 @@ class transport_order_in(osv.osv):
     _name = 'transport.order.in'
     _table = 'transport_order_in'
     _description = 'Inbound Transport Order'
+    _trace = True
+
+    def generate_closure_sync_message(self, cr, uid, ids, context=None):
+        if isinstance(ids, int):
+            ids = [ids]
+
+        cr.execute('''
+            select ito.id from transport_order_in ito
+                where
+                    ito.from_sync = 't' and
+                    ito.id in %s and
+                    not exists(select ito2.id from transport_order_in ito2 where ito2.id = ito.id and ito2.sync_ref = ito2.sync_ref and state not in ('closed', 'done'))
+            ''', (tuple(ids), ), debug=True)
+        for _id in cr.fetchall():
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'transport.order.in', _id[0], {},
+                                                                                  'transport.order.out.closed_by_sync', False, check_identifier=False, context=context, force_domain=True)
+
+    def create_by_sync(self, cr, uid, source, line_info, context=None):
+        from sync_common import xmlid_to_sdref
+
+        so_po_common = self.pool.get('so.po.common')
+        partner_obj = self.pool.get('res.partner')
+        partner_id = so_po_common.get_partner_id(cr, uid, source, context)
+        address_id = so_po_common.get_partner_address_id(cr, uid, partner_id, context=context)
+
+        partner_instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
+
+        internal_source = partner_obj.search_exists(cr, uid, [('id', '=', partner_id), ('partner_type', '=', 'internal')], context=context)
+
+        info = line_info.to_dict()
+        ito_data = {
+            'supplier_partner_id': partner_id,
+            'supplier_address_id': address_id,
+            'from_sync': True,
+            'sync_ref': info.get('name'),
+            'state': 'transit',
+        }
+
+        if info.get('transport_partner_id'):
+            transport_id = False
+            if internal_source:
+                transport_id = partner_obj.find_sd_ref(cr, uid, xmlid_to_sdref(info['transport_partner_id']['id']), context=context)
+            if not transport_id:
+                t_ids = partner_obj.search(cr, uid, [('name', '=', info['transport_partner_id']['name']), ('active', 'in', ['t', 'f'])], context=context)
+                if t_ids:
+                    transport_id = t_ids[0]
+            if transport_id:
+                ito_data['transport_partner_id'] = transport_id
+
+        if info.get('next_partner_type') == 'via':
+            ito_data['transit_partner_id'] = partner_instance_id
+            if info.get('customer_partner_id'):
+                customer_id = False
+                customer_address_id = False
+                if internal_source:
+                    customer_id = partner_obj.find_sd_ref(cr, uid, xmlid_to_sdref(info['customer_partner_id']['id']), context=context)
+                if not customer_id:
+                    c_ids = partner_obj.search(cr, uid, [('name', '=', info['customer_partner_id']['name']), ('active', 'in', ['t', 'f'])], context=context)
+                    if c_ids:
+                        customer_id = c_ids[0]
+                if customer_id:
+                    customer_address_id = so_po_common.get_partner_address_id(cr, uid, customer_id, context=context)
+                    ito_data.update({'customer_partner_id':customer_id, 'customer_address_id': customer_address_id})
+
+        if info.get('next_partner_type') == 'customer':
+            ito_data['customer_partner_id'] = partner_instance_id
+            if info.get('transit_partner_id'):
+                transit_id = False
+                transit_address_id = False
+                if internal_source:
+                    transit_id = partner_obj.find_sd_ref(cr, uid, xmlid_to_sdref(info['transit_partner_id']['id']), context=context)
+                if not transit_id:
+                    t_ids = partner_obj.search(cr, uid, [('name', '=', info['transit_partner_id']['name']), ('active', 'in', ['t', 'f'])], context=context)
+                    if t_ids:
+                        transit_id = t_ids[0]
+                if transit_id:
+                    transit_address_id = so_po_common.get_partner_address_id(cr, uid, transit_id, context=context)
+                    ito_data.update({'transit_partner_id': transit_id, 'transit_address_id': transit_address_id})
+
+        if info.get('incoterm_type') and info.get('incoterm_type').get('code'):
+            incoterm_ids = self.pool.get('stock.incoterms').search(cr, uid, [('code', '=', info['incoterm_type']['code'])], context=context)
+            if incoterm_ids:
+                ito_data['incoterm_type'] = incoterm_ids[0]
+
+        for field in ['original_cargo_ref', 'shipment_flow', 'zone_type', 'cargo_category', 'ship_ref', 'details', 'transport_mode', 'departure_date', 'arrival_planned_date', 'incoterm_location', 'container_type', 'container_size', 'truck_payload']:
+            ito_data[field] = info.get(field, False)
+
+        ito_data['line_ids'] = []
+        if info.get('line_ids'):
+            for line in info['line_ids']:
+                ito_line_info = {}
+                if line.get('shipment_id') and line.get('shipment_id').get('name'):
+                    in_ref = '%s.%s' % (source, line['shipment_id']['name'])
+                    in_ids = self.pool.get('stock.picking').search(cr, uid, [('name', '=', in_ref), ('type', '=', 'in')], context=context)
+                    if in_ids:
+                        ito_line_info['incoming_id'] = in_ids[0]
+                    ito_line_info['description'] = in_ref
+                else:
+                    ito_line_info['description'] = line.get('description')
+                for f in ['parcels_nb', 'volume', 'weight', 'amount', 'comment', 'kc', 'dg', 'cs']:
+                    ito_line_info[f] = line.get(f)
+
+                ito_data['line_ids'].append((0, 0, ito_line_info))
+        ito_io = self.create(cr, uid, ito_data, context=context)
+
+        ito = self.read(cr, uid, ito_io, ['name'], context=context)
+        return 'ITO %s created' % (ito['name'], )
 
     def _get_total(self, cr, uid, ids, field_name, args, context=None):
         if not ids:
@@ -288,6 +395,7 @@ class transport_order_in(osv.osv):
         'oto_created': fields.boolean('Corresponding OTO created', readonly=True, copy=False),
         'oto_id': fields.many2one('transport.order.out', 'OTO', readonly=True, copy=False),
         'from_sync': fields.boolean('From sync', readonly=True, copy=False),
+        'sync_ref': fields.char('OTO Reference', size=64, readonly=True, copy=False, select=1),
     }
     _defaults = {
         'shipment_type': 'in',
@@ -296,8 +404,12 @@ class transport_order_in(osv.osv):
         'from_sync': False,
     }
 
-    #def write(self, cr, uid, ids, vals, context=None):
-    #    return super(transport_order_in, self).write(cr, uid, ids, vals, context=context)
+    def write(self, cr, uid, ids, vals, context=None):
+        ret = super(transport_order_in, self).write(cr, uid, ids, vals, context=context)
+        if vals and vals.get('state') in ['closed', 'cancel']:
+            self.generate_closure_sync_message(cr, uid, ids, context=context)
+        return ret
+
 
     def _check_partner_consistency(self, cr, uid, ids, context=None):
         # to check at doc validation
@@ -318,7 +430,7 @@ class transport_order_in(osv.osv):
         return self._process_step(cr, uid, ids, 'planned', context=context)
 
     def copy_all(self, cr, uid, ids, context=None):
-        to_process_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'planned')], context=context)
+        to_process_ids = self.search(cr, uid, [('id', 'in', ids), ('state', 'in', ['planned', 'warehouse'])], context=context)
         if not to_process_ids:
             return False
 
@@ -338,7 +450,7 @@ class transport_order_in(osv.osv):
         return to_process_ids[0]
 
     def uncopy_all(self, cr, uid, ids, context=None):
-        to_process_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'planned')], context=context)
+        to_process_ids = self.search(cr, uid, [('id', 'in', ids), ('state', 'in', ['planned', 'warehouse'])], context=context)
         if not to_process_ids:
             return False
 
@@ -359,6 +471,9 @@ class transport_order_in(osv.osv):
 
     def button_wizard_cancel(self, cr, uid, ids, context=None):
         return {'type': 'ir.actions.act_window_close'}
+
+    def button_partial_reception(self, cr, uid, ids, context=None):
+        return self.button_process_lines(cr, uid, ids, context=None)
 
     def button_process_lines(self, cr, uid, ids, context=None):
         new_id = self.copy_all(cr, uid, ids, context=context)
@@ -398,7 +513,7 @@ class transport_order_in(osv.osv):
         return True
 
     def button_wizard_process(self, cr, uid, ids, context=None):
-        to_dup = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'planned')], context=context)
+        to_dup = self.search(cr, uid, [('id', 'in', ids), ('state', 'in', ['planned', 'warehouse'])], context=context)
 
         if not to_dup:
             return True
@@ -410,12 +525,15 @@ class transport_order_in(osv.osv):
         lines_id = self.pool.get('transport.order.in.line').search(cr, uid, [('transport_id', 'in', to_dup), ('process_parcels_nb', '>', 0)], context=context)
         if not lines_id:
             return True
-        # new ITO with remaining
-        cr.execute("select exists(select id from transport_order_in_line where transport_id in %s and process_parcels_nb < parcels_nb)", (tuple(to_dup),))
-        if cr.fetchone()[0]:
-            back_id = self.copy(cr, uid, to_dup[0], {'parent_ito_id': to_dup[0]},context=context)
+
 
         ito = self.browse(cr, uid, ids[0], fields_to_fetch=['line_ids'], context=context)
+
+        # new ITO with remaining
+        cr.execute("select exists(select id from transport_order_in_line where transport_id = %s and process_parcels_nb < parcels_nb)", (ito.id,))
+        if cr.fetchone()[0]:
+            back_id = self.copy(cr, uid, ito.id, {'parent_ito_id': ito.id, 'from_sync': ito.from_sync, 'sync_ref': ito.sync_ref, 'state': ito.state},context=context)
+
         for line in ito.line_ids:
             if back_id:
                 if not line['process_parcels_nb']:
@@ -450,7 +568,12 @@ class transport_order_in(osv.osv):
             ito_name = self.read(cr, uid, back_id, ['name'], context=context)['name']
             self.log(cr, uid, back_id, _('Backorder ITO %s created') % (ito_name), context=context)
 
-        self.write(cr, uid, to_dup[0], {'line_ids': updated_lines, 'state': 'preclearance'}, context=context)
+        if ito.state == 'planned':
+            new_state = 'preclearance'
+        else:
+            new_state = 'closed'
+
+        self.write(cr, uid, to_dup[0], {'line_ids': updated_lines, 'state': new_state}, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 
@@ -499,6 +622,16 @@ class transport_order_out(osv.osv):
     _name = 'transport.order.out'
     _table = 'transport_order_out'
     _description = 'Outbound Transport Order'
+    _trace = True
+
+    def closed_by_sync(self, cr, uid, source, line_info, context=None):
+        info = line_info.to_dict()
+        oto_ids = self.search(cr, uid, [('state', '=', 'dispatched'), ('name', '=', info.get('sync_ref')), ('next_partner_id.name', '=', source)], context=context)
+        if oto_ids:
+            self.write(cr, uid, oto_ids, {'state': 'closed'}, context=context)
+            return 'OTO closed'
+
+        return 'Message ignored'
 
     def _get_total(self, cr, uid, ids, field_name, args, context=None):
         if not ids:
@@ -619,6 +752,7 @@ class transport_order_out(osv.osv):
         'transport_step_ids': fields.one2many('transport.order.step', 'transport_out_id', 'Steps', copy=False),
         'parent_oto_id': fields.many2one('transport.order.out', 'Backorder of', readonly=True, copy=False),
         'next_partner_id': fields.many2one('res.partner', 'Sync to', readonly=True, copy=False),
+        'next_partner_type': fields.selection([('via', 'via'), ('customer', 'customer')], 'Next partner type', readonly=True, copy=False),
     }
     _defaults = {
         'shipment_type': 'out',
@@ -637,7 +771,16 @@ class transport_order_out(osv.osv):
             for _id, vals in line_obj._get_shipment_data(cr, uid, to_update, context=context).items():
                 line_obj.write(cr, uid, _id, vals, context=context)
 
-        self.write(cr, uid, ids, {'state': 'dispatched'}, context=context)
+        for oto in self.browse(cr, uid, ids, context=context):
+            data = {'state': 'dispatched'}
+            if oto.transit_partner_id and oto.transit_partner_id.partner_type in ('internal', 'section', 'intermission'):
+                data['next_partner_id'] = oto.transit_partner_id.id
+                data['next_partner_type'] = 'via'
+            elif oto.customer_partner_id and oto.customer_partner_id.partner_type in ('internal', 'section', 'intermission'):
+                data['next_partner_id'] = oto.customer_partner_id.id
+                data['next_partner_type'] = 'customer'
+
+            self.write(cr, uid, oto.id, data, context=context)
 
         return True
 
@@ -663,8 +806,6 @@ class transport_order_out(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'closed'}, context=context)
         return True
-
-
 
 
     def button_cancel(self, cr, uid, ids, context=None):

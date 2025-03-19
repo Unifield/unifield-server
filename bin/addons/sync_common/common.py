@@ -155,6 +155,8 @@ WHITE_LIST_MODEL = [
     'sync.version.instance.monitor',
     'tender',
     'tender.line',
+    'transport.order.out',
+    'transport.order.in',
     'stock.mission.report.line.location',
     'cash.request',
     'cash.request.transfer.currency',

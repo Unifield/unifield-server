@@ -114,7 +114,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
-                <tree string="Inbound Transport Object">
+                <tree string="Inbound Transport Object" hide_delete_button="1">
                     <field name="name" />
                     <field name="supplier_partner_id" string="Supplier" />
                     <field name="customer_partner_id" string="Customer"/>
@@ -136,7 +136,7 @@
             <field name="type">form</field>
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
-                <form string="Inbound Transport Object">
+                <form string="Inbound Transport Object" hide_delete_button="1">
                     <field name="name" />
                     <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="shipment_type"  />
@@ -146,6 +146,8 @@
                     <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}"/>
                     <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="sync_ref" />
+                    <field name="from_sync" invisible="1" />
                     <notebook colspan="4">
                         <page string="Transport Object">
                             <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
@@ -245,6 +247,7 @@
                         <button string="Clear Customs" states="border" type="object" name="button_clear_customs" icon="gtk-paste-v" />
                         <button string="Delivery to Warehouse" states="customs" type="object" name="button_delivery" icon="gtk-home" />
                         <button string="Parcel Reception" states="warehouse" type="object" name="button_reception" icon="gtk-close" />
+                        <button string="Parcel Partial Reception" states="warehouse" type="object" name="button_partial_reception" icon="gtk-indent" />
                         <button string="Create Outbound Transport Order for these goods" type="object" name="button_create_oto" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('state', '!=', 'closed') ,('oto_created', '=', True)]}" />
                         <field name="oto_created" attrs="{'invisible': [('oto_created', '=', False)]}" />
                         <button string="Cancel document" states="planned,preclearance,transit,border,customs,warehouse" type="object" name="button_cancel" icon="gtk-cancel"/>
@@ -341,7 +344,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
-                <tree string="Outbound Transport Object">
+                <tree string="Outbound Transport Object" hide_delete_button="1">
                     <field name="name" />
                     <field name="supplier_partner_id" string="Supplier" />
                     <field name="customer_partner_id" string="Customer"/>
@@ -363,7 +366,7 @@
             <field name="type">form</field>
             <field name="priority" eval="16" />
             <field name="arch" type="xml">
-                <form string="Outbound Transport Object">
+                <form string="Outbound Transport Object" hide_delete_button="1">
                     <field name="name" />
                     <field name="original_cargo_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="shipment_type" />
@@ -469,7 +472,7 @@
                     <group colspan="2" col="6">
                         <button string="Dispatch" states="planned" type="object" name="button_dispatch" icon="terp-dialog-close" />
                         <button string="Validate" states="dispatched" type="object" name="button_validate"  icon="terp-check" />
-                        <button string="Cancel document" states="planned,dispatched,closed" type="object" name="button_cancel" icon="gtk-cancel"/>
+                        <button string="Cancel document" states="planned,dispatched" type="object" name="button_cancel" icon="gtk-cancel"/>
                     </group>
 
                 </form>

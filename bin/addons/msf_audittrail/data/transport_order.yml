@@ -1,0 +1,117 @@
+-
+  For ITO
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO'
+    obj = 'transport.order.in'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', obj)], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['supplier_partner_id', 'sync_ref', 'state', 'original_cargo_ref', 'shipment_flow', 'zone_type', 'cargo_category', 'ship_ref', 'details', 'transport_mode', 'departure_date', 'arrival_planned_date', 'incoterm_location', 'container_type', 'container_size', 'truck_payload']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' , obj), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': True,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  For OTO
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO'
+    obj = 'transport.order.out'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', obj)], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        # warning: the functional field to trace is 'state_hidden_sale_order' and not 'state'
+        fields = ['supplier_partner_id', 'sync_ref', 'state', 'original_cargo_ref', 'shipment_flow', 'zone_type', 'cargo_category', 'ship_ref', 'details', 'transport_mode', 'departure_date', 'arrival_planned_date', 'incoterm_location', 'container_type', 'container_size', 'truck_payload']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' , obj), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': True,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  OTO lines
+-
+  !python {model: audittrail.rule}: |
+    name = 'OTO line'
+    obj = 'transport.order.out'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', obj)], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['shipment_id', 'description', 'parcels_nb']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' , obj), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=',  obj), ('name', '=', 'description')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', obj), ('name', '=', 'transport_id')], context=context)
+        name_id = False
+        parent_id = False
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': True,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  ITO line
+-
+  !python {model: audittrail.rule}: |
+    name = 'ITO line'
+    obj = 'transport.order.int'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', obj)], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['incoming_id', 'description', 'parcels_nb']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' , obj), ('name', 'in', fields)], context=context)
+        field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=',  obj), ('name', '=', 'description')], context=context)
+        field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', obj), ('name', '=', 'transport_id')], context=context)
+        name_id = False
+        parent_id = False
+        if field_parent:
+            parent_id = field_parent[0]
+        if field_name:
+            name_id = field_name[0]
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': True,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                'parent_field_id': parent_id,
+                'name_get_field_id': name_id,
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
