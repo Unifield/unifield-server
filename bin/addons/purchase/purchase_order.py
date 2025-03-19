@@ -3433,6 +3433,20 @@ class purchase_order(osv.osv):
             'context': context
         }
 
+    def open_ito_from_po(self, cr, uid, ids, context=None):
+
+        if context is None:
+            context = {}
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'transport_mgmt.transport_order_in_action', ['tree', 'form'], new_tab=True, context=context)
+        po_id =  context.get('active_id', 0)
+        if po_id:
+            po = self.read(cr, uid, po_id, ['name'], context=context)
+            res['name'] = _('ITOs linked to %s') % (po['name'], )
+        res['domain'] = [('line_ids.incoming_id.purchase_id', '=', po_id)]
+        return res
+
+
 
 purchase_order()
 

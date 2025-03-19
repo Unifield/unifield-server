@@ -1444,7 +1444,7 @@
                             </group>
                         </page>
                         <page string="Additional Items" attrs="{'invisible': [('state', '=', 'draft')]}">
-                            <field colspan="4" name="additional_items_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '=', 'done')]}">
+                            <field colspan="4" name="additional_items_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'in', ['done', 'delivered'])]}">
                             </field>
                         </page>
                     </notebook>
