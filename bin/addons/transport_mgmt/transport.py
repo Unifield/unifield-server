@@ -813,7 +813,7 @@ class transport_order_out(osv.osv):
         line_obj = self.pool.get('transport.order.out.line')
         line_ids = line_obj.search(cr, uid, [('transport_id', 'in', ids)], context=context)
         if line_ids:
-            line_obj.write(cr, uid, line_ids, {'is_split': True, 'is_cancel': True}, context=context)
+            line_obj.write(cr, uid, line_ids, {'is_split': True}, context=context)
             cr.execute("update pack_family_memory set oto_line_id=null where oto_line_id in %s", (tuple(line_ids), ))
             cr.execute("update shipment_additionalitems set oto_line_id=null where oto_line_id in %s", (tuple(line_ids), ))
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
@@ -961,15 +961,12 @@ class transport_order_out_line(osv.osv):
                                                                                                                        ('done', 'Dispatched'),
                                                                                                                        ('delivered', 'Received'),
                                                                                                                        ('cancel', 'Returned')]),
-        'full_ship': fields.boolean('Full Ship', readonly=True, copy=False),
-        'is_split': fields.boolean('is_split', readonly=True, copy=False),
-        'is_cancel': fields.boolean('is_cancel', readonly=True, copy=False),
+        'is_split': fields.boolean('is_split', 'Split', readonly=True, copy=False),
         'pack_family_ids': fields.one2many('pack.family.memory', 'oto_line_id', 'Pack Family', copy=False),
         'item_ids': fields.one2many('shipment.additionalitems', 'oto_line_id', 'Additional Item', copy=False),
     }
 
     _defaults = {
-        'full_ship': True,
     }
     def write(self, cr, uid, ids, values, context=None):
         ret = super(transport_order_out_line, self).write(cr, uid, ids, values, context=context)
