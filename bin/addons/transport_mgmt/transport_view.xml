@@ -73,7 +73,7 @@
         </record>
 
 
-        <menuitem icon="terp-purchase" id="menu_transportation_root" name="Transportation" sequence="5" web_icon="images/purchases.png" web_icon_hover="images/purchases-hover.png" action="board_transportation"/>
+        <menuitem icon="terp-purchase" id="menu_transportation_root" name="Transportation" sequence="5" web_icon="images/transportation.png" web_icon_hover="images/transportation-hover.png" action="board_transportation"/>
         <menuitem id="menu_transport_management" name="Transport Management" parent="menu_transportation_root" />
 
         <record id="transport_order_in_search" model="ir.ui.view">
@@ -325,7 +325,6 @@
                         <separator orientation="vertical"/>
                         <newline />
                         <field name="name" />
-                        <field name="supplier_partner_id" string="Supplier" />
                         <field name="customer_partner_id" string="Customer"/>
                         <field name="transport_partner_id" />
                         <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
@@ -346,7 +345,6 @@
             <field name="arch" type="xml">
                 <tree string="Outbound Transport Object" hide_delete_button="1">
                     <field name="name" />
-                    <field name="supplier_partner_id" string="Supplier" />
                     <field name="customer_partner_id" string="Customer"/>
                     <field name="transport_partner_id" />
                     <field name="original_cargo_ref" string="Original Outbound Cargo Ref" />
@@ -376,6 +374,7 @@
                     <field name="creation_date" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="ship_ref" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
                     <field name="details" attrs="{'readonly': [('state', 'not in', ['planned'])]}" />
+                    <field name="supplier_partner_id" readonly="1" invisible="1"/>
                     <notebook colspan="4">
                         <page string="Transport Object">
                             <group colspan="4" col="8" attrs="{'readonly': [('state', 'not in', ['planned'])]}">
@@ -383,8 +382,7 @@
                             <separator colspan="4" string="Shipping" />
                                 <field name="transport_partner_id" />
                                 <field name="transport_mode" />
-                                <field name="supplier_partner_id" on_change="change_partner('supplier', supplier_partner_id, supplier_address_id, context)"/>
-                                <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id)]" />
+                                <field name="supplier_address_id" domain="[('partner_id', '=', supplier_partner_id)]" colspan="2"/>
                             <separator colspan="4" string="Transit" />
                             <separator colspan="4" string="Customer" />
                                 <field name="transit_partner_id" on_change="change_partner('transit', transit_partner_id, transit_address_id, context)"/>

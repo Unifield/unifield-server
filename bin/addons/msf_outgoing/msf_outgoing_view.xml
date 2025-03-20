@@ -1304,7 +1304,7 @@
                             <field name="shipment_actual_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'shipped'])]}" />
                             <field name="shipment_expected_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'shipped'])]}" />
                             <field name="transport_type" attrs="{'readonly': [('state', 'in', ('done', 'delivered', 'cancel'))]}" />
-                            <field name="backshipment_id" readonly="True" />
+                            <newline />
                             <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
                                                                 required="1"
                                 attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
@@ -1314,6 +1314,7 @@
                                    on_change="on_change_address_id(address_id)"
                                    />
                             <field name="in_ref" readonly="True" />
+                            <field name="manual_oto_id"  attrs="{'readonly': [('state', 'not in', ['shipped'])]}" />
                             <field name="partner_type" invisible="True" readonly="True" />
                         </group>
                     </group>

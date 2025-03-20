@@ -757,6 +757,7 @@ class transport_order_out(osv.osv):
     _defaults = {
         'shipment_type': 'out',
         'state': 'planned',
+        'supplier_partner_id': lambda self, cr, uid, *a: self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id,
     }
 
     def button_dispatch(self, cr, uid, ids, context=None):
