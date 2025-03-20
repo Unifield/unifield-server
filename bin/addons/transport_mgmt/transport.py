@@ -875,6 +875,8 @@ class transport_order_in_line(osv.osv):
     _inherit = 'transport.order.line'
     _name = 'transport.order.in.line'
     _table = 'transport_order_in_line'
+    _trace = True
+
     _columns = {
         'transport_id': fields.many2one('transport.order.in', 'Transport', required=True, select=True, join=True, ondelete='cascade'),
         'incoming_id': fields.many2one('stock.picking', 'Incoming', select=1, domain=[('type', '=', 'in')], join='LEFT'),
@@ -953,6 +955,8 @@ class transport_order_out_line(osv.osv):
     _inherit = 'transport.order.line'
     _name = 'transport.order.out.line'
     _table = 'transport_order_out_line'
+    _trace = True
+
     _columns = {
         'transport_id': fields.many2one('transport.order.out', 'Transport', required=True, select=True, join=True, ondelete='cascade'),
         'shipment_id': fields.many2one('shipment', 'Shipment', select=1, domain=[('parent_id', '!=', False)], join='LEFT'),

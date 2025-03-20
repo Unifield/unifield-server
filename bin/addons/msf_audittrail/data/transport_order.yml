@@ -52,7 +52,7 @@
 -
   !python {model: audittrail.rule}: |
     name = 'OTO line'
-    obj = 'transport.order.out'
+    obj = 'transport.order.out.line'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', obj)], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
@@ -86,7 +86,7 @@
 -
   !python {model: audittrail.rule}: |
     name = 'ITO line'
-    obj = 'transport.order.int'
+    obj = 'transport.order.in.line'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', obj)], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
