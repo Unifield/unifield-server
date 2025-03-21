@@ -136,6 +136,7 @@ class automated_import_job(osv.osv):
             selection=[
                 ('draft', 'Draft'),
                 ('in_progress', 'In progress'),
+                ('partial', 'Partially processed'),
                 ('done', 'Done'),
                 ('error', 'Exception'),
             ],
@@ -411,6 +412,9 @@ class automated_import_job(osv.osv):
                         is_success = True
                         if processed:
                             nb_processed += self.generate_file_report(cr, uid, job, processed, headers, remote=remote)
+                            if context.get('nb_rejected_po_vi_lines') or context.get('nb_rejected_in_vi_lines'):
+                                nb_rejected += (context.get('nb_rejected_po_vi_lines', 0) + context.get('nb_rejected_in_vi_lines', 0))
+                                nb_processed -= (context.get('nb_rejected_po_vi_lines', 0) + context.get('nb_rejected_in_vi_lines', 0))
 
                         if rejected:
                             is_success = False
@@ -430,9 +434,11 @@ class automated_import_job(osv.osv):
                                 tools.cache.clean_caches_for_db(cr.dbname)
                                 tools.read_cache.clean_caches_for_db(cr.dbname)
 
-
                         if context.get('rejected_confirmation'):
-                            nb_rejected += context.get('rejected_confirmation')
+                            nb_rejected += context['rejected_confirmation']
+                            nb_processed -= context['rejected_confirmation']
+
+                        if nb_processed == 0 and nb_rejected:
                             state = 'error'
 
                     self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (import_data.name, nb_processed, nb_rejected))
@@ -451,6 +457,9 @@ class automated_import_job(osv.osv):
                                 msg += _('%s out of %s lines have been rejected') % (nb_rejected, nb_total_pol)
                             if nb_processed or nb_rejected:
                                 self.pool.get('purchase.order').log(cr, uid, po_id, msg)
+
+                    if nb_processed and nb_rejected and state != 'error':
+                        state = 'partial'
 
                     if context.get('job_comment'):
                         for msg_dict in context['job_comment']:

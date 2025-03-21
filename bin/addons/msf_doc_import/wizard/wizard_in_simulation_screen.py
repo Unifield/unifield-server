@@ -742,6 +742,7 @@ Nothing has been imported because of %s. See below:
                 pack_sequences = {}
                 pack_id = False
                 pack_found = False
+                nb_rejected = 0
                 while x < len(values) + 1:
                     not_ok = False
                     file_line_error = []
@@ -991,6 +992,8 @@ Nothing has been imported because of %s. See below:
                         vals = values.get(file_line[0], [])
                         if file_line[1] == 'match':
                             err_msg = wl_obj.import_line(cr, uid, in_line, vals, prodlot_cache, wiz.with_pack, context=context)
+                            if err_msg:
+                                nb_rejected += 1
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [in_line], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         elif file_line[1] == 'split':
@@ -1008,6 +1011,8 @@ Nothing has been imported because of %s. See below:
                                                      'parent_line_id': in_line,
                                                      'move_id': False}, context=context)
                             err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, wiz.with_pack, context=context)
+                            if err_msg:
+                                nb_rejected += 1
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         # Commit modifications
@@ -1055,6 +1060,8 @@ Nothing has been imported because of %s. See below:
                                                         'line_number': vals.get('line_number') and int(vals.get('line_number', 0)) or False,
                                                         'simu_id': wiz.id}, context=context)
                     err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, wiz.with_pack, context=context)
+                    if err_msg:
+                        nb_rejected += 1
                     if in_line in not_ok_file_lines:
                         wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[in_line]}, context=context)
 
@@ -1093,6 +1100,10 @@ Nothing has been imported because of %s. See below:
                         message += '%s\n' % err
                     if wiz.with_pack:
                         can_be_imported = False
+
+                # For auto-import
+                if nb_rejected:
+                    context['nb_rejected_in_vi_lines'] = nb_rejected
 
                 header_values['message'] = message
                 header_values['state'] = can_be_imported and 'simu_done' or 'error'
